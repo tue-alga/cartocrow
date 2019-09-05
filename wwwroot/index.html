@@ -45,89 +45,53 @@
   </head>
 
   <body class="aga-rows">
-    <nav class="aga-header aga-card">
-      <a
-        class="w3-button w3-hide-medium w3-hide-large aga-header-button"
-        href="javascript:void(0)"
-        onclick="toggleMenu();"
-        title="Toggle Navigation Menu"
-        ><i class="fa fa-bars"></i
-      ></a>
-
-      <div class="aga-nav">
-        <!-- Website brand. -->
+    <header class="aga-header aga-card aga-theme-meta">
+      <div class="aga-brand-container">
+        <a
+          title="Toggle navigation menu"
+          href="javascript:void(0)"
+          onclick="toggleNavigation('nav',false);"
+          class="aga-button aga-hide-medium"
+          ><i class="fa fa-bars"></i
+        ></a>
         <a
           href="javascript:void(0)"
-          onclick="tryAddSection('/page/map.html','mapid');"
-          class="w3-bar-item w3-button aga-nav-item aga-nav-brand aga-subtle"
+          onclick="toggleNavigation('nav');tryAddSection('/page/map.html','content','map');"
+          class="aga-button aga-theme-brand"
           >GeoViz</a
         >
-
-        <a
-          href="javascript:void(0)"
-          onclick="tryAddSection('/page/map.html','default_map');"
-          class="w3-bar-item w3-button w3-hide-small aga-nav-item aga-subtle"
-          >Map</a
-        >
-        <a
-          href="javascript:void(0)"
-          onclick="tryAddSection('/page/help.html','help');toggleMenu();"
-          class="w3-bar-item w3-button w3-hide-small aga-nav-item aga-subtle"
-          >Help</a
-        >
-        <a
-          href="javascript:void(0)"
-          onclick="tryAddSection('/page/other_alt.html','other_alt');toggleMenu();"
-          class="w3-bar-item w3-button w3-hide-small aga-nav-item aga-subtle"
-          >Other</a
-        >
-        <!--<div class="w3-dropdown-hover w3-hide-small">
-          <button class="w3-button aga-nav-item" title="More">
-            MORE <i class="fa fa-caret-down"></i>
-          </button>
-          <div class="w3-dropdown-content w3-bar-block w3-card-4">
-            <a href="#" class="w3-bar-item w3-button">Merchandise</a>
-            <a href="#" class="w3-bar-item w3-button">Extras</a>
-            <a href="#" class="w3-bar-item w3-button">Media</a>
-          </div>
-        </div>-->
       </div>
-    </nav>
-    <!-- Navbar on small screens (remove the onclick attribute if you want the navbar to always show on top of the content when clicking on the links) -->
-    <!-- Note that while this navbar duplicates the navigation items, this adds customization options for small screens. -->
-    <div
-      id="navMobile"
-      class="w3-bar-block w3-top w3-hide w3-hide-large w3-hide-medium aga-nav aga-card"
-      style="position:relative;"
-    >
-      <a
-        href="javascript:void(0)"
-        class="w3-bar-item w3-button aga-nav-item aga-subtle"
-        onclick="tryAddSection('/page/map.html','default_map');toggleMenu();"
-        >Map</a
-      >
-      <a
-        href="javascript:void(0)"
-        class="w3-bar-item w3-button aga-nav-item aga-subtle"
-        onclick="tryAddSection('/page/help.html','help');toggleMenu();"
-        >Help</a
-      >
-      <a
-        href="javascript:void(0)"
-        class="w3-bar-item w3-button aga-nav-item aga-subtle"
-        onclick="tryAddSection('/page/other_alt.html','other_alt');toggleMenu();"
-        >Other</a
-      >
-    </div>
+      <div id="nav" class="aga-nav-container aga-hide-small">
+        <nav class="aga-nav aga-card aga-theme-meta">
+          <a
+            href="javascript:void(0)"
+            class="aga-button"
+            onclick="toggleNavigation('nav');tryAddSection('/page/map.html','content','map');"
+            >Map</a
+          >
+          <a
+            href="javascript:void(0)"
+            class="aga-button"
+            onclick="toggleNavigation('nav');tryAddSection('/page/help.html','content','help');"
+            >Help</a
+          >
+          <a
+            href="javascript:void(0)"
+            class="aga-button"
+            onclick="toggleNavigation('nav');tryAddSection('/page/other_alt.html','content','other');"
+            >Other</a
+          >
+        </nav>
+      </div>
+    </header>
 
     <!-- Note that this 'functional' part should be the map, i.e. the map has side-panels, the other content may not...-->
-    <div class="aga-fill">
-      <!-- Container for all content sections. -->
-      <div id="content">
-        <div id="mapid" class="content-item" style="z-index:0;"></div>
+    <div id="content"></div>
 
+    <!-- Container for all content sections. -->
+    <!--<div id="map" class="content-item" style="z-index:0;"></div>
         <script>
-          var mymap = L.map("mapid").setView([51.448, 5.49], 16);
+          var mymap = L.map("map").setView([51.448, 5.49], 16);
 
           L.tileLayer(
             "https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw",
@@ -140,11 +104,10 @@
               id: "mapbox.streets"
             }
           ).addTo(mymap);
-        </script>
-      </div>
+        </script>-->
 
-      <!-- Testing side panels. -->
-      <div class="aga-panel aga-left">
+    <!-- Testing side panels. -->
+    <!--<div class="aga-panel aga-left">
         <p class="aga-hover-75 aga-shadow" style="z-index: 2 !important;">
           Left panel.<br />
           <img src="#" width="500px" height="150px" />
@@ -155,23 +118,23 @@
           Right panel.<br />
           <img src="#" width="500px" height="150px" />
         </p>
-      </div>
-    </div>
+      </div>-->
 
     <!-- Acknowledgements -->
-    <footer class="aga-panel aga-bottom">
-      <p class="aga-hover-25 aga-acknowledge aga-subtle">
+    <!-- Note, disabled because no framework is actually used. -->
+    <!--<footer class="aga-footer aga-card aga-theme-meta aga-hide-small">
+      <p>
         Powered by
         <a href="https://www.w3schools.com/w3css/default.asp" target="_blank"
           >w3.css</a
         >
       </p>
-    </footer>
+    </footer>-->
 
     <script>
       // Preload the map and help content.
-      //tryAddSection("/page/map.html", "mapid");
-      //tryAddSection("/page/help.html", "help", false);
+      tryAddSection("/page/map.html", "content", "map");
+      tryAddSection("/page/help.html", "content", "help", false);
     </script>
   </body>
 </html>

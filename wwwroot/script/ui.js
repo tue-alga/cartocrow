@@ -1,21 +1,22 @@
 "use strict";
 
+let content_item_class = "content-item";
+
 // Toggle the menu for small screens.
-// TODO(tvl) remove w3
-function toggleMenu() {
-  var x = document.getElementById("navMobile");
-  if (x.className.indexOf("w3-show") == -1) {
-    x.className += " w3-show";
-  } else {
-    x.className = x.className.replace(" w3-show", "");
+function toggleNavigation(nav_id, force = true) {
+  let x = document.getElementById(nav_id);
+  if (x.className.indexOf("aga-hide-small") == -1) {
+    x.className += " aga-hide-small";
+  } else if (!force) {
+    x.className = x.className.replace(" aga-hide-small", "");
   }
 }
 
 // Focus on a specific content item.
-function focusItem(id) {
-  for (let c of document.getElementsByClassName("content-item"))
+function focusContentItem(content_item_id) {
+  for (let c of document.getElementsByClassName(content_item_class))
     c.style.display = "none";
-  document.getElementById(id).style.display = "block";
+  document.getElementById(content_item_id).style.display = "flex";
 }
 
 // Generic AJAX function with GET method.
@@ -32,34 +33,48 @@ function ajaxGet(url, callback) {
 }
 
 // Callback function to add the response text as item of the content container.
-function addResponseAsContentItem(id, focus) {
+function addResponseAsContentItem(
+  content_container_id,
+  content_item_id,
+  focus
+) {
   return function(request) {
     // Add the request content as section element in the container.
-    document.getElementById("content").innerHTML +=
+    document.getElementById(content_container_id).innerHTML +=
       '<section id="' +
-      id +
-      '" class="content-item">' +
+      content_item_id +
+      '" class="' +
+      content_item_class +
+      '">' +
       request.responseText +
       "</section>";
 
     // Make the item fill the remaining height of the container.
-    let item = document.getElementById(id);
+    let item = document.getElementById(content_item_id);
     item.children[0].style.height = "100%";
     item.children[0].style.boxSizing = "border-box";
 
     // Set focus.
-    if (focus) focusItem(id);
+    if (focus) focusContentItem(content_item_id);
     else item.style.display = "none";
   };
 }
 
 // Add a section to the section container.
-function tryAddSection(url, id, focus = true) {
+function tryAddSection(
+  url,
+  content_container_id,
+  content_item_id,
+  focus = true
+) {
   // Check whether the element already exists;
   // if so, just set focus to the item.
-  let element = document.getElementById(id);
+  let element = document.getElementById(content_item_id);
   if (element === null) {
-    ajaxGet(url, addResponseAsContentItem(id, focus));
-  } else if (focus) focusItem(id);
+    ajaxGet(
+      url,
+      addResponseAsContentItem(content_container_id, content_item_id, focus)
+    );
+  } else if (focus) focusContentItem(content_item_id);
   else element.style.display = "none";
 }
