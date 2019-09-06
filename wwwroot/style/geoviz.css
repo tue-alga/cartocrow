@@ -7,6 +7,9 @@
 #content {
   display: flex;
 }
-.content-item > * {
+.content-item {
+  z-index: 0;
+}
+.content-item>* {
   width: 100%;
 }

@@ -28,7 +28,7 @@
 
     <!-- Scripts. -->
     <script type="text/javascript" src="/script/ui.js"></script>
-    <script type="text/javascript" src="/script/dynamic.js"></script>
+    <script type="text/javascript" src="/script/geoviz.js"></script>
 
     <!-- TODO(tvl) check new stuff... -->
     <link
@@ -56,7 +56,7 @@
         ></a>
         <a
           href="javascript:void(0)"
-          onclick="toggleNavigation('nav');tryAddSection('/page/map.html','content','map');"
+          onclick="toggleNavigation('nav');tryAddMapSection('/page/map.html','content','item_map');"
           class="aga-button aga-theme-brand"
           >GeoViz</a
         >
@@ -66,19 +66,19 @@
           <a
             href="javascript:void(0)"
             class="aga-button"
-            onclick="toggleNavigation('nav');tryAddSection('/page/map.html','content','map');"
+            onclick="toggleNavigation('nav');tryAddMapSection('/page/map.html','content','item_map');"
             >Map</a
           >
           <a
             href="javascript:void(0)"
             class="aga-button"
-            onclick="toggleNavigation('nav');tryAddSection('/page/help.html','content','help');"
+            onclick="toggleNavigation('nav');tryAddSection('/page/help.html','content','item_help');"
             >Help</a
           >
           <a
             href="javascript:void(0)"
             class="aga-button"
-            onclick="toggleNavigation('nav');tryAddSection('/page/other_alt.html','content','other');"
+            onclick="toggleNavigation('nav');tryAddSection('/page/other_alt.html','content','item_other');"
             >Other</a
           >
         </nav>
@@ -133,8 +133,8 @@
 
     <script>
       // Preload the map and help content.
-      tryAddSection("/page/map.html", "content", "map");
-      tryAddSection("/page/help.html", "content", "help", false);
+      tryAddSection("/page/help.html", "content", "item_help");
+      tryAddMapSection("/page/map.html", "content", "item_map");
     </script>
   </body>
 </html>

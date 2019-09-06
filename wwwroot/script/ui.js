@@ -23,7 +23,7 @@ function focusContentItem(content_item_id) {
 function ajaxGet(url, callback) {
   var request;
   request = new XMLHttpRequest();
-  request.onreadystatechange = function() {
+  request.onreadystatechange = function () {
     if (this.readyState == 4 && this.status == 200) {
       callback(this);
     }
@@ -33,30 +33,10 @@ function ajaxGet(url, callback) {
 }
 
 // Callback function to add the response text as item of the content container.
-function addResponseAsContentItem(
-  content_container_id,
-  content_item_id,
-  focus
-) {
-  return function(request) {
-    // Add the request content as section element in the container.
-    document.getElementById(content_container_id).innerHTML +=
-      '<section id="' +
-      content_item_id +
-      '" class="' +
-      content_item_class +
-      '">' +
-      request.responseText +
-      "</section>";
-
-    // Make the item fill the remaining height of the container.
-    let item = document.getElementById(content_item_id);
-    item.children[0].style.height = "100%";
-    item.children[0].style.boxSizing = "border-box";
-
-    // Set focus.
-    if (focus) focusContentItem(content_item_id);
-    else item.style.display = "none";
+function setResponseAsContentItem(content_item_id) {
+  return function (request) {
+    // Add the request content into the content item.
+    document.getElementById(content_item_id).innerHTML = request.responseText;
   };
 }
 
@@ -64,17 +44,21 @@ function addResponseAsContentItem(
 function tryAddSection(
   url,
   content_container_id,
-  content_item_id,
-  focus = true
+  content_item_id
 ) {
-  // Check whether the element already exists;
-  // if so, just set focus to the item.
+  // Check whether the element already exists.
   let element = document.getElementById(content_item_id);
   if (element === null) {
-    ajaxGet(
-      url,
-      addResponseAsContentItem(content_container_id, content_item_id, focus)
-    );
-  } else if (focus) focusContentItem(content_item_id);
-  else element.style.display = "none";
+    // Create a new section element in the container that indicates that the content is loading.
+    document.getElementById(content_container_id).innerHTML +=
+      '<section id="' + content_item_id + '" class="' + content_item_class + '">' +
+      '<div style="display: flex; justify-content: center; align-items: center;"><p>Loading content...</p></div>' +
+      '</section>';
+
+    // Set focus to the item.
+    focusContentItem(content_item_id);
+
+    // Get the item content from an external URL.
+    ajaxGet(url, setResponseAsContentItem(content_item_id));
+  } else focusContentItem(content_item_id);
 }
