@@ -39,13 +39,16 @@ body {
 .aga-theme-meta .aga-button {
   color: #777777;
 }
-.aga-theme-meta .aga-button:hover {
+.aga-theme-meta .aga-button:hover,
+.aga-theme-meta a:hover {
   background-color: #e7e7e7;
 }
-.aga-theme-meta .aga-button:active {
+.aga-theme-meta .aga-button:active,
+.aga-theme-meta a:active {
   color: #5e5e5e;
 }
-.aga-theme-meta .aga-button:visited {
+.aga-theme-meta .aga-button:visited,
+.aga-theme-meta a:visited {
   color: #5e5e5e;
 }
 
