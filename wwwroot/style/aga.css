@@ -6,9 +6,19 @@
   margin: 0;
   padding: 0;
 }
-html,
 body {
+  display: flex;
+  flex-flow: column nowrap;
+}
+
+.aga-fill {
   height: 100%;
+  width: 100%;
+}
+.aga-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 /* Look and feel. */
@@ -26,8 +36,17 @@ body {
 .aga-theme-brand {
   font-size: 18px;
 }
+.aga-theme-meta .aga-button {
+  color: #777777;
+}
 .aga-theme-meta .aga-button:hover {
-  background-color: #cccccc;
+  background-color: #e7e7e7;
+}
+.aga-theme-meta .aga-button:active {
+  color: #5e5e5e;
+}
+.aga-theme-meta .aga-button:visited {
+  color: #5e5e5e;
 }
 
 /* Navigation. */
@@ -36,6 +55,8 @@ body {
   display: flex;
   flex-direction: column;
   flex-wrap: nowrap;
+  z-index: 2;
+  box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.16), 0 2px 10px 0 rgba(0, 0, 0, 0.12);
 }
 .aga-brand-container {
   display: flex;
@@ -79,6 +100,22 @@ body {
   box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.16), 0 2px 10px 0 rgba(0, 0, 0, 0.12);
 }
 
+/* Panel on top of the main content that may slide into view:
+    the panel always has a fixed height to allow hovering,
+    while the child starts with max-height 0% and transitions to X% on hover.
+    This transition only works if the units are the same (e.g. both percentages)
+    and the final percentage is relative to the viewport.
+*/
+.aga-panel-container {
+  position: relative;
+}
+.aga-panel {
+  position: absolute;
+  background-color: #f8f8f8;
+  overflow: hidden;
+}
+
+/* Responsiveness. */
 @media (min-width: 601px) {
   /* Tablet */
   .aga-header {
@@ -113,25 +150,6 @@ body {
 
 */
 
-.aga-subtle {
-  color: #777777;
-}
-.aga-subtle a:visited {
-  color: #5e5e5e;
-}
-.aga-subtle a:hover {
-  background-color: #e7e7e7;
-}
-.aga-subtle a:active {
-  color: #5e5e5e;
-}
-
-.aga-acknowledge {
-  width: 100%;
-  text-align: center;
-  font-size: 11px;
-}
-
 /* Layout. */
 
 /*
@@ -139,23 +157,13 @@ body {
 
 
 */
-
-.aga-rows {
-  display: flex;
-  flex-flow: column nowrap;
-}
-.aga-fill {
-  height: 100%;
-  width: 100;
-}
-
 /* Panel on a side of the viewport that may slide into view:
     the panel always has a fixed height to allow hovering,
     while the child starts with max-height 0% and transitions to X% on hover.
     This transition only works if the units are the same (e.g. both percentages)
     and the final percentage is relative to the viewport.
 */
-.aga-panel,
+/*.aga-panel,
 .aga-panel > * {
   position: fixed;
   z-index: 1;
@@ -251,3 +259,4 @@ body {
 .aga-panel[visible="force"] > *.aga-shadow {
   box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.16), 0 2px 10px 0 rgba(0, 0, 0, 0.12);
 }
+*/

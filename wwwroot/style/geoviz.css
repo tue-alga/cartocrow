@@ -1,15 +1,11 @@
-#content,
-.content-item {
+#map {
   width: 100%;
   height: 100%;
-}
-
-#content {
-  display: flex;
-}
-.content-item {
   z-index: 0;
 }
-.content-item>* {
+
+.gv-support {
+  display: block;
   width: 100%;
+  transition: all 200ms;
 }
