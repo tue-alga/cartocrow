@@ -9,3 +9,6 @@
   width: 100%;
   transition: all 200ms;
 }
+.gv-support > * {
+  transition: all 200ms;
+}

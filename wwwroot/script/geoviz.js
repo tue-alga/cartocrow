@@ -14,8 +14,8 @@ function focusSupportCard(card_id = null) {
     }
   }
   if (card_id !== null) {
-    card.style.height = "100%";
     card.children[0].style.height = "100%";
+    card.style.height = "100%";
   }
 }
 
