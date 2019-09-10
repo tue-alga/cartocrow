@@ -2,8 +2,10 @@
 
 Library and website for algorithmic geo-visualization.
 
-
 This repository contains both the GeoViz software library (in the ./src/ directory) and the GeoViz website (in the ./wwwroot/ directory).
+
+The software can be built using the make.sh script.
+The website can be served using the serve.sh script.
 
 
 # GeoViz library
