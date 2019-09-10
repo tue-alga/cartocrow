@@ -15,6 +15,7 @@ The website can be served using the serve.sh script.
 The ./wwwroot/ directory contains the GeoViz website. This directory is further divided into:
 - ./bin/	: native applications.
 - ./data/	: data stores like databases.
+- ./include/	: source code for native applications.
 - ./page/	: referenced webpages.
 - ./res/	: webpage resources like images and icons.
 - ./script/	: javascript and other scripts.
