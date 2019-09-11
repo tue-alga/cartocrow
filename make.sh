@@ -2,6 +2,8 @@
 SOURCE_DIR="$PWD/src"
 BUILD_DIR="build"
 
+echo "Building code..."
+
 # Create build directory if necessary.
 if [ ! -d "$BUILD_DIR" ]; then
   mkdir $BUILD_DIR
@@ -16,4 +18,6 @@ pushd . > /dev/null
 cd $BUILD_DIR && cmake $SOURCE_DIR && make && make install
 
 popd > /dev/null
+
+echo "DONE"
 

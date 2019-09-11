@@ -4,6 +4,8 @@
 #include <geoviz/necklace_map/necklace_map.h>
 #include <geoviz/flow_diagram/flow_diagram.h>
 
+#include "console/necklace_map/internal/test_internal.h"
+
 int main(int argc, char** argv) {
     std::cout << "Args: " << std::endl;
     for ( int i = 1; i < argc; ++i )
@@ -14,6 +16,8 @@ int main(int argc, char** argv) {
 
     // TODO(tvl) place in 'usage' print.
     std::cout << "GeoViz version: " << GEOVIZ_VERSION << std::endl;
+
+    std::cout << "Internal number: " << internal::test() << std::endl;
 
     return 0;
 }
