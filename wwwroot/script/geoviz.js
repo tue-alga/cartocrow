@@ -65,20 +65,14 @@ function initMap() {
     }
   ).addTo(mymap);
 
-  /*L.marker([51.5, -0.09]).addTo(mymap);
-  
-      L.circle([51.508, -0.11], {
-        color: "red",
-        fillColor: "#f03",
-        fillOpacity: 0.5,
-        radius: 500
-      }).addTo(mymap);
-  
-      L.polygon([
-        [51.509, -0.08],
-        [51.503, -0.06],
-        [51.51, -0.047]
-      ]).addTo(
-        mymap
-      );*/
+  // L.marker([51.448, 5.49]).addTo(mymap);
+
+  /*L.circle([51.448, 5.49], {
+    color: "red",
+    fillColor: "#f03",
+    fillOpacity: 0.5,
+    radius: 500
+  }).addTo(mymap);*/
+
+  //L.polygon([[51.509, -0.08], [51.503, -0.06], [51.51, -0.047]]).addTo(mymap);
 }
