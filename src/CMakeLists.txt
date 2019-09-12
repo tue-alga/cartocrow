@@ -9,6 +9,7 @@ set(CMAKE_INSTALL_PREFIX ${INSTALL_ROOT} CACHE PATH "${INSTALL_MESSAGE}")
 set(CMAKE_INSTALL_BINARY_DIR bin CACHE STRING "Installation subdirectory for compiled executables and shared libraries.")
 set(CMAKE_INSTALL_LIBRARY_DIR lib CACHE STRING "Installation subdirectory for compiled static libraries.")
 set(CMAKE_INSTALL_SOURCE_DIR include CACHE STRING "Installation subdirectory for source code.")
+set(CMAKE_INSTALL_SCRIPT_DIR script CACHE STRING "Installation subdirectory for scripts.")
 
 # GeoViz project.
 set(PROJECT_NAME GeoViz)
@@ -33,17 +34,18 @@ endmacro(install_files_and_directories)
 # Set version numbers.
 set(VERSION_MAJOR 0)
 set(VERSION_MINOR 1)
-set(VERSION_FEATURE 0)
+set(VERSION_FEATURE 1)
 set(VERSION_PATCH 0)
 set(VERSION_PROJECT "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_FEATURE}.${VERSION_PATCH}")
 message(STATUS "${PROJECT_NAME} version: ${VERSION_PROJECT}")
 
 # Configure a header file to pass CMake settings to the source code.
+set(CONFIG_DIR ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 configure_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/geoviz_config.h.in"
-    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/geoviz_config.h"
+    "${CONFIG_DIR}/geoviz_config.h.in"
+    "${CONFIG_DIR}/geoviz_config.h"
 )
-install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/cmake/geoviz_config.h" DESTINATION "${CMAKE_INSTALL_SOURCE_DIR}/cmake")
+install(FILES "${CONFIG_DIR}/geoviz_config.h" DESTINATION "${CMAKE_INSTALL_SOURCE_DIR}/cmake")
 
 # Indicate the version to CMake (for find_package)
 include(CMakePackageConfigHelpers)
@@ -65,7 +67,15 @@ add_subdirectory(console)
 
 install(
     FILES
-    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/GeoVizConfig.cmake"
+    "${CONFIG_DIR}/GeoVizConfig.cmake"
     "${CMAKE_CURRENT_BINARY_DIR}/GeoVizConfigVersion.cmake"
     DESTINATION ${CMAKE_INSTALL_LIBRARY_DIR}/cmake/GeoViz
+)
+
+# Custom install target for CLion.
+add_custom_target(
+    install_${PROJECT_NAME}
+    "${CMAKE_COMMAND}" --build "${CMAKE_BINARY_DIR}" --target install
+    DEPENDS ${PROJECT_NAME}
+    COMMENT "Installing ${PROJECT_NAME}"
 )

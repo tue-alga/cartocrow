@@ -1,0 +1,10 @@
+<?php
+    // Collect the command line arguments and separate them by spaces.
+    $args = $_REQUEST["args"];
+    $delim = isset($_REQUEST["delim"]) ? $_REQUEST["delim"] : "|";
+    $arg_str = str_replace($delim, " ", $args);
+    // Run the executable and return what it sent to the standard output stream.
+    // Note that while we could have one PHP file that takes as input the executable to run, this would pose an enormous security risk.
+    $result = shell_exec("../@CMAKE_INSTALL_BINARY_DIR@/@CURRENT_CLA@ $arg_str");
+    echo $result;
+?>

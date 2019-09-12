@@ -13,7 +13,16 @@ add_exe_properties(${TARGET_CLA_NECKLACE_MAP})
 target_link_libraries(${TARGET_CLA_NECKLACE_MAP} ${TARGET_LIB_GEOVIZ})
 
 # Install rules.
-set(INSTALL_NECLACE_MAP_CLA_DIR ${INSTALL_CONSOLE_DIR}/necklace_map)
+set(INSTALL_NECKLACE_MAP_CLA_DIR ${INSTALL_CONSOLE_DIR}/necklace_map)
 install(TARGETS ${TARGET_CLA_NECKLACE_MAP} DESTINATION ${CMAKE_INSTALL_BINARY_DIR})
-install_files_and_directories("${HDRS}" ${INSTALL_NECLACE_MAP_CLA_DIR})
-install_files_and_directories("${SRCS}" ${INSTALL_NECLACE_MAP_CLA_DIR})
+install_files_and_directories("${HDRS}" ${INSTALL_NECKLACE_MAP_CLA_DIR})
+install_files_and_directories("${SRCS}" ${INSTALL_NECKLACE_MAP_CLA_DIR})
+
+# PHP script to run the executable.
+# Note that the configure file uses the ${CURRENT_CLA} variable to determine the executable to run.
+set(CURRENT_CLA ${TARGET_CLA_NECKLACE_MAP})
+configure_file(
+    "${CONFIG_DIR}/run_cla.php.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/run_necklace_map.php"
+)
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/run_necklace_map.php" DESTINATION "${CMAKE_INSTALL_SCRIPT_DIR}")
