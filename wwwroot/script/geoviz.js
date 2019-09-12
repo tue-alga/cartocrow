@@ -16,6 +16,8 @@ function focusSupportCard(card_id = null) {
   if (card_id !== null) {
     card.children[0].style.height = "100%";
     card.style.height = "100%";
+  } else {
+    toggleNavigation();
   }
 }
 
@@ -29,7 +31,10 @@ function setResponseAsSupportCard(card_id) {
 }
 
 // Add a support card and open it.
-function tryAddSupportCard(url, card_id) {
+function tryAddSupportCard(url, card_id, gain_focus = true) {
+  // Always disable the menu.
+  toggleNavigation();
+
   // Check whether the element already exists.
   let element = document.getElementById(card_id);
   if (element === null) {
@@ -48,6 +53,8 @@ function tryAddSupportCard(url, card_id) {
     // Get the item content from an external URL.
     ajaxGet(url, setResponseAsSupportCard(card_id));
   }
+
+  if (gain_focus) focusSupportCard(card_id);
 }
 
 function initMap() {

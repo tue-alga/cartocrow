@@ -1,11 +1,13 @@
 "use strict";
 
+let nav_id = "nav";
+
 // Toggle the menu for small screens.
-function toggleNavigation(nav_id, force = true) {
+function toggleNavigation(force_hide = true) {
   let x = document.getElementById(nav_id);
   if (x.className.indexOf("aga-hide-small") == -1) {
     x.className += " aga-hide-small";
-  } else if (!force) {
+  } else if (!force_hide) {
     x.className = x.className.replace(" aga-hide-small", "");
   }
 }

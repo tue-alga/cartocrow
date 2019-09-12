@@ -9,16 +9,18 @@
     <link rel="shortcut icon" type="image/x-icon" href="/res/favicon.ico" />
 
     <!-- Menu icons. -->
+    <!-- Note that the font awesome stylesheet depends on other stylesheet URLs, so downloading it breaks it. -->
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
     />
     <!-- Main font. -->
-    <link
+    <!--<link
       rel="stylesheet"
       media="screen"
       href="http://fonts.googleapis.com/css?family=Bitter:400,700,400italic"
-    />
+    />-->
+    <link rel="stylesheet" media="screen" href="/external/fonts_bitter.css" />
     <!-- AGA generic styles. -->
     <link rel="stylesheet" href="/style/aga.css" />
     <!-- Page-specific styles. -->
@@ -29,7 +31,19 @@
     <script type="text/javascript" src="/script/geoviz.js"></script>
 
     <!-- Leaflet 'plugin' for map drawing. -->
+    <!-- Note that Leaflet requires the script to be placed after the stylesheet. -->
+    <!--<link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.5.1/dist/leaflet.css"
+      integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ=="
+      crossorigin=""
+    />-->
     <link rel="stylesheet" href="/external/leaflet.css" />
+    <!--<script
+      src="https://unpkg.com/leaflet@1.5.1/dist/leaflet.js"
+      integrity="sha512-GffPMF3RvMeYyc1LWMHtK8EbPv0iNZ8/oTtHPx9/cc2ILxQ+u905qIwdpULaqDkyBKgOaB57QTMg7ztg8Jm2Og=="
+      crossorigin=""
+    ></script>-->
     <script src="/external/leaflet.js"></script>
   </head>
 
@@ -39,7 +53,7 @@
         <a
           title="Toggle navigation menu"
           href="javascript:void(0)"
-          onclick="toggleNavigation('nav',false);"
+          onclick="toggleNavigation(false);"
           class="aga-button aga-hide-medium"
           ><i class="fa fa-bars"></i
         ></a>
@@ -50,25 +64,25 @@
           <a
             href="javascript:void(0)"
             class="aga-button"
-            onclick="toggleNavigation('nav');focusSupportCard();"
+            onclick="focusSupportCard();"
             >Map</a
           >
           <a
             href="javascript:void(0)"
             class="aga-button"
-            onclick="toggleNavigation('nav');tryAddSupportCard('/page/help.html','support_help');focusSupportCard('support_help');"
+            onclick="tryAddSupportCard('/page/help.html','support_help');"
             >Help</a
           >
           <a
             href="javascript:void(0)"
             class="aga-button"
-            onclick="toggleNavigation('nav');tryAddSupportCard('/page/other_alt.html','support_other');focusSupportCard('support_other');"
+            onclick="tryAddSupportCard('/page/other_alt.html','support_other');"
             >Other</a
           >
           <a
             href="javascript:void(0)"
             class="aga-button"
-            onclick="toggleNavigation('nav');tryAddSupportCard('/script/run_necklace_map.php?args=none|some|all','necklace_map');focusSupportCard('necklace_map');"
+            onclick="tryAddSupportCard('/script/run_necklace_map.php?args=none|some|all','necklace_map');"
             >Necklace Map</a
           >
         </nav>
@@ -84,7 +98,6 @@
     </div>
 
     <!-- Acknowledgements -->
-    <!-- Note, disabled because no framework is actually used. -->
     <footer class="aga-footer aga-card aga-theme-meta aga-hide-small">
       <p>
         Website by
@@ -96,8 +109,7 @@
 
     <script>
       // Preload help content.
-      tryAddSupportCard("/page/help.html", "support_help");
-      focusSupportCard();
+      tryAddSupportCard("/page/help.html", "support_help", false);
 
       // Initialize the map.
       initMap();
