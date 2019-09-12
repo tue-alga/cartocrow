@@ -1,11 +1,5 @@
 cmake_minimum_required (VERSION 2.6)
 
-# The CMake install prefix default is changed to reflect
-# the normal place to install the software to be used by the website.
-set(INSTALL_ROOT ${CMAKE_BINARY_DIR}/../wwwroot)
-set(INSTALL_MESSAGE "Install path prefix, prepended onto install directories.")
-set(CMAKE_INSTALL_PREFIX ${INSTALL_ROOT} CACHE PATH "${INSTALL_MESSAGE}")
-
 set(CMAKE_INSTALL_BINARY_DIR bin CACHE STRING "Installation subdirectory for compiled executables and shared libraries.")
 set(CMAKE_INSTALL_LIBRARY_DIR lib CACHE STRING "Installation subdirectory for compiled static libraries.")
 set(CMAKE_INSTALL_SOURCE_DIR include CACHE STRING "Installation subdirectory for source code.")
@@ -14,10 +8,6 @@ set(CMAKE_INSTALL_SCRIPT_DIR script CACHE STRING "Installation subdirectory for 
 # GeoViz project.
 set(PROJECT_NAME GeoViz)
 project(${PROJECT_NAME})
-
-if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-    set(CMAKE_INSTALL_PREFIX ${INSTALL_ROOT} CACHE PATH "${INSTALL_MESSAGE}")
-endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 
 # CMake options.
 option(GEOVIZ_CREATE_ARCHIVE "Create an archive GeoViz library, collecting all Geo-visualization methods." ON)

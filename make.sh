@@ -1,6 +1,7 @@
 #!/bin/bash
 SOURCE_DIR="$PWD/src"
 BUILD_DIR="build"
+INSTALL_ROOT="$PWD/wwwroot"
 
 echo "Building code..."
 
@@ -15,7 +16,7 @@ pushd . > /dev/null
 # Run CMake to configure the build project.
 # Note that these commands are chained
 # to terminate early if anything goes wrong.
-cd $BUILD_DIR && cmake $SOURCE_DIR && make && make install
+cd $BUILD_DIR && cmake $SOURCE_DIR -DCMAKE_INSTALL_PREFIX=$INSTALL_ROOT && make && make install
 
 popd > /dev/null
 
