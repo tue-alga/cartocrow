@@ -7,14 +7,16 @@ A website that uses the following things:
 * CSS3
 * JavaScript
 * AJAX
+- PHP (for C++ binary)
 
 This website should run a C++ executable that uses the following things:
-* Separation of (static) library and executable
-* CMake with subdirectory structure
-* Installation into directory from where the website would run it
+* Separation of (static) library and executable.
+* CMake with subdirectory structure.
+- Installation (remove default directory from where the website would run it).
+- Produces output that can be used by website.
 
 There should also be some 'administrative' stuff around this:
-* Licenses for both code and website.
-* Readme for how to install and use.
-* Documentation of code (doxygen?)
-* scripts for: building and installing code, serving website locally.
+- Licenses for both code and website.
+- Readme for how to install and use.
+- Documentation of code (doxygen?)
+- scripts for: building and installing code into website directory, serving website locally, creating documentation.
