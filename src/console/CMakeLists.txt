@@ -23,5 +23,5 @@ add_subdirectory(necklace_map)
 
 # Set the default executable to run in Visual Studio.
 if(MSVC)
-    set_property( DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${TARGET_CLA_NECKLACE_MAP} )
+    set_property( DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${NECKLACE_MAP_CLA_TARGET} )
 endif(MSVC)

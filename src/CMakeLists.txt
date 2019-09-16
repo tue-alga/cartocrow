@@ -1,16 +1,18 @@
-cmake_minimum_required (VERSION 2.6)
-
-set(CMAKE_INSTALL_BINARY_DIR bin CACHE STRING "Installation subdirectory for compiled executables and shared libraries.")
-set(CMAKE_INSTALL_LIBRARY_DIR lib CACHE STRING "Installation subdirectory for compiled static libraries.")
-set(CMAKE_INSTALL_SOURCE_DIR include CACHE STRING "Installation subdirectory for source code.")
-set(CMAKE_INSTALL_SCRIPT_DIR script CACHE STRING "Installation subdirectory for scripts.")
+cmake_minimum_required(VERSION 2.6)
 
 # GeoViz project.
 set(PROJECT_NAME GeoViz)
 project(${PROJECT_NAME})
 
 # CMake options.
+set(CMAKE_INSTALL_BINARY_DIR bin CACHE STRING "Installation subdirectory for compiled executables and shared libraries.")
+set(CMAKE_INSTALL_LIBRARY_DIR lib CACHE STRING "Installation subdirectory for compiled static libraries.")
+set(CMAKE_INSTALL_SOURCE_DIR include CACHE STRING "Installation subdirectory for source code.")
+set(CMAKE_INSTALL_SCRIPT_DIR script CACHE STRING "Installation subdirectory for scripts.")
+
 option(GEOVIZ_CREATE_ARCHIVE "Create an archive GeoViz library, collecting all Geo-visualization methods." ON)
+
+set(INSTALL_CONFIG_DIR ${CMAKE_INSTALL_LIBRARY_DIR}/cmake)
 
 # Macros.
 macro(install_files_and_directories FILE_LIST ROOT_DIR)
@@ -21,21 +23,13 @@ macro(install_files_and_directories FILE_LIST ROOT_DIR)
     endforeach(FILE)
 endmacro(install_files_and_directories)
 
-# Set version numbers.
+# Project version.
 set(VERSION_MAJOR 0)
 set(VERSION_MINOR 1)
 set(VERSION_FEATURE 1)
 set(VERSION_PATCH 0)
 set(VERSION_PROJECT "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_FEATURE}.${VERSION_PATCH}")
 message(STATUS "${PROJECT_NAME} version: ${VERSION_PROJECT}")
-
-# Configure a header file to pass CMake settings to the source code.
-set(CONFIG_DIR ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
-configure_file(
-    "${CONFIG_DIR}/geoviz_config.h.in"
-    "${CONFIG_DIR}/geoviz_config.h"
-)
-install(FILES "${CONFIG_DIR}/geoviz_config.h" DESTINATION "${CMAKE_INSTALL_SOURCE_DIR}/cmake")
 
 # Indicate the version to CMake (for find_package)
 include(CMakePackageConfigHelpers)
@@ -45,9 +39,19 @@ write_basic_package_version_file(
     COMPATIBILITY AnyNewerVersion
 )
 
+# Configure a header file to pass CMake settings to the source code.
+set(SOURCE_CONFIG_DIR ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+configure_file(
+    "${SOURCE_CONFIG_DIR}/geoviz_config.h.in"
+    "${SOURCE_CONFIG_DIR}/geoviz_config.h"
+)
+install(FILES "${SOURCE_CONFIG_DIR}/geoviz_config.h" DESTINATION "${CMAKE_INSTALL_SOURCE_DIR}/cmake")
+
+
+#### SOURCES ###
+
 # All source files should use include paths relative to the source root.
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-
 
 # The GeoViz library.
 add_subdirectory(geoviz)
@@ -55,11 +59,13 @@ add_subdirectory(geoviz)
 # Executables that use or expose GeoViz.
 add_subdirectory(console)
 
+
+# Install rules.
 install(
     FILES
-    "${CONFIG_DIR}/GeoVizConfig.cmake"
+    "${SOURCE_CONFIG_DIR}/GeoVizConfig.cmake"
     "${CMAKE_CURRENT_BINARY_DIR}/GeoVizConfigVersion.cmake"
-    DESTINATION ${CMAKE_INSTALL_LIBRARY_DIR}/cmake/GeoViz
+    DESTINATION ${INSTALL_CONFIG_DIR}/GeoViz
 )
 
 # Custom install target for CLion.
