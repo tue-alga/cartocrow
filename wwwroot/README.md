@@ -18,3 +18,10 @@ This website has been developed according to the following design principles to 
 - Minimize 'clutter'; maximize 'content'.
 - Show something soon; indicate more is coming.
 - Minimize reloading heavy content.
+
+=== Licensing ===
+Copyright 2019 Netherlands eScience Center and TU Eindhoven
+Licensed under the Apache License, version 2.0. See LICENSE for details.
+
+This website depends on the GeoViz software library distributed together with this website.
+The GeoViz software library is Licensed under the GPLv3.0 license. See its LICENSE for details.

@@ -17,3 +17,6 @@ Note that within the CMakeLists files, we follow a loose naming convention:
 - All project-specific CMake build options have the GEOVIZ_ prefix.
 - Similar to CMake, most variables are [project_name]_<target_name>_<type> (e.g. GEOVIZ_INSTALL_SOURCE_DIR or NECKLACE_MAP_TARGET)._
 - Applications exposing the functionality of an individual library are suffixed by _CLA (for command-line application).
+
+For the c++ code, we follow the Google style guide (https://google.github.io/styleguide/cppguide.html) with minor adjustments.
+- Whenever a code block is spread over multiple lines, the opening character (e.g. brace) will be placed on the next line and the opening and closing characters have the same indentation.
