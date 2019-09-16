@@ -9,3 +9,5 @@
 
  etc...
 
+<a href="/index.html">GeoViz webpage</a>
+
