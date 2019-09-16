@@ -8,5 +8,7 @@ rm -rf wwwroot/latex/
 rm -rf wwwroot/lib/
 rm -rf wwwroot/include/
 
+rm wwwroot/script/run_*.php
+
 echo "DONE"
 
