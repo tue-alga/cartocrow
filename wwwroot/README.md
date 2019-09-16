@@ -5,7 +5,9 @@ This directory contains the GeoViz website. The following descibes the subdirect
 - bin : native (server-side) applications.
 - data : data stores such as databases.
 - external : downloaded packages for offline processing.
+- html : doxygen generated HTML documentation.
 - include : source code for native applications.
+- latex : docygen generated LaTeX docuementation.
 - lib : native (server-side) libraries.
 - page : referenced webpages.
 - res : webpage resources like images and icons.

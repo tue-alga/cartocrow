@@ -29,6 +29,15 @@ namespace geoviz
 
 std::string proc_necklace_map();
 
+/// Test for generating doxygen documentation?
+class TestDoc{
+    /// Default constructor
+    /**
+     * More documentation...
+     */
+    TestDoc() {}
+};
+
 } // namespace geoviz
 
 #endif //GEOVIZ_NECKLACE_MAP_NECKLACE_MAP_H

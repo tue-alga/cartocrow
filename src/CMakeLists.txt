@@ -47,6 +47,12 @@ configure_file(
 )
 install(FILES "${SOURCE_CONFIG_DIR}/geoviz_config.h" DESTINATION "${CMAKE_INSTALL_SOURCE_DIR}/cmake")
 
+# Configure the doxygen configuration file to pass CMake settings to the doxygen.
+configure_file(
+    "${SOURCE_CONFIG_DIR}/Doxyfile.in"
+    "Doxyfile"
+)
+
 
 #### SOURCES ###
 

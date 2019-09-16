@@ -37,6 +37,10 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-19
 DEFINE_string(test_flag, "", "A test for the gflags dependency for parsing command-line arguments");
 // TODO(tvl) add dependency: glog and gflags for logging and capturing command line parameters (check for other, better libraries).
 
+/**
+ * Example long doxygen comment describing this method.
+ * @return the copyright notice.
+ */
 std::string copyrightNotice()
 {
     return
@@ -46,6 +50,7 @@ std::string copyrightNotice()
         "under certain conditions; type `show c' for details.";
 }
 
+/// Example brief doxygen comment describing this method.
 std::string getUsageMessage(std::string executable_name) {
     std::string usage = "This is where I should set the usage message.  Sample usage:\n";
     usage += executable_name + " <uselessarg1> <uselessarg2>";

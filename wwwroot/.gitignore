@@ -1,5 +1,7 @@
 bin/
+html/
 include/
+latex/
 lib/
 test.html
 
