@@ -12,6 +12,9 @@ set(GEOVIZ_EXPORT_TARGETS GeoVizTargets)
 add_subdirectory(necklace_map)
 add_subdirectory(flow_diagram)
 
+set(NECKLACE_MAP_TARGET ${NECKLACE_MAP_TARGET} PARENT_SCOPE)
+set(FLOW_DIAGRAM_TARGET ${FLOW_DIAGRAM_TARGET} PARENT_SCOPE)
+
 
 # The GeoViz library is an "interface" library:
 # it forwards linking to a collection of other libraries.
