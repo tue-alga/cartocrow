@@ -10,7 +10,7 @@ namespace geoviz
 
 std::string proc_necklace_map()
 {
-    return "Necklace Map";
+  return "Necklace Map";
 }
 
 } // namespace geoviz

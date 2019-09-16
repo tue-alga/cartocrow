@@ -24,18 +24,21 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-19
 
 #include <string>
 
+
 namespace geoviz
 {
 
 std::string proc_necklace_map();
 
 /// Test for generating doxygen documentation?
-class TestDoc{
-    /// Default constructor
-    /**
-     * More documentation...
-     */
-    TestDoc() {}
+class TestDoc
+{
+ public:
+  /// Default constructor
+  /**
+   * More documentation...
+   */
+  TestDoc() {}
 };
 
 } // namespace geoviz
