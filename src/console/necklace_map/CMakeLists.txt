@@ -11,7 +11,12 @@ add_executable( ${NECKLACE_MAP_CLA_TARGET} ${HDRS} ${SRCS} )
 add_exe_properties(${NECKLACE_MAP_CLA_TARGET})
 
 #target_link_libraries(${NECKLACE_MAP_CLA_TARGET} ${NECKLACE_MAP_TARGET})
-target_link_libraries(${NECKLACE_MAP_CLA_TARGET} ${GEOVIZ_TARGET})
+target_link_libraries(
+    ${NECKLACE_MAP_CLA_TARGET}
+    ${GEOVIZ_TARGET}
+    #${NECKLACE_MAP_TARGET}
+    gflags
+)
 
 # Install rules.
 set(INSTALL_NECKLACE_MAP_CLA_DIR ${INSTALL_CONSOLE_DIR}/necklace_map)

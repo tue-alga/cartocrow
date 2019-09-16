@@ -19,7 +19,12 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-19
 */
 
+// Note dependences:
+// - gflags
+
 #include <iostream>
+
+#include <gflags/gflags.h>
 
 #include <cmake/geoviz_config.h>
 #include <geoviz/necklace_map/necklace_map.h>
@@ -27,6 +32,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-19
 
 #include "console/necklace_map/internal/test_internal.h"
 
+DEFINE_string(test_flag, "", "A test for the gflags dependency for parsing command-line arguments");
 // TODO(tvl) add dependency: glog and gflags for logging and capturing command line parameters (check for other, better libraries).
 
 std::string copyrightNotice()
@@ -40,6 +46,11 @@ std::string copyrightNotice()
 
 int main(int argc, char** argv)
 {
+    gflags::ParseCommandLineFlags(&argc, &argv, true);
+
+    std::cerr << "Flags: " << std::endl;
+    std::cerr << FLAGS_test_flag << std::endl;
+
     std::cerr << "Args: " << std::endl;
     for ( int i = 1; i < argc; ++i )
         std::cerr << "\t" << argv[i] << std::endl;

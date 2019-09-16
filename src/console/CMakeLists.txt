@@ -14,6 +14,9 @@ macro(add_exe_properties target)
     endif(MSVC)
 endmacro(add_exe_properties)
 
+# Most command-line applications use gflags to parse command-line arguments.
+find_package(gflags REQUIRED)
+
 ### EXECUTABLES ###
 # A few notes:
 # - The executables are named after the method they expose.
