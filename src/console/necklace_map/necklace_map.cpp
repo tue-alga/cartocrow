@@ -20,11 +20,13 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-19
 */
 
 // Note dependences:
+// - glog
 // - gflags
 
 #include <iostream>
 
 #include <gflags/gflags.h>
+#include <glog/logging.h>
 
 #include <cmake/geoviz_config.h>
 #include <geoviz/necklace_map/necklace_map.h>
@@ -46,22 +48,26 @@ std::string copyrightNotice()
 
 int main(int argc, char** argv)
 {
+    google::InitGoogleLogging(argv[0]);
     gflags::ParseCommandLineFlags(&argc, &argv, true);
 
-    std::cerr << "Flags: " << std::endl;
-    std::cerr << FLAGS_test_flag << std::endl;
+    FLAGS_logtostderr = true;
+    LOG(INFO) << "Google logging enabled!";
 
-    std::cerr << "Args: " << std::endl;
+    LOG(INFO) << "Flags:";
+    LOG(INFO) << FLAGS_test_flag;
+
+    LOG(INFO) << "Args:";
     for ( int i = 1; i < argc; ++i )
-        std::cerr << "\t" << argv[i] << std::endl;
+        LOG(INFO) << "\t" << argv[i];
 
-    std::cerr << "Necklace map: " << geoviz::proc_necklace_map() << std::endl;
-    std::cerr << "Flow Diagram: " << geoviz::proc_flow_diagram() << std::endl;
+    LOG(INFO) << "Necklace map: " << geoviz::proc_necklace_map();
+    LOG(INFO) << "Flow Diagram: " << geoviz::proc_flow_diagram();
 
     // TODO(tvl) place in 'usage' print.
-    std::cerr << "GeoViz version: " << GEOVIZ_VERSION << std::endl;
+    LOG(INFO) << "GeoViz version: " << GEOVIZ_VERSION;
 
-    std::cerr << "Internal number: " << geoviz::internal::test() << std::endl;
+    LOG(INFO) << "Internal number: " << geoviz::internal::test();
 
     std::cout << "<div>";
     std::cout << "<!--To be loaded as support card.-->";

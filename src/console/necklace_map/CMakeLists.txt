@@ -16,6 +16,7 @@ target_link_libraries(
     ${GEOVIZ_TARGET}
     #${NECKLACE_MAP_TARGET}
     gflags
+    glog
 )
 
 # Install rules.
