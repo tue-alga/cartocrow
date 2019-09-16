@@ -46,9 +46,18 @@ std::string copyrightNotice()
         "under certain conditions; type `show c' for details.";
 }
 
+std::string getUsageMessage(std::string executable_name) {
+    std::string usage = "This is where I should set the usage message.  Sample usage:\n";
+    usage += executable_name + " <uselessarg1> <uselessarg2>";
+    return usage;
+}
+
 int main(int argc, char** argv)
 {
     google::InitGoogleLogging(argv[0]);
+
+    gflags::SetUsageMessage( getUsageMessage(argv[0]) );
+    gflags::SetVersionString(GEOVIZ_VERSION);
     gflags::ParseCommandLineFlags(&argc, &argv, true);
 
     FLAGS_logtostderr = true;
@@ -56,6 +65,12 @@ int main(int argc, char** argv)
 
     LOG(INFO) << "Flags:";
     LOG(INFO) << FLAGS_test_flag;
+    // Note that here is a good place to check the validity of the flags.
+    // While this can be done by adding flag validators using gflags,
+    // These generally only allow validating independent flags,
+    // they do not allow validating programmatically set flags,
+    // and they may throw inconvenient compiler warnings about unused variables
+    // (depending on the implementation).
 
     LOG(INFO) << "Args:";
     for ( int i = 1; i < argc; ++i )
