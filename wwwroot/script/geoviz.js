@@ -58,7 +58,8 @@ function tryAddSupportCard(url, card_id, gain_focus = true) {
 }
 
 function initMap() {
-  var mymap = L.map("map").setView([51.448, 5.49], 16);
+  var map = L.map("map").fitWorld();
+  //var map = L.map("map").setView([51.448, 5.49], 16);
 
   L.tileLayer(
     "https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw",
@@ -70,16 +71,41 @@ function initMap() {
         'Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
       id: "mapbox.streets"
     }
-  ).addTo(mymap);
+  ).addTo(map);
 
-  // L.marker([51.448, 5.49]).addTo(mymap);
+  L.control.scale().addTo(map);
+
+  function onLocationFound(e) {
+    var radius = e.accuracy / 2;
+
+    L.marker(e.latlng)
+      .addTo(map)
+      .bindPopup("You are within " + radius + " meters from this point")
+      .openPopup();
+
+    L.circle(e.latlng, radius).addTo(map);
+  }
+
+  function onLocationError(e) {
+    // Focus on TU/e.
+    map.setView([51.448, 5.49], 16);
+  }
+
+  map.on("locationfound", onLocationFound);
+  map.on("locationerror", onLocationError);
+
+  map.locate({ setView: true, maxZoom: 16 });
+
+  // L.marker([51.448, 5.49]).addTo(map);
 
   /*L.circle([51.448, 5.49], {
     color: "red",
     fillColor: "#f03",
     fillOpacity: 0.5,
     radius: 500
-  }).addTo(mymap);*/
+  }).addTo(map);*/
+
+  //L.polygon([[51.509, -0.08], [51.503, -0.06], [51.51, -0.047]]).addTo(map);
 
   // Make sure that the navigation menu and support cards always show on top of the map.
   let map_max_z_index = Math.max(
