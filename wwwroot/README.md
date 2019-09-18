@@ -35,4 +35,9 @@ The HTML and CSS webpage files follow the Google HTML/CSS style guide (https://g
 - Ignore section 4.1.8 on hexadecimal notation: always use 6- or 8-character notation. Shorter notations obfuscate the actual value.
 - All style classes for general use within the group use the "aga-" prefix. All style classes for specific use within a project use a short prefix based on the project name.
 
-The JavaScript files follow the Google JavaScript style guide (https://google.github.io/styleguide/jsguide.html).
+The JavaScript files follow the Google JavaScript style guide (https://google.github.io/styleguide/jsguide.html) with the following changes:
+
+- Ignore section 9.3.2 on using clang-format. Instead, when using VS Code, use the Prettier plugin to format the code. One of the reasons is that clang-format violates section 4.1.2 on closing brace placement.
+- Instead of using 4+ spaces fo continuation indentation (section 4.5.2), continuations are idented by 2 spaces compared to the original.
+- Whenever spreading function parameters/arguments over multiple lines, always put the first one on a new line. Prefer to use exactly 1 parameter/argument per line.
+- When naming elements in camel case, only capitalize the first letter of an abbreviation.

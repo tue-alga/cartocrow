@@ -36,5 +36,5 @@ For the c++ code, we follow the Google style guide (https://google.github.io/sty
 - When deciding on a name, prefer to start with more general parts before more specific parts (e.g. my_point_x as opposed to my_x_point).
 - Add inline spaces if this would make similar parts of multiple lines line up better. For example, when setting multiple values in sequence, you may add spaces before the = character to line them up.
 - When declaring pointer variables, always place the * adjacent to the type (e.g. const char* my_variable).
-
-
+- Whenever spreading function parameters/arguments over multiple lines, always put the first one on a new line. Prefer to use exactly 1 parameter/argument per line.
+- When naming elements in camel case, only capitalize the first letter of an abbreviation.

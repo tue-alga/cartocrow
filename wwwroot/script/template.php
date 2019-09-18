@@ -1,3 +1,7 @@
+<!--
+    Copyright 2019 Netherlands eScience Center and TU Eindhoven
+    Licensed under the Apache License, version 2.0. See LICENSE for details.
+-->
 <!--Note that while we could have one PHP file that takes as input the executable to run, this would pose an enormous security risk.-->
 <?php
     // Collect the command line arguments and separate them by spaces.
