@@ -81,5 +81,14 @@ function initMap() {
     radius: 500
   }).addTo(mymap);*/
 
-  //L.polygon([[51.509, -0.08], [51.503, -0.06], [51.51, -0.047]]).addTo(mymap);
+  // Make sure that the navigation menu and support cards always show on top of the map.
+  let map_max_z_index = Math.max(
+    getComputedStyle(document.querySelector(".leaflet-control")).zIndex,
+    getComputedStyle(document.querySelector(".leaflet-top")).zIndex
+  );
+  let stylesheet = document.styleSheets[document.styleSheets.length - 1];
+  stylesheet.insertRule(".aga-card { z-index: " + (map_max_z_index + 1) + ";}");
+  stylesheet.insertRule(
+    ".aga-header { z-index: " + (map_max_z_index + 2) + ";}"
+  );
 }
