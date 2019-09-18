@@ -16,75 +16,68 @@ body {
   width: 100%;
 }
 .aga-center {
+  align-items: center;
   display: flex;
   justify-content: center;
-  align-items: center;
 }
 
 /* Look and feel. */
 body {
-  font-family: "Bitter", serif;
-  font-size: 14px;
-  line-height: 1.42857143;
+  background: #ffffff;
   color: #333333;
-  background-color: #ffffff;
+  font: 0.875em "Bitter", serif;
+  line-height: 1.42857143;
 }
 .aga-theme-meta {
+  background: #f8f8f8;
   color: #777777;
-  background-color: #f8f8f8;
 }
 .aga-theme-brand {
-  font-size: 18px;
+  font-size: 1.285em;
 }
 .aga-theme-meta .aga-button {
   color: #777777;
 }
 .aga-theme-meta .aga-button:hover,
 .aga-theme-meta a:hover {
-  background-color: #e7e7e7;
+  background: #e7e7e7;
 }
 .aga-theme-meta .aga-button:active,
 .aga-theme-meta a:active {
   color: #5e5e5e;
 }
-.aga-theme-meta .aga-button:visited,
-.aga-theme-meta a:visited {
-  color: #5e5e5e;
-}
 
 /* Navigation. */
 .aga-header {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  flex-wrap: nowrap;
-  z-index: 2;
   box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.16), 0 2px 10px 0 rgba(0, 0, 0, 0.12);
+  display: flex;
+  flex-flow: column nowrap;
+  position: relative;
+  z-index: 2;
 }
 .aga-brand-container {
   display: flex;
   flex-flow: row nowrap;
 }
 .aga-nav-container {
-  position: relative;
   height: 0;
+  position: relative;
   width: 100%;
 }
 .aga-nav {
   display: flex;
-  flex-direction: column;
-  flex-wrap: nowrap;
+  flex-flow: column nowrap;
   position: absolute;
 }
 .aga-header .aga-button {
-  display: flex;
   align-items: center;
-  user-select: none;
-  padding: 8px 16px;
-  overflow: hidden;
-  text-decoration: none;
-  text-align: center;
   cursor: pointer;
+  display: flex;
+  overflow: hidden;
+  padding: 8px 16px;
+  text-align: center;
+  text-decoration: none;
+  user-select: none;
   white-space: nowrap;
 }
 .aga-hide-small {
@@ -92,15 +85,15 @@ body {
 }
 
 .aga-footer {
-  position: relative;
-  width: 100%;
-  text-align: center;
   font-size: 11px;
+  position: relative;
+  text-align: center;
+  width: 100%;
 }
 
 .aga-card {
-  z-index: 1;
   box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.16), 0 2px 10px 0 rgba(0, 0, 0, 0.12);
+  z-index: 1;
 }
 
 /* Panel on top of the main content that may slide into view. */
@@ -108,10 +101,10 @@ body {
   position: relative;
 }
 .aga-panel {
-  position: absolute;
+  background: #f8f8f8;
   display: block;
   overflow: hidden;
-  background-color: #f8f8f8;
+  position: absolute;
   transition: all 200ms;
 }
 
@@ -125,13 +118,13 @@ body {
     height: unset;
   }
   .aga-nav {
-    height: 100%;
     flex-direction: row;
+    height: 100%;
     position: static;
   }
   .aga-nav.aga-card {
-    z-index: unset;
     box-shadow: unset;
+    z-index: unset;
   }
   .aga-hide-small {
     display: unset !important;

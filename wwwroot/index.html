@@ -6,7 +6,7 @@
 <html lang="en-US" class="aga-fill">
   <head>
     <title>Algorithmic Geo-Visualization</title>
-    <meta charset="UTF-8" />
+    <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
     <!-- Browser tab icon. -->
@@ -22,7 +22,7 @@
     <!--<link
       rel="stylesheet"
       media="screen"
-      href="http://fonts.googleapis.com/css?family=Bitter:400,700,400italic"
+      href="https://fonts.googleapis.com/css?family=Bitter:400,700,400italic"
     />-->
     <link rel="stylesheet" media="screen" href="/external/fonts_bitter.css" />
     <!-- AGA generic styles. -->
@@ -31,10 +31,10 @@
     <link rel="stylesheet" href="/style/geoviz.css" />
 
     <!-- Scripts. -->
-    <script type="text/javascript" src="/script/aga.js"></script>
-    <script type="text/javascript" src="/script/geoviz.js"></script>
+    <script src="/script/aga.js"></script>
+    <script src="/script/geoviz.js"></script>
 
-    <!-- Leaflet 'plugin' for map drawing. -->
+    <!-- Leaflet library for map drawing. -->
     <!-- Note that Leaflet requires the script to be placed after the stylesheet. -->
     <!--<link
       rel="stylesheet"
@@ -53,6 +53,7 @@
 
   <body class="aga-fill">
     <header class="aga-header aga-theme-meta">
+      <!-- On mobile devices, initially only the menu toggle button and website brand are visible. -->
       <div class="aga-brand-container">
         <a
           title="Toggle navigation menu"
@@ -63,6 +64,8 @@
         ></a>
         <a href="/" class="aga-button aga-theme-brand">GeoViz</a>
       </div>
+      <!-- On mobile devices, the navigation button container dangles below the header,
+           on larger devices, the navigation buttong container is part of the header. -->
       <div id="nav" class="aga-nav-container aga-hide-small">
         <nav class="aga-nav aga-card aga-theme-meta">
           <a

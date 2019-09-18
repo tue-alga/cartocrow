@@ -3,6 +3,7 @@
 DEV
 
 * Dynamically putting website floating panels above map elements.
+* Applied Google HTML/CSS style guide and Google JavaScript style guide.
 
 === 0.1.1.0 ===
 STABLE

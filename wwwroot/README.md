@@ -27,3 +27,12 @@ Licensed under the Apache License, version 2.0. See LICENSE for details.
 
 This website depends on the GeoViz software library distributed together with this website.
 The GeoViz software library is Licensed under the GPLv3.0 license. See its LICENSE for details.
+
+=== Style ===
+The HTML and CSS webpage files follow the Google HTML/CSS style guide (https://google.github.io/styleguide/htmlcssguide.html) with the following changes:
+
+- Ignore section 3.1.7 on optional elements: always keep the <head> and <body> tags for separation of concerns (e.g. separating metadata from data).
+- Ignore section 4.1.8 on hexadecimal notation: always use 6- or 8-character notation. Shorter notations obfuscate the actual value.
+- All style classes for general use within the group use the "aga-" prefix. All style classes for specific use within a project use a short prefix based on the project name.
+
+The JavaScript files follow the Google JavaScript style guide (https://google.github.io/styleguide/jsguide.html).
