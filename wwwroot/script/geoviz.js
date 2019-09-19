@@ -82,6 +82,8 @@ function initMap() {
     pane: 'labels'
   }).addTo(map);
 
+  L.gridLayer.debugCoords().addTo(map);
+
   // Add a scale control.
   L.control.scale().addTo(map);
 
@@ -164,7 +166,7 @@ function getTileLayer(
         'under <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>. ' +
         'Map data © <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, ' +
         'under <a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>.';
-      // Expected IDs: 'light_all', 'light_nolabels', 'light_only_labels'.
+      // Example IDs: 'light_all', 'light_nolabels', 'light_only_labels'.
       break;
     case tileServer.MAPBOX:
       serverUrl =
@@ -174,7 +176,7 @@ function getTileLayer(
         'Map data © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, ' +
         'under <a href="http://creativecommons.org/licenses/by-sa/3.0">CC BY SA</a>. ' +
         '<strong><a href="https://www.mapbox.com/map-feedback/" target="_blank">Improve this map</a></strong>';
-      // Expected IDs: 'mapbox.streets', 'mapbox.mapbox-terrain-v2'.
+      // Example IDs: 'mapbox.streets', 'mapbox.mapbox-terrain-v2'.
       break;
     case tileServer.OSM:
       serverUrl = 'http://{s}.tile.osm.org/{z}/{x}/{y}.png';
@@ -183,13 +185,13 @@ function getTileLayer(
         'under <a href="http://creativecommons.org/licenses/by-sa/3.0">CC BY SA</a>.';
       break;
     case tileServer.STAMEN:
-      // Expected IDs: 'watercolor'.
       serverUrl = 'http://{s}.tile.stamen.com/{id}/{z}/{x}/{y}.jpg';
       tileOptions.attribution =
         'Map tiles © <a href="http://stamen.com">Stamen Design</a>, ' +
         'under <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>. ' +
         'Map data © <a href="http://openstreetmap.org">OpenStreetMap</a>, ' +
         'under <a href="http://creativecommons.org/licenses/by-sa/3.0">CC BY SA</a>.';
+      // Example IDs: 'watercolor'.
       break;
     default:
       return null;
@@ -203,3 +205,17 @@ function getTileLayer(
 
   return L.tileLayer(serverUrl, tileOptions);
 }
+
+// Extension of L.GridLayer that draws a border around each tile and shows the tile coordinates.
+L.GridLayer.DebugGridLayer = L.GridLayer.extend({
+  createTile: function(coords) {
+    let tile = document.createElement('div');
+    tile.innerHTML = [coords.x, coords.y, coords.z].join(', ');
+    tile.style.outline = '1px solid lightblue';
+    return tile;
+  }
+});
+
+L.gridLayer.debugCoords = function(opts) {
+  return new L.GridLayer.DebugGridLayer(opts);
+};
