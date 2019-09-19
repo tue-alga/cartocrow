@@ -45,12 +45,13 @@ function tryAddSupportCard(url, cardId, gainFocus = true) {
   if (element === null) {
     // Create a new section element in the container that indicates that the
     // content is loading.
+    // Note that the initial height is set to 0 to hide the card.
     document.getElementById(SUPPORT_CONTAINER_ID).innerHTML +=
       '<section id="' +
       cardId +
       '" class="aga-panel aga-card ' +
       SUPPORT_CARD_CLASS +
-      '" style="height: 0%;">' +
+      '" style="height: 0;">' +
       '<div class=' +
       SUPPORT_CARD_INNER_CLASS +
       '><div class="aga-fill aga-center"><p>Loading content...</p></div></div>' +
@@ -63,10 +64,11 @@ function tryAddSupportCard(url, cardId, gainFocus = true) {
   if (gainFocus) focusSupportCard(cardId);
 }
 
+// Initialize the map block using Leaflet.
 function initMap() {
   var map = L.map('map').fitWorld();
-  // var map = L.map("map").setView([51.448, 5.49], 16);
 
+  // Use OpenStreetMap as base layer.
   L.tileLayer(
     'https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw',
     {
@@ -79,9 +81,11 @@ function initMap() {
     }
   ).addTo(map);
 
+  // Add a scale control.
   L.control.scale().addTo(map);
 
   function onLocationFound(e) {
+    // Focus on the user's location.
     const radius = e.accuracy / 2;
 
     L.marker(e.latlng)
@@ -97,9 +101,9 @@ function initMap() {
     map.setView([51.448, 5.49], 16);
   }
 
+  // Try to locate the user.
   map.on('locationfound', onLocationFound);
   map.on('locationerror', onLocationError);
-
   map.locate({ setView: true, maxZoom: 16 });
 
   // L.marker([51.448, 5.49]).addTo(map);
@@ -113,8 +117,7 @@ function initMap() {
 
   // L.polygon([[51.509, -0.08], [51.503, -0.06], [51.51, -0.047]]).addTo(map);
 
-  // Make sure that the navigation menu and support cards always show on top of
-  // the map.
+  // Make sure that the navigation and support cards always show on top of the map.
   const mapZIndexMax = Math.max(
     getComputedStyle(document.querySelector('.leaflet-control')).zIndex,
     getComputedStyle(document.querySelector('.leaflet-top')).zIndex
