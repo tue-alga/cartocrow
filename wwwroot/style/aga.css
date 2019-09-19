@@ -52,6 +52,13 @@ body {
   color: #5e5e5e;
 }
 
+.aga-theme-meta a:visited {
+  color: #5e5e5e;
+}
+.aga-theme-meta .aga-button:visited {
+  color: #777777;
+}
+
 /* Navigation. */
 .aga-header {
   box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.16), 0 2px 10px 0 rgba(0, 0, 0, 0.12);
