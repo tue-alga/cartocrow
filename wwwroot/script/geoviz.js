@@ -66,7 +66,7 @@ function tryAddSupportCard(url, cardId, gainFocus = true) {
 
 // Initialize the map block using Leaflet.
 function initMap() {
-  var map = L.map('map').fitWorld();
+  let map = L.map('map').fitWorld();
 
   // Use CartoDB wihtout labels as base layer.
   getTileLayer({ server: tileServer.CARTODB, id: 'light_nolabels' }).addTo(map);
@@ -83,25 +83,6 @@ function initMap() {
   }).addTo(map);
 
   //L.gridLayer.debugCoords().addTo(map);
-
-  // TMP TESTING!
-
-  var svgElement = document.createElementNS(
-    'http://www.w3.org/2000/svg',
-    'svg'
-  );
-  svgElement.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-  svgElement.setAttribute('width', '250');
-  svgElement.setAttribute('viewBox', '0 0 200 85');
-  svgElement.setAttribute('version', '1.1');
-  //svgElement.setAttribute('viewBox', '0 0 200 200');
-  //svgElement.innerHTML = '<rect width="200" height="200"/><rect x="75" y="23" width="50" height="50" style="fill:red"/><rect x="75" y="123" width="50" height="50" style="fill:#0013ff"/>';
-  svgElement.innerHTML =
-    'Sorry, your browser does not support the svg tag. <defs> <!-- Filter declaration --> <filter id="MyFilter" filterUnits="userSpaceOnUse" x="0" y="0" width="200" height="120" > <!-- offsetBlur --> <feGaussianBlur in="SourceAlpha" stdDeviation="4" result="blur" /> <feOffset in="blur" dx="4" dy="4" result="offsetBlur" />  <!-- litPaint --> <feSpecularLighting in="blur" surfaceScale="5" specularConstant=".75" specularExponent="20" lighting-color="#bbbbbb" result="specOut" > <fePointLight x="-5000" y="-10000" z="20000" /> </feSpecularLighting> <feComposite in="specOut" in2="SourceAlpha" operator="in" result="specOut" /> <feComposite in="SourceGraphic" in2="specOut" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="litPaint" />  <!-- merge offsetBlur + litPaint --> <feMerge> <feMergeNode in="offsetBlur" /> <feMergeNode in="litPaint" /> </feMerge> </filter> </defs>  <!-- Graphic elements --> <g filter="url(#MyFilter)"> <path fill="none" stroke="#D90000" stroke-width="10" d="M50,66 c-50,0 -50,-60 0,-60 h100 c50,0 50,60 0,60z" /> <path fill="#D90000" d="M60,56 c-30,0 -30,-40 0,-40 h80 c30,0 30,40 0,40z" /> <g fill="#FFFFFF" stroke="black" font-size="45" font-family="Verdana"> <text x="52" y="52">SVG</text> </g> </g>';
-  //var svgElementBounds = [[32, -130], [13, -100]];
-  var svgElementBounds = [[51.449, 5.48], [51.447, 5.5]];
-  L.svgOverlay(svgElement, svgElementBounds).addTo(map);
-  // < TMP TESTING!
 
   // Add a scale control.
   L.control.scale().addTo(map);
@@ -147,6 +128,31 @@ function initMap() {
   let stylesheet = document.styleSheets[document.styleSheets.length - 1];
   stylesheet.insertRule('.aga-card { z-index: ' + (mapZIndexMax + 1) + ';}');
   stylesheet.insertRule('.aga-header { z-index: ' + (mapZIndexMax + 2) + ';}');
+
+  return map;
+}
+
+// Callback function to add the svg direct child elements in the response text to the map.
+function addSvgResponseToMap(map) {
+  return function(request) {
+    // Add the response text as a new element.
+    let wrapperElement = document.createElement('div');
+    wrapperElement.innerHTML = request.responseText;
+
+    // Add all svg children of the wrapper element to the map.
+    for (let child of wrapperElement.children) {
+      if (child.tagName === 'svg') {
+        let svgElementBounds = [[51.449, 5.48], [51.447, 5.5]];
+        L.svgOverlay(child, svgElementBounds).addTo(map);
+      }
+    }
+  };
+}
+
+// Add a SVG glyph to the map.
+function tryAddSvgToMap(url, map) {
+  // Get the item content from an external URL.
+  ajaxGet(url, addSvgResponseToMap(map));
 }
 
 // Servers with a * require an id option.

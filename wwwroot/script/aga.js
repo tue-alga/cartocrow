@@ -5,7 +5,7 @@
 
 'use strict';
 
-let nav_id = 'nav';
+const nav_id = 'nav';
 
 // Toggle the menu for small screens.
 function toggleNavigation(force_hide = true) {

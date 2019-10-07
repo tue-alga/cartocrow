@@ -120,7 +120,10 @@
       tryAddSupportCard('/page/help.html', 'support_help', false);
 
       // Initialize the map.
-      initMap();
+      let map = initMap();
+
+      // Add a svg glyph to the map.
+      tryAddSvgToMap('/res/logo_svg.html', map);
     </script>
   </body>
 </html>
