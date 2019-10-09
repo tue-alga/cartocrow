@@ -16,7 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-19
+Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-2019
 */
 
 // Note dependences:
@@ -35,7 +35,6 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-19
 
 
 DEFINE_string(test_flag, "", "A test for the gflags dependency for parsing command-line arguments");
-// TODO(tvl) add dependency: glog and gflags for logging and capturing command line parameters (check for other, better libraries).
 
 /**
  * Example long doxygen comment describing this method.
@@ -49,6 +48,7 @@ std::string copyrightNotice()
     "This is free software, and you are welcome to redistribute it\n"
     "under certain conditions; type `show c' for details.";
 }
+// TODO(tvl) implement 'show w' and 'show c' options.
 
 /// Example brief doxygen comment describing this method.
 std::string getUsageMessage(std::string executable_name)
@@ -61,13 +61,11 @@ std::string getUsageMessage(std::string executable_name)
 int main(int argc, char **argv)
 {
   google::InitGoogleLogging(argv[0]);
+  FLAGS_logtostderr = true;
 
   gflags::SetUsageMessage(getUsageMessage(argv[0]));
   gflags::SetVersionString(GEOVIZ_VERSION);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
-
-  FLAGS_logtostderr = true;
-  LOG(INFO) << "Google logging enabled!";
 
   LOG(INFO) << "Flags:";
   LOG(INFO) << FLAGS_test_flag;

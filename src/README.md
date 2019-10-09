@@ -1,6 +1,6 @@
 === GeoViz code library ===
 
-This directory contains the GeoViz C++ library. The following descibes the subdirectory structure:
+This directory contains the GeoViz C++ library. The following describes the subdirectory structure:
 
 - cmake : configuration and template files for CMake.
 - console : command-line applications to expose the functionality of the library.

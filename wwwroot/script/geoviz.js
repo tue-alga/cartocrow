@@ -142,8 +142,13 @@ function addSvgResponseToMap(map) {
     // Add all svg children of the wrapper element to the map.
     for (let child of wrapperElement.children) {
       if (child.tagName === 'svg') {
-        let svgElementBounds = [[51.449, 5.48], [51.447, 5.5]];
-        L.svgOverlay(child, svgElementBounds).addTo(map);
+        // Note that children without a parsable "bounds" attribute are added but not shown.
+        let bounds = [[0, 0], [0, 0]];
+        if (child.hasAttribute('bounds'))
+          try {
+            bounds = JSON.parse(child.getAttribute('bounds'));
+          } catch {}
+        L.svgOverlay(child, bounds).addTo(map);
       }
     }
   };

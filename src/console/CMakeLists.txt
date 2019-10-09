@@ -22,6 +22,8 @@ find_package(gflags REQUIRED)
 # - The executables are named after the method they expose.
 # - The execuatble targets end in "_cla" for "command line application"
 
+add_subdirectory(print_arguments)
+add_subdirectory(draw_logo)
 add_subdirectory(necklace_map)
 
 # Set the default executable to run in Visual Studio.

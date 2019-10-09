@@ -3,7 +3,8 @@
 DEV
 
 * Dynamically putting website floating panels above map elements.
-* Applyed Google HTML/CSS style guide and Google JavaScript style guide.
+* Applied Google HTML/CSS style guide and Google JavaScript style guide.
+* Added executable to create glyph to add to the map.
 
 === 0.1.1.0 ===
 STABLE
