@@ -20,33 +20,13 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 09-10-2019
 
 #include <iostream>
 
-#include <gflags/gflags.h>
-
-#include <cmake/geoviz_config.h>
+#include "console/common/utils_cla.h"
 
 
-std::string copyrightNotice()
-{
-  return
-    "draw_logo  Copyright (C) 2019  Netherlands eScience Center\n"
-    "This program comes with ABSOLUTELY NO WARRANTY.\n"
-    "This is free software, and you are welcome to redistribute it\n"
-    "under certain conditions.";
-}
-
-/// Example brief doxygen comment describing this method.
-std::string getUsageMessage(std::string executable_name)
-{
-  std::string usage = "Prints a logo formatted as a svg HTML element.\nSample usage:\n";
-  usage += executable_name;
-  return usage;
-}
-
+/// Command-line application entry point.
 int main(int argc, char **argv)
 {
-  gflags::SetUsageMessage(getUsageMessage(argv[0]));
-  gflags::SetVersionString(GEOVIZ_VERSION);
-  gflags::ParseCommandLineFlags(&argc, &argv, true);
+  initApplication(argc, argv, "Command line application that prints a logo formatted as a svg HTML element.");
 
   std::cout << "<svg width='250' viewBox='0 0 200 85' xmlns='http://www.w3.org/2000/svg' version='1.1' bounds='[[51.449,5.48],[51.447,5.5]]'>";
   std::cout << "Sorry, your browser does not support the svg tag.";

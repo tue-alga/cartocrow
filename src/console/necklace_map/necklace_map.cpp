@@ -1,6 +1,5 @@
 /*
-The Necklace Map application exposes the functionality of the library
-by the same name.
+Application to expose the functionality of the library by the same name.
 Copyright (C) 2019  Netherlands eScience Center
 
 This program is free software: you can redistribute it and/or modify
@@ -31,44 +30,31 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-2019
 #include <cmake/geoviz_config.h>
 #include <geoviz/necklace_map/necklace_map.h>
 #include <geoviz/flow_diagram/flow_diagram.h>
+
+#include "console/common/utils_cla.h"
 #include "console/necklace_map/internal/test_internal.h"
 
 
 DEFINE_string(test_flag, "", "A test for the gflags dependency for parsing command-line arguments");
 
-/**
- * Example long doxygen comment describing this method.
- * @return the copyright notice.
- */
-std::string copyrightNotice()
-{
-  return
-    "necklace_map_cla  Copyright (C) 2019  Netherlands eScience Center\n"
-    "This program comes with ABSOLUTELY NO WARRANTY; for details type `show w'.\n"
-    "This is free software, and you are welcome to redistribute it\n"
-    "under certain conditions; type `show c' for details.";
-}
-// TODO(tvl) implement 'show w' and 'show c' options.
 
-/// Example brief doxygen comment describing this method.
-std::string getUsageMessage(std::string executable_name)
-{
-  std::string usage = "This is where I should set the usage message.  Sample usage:\n";
-  usage += executable_name + " <uselessarg1> <uselessarg2>";
-  return usage;
-}
-
+/// Command-line application entry point.
 int main(int argc, char **argv)
 {
-  google::InitGoogleLogging(argv[0]);
-  FLAGS_logtostderr = true;
+  initApplication
+  (
+    argc,
+    argv,
+    "Command line application that exposes the functionality of the GeoViz necklace map.",
+    {"<some arg>", "<another arg>"}
+  );
 
-  gflags::SetUsageMessage(getUsageMessage(argv[0]));
-  gflags::SetVersionString(GEOVIZ_VERSION);
-  gflags::ParseCommandLineFlags(&argc, &argv, true);
+  // Writing to the standard output is reserved for text that should be returned to a calling website.
+  FLAGS_logtostderr = true;
 
   LOG(INFO) << "Flags:";
   LOG(INFO) << FLAGS_test_flag;
+
   // Note that here is a good place to check the validity of the flags.
   // While this can be done by adding flag validators using gflags,
   // These generally only allow validating independent flags,
@@ -83,7 +69,6 @@ int main(int argc, char **argv)
   LOG(INFO) << "Necklace map: " << geoviz::proc_necklace_map();
   LOG(INFO) << "Flow Diagram: " << geoviz::proc_flow_diagram();
 
-  // TODO(tvl) place in 'usage' print.
   LOG(INFO) << "GeoViz version: " << GEOVIZ_VERSION;
 
   LOG(INFO) << "Internal number: " << geoviz::internal::test();

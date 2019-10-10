@@ -59,6 +59,9 @@ configure_file(
 # All source files should use include paths relative to the source root.
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
+# By default, we use the C++11 dialect.
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+
 # The GeoViz library.
 add_subdirectory(geoviz)
 

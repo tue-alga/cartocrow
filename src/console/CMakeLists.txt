@@ -4,9 +4,19 @@ if(MSVC)
     set(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} /SUBSYSTEM:CONSOLE")
 endif(MSVC)
 
-# Macro for adding Visual Studio specific constructs to a target.
+
+### MACROS ###
+
+# Add Visual Studio specific constructs to a target.
 macro(add_exe_properties target)
     set_target_properties( ${target} PROPERTIES DEBUG_POSTFIX d )
+    target_link_libraries(
+        ${target}
+        ${COMMON_CLA_TARGET}
+        gflags
+        glog
+        stdc++fs
+    )
 
     if(MSVC)
         source_group( "src" FILES ${HDRS} ${SRCS} )
@@ -14,8 +24,41 @@ macro(add_exe_properties target)
     endif(MSVC)
 endmacro(add_exe_properties)
 
+macro(geoviz_add_cla NAME)
+    set(TARGET "${NAME}_cla")
+    set(PHP "run_${NAME}.php")
+    set(INSTALL_DIR ${INSTALL_CONSOLE_DIR}/${NAME})
+
+    # - While CMake will try various file extensions when adding files,
+    #   specifying the files without extension may give problems due to ambiguity.
+    file(GLOB_RECURSE HDRS "*.h")
+    file(GLOB_RECURSE SRCS "*.cpp")
+
+    add_executable( ${TARGET} ${HDRS} ${SRCS} )
+    add_exe_properties(${TARGET})
+
+    # Install rules.
+    install(TARGETS ${TARGET} DESTINATION ${CMAKE_INSTALL_BINARY_DIR})
+    install_files_and_directories("${HDRS}" ${INSTALL_DIR})
+    install_files_and_directories("${SRCS}" ${INSTALL_DIR})
+
+    # PHP script to run the executable.
+    # Note that the configure file uses the ${CURRENT_CLA} variable to determine the executable to run.
+    set(CURRENT_CLA ${TARGET})
+    configure_file(
+        "${SOURCE_CONFIG_DIR}/run_cla.php.in"
+        "${CMAKE_CURRENT_BINARY_DIR}/${PHP}"
+    )
+    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${PHP}" DESTINATION "${CMAKE_INSTALL_SCRIPT_DIR}")
+endmacro(geoviz_add_cla)
+
+
 # Most command-line applications use gflags to parse command-line arguments.
 find_package(gflags REQUIRED)
+
+### LIBRARIES ###
+
+add_subdirectory(common)
 
 ### EXECUTABLES ###
 # A few notes:

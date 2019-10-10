@@ -5,6 +5,28 @@ set(GEOVIZ_INSTALL_DIR "${CMAKE_INSTALL_SOURCE_DIR}/geoviz")
 set(GEOVIZ_EXPORT_TARGETS GeoVizTargets)
 
 
+### MACROS ###
+
+macro(geoviz_add_library TARGET INSTALL_DIR)
+    # - While CMake will try various file extensions when adding files,
+    #   specifying the files without extension may give problems due to ambiguity.
+    file(GLOB_RECURSE HDRS "*.h")
+    file(GLOB_RECURSE SRCS "*.cpp")
+
+    add_library(${TARGET} ${HDRS} ${SRCS})
+
+    # Install rules.
+    install(
+        TARGETS ${TARGET}
+        EXPORT ${GEOVIZ_EXPORT_TARGETS}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBRARY_DIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBRARY_DIR}
+    )
+    install_files_and_directories("${HDRS}" ${INSTALL_DIR})
+    install_files_and_directories("${SRCS}" ${INSTALL_DIR})
+endmacro(geoviz_add_library)
+
+
 ### LIBRARIES ###
 
 # Add the individual libraries per geo-visualization method.
