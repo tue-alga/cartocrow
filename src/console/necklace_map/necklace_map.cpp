@@ -38,7 +38,6 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-2019
 DEFINE_string(test_flag, "", "A test for the gflags dependency for parsing command-line arguments");
 
 
-/// Command-line application entry point.
 int main(int argc, char **argv)
 {
   initApplication

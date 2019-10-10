@@ -23,7 +23,6 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 09-10-2019
 #include "console/common/utils_cla.h"
 
 
-/// Command-line application entry point.
 int main(int argc, char **argv)
 {
   initApplication(argc, argv, "Command line application that prints its arguments formatted as a div HTML element.", {"[args...]"});

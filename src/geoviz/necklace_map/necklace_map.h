@@ -1,6 +1,6 @@
 /*
 The Necklace Map library implements the algorithmic geo-visualization
-method by the same name, developed by [name] at TU Eindhoven ([DIO to paper]).
+method by the same name, developed by [name] at TU Eindhoven (dio). TODO(tvl) add name and DIO to paper.
 Copyright (C) 2019  Netherlands eScience Center
 
 This program is free software: you can redistribute it and/or modify
@@ -28,15 +28,19 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-19
 namespace geoviz
 {
 
+/**
+ * Dummy method for running the necklace map algorithm.
+ * @return a dummy return string.
+ */
 std::string proc_necklace_map();
 
-/// Test for generating doxygen documentation?
+/// Test for generating doxygen documentation.
 class TestDoc
 {
  public:
   /// Default constructor
   /**
-   * More documentation...
+   * More documentation than the brief summary above...
    */
   TestDoc() {}
 };
