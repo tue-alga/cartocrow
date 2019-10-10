@@ -19,6 +19,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-19
 */
 
+/// @file
+/// @brief Interfaces to necklace map algorithm.
 #ifndef GEOVIZ_NECKLACE_MAP_NECKLACE_MAP_H
 #define GEOVIZ_NECKLACE_MAP_NECKLACE_MAP_H
 

@@ -19,6 +19,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-19
 */
 
+/// @file
+/// @brief Interfaces to flow diagram algorithm.
 #ifndef GEOVIZ_FLOW_DIAGRAM_FLOW_DIAGRAM_H
 #define GEOVIZ_FLOW_DIAGRAM_FLOW_DIAGRAM_H
 

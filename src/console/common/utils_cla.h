@@ -18,6 +18,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-10-2019
 */
 
+/// @file
+/// @brief Generic methods for command-line applications.
 #ifndef CONSOLE_COMMON_UTILS_CLA_H
 #define CONSOLE_COMMON_UTILS_CLA_H
 
