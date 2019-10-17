@@ -1,5 +1,7 @@
 #!/bin/bash
 
-./clean.sh && ./make.sh && ./document.sh
+./clean.sh
 ./convert_favicon.sh
+./make.sh
+./document.sh
 
