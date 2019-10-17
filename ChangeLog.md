@@ -1,23 +1,4 @@
 
-=== 0.1.2.0 ===
-DEV
-
-* Dynamically putting website floating panels above map elements.
-* Applied Google HTML/CSS style guide and Google JavaScript style guide.
-* Added executable to create glyph to add to the map.
-
-=== 0.1.1.0 ===
-STABLE
-
-* Initial codebase scaffolding.
-  - C++ library and command-line executable.
-  - gflags for command-line argument parsing.
-  - glog for logging functionality.
-  - CMake for configuring code and documentation.
-* Doxygen for generating documentation.
-* PHP for calling executable.
-* Bash scripts for building various parts of the package.
-
 === 0.1.0.0 ===
 
 * Intial website scaffolding.
@@ -25,3 +6,24 @@ STABLE
   - CSS3 styling.
   - JavaScript for minor dynamic functionality.
   - Leaflet.js for map drawing.
+* Initial codebase scaffolding.
+  - C++ library and command-line executable.
+  - gflags for command-line argument parsing.
+  - glog for logging functionality.
+  - CMake for configuring code and documentation.
+* Google HTML/CSS style guide, Google JavaScript style guide, Google C++ style guide.
+* Doxygen for generating documentation.
+* PHP for calling executable.
+* Bash scripts for building various parts of the package.
+
+Note on version:
+Versions are numbered as "MAJOR.MINOR.PATCH.FEATURE", although the feature patch is unlikely to be used very often, especially when sharing a newer version.
+* MAJOR versions indicate a change in functionality that breaks backwards compatibility.
+* MINOR versions indicate a change in functionality that preserves backwards compatibility.
+* PATCH versions indicate a correction that does not change functionality (e.g. a bug fix).
+* FEATURE version indicate an addition that does not change existing functionality.
+
+Each version must be (reasonably) stable, meaning it has gone through unit/integration testing.
+
+
+
