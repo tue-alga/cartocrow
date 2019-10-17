@@ -1,9 +1,10 @@
 /*
-    Copyright 2019 Netherlands eScience Center and TU Eindhoven
+    Copyright 2019 Netherlands eScience Center
     Licensed under the Apache License, version 2.0. See LICENSE for details.
 */
 
-/* TU/e AGA website styles */
+/* Base look and feel styles. */
+/* These can be used to reenforce a coherent style scross multiple webpages of the same organization. */
 
 /* Text and content. */
 * {
@@ -16,11 +17,11 @@ body {
   flex-flow: column nowrap;
 }
 
-.aga-fill {
+.myorg-fill {
   height: 100%;
   width: 100%;
 }
-.aga-center {
+.myorg-center {
   align-items: center;
   display: flex;
   justify-content: center;
@@ -33,55 +34,55 @@ body {
   font: 0.875em 'Bitter', serif;
   line-height: 1.42857143;
 }
-.aga-theme-meta {
+.myorg-theme-meta {
   background: #f8f8f8;
   color: #777777;
 }
-.aga-theme-brand {
+.myorg-theme-brand {
   font-size: 1.285em;
 }
-.aga-theme-meta .aga-button {
+.myorg-theme-meta .myorg-button {
   color: #777777;
 }
-.aga-theme-meta .aga-button:hover,
-.aga-theme-meta a:hover {
+.myorg-theme-meta .myorg-button:hover,
+.myorg-theme-meta a:hover {
   background: #e7e7e7;
 }
-.aga-theme-meta .aga-button:active,
-.aga-theme-meta a:active {
+.myorg-theme-meta .myorg-button:active,
+.myorg-theme-meta a:active {
   color: #5e5e5e;
 }
 
-.aga-theme-meta a:visited {
+.myorg-theme-meta a:visited {
   color: #5e5e5e;
 }
-.aga-theme-meta .aga-button:visited {
+.myorg-theme-meta .myorg-button:visited {
   color: #777777;
 }
 
 /* Navigation. */
-.aga-header {
+.myorg-header {
   box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.16), 0 2px 10px 0 rgba(0, 0, 0, 0.12);
   display: flex;
   flex-flow: column nowrap;
   position: relative;
   z-index: 2;
 }
-.aga-brand-container {
+.myorg-brand-container {
   display: flex;
   flex-flow: row nowrap;
 }
-.aga-nav-container {
+.myorg-nav-container {
   height: 0;
   position: relative;
   width: 100%;
 }
-.aga-nav {
+.myorg-nav {
   display: flex;
   flex-flow: column nowrap;
   position: absolute;
 }
-.aga-header .aga-button {
+.myorg-header .myorg-button {
   align-items: center;
   cursor: pointer;
   display: flex;
@@ -92,27 +93,27 @@ body {
   user-select: none;
   white-space: nowrap;
 }
-.aga-hide-small {
+.myorg-hide-small {
   display: none !important;
 }
 
-.aga-footer {
+.myorg-footer {
   font-size: 11px;
   position: relative;
   text-align: center;
   width: 100%;
 }
 
-.aga-card {
+.myorg-card {
   box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.16), 0 2px 10px 0 rgba(0, 0, 0, 0.12);
   z-index: 1;
 }
 
 /* Panel on top of the main content that may slide into view. */
-.aga-panel-container {
+.myorg-panel-container {
   position: relative;
 }
-.aga-panel {
+.myorg-panel {
   background: #f8f8f8;
   display: block;
   overflow: hidden;
@@ -121,27 +122,28 @@ body {
 }
 
 /* Responsiveness. */
+/* Note that mobile-first webdesign demands the base page to be designed for mobile. */
 @media (min-width: 601px) {
   /* Tablet */
-  .aga-header {
+  .myorg-header {
     flex-direction: row;
   }
-  .aga-nav-container {
+  .myorg-nav-container {
     height: unset;
   }
-  .aga-nav {
+  .myorg-nav {
     flex-direction: row;
     height: 100%;
     position: static;
   }
-  .aga-nav.aga-card {
+  .myorg-nav.myorg-card {
     box-shadow: unset;
     z-index: unset;
   }
-  .aga-hide-small {
+  .myorg-hide-small {
     display: unset !important;
   }
-  .aga-hide-medium {
+  .myorg-hide-medium {
     display: none !important;
   }
 }

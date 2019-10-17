@@ -1,5 +1,5 @@
 /*
-    Copyright 2019 Netherlands eScience Center and TU Eindhoven
+    Copyright 2019 Netherlands eScience Center
     Licensed under the Apache License, version 2.0. See LICENSE for details.
 */
 
@@ -14,9 +14,9 @@
   will-change: auto !important;
 }
 
-.gv-support {
+.mypage-support {
   width: 100%;
 }
-.gv-support > * {
+.mypage-support > * {
   transition: all 200ms;
 }

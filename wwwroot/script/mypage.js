@@ -1,13 +1,13 @@
 /*
-    Copyright 2019 Netherlands eScience Center and TU Eindhoven
+    Copyright 2019 Netherlands eScience Center
     Licensed under the Apache License, version 2.0. See LICENSE for details.
 */
 
 'use strict';
 
 const SUPPORT_CONTAINER_ID = 'support_cards';
-const SUPPORT_CARD_CLASS = 'gv-support';
-const SUPPORT_CARD_INNER_CLASS = 'gv-support-inner';
+const SUPPORT_CARD_CLASS = 'mypage-support';
+const SUPPORT_CARD_INNER_CLASS = 'mypage-support-inner';
 
 // Focus on a specific support card.
 function focusSupportCard(cardId = null) {
@@ -49,12 +49,12 @@ function tryAddSupportCard(url, cardId, gainFocus = true) {
     document.getElementById(SUPPORT_CONTAINER_ID).innerHTML +=
       '<section id="' +
       cardId +
-      '" class="aga-panel aga-card ' +
+      '" class="myorg-panel myorg-card ' +
       SUPPORT_CARD_CLASS +
       '" style="height: 0;">' +
       '<div class=' +
       SUPPORT_CARD_INNER_CLASS +
-      '><div class="aga-fill aga-center"><p>Loading content...</p></div></div>' +
+      '><div class="myorg-fill myorg-center"><p>Loading content...</p></div></div>' +
       '</section>';
 
     // Get the item content from an external URL.
@@ -68,7 +68,7 @@ function tryAddSupportCard(url, cardId, gainFocus = true) {
 function initMap() {
   let map = L.map('map').fitWorld();
 
-  // Use CartoDB wihtout labels as base layer.
+  // Use CartoDB without labels as base layer.
   getTileLayer({ server: tileServer.CARTODB, id: 'light_nolabels' }).addTo(map);
 
   // Add CartoDB labels as separate pane.
@@ -82,6 +82,7 @@ function initMap() {
     pane: 'labels'
   }).addTo(map);
 
+  // Enable to overlay a grid on the map.
   //L.gridLayer.debugCoords().addTo(map);
 
   // Add a scale control.
@@ -126,8 +127,10 @@ function initMap() {
     getComputedStyle(document.querySelector('.leaflet-top')).zIndex
   );
   let stylesheet = document.styleSheets[document.styleSheets.length - 1];
-  stylesheet.insertRule('.aga-card { z-index: ' + (mapZIndexMax + 1) + ';}');
-  stylesheet.insertRule('.aga-header { z-index: ' + (mapZIndexMax + 2) + ';}');
+  stylesheet.insertRule('.myorg-card { z-index: ' + (mapZIndexMax + 1) + ';}');
+  stylesheet.insertRule(
+    '.myorg-header { z-index: ' + (mapZIndexMax + 2) + ';}'
+  );
 
   return map;
 }
