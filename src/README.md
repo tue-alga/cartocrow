@@ -23,6 +23,23 @@ Subdirectories are organized as follows:
 - console : command-line applications to expose the functionality of the library.
 - geoviz : all the functional code. Note that I/O methods can be found with the relevant applications.
 
+# Dependencies
+
+The code depends on several packages that may need to be installed before it can compile successfully:
+- CMake
+- convert
+- DoxyGen
+- gflags
+- glog
+- latex
+- php
+
+On Ubuntu, this can be installed by running:
+
+```sh
+sudo apt install build-essential cmake doxygen libgoogle-glog-dev libgflags-dev imagemagick-6.q16 texlive-xetex php7.2-cli
+```
+
 ## Code styles
 
 Note that within the CMakeLists files, we follow a loose naming convention:
