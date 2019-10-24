@@ -6,6 +6,6 @@
     $args = $_REQUEST["args"];
     $delim = isset($_REQUEST["delim"]) ? $_REQUEST["delim"] : "|";
     $arg_str = str_replace($delim, " ", $args);
-    $result = shell_exec("../@CMAKE_INSTALL_BINARY_DIR@/@CURRENT_CLA@ $arg_str");
+    $result = shell_exec(escapeshellcmd("../@CMAKE_INSTALL_BINARY_DIR@/@CURRENT_CLA@ $arg_str"));
     echo $result;
 ?>
