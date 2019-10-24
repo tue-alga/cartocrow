@@ -27,7 +27,7 @@ int main(int argc, char **argv)
 {
   initApplication(argc, argv, "Command line application that prints a logo formatted as a svg HTML element.");
 
-  std::cout << "<svg width='250' viewBox='0 0 200 85' xmlns='http://www.w3.org/2000/svg' version='1.1' bounds='[[51.449,5.48],[51.447,5.5]]'>";
+  std::cout << "<svg width='250' viewBox='0 0 200 85' xmlns='http://www.w3.org/2000/svg' version='1.1' bounds='[[52.356,4.945],[52.354,4.947]]'>";
   std::cout << "Sorry, your browser does not support the svg tag.";
   std::cout << "<defs>";
   std::cout << "<!-- Filter declaration -->";

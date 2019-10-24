@@ -19,12 +19,21 @@ function toggleNavigation(force_hide = true) {
 
 // Generic AJAX function with GET method.
 function ajaxGet(url, callback) {
-  let request = new XMLHttpRequest();
-  request.onreadystatechange = function() {
-    if (this.readyState == 4 && this.status == 200) {
-      callback(this);
+  const init = {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'text/html'
     }
   };
-  request.open('GET', url, true);
-  request.send();
+  let request = new Request(url);
+  fetch(request, init)
+    .then(response => {
+      if (response.status == 200) {
+        return response.text();
+      }
+      throw new Error(
+        'Unexpected response status in ajaxGet: ' + response.status
+      );
+    })
+    .then(callback, console.error);
 }

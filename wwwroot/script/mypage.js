@@ -28,10 +28,9 @@ function focusSupportCard(cardId = null) {
 
 // Callback function to add the response text as support card.
 function setResponseAsSupportCard(cardId) {
-  return function(request) {
-    // Add the request content into the content item.
-    document.getElementById(cardId).children[0].innerHTML =
-      request.responseText;
+  return function(response) {
+    // Add the response content into the content item.
+    document.getElementById(cardId).children[0].innerHTML = response;
   };
 }
 
@@ -137,10 +136,10 @@ function initMap() {
 
 // Callback function to add the svg direct child elements in the response text to the map.
 function addSvgResponseToMap(map) {
-  return function(request) {
+  return function(response) {
     // Add the response text as a new element.
     let wrapperElement = document.createElement('div');
-    wrapperElement.innerHTML = request.responseText;
+    wrapperElement.innerHTML = response;
 
     // Add all svg children of the wrapper element to the map.
     for (let child of wrapperElement.children) {
