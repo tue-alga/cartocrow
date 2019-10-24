@@ -1,4 +1,4 @@
-=== Example website with C++ back-end ===
+# Example website with C++ back-end
 
 This repository gives a minimal starting point for deploying a C++ back-end that generates data to be shown on a geographical map in a website.
 The back-end is contained in the ./src/ subdirectory. The front-end is contained in the ./wwwroot/ subdirectory.
@@ -12,5 +12,7 @@ This directory contains several linux bash scripts to simplify building and usin
 * rebuild_all.sh runs all the above scripts to regenerate the back-end.
 * serve.sh starts serving the website as port of localhost. A specific port can be used by calling "./serve.sh [port#]".
 
-
+To generate and start serving the site, run
+```sh\n./rebuild_all.sh\n```
+```sh\n./serve.sh\n```
 
