@@ -1,5 +1,5 @@
 /*
-    Copyright 2019 Netherlands eScience Center
+    Copyright 2019 Netherlands eScience Center and TU Eindhoven
     Licensed under the Apache License, version 2.0. See LICENSE for details.
 */
 
@@ -10,10 +10,10 @@ const nav_id = 'nav';
 // Toggle the menu for small screens.
 function toggleNavigation(force_hide = true) {
   let nav = document.getElementById(nav_id);
-  if (nav.className.indexOf('myorg-hide-small') == -1) {
-    nav.className += ' myorg-hide-small';
+  if (nav.className.indexOf('aga-hide-small') == -1) {
+    nav.className += ' aga-hide-small';
   } else if (!force_hide) {
-    nav.className = nav.className.replace(' myorg-hide-small', '');
+    nav.className = nav.className.replace(' aga-hide-small', '');
   }
 }
 
