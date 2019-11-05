@@ -17,6 +17,7 @@ cd $BUILD_DIR && doxygen
 # on each prompt for input from xelatex.
 # While this is convenient, because doxygen invariably generates
 # imperfect tex sources, it may be dangerous in some cases.
+#Disabled due to dependencies and because the output is unlikely to add value.
 #cd $LATEX_DIR && yes "" | xelatex refman.tex && yes "" | xelatex refman.tex
 
 popd > /dev/null

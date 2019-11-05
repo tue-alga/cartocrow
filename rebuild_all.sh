@@ -3,5 +3,5 @@
 ./clean.sh
 ./convert_favicon.sh
 ./make.sh
-./document.sh
+./build_docs.sh
 

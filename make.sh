@@ -6,9 +6,7 @@ INSTALL_ROOT="$PWD/wwwroot"
 echo "Building code..."
 
 # Create build directory if necessary.
-if [ ! -d "$BUILD_DIR" ]; then
-  mkdir $BUILD_DIR
-fi
+mkdir -p $BUILD_DIR
 
 # Remember the current directory to later return to it.
 pushd . > /dev/null

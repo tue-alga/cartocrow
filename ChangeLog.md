@@ -1,3 +1,11 @@
+=== 0.1.1.0 ===
+
+* Renamed `document.sh` to `build_docs.sh`.
+* Indicate reasons for disabling pdflatex documentation.
+* Minor optimizations to scripts.
+* Changed CMake required version to 3.15.2: too cumbersome to support older versions of CMake.
+* Added IP copyright placeholder to license boilerplate notices.
+
 
 === 0.1.0.0 ===
 
