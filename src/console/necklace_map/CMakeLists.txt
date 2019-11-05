@@ -3,6 +3,7 @@ geoviz_add_cla(necklace_map)
 
 target_link_libraries(
     ${TARGET}
-    ${GEOVIZ_TARGET}
-    #${NECKLACE_MAP_TARGET}
+    ${NECKLACE_MAP_TARGET}
+    CGAL::CGAL
+    tinyxml2
 )

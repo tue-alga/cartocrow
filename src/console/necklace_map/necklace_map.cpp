@@ -23,19 +23,125 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-2019
 // - gflags
 
 #include <iostream>
+#include <map>
+#include <memory>
+#include <tinyxml2.h>
+#include <vector>
 
-#include <gflags/gflags.h>
+#include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
+//#include <gflags/gflags.h>
 #include <glog/logging.h>
 
 #include <cmake/geoviz_config.h>
 #include <geoviz/necklace_map/necklace_map.h>
-#include <geoviz/flow_diagram/flow_diagram.h>
 
 #include "console/common/utils_cla.h"
-#include "console/necklace_map/internal/test_internal.h"
 
 
-DEFINE_string(test_flag, "", "A test for the gflags dependency for parsing command-line arguments");
+// When reading example data:
+// .mrk files: number of IDs; per line: ID.
+// .txt files: number of countries; per country: ID, name, necklace value, 'flow value'
+// .ipe files: country and necklace shapes (check java implementation for format...)
+// as input, I expect either an XML file with SVG content, or )later on) that content as command line argument...
+
+using namespace geoviz::necklace_map;  //TODO(tvl) remove: name types explicitly!
+
+class SvgInputVisitor : public tinyxml2::XMLVisitor
+{
+ public:
+  SvgInputVisitor
+  (
+    std::vector<Region>& regions,
+    std::shared_ptr<NecklaceType>& necklace,
+    std::map<std::string, size_t>& id_to_index
+  )
+  : regions_(regions), necklace_(necklace), id_to_index_(id_to_index)
+  {}
+
+
+  bool 	VisitEnter
+  (
+    const tinyxml2::XMLElement& element,
+    const tinyxml2::XMLAttribute* attribute
+  ) {
+    const std::string elem_name = element.Name();
+    if (elem_name != "path") return true;
+
+    bool necklace = false;
+    std::string path = "";
+    std::string id = "";
+
+    for (; attribute != nullptr; attribute = attribute->Next())
+    {
+      const std::string name = attribute->Name();
+      const std::string value = attribute->Value();
+      if (name == "d")
+        path = value;
+      else if (name == "id")
+        id = value;
+      else if (name == "style" && value.find("stroke-dasharray") != std::string::npos)
+        necklace = true;
+    }
+
+    CHECK_NE(path, "");
+
+    if (necklace)
+      AddNecklace(path);
+    else
+    {
+      if (id.empty()) return true;
+      AddRegion(path, id);
+    }
+
+    return true;
+  }
+
+ private:
+  void AddNecklace(const std::string& path)
+  {
+
+  }
+
+  void AddRegion(const std::string& path, const std::string& id)
+  {
+
+  }
+
+  std::vector<Region>& regions_;
+  std::shared_ptr<NecklaceType>& necklace_;
+  std::map<std::string, size_t>& id_to_index_;
+};
+
+
+bool readSvg
+(
+  const std::string& filename,
+  std::vector<Region>& regions,
+  std::shared_ptr<NecklaceType>& necklace
+)
+{
+  // Note that while the SVG input is stored in an XML file, it does not make use of the main feature that makes XML preferable over JSON: validatibility (i.e. assigning a schema).
+  // This means that we do not need to use a comprehensive XML library such as xerces; we can instead use a lightweight library such as tinyxml.
+
+  tinyxml2::XMLDocument doc;
+  tinyxml2::XMLError result = doc.LoadFile( filename.c_str() );
+  //tinyxml2::XMLError result = doc.Parse( content ); // This would be how to parse a string using tinyxml2
+  if (result != tinyxml2::XML_SUCCESS) return false;
+
+  std::map<std::string, size_t> id_to_index;
+
+  SvgInputVisitor visitor
+    (
+      regions,
+      necklace,
+      id_to_index
+    );
+
+  doc.Accept(&visitor);
+
+
+  return true;
+}
 
 
 int main(int argc, char **argv)
@@ -51,8 +157,27 @@ int main(int argc, char **argv)
   // Writing to the standard output is reserved for text that should be returned to a calling website.
   FLAGS_logtostderr = true;
 
-  LOG(INFO) << "Flags:";
-  LOG(INFO) << FLAGS_test_flag;
+  std::cerr << "Test" << std::endl;
+
+  std::vector<Region> regions;
+    std::shared_ptr<NecklaceType> necklace;
+  readSvg
+  (
+    "/storage/GeoViz/wwwroot/data/Example_wEU/wEU_svg.xml",
+    regions,
+    necklace
+  );
+
+
+
+  using K = CGAL::Exact_predicates_inexact_constructions_kernel;
+  using Point_3 = K::Point_3;
+
+
+  Point_3 p(0,1,2.3);
+
+
+
 
   // Note that here is a good place to check the validity of the flags.
   // While this can be done by adding flag validators using gflags,
@@ -66,11 +191,8 @@ int main(int argc, char **argv)
     LOG(INFO) << "\t" << argv[i];
 
   LOG(INFO) << "Necklace map: " << geoviz::proc_necklace_map();
-  LOG(INFO) << "Flow Diagram: " << geoviz::proc_flow_diagram();
 
   LOG(INFO) << "GeoViz version: " << GEOVIZ_VERSION;
-
-  LOG(INFO) << "Internal number: " << geoviz::internal::test();
 
   std::cout << "<div>";
   std::cout << "<!--To be loaded as support card.-->";

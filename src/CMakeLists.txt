@@ -54,7 +54,12 @@ configure_file(
 )
 
 
-#### SOURCES ###
+### DEPENDENCIES ###
+
+find_package(CGAL)
+
+
+### SOURCES ###
 
 # All source files should use include paths relative to the source root.
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})

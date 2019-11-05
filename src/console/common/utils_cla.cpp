@@ -48,6 +48,10 @@ std::string getUsageMessage
 {
   // Note that GCC 7.4.0 implements the C++17 filesystem specification as experimental.
   // This experimental implementation requires linking the "stdc++fs" static library.
+  // Note that this choice for compiler and version is made for convenience:
+  // it is currently shipped with my operating system.
+  // Other compilers or later versions may fully implement the C++17 standard,
+  // in which case this namespace will need to be updated as well.
   namespace filesystem = std::experimental::filesystem;
 
   std::stringstream out;

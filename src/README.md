@@ -33,11 +33,12 @@ The code depends on several packages that may need to be installed before it can
 - glog
 - latex
 - php
+- tinyxml2
 
 On Ubuntu, this can be installed by running:
 
 ```sh
-sudo apt install build-essential cmake doxygen libgoogle-glog-dev libgflags-dev imagemagick-6.q16 texlive-xetex php7.2-cli
+sudo apt install build-essential cmake doxygen libgoogle-glog-dev libgflags-dev imagemagick-6.q16 texlive-xetex php7.2-cli libtinyxml2-dev
 ```
 
 ## Code styles
@@ -48,7 +49,7 @@ Note that within the CMakeLists files, we follow a loose naming convention:
 - Similar to CMake, most variables are [project_name]_<target_name>_<type> (e.g. GEOVIZ_INSTALL_SOURCE_DIR or NECKLACE_MAP_TARGET)._
 - Applications exposing the functionality of an individual library are suffixed by _CLA (for command-line application).
 
-For the c++ code, we follow the Google style guide (https://google.github.io/styleguide/cppguide.html) with minor adjustments.
+For the C++ code, we follow the Google style guide (https://google.github.io/styleguide/cppguide.html) with minor adjustments.
 - Source files use the .cpp extension. Template implementations may be separated from their declaration in a file with the same name and the .inc extension.
 - The order of #include directives is not strictly alphabetical: within each block, all files in a specific directory precede the files in sub-directories.
 - Whenever a code block is spread over multiple lines, the opening character (e.g. brace) will be placed on the next line and the opening and closing characters have the same indentation.
