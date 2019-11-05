@@ -18,7 +18,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-2019
 */
 
-// Note dependences:
+// Note dependencies:
 // - glog
 // - gflags
 
