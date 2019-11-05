@@ -1,7 +1,7 @@
 /*
 The Flow Diagram library implements the algorithmic geo-visualization
-method by the same name, developed by [name] at TU Eindhoven (dio). TODO(tvl) add name and DIO to paper.
-Copyright (C) 2019  Netherlands eScience Center
+method by the same name, developed by [name] at [IP's institution].
+Copyright (C) 2019  Netherlands eScience Center and [IP's institution]
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
