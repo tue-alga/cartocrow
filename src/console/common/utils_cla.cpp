@@ -1,6 +1,6 @@
 /*
 Generic methods for command-line applications.
-Copyright (C) 2019  Netherlands eScience Center
+Copyright (C) 2019  Netherlands eScience Center and [IP's institution]
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
