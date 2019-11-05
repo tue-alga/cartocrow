@@ -63,7 +63,7 @@ add_subdirectory(common)
 ### EXECUTABLES ###
 # A few notes:
 # - The executables are named after the method they expose.
-# - The execuatble targets end in "_cla" for "command line application"
+# - The executable targets end in "_cla" for "command line application"
 
 add_subdirectory(print_arguments)
 add_subdirectory(draw_logo)

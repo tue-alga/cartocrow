@@ -10,9 +10,9 @@ This directory contains several linux bash scripts to simplify building and usin
 * `document.sh` generates DoxyGen documentation based on the comments in the back-end source code.
 * `make.sh` compiles the back-end applications and installs the source code into their desired subdirectories of `./wwwroot/`.
 * `rebuild_all.sh` runs all the above scripts to regenerate the back-end.
-* `serve.sh [port#]` starts serving the website as port of localhost. By default port 8000 is used.
+* `serve.sh [port#]` starts serving the website on localhost. By default port 8000 is used.
 
-To generate and start serving the site:
+To generate and start serving the site (note that these scripts expect to be called from the current directory):
 
 ```sh
 ./rebuild_all.sh
