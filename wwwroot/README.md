@@ -11,7 +11,7 @@ This website has been developed with design principles to promote responsiveness
 
 ## Licensing
 
-Copyright 2019 Netherlands eScience Center
+Copyright 2019 Netherlands eScience Center and TU Eindhoven
 Licensed under the Apache License, version 2.0. See LICENSE for details.
 
 This website depends on the GeoViz software library distributed together with this website.
