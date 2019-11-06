@@ -38,3 +38,16 @@ For the c++ code, we follow the Google style guide (https://google.github.io/sty
 - Whenever spreading function parameters/arguments over multiple lines, always put the first one on a new line. Prefer to use exactly 1 parameter/argument per line.
 - When naming elements in camel case, only capitalize the first letter of an abbreviation.
 
+## Logging
+
+We use the Google logging library (glog) for logging important information about the process including major command-line parameters and high level program flow. This library allows for logging at various 'levels' and adjusting the visible logging levels at runtime. We adhere to the following guidelines on logging levels:
+* **FATAL:** terminate the process because an 'invalid state' has been reached. Further processing would produce invalid or undeterminable results. For example, some inconsistency in the data was detected. Note that logging at this severity level may terminate the program very abruptly without any deconstruction or memory deallocation, which can give serious issues related to file or stream/pipe flushing.
+* **ERROR:** a recoverable 'invalid state' has been reached. For example, a file I/O operation failed or a connection was lost. Use FATAL instead if no (more) retries are attempted.
+* **WARNING:** should never be used. Some people argue for using this severity level for unexpected results (but you expect them, because you're logging them: use INFO instead) or something that a developer should really have a look at (add a TODO comment instead and possibly log to INFO if you want to irritate to user).
+* **INFO:** major program flow or progress. This is meant for the uninformed end user. For example, "currently at 60% progress", or "accessing file X". Try not to be spammy while also not leaving the user to wonder whether the program is still running.
+* **1** minor program flow such as module progress. This is meant for the informed end user. For example, "computing average point density", or "95/1600 processes complete".
+* **2+** program details. This is meant for a developer, with varying degrees of required detail. Try not to use too many levels: the developer will likely either want all the debug data (verbosity = infinity) or only know where things break down (verbosity = ~2).
+
+Note that FLAGS_logtostderr logs to the standard error stream instead of file, FLAGS_stderrthreshold logs to standard error stream as well as file. You can set program-specific log directories using FLAGS_log_dir.
+
+Use CHECK (and related method) liberally to verify important data or states. Take the logging message into account when choosing the CHECK method. For example, CHECK(my_string.empty()) will just log that line, while CHECK_EQ(my_string,"") will log that line and the two compared values (the contents of my_string and ""). Also be careful about comparing double values: you may want to replace equality checks by checks on a maximum difference or at least CHECK_DOUBLE_EQ().

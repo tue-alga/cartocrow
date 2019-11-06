@@ -179,12 +179,17 @@ int main(int argc, char **argv)
 
 
 
-  // Note that here is a good place to check the validity of the flags.
+  // Note that here is a good place to check the semantic validity of the flags.
   // While this can be done by adding flag validators using gflags,
-  // These generally only allow validating independent flags,
+  // These generally only allow (statically) validating independent flags,
   // they do not allow validating programmatically set flags,
-  // and they may throw inconvenient compiler warnings about unused variables
-  // (depending on the implementation).
+  // and they may throw inconvenient compiler warnings about unused static variables
+  // (depending on your implementation).
+  // Instead of registering validators, I prefer to add a "ValidateFlags()"
+  // method call here that performs all the semantic validation and error messaging
+  // (syntactic validation will be done by gflags automatically).
+  // For added value, this method could always log the values of important flags
+  // to make it easier to reproduce a particular program execution.
 
   LOG(INFO) << "Args:";
   for (int i = 1; i < argc; ++i)
