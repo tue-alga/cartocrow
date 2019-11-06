@@ -11,7 +11,7 @@ This library has been developed according to the following design principles to 
 
 ## Licensing
 
-Copyright 2019 Netherlands eScience Center and [IP's institution]
+Copyright 2019 Netherlands eScience Center and TU Eindhoven
 Licensed under the GPLv3.0 license. See LICENSE for details.
 
 ## Directory structure
