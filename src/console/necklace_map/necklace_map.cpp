@@ -27,10 +27,6 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-2019
 #include <cmath>
 #include <iomanip>
 #include <iostream>
-#include <memory>
-#include <tinyxml2.h>
-#include <unordered_map>
-#include <vector>
 
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 #include <glog/logging.h>
@@ -41,6 +37,9 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-2019
 #include "console/common/utils_cla.h"
 #include "console/common/detail/svg_polygon_parser.h"
 #include "console/common/detail/svg_visitor.h"
+
+#include "console/necklace_map/svg_necklace_map_reader.h"
+
 
 
 // Source files for
@@ -72,168 +71,13 @@ using namespace geoviz::necklace_map;  //TODO(tvl) remove: name types explicitly
 
 
 
- class SvgNecklaceMapVisitor : public geoviz::detail::SvgVisitor
-{
- public:
-  SvgNecklaceMapVisitor
-  (
-    std::vector<Region>& regions,
-    std::shared_ptr<NecklaceType>& necklace,
-    std::unordered_map<std::string, size_t>& lookup_
-  );
-
- private:
-
-
-  bool visitCircle
-  (
-    const Point& center,
-    const Number& radius,
-    const tinyxml2::XMLAttribute* attributes
-  );
-
-  bool visitPath
-  (
-    const std::string& commands,
-    const tinyxml2::XMLAttribute* attributes
-  );
-
-
-
-  bool SetCircleNecklace(const Point& center, const Number& radius);
-  bool SetArcNecklace(const std::string& commands);
-  bool SetGenericNecklace(const std::string& commands);
-
-  bool AddRegion(const std::string& commands, const std::string& id, const std::string& style);
-
-  std::vector<Region>& regions_;
-  std::shared_ptr<NecklaceType>& necklace_;
-
-  std::unordered_map<std::string, size_t>& lookup_;
-};
-
-SvgNecklaceMapVisitor::SvgNecklaceMapVisitor
-(
-  std::vector<Region>& regions,
-  std::shared_ptr<NecklaceType>& necklace,
-  std::unordered_map<std::string, size_t>& lookup
-)
-  : regions_(regions), necklace_(necklace), lookup_(lookup) {}
-
-
-bool SvgNecklaceMapVisitor::visitCircle
-(
-  const Point& center,
-  const Number& radius,
-  const tinyxml2::XMLAttribute* attributes
-)
-{
-  // Circles must be necklaces and necklaces must be dashed.
-  std::string style;
-  CHECK(findAttribute(attributes, "style", style));
-  CHECK(style.find("stroke-dasharray") != std::string::npos);
-
-  SetCircleNecklace(center, radius);
-  return false;
-}
-
-bool SvgNecklaceMapVisitor::visitPath
-(
-  const std::string& commands,
-  const tinyxml2::XMLAttribute* attributes
-)
-{
-  CHECK(!commands.empty());
-
-  std::string style, id;
-  if
-  (
-    findAttribute(attributes, "style", style) &&
-    style.find("stroke-dasharray") != std::string::npos
-  )
-  {
-    // All dashed elements are necklaces.
-    // Note that this may have to change into some identifying attribute.
-    if (commands.find_first_of("LlZzCcQqSsTt") == std::string::npos)
-      return SetArcNecklace(commands);
-    else
-      return SetGenericNecklace(commands);
-  }
-  else if (findAttribute(attributes, "id", id))
-  {
-    // Path elements with an ID are regions.
-    CHECK(!id.empty());
-    return AddRegion(commands, id, style);;
-  }
-
-  // Traverse other elements.
-  return true;
-}
-
-
-
-
-
-bool SvgNecklaceMapVisitor::SetCircleNecklace(const Point& center, const Number& radius)
-{
-  necklace_ = std::make_shared<CircleNecklace>(Circle(center, radius * radius));
-  return true;
-}
-
-bool SvgNecklaceMapVisitor::SetArcNecklace(const std::string& commands)
-{
-  LOG(FATAL) << "Not implemented yet.";
-  return true;
-}
-
-bool SvgNecklaceMapVisitor::SetGenericNecklace(const std::string& commands)
-{
-  LOG(FATAL) << "Not implemented yet.";
-  return true;
-}
-
-bool SvgNecklaceMapVisitor::AddRegion(const std::string& commands, const std::string& id, const std::string& style)
-{
-  // Get the region with the given ID, or create a new one if it does not yet exist.
-  const size_t n = lookup_.insert({id, regions_.size()}).first->second;
-  if (n == regions_.size()) regions_.emplace_back(id);
-  Region& region = regions_[n];
-  CHECK_EQ(id, region.id);
-
-  region.style = style;
-
-  // Interpret the commands as a region.
-  geoviz::detail::SvgPolygonConverter converter(region.shape);
-  geoviz::detail::SvgPathParser()(commands, converter);
-  return true;
-}
 
 
 
 
 
 
-bool readNecklaceMapSvg
-(
-  const std::string& filename,
-  std::vector<Region>& regions,
-  std::shared_ptr<NecklaceType>& necklace,
-  std::unordered_map<std::string, size_t>& lookup
-)
-{
-  // Note that while the SVG input is stored in an XML file, it does not make use of the main feature that makes XML preferable over JSON: validatibility (i.e. assigning a schema).
-  // This means that we do not need to use a comprehensive XML library such as xerces; we can instead use a lightweight library such as tinyxml.
 
-  tinyxml2::XMLDocument doc;
-  tinyxml2::XMLError result = doc.LoadFile( filename.c_str() );
-  //tinyxml2::XMLError result = doc.Parse( content ); // This would be how to parse a string instead of a file using tinyxml2
-  if (result != tinyxml2::XML_SUCCESS) return false;
-
-  SvgNecklaceMapVisitor visitor(regions, necklace, lookup);
-  doc.Accept(&visitor);
-
-  return true;
-}
 
 std::string toString(const Region::PolygonSet& shape, const Vector& offset = Vector(0, 0))
 {
@@ -409,18 +253,16 @@ int main(int argc, char **argv)
   // Writing to the standard output is reserved for text that should be returned to a calling website.
   FLAGS_logtostderr = true;
 
-  //std::cerr << "Test" << std::endl;
-
   std::vector<Region> regions;
   std::shared_ptr<NecklaceType> necklace;
   std::unordered_map<std::string, size_t> region_lookup;
-  readNecklaceMapSvg
+  SvgNecklaceMapReader reader
   (
-    "/storage/GeoViz/wwwroot/data/Example_wEU/wEU_svg.xml",
     regions,
     necklace,
     region_lookup
   );
+  reader.read("/storage/GeoViz/wwwroot/data/Example_wEU/wEU_svg.xml");
 
   std::string out;
   writeDummySvg

@@ -32,6 +32,10 @@ namespace geoviz
 namespace detail
 {
 
+// Note that while the SVG input is stored in an XML file, it does not make use of the
+// main feature that makes XML preferable over JSON: validatibility (i.e. assigning a
+// schema). This means that we do not need to use a comprehensive XML library such as
+// xerces; we can instead use a lightweight library such as tinyxml.
 class SvgVisitor : public tinyxml2::XMLVisitor
 {
  public:

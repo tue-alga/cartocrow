@@ -45,6 +45,7 @@ namespace necklace_map
 
 /**@brief Main constructor.
  * @param id the ID of the region.
+ *
  * These IDs often follow ISO-3166-2 (ISO-3166-1 alpha-2, possibly followed by a
  * subdivision number), or ISO-3166-1 alpha-3. However, any set of unique IDs is
  * allowed.
