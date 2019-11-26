@@ -6,6 +6,7 @@
 #map {
   height: 100%;
   width: 100%;
+  background-color: white;
 }
 /* Quickfix for Firefox warning about will-change memory consumption of Leaflet. */
 /* https://github.com/Leaflet/Leaflet/issues/4686 */

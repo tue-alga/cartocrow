@@ -1,7 +1,6 @@
 /*
-The Necklace Map library implements the algorithmic geo-visualization
-method by the same name, developed by Bettina Speckmann and Kevin Verbeek
-at TU Eindhoven (DOI: 10.1109/TVCG.2010.180 & 10.1142/S021819591550003X).
+The GeoViz library implements several algorithmic geo-visualization methods developed at
+TU Eindhoven.
 Copyright (C) 2019  Netherlands eScience Center and TU Eindhoven
 
 This program is free software: you can redistribute it and/or modify
@@ -17,19 +16,27 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-19
+Created by tvl (t.vanlankveld@esciencecenter.nl) on 07-11-19
 */
 
-#include "necklace_map.h"
+#ifndef GEOVIZ_COMMON_CORE_TYPES_H
+#define GEOVIZ_COMMON_CORE_TYPES_H
 
+#include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
+#include <CGAL/Polygon_2.h>
 
 namespace geoviz
 {
-namespace necklace_map
-{
 
+// The geometric data types are taken from the CGAL library where possible.
+using Kernel = CGAL::Exact_predicates_inexact_constructions_kernel;
+using Number = Kernel::FT;
 
-
-} // namespace necklace_map
+using Point = CGAL::Point_2<Kernel>;
+using Vector = CGAL::Vector_2<Kernel>;
+using Circle = CGAL::Circle_2<Kernel>;
+using Polygon = CGAL::Polygon_2<Kernel>;
 
 } // namespace geoviz
+
+#endif //GEOVIZ_COMMON_CORE_TYPES_H

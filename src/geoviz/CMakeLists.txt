@@ -31,9 +31,11 @@ endmacro(geoviz_add_library)
 
 # Add the individual libraries per geo-visualization method.
 # Note that each of these will have to be added to the GeoViz interface target and the GeoViz library archive.
+add_subdirectory(common)
 add_subdirectory(necklace_map)
 add_subdirectory(flow_diagram)
 
+set(GEOVIZ_COMMON_TARGET ${GEOVIZ_COMMON_TARGET} PARENT_SCOPE)
 set(NECKLACE_MAP_TARGET ${NECKLACE_MAP_TARGET} PARENT_SCOPE)
 set(FLOW_DIAGRAM_TARGET ${FLOW_DIAGRAM_TARGET} PARENT_SCOPE)
 
@@ -44,6 +46,7 @@ set(FLOW_DIAGRAM_TARGET ${FLOW_DIAGRAM_TARGET} PARENT_SCOPE)
 add_library(${GEOVIZ_TARGET} INTERFACE)
 target_link_libraries(
     ${GEOVIZ_TARGET} INTERFACE
+    ${GEOVIZ_COMMON_TARGET}
     ${NECKLACE_MAP_TARGET}
     ${FLOW_DIAGRAM_TARGET}
 )
@@ -68,6 +71,7 @@ if(GEOVIZ_CREATE_ARCHIVE)
     add_custom_target(
         archive_geoviz ALL
         COMMAND ${CMAKE_AR} rc ${GEOVIZ_ARCHIVE}
+        $<TARGET_FILE:${GEOVIZ_COMMON_TARGET}>
         $<TARGET_FILE:${NECKLACE_MAP_TARGET}>
         $<TARGET_FILE:${FLOW_DIAGRAM_TARGET}>
     )

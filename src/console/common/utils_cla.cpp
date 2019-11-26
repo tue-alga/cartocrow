@@ -29,6 +29,16 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-10-2019
 #include <cmake/geoviz_config.h>
 
 
+/**@file utils_cla.h
+ * @brief Generic methods for command-line applications.
+ */
+
+/**@brief Generate a copyright notice for an command-line application.
+ *
+ * Note that the notice does not end with a newline character.
+ * @param interactive whether the executable accepts user input while running.
+ * @return the copyright notice.
+ */
 std::string copyrightNotice(const bool interactive /*= false*/)
 {
   std::stringstream out;
@@ -39,6 +49,12 @@ std::string copyrightNotice(const bool interactive /*= false*/)
   return out.str();
 }
 
+/**@brief Generate a basic usage message for an command-line application.
+ * @param executable_name the name of the executable.
+ * @param description a one-line description of the application's purpose.
+ * @param sample_arguments command-line arguments that should be part of the sample usage.
+ * @return the usage message.
+ */
 std::string getUsageMessage
 (
   const std::string& executable_name,
@@ -64,6 +80,12 @@ std::string getUsageMessage
   return out.str();
 }
 
+/**@brief Initialize the processes related to a basic command-line application.
+ * @param argc the number of command-line arguments.
+ * @param argv the collection of command-line arguments.
+ * @param description a one-line description of the application's purpose.
+ * @param sample_arguments any command-line arguments that should be part of the sample usage.
+ */
 void initApplication
 (
   int argc,

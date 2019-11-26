@@ -18,8 +18,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-10-2019
 */
 
-/// @file
-/// @brief Generic methods for command-line applications.
 #ifndef CONSOLE_COMMON_UTILS_CLA_H
 #define CONSOLE_COMMON_UTILS_CLA_H
 
@@ -27,21 +25,9 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-10-2019
 #include <vector>
 
 
-/**
- * Generate a copyright notice for an command-line application.
- * Note that the notice does not end with a newline character.
- * @param interactive whether the executable accepts user input while running.
- * @return the copyright notice.
- */
+///@param interactive whether the executable accepts user input while running.
 std::string copyrightNotice(const bool interactive = false);
 
-/**
- * Generate a basic usage message for an command-line application.
- * @param executable_name the name of the executable.
- * @param description a one-line description of the application's purpose.
- * @param sample_arguments command-line arguments that should be part of the sample usage.
- * @return the usage message.
- */
 std::string getUsageMessage
 (
   const std::string& executable_name,
@@ -49,13 +35,6 @@ std::string getUsageMessage
   const std::vector<std::string>& sample_arguments = {}
 );
 
-/**
- * Initialize the processes related to a basic command-line application.
- * @param argc the number of command-line arguments.
- * @param argv the collection of command-line arguments.
- * @param description a one-line description of the application's purpose.
- * @param sample_arguments any command-line arguments that should be part of the sample usage.
- */
 void initApplication
 (
   int argc,

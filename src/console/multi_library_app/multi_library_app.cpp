@@ -65,7 +65,7 @@ int main(int argc, char **argv)
   for (int i = 1; i < argc; ++i)
     LOG(INFO) << "\t" << argv[i];
 
-  LOG(INFO) << "Necklace map: " << geoviz::proc_necklace_map();
+  //LOG(INFO) << "Necklace map: " << geoviz::proc_necklace_map();
   LOG(INFO) << "Flow Diagram: " << geoviz::proc_flow_diagram();
 
   LOG(INFO) << "GeoViz version: " << GEOVIZ_VERSION;
