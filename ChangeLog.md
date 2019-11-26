@@ -1,5 +1,8 @@
 === 0.1.1.0 ===
 
+* Initial DoxyGen documentation for the necklace map classes in source files.
+* Moved SVG parsing functionality out of necklace map application source.
+* Separated Necklace Map specific and generic SVG parsing functionality.
 * Renamed `document.sh` to `build_docs.sh`.
 * Indicate reasons for disabling pdflatex documentation.
 * Minor optimizations to scripts.
