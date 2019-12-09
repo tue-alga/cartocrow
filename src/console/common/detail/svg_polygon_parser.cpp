@@ -1,5 +1,6 @@
 /*
-Converter for SVG path polygons.
+The GeoViz console applications implement algorithmic geo-visualization
+methods, developed at TU Eindhoven.
 Copyright (C) 2019  Netherlands eScience Center and TU Eindhoven
 
 This program is free software: you can redistribute it and/or modify
@@ -29,7 +30,7 @@ namespace detail
 {
 
 /**@class SvgPolygonConverter
- * @brief An implementation of SvgPathConverter for converting a SVG path element to a collection of polygons.
+ * @brief An implementation of SvgPathConverter for converting an SVG path element to a collection of polygons.
  *
  * Only closed polygons are stored.
  *
@@ -40,11 +41,11 @@ namespace detail
  * @brief A collection of polygons.
  */
 
-/**@brief Main constructor.
+/**@brief Construct an object for converting SVG path elements to collections of polygons.
  * @param shape the output polygon shape.
  */
 SvgPolygonConverter::SvgPolygonConverter(PolygonSet& shape)
-  : shape_(shape) {}
+  : SvgPathConverter(), shape_(shape) {}
 
 void SvgPolygonConverter::MoveTo_(const Point& to)
 {
@@ -62,7 +63,7 @@ void SvgPolygonConverter::Close_()
   CHECK(current_.is_simple());
   if ( current_.is_clockwise_oriented() )
     current_.reverse_orientation();
-  shape_.push_back(current_);
+  shape_.emplace_back(current_);
   current_.clear();
 }
 

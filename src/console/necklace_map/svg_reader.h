@@ -1,5 +1,8 @@
 /*
-File reader for SVG necklace map input.
+The Necklace Map console application implements the algorithmic
+geo-visualization method by the same name, developed by
+Bettina Speckmann and Kevin Verbeek at TU Eindhoven
+(DOI: 10.1109/TVCG.2010.180 & 10.1142/S021819591550003X).
 Copyright (C) 2019  Netherlands eScience Center and TU Eindhoven
 
 This program is free software: you can redistribute it and/or modify
@@ -18,43 +21,41 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Created by tvl (t.vanlankveld@esciencecenter.nl) on 26-11-2019
 */
 
-#ifndef GEOVIZ_SVG_NECKLACE_MAP_READER_H
-#define GEOVIZ_SVG_NECKLACE_MAP_READER_H
+#ifndef CONSOLE_NECKLACE_MAP_SVG_READER_H
+#define CONSOLE_NECKLACE_MAP_SVG_READER_H
 
 #include <string>
 #include <unordered_map>
 #include <vector>
 
-#include "console/necklace_map/detail/svg_necklace_map_visitor.h"
+#include <gflags/gflags.h>
+
+#include "geoviz/common/region.h"
+#include "console/necklace_map/detail/svg_visitor.h"
 #include "geoviz/necklace_map/necklace.h"
-#include "geoviz/necklace_map/region.h"
+
+DECLARE_bool(strict_validity);
 
 
 namespace geoviz
 {
 
-namespace gnm = geoviz::necklace_map;
-
-class SvgNecklaceMapReader
+class SvgReader
 {
+  using Visitor = detail::NecklaceMapSvgVisitor;
  public:
-  using NecklaceType = gnm::NecklaceType;
-  using Region = gnm::Region;
+  using NecklaceElement = Visitor::NecklaceElement;
+  using NecklaceTypePtr = Visitor::NecklaceTypePtr;
 
  public:
-  SvgNecklaceMapReader
-  (
-    std::vector<Region>& regions,
-    std::shared_ptr<NecklaceType>& necklace,
-    std::unordered_map<std::string, size_t>& region_index_by_id
-  );
+  SvgReader(std::vector<NecklaceElement>& elements, std::vector<NecklaceTypePtr>& necklaces);
 
-  bool read(const std::string& filename);
+  bool Read(const std::string& filename);
 
  private:
-  geoviz::detail::SvgNecklaceMapVisitor visitor_;
-};
+  Visitor visitor_;
+}; // class SvgReader
 
 } // namespace geoviz
 
-#endif //GEOVIZ_SVG_NECKLACE_MAP_READER_H
+#endif //CONSOLE_NECKLACE_MAP_SVG_READER_H

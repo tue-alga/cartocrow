@@ -1,6 +1,6 @@
 /*
-The GeoViz library implements several algorithmic geo-visualization methods developed at
-TU Eindhoven.
+The GeoViz library implements algorithmic geo-visualization methods,
+developed at TU Eindhoven.
 Copyright (C) 2019  Netherlands eScience Center and TU Eindhoven
 
 This program is free software: you can redistribute it and/or modify
@@ -16,26 +16,22 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-Created by tvl (t.vanlankveld@esciencecenter.nl) on 07-11-19
+Created by tvl (t.vanlankveld@esciencecenter.nl) on 05-12-2019
 */
 
 #ifndef GEOVIZ_COMMON_CORE_TYPES_H
 #define GEOVIZ_COMMON_CORE_TYPES_H
 
-#include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
-#include <CGAL/Polygon_2.h>
+#include <cmath>
+
+#include "geoviz/common/cgal_types.h"
+#include "geoviz/common/polygon.h"
 
 namespace geoviz
 {
 
-// The geometric data types are taken from the CGAL library where possible.
-using Kernel = CGAL::Exact_predicates_inexact_constructions_kernel;
-using Number = Kernel::FT;
-
-using Point = CGAL::Point_2<Kernel>;
-using Vector = CGAL::Vector_2<Kernel>;
-using Circle = CGAL::Circle_2<Kernel>;
-using Polygon = CGAL::Polygon_2<Kernel>;
+/// The value 2*PI, defined for convenience.
+constexpr const Number M_2xPI = 2 * M_PI;
 
 } // namespace geoviz
 

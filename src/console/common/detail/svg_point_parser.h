@@ -1,5 +1,6 @@
 /*
-Parser for SVG point coordinates.
+The GeoViz console applications implement algorithmic geo-visualization
+methods, developed at TU Eindhoven.
 Copyright (C) 2019  Netherlands eScience Center and TU Eindhoven
 
 This program is free software: you can redistribute it and/or modify
@@ -35,17 +36,17 @@ namespace detail
 class SvgPointParser
 {
  public:
-  Number toNumber(const std::string& str);
-  Number toX(const std::string& str);
-  Number toY(const std::string& str);
-  Point toPoint(const std::string& str_x, const std::string& str_y);
-  Vector toVector(const std::string& str_x, const std::string& str_y);
+  Number N(const std::string& str);
+  Number X(const std::string& str);
+  Number Y(const std::string& str);
+  Point Pt(const std::string& str_x, const std::string& str_y);
+  Vector Vec(const std::string& str_x, const std::string& str_y);
 
-  Number getNumber(std::stringstream& ss);
-  Number getX(std::stringstream& ss);
-  Number getY(std::stringstream& ss);
-  Point getPoint(std::stringstream& ss);
-  Vector getVector(std::stringstream& ss);
+  Number N(std::stringstream& ss);
+  Number X(std::stringstream& ss);
+  Number Y(std::stringstream& ss);
+  Point Pt(std::stringstream& ss);
+  Vector Vec(std::stringstream& ss);
 }; // class SvgPointParser
 
 } // namespace detail

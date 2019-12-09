@@ -1,5 +1,6 @@
 /*
-Parser for SVG point coordinates.
+The GeoViz console applications implement algorithmic geo-visualization
+methods, developed at TU Eindhoven.
 Copyright (C) 2019  Netherlands eScience Center and TU Eindhoven
 
 This program is free software: you can redistribute it and/or modify
@@ -27,8 +28,7 @@ namespace detail
 {
 
 /**@class SvgPointParser
- * @brief Functor to parse strings as SVG points and coordinates and to collect this data
- * from a string stream.
+ * @brief A functor to parse strings as SVG points and coordinates and to collect this data from a string stream.
  */
 
 /**@brief Convert a string to a number.
@@ -37,7 +37,7 @@ namespace detail
  * @param str the number as string.
  * @return the number.
  */
-Number SvgPointParser::toNumber(const std::string& str)
+Number SvgPointParser::N(const std::string& str)
 {
   return std::stod(str);
 }
@@ -48,22 +48,21 @@ Number SvgPointParser::toNumber(const std::string& str)
  * @param str the x coordinate as string.
  * @return the x coordinate.
  */
-Number SvgPointParser::toX(const std::string& str)
+Number SvgPointParser::X(const std::string& str)
 {
-  return toNumber(str);
+  return N(str);
 }
 
 /**@brief Convert a string to a y-coordinate.
- *
- * Note that SVG uses a y-down coordinate system, while the point uses y-up coordinates.
  *
  * If the string is a not a valid number, a std::invalid_argument exception is thrown.
  * @param str the y coordinate as string.
  * @return the y-coordinate.
  */
-Number SvgPointParser::toY(const std::string& str)
+Number SvgPointParser::Y(const std::string& str)
 {
-  return -toNumber(str);
+  //return -N(str);  // Use transform matrices in the SVG instead of a direct point transformation.
+  return N(str);
 }
 
 /**@brief Convert two strings to a point.
@@ -75,9 +74,9 @@ Number SvgPointParser::toY(const std::string& str)
  * @param str_y the y coordinate as string.
  * @return the point.
  */
-Point SvgPointParser::toPoint(const std::string& str_x, const std::string& str_y)
+Point SvgPointParser::Pt(const std::string& str_x, const std::string& str_y)
 {
-  return Point(CGAL::ORIGIN) + toVector(str_x, str_y);
+  return Point(CGAL::ORIGIN) + Vec(str_x, str_y);
 }
 
 /**@brief Convert two strings to a vector.
@@ -89,9 +88,9 @@ Point SvgPointParser::toPoint(const std::string& str_x, const std::string& str_y
  * @param str_y the y coordinate as string.
  * @return the vector.
  */
-Vector SvgPointParser::toVector(const std::string& str_x, const std::string& str_y)
+Vector SvgPointParser::Vec(const std::string& str_x, const std::string& str_y)
 {
-  return Vector(toX(str_x), toY(str_y));
+  return Vector(X(str_x), Y(str_y));
 }
 
 /**@brief Convert the next token in the stream to a number.
@@ -100,7 +99,7 @@ Vector SvgPointParser::toVector(const std::string& str_x, const std::string& str
  * @param ss the string stream.
  * @return the next token as number.
  */
-Number SvgPointParser::getNumber(std::stringstream& ss)
+Number SvgPointParser::N(std::stringstream& ss)
 {
   Number v;
   ss >> v;
@@ -113,9 +112,9 @@ Number SvgPointParser::getNumber(std::stringstream& ss)
  * @param ss the string stream.
  * @return the next token as x coordinate.
  */
-Number SvgPointParser::getX(std::stringstream& ss)
+Number SvgPointParser::X(std::stringstream& ss)
 {
-  return getNumber(ss);
+  return N(ss);
 }
 
 /**@brief Convert the next token in the stream to a y coordinate.
@@ -126,9 +125,10 @@ Number SvgPointParser::getX(std::stringstream& ss)
  * @param ss the string stream.
  * @return the next token as y coordinate.
  */
-Number SvgPointParser::getY(std::stringstream& ss)
+Number SvgPointParser::Y(std::stringstream& ss)
 {
-  return -getNumber(ss);
+  //return -N(ss);  // Use transform matrices in the SVG instead of a direct point transformation.
+  return N(ss);
 }
 
 /**@brief Convert the next two tokens in the stream to a point.
@@ -139,9 +139,9 @@ Number SvgPointParser::getY(std::stringstream& ss)
  * @param ss the string stream.
  * @return the next two tokens as point.
  */
-Point SvgPointParser::getPoint(std::stringstream& ss)
+Point SvgPointParser::Pt(std::stringstream& ss)
 {
-  return Point(CGAL::ORIGIN) + getVector(ss);
+  return Point(CGAL::ORIGIN) + Vec(ss);
 }
 
 /**@brief Convert the next two tokens in the stream to a vector.
@@ -152,12 +152,12 @@ Point SvgPointParser::getPoint(std::stringstream& ss)
  * @param ss the string stream.
  * @return the next two tokens as vector.
  */
-Vector SvgPointParser::getVector(std::stringstream& ss)
+Vector SvgPointParser::Vec(std::stringstream& ss)
 {
   // Note that parsing the stream must be performed in the correct order,
   // so this cannot be done as part of the constructor parameters.
-  const Number x = getX(ss);
-  const Number y = getY(ss);
+  const Number x = X(ss);
+  const Number y = Y(ss);
   return Vector(x, y);
 }
 

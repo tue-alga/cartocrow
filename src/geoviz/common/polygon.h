@@ -1,6 +1,6 @@
 /*
-The Flow Diagram library implements the algorithmic geo-visualization
-method by the same name, developed by [name] at TU Eindhoven (DOI).
+The GeoViz library implements algorithmic geo-visualization methods,
+developed at TU Eindhoven.
 Copyright (C) 2019  Netherlands eScience Center and TU Eindhoven
 
 This program is free software: you can redistribute it and/or modify
@@ -16,23 +16,30 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-2019
+Created by tvl (t.vanlankveld@esciencecenter.nl) on 05-12-2019
 */
 
-#ifndef GEOVIZ_FLOW_DIAGRAM_FLOW_DIAGRAM_H
-#define GEOVIZ_FLOW_DIAGRAM_FLOW_DIAGRAM_H
+#ifndef GEOVIZ_COMMON_POLYGON_H
+#define GEOVIZ_COMMON_POLYGON_H
 
-#include <string>
+#include <CGAL/Polygon_with_holes_2.h>
+
+#include "geoviz/common/cgal_types.h"
 
 
 namespace geoviz
 {
 
-/**@brief Dummy method for running the flow diagram algorithm.
- * @return a dummy return string.
- */
-std::string proc_flow_diagram();
+using Polygon = CGAL::Polygon_2<Kernel>;
+using Polygon_with_holes = CGAL::Polygon_with_holes_2<Kernel>;
+
+
+struct ComputeCentroid
+{
+  Point operator()(const Polygon& shape) const;
+  Point operator()(const Polygon_with_holes& shape) const;
+}; // struct ComputeCentroid
 
 } // namespace geoviz
 
-#endif //GEOVIZ_FLOW_DIAGRAM_FLOW_DIAGRAM_H
+#endif //GEOVIZ_COMMON_POLYGON_H

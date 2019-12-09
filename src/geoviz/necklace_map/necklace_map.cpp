@@ -17,7 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-19
+Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-2019
 */
 
 #include "necklace_map.h"
@@ -27,7 +27,6 @@ namespace geoviz
 {
 namespace necklace_map
 {
-
 
 
 } // namespace necklace_map

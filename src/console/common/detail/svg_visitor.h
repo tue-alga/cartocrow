@@ -1,5 +1,6 @@
 /*
-Generic XML visitor for SVG geometry.
+The GeoViz console applications implement algorithmic geo-visualization
+methods, developed at TU Eindhoven.
 Copyright (C) 2019  Netherlands eScience Center and TU Eindhoven
 
 This program is free software: you can redistribute it and/or modify
@@ -39,21 +40,12 @@ namespace detail
 class SvgVisitor : public tinyxml2::XMLVisitor
 {
  public:
-  bool 	VisitEnter
-  (
-    const tinyxml2::XMLElement& element,
-    const tinyxml2::XMLAttribute* attributes
-  );
+  bool VisitEnter(const tinyxml2::XMLElement& element, const tinyxml2::XMLAttribute* attributes);
 
  protected:
-  virtual bool visitLine
-  (
-    const Point& point_1,
-    const Point& point_2,
-    const tinyxml2::XMLAttribute* attributes
-  );
+  virtual bool VisitLine(const Point& point_1, const Point& point_2, const tinyxml2::XMLAttribute* attributes);
 
-  virtual bool visitRectangle
+  virtual bool VisitRectangle
   (
     const Point& corner,
     const Number& width,
@@ -61,26 +53,13 @@ class SvgVisitor : public tinyxml2::XMLVisitor
     const tinyxml2::XMLAttribute* attributes
   );
 
-  virtual bool visitPolygon
-  (
-    const std::string& points,
-    const tinyxml2::XMLAttribute* attributes
-  );
+  virtual bool VisitPolygon(const std::string& points, const tinyxml2::XMLAttribute* attributes);
 
-  virtual bool visitPolyline
-  (
-    const std::string& points,
-    const tinyxml2::XMLAttribute* attributes
-  );
+  virtual bool VisitPolyline(const std::string& points, const tinyxml2::XMLAttribute* attributes);
 
-  virtual bool visitCircle
-  (
-    const Point& center,
-    const Number& radius,
-    const tinyxml2::XMLAttribute* attributes
-  );
+  virtual bool VisitCircle(const Point& center, const Number& radius, const tinyxml2::XMLAttribute* attributes);
 
-  virtual bool visitEllipse
+  virtual bool VisitEllipse
   (
     const Point& center,
     const Number& radius_x,
@@ -88,20 +67,11 @@ class SvgVisitor : public tinyxml2::XMLVisitor
     const tinyxml2::XMLAttribute* attributes
   );
 
-  virtual bool visitPath
-  (
-    const std::string& commands,
-    const tinyxml2::XMLAttribute* attributes
-  );
+  virtual bool VisitPath(const std::string& commands, const tinyxml2::XMLAttribute* attributes);
 
-  bool findAttribute
-  (
-    const tinyxml2::XMLAttribute* attributes,
-    const std::string& name,
-    std::string& value
-  ) const;
+  bool FindAttribute(const tinyxml2::XMLAttribute* attributes, const std::string& name, std::string& value) const;
 
-  bool findAttributes
+  bool FindAttributes
   (
     const tinyxml2::XMLAttribute* attributes,
     const size_t num,

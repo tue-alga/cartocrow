@@ -1,5 +1,6 @@
 /*
-Generic methods for command-line applications.
+The GeoViz console applications implement algorithmic geo-visualization
+methods, developed at TU Eindhoven.
 Copyright (C) 2019  Netherlands eScience Center and TU Eindhoven
 
 This program is free software: you can redistribute it and/or modify
@@ -39,7 +40,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-10-2019
  * @param interactive whether the executable accepts user input while running.
  * @return the copyright notice.
  */
-std::string copyrightNotice(const bool interactive /*= false*/)
+std::string CopyrightNotice(const bool interactive /*= false*/)
 {
   std::stringstream out;
   out << "Copyright (C) 2019  Netherlands eScience Center and TU Eindhoven" << std::endl;
@@ -55,7 +56,7 @@ std::string copyrightNotice(const bool interactive /*= false*/)
  * @param sample_arguments command-line arguments that should be part of the sample usage.
  * @return the usage message.
  */
-std::string getUsageMessage
+std::string UsageMessage
 (
   const std::string& executable_name,
   const std::string& description,
@@ -71,7 +72,7 @@ std::string getUsageMessage
   namespace filesystem = std::experimental::filesystem;
 
   std::stringstream out;
-  out << std::endl << copyrightNotice() << std::endl << std::endl;
+  out << std::endl << CopyrightNotice() << std::endl << std::endl;
   out << description << std::endl;
   out << "Sample usage:" << std::endl;
   out << filesystem::path(executable_name).filename().string();
@@ -86,7 +87,7 @@ std::string getUsageMessage
  * @param description a one-line description of the application's purpose.
  * @param sample_arguments any command-line arguments that should be part of the sample usage.
  */
-void initApplication
+void InitApplication
 (
   int argc,
   char **argv,
@@ -96,7 +97,7 @@ void initApplication
 {
   google::InitGoogleLogging(argv[0]);
 
-  gflags::SetUsageMessage(getUsageMessage(argv[0], description, sample_arguments));
+  gflags::SetUsageMessage(UsageMessage(argv[0], description, sample_arguments));
   gflags::SetVersionString(GEOVIZ_VERSION);
 
   // Note that the command line flags are parsed after applying the defaults above.

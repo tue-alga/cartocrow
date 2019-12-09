@@ -1,5 +1,6 @@
 /*
-Generic methods for command-line applications.
+The GeoViz console applications implement algorithmic geo-visualization
+methods, developed at TU Eindhoven.
 Copyright (C) 2019  Netherlands eScience Center and TU Eindhoven
 
 This program is free software: you can redistribute it and/or modify
@@ -25,17 +26,17 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-10-2019
 #include <vector>
 
 
-///@param interactive whether the executable accepts user input while running.
-std::string copyrightNotice(const bool interactive = false);
+//@param interactive whether the executable accepts user input while running.
+std::string CopyrightNotice(const bool interactive = false);
 
-std::string getUsageMessage
+std::string UsageMessage
 (
   const std::string& executable_name,
   const std::string& description,
   const std::vector<std::string>& sample_arguments = {}
 );
 
-void initApplication
+void InitApplication
 (
   int argc,
   char **argv,

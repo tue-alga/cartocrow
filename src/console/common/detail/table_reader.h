@@ -16,15 +16,14 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-Created by tvl (t.vanlankveld@esciencecenter.nl) on 20-11-2019
+Created by tvl (t.vanlankveld@esciencecenter.nl) on 03-12-2019
 */
 
-#ifndef CONSOLE_COMMON_DETAIL_SVG_POLYGON_PARSER_H
-#define CONSOLE_COMMON_DETAIL_SVG_POLYGON_PARSER_H
+#ifndef CONSOLE_COMMON_DETAIL_DATA_READER_H
+#define CONSOLE_COMMON_DETAIL_DATA_READER_H
 
-#include "geoviz/common/core_types.h"
-
-#include "console/common/detail/svg_path_parser.h"
+#include <memory>
+#include <vector>
 
 
 namespace geoviz
@@ -32,24 +31,37 @@ namespace geoviz
 namespace detail
 {
 
-class SvgPolygonConverter : public SvgPathConverter
+struct DataColumn
+{
+  DataColumn(const std::string& name);
+  virtual void push_back(const std::string& value) = 0;
+  std::string name;
+}; // struct DataColumn
+
+template<typename T_>
+struct ValueColumn : public DataColumn
+{
+  ValueColumn(const std::string& name, const size_t size);
+  void push_back(const std::string& value);
+  std::vector<T_> values;
+}; // struct ValueColumn
+
+
+class TableReader
 {
  public:
-  using PolygonSet = std::vector<Polygon_with_holes>;
+  TableReader();
 
- public:
-  explicit SvgPolygonConverter(PolygonSet& shape);
+  bool Read(const std::string& filename);
 
- private:
-  void MoveTo_(const Point& to);
-  void LineTo_(const Point& to);
-  void Close_();
-
-  PolygonSet& shape_;
-  Polygon current_;
-}; // class SvgPolygonConverter
+ protected:
+  using ColumnPtr = std::unique_ptr<DataColumn>;
+  std::vector<ColumnPtr> table_;
+}; // class TableReader
 
 } // namespace detail
 } // namespace geoviz
 
-#endif //CONSOLE_COMMON_DETAIL_SVG_POLYGON_PARSER_H
+#include "table_reader.inc"
+
+#endif //CONSOLE_COMMON_DETAIL_DATA_READER_H

@@ -1,5 +1,8 @@
 /*
-Application to expose the functionality of the library by the same name.
+The Necklace Map console application implements the algorithmic
+geo-visualization method by the same name, developed by
+Bettina Speckmann and Kevin Verbeek at TU Eindhoven
+(DOI: 10.1109/TVCG.2010.180 & 10.1142/S021819591550003X).
 Copyright (C) 2019  Netherlands eScience Center and TU Eindhoven
 
 This program is free software: you can redistribute it and/or modify
@@ -25,8 +28,10 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-2019
 #include <algorithm>
 #include <cctype>
 #include <cmath>
+#include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <memory>
 
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 #include <glog/logging.h>
@@ -38,7 +43,8 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-2019
 #include "console/common/detail/svg_polygon_parser.h"
 #include "console/common/detail/svg_visitor.h"
 
-#include "console/necklace_map/svg_necklace_map_reader.h"
+#include "console/necklace_map/svg_reader.h"
+#include "console/necklace_map/data_reader.h"
 
 
 
@@ -65,45 +71,33 @@ using namespace geoviz::necklace_map;  //TODO(tvl) remove: name types explicitly
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-std::string toString(const Region::PolygonSet& shape, const Vector& offset = Vector(0, 0))
+std::string toString(const Region::PolygonSet& shape)
 {
   std::stringstream sout;
   sout << std::setprecision(9);  // TODO(tvl) we should align this precision with the maximum expected precision of the data. Probably should be a parameter with default.
 
-  for (const Polygon& polygon : shape)
+  for (const Polygon_with_holes& polygon : shape)
   {
     for
     (
-      Polygon::Vertex_const_iterator point_iter = polygon.vertices_begin();
-      point_iter != polygon.vertices_end();
+      Polygon::Vertex_const_iterator point_iter = polygon.outer_boundary().vertices_begin();
+      point_iter != polygon.outer_boundary().vertices_end();
       ++point_iter
     )
     {
-      const Point point = *point_iter + offset;
-
-      if (point_iter == polygon.vertices_begin())
+      if (point_iter == polygon.outer_boundary().vertices_begin())
         sout << " M ";
       else
         sout << " L ";
 
-      sout << point.x() << " " << point.y();
+      sout << point_iter->x() << " " << point_iter->y();
     }
 
-    if (1 < polygon.size() && polygon.vertices_begin() != --polygon.vertices_end())
+    if
+    (
+      1 < polygon.outer_boundary().size() &&
+      polygon.outer_boundary().vertices_begin() != --polygon.outer_boundary().vertices_end()
+    )
       sout << " Z";
   }
 
@@ -113,45 +107,58 @@ std::string toString(const Region::PolygonSet& shape, const Vector& offset = Vec
 
 bool writeDummySvg
 (
-  const std::vector<Region>& regions,
-  const std::shared_ptr<NecklaceType>& necklace,
+  const std::vector<NecklaceElement>& elements,
   std::string& svg
 )
 {
-  // Create dummy necklace glyphs and write everything to an SVG string.
+  //std::vector<Number> angles_rad = {0, M_PI_4, M_PI_2, M_PI_2 + M_PI_4, M_PI, M_PI + M_PI_2};
 
-  std::shared_ptr<CircleNecklace> circle_necklace = std::static_pointer_cast<CircleNecklace>(necklace);
-  const Point& kernel = circle_necklace->getKernel();
-  const Number radius = CGAL::sqrt(circle_necklace->shape.squared_radius());
-  std::vector<Point> centers =
+
+
+
+  const std::shared_ptr<NecklaceType>& necklace = elements[0].necklace;
+
+  // Create dummy necklace glyphs and write everything to an SVG string.
+  const Point& kernel = necklace->kernel();
+
+  //std::shared_ptr<CircleNecklace> circle_necklace = std::static_pointer_cast<CircleNecklace>(necklace);
+  //const Number radius = circle_necklace == nullptr ? 0 : CGAL::sqrt(circle_necklace->shape_.squared_radius());
+  const Box bounding_box = necklace->ComputeBoundingBox();
+  const Number necklace_radius = (bounding_box.xmax() - bounding_box.xmin()) / 2.0;
+
+  std::vector<Point> centers;
+  for (const NecklaceElement& element : elements)
   {
-    kernel + Vector(radius, 0),
-    kernel + Vector(0, radius),
-    kernel + Vector(-radius, 0),
-    kernel + Vector(0, -radius)
-  };
-  std::vector<Number> radii = { 5, 5.5, 4.5, 6 };
+    const std::shared_ptr<NecklaceInterval>& interval = element.glyph.interval;
+    const Number angle_rad = (interval->angle_cw_rad() + interval->angle_ccw_rad()) / 2.0;
+
+    centers.emplace_back();
+    CHECK(necklace->IntersectRay(angle_rad, centers.back()));
+  }
+
 
   Number bounds[] = {kernel.x(), kernel.y(), kernel.x(), kernel.y()};
 
   // Necklace
   for (size_t n = 0; n < centers.size(); ++n)
   {
-    bounds[0] = std::min(bounds[0], centers[n].x() - radii[n]);
-    bounds[1] = std::min(bounds[1], centers[n].y() - radii[n]);
-    bounds[2] = std::max(bounds[2], centers[n].x() + radii[n]);
-    bounds[3] = std::max(bounds[3], centers[n].y() + radii[n]);
+    const Number radius = std::sqrt(elements[n].value);
+
+    bounds[0] = std::min(bounds[0], centers[n].x() - radius);
+    bounds[1] = std::min(bounds[1], centers[n].y() - radius);
+    bounds[2] = std::max(bounds[2], centers[n].x() + radius);
+    bounds[3] = std::max(bounds[3], centers[n].y() + radius);
   }
 
   // Regions.
-  for (const Region& region : regions)
+  for (const NecklaceElement& element : elements)
   {
-    for (const Polygon& polygon : region.shape)
+    for (const Polygon_with_holes& polygon : element.region.shape)
     {
       for
       (
-        Polygon::Vertex_const_iterator point_iter = polygon.vertices_begin();
-        point_iter != polygon.vertices_end();
+        Polygon::Vertex_const_iterator point_iter = polygon.outer_boundary().vertices_begin();
+        point_iter != polygon.outer_boundary().vertices_end();
         ++point_iter
       )
       {
@@ -175,6 +182,15 @@ bool writeDummySvg
   const Number pixel_width = 500;
   const Number pixel_height = pixel_width * height / width;
 
+  const Number transform_scale = 1;
+  std::stringstream transform_str;
+  transform_str << "matrix(" <<
+    transform_scale << ",0,0," <<
+   -transform_scale << "," <<
+   -transform_scale * bounds[0] << "," <<
+    transform_scale * bounds[3] << ")";
+
+
   tinyxml2::XMLPrinter printer;
   printer.PushComment
   (
@@ -190,7 +206,8 @@ bool writeDummySvg
 
   {
     std::stringstream view_str;
-    view_str << bounds[0] << " " << bounds[1] << " " << width << " " << height;
+    //view_str << bounds[0] << " " << bounds[1] << " " << width << " " << height;
+    view_str << "0 0 " << width << " " << height;
     printer.PushAttribute("viewBox", view_str.str().c_str());
   }
 
@@ -203,35 +220,99 @@ bool writeDummySvg
     //printer.PushAttribute("bounds", "[[52.356,4.945],[52.354,4.947]]");  // TODO(tvl) Note: lat-lon!
   }
 
-  const Vector offset;//(-bounds[0], -bounds[1]);
-
-  for (const Region& region : regions)
+  for (const NecklaceElement& element : elements)
   {
+    const Region& region = element.region;
+
     printer.OpenElement("path");
     printer.PushAttribute("style", region.style.c_str());
-    printer.PushAttribute("d", toString(region.shape, offset).c_str());
+    printer.PushAttribute("d", toString(region.shape).c_str());
     printer.PushAttribute("id", region.id.c_str());
+    printer.PushAttribute("transform", transform_str.str().c_str());
     printer.CloseElement();
   }
 
   printer.OpenElement("circle");
   printer.PushAttribute("style", "fill:none;stroke-width:0.4;stroke-linecap:butt;stroke-linejoin:round;stroke:rgb(0%,0%,0%);stroke-opacity:1;stroke-miterlimit:10;");
-  printer.PushAttribute("cx", kernel.x() + offset.x());
-  printer.PushAttribute("cy", kernel.y() + offset.y());
-  printer.PushAttribute("r", radius);
-  //printer.PushAttribute("transform", "matrix(13.695085,0,0,-13.695085,-3559.352703,7300.288543)");
+  printer.PushAttribute("cx", kernel.x());
+  printer.PushAttribute("cy", kernel.y());
+  printer.PushAttribute("r", necklace_radius);
+  printer.PushAttribute("transform", transform_str.str().c_str());
   printer.CloseElement();
 
   for (size_t n = 0; n < centers.size(); ++n)
   {
-    printer.OpenElement("circle");
-    printer.PushAttribute("style",
-                          "fill-rule:evenodd;fill:rgb(80%,80%,80%);fill-opacity:1;stroke-width:0.2;stroke-linecap:butt;stroke-linejoin:round;stroke:rgb(0%,0%,0%);stroke-opacity:1;stroke-miterlimit:10;"
-                         );
-    printer.PushAttribute("cx", centers[n].x() + offset.x());
-    printer.PushAttribute("cy", centers[n].y() + offset.y());
-    printer.PushAttribute("r", radii[n]);
-    printer.CloseElement();
+    const std::string style = elements[n].region.style;
+
+    {
+      const std::shared_ptr<NecklaceInterval>& interval = elements[n].glyph.interval;
+
+      const size_t from = style.find("fill:");
+      const size_t to = style.find(")", from);
+      const std::string color = style.substr(from + 5, to - from - 4);
+      const std::string interval_style =
+        "fill:none;stroke-width:0.4;stroke-linecap:butt;stroke-linejoin:round;stroke:"
+        + color +
+        ";stroke-opacity:1;stroke-miterlimit:10;";
+
+      const Number my_radius = necklace_radius + (0.4 * (n+1));
+
+      CircleNecklace my_necklace(Circle(kernel, my_radius * my_radius));
+
+      Point from_pt, to_pt;
+      my_necklace.IntersectRay(interval->angle_cw_rad(), from_pt);
+      my_necklace.IntersectRay(interval->angle_ccw_rad(), to_pt);
+
+      std::stringstream sout;
+      sout << std::setprecision(9);  // TODO(tvl) we should align this precision with the maximum expected precision of the data. Probably should be a parameter with default.
+      sout << "M " << from_pt.x() << " " << from_pt.y();
+      sout << " A " << my_radius << " " << my_radius << " 0 0 1 ";
+      sout  << to_pt.x() << " " << to_pt.y();
+      std::string path_str = sout.str();
+
+      printer.OpenElement("path");
+      printer.PushAttribute("style", interval_style.c_str());
+      printer.PushAttribute("d", path_str.c_str());
+      printer.PushAttribute("transform", transform_str.str().c_str());
+      printer.CloseElement();
+    }
+
+    {
+      const Number radius = std::sqrt(elements[n].value);
+
+      const size_t from = style.find("fill-opacity:");
+      const size_t to = style.find(";", from);
+      const std::string glyph_style =
+        style.substr(0, from+13)
+        + "0.5" +
+        style.substr(to);
+
+      printer.OpenElement("circle");
+      printer.PushAttribute("style", glyph_style.c_str());
+      printer.PushAttribute("cx", centers[n].x());
+      printer.PushAttribute("cy", centers[n].y());
+      printer.PushAttribute("r", radius);
+      printer.PushAttribute("transform", transform_str.str().c_str());
+      printer.CloseElement();
+    }
+
+    {
+      std::stringstream sout;
+      sout << std::setprecision(9
+                               );  // TODO(tvl) we should align this precision with the maximum expected precision of the data. Probably should be a parameter with default.
+      sout << "M " << kernel.x() << " " << kernel.y() << " L " << centers[n].x() << " " << centers[n].y();
+      std::string path_str = sout.str();
+
+      printer.OpenElement("path");
+      printer.PushAttribute
+      (
+        "style",
+        "fill:none;stroke-width:0.2;stroke-linecap:butt;stroke-linejoin:round;stroke:rgb(0%,0%,0%);stroke-opacity:1;stroke-miterlimit:10;"
+      );
+      printer.PushAttribute("d", path_str.c_str());
+      printer.PushAttribute("transform", transform_str.str().c_str());
+      printer.CloseElement();
+    }
   }
 
   printer.PushText("Sorry, your browser does not support the svg tag.");
@@ -242,7 +323,7 @@ bool writeDummySvg
 
 int main(int argc, char **argv)
 {
-  initApplication
+  InitApplication
   (
     argc,
     argv,
@@ -252,34 +333,6 @@ int main(int argc, char **argv)
 
   // Writing to the standard output is reserved for text that should be returned to a calling website.
   FLAGS_logtostderr = true;
-
-  std::vector<Region> regions;
-  std::shared_ptr<NecklaceType> necklace;
-  std::unordered_map<std::string, size_t> region_lookup;
-  SvgNecklaceMapReader reader
-  (
-    regions,
-    necklace,
-    region_lookup
-  );
-  reader.read("/storage/GeoViz/wwwroot/data/Example_wEU/wEU_svg.xml");
-
-  std::string out;
-  writeDummySvg
-  (
-    regions,
-    necklace,
-    out
-  );
-
-  std::cout << out;
-
-  //LOG(INFO) << "Finishing example run";
-  exit(0);
-
-
-
-
 
   // Note that here is a good place to check the semantic validity of the flags.
   // While this can be done by adding flag validators using gflags,
@@ -293,21 +346,55 @@ int main(int argc, char **argv)
   // For added value, this method could always log the values of important flags
   // to make it easier to reproduce a particular program execution.
 
-  LOG(INFO) << "Args:";
-  for (int i = 1; i < argc; ++i)
-    LOG(INFO) << "\t" << argv[i];
+  //LOG(INFO) << "GeoViz version: " << GEOVIZ_VERSION;
 
-  LOG(INFO) << "GeoViz version: " << GEOVIZ_VERSION;
 
-  std::cout << "<div>";
-  std::cout << "<!--To be loaded as support card.-->";
-  std::cout << "<h1>Application-based component</h1>";
-  std::cout << "<p>This page is just to test running a server-side application using PHP.</p>";
-  std::cout << "<p>The following command line arguments were caught:<br>";
-  for (int i = 1; i < argc; ++i)
-    std::cout << argv[i] << "<br>";
-  std::cout << "</p>";
-  std::cout << "</div>";
+  const std::string svg_filename = "/storage/GeoViz/wwwroot/data/Example_wEU/wEU_svg.xml";
+  const std::string data_filename = "/storage/GeoViz/wwwroot/data/Example_wEU/wEU.txt";
+  const std::string value_name = "value";
+
+  std::vector<NecklaceElement> elements;
+  std::vector<SvgReader::NecklaceTypePtr> necklaces;
+
+  SvgReader svg_reader
+  (
+    elements,
+    necklaces
+  );
+
+  int c = 0;
+  do
+  {
+    LOG_IF(INFO, !svg_reader.Read(svg_filename)) << "Failed to read necklace map geometry file " << svg_filename;
+    LOG_IF(INFO, !elements.empty())
+      << "Read necklace map geometry file " << svg_filename
+      << " (" << elements.size() << " regions; "<< necklaces.size() << " necklaces)";
+    // Note(tvl) we should allow the SVG to no contain the necklace: then create the necklace as smallest enclosing circle.
+  } while (elements.empty() || 3 < ++c);
+
+  DataReader data_reader(elements);
+  LOG_IF(INFO, !data_reader.Read(data_filename, value_name)) << "Failed to read necklace map data file " << data_filename;
+
+  std::unique_ptr<IntervalGenerator> make_interval(new IntervalCentroidGenerator(0.1 * M_PI));
+  (*make_interval)(elements);;
+
+
+
+
+
+
+  std::string out;
+  writeDummySvg
+  (
+    elements,
+    out
+  );
+
+  std::cout << out;
+
+  std::ofstream fout("/storage/GeoViz/wwwroot/data/Example_wEU/test_out.xml");
+  fout << out;
+  fout.close();
 
   return 0;
 }

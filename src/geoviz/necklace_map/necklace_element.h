@@ -17,16 +17,18 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-Created by tvl (t.vanlankveld@esciencecenter.nl) on 07-11-19
+Created by tvl (t.vanlankveld@esciencecenter.nl) on 28-11-2019
 */
 
-#ifndef GEOVIZ_NECKLACE_MAP_REGION_H
-#define GEOVIZ_NECKLACE_MAP_REGION_H
+#ifndef GEOVIZ_NECKLACE_MAP_NECKLACE_ELEMENT_H
+#define GEOVIZ_NECKLACE_MAP_NECKLACE_ELEMENT_H
 
-#include <string>
-#include <vector>
+#include <memory>
 
 #include "geoviz/common/core_types.h"
+#include "geoviz/common/region.h"
+#include "geoviz/necklace_map/necklace.h"
+#include "geoviz/necklace_map/necklace_interval.h"
 
 
 namespace geoviz
@@ -34,30 +36,31 @@ namespace geoviz
 namespace necklace_map
 {
 
-///@brief A region represents a country or other geographically significant shape.
-class Region
+struct NecklaceGlyph
 {
- public:
-  //using PolygonSet = CGAL::Polygon_set_2<Kernel>;
-  // Polygon_set_2 fails to initialize with the EPIC kernel: using simple list instead.
-  using PolygonSet = std::vector<Polygon>;  ///< The main shape of a region.
+  bool IsValid() const;
 
- public:
-  Region(const std::string& id);
+  std::shared_ptr<NecklaceInterval> interval;
+  Number angle_rad;
+}; // struct NecklaceGlyph
 
-  ///@param strict whether the value must be strictly larger than 0.
-  bool isValid(const bool strict = true) const;
 
-  Polygon getExtent() const;
+struct NecklaceElement
+{
+  explicit NecklaceElement(const std::string& id);
+  explicit NecklaceElement(const Region& region);
 
-  std::string id;
-  PolygonSet shape;
+  //@param strict whether the value must be strictly larger than 0.
+  bool IsValid(const bool strict = true) const;
+
+  Region region;
   Number value;
 
-  std::string style; //TODO(tvl) this should probably be implemented differently. Note that preserving the style may still be necessary in some cases.
-}; // class Region
+  std::shared_ptr<NecklaceType> necklace;
+  NecklaceGlyph glyph;
+}; // struct NecklaceElement
 
 } // namespace necklace_map
 } // namespace geoviz
 
-#endif //GEOVIZ_NECKLACE_MAP_REGION_H
+#endif //GEOVIZ_NECKLACE_MAP_NECKLACE_ELEMENT_H

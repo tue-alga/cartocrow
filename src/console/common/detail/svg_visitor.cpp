@@ -1,5 +1,6 @@
 /*
-Generic XML visitor for SVG geometry.
+The GeoViz console applications implement algorithmic geo-visualization
+methods, developed at TU Eindhoven.
 Copyright (C) 2019  Netherlands eScience Center and TU Eindhoven
 
 This program is free software: you can redistribute it and/or modify
@@ -63,10 +64,9 @@ constexpr const char* kAttributeEllipseRadiusY = "ry";
 
 
 /**@class SvgVisitor
- * @brief A XML visitor that handles SVG geometry elements.
+ * @brief An XML visitor that handles SVG geometry elements.
  *
- * Note that only a subset all the SVG elements are visited; the rest is traversed but
- * otherwise ignored.
+ * Note that only a subset of the SVG elements are visited; the rest is traversed but otherwise ignored.
  */
 
 /**@brief Enter an XML element.
@@ -74,11 +74,7 @@ constexpr const char* kAttributeEllipseRadiusY = "ry";
  * @param attributes the first attribute and a pointer to the next.
  * @return whether the element should be traversed further.
  */
-bool 	SvgVisitor::VisitEnter
-(
-  const tinyxml2::XMLElement& element,
-  const tinyxml2::XMLAttribute* attributes
-)
+bool SvgVisitor::VisitEnter(const tinyxml2::XMLElement& element, const tinyxml2::XMLAttribute* attributes)
 {
   std::string name = element.Name();
   std::transform(name.begin(), name.end(), name.begin(), [](unsigned char c) { return std::tolower(c); });
@@ -86,9 +82,9 @@ bool 	SvgVisitor::VisitEnter
   if (name == kElementPath)
   {
     std::string commands;
-    CHECK(findAttribute(attributes, kAttributePathCommands, commands));
+    CHECK(FindAttribute(attributes, kAttributePathCommands, commands));
 
-    return visitPath(commands, attributes);
+    return VisitPath(commands, attributes);
   }
   else if (name == kElementCircle)
   {
@@ -99,12 +95,12 @@ bool 	SvgVisitor::VisitEnter
       kAttributeCircleRadius
     };
     std::string values[3];
-    CHECK(findAttributes(attributes, 3, names, values));
+    CHECK(FindAttributes(attributes, 3, names, values));
 
     try
     {
       SvgPointParser pp;
-      return visitCircle(pp.toPoint(values[0], values[1]), pp.toNumber(values[2]), attributes);
+      return VisitCircle(pp.Pt(values[0], values[1]), pp.N(values[2]), attributes);
     }
     catch (...) { return false; }
   }
@@ -118,33 +114,28 @@ bool 	SvgVisitor::VisitEnter
       kAttributeLineY_2
     };
     std::string values[4];
-    CHECK(findAttributes(attributes, 4, names, values));
+    CHECK(FindAttributes(attributes, 4, names, values));
 
     try
     {
       SvgPointParser pp;
-      return visitLine
-      (
-        pp.toPoint(values[0], values[1]),
-        pp.toPoint(values[2], values[3]),
-        attributes
-      );
+      return VisitLine(pp.Pt(values[0], values[1]), pp.Pt(values[2], values[3]), attributes);
     }
     catch (...) { return false; }
   }
   else if (name == kElementPolygon)
   {
     std::string points;
-    CHECK(findAttribute(attributes, kAttributePolygonPoints, points));
+    CHECK(FindAttribute(attributes, kAttributePolygonPoints, points));
 
-    return visitPolygon(points, attributes);
+    return VisitPolygon(points, attributes);
   }
   else if (name == kElementPolyline)
   {
     std::string points;
-    CHECK(findAttribute(attributes, kAttributePolylinePoints, points));
+    CHECK(FindAttribute(attributes, kAttributePolylinePoints, points));
 
-    return visitPolyline(points, attributes);
+    return VisitPolyline(points, attributes);
   }
   else if (name == kElementRectangle)
   {
@@ -156,18 +147,12 @@ bool 	SvgVisitor::VisitEnter
       kAttributeRectangleHeight
     };
     std::string values[] = {0, 0, 0, 0};
-    findAttributes(attributes, 4, names, values);
+    FindAttributes(attributes, 4, names, values);
 
     try
     {
       SvgPointParser pp;
-      return visitRectangle
-      (
-        pp.toPoint(values[0], values[1]),
-        pp.toNumber(values[2]),
-        pp.toNumber(values[3]),
-        attributes
-      );
+      return VisitRectangle(pp.Pt(values[0], values[1]), pp.N(values[2]), pp.N(values[3]), attributes);
     }
     catch (...) { return false; }
   }
@@ -181,18 +166,12 @@ bool 	SvgVisitor::VisitEnter
       kAttributeEllipseRadiusY
     };
     std::string values[4];
-    CHECK(findAttributes(attributes, 4, names, values));
+    CHECK(FindAttributes(attributes, 4, names, values));
 
     try
     {
       SvgPointParser pp;
-      return visitEllipse
-      (
-        pp.toPoint(values[0], values[1]),
-        pp.toNumber(values[2]),
-        pp.toNumber(values[3]),
-        attributes
-      );
+      return VisitEllipse(pp.Pt(values[0], values[1]), pp.N(values[2]), pp.N(values[3]), attributes);
     }
     catch (...) { return false; }
   }
@@ -208,12 +187,7 @@ bool 	SvgVisitor::VisitEnter
  * Note that these attributes include the other parameters.
  * @return whether the element should be traversed further.
  */
-bool SvgVisitor::visitLine
-(
-  const Point& point_1,
-  const Point& point_2,
-  const tinyxml2::XMLAttribute* attributes
-)
+bool SvgVisitor::VisitLine(const Point& point_1, const Point& point_2, const tinyxml2::XMLAttribute* attributes)
 {
   return true;
 }
@@ -226,7 +200,7 @@ bool SvgVisitor::visitLine
  * Note that these attributes include the other parameters.
  * @return whether the element should be traversed further.
  */
-bool SvgVisitor::visitRectangle
+bool SvgVisitor::VisitRectangle
 (
   const Point& corner,
   const Number& width,
@@ -238,33 +212,23 @@ bool SvgVisitor::visitRectangle
 }
 
 /**@brief Visit a polygon element.
- * @param points a space-separated list of point coordinates; the coordinates per point
- * are comma-separated.
+ * @param points a space-separated list of point coordinates; the coordinates per point are comma-separated.
  * @param attributes the first attribute and a pointer to the next.
  * Note that these attributes include the other parameters.
  * @return whether the element should be traversed further.
  */
-bool SvgVisitor::visitPolygon
-(
-  const std::string& points,
-  const tinyxml2::XMLAttribute* attributes
-)
+bool SvgVisitor::VisitPolygon(const std::string& points, const tinyxml2::XMLAttribute* attributes)
 {
   return true;
 }
 
 /**@brief Visit a polyline element.
- * @param points a space-separated list of point coordinates; the coordinates per point
- * are comma-separated.
+ * @param points a space-separated list of point coordinates; the coordinates per point are comma-separated.
  * @param attributes the first attribute and a pointer to the next.
  * Note that these attributes include the other parameters.
  * @return whether the element should be traversed further.
  */
-bool SvgVisitor::visitPolyline
-(
-  const std::string& points,
-  const tinyxml2::XMLAttribute* attributes
-)
+bool SvgVisitor::VisitPolyline(const std::string& points, const tinyxml2::XMLAttribute* attributes)
 {
   return true;
 }
@@ -276,12 +240,7 @@ bool SvgVisitor::visitPolyline
  * Note that these attributes include the other parameters.
  * @return whether the element should be traversed further.
  */
-bool SvgVisitor::visitCircle
-(
-  const Point& center,
-  const Number& radius,
-  const tinyxml2::XMLAttribute* attributes
-)
+bool SvgVisitor::VisitCircle(const Point& center, const Number& radius, const tinyxml2::XMLAttribute* attributes)
 {
   return true;
 }
@@ -294,7 +253,7 @@ bool SvgVisitor::visitCircle
  * Note that these attributes include the other parameters.
  * @return whether the element should be traversed further.
  */
-bool SvgVisitor::visitEllipse
+bool SvgVisitor::VisitEllipse
 (
   const Point& center,
   const Number& radius_x,
@@ -312,11 +271,7 @@ bool SvgVisitor::visitEllipse
  * Note that these attributes include the other parameters.
  * @return whether the element should be traversed further.
  */
-bool SvgVisitor::visitPath
-(
-  const std::string& commands,
-  const tinyxml2::XMLAttribute* attributes
-)
+bool SvgVisitor::VisitPath(const std::string& commands, const tinyxml2::XMLAttribute* attributes)
 {
   return true;
 }
@@ -324,16 +279,11 @@ bool SvgVisitor::visitPath
 /**@brief Find an attribute with a given name.
  * @param attributes the complete list of attributes.
  * @param name the attribute to search for.
- * @param value the string value of the attribute, if found or an empty string
- * otherwise.
+ * @param value the string value of the attribute, if found or an empty string otherwise.
  * @return whether the searched attribute is part of the list.
  */
-bool SvgVisitor::findAttribute
-(
-  const tinyxml2::XMLAttribute* attributes,
-  const std::string& name,
-  std::string& value
-) const
+bool
+SvgVisitor::FindAttribute(const tinyxml2::XMLAttribute* attributes, const std::string& name, std::string& value) const
 {
   for (const tinyxml2::XMLAttribute* attribute = attributes; attribute != nullptr; attribute = attribute->Next())
   {
@@ -350,13 +300,11 @@ bool SvgVisitor::findAttribute
  * @param attributes the complete list of attributes.
  * @param num the number of attributes to search.
  * @param names an array of attributes to search for.
- * Note that if this collection may have duplicate names, in which case these will be
- * assigned the same values.
- * @param values the string value of each attribute, if found or an empty string
- * otherwise.
+ * Note that if this collection may have duplicate names, in which case these will be assigned the same values.
+ * @param values the string value of each attribute, if found or an empty string otherwise.
  * @return whether all searched attributes are part of the list.
  */
-bool SvgVisitor::findAttributes
+bool SvgVisitor::FindAttributes
 (
   const tinyxml2::XMLAttribute* attributes,
   const size_t num,
