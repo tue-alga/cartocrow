@@ -185,8 +185,9 @@ bool NecklaceMapSvgVisitor::FinalizeSvg()
 bool NecklaceMapSvgVisitor::AddCircleNecklace(const std::string& id, const Point& center, const Number& radius)
 {
   // Necklace IDs must be unique.
-  const size_t n = id_to_necklace_index_.insert({id, necklaces_.size()}).first->second;
-  CHECK_EQ(n, necklaces_.size());
+  const size_t next_index = necklaces_.size();
+  const size_t n = id_to_necklace_index_.insert({id, next_index}).first->second;
+  CHECK_EQ(next_index, n);
 
   necklaces_.push_back(std::make_shared<geoviz::necklace_map::CircleNecklace>(Circle(center, radius * radius)));
   return true;
