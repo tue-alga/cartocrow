@@ -17,50 +17,32 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-Created by tvl (t.vanlankveld@esciencecenter.nl) on 28-11-2019
+Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-12-2019
 */
 
-#ifndef GEOVIZ_NECKLACE_MAP_NECKLACE_ELEMENT_H
-#define GEOVIZ_NECKLACE_MAP_NECKLACE_ELEMENT_H
-
-#include <memory>
-
-#include "geoviz/common/core_types.h"
-#include "geoviz/common/region.h"
-#include "geoviz/necklace_map/necklace.h"
-#include "geoviz/necklace_map/necklace_interval.h"
-
+#include "necklace_glyph.h"
 
 namespace geoviz
 {
 namespace necklace_map
 {
 
-struct NecklaceGlyph
+/**@struct NecklaceGlyph
+ * @brief A visualization element to show the numeric value associated with a map region.
+ *
+ * Each region with a value larger than 0 that is also assigned a necklace will get a necklace glyph. The value is visualized using the area of the element. While this does not directly convey the absolute value, the difference between glyphs exposes their relative values.
+ *
+ * While glyphs could have various shapes, we currently only support disks.
+ */
+
+/**@brief Check whether the glyph is valid.
+ *
+ * This validity depends on three aspects: the interval must not be null, the interval must be valid, and the glyph's position must be in the interval.
+ */
+bool NecklaceGlyph::IsValid() const
 {
-  bool IsValid() const;
-
-  std::shared_ptr<NecklaceInterval> interval;
-  Number angle_rad;
-}; // struct NecklaceGlyph
-
-
-struct NecklaceElement
-{
-  explicit NecklaceElement(const std::string& id);
-  explicit NecklaceElement(const Region& region);
-
-  //@param strict whether the value must be strictly larger than 0.
-  bool IsValid(const bool strict = true) const;
-
-  Region region;
-  Number value;
-
-  std::shared_ptr<NecklaceType> necklace;
-  NecklaceGlyph glyph;
-}; // struct NecklaceElement
+  return interval != nullptr && interval->IsValid() && interval->IntersectsRay(angle_rad);
+}
 
 } // namespace necklace_map
 } // namespace geoviz
-
-#endif //GEOVIZ_NECKLACE_MAP_NECKLACE_ELEMENT_H

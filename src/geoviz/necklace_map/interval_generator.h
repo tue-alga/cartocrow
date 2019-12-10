@@ -28,7 +28,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 05-12-2019
 
 #include "geoviz/common/core_types.h"
 #include "geoviz/necklace_map/necklace.h"
-#include "geoviz/necklace_map/necklace_element.h"
+#include "geoviz/necklace_map/map_element.h"
 
 
 namespace geoviz
@@ -45,9 +45,9 @@ struct IntervalGenerator
     std::shared_ptr<NecklaceInterval>& interval
   ) const = 0;
 
-  void operator()(NecklaceElement& element) const;
+  void operator()(MapElement& element) const;
 
-  void operator()(std::vector<NecklaceElement>& elements) const;
+  void operator()(std::vector<MapElement>& elements) const;
 }; // struct IntervalGenerator
 
 

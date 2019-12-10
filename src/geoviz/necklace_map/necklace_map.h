@@ -31,7 +31,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-2019
 #include "geoviz/common/region.h"
 #include "geoviz/necklace_map/interval_generator.h"
 #include "geoviz/necklace_map/necklace.h"
-#include "geoviz/necklace_map/necklace_element.h"
+#include "geoviz/necklace_map/map_element.h"
 
 
 // TODO(tvl) this should probably end up as forwarding file, to functional parts that may each have their own subdirectory...

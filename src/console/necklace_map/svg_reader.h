@@ -44,11 +44,11 @@ class SvgReader
 {
   using Visitor = detail::NecklaceMapSvgVisitor;
  public:
-  using NecklaceElement = Visitor::NecklaceElement;
+  using MapElement = Visitor::MapElement;
   using NecklaceTypePtr = Visitor::NecklaceTypePtr;
 
  public:
-  SvgReader(std::vector<NecklaceElement>& elements, std::vector<NecklaceTypePtr>& necklaces);
+  SvgReader(std::vector<MapElement>& elements, std::vector<NecklaceTypePtr>& necklaces);
 
   bool Read(const std::string& filename);
 

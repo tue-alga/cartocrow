@@ -65,13 +65,13 @@ constexpr const char* kCommandsRestrictionArcNecklace = "LlZzCcQqSsTt";
  */
 NecklaceMapSvgVisitor::NecklaceMapSvgVisitor
 (
-  std::vector<NecklaceElement>& elements,
+  std::vector<MapElement>& elements,
   std::vector<NecklaceTypePtr>& necklaces,
   const bool strict_validity /*= true*/
 ) : SvgVisitor(), elements_(elements), necklaces_(necklaces), strict_validity_(strict_validity)
 {
   // Add the regions to the lookup table, while checking for duplicates.
-  for (const NecklaceElement& element : elements_)
+  for (const MapElement& element : elements_)
   {
     const size_t next_index = id_to_region_index_.size();
     const size_t n = id_to_region_index_.insert({element.region.id, next_index}).first->second;
@@ -152,7 +152,7 @@ bool NecklaceMapSvgVisitor::VisitPath(const std::string& commands, const tinyxml
   {
     // Path elements with an ID are regions.
     CHECK(!id.empty());
-    return AddNecklaceElement(id, commands, necklace_id, style);;
+    return AddMapElement(id, commands, necklace_id, style);;
   }
 
   // Traverse other elements.
@@ -167,7 +167,7 @@ bool NecklaceMapSvgVisitor::FinalizeSvg()
   CHECK_EQ(elements_.size(), necklace_ids_.size());
   for (size_t n = 0; n < elements_.size(); ++n)
   {
-    NecklaceElement& element = elements_[n];
+    MapElement& element = elements_[n];
     const std::string& necklace_id = necklace_ids_[n];
     LookupTable::const_iterator index_iter = id_to_necklace_index_.find(necklace_id);
     CHECK(index_iter != id_to_necklace_index_.end());
@@ -228,7 +228,7 @@ bool NecklaceMapSvgVisitor::AddGenericNecklace(const std::string& id, const std:
  * for the output regions.
  * @return whether the region could be parsed correctly.
  */
-bool NecklaceMapSvgVisitor::AddNecklaceElement
+bool NecklaceMapSvgVisitor::AddMapElement
 (
   const std::string& id,
   const std::string& commands,

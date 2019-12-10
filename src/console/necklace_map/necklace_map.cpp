@@ -107,7 +107,7 @@ std::string toString(const Region::PolygonSet& shape)
 
 bool writeDummySvg
 (
-  const std::vector<NecklaceElement>& elements,
+  const std::vector<MapElement>& elements,
   std::string& svg
 )
 {
@@ -127,7 +127,7 @@ bool writeDummySvg
   const Number necklace_radius = (bounding_box.xmax() - bounding_box.xmin()) / 2.0;
 
   std::vector<Point> centers;
-  for (const NecklaceElement& element : elements)
+  for (const MapElement& element : elements)
   {
     const std::shared_ptr<NecklaceInterval>& interval = element.glyph.interval;
     const Number angle_rad = (interval->angle_cw_rad() + interval->angle_ccw_rad()) / 2.0;
@@ -151,7 +151,7 @@ bool writeDummySvg
   }
 
   // Regions.
-  for (const NecklaceElement& element : elements)
+  for (const MapElement& element : elements)
   {
     for (const Polygon_with_holes& polygon : element.region.shape)
     {
@@ -220,7 +220,7 @@ bool writeDummySvg
     //printer.PushAttribute("bounds", "[[52.356,4.945],[52.354,4.947]]");  // TODO(tvl) Note: lat-lon!
   }
 
-  for (const NecklaceElement& element : elements)
+  for (const MapElement& element : elements)
   {
     const Region& region = element.region;
 
@@ -353,7 +353,7 @@ int main(int argc, char **argv)
   const std::string data_filename = "/storage/GeoViz/wwwroot/data/Example_wEU/wEU.txt";
   const std::string value_name = "value";
 
-  std::vector<NecklaceElement> elements;
+  std::vector<MapElement> elements;
   std::vector<SvgReader::NecklaceTypePtr> necklaces;
 
   SvgReader svg_reader
@@ -375,9 +375,13 @@ int main(int argc, char **argv)
   DataReader data_reader(elements);
   LOG_IF(INFO, !data_reader.Read(data_filename, value_name)) << "Failed to read necklace map data file " << data_filename;
 
+  // Generate intervals based on the regions and necklaces.
   std::unique_ptr<IntervalGenerator> make_interval(new IntervalCentroidGenerator(0.1 * M_PI));
   (*make_interval)(elements);;
 
+  // Compute the scaling factor.
+
+  // Position the glyphs.
 
 
 

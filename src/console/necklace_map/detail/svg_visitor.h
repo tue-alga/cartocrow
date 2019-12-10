@@ -33,7 +33,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 26-11-2019
 #include "console/common/detail/svg_visitor.h"
 #include "geoviz/common/core_types.h"
 #include "geoviz/necklace_map/necklace.h"
-#include "geoviz/necklace_map/necklace_element.h"
+#include "geoviz/necklace_map/map_element.h"
 
 
 namespace geoviz
@@ -45,7 +45,7 @@ class NecklaceMapSvgVisitor : public SvgVisitor
 {
  public:
   using NecklaceType = geoviz::necklace_map::NecklaceType;
-  using NecklaceElement = geoviz::necklace_map::NecklaceElement;
+  using MapElement = geoviz::necklace_map::MapElement;
 
   using NecklaceTypePtr = std::shared_ptr<NecklaceType>;
 
@@ -55,7 +55,7 @@ class NecklaceMapSvgVisitor : public SvgVisitor
  public:
   NecklaceMapSvgVisitor
   (
-    std::vector<NecklaceElement>& elements,
+    std::vector<MapElement>& elements,
     std::vector<NecklaceTypePtr>& necklaces,
     const bool strict_validity = true
   );
@@ -73,7 +73,7 @@ class NecklaceMapSvgVisitor : public SvgVisitor
   bool AddArcNecklace(const std::string& id, const std::string& commands);
   bool AddGenericNecklace(const std::string& id, const std::string& commands, const Point& kernel);
 
-  bool AddNecklaceElement
+  bool AddMapElement
   (
     const std::string& id,
     const std::string& commands,
@@ -81,7 +81,7 @@ class NecklaceMapSvgVisitor : public SvgVisitor
     const std::string& style
   );
 
-  std::vector<NecklaceElement>& elements_;
+  std::vector<MapElement>& elements_;
   std::vector<std::string> necklace_ids_;
   std::vector<NecklaceTypePtr>& necklaces_;
 

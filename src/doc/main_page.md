@@ -1,4 +1,4 @@
- \mainpage My Personal Index Page
+ \mainpage Algorithmic Geographic Visualization Library
  \section intro_sec Introduction
 
  This is the introduction.

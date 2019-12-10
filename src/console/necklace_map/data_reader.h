@@ -29,7 +29,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 03-12-2019
 #include <vector>
 
 #include "console/common/detail/table_reader.h"
-#include "geoviz/necklace_map/necklace_element.h"
+#include "geoviz/necklace_map/map_element.h"
 
 
 namespace geoviz
@@ -38,18 +38,18 @@ namespace geoviz
 class DataReader : public detail::TableReader
 {
  public:
-  using NecklaceElement = geoviz::necklace_map::NecklaceElement;
+  using MapElement = geoviz::necklace_map::MapElement;
 
  private:
   using LookupTable = std::unordered_map<std::string, size_t>;
 
  public:
-  explicit DataReader(std::vector<NecklaceElement>& elements);
+  explicit DataReader(std::vector<MapElement>& elements);
 
   bool Read(const std::string& filename, const std::string& value_name);
 
  private:
-  std::vector<NecklaceElement>& elements_;
+  std::vector<MapElement>& elements_;
 
   LookupTable id_to_element_index_;
 }; // class DataReader

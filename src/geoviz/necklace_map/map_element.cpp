@@ -20,7 +20,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Created by tvl (t.vanlankveld@esciencecenter.nl) on 28-11-2019
 */
 
-#include "necklace_element.h"
+#include "map_element.h"
 
 #include <glog/logging.h>
 
@@ -30,25 +30,7 @@ namespace geoviz
 namespace necklace_map
 {
 
-/**@struct NecklaceGlyph
- * @brief A visualization element to show the numeric value associated with a map region.
- *
- * Each region with a value larger than 0 that is also assigned a necklace will get a necklace glyph. The value is visualized using the area of the element. While this does not directly convey the absolute value, the difference between glyphs exposes their relative values.
- *
- * While glyphs could have various shapes, we currently only support disks.
- */
-
-/**@brief Check whether the glyph is valid.
- *
- * This validity depends on three aspects: the interval must not be null, the interval must be valid, and the glyph's position must be in the interval.
- */
-bool NecklaceGlyph::IsValid() const
-{
-  return interval != nullptr && interval->IsValid() && interval->IntersectsRay(angle_rad);
-}
-
-
-/**@struct NecklaceElement
+/**@struct MapElement
  * @brief A region and its associated data for use in a necklace map.
  *
  * This element has a region, a numeric value that should be visualized in the necklace map, and a glyph used for this visualization.
@@ -68,7 +50,7 @@ bool NecklaceGlyph::IsValid() const
  * map.
  * @endparblock
  */
-NecklaceElement::NecklaceElement(const std::string& id)
+MapElement::MapElement(const std::string& id)
   : region(id), value(0), necklace(), glyph() {}
 
 /**@brief Construct a necklace region and data element from a region.
@@ -77,7 +59,7 @@ NecklaceElement::NecklaceElement(const std::string& id)
  * Note that necklace elements of a region without an ID are ignored when constructing the necklace map.
  * @endparblock
  */
-NecklaceElement::NecklaceElement(const Region& region)
+MapElement::MapElement(const Region& region)
   : region(region), value(0), necklace(), glyph() {}
 
 /**@brief Check whether the necklace element is valid.
@@ -86,7 +68,7 @@ NecklaceElement::NecklaceElement(const Region& region)
  * @param strict whether the value must be strictly larger than 0.
  * @return whether the element is valid.
  */
-bool NecklaceElement::IsValid(const bool strict /*= true*/) const
+bool MapElement::IsValid(const bool strict /*= true*/) const
 {
   LOG(FATAL) << "Not implemented yet!";
 }

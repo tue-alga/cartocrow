@@ -46,7 +46,7 @@ namespace necklace_map
 /**@brief Apply the functor to a necklace element.
  * @param[in,out] element the necklace element.
  */
-void IntervalGenerator::operator()(NecklaceElement& element) const
+void IntervalGenerator::operator()(MapElement& element) const
 {
   Polygon extent;
   element.region.MakeSimple(extent);
@@ -57,9 +57,9 @@ void IntervalGenerator::operator()(NecklaceElement& element) const
 /**@brief Apply the functor to a collection of necklace elements.
  * @param[in,out] elements the necklace elements.
  */
-void IntervalGenerator::operator()(std::vector<NecklaceElement>& elements) const
+void IntervalGenerator::operator()(std::vector<MapElement>& elements) const
 {
-  for (NecklaceElement& element : elements)
+  for (MapElement& element : elements)
     (*this)(element);
 }
 
@@ -91,6 +91,7 @@ void IntervalCentroidGenerator::operator()
   const Point centroid = ComputeCentroid()(extent);
   const Vector centroid_offset = centroid - necklace->kernel();
 
+  // Note the special case where the centroid overlaps the necklace kernel.
   const Number angle_rad =
     centroid_offset.squared_length() == 0
     ? 0
