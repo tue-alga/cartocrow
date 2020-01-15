@@ -25,7 +25,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 09-10-2019
 
 int main(int argc, char **argv)
 {
-  initApplication(argc, argv, "Command line application that prints a logo formatted as an svg HTML element.");
+  InitApplication(argc, argv, "Command line application that prints a logo formatted as an svg HTML element.");
 
   std::cout << "<svg width='250' viewBox='0 0 200 85' xmlns='http://www.w3.org/2000/svg' version='1.1' bounds='[[52.356,4.945],[52.354,4.947]]'>";
   std::cout << "Sorry, your browser does not support the svg tag.";

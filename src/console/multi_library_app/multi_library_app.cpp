@@ -40,7 +40,7 @@ DEFINE_string(test_flag, "", "A test for the gflags dependency for parsing comma
 
 int main(int argc, char **argv)
 {
-  initApplication
+  InitApplication
   (
     argc,
     argv,

@@ -25,7 +25,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 09-10-2019
 
 int main(int argc, char **argv)
 {
-  initApplication(argc, argv, "Command line application that prints its arguments formatted as a div HTML element.", {"[args...]"});
+  InitApplication(argc, argv, "Command line application that prints its arguments formatted as a div HTML element.", {"[args...]"});
 
   std::cout << "<div>";
   std::cout << "<h1>Externally generated content</h1>";
