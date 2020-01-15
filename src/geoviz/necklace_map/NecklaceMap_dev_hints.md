@@ -1,5 +1,6 @@
 # Necklace Map
 # Notes based on paper (2015)
+<!-- TODO(tvl) remove this file... -->
 
 Input: set of polygons with values > 0, a necklace curve, and a necklace star-point (by default circle center if circular curve necklace).
 * It may be important to check any references used (i.e. identifiers that link polygon and value).
@@ -29,15 +30,20 @@ Multiple necklaces: compute per necklace. However, the algorithms do not check w
 "Fixed-Order, where an order for the symbols on the necklace is given". This suggests that the order is not determined by the algorithm itself. However, we may actually still want to do that.
 
 
+Necklace Element vectors versus Element feature vectors.
+* Pro element vectors: all features grouped and e.g. can be sorted together.
+* Pro feature vectors: can specify per feature whether it is constant.
+
 
 Notes on Java implementation
 * Entry point: FlowCircle.java applet.
   * This calls DrawPanel.java methods to refresh drawing and to initiate computations.
     * This calls Optimizer.java: main functional part (that implements the dynamic programming part).
-  * Immediately calculates Necklace Maps for all datasets in the maps directory (mainPanel.loadMap(curMap);).
+  * [not true:] Immediately calculates Necklace Maps for all datasets in the maps directory (mainPanel.loadMap(curMap);). [instead does this for this first map found.]
     * Note that "Map.loadMap()" loads in the data, but does not yet calculate the necklace maps. This is done in DrawPanel.setDataset(interval algorithm ID).
     * Algorithm.computeRanges() computes the valid intervals according to the specified Algorithm (AlgCentroid, or AlgWedge with some weighting factor).
     * Optimizer.computeOptSize(...) computes the scale factor. Note that the optimum is calculated per necklace, but then the minimum over all necklaces must be taken.
+      - Apparently, there is an error in the fixed order implementation of the optimum scaling factor. The 2015 paper is correct though.
     * Optimizer.optFixedOrder(...) computes the positions of the glyph centers. Note that the fixed order is based on the interval centers for the centroid intervals and based on the interval start for wedge intervals.
   * The applet allows multiple necklaces by adding "_#" to the polygon/value IDs (which are otherwise 2-character country/region identifiers).
   * Note that no check seems to be made whether the glyphs of different nacklaces overlap.
