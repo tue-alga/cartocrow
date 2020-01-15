@@ -28,7 +28,6 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 28-11-2019
 #include "geoviz/common/core_types.h"
 #include "geoviz/common/region.h"
 #include "geoviz/necklace_map/necklace.h"
-#include "geoviz/necklace_map/necklace_glyph.h"
 
 
 namespace geoviz
@@ -38,6 +37,8 @@ namespace necklace_map
 
 struct MapElement
 {
+  using Ptr = std::shared_ptr<MapElement>;
+
   explicit MapElement(const std::string& id);
   explicit MapElement(const Region& region);
 
@@ -47,8 +48,7 @@ struct MapElement
   Region region;
   Number value;  // Note that the value is correlated with the area of the glyph, so its squared radius.
 
-  std::shared_ptr<NecklaceType> necklace;
-  NecklaceGlyph glyph;
+  NecklaceGlyph::Ptr glyph;
 }; // struct MapElement
 
 } // namespace necklace_map
