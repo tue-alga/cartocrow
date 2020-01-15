@@ -23,6 +23,8 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 07-11-2019
 #ifndef GEOVIZ_NECKLACE_MAP_NECKLACE_H
 #define GEOVIZ_NECKLACE_MAP_NECKLACE_H
 
+#include <memory>
+
 #include "geoviz/common/core_types.h"
 
 
@@ -31,28 +33,32 @@ namespace geoviz
 namespace necklace_map
 {
 
-class NecklaceType
+class NecklaceShape
 {
  public:
+  using Ptr = std::shared_ptr<NecklaceShape>;
+
   virtual const Point& kernel() const = 0;
   virtual bool IntersectRay(const Number& angle_rad, Point& intersection) const = 0;
   virtual Box ComputeBoundingBox() const = 0;
+  virtual Number ComputeLength() const = 0;
 
   // TODO(tvl) should the necklace contain methods for adapting the 1D solution to the 2D solution?
   // This would mainly come into play for Bezier necklaces. For impl: check the 30x for loop in the Java prototype code.
   // Another case would be when a Glyph contains the necklace center;
   // in this case, the scale factor should be reduced such that the glyph does not contain the necklace center
   // (could this cause recursive failure and if so, in which cases? This *may* actually prove scientifically interesting).
-}; // class NecklaceType
+}; // class NecklaceShape
 
 
-class CircleNecklace : public NecklaceType
+class CircleNecklace : public NecklaceShape
 {
  public:
   explicit CircleNecklace(const Circle& shape);
   const Point& kernel() const;
   bool IntersectRay(const Number& angle_rad, Point& intersection) const;
   Box ComputeBoundingBox() const;
+  Number ComputeLength() const;
 
  protected:
   Circle shape_;
@@ -71,17 +77,84 @@ class CurveNecklace : public CircleNecklace
 }; // class CurveNecklace
 
 
-class GenericNecklace : public NecklaceType
+class GenericNecklace : public NecklaceShape
 {
  public:
   const Point& getKernel() const;
   bool IntersectRay(const Number& angle_rad, Point& intersection) const;
   Box ComputeBoundingBox() const;
+  Number ComputeLength() const;
 
  private:
   Point kernel_;
-  std::vector<Point> points_;  // TODO(tvl) the geneic necklace will probably require different markers than just points.
+  std::vector<Point> points_;  // TODO(tvl) the generic necklace will probably require different markers than just points.
 }; // class GenericNecklace
+
+
+class NecklaceInterval
+{
+ public:
+  using Ptr = std::shared_ptr<NecklaceInterval>;
+
+  NecklaceInterval(const Number& angle_cw_rad, const Number& angle_ccw_rad);
+
+  const Number& angle_cw_rad() const;
+  const Number& angle_ccw_rad() const;
+
+  bool IsValid() const;
+
+  bool IntersectsRay(const Number& angle_rad) const;
+
+  virtual Number ComputeOrder() const = 0;
+
+ protected:
+  Number angle_cw_rad_; // Internally, this angle is adjusted to be in the range [0, 2*pi).
+  Number angle_ccw_rad_; // For convenience, this angle is adjusted to be in the range [angle_from_rad, angle_from_rad+2*pi).
+}; // class NecklaceInterval
+
+
+class IntervalCentroid : public NecklaceInterval
+{
+ public:
+  IntervalCentroid(const Number& angle_cw_rad, const Number& angle_ccw_rad);
+
+  Number ComputeOrder() const;  // Order based on centroid.
+}; // class IntervalCentroid
+
+
+class IntervalWedge : public NecklaceInterval
+{
+ public:
+  IntervalWedge(const Number& angle_cw_rad, const Number& angle_ccw_rad);
+
+  Number ComputeOrder() const;  // Order based on begin.
+}; // class IntervalWedge
+
+
+struct Necklace
+{
+  using Ptr = std::shared_ptr<Necklace>;
+
+  Necklace(const NecklaceShape::Ptr& shape);
+
+  NecklaceShape::Ptr shape;
+}; // struct Necklace
+
+
+struct NecklaceGlyph  // TODO(tvl) rename glyph => bead (including all derived types and methods).
+{
+  using Ptr = std::shared_ptr<NecklaceGlyph>;
+
+  NecklaceGlyph(const Necklace::Ptr necklace);
+
+  bool IsValid() const;
+
+  Necklace::Ptr necklace;
+  NecklaceInterval::Ptr interval;  // TODO(tvl) rename feasible.
+  Number angle_rad;
+  Number angle_min_rad;  // TODO(tvl) move out of glyph into glyph-scaler-element...
+  Number angle_max_rad;
+}; // struct NecklaceGlyph
 
 } // namespace necklace_map
 } // namespace geoviz
