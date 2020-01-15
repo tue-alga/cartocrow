@@ -1,4 +1,4 @@
-# GeoViz code library
+# GeoViz README
 
 This library is a minimal (dummy) C++ library meant to demonstrate functionality that can be called from a website and return new content for that website.
 Note that this implementation depends on quick processing times. Heavier processing may take longer than the allowed response delay, in which case more complex processing control may be required.
