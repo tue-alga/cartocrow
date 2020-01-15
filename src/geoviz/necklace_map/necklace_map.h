@@ -29,13 +29,13 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-2019
 
 #include "geoviz/common/core_types.h"
 #include "geoviz/common/region.h"
+#include "geoviz/necklace_map/glyph_scaler.h"
 #include "geoviz/necklace_map/interval_generator.h"
 #include "geoviz/necklace_map/necklace.h"
 #include "geoviz/necklace_map/map_element.h"
 
 
-// TODO(tvl) this should probably end up as forwarding file, to functional parts that may each have their own subdirectory...
-// However, it should probably also contain functionality for running 'the pipeline'.
+// TODO(tvl) this should probably end up as forwarding file, to functional parts that may each have their own subdirectory... However, it should probably also contain functionality for running 'the full pipeline'.
 
 
 namespace geoviz
@@ -43,29 +43,7 @@ namespace geoviz
 namespace necklace_map
 {
 
-struct GlyphScaler
-{
-  GlyphScaler(const Number& buffer);
 
-  void operator()
-  (
-    const std::vector<NecklaceInterval>& intervals,
-    const std::vector<Number>& values,
-    Number& scale_factor
-  ) const;
-
-  void ComputeRadius(const Number& value, const Number& scale_factor, Number& radius) const;
-
-  const Number& buffer;  // Minimum distance between two glyphs (while determining scale factor, the buffer is added to s*sqrt(z) for the glyph radius).
-  // TODO(tvl) check >= 0, design decent max (should depend on number of glyphs and should at the very least be half the necklace length).
-}; // struct GlyphScaler
-
-
-
-
-// Add a note on multiple necklaces that the different necklaces may generate overlapping glyphs;
-// these can often be corrected by manually tuning the buffer and attraction-repulsion parameters.
-// We don't fix this, or even check for occurrence of overlapping glyphs.
 
 struct GlyphPositioner
 {
