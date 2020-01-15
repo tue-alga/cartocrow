@@ -43,20 +43,16 @@ namespace detail
 
 class NecklaceMapSvgVisitor : public SvgVisitor
 {
- public:
-  using NecklaceType = geoviz::necklace_map::NecklaceType;
-  using MapElement = geoviz::necklace_map::MapElement;
-
-  using NecklaceTypePtr = std::shared_ptr<NecklaceType>;
-
  private:
+  using MapElement = necklace_map::MapElement;
+  using Necklace = necklace_map::Necklace;
   using LookupTable = std::unordered_map<std::string, size_t>;
 
  public:
   NecklaceMapSvgVisitor
   (
-    std::vector<MapElement>& elements,
-    std::vector<NecklaceTypePtr>& necklaces,
+    std::vector<necklace_map::MapElement::Ptr>& elements,
+    std::vector<necklace_map::Necklace::Ptr>& necklaces,
     const bool strict_validity = true
   );
 
@@ -81,9 +77,9 @@ class NecklaceMapSvgVisitor : public SvgVisitor
     const std::string& style
   );
 
-  std::vector<MapElement>& elements_;
+  std::vector<MapElement::Ptr>& elements_;
   std::vector<std::string> necklace_ids_;
-  std::vector<NecklaceTypePtr>& necklaces_;
+  std::vector<Necklace::Ptr>& necklaces_;
 
   LookupTable id_to_region_index_;
   LookupTable id_to_necklace_index_;

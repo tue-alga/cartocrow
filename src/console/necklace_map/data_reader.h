@@ -37,19 +37,16 @@ namespace geoviz
 
 class DataReader : public detail::TableReader
 {
- public:
-  using MapElement = geoviz::necklace_map::MapElement;
-
  private:
   using LookupTable = std::unordered_map<std::string, size_t>;
 
  public:
-  explicit DataReader(std::vector<MapElement>& elements);
+  explicit DataReader(std::vector<necklace_map::MapElement::Ptr>& elements);
 
   bool Read(const std::string& filename, const std::string& value_name);
 
  private:
-  std::vector<MapElement>& elements_;
+  std::vector<necklace_map::MapElement::Ptr>& elements_;
 
   LookupTable id_to_element_index_;
 }; // class DataReader

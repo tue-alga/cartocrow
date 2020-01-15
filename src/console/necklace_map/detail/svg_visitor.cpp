@@ -65,16 +65,18 @@ constexpr const char* kCommandsRestrictionArcNecklace = "LlZzCcQqSsTt";
  */
 NecklaceMapSvgVisitor::NecklaceMapSvgVisitor
 (
-  std::vector<MapElement>& elements,
-  std::vector<NecklaceTypePtr>& necklaces,
+  std::vector<necklace_map::MapElement::Ptr>& elements,
+  std::vector<necklace_map::Necklace::Ptr>& necklaces,
   const bool strict_validity /*= true*/
 ) : SvgVisitor(), elements_(elements), necklaces_(necklaces), strict_validity_(strict_validity)
 {
   // Add the regions to the lookup table, while checking for duplicates.
-  for (const MapElement& element : elements_)
+  for (const MapElement::Ptr& element : elements_)
   {
+    CHECK_NOTNULL(element);
+
     const size_t next_index = id_to_region_index_.size();
-    const size_t n = id_to_region_index_.insert({element.region.id, next_index}).first->second;
+    const size_t n = id_to_region_index_.insert({element->region.id, next_index}).first->second;
     CHECK_EQ(next_index, n);
   }
   necklace_ids_.resize(elements_.size());
@@ -91,6 +93,7 @@ bool NecklaceMapSvgVisitor::VisitExit(const tinyxml2::XMLElement& element)
   {
     return FinalizeSvg();
   }
+  return true;
 }
 
 bool
@@ -167,13 +170,16 @@ bool NecklaceMapSvgVisitor::FinalizeSvg()
   CHECK_EQ(elements_.size(), necklace_ids_.size());
   for (size_t n = 0; n < elements_.size(); ++n)
   {
-    MapElement& element = elements_[n];
+    MapElement::Ptr& element = elements_[n];
+    CHECK_NOTNULL(element);
+
     const std::string& necklace_id = necklace_ids_[n];
     LookupTable::const_iterator index_iter = id_to_necklace_index_.find(necklace_id);
     CHECK(index_iter != id_to_necklace_index_.end());
 
-    element.necklace = necklaces_[index_iter->second];
+    element->glyph = std::make_shared<necklace_map::NecklaceGlyph>(necklaces_[index_iter->second]);
   }
+  return true;
 }
 
 /**@brief Add a circle necklace.
@@ -189,7 +195,13 @@ bool NecklaceMapSvgVisitor::AddCircleNecklace(const std::string& id, const Point
   const size_t n = id_to_necklace_index_.insert({id, next_index}).first->second;
   CHECK_EQ(next_index, n);
 
-  necklaces_.push_back(std::make_shared<geoviz::necklace_map::CircleNecklace>(Circle(center, radius * radius)));
+  necklaces_.push_back
+  (
+    std::make_shared<necklace_map::Necklace>
+    (
+    std::make_shared<necklace_map::CircleNecklace>(Circle(center, radius * radius))
+    )
+  );
   return true;
 }
 
@@ -238,8 +250,9 @@ bool NecklaceMapSvgVisitor::AddMapElement
 {
   // Get the region with the given ID, or create a new one if it does not yet exist.
   const size_t n = id_to_region_index_.insert({id, elements_.size()}).first->second;
-  if (n == elements_.size()) elements_.emplace_back(id);
-  Region& region = elements_[n].region;
+  if (n == elements_.size()) elements_.emplace_back(std::make_shared<necklace_map::MapElement>(id));
+  CHECK_NOTNULL(elements_[n]);
+  Region& region = elements_[n]->region;
   CHECK_EQ(id, region.id);
 
   // Interpret the commands as a region.

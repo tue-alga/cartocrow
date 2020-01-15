@@ -44,8 +44,11 @@ namespace geoviz
  * @param regions the collection in which to collect the regions in the input.
  * @param necklace where to place the necklace.
  */
-SvgReader::SvgReader(std::vector<MapElement>& elements, std::vector<NecklaceTypePtr>& necklaces)
-  : visitor_(elements, necklaces, FLAGS_strict_validity) {}
+SvgReader::SvgReader
+(
+  std::vector<necklace_map::MapElement::Ptr>& elements,
+  std::vector<necklace_map::Necklace::Ptr>& necklaces
+) : visitor_(elements, necklaces, FLAGS_strict_validity) {}
 
 /**@brief Read necklace map SVG input from a file.
  * @param filename the file to read.

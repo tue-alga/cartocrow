@@ -42,14 +42,15 @@ constexpr const char* kNameId = "id";
 /**@brief Construct a file reader for necklace map values.
  * @param elements the necklace map elements associated with the values.
  */
-DataReader::DataReader(std::vector<MapElement>& elements)
+DataReader::DataReader(std::vector<necklace_map::MapElement::Ptr>& elements)
   : detail::TableReader(), elements_(elements)
 {
   // Add the elements to the lookup table, while checking for duplicates.
-  for (const MapElement& element : elements_)
+  for (const necklace_map::MapElement::Ptr& element : elements_)
   {
+    CHECK_NOTNULL(element);
     const size_t next_index = id_to_element_index_.size();
-    const size_t n = id_to_element_index_.insert({element.region.id, next_index}).first->second;
+    const size_t n = id_to_element_index_.insert({element->region.id, next_index}).first->second;
     CHECK_EQ(next_index, n);
   }
 }
@@ -100,11 +101,12 @@ bool DataReader::Read(const std::string& filename, const std::string& value_name
 
     // Get the region with the given ID, or create a new one if it does not yet exist.
     const size_t e = id_to_element_index_.insert({id, elements_.size()}).first->second;
-    if (e == elements_.size()) elements_.emplace_back(id);
-    MapElement& element = elements_[e];
-    CHECK_EQ(id, element.region.id);
+    if (e == elements_.size()) elements_.emplace_back(std::make_shared<necklace_map::MapElement>(id));
+    necklace_map::MapElement::Ptr& element = elements_[e];
+    CHECK_NOTNULL(element);
+    CHECK_EQ(id, element->region.id);
 
-    element.value = column_value->values[v];
+    element->value = column_value->values[v];
   }
 
   return true;
