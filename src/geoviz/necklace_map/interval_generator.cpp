@@ -33,7 +33,7 @@ namespace necklace_map
 {
 
 /**@struct IntervalGenerator
- * @brief An interface for a functor that generates feasible intervals for necklace glyph placement.
+ * @brief An interface for a functor to generate feasible intervals for necklace glyph placement.
  */
 
 /**@fn virtual void IntervalGenerator::operator()(const Polygon& extent, const std::shared_ptr<NecklaceType>& necklace, std::shared_ptr<NecklaceInterval>& interval) const = 0
@@ -46,26 +46,31 @@ namespace necklace_map
 /**@brief Apply the functor to a necklace element.
  * @param[in,out] element the necklace element.
  */
-void IntervalGenerator::operator()(MapElement& element) const
+void IntervalGenerator::operator()(MapElement::Ptr& element) const
 {
-  Polygon extent;
-  element.region.MakeSimple(extent);
+  CHECK_NOTNULL(element);
+  CHECK_NOTNULL(element->glyph);
+  if (element->value <= 0)
+    return;
 
-  (*this)(extent, element.necklace, element.glyph.interval);
+  Polygon extent;
+  element->region.MakeSimple(extent);
+
+  (*this)(extent, element->glyph->necklace, element->glyph->interval);
 }
 
 /**@brief Apply the functor to a collection of necklace elements.
  * @param[in,out] elements the necklace elements.
  */
-void IntervalGenerator::operator()(std::vector<MapElement>& elements) const
+void IntervalGenerator::operator()(std::vector<MapElement::Ptr>& elements) const
 {
-  for (MapElement& element : elements)
+  for (MapElement::Ptr& element : elements)
     (*this)(element);
 }
 
 
 /**@struct IntervalCentroidGenerator
- * @brief A functor that generates feasible centroid intervals for necklace glyph placement.
+ * @brief A functor to generate feasible centroid intervals for necklace glyph placement.
  *
  * The generated centroid interval is the intersection of the necklace and a wedge @f$W@f$, such that the apex of @f$W@f$ is the necklace kernel, the inner bisector of @f$W@f$ intersects the centroid of a map region, and the inner angle of @f$W@f$ is twice some predefined angle.
  *
@@ -84,12 +89,12 @@ IntervalCentroidGenerator::IntervalCentroidGenerator(const Number& buffer_rad)
 void IntervalCentroidGenerator::operator()
 (
   const Polygon& extent,
-  const std::shared_ptr<NecklaceType>& necklace,
-  std::shared_ptr<NecklaceInterval>& interval
+  const Necklace::Ptr& necklace,
+  NecklaceInterval::Ptr& interval
 ) const
 {
   const Point centroid = ComputeCentroid()(extent);
-  const Vector centroid_offset = centroid - necklace->kernel();
+  const Vector centroid_offset = centroid - necklace->shape->kernel();
 
   // Note the special case where the centroid overlaps the necklace kernel.
   const Number angle_rad =
@@ -97,26 +102,26 @@ void IntervalCentroidGenerator::operator()
     ? 0
     : std::atan2(centroid_offset.y(), centroid_offset.x());
 
-  interval = std::make_shared<IntervalCentroid>(necklace, angle_rad - buffer_rad_, angle_rad + buffer_rad_);
+  interval = std::make_shared<IntervalCentroid>(angle_rad - buffer_rad_, angle_rad + buffer_rad_);  // TODO(tvl) can I replace this by a return value or will the object be destroyed before being assigned to the other one?
 }
 
 
 /**@struct IntervalWedgeGenerator
- * @brief A functor that generates feasible wedge intervals for necklace glyph placement.
+ * @brief A functor to generate feasible wedge intervals for necklace glyph placement.
  *
  * The generated wedge interval is the intersection of the necklace and a wedge @f$W@f$, such that the apex of @f$W@f$ is the necklace kernel, @f$W@f$ contains a map region, and the inner angle of @f$W@f$ is minimal.
  *
  * If the region contains the necklace kernel, the wedge interval would cover the complete plane. In this case, a centroid interval in generated instead.
  */
 
-//TODO(tvl) implement 'toggle' to always use centroid interval for empty-interval regions (e.g. point regions).
 void IntervalWedgeGenerator::operator()
 (
   const Polygon& extent,
-  const std::shared_ptr<NecklaceType>& necklace,
-  std::shared_ptr<NecklaceInterval>& interval
+  const Necklace::Ptr& necklace,
+  NecklaceInterval::Ptr& interval
 ) const
 {
+  //TODO(tvl) implement 'toggle' to always use centroid interval for empty-interval regions (e.g. point regions).
   LOG(FATAL) << "Not implemented yet.";
 }
 

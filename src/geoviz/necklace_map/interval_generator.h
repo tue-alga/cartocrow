@@ -41,13 +41,13 @@ struct IntervalGenerator
   virtual void operator()
   (
     const Polygon& extent,
-    const std::shared_ptr<NecklaceType>& necklace,
-    std::shared_ptr<NecklaceInterval>& interval
+    const Necklace::Ptr& necklace,
+    NecklaceInterval::Ptr& interval
   ) const = 0;
 
-  void operator()(MapElement& element) const;
+  void operator()(MapElement::Ptr& element) const;
 
-  void operator()(std::vector<MapElement>& elements) const;
+  void operator()(std::vector<MapElement::Ptr>& elements) const;
 }; // struct IntervalGenerator
 
 
@@ -58,8 +58,8 @@ struct IntervalCentroidGenerator : public IntervalGenerator
   void operator()
   (
     const Polygon& extent,
-    const std::shared_ptr<NecklaceType>& necklace,
-    std::shared_ptr<NecklaceInterval>& interval
+    const Necklace::Ptr& necklace,
+    NecklaceInterval::Ptr& interval
   ) const;
 
  private:
@@ -72,8 +72,8 @@ struct IntervalWedgeGenerator : public IntervalGenerator
   void operator()
   (
     const Polygon& extent,
-    const std::shared_ptr<NecklaceType>& necklace,
-    std::shared_ptr<NecklaceInterval>& interval
+    const Necklace::Ptr& necklace,
+    NecklaceInterval::Ptr& interval
   ) const;
 }; // struct IntervalWedgeGenerator
 
