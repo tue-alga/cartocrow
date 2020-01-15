@@ -27,7 +27,8 @@ body {
 }
 
 /* Look and feel. */
-body {
+body,
+.aga-theme-main {
   background: #ffffff;
   color: #333333;
   font: 0.875em 'Bitter', serif;
