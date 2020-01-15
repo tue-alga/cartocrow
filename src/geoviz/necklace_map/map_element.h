@@ -27,7 +27,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 28-11-2019
 
 #include "geoviz/common/core_types.h"
 #include "geoviz/common/region.h"
-#include "geoviz/necklace_map/necklace.h"
+#include "geoviz/necklace_map/necklace_glyph.h"
 
 
 namespace geoviz
@@ -46,6 +46,7 @@ struct MapElement
   bool IsValid(const bool strict = true) const;
 
   Region region;
+
   Number value;  // Note that the value is correlated with the area of the glyph, so its squared radius.
 
   NecklaceGlyph::Ptr glyph;

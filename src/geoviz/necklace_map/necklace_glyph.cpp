@@ -17,10 +17,11 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-12-2019
+Created by tvl (t.vanlankveld@esciencecenter.nl) on 15-01-2020
 */
 
 #include "necklace_glyph.h"
+
 
 namespace geoviz
 {
@@ -34,6 +35,11 @@ namespace necklace_map
  *
  * While glyphs could have various shapes, we currently only support disks.
  */
+
+/**@brief Construct a necklace glyph.
+ */
+NecklaceGlyph::NecklaceGlyph()
+  : interval(), angle_rad(0), angle_min_rad(0), angle_max_rad(0) {}
 
 /**@brief Check whether the glyph is valid.
  *

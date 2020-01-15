@@ -43,29 +43,29 @@ namespace necklace_map
  * @param interval the feasible interval for placing the necklace glyph of the region on the necklace.
  */
 
-/**@brief Apply the functor to a necklace element.
- * @param[in,out] element the necklace element.
+/**@brief Apply the functor to a necklace.
+ * @param[in,out] necklace the necklace.
  */
-void IntervalGenerator::operator()(MapElement::Ptr& element) const
+void IntervalGenerator::operator()(Necklace::Ptr& necklace) const
 {
-  CHECK_NOTNULL(element);
-  CHECK_NOTNULL(element->glyph);
-  if (element->value <= 0)
-    return;
+  for (MapElement::Ptr& element : necklace->beads)
+  {
+    CHECK_NOTNULL(element);
 
-  Polygon extent;
-  element->region.MakeSimple(extent);
+    Polygon extent;
+    element->region.MakeSimple(extent);
 
-  (*this)(extent, element->glyph->necklace, element->glyph->interval);
+    element->glyph->interval = (*this)(extent, necklace);
+  }
 }
 
-/**@brief Apply the functor to a collection of necklace elements.
- * @param[in,out] elements the necklace elements.
+/**@brief Apply the functor to a collection of necklaces.
+ * @param[in,out] necklaces the necklaces.
  */
-void IntervalGenerator::operator()(std::vector<MapElement::Ptr>& elements) const
+void IntervalGenerator::operator()(std::vector<Necklace::Ptr>& necklaces) const
 {
-  for (MapElement::Ptr& element : elements)
-    (*this)(element);
+  for (Necklace::Ptr& necklace : necklaces)
+    (*this)(necklace);
 }
 
 
@@ -83,14 +83,13 @@ void IntervalGenerator::operator()(std::vector<MapElement::Ptr>& elements) const
  * In other words, this is the angle between the inner bisector of the wedge and either boundary ray of the wedge.
  * @endparblock
  */
-IntervalCentroidGenerator::IntervalCentroidGenerator(const Number& buffer_rad)
-  : IntervalGenerator(), buffer_rad_(buffer_rad) {}
+IntervalCentroidGenerator::IntervalCentroidGenerator(const Number& length_rad)
+  : IntervalGenerator(), half_length_rad_(0.5 * length_rad) {}
 
-void IntervalCentroidGenerator::operator()
+NecklaceInterval::Ptr IntervalCentroidGenerator::operator()
 (
   const Polygon& extent,
-  const Necklace::Ptr& necklace,
-  NecklaceInterval::Ptr& interval
+  const Necklace::Ptr& necklace
 ) const
 {
   const Point centroid = ComputeCentroid()(extent);
@@ -102,7 +101,7 @@ void IntervalCentroidGenerator::operator()
     ? 0
     : std::atan2(centroid_offset.y(), centroid_offset.x());
 
-  interval = std::make_shared<IntervalCentroid>(angle_rad - buffer_rad_, angle_rad + buffer_rad_);  // TODO(tvl) can I replace this by a return value or will the object be destroyed before being assigned to the other one?
+  return std::make_shared<IntervalCentroid>(angle_rad - half_length_rad_, angle_rad + half_length_rad_);
 }
 
 
@@ -114,11 +113,10 @@ void IntervalCentroidGenerator::operator()
  * If the region contains the necklace kernel, the wedge interval would cover the complete plane. In this case, a centroid interval in generated instead.
  */
 
-void IntervalWedgeGenerator::operator()
+NecklaceInterval::Ptr IntervalWedgeGenerator::operator()
 (
   const Polygon& extent,
-  const Necklace::Ptr& necklace,
-  NecklaceInterval::Ptr& interval
+  const Necklace::Ptr& necklace
 ) const
 {
   //TODO(tvl) implement 'toggle' to always use centroid interval for empty-interval regions (e.g. point regions).

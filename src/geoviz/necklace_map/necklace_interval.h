@@ -26,7 +26,6 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 09-12-2019
 #include <memory>
 
 #include "geoviz/common/core_types.h"
-#include "geoviz/necklace_map/necklace.h"
 
 namespace geoviz
 {
@@ -36,14 +35,10 @@ namespace necklace_map
 class NecklaceInterval
 {
  public:
-  NecklaceInterval
-  (
-    const std::shared_ptr<NecklaceType>& necklace,
-    const Number& angle_cw_rad,
-    const Number& angle_ccw_rad
-  );
+  using Ptr = std::shared_ptr<NecklaceInterval>;
 
-  const std::shared_ptr<NecklaceType>& necklace() const;
+  NecklaceInterval(const Number& angle_cw_rad, const Number& angle_ccw_rad);
+
   const Number& angle_cw_rad() const;
   const Number& angle_ccw_rad() const;
 
@@ -54,7 +49,6 @@ class NecklaceInterval
   virtual Number ComputeOrder() const = 0;
 
  protected:
-  std::shared_ptr<NecklaceType> necklace_;
   Number angle_cw_rad_; // Internally, this angle is adjusted to be in the range [0, 2*pi).
   Number angle_ccw_rad_; // For convenience, this angle is adjusted to be in the range [angle_from_rad, angle_from_rad+2*pi).
 }; // class NecklaceInterval
@@ -63,29 +57,18 @@ class NecklaceInterval
 class IntervalCentroid : public NecklaceInterval
 {
  public:
-  IntervalCentroid
-  (
-    const std::shared_ptr<NecklaceType>& necklace,
-    const Number& angle_cw_rad,
-    const Number& angle_ccw_rad
-  );
+  IntervalCentroid(const Number& angle_cw_rad, const Number& angle_ccw_rad);
 
-  Number ComputeOrder() const; // Order based on centroid.
+  Number ComputeOrder() const;  // Order based on centroid.
 }; // class IntervalCentroid
 
 
 class IntervalWedge : public NecklaceInterval
 {
  public:
-  IntervalWedge
-  (
-    const std::shared_ptr<NecklaceType>& necklace,
-    const Number& angle_cw_rad,
-    const Number& angle_ccw_rad
-  );
+  IntervalWedge(const Number& angle_cw_rad, const Number& angle_ccw_rad);
 
-  // Order based on begin.
-  Number ComputeOrder() const;
+  Number ComputeOrder() const;  // Order based on begin.
 }; // class IntervalWedge
 
 } // namespace necklace_map

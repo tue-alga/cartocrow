@@ -30,6 +30,7 @@ namespace geoviz
 namespace necklace_map
 {
 
+
 /**@class NecklaceInterval
  * @brief A connected part of a necklace.
  */
@@ -43,17 +44,19 @@ namespace necklace_map
  * If the rays are identical, the interval covers the full necklace. This should not occur in practice.
  *
  * Note that the interval includes the intersections of the wedge boundaries with the necklace, i.e. the interval is closed.
- * @param necklace the necklace containing the interval.
  * @param angle_cw_rad the clockwise endpoint of the interval.
  * @param angle_ccw_rad the counterclockwise endpoint of the interval.
  */
-NecklaceInterval::NecklaceInterval
-(
-  const std::shared_ptr<NecklaceType>& necklace,
-  const Number& angle_cw_rad,
-  const Number& angle_ccw_rad
-) : necklace_(necklace), angle_cw_rad_(angle_cw_rad), angle_ccw_rad_(angle_ccw_rad)
+NecklaceInterval::NecklaceInterval(const Number& angle_cw_rad, const Number& angle_ccw_rad)
+  : angle_cw_rad_(angle_cw_rad), angle_ccw_rad_(angle_ccw_rad)
 {
+  if (angle_cw_rad_ == angle_ccw_rad_)
+  {
+    // If the interval covers the whole necklace, we set the angles to 0 for convenience.
+    angle_cw_rad_ = angle_ccw_rad_ = 0;
+    return;
+  }
+
   while (angle_cw_rad_ < 0)
     angle_cw_rad_ += M_2xPI;
   while (M_2xPI <= angle_cw_rad_)
@@ -64,11 +67,6 @@ NecklaceInterval::NecklaceInterval
   while (angle_cw_rad_ + M_2xPI < angle_ccw_rad_)
     angle_ccw_rad_ -= M_2xPI;
 }
-
-/**@brief The necklace containing the interval.
- * @return the necklace.
- */
-const std::shared_ptr<NecklaceType>& NecklaceInterval::necklace() const { return necklace_; }
 
 /**@brief The angle where the interval ends when traversing the interval in clockwise direction.
  *
@@ -94,7 +92,6 @@ const Number& NecklaceInterval::angle_ccw_rad() const { return angle_ccw_rad_; }
 bool NecklaceInterval::IsValid() const
 {
   return
-    necklace_ != nullptr &&
     0 <= angle_cw_rad_ && angle_cw_rad_ < M_2xPI &&
     angle_cw_rad_ <= angle_ccw_rad_ && angle_ccw_rad_ < angle_cw_rad_ + M_2xPI;
 }
@@ -115,15 +112,6 @@ bool NecklaceInterval::IntersectsRay(const Number& angle_rad) const
     (angle_rad < angle_cw_rad_ ? angle_rad + M_2xPI : angle_rad) < angle_ccw_rad_;
 }
 
-/**@fn Number NecklaceInterval::ComputeOrder() const
- * @brief Generate a number that can be used to impose a strict weak ordering on the
- * necklace intervals.
- *
- * If this returns the same value for multiple intervals, these can be placed in any
- * order relative to each other, although in practice they will be ordered as
- * encountered.
- */
-
 
 /**@class IntervalCentroid
  * @brief A centroid-based necklace interval.
@@ -138,16 +126,11 @@ bool NecklaceInterval::IntersectsRay(const Number& angle_rad) const
  * If the rays are identical, the interval covers the full necklace. This should not occur in practice.
  *
  * Note that the interval includes the intersections of the wedge boundaries with the necklace, i.e. the interval is closed.
- * @param necklace the necklace containing the interval.
  * @param angle_cw_rad the clockwise endpoint of the interval.
  * @param angle_ccw_rad the counterclockwise endpoint of the interval.
  */
-IntervalCentroid::IntervalCentroid
-(
-  const std::shared_ptr<NecklaceType>& necklace,
-  const Number& angle_cw_rad,
-  const Number& angle_ccw_rad
-) : NecklaceInterval(necklace, angle_cw_rad, angle_ccw_rad) {}
+IntervalCentroid::IntervalCentroid(const Number& angle_cw_rad, const Number& angle_ccw_rad)
+  : NecklaceInterval(angle_cw_rad, angle_ccw_rad) {}
 
 Number IntervalCentroid::ComputeOrder() const
 {
@@ -172,16 +155,11 @@ Number IntervalCentroid::ComputeOrder() const
  * If the rays are identical, the interval covers the full necklace. This should not occur in practice.
  *
  * Note that the interval includes the intersections of the wedge boundaries with the necklace, i.e. the interval is closed.
- * @param necklace the necklace containing the interval.
  * @param angle_cw_rad the clockwise endpoint of the interval.
  * @param angle_ccw_rad the counterclockwise endpoint of the interval.
  */
-IntervalWedge::IntervalWedge
-(
-  const std::shared_ptr<NecklaceType>& necklace,
-  const Number& angle_cw_rad,
-  const Number& angle_ccw_rad
-) : NecklaceInterval(necklace, angle_cw_rad, angle_ccw_rad) {}
+IntervalWedge::IntervalWedge(const Number& angle_cw_rad, const Number& angle_ccw_rad)
+  : NecklaceInterval(angle_cw_rad, angle_ccw_rad) {}
 
 Number IntervalWedge::ComputeOrder() const
 {

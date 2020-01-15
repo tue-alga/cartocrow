@@ -17,7 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-12-2019
+Created by tvl (t.vanlankveld@esciencecenter.nl) on 15-01-2020
 */
 
 #ifndef GEOVIZ_NECKLACE_MAP_NECKLACE_GLYPH_H
@@ -34,12 +34,18 @@ namespace geoviz
 namespace necklace_map
 {
 
-struct NecklaceGlyph
+struct NecklaceGlyph  // TODO(tvl) rename glyph => bead (including all derived types and methods).
 {
+  using Ptr = std::shared_ptr<NecklaceGlyph>;
+
+  NecklaceGlyph();
+
   bool IsValid() const;
 
-  std::shared_ptr<NecklaceInterval> interval;
+  NecklaceInterval::Ptr interval;  // TODO(tvl) rename feasible.
   Number angle_rad;
+  Number angle_min_rad;  // TODO(tvl) move out of glyph into glyph-scaler-element...
+  Number angle_max_rad;
 }; // struct NecklaceGlyph
 
 } // namespace necklace_map

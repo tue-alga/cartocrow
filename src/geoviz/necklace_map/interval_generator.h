@@ -28,7 +28,6 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 05-12-2019
 
 #include "geoviz/common/core_types.h"
 #include "geoviz/necklace_map/necklace.h"
-#include "geoviz/necklace_map/map_element.h"
 
 
 namespace geoviz
@@ -38,42 +37,39 @@ namespace necklace_map
 
 struct IntervalGenerator
 {
-  virtual void operator()
+  virtual NecklaceInterval::Ptr operator()
   (
     const Polygon& extent,
-    const Necklace::Ptr& necklace,
-    NecklaceInterval::Ptr& interval
+    const Necklace::Ptr& necklace
   ) const = 0;
 
-  void operator()(MapElement::Ptr& element) const;
+  void operator()(Necklace::Ptr& necklace) const;
 
-  void operator()(std::vector<MapElement::Ptr>& elements) const;
+  void operator()(std::vector<Necklace::Ptr>& necklaces) const;
 }; // struct IntervalGenerator
 
 
 struct IntervalCentroidGenerator : public IntervalGenerator
 {
-  IntervalCentroidGenerator(const Number& buffer_rad);
+  IntervalCentroidGenerator(const Number& length_rad);
 
-  void operator()
+  NecklaceInterval::Ptr operator()
   (
     const Polygon& extent,
-    const Necklace::Ptr& necklace,
-    NecklaceInterval::Ptr& interval
+    const Necklace::Ptr& necklace
   ) const;
 
  private:
-  Number buffer_rad_;
+  Number half_length_rad_;
 }; // struct IntervalCentroidGenerator
 
 
 struct IntervalWedgeGenerator : public IntervalGenerator
 {
-  void operator()
+  NecklaceInterval::Ptr operator()
   (
     const Polygon& extent,
-    const Necklace::Ptr& necklace,
-    NecklaceInterval::Ptr& interval
+    const Necklace::Ptr& necklace
   ) const;
 }; // struct IntervalWedgeGenerator
 

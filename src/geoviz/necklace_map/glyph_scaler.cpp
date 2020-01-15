@@ -60,9 +60,23 @@ GlyphScaler::GlyphScaler(const Number& min_separation /*= 0*/)
 /**@fn virtual Number GlyphScaler::operator()(const std::vector<MapElement::Ptr>& elements, NecklaceOrderMap& ordering) const = 0
  * @brief Apply the scaler to a collection of elements.
  * @param elements the elements for which to determine the optimal scale factor.
- * @param[out] ordering the ordering of the indices of the elements (per necklace) that resulted in the optimal scale factor.
  * @return the optimal scale factor.
  */
+
+Number GlyphScaler::operator()(std::vector<Necklace::Ptr>& necklaces) const
+{
+  // Determine the optimal scale factor per necklace;
+  // the global optimum is the smallest of these.
+  Number scale_factor = -1;
+  for (Necklace::Ptr& necklace : necklaces)
+  {
+    const Number necklace_scale_factor = (*this)(necklace);
+
+    if (scale_factor < 0 || necklace_scale_factor < scale_factor)
+      scale_factor = necklace_scale_factor;
+  }
+  return scale_factor;
+}
 
 
 /**@struct GlyphScalerFixedOrder
@@ -89,67 +103,35 @@ GlyphScalerFixedOrder::GlyphScalerFixedOrder(const Number& min_separation /*= 0*
   : GlyphScaler(min_separation)
 {}
 
-Number GlyphScalerFixedOrder::operator()(const std::vector<MapElement::Ptr>& elements, NecklaceOrderMap& ordering) const
+Number GlyphScalerFixedOrder::operator()(Necklace::Ptr& necklace) const
 {
-  //TODO(tvl) constructing a sorted list of beads should be separated out, probably into separate class, or into the necklace class (?)
-  // Construct an ordering on the elements.
-  for (size_t e = 0; e < elements.size(); ++e)
+  for (const MapElement::Ptr& element : necklace->beads)
   {
-    // Ignore elements without a value.
-    const MapElement::Ptr& element = elements[e];
-    if (element->value <= 0)
-      continue;
-
     CHECK_NOTNULL(element);
     CHECK_NOTNULL(element->glyph);
-    CHECK_NOTNULL(element->glyph->necklace);
-
-    ordering[element->glyph->necklace].push_back(e);
   }
 
-  // Determine the optimal scale factor per necklace;
-  // the global optimum is the smallest of these.
-  Number scale_factor = -1;
-  for (NecklaceOrderMap::iterator order_iter = ordering.begin(); order_iter != ordering.end(); ++order_iter)
-  {
-    const Necklace::Ptr& necklace = order_iter->first;
-    Ordering& necklace_order = order_iter->second;
-
-    // Check whether the minimum separation can be enforced.
-    const Number total_separation = necklace_order.size() * dilation_ * 2;
-    CHECK_LE(total_separation, necklace->shape->ComputeLength() / 2);  // At least half the circle is available for glyphs.
-
-    // Sort the elements by the clockwise extreme of their feasible interval.
-    std::sort
-    (
-      necklace_order.begin(),
-      necklace_order.end(),
-      [elements](const size_t& a, const size_t& b)
-      {
-        const MapElement::Ptr& elem_a = elements[a];
-        const MapElement::Ptr& elem_b = elements[b];
-        return elem_a->glyph->interval->angle_cw_rad() < elem_b->glyph->interval->angle_cw_rad();
-      }
-    );
-
-    // Per element add a node to the scaler.
-    const Number necklace_radius = necklace->shape->ComputeLength() / M_2xPI;
-    detail::FixedGlyphScaler scaler(necklace_radius, dilation_);
-    for (const size_t& e : order_iter->second)
+  // Sort the elements by the clockwise extreme of their feasible interval.
+  std::sort
+  (
+    necklace->beads.begin(),
+    necklace->beads.end(),
+    [](const MapElement::Ptr& a, const MapElement::Ptr& b)
     {
-      const MapElement::Ptr& element = elements[e];
-      scaler.AddNode(element);
+      return a->glyph->interval->angle_cw_rad() < b->glyph->interval->angle_cw_rad();
     }
+  );
 
-    // Determine the scale factor.
-    const Number necklace_scale_factor = scaler.OptimizeScaleFactor();
-    //TODO(tvl) add bisection search for true (valid) scale factor.
+  // Per element with a value greater than 0, add a node to the scaler.
+  const Number necklace_radius = necklace->shape->ComputeLength() / M_2xPI;
+  detail::FixedGlyphScaler scaler(necklace_radius, dilation_);
+  for (const MapElement::Ptr& element : necklace->beads)
+    if (0 < element->value)
+      scaler.AddNode(element);
 
-    if (scale_factor < 0 || necklace_scale_factor < scale_factor)
-      scale_factor = necklace_scale_factor;
-  }
-
-  return scale_factor;
+  // Determine the scale factor.
+  return scaler.OptimizeScaleFactor();
+  //TODO(tvl) add bisection search for true (valid) scale factor.
 }
 
 } // namespace necklace_map

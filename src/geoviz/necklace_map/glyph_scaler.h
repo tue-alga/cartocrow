@@ -27,7 +27,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 28-11-2019
 #include <vector>
 
 #include "geoviz/common/core_types.h"
-#include "geoviz/necklace_map/map_element.h"
+#include "geoviz/necklace_map/necklace.h"
 
 
 namespace geoviz
@@ -38,13 +38,12 @@ namespace necklace_map
 class GlyphScaler
 {
  public:
-  using Ordering = std::vector<size_t>;
-  using NecklaceOrderMap = std::unordered_map<Necklace::Ptr, Ordering>;
-
   explicit GlyphScaler(const Number& min_separation = 0);
 
   // Note that elements with value 0 will not be included in the ordering.
-  virtual Number operator()(const std::vector<MapElement::Ptr>& elements, NecklaceOrderMap& ordering) const = 0;
+  virtual Number operator()(Necklace::Ptr& necklace) const = 0;
+
+  Number operator()(std::vector<Necklace::Ptr>& necklaces) const;
 
  protected:
   Number dilation_;
@@ -56,7 +55,7 @@ class GlyphScalerFixedOrder : public GlyphScaler
  public:
   explicit GlyphScalerFixedOrder(const Number& min_separation = 0);
 
-  Number operator()(const std::vector<MapElement::Ptr>& elements, NecklaceOrderMap& ordering) const;
+  Number operator()(Necklace::Ptr& necklaces) const;
 }; // class GlyphScalerFixedOrder
 
 } // namespace necklace_map

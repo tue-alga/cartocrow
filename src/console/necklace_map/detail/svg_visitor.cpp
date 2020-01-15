@@ -177,7 +177,7 @@ bool NecklaceMapSvgVisitor::FinalizeSvg()
     LookupTable::const_iterator index_iter = id_to_necklace_index_.find(necklace_id);
     CHECK(index_iter != id_to_necklace_index_.end());
 
-    element->glyph = std::make_shared<necklace_map::NecklaceGlyph>(necklaces_[index_iter->second]);
+    necklaces_[index_iter->second]->beads.push_back(element);
   }
   return true;
 }
