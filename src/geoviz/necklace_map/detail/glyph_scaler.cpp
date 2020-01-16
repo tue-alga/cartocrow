@@ -35,10 +35,8 @@ namespace detail
 GlyphScalerNode::GlyphScalerNode
 (
   const NecklaceGlyph::Ptr& glyph,
-  const Number& radius_base,
   const Number& covering_radius_dilated_rad
 ) : glyph(glyph),
-    radius_base(radius_base),
     covering_radius_dilated_rad(covering_radius_dilated_rad),
     feasible_angle_cw_rad(glyph->interval->angle_cw_rad()),
     feasible_angle_ccw_rad(glyph->interval->angle_ccw_rad())
@@ -49,26 +47,28 @@ GlyphScaler::GlyphScaler(const Number& necklace_radius, const Number& dilation /
   : nodes_(), necklace_radius_(necklace_radius), dilation_(dilation)
 {}
 
-void GlyphScaler::AddNode(const MapElement::Ptr& element)
+void GlyphScaler::AddNode(const NecklaceGlyph::Ptr& bead)
 {
-  const Number radius_base = CGAL::sqrt(element->value);
-  const Number covering_radius_dilated_rad = std::asin((radius_base + dilation_) / necklace_radius_);
+  CHECK_GT(bead->radius_base, 0);
+  const Number covering_radius_dilated_rad = std::asin((bead->radius_base + dilation_) / necklace_radius_);
   // Note that for an exact computation, the scaling factor should be inside this arcsine function.
   // This can be solved by performing a bisection search on the scale factors using a feasibility check to see if the scaled glyphs fit.
 
-  nodes_.emplace_back(element->glyph, radius_base, covering_radius_dilated_rad);
+  nodes_.emplace_back(bead, covering_radius_dilated_rad);
 }
 
 void GlyphScaler::FinalizeNodes()
 {
   if (nodes_.empty() || nodes_[0].glyph == nodes_[Size()/2].glyph)
     return;
+  nodes_.reserve(2 * nodes_.size());
 
   // Each node is duplicated with an offset to its feasible interval to force cyclic validity.
   const NodeSet::iterator end = nodes_.end();
   for (NodeSet::iterator node_iter = nodes_.begin(); node_iter != end; ++node_iter)
   {
-    nodes_.push_back(*node_iter);
+    CHECK_NOTNULL(node_iter->glyph);
+    nodes_.emplace_back(node_iter->glyph, node_iter->covering_radius_dilated_rad);
     nodes_.back().feasible_angle_cw_rad += M_2xPI;
     nodes_.back().feasible_angle_ccw_rad += M_2xPI;
   }
@@ -128,7 +128,7 @@ Number GlyphScaler::CorrectScaleFactor(const Number& rho) const
   for (size_t n = 0; n < Size(); ++n)
   {
     const Number rho_prime =
-      (necklace_radius_ * std::sin(rho * nodes_[n].covering_radius_dilated_rad) - dilation_) / nodes_[n].radius_base;
+      (necklace_radius_ * std::sin(rho * nodes_[n].covering_radius_dilated_rad) - dilation_) / nodes_[n].glyph->radius_base;
     if (rho_prime < scale_factor)
       scale_factor = rho_prime;
   }

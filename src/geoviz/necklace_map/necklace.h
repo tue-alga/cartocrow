@@ -27,7 +27,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 07-11-2019
 #include <vector>
 
 #include "geoviz/common/core_types.h"
-#include "geoviz/necklace_map/map_element.h"
+#include "geoviz/necklace_map/necklace_glyph.h"
 #include "geoviz/necklace_map/necklace_shape.h"
 
 namespace geoviz
@@ -41,8 +41,10 @@ struct Necklace
 
   Necklace(const NecklaceShape::Ptr& shape);
 
+  void SortBeads();
+
   NecklaceShape::Ptr shape;
-  std::vector<MapElement::Ptr> beads;
+  std::vector<NecklaceGlyph::Ptr> beads;
 }; // struct Necklace
 
 } // namespace necklace_map

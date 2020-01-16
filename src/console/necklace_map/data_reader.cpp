@@ -100,8 +100,10 @@ bool DataReader::Read(const std::string& filename, const std::string& value_name
     const std::string& id = column_id->values[v];
 
     // Get the region with the given ID, or create a new one if it does not yet exist.
-    const size_t e = id_to_element_index_.insert({id, elements_.size()}).first->second;
-    if (e == elements_.size()) elements_.emplace_back(std::make_shared<necklace_map::MapElement>(id));
+    std::pair<LookupTable::iterator, bool> result = id_to_element_index_.emplace(id, elements_.size());
+    const size_t e = result.first->second;
+    if (e == elements_.size())
+      elements_.push_back(std::make_shared<necklace_map::MapElement>(id));
     necklace_map::MapElement::Ptr& element = elements_[e];
     CHECK_NOTNULL(element);
     CHECK_EQ(id, element->region.id);

@@ -112,6 +112,25 @@ bool NecklaceInterval::IntersectsRay(const Number& angle_rad) const
     (angle_rad < angle_cw_rad_ ? angle_rad + M_2xPI : angle_rad) < angle_ccw_rad_;
 }
 
+Number NecklaceInterval::ComputeCentroid() const
+{
+  const Number centroid = .5 * (angle_cw_rad() + angle_ccw_rad());
+  CHECK_GE(centroid, 0);
+  return (M_2xPI < centroid) ? centroid - M_2xPI : centroid;
+}
+
+Number NecklaceInterval::ComputeLength() const
+{
+  const Number length = angle_ccw_rad() - angle_cw_rad();
+  CHECK_GE(length, 0);
+  return length;
+}
+
+Number NecklaceInterval::ComputeOrder() const
+{
+  return 0;
+}
+
 
 /**@class IntervalCentroid
  * @brief A centroid-based necklace interval.

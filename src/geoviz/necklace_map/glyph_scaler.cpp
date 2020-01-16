@@ -105,29 +105,14 @@ GlyphScalerFixedOrder::GlyphScalerFixedOrder(const Number& min_separation /*= 0*
 
 Number GlyphScalerFixedOrder::operator()(Necklace::Ptr& necklace) const
 {
-  for (const MapElement::Ptr& element : necklace->beads)
-  {
-    CHECK_NOTNULL(element);
-    CHECK_NOTNULL(element->glyph);
-  }
+  // The fixed order scaler expects the necklace sorted by the feasible intervals of its beads.
+  necklace->SortBeads();
 
-  // Sort the elements by the clockwise extreme of their feasible interval.
-  std::sort
-  (
-    necklace->beads.begin(),
-    necklace->beads.end(),
-    [](const MapElement::Ptr& a, const MapElement::Ptr& b)
-    {
-      return a->glyph->interval->angle_cw_rad() < b->glyph->interval->angle_cw_rad();
-    }
-  );
-
-  // Per element with a value greater than 0, add a node to the scaler.
+  // Per element that should not be ignored (i.e. that has a glyph), add a node to the scaler.
   const Number necklace_radius = necklace->shape->ComputeLength() / M_2xPI;
   detail::FixedGlyphScaler scaler(necklace_radius, dilation_);
-  for (const MapElement::Ptr& element : necklace->beads)
-    if (0 < element->value)
-      scaler.AddNode(element);
+  for (const NecklaceGlyph::Ptr& bead : necklace->beads)
+    scaler.AddNode(bead);
 
   // Determine the scale factor.
   return scaler.OptimizeScaleFactor();

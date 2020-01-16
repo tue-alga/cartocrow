@@ -24,9 +24,11 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 28-11-2019
 #define GEOVIZ_NECKLACE_MAP_MAP_ELEMENT_H
 
 #include <memory>
+#include <unordered_map>
 
 #include "geoviz/common/core_types.h"
 #include "geoviz/common/region.h"
+#include "geoviz/necklace_map/necklace.h"
 #include "geoviz/necklace_map/necklace_glyph.h"
 
 
@@ -38,6 +40,7 @@ namespace necklace_map
 struct MapElement
 {
   using Ptr = std::shared_ptr<MapElement>;
+  using GlyphMap = std::unordered_map<Necklace::Ptr, NecklaceGlyph::Ptr>;
 
   explicit MapElement(const std::string& id);
   explicit MapElement(const Region& region);
@@ -46,10 +49,9 @@ struct MapElement
   bool IsValid(const bool strict = true) const;
 
   Region region;
-
   Number value;  // Note that the value is correlated with the area of the glyph, so its squared radius.
 
-  NecklaceGlyph::Ptr glyph;
+  GlyphMap glyphs;
 }; // struct MapElement
 
 } // namespace necklace_map

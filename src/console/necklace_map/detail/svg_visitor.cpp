@@ -79,9 +79,9 @@ NecklaceMapSvgVisitor::NecklaceMapSvgVisitor
     const size_t n = id_to_region_index_.insert({element->region.id, next_index}).first->second;
     CHECK_EQ(next_index, n);
   }
-  necklace_ids_.resize(elements_.size());
 
   // Note that the necklace IDs only apply while in the same SVG, so their ID to index table does not have to be rebuilt.
+  necklace_ids_.resize(elements_.size());
 }
 
 bool NecklaceMapSvgVisitor::VisitExit(const tinyxml2::XMLElement& element)
@@ -173,11 +173,19 @@ bool NecklaceMapSvgVisitor::FinalizeSvg()
     MapElement::Ptr& element = elements_[n];
     CHECK_NOTNULL(element);
 
+    // Elements on a necklace must have strictly positive value.
+    if (element->value <= 0)
+      continue;
+
     const std::string& necklace_id = necklace_ids_[n];
     LookupTable::const_iterator index_iter = id_to_necklace_index_.find(necklace_id);
     CHECK(index_iter != id_to_necklace_index_.end());
 
-    necklaces_[index_iter->second]->beads.push_back(element);
+    Necklace::Ptr& necklace = necklaces_[index_iter->second];
+    NecklaceGlyph::Ptr glyph = std::make_shared<necklace_map::NecklaceGlyph>(CGAL::sqrt(element->value));
+
+    element->glyphs[necklace] = glyph;
+    necklace->beads.push_back(glyph);
   }
   return true;
 }
@@ -250,7 +258,11 @@ bool NecklaceMapSvgVisitor::AddMapElement
 {
   // Get the region with the given ID, or create a new one if it does not yet exist.
   const size_t n = id_to_region_index_.insert({id, elements_.size()}).first->second;
-  if (n == elements_.size()) elements_.emplace_back(std::make_shared<necklace_map::MapElement>(id));
+  if (n == elements_.size())
+  {
+    elements_.push_back(std::make_shared<necklace_map::MapElement>(id));
+    necklace_ids_.resize(elements_.size());
+  }
   CHECK_NOTNULL(elements_[n]);
   Region& region = elements_[n]->region;
   CHECK_EQ(id, region.id);
@@ -260,7 +272,6 @@ bool NecklaceMapSvgVisitor::AddMapElement
   SvgPathParser()(commands, converter);
 
   region.style = style;
-  necklace_ids_.resize(n + 1);
   necklace_ids_[n] = necklace_id;
 
   if (strict_validity_)

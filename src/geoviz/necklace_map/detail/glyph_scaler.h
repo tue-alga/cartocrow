@@ -43,17 +43,17 @@ struct GlyphScalerNode
 {
   using Ptr = std::shared_ptr<GlyphScalerNode>;
 
-  GlyphScalerNode(
+  GlyphScalerNode
+  (
     const NecklaceGlyph::Ptr& glyph,
-    const Number& radius_base,
     const Number& covering_radius_dilated_rad
   );
 
   NecklaceGlyph::Ptr glyph;
 
-  Number radius_base;
   Number covering_radius_dilated_rad;
 
+  // Note that unlike the glyph's feasible interval, these can be larger than 2*PI.
   Number feasible_angle_cw_rad;
   Number feasible_angle_ccw_rad;
 }; // struct GlyphScalerNode
@@ -65,7 +65,7 @@ class GlyphScaler
  public:
   GlyphScaler(const Number& necklace_radius, const Number& dilation = 0);
 
-  void AddNode(const MapElement::Ptr& element);
+  void AddNode(const NecklaceGlyph::Ptr& bead);
 
   virtual Number OptimizeScaleFactor() = 0;
 

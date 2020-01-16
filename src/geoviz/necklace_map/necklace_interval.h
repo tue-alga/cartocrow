@@ -46,7 +46,11 @@ class NecklaceInterval
 
   bool IntersectsRay(const Number& angle_rad) const;
 
-  virtual Number ComputeOrder() const = 0;
+  Number ComputeCentroid() const;
+
+  Number ComputeLength() const;
+
+  virtual Number ComputeOrder() const;
 
  protected:
   Number angle_cw_rad_; // Internally, this angle is adjusted to be in the range [0, 2*pi).

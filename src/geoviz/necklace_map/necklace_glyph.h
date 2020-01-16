@@ -38,12 +38,14 @@ struct NecklaceGlyph  // TODO(tvl) rename glyph => bead (including all derived t
 {
   using Ptr = std::shared_ptr<NecklaceGlyph>;
 
-  NecklaceGlyph();
+  NecklaceGlyph(const Number& radius_base);
 
   bool IsValid() const;
 
-  NecklaceInterval::Ptr interval;  // TODO(tvl) rename feasible.
+  Number radius_base;
   Number angle_rad;
+
+  NecklaceInterval::Ptr interval;  // TODO(tvl) rename feasible.
   Number angle_min_rad;  // TODO(tvl) move out of glyph into glyph-scaler-element...
   Number angle_max_rad;
 }; // struct NecklaceGlyph

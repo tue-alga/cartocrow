@@ -24,10 +24,13 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 05-12-2019
 #define GEOVIZ_NECKLACE_MAP_INTERVAL_GENERATOR_H
 
 #include <memory>
+#include <unordered_map>
 #include <vector>
 
 #include "geoviz/common/core_types.h"
+#include "geoviz/necklace_map/map_element.h"
 #include "geoviz/necklace_map/necklace.h"
+#include "geoviz/necklace_map/necklace_glyph.h"
 
 
 namespace geoviz
@@ -43,9 +46,9 @@ struct IntervalGenerator
     const Necklace::Ptr& necklace
   ) const = 0;
 
-  void operator()(Necklace::Ptr& necklace) const;
+  void operator()(MapElement::Ptr& element) const;
 
-  void operator()(std::vector<Necklace::Ptr>& necklaces) const;
+  void operator()(std::vector<MapElement::Ptr>& elements) const;
 }; // struct IntervalGenerator
 
 

@@ -38,7 +38,7 @@ namespace necklace_map
 
 /**@brief Construct a necklace glyph.
  */
-NecklaceGlyph::NecklaceGlyph()
+NecklaceGlyph::NecklaceGlyph(const Number& radius_base)
   : interval(), angle_rad(0), angle_min_rad(0), angle_max_rad(0) {}
 
 /**@brief Check whether the glyph is valid.

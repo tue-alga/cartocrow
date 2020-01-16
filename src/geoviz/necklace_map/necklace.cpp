@@ -22,6 +22,8 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 07-11-2019
 
 #include "necklace.h"
 
+#include <glog/logging.h>
+
 
 namespace geoviz
 {
@@ -37,9 +39,10 @@ namespace necklace_map
  */
 
 /**@brief Construct a necklace glyph.
+ * @param radius_base the unscaled radius of the glyph.
  */
-NecklaceGlyph::NecklaceGlyph()
-  : interval(), angle_rad(0), angle_min_rad(0), angle_max_rad(0) {}
+NecklaceGlyph::NecklaceGlyph(const Number& radius_base)
+  : radius_base(radius_base), angle_rad(0), interval(), angle_min_rad(0), angle_max_rad(0) {}
 
 /**@brief Check whether the glyph is valid.
  *
@@ -59,6 +62,27 @@ bool NecklaceGlyph::IsValid() const
  * @param shape the shape of the necklace.
  */
 Necklace::Necklace(const NecklaceShape::Ptr& shape) : shape(shape), beads() {}
+
+/**@brief Sort the beads of the necklace by the clockwise extremes of their feasible interval.
+ */
+void Necklace::SortBeads()
+{
+  for (const NecklaceGlyph::Ptr& bead : beads)
+  {
+    CHECK_NOTNULL(bead);
+  }
+
+  // Sort the beads by the clockwise extreme of their feasible interval.
+  std::sort
+  (
+    beads.begin(),
+    beads.end(),
+    [](const NecklaceGlyph::Ptr& a, const NecklaceGlyph::Ptr& b)
+    {
+      return a->interval->angle_cw_rad() < b->interval->angle_cw_rad();
+    }
+  );
+}
 
 } // namespace necklace_map
 } // namespace geoviz

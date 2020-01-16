@@ -51,7 +51,7 @@ namespace necklace_map
  * @endparblock
  */
 MapElement::MapElement(const std::string& id)
-  : region(id), value(0), glyph() {}
+  : region(id), value(0), glyphs() {}
 
 /**@brief Construct a necklace region and data element from a region.
  * @param region @parblock the region of the element.
@@ -60,7 +60,7 @@ MapElement::MapElement(const std::string& id)
  * @endparblock
  */
 MapElement::MapElement(const Region& region)
-  : region(region), value(0), glyph() {}
+  : region(region), value(0), glyphs() {}
 
 /**@brief Check whether the necklace element is valid.
  *

@@ -26,7 +26,6 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-2019
 // - gflags
 
 #include <algorithm>
-#include <cctype>
 #include <cmath>
 #include <fstream>
 #include <iomanip>
@@ -34,6 +33,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-2019
 #include <memory>
 
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
+#include <gflags/gflags.h>
 #include <glog/logging.h>
 
 #include <cmake/geoviz_config.h>
@@ -107,53 +107,51 @@ std::string toString(const Region::PolygonSet& shape)
 
 bool writeDummySvg
 (
-  const std::vector<MapElement>& elements,
-  std::string& svg
+  const std::vector<MapElement::Ptr>& elements,  //TODO(tvl) rename "elements"
+  const Necklace::Ptr& necklace,
+  const Number& scale_factor,
+  std::string& svg,
+  bool write_debug_info = false
 )
 {
   //std::vector<Number> angles_rad = {0, M_PI_4, M_PI_2, M_PI_2 + M_PI_4, M_PI, M_PI + M_PI_2};
+  //const std::vector<MapElement::Ptr>& elements = necklace->beads;
+  const std::vector<NecklaceGlyph::Ptr>& beads = necklace->beads;
 
-
-
-
-  const std::shared_ptr<NecklaceType>& necklace = elements[0].necklace;
 
   // Create dummy necklace glyphs and write everything to an SVG string.
-  const Point& kernel = necklace->kernel();
+  const Point& kernel = necklace->shape->kernel();
 
   //std::shared_ptr<CircleNecklace> circle_necklace = std::static_pointer_cast<CircleNecklace>(necklace);
   //const Number radius = circle_necklace == nullptr ? 0 : CGAL::sqrt(circle_necklace->shape_.squared_radius());
-  const Box bounding_box = necklace->ComputeBoundingBox();
+  const Box bounding_box = necklace->shape->ComputeBoundingBox();
   const Number necklace_radius = (bounding_box.xmax() - bounding_box.xmin()) / 2.0;
 
-  std::vector<Point> centers;
-  for (const MapElement& element : elements)
-  {
-    const std::shared_ptr<NecklaceInterval>& interval = element.glyph.interval;
-    const Number angle_rad = (interval->angle_cw_rad() + interval->angle_ccw_rad()) / 2.0;
-
-    centers.emplace_back();
-    CHECK(necklace->IntersectRay(angle_rad, centers.back()));
-  }
 
 
   Number bounds[] = {kernel.x(), kernel.y(), kernel.x(), kernel.y()};
 
   // Necklace
-  for (size_t n = 0; n < centers.size(); ++n)
+  std::vector<Number> glyph_radii(beads.size(), 0);
+  std::vector<Point> glyph_centers;
+  for (const NecklaceGlyph::Ptr& bead : beads)
   {
-    const Number radius = std::sqrt(elements[n].value);
+    CHECK_NOTNULL(bead);
+    Point glyph_center;
+    CHECK(necklace->shape->IntersectRay(bead->angle_rad, glyph_center));
 
-    bounds[0] = std::min(bounds[0], centers[n].x() - radius);
-    bounds[1] = std::min(bounds[1], centers[n].y() - radius);
-    bounds[2] = std::max(bounds[2], centers[n].x() + radius);
-    bounds[3] = std::max(bounds[3], centers[n].y() + radius);
+    const Number& radius = scale_factor * bead->radius_base;
+
+    bounds[0] = std::min(bounds[0], glyph_center.x() - radius);
+    bounds[1] = std::min(bounds[1], glyph_center.y() - radius);
+    bounds[2] = std::max(bounds[2], glyph_center.x() + radius);
+    bounds[3] = std::max(bounds[3], glyph_center.y() + radius);
   }
 
   // Regions.
-  for (const MapElement& element : elements)
+  for (const MapElement::Ptr& element : elements)
   {
-    for (const Polygon_with_holes& polygon : element.region.shape)
+    for (const Polygon_with_holes& polygon : element->region.shape)
     {
       for
       (
@@ -348,41 +346,313 @@ int main(int argc, char **argv)
 
   //LOG(INFO) << "GeoViz version: " << GEOVIZ_VERSION;
 
+  // TODO(tvl) when moving to text input as flag, be careful of special characters such as ':', '"', ''', '='!
 
   const std::string svg_filename = "/storage/GeoViz/wwwroot/data/Example_wEU/wEU_svg.xml";
   const std::string data_filename = "/storage/GeoViz/wwwroot/data/Example_wEU/wEU.txt";
   const std::string value_name = "value";
 
-  std::vector<MapElement> elements;
-  std::vector<SvgReader::NecklaceTypePtr> necklaces;
+  std::vector<MapElement::Ptr> elements;
+  std::vector<Necklace::Ptr> necklaces;
 
-  SvgReader svg_reader
-  (
-    elements,
-    necklaces
-  );
 
+
+
+  // TODO(tvl) capture in method that also does the retries and make stable!
+  const int max_tries = 5;
   int c = 0;
+  bool success_read_data = false;
   do
   {
-    LOG_IF(INFO, !svg_reader.Read(svg_filename)) << "Failed to read necklace map geometry file " << svg_filename;
-    LOG_IF(INFO, !elements.empty())
+    try
+    {
+      DataReader data_reader(elements);
+      success_read_data = data_reader.Read(data_filename, value_name);
+    }
+    catch (const std::exception& e)
+    {
+      success_read_data = false;
+      LOG(ERROR) << e.what();
+    }
+
+    if (success_read_data)
+      break;
+    else
+      LOG(INFO) << "Failed to read necklace map data file " << data_filename;
+  } while (max_tries < ++c);
+
+  c = 0;
+  bool success_read_svg = false;
+  do
+  {
+    try
+    {
+      SvgReader svg_reader
+      (
+        elements,
+        necklaces
+      );
+      success_read_svg = svg_reader.Read(svg_filename);
+      LOG_IF(INFO, !elements.empty())
       << "Read necklace map geometry file " << svg_filename
       << " (" << elements.size() << " regions; "<< necklaces.size() << " necklaces)";
-    // Note(tvl) we should allow the SVG to no contain the necklace: then create the necklace as smallest enclosing circle.
-  } while (elements.empty() || 3 < ++c);
+      // Note(tvl) we should allow the SVG to not contain the necklace: then create the necklace as smallest enclosing circle.
+    }
+    catch (const std::exception& e)
+    {
+      success_read_svg = false;
+      LOG(ERROR) << e.what();
+    }
 
-  DataReader data_reader(elements);
-  LOG_IF(INFO, !data_reader.Read(data_filename, value_name)) << "Failed to read necklace map data file " << data_filename;
+    if (success_read_svg)
+      break;
+    else
+      LOG(INFO) << "Failed to read necklace map geometry file " << svg_filename;
+  } while (max_tries < ++c);
 
   // Generate intervals based on the regions and necklaces.
-  std::unique_ptr<IntervalGenerator> make_interval(new IntervalCentroidGenerator(0.1 * M_PI));
-  (*make_interval)(elements);;
+  std::unique_ptr<IntervalGenerator> make_intervals;
+  make_intervals.reset(new IntervalCentroidGenerator(FLAGS_centroid_interval_length_rad));
+  (*make_intervals)(elements);
 
   // Compute the scaling factor.
+  std::unique_ptr<GlyphScaler> scaler(new GlyphScalerFixedOrder(FLAGS_min_separation)); // TODO(tvl) Note the min_separation should depend on the number of elements per necklace: make sure that this separation cannot break the algorithm. i.e. there is a scale factor such that the glyphs have at least radius 0...
+  const Number scale_factor = (*scaler)(necklaces);
 
-  // Position the glyphs.
 
+
+
+
+
+
+
+
+
+
+  // TODO(tvl) move determining the positioning limits into positioner?
+
+  // Position the glyphs at the start of their interval.
+  Necklace::Ptr necklace = necklaces[0];
+  for (NecklaceGlyph::Ptr& glyph : necklace->beads)
+  {
+    CHECK_NOTNULL(glyph);
+
+    glyph->angle_min_rad = glyph->interval->angle_cw_rad();
+    glyph->angle_max_rad = glyph->interval->angle_ccw_rad();
+  }
+
+  // Adjust the glyphs position so there are no overlapping glyphs.
+  const Number necklace_radius = necklaces[0]->shape->ComputeLength() / M_2xPI;
+  std::vector<Number> covering_radii_scaled_rad(elements.size(), 0);
+
+  Number angle_prev_end_rad = -M_2xPI;
+  for (int i = 0; i < 2; ++i)
+  for (size_t e = 0; e < necklace->beads.size(); ++e)
+  {
+    NecklaceGlyph::Ptr& glyph = necklace->beads[e];
+    CHECK_NOTNULL(glyph);
+
+    // Determine the covering radius.
+    const Number radius_scaled = scale_factor * glyph->radius_base + (FLAGS_min_separation / 2);
+    //const Number& covering_radius_scaled_rad = covering_radii_scaled_rad[n] = 2 * std::asin(radius_scaled / (2 * necklace_radius));
+    const Number& covering_radius_scaled_rad = covering_radii_scaled_rad[e] = std::asin(radius_scaled / necklace_radius);
+    // The glyph must start past the previous endpoint.
+    Number start = glyph->angle_min_rad - covering_radius_scaled_rad;
+    if (start < 0) start += M_2xPI;
+    if (start < angle_prev_end_rad)
+    {
+      glyph->angle_min_rad = angle_prev_end_rad + covering_radius_scaled_rad;
+      if (glyph->interval->angle_ccw_rad() < glyph->angle_min_rad)
+        glyph->angle_min_rad = glyph->interval->angle_ccw_rad();
+      if (M_2xPI < glyph->angle_min_rad)
+        glyph->angle_min_rad -= M_2xPI;
+    }
+
+    angle_prev_end_rad = glyph->angle_min_rad + covering_radius_scaled_rad;
+    if (M_2xPI < angle_prev_end_rad)
+      angle_prev_end_rad -= M_2xPI;
+  }
+
+  Number angle_prev_start_rad = 2 * M_2xPI;
+  for (int i = 0; i < 2; ++i)
+  for (ptrdiff_t n = necklace->beads.size()-1; 0 <= n; --n)
+  {
+    NecklaceGlyph::Ptr& glyph = necklace->beads[n];
+    CHECK_NOTNULL(glyph);
+
+    const Number& covering_radius_scaled_rad = covering_radii_scaled_rad[n];
+
+    // The glyph must end before the previous startpoint.
+    Number end = glyph->angle_max_rad + covering_radius_scaled_rad;
+    /*if (M_2xPI < end)
+      end -= M_2xPI;*/
+    if (angle_prev_start_rad < end)
+    {
+      glyph->angle_max_rad = angle_prev_start_rad - covering_radius_scaled_rad;
+      if (glyph->angle_max_rad < 0)
+        glyph->angle_max_rad += M_2xPI;
+      if (glyph->angle_max_rad < glyph->interval->angle_cw_rad())
+        glyph->angle_max_rad = glyph->interval->angle_cw_rad();
+    }
+
+    angle_prev_start_rad = glyph->angle_max_rad - covering_radius_scaled_rad;
+    if (angle_prev_start_rad < 0)
+      angle_prev_start_rad += M_2xPI;
+  }
+
+
+
+
+
+
+
+
+  // Tested: the elements must start in a valid position.
+  for (NecklaceGlyph::Ptr& glyph : necklace->beads)
+    glyph->angle_rad = glyph->angle_min_rad;
+
+  const Number repVal = FLAGS_glyph_repulsion;
+
+  const Number midStr = 1;
+  const Number repStr = std::pow(repVal, 4);
+  const Number EPSILON = 1e-7;
+
+  const size_t num_beads = necklace->beads.size();
+  for (int n = 0; n < 30; ++n)
+  {
+    for (size_t i = 0; i < num_beads; ++i)
+    {
+      NecklaceGlyph::Ptr& glyph = necklace->beads[i];
+      CHECK_NOTNULL(glyph);
+
+      int j1 = (i + num_beads - 1)%num_beads;
+      /*while (!necklace->beads[j1]->glyph)
+        j1 = (j1 + num_beads - 1)%num_beads;*/
+      int j2 = (i+1)%num_beads;
+      /*while (!necklace->beads[j2]->glyph)
+        j2 = (j2+1)%num_beads;*/
+
+      NecklaceGlyph::Ptr& prev = necklace->beads[j1];
+      NecklaceGlyph::Ptr& next = necklace->beads[j2];
+
+      NecklaceInterval r1(prev->angle_rad, glyph->angle_rad);
+      NecklaceInterval r2(prev->angle_rad, next->angle_rad);
+      NecklaceInterval r3(glyph->interval->ComputeCentroid(), glyph->angle_rad);
+
+      const Number length_r1 = r1.ComputeLength();
+      const Number length_r2 = r2.ComputeLength();
+      const Number length_r3 = r3.ComputeLength();
+      
+      // determ. cov. radii (can be stored in vector, but then make sure these are also swapped if the elements are swapped...)
+      const Number elem_radius = std::asin((scale_factor * glyph->radius_base + (FLAGS_min_separation / 2)) / necklace_radius);
+      const Number prev_radius = std::asin((scale_factor * prev->radius_base + (FLAGS_min_separation / 2)) / necklace_radius);
+      const Number next_radius = std::asin((scale_factor * next->radius_base + (FLAGS_min_separation / 2)) / necklace_radius);
+
+
+      double d1 = prev_radius + elem_radius;
+      double d2 = length_r2 - next_radius - elem_radius;
+      if (j1 == j2)
+        d2 = M_2xPI - next_radius - elem_radius;
+      double m =
+        ((length_r3 < M_PI)
+         ? (length_r1 - length_r3)
+         : (length_r1 + (M_2xPI - length_r3)));
+      double e = midStr * m * d1 * d2 - repStr * (d1 + d2);
+      double f = 2.0 * repStr - midStr * ((d1 + m) * (d2 + m) - m * m);
+      double g = midStr * (d1 + d2 + m);
+      double h = -midStr;
+
+
+
+      // solve h x^3 + g x^2 + f x + e == 0
+      if (std::abs(h) < EPSILON && std::abs(g) < EPSILON)
+      {
+        double x = -e / f + prev->angle_rad;
+        while (x > M_2xPI) x -= M_2xPI;
+        while (x < 0) x += M_2xPI;
+        if (!glyph->interval->IntersectsRay(x))
+        {
+          if (2.0 * length_r1 - (d1 + d2) > 0.0)
+            x = glyph->interval->angle_cw_rad();
+          else
+            x = glyph->interval->angle_ccw_rad();
+        }
+        glyph->angle_rad = x;
+      }
+      else
+      {
+        double q = (3.0 * h * f - g * g) / (9.0 * h * h);
+        double r = (9.0 * h * g * f - 27.0 * h * h * e - 2.0 * g * g * g) / (54.0 * h * h * h);
+        //double z = q * q * q + r * r;
+        double rho = CGAL::sqrt(-q * q * q);
+        if (std::abs(r) > rho) rho = std::abs(r);
+        double theta = std::acos(r / rho);
+        rho = std::pow(rho, 1.0 / 3.0);
+        double x = -rho * std::cos(theta / 3.0) - g / (3.0 * h) + rho * CGAL::sqrt(3.0) * std::sin(theta/3.0);
+        x += prev->angle_rad;
+        while (x > M_2xPI) x -= M_2xPI;
+        while (x < 0) x += M_2xPI;
+        if (!glyph->interval->IntersectsRay(x)) {
+          if (repStr * (2.0 * length_r1 - (d1 + d2)) + midStr * (m - length_r1) * (length_r1 - d1) * (length_r1 - d2) > 0.0)
+            x = glyph->interval->angle_cw_rad();
+          else x = glyph->interval->angle_ccw_rad();
+        }
+        glyph->angle_rad = x;
+      }
+    }
+
+
+
+
+
+
+    // swapping action
+    for (int i = 0; i < num_beads; i++)
+    {
+      int j = (i+1)%num_beads;
+
+      NecklaceGlyph::Ptr& glyph = necklace->beads[i];
+      NecklaceGlyph::Ptr& next = necklace->beads[j];
+
+      const Number elem_radius = std::asin((scale_factor * glyph->radius_base + (FLAGS_min_separation / 2)) / necklace_radius);
+      const Number next_radius = std::asin((scale_factor * next->radius_base + (FLAGS_min_separation / 2)) / necklace_radius);
+
+
+      double newAngle1 = next->angle_rad + next_radius - elem_radius;
+      double newAngle2 = glyph->angle_rad - elem_radius + next_radius;
+      while (M_2xPI < newAngle1) newAngle1 -= M_2xPI;
+      while (newAngle1 < 0) newAngle1 += M_2xPI;
+      while (M_2xPI < newAngle2) newAngle2 -= M_2xPI;
+      while (newAngle2 < 0) newAngle2 += M_2xPI;
+
+
+
+      if (glyph->interval->IntersectsRay(newAngle1) && next->interval->IntersectsRay(newAngle2))
+      {
+        double mid1 = glyph->interval->ComputeCentroid();
+        double mid2 = next->interval->ComputeCentroid();
+
+        NecklaceInterval r1(glyph->angle_rad, mid1);
+        if (r1.ComputeLength() > M_PI) r1 = NecklaceInterval(mid1, glyph->angle_rad);
+        NecklaceInterval r2(next->angle_rad, mid2);
+        if (r2.ComputeLength() > M_PI) r2 = NecklaceInterval(mid2, next->angle_rad);
+        double dif1 = r1.ComputeLength() * r1.ComputeLength() + r2.ComputeLength() * r2.ComputeLength();
+
+        r1 = NecklaceInterval(newAngle1, mid1);
+        if (r1.ComputeLength() > M_PI) r1 = NecklaceInterval(mid1, newAngle1);
+        r2 = NecklaceInterval(newAngle2, mid2);
+        if (r2.ComputeLength() > M_PI) r2 = NecklaceInterval(mid2, newAngle2);
+        double dif2 = r1.ComputeLength() * r1.ComputeLength() + r2.ComputeLength() * r2.ComputeLength();
+
+        if (dif2 < dif1) {
+          glyph->angle_rad = newAngle1;
+          next->angle_rad = newAngle2;
+
+          std::swap(necklace->beads[i], necklace->beads[j]);
+        }
+      }
+    }
+  }
 
 
 
@@ -396,9 +666,11 @@ int main(int argc, char **argv)
 
   std::cout << out;
 
-  std::ofstream fout("/storage/GeoViz/wwwroot/data/Example_wEU/test_out.xml");
-  fout << out;
-  fout.close();
-
+  if (FLAGS_debug_out)
+  {
+    std::ofstream fout("/storage/GeoViz/wwwroot/data/Example_wEU/test_out.xml");
+    fout << out;
+    fout.close();
+  }
   return 0;
 }

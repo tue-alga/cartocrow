@@ -43,29 +43,33 @@ namespace necklace_map
  * @param interval the feasible interval for placing the necklace glyph of the region on the necklace.
  */
 
-/**@brief Apply the functor to a necklace.
- * @param[in,out] necklace the necklace.
+/**@brief Apply the functor to a map element.
+ * @param[in,out] element the element.
  */
-void IntervalGenerator::operator()(Necklace::Ptr& necklace) const
+void IntervalGenerator::operator()(MapElement::Ptr& element) const
 {
-  for (MapElement::Ptr& element : necklace->beads)
+  for (MapElement::GlyphMap::value_type& map_value : element->glyphs)
   {
-    CHECK_NOTNULL(element);
+    const Necklace::Ptr& necklace = map_value.first;
+    NecklaceGlyph::Ptr& bead = map_value.second;
+
+    CHECK_NOTNULL(necklace);
+    CHECK_NOTNULL(bead);
 
     Polygon extent;
     element->region.MakeSimple(extent);
 
-    element->glyph->interval = (*this)(extent, necklace);
+    bead->interval = (*this)(extent, necklace);
   }
 }
 
-/**@brief Apply the functor to a collection of necklaces.
- * @param[in,out] necklaces the necklaces.
+/**@brief Apply the functor to a collection of map elements.
+ * @param[in,out] elements the elements.
  */
-void IntervalGenerator::operator()(std::vector<Necklace::Ptr>& necklaces) const
+void IntervalGenerator::operator()(std::vector<MapElement::Ptr>& elements) const
 {
-  for (Necklace::Ptr& necklace : necklaces)
-    (*this)(necklace);
+  for (MapElement::Ptr& element : elements)
+    (*this)(element);
 }
 
 
