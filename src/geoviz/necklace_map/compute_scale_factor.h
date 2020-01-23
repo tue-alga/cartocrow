@@ -17,16 +17,17 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-Created by tvl (t.vanlankveld@esciencecenter.nl) on 15-01-2020
+Created by tvl (t.vanlankveld@esciencecenter.nl) on 28-11-2019
 */
 
-#ifndef GEOVIZ_NECKLACE_MAP_NECKLACE_GLYPH_H
-#define GEOVIZ_NECKLACE_MAP_NECKLACE_GLYPH_H
+#ifndef GEOVIZ_NECKLACE_MAP_COMPUTE_SCALE_FACTOR_H
+#define GEOVIZ_NECKLACE_MAP_COMPUTE_SCALE_FACTOR_H
 
-#include <memory>
+#include <unordered_map>
+#include <vector>
 
 #include "geoviz/common/core_types.h"
-#include "geoviz/necklace_map/necklace_interval.h"
+#include "geoviz/necklace_map/necklace.h"
 
 
 namespace geoviz
@@ -34,23 +35,33 @@ namespace geoviz
 namespace necklace_map
 {
 
-struct NecklaceGlyph  // TODO(tvl) rename glyph => bead (including all derived types and methods).
+class ComputeScaleFactor
 {
-  using Ptr = std::shared_ptr<NecklaceGlyph>;
+ public:
+  explicit ComputeScaleFactor(const Number& buffer_rad = 0);
 
-  NecklaceGlyph(const Number& radius_base);
+  // Note that elements with value 0 will not be included in the ordering.
+  virtual Number operator()(Necklace::Ptr& necklace) = 0;
 
-  bool IsValid() const;
+  Number operator()(std::vector<Necklace::Ptr>& necklaces);
 
-  Number radius_base;
-  Number angle_rad;
+  const Number& max_buffer_rad() const { return max_buffer_rad_; }
 
-  NecklaceInterval::Ptr interval;  // TODO(tvl) rename feasible.
-  Number angle_min_rad;  // TODO(tvl) move out of glyph into glyph-scaler-element...
-  Number angle_max_rad;
-}; // struct NecklaceGlyph
+ protected:
+  Number buffer_rad_;
+  Number max_buffer_rad_;
+}; // class ComputeScaleFactor
+
+
+class ComputeScaleFactorFixedOrder : public ComputeScaleFactor
+{
+ public:
+  explicit ComputeScaleFactorFixedOrder(const Number& buffer_rad = 0);
+
+  Number operator()(Necklace::Ptr& necklaces);
+}; // class ComputeScaleFactorFixedOrder
 
 } // namespace necklace_map
 } // namespace geoviz
 
-#endif //GEOVIZ_NECKLACE_MAP_NECKLACE_GLYPH_H
+#endif //GEOVIZ_NECKLACE_MAP_COMPUTE_SCALE_FACTOR_H

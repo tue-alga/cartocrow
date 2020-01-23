@@ -20,14 +20,15 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Created by tvl (t.vanlankveld@esciencecenter.nl) on 06-01-2020
 */
 
-#ifndef GEOVIZ_NECKLACE_MAP_DETAIL_GLYPH_SCALER_H
-#define GEOVIZ_NECKLACE_MAP_DETAIL_GLYPH_SCALER_H
+#ifndef GEOVIZ_NECKLACE_MAP_DETAIL_COMPUTE_SCALE_FACTOR_H
+#define GEOVIZ_NECKLACE_MAP_DETAIL_COMPUTE_SCALE_FACTOR_H
 
 #include <memory>
 
 #include "geoviz/common/core_types.h"
+#include "geoviz/necklace_map/bead.h"
 #include "geoviz/necklace_map/necklace.h"
-#include "geoviz/necklace_map/map_element.h"
+#include "geoviz/necklace_map/detail/cycle_node.h"
 
 
 namespace geoviz
@@ -37,43 +38,22 @@ namespace necklace_map
 namespace detail
 {
 
-// An 'event' node in the scaling process.
-// As opposed to glyphs, these nodes may have a feasible interval completely outside [0, 2pi).
-struct GlyphScalerNode
-{
-  using Ptr = std::shared_ptr<GlyphScalerNode>;
-
-  GlyphScalerNode
-  (
-    const NecklaceGlyph::Ptr& glyph,
-    const Number& covering_radius_dilated_rad
-  );
-
-  NecklaceGlyph::Ptr glyph;
-
-  Number covering_radius_dilated_rad;
-
-  // Note that unlike the glyph's feasible interval, these can be larger than 2*PI.
-  Number feasible_angle_cw_rad;
-  Number feasible_angle_ccw_rad;
-}; // struct GlyphScalerNode
-
-
-// Base functional glyph scaler, implementing simple recurring functions.
-class GlyphScaler
+// Base class for computing the scale factor, implementing simple recurring functions.
+class ComputeScaleFactor
 {
  public:
-  GlyphScaler(const Number& necklace_radius, const Number& dilation = 0);
+  ComputeScaleFactor(const Necklace::Ptr& necklace, const Number& buffer_rad = 0);
 
-  void AddNode(const NecklaceGlyph::Ptr& bead);
+  virtual Number Optimize() = 0;
 
-  virtual Number OptimizeScaleFactor() = 0;
+  const Number& max_buffer_rad() const { return max_buffer_rad_; }
 
  protected:
-  void FinalizeNodes();
-
   // Number of nodes.
-  size_t Size() const;
+  size_t size() const;
+
+  // Aggregate buffer between i and j.
+  Number buffer(const size_t i, const size_t j) const;
 
   // Clockwise extreme angle a_i of an interval.
   const Number& a(const size_t i) const;
@@ -87,39 +67,42 @@ class GlyphScaler
   // Aggregate covering radius r_ij.
   Number r(const size_t i, const size_t j) const;
 
-  // Dual point l* to the line l describing the right extreme - scale factor relation of a glyph i to the left of the split index k.
+  // Dual point l* to the line l describing the right extreme - scale factor relation of a bead i to the left of the split index k.
   Point l_(const size_t i, const size_t k) const;
 
-  // Dual point r* to the line r describing the left extreme - scale factor relation of a glyph j to the right of the split index k.
+  // Dual point r* to the line r describing the left extreme - scale factor relation of a bead j to the right of the split index k.
   Point r_(const size_t j, const size_t k) const;
 
   Number CorrectScaleFactor(const Number& rho) const;
 
+ protected:
+  Number max_buffer_rad_;
+
  private:
   // Note that the scaler must be able to access the set by index.
-  using NodeSet = std::vector<GlyphScalerNode>;
+  using NodeSet = std::vector<BeadCycleNode>;
   NodeSet nodes_;
 
   Number necklace_radius_;
-  Number dilation_;
+  Number buffer_rad_;
 };
 
 
-// Functional glyph scaler for collections ordered by their interval.
-class FixedGlyphScaler : public GlyphScaler
+// Computes the scale factor for collections ordered by their interval.
+class ComputeScaleFactorFixedOrder : public ComputeScaleFactor
 {
  public:
-  FixedGlyphScaler(const Number& necklace_radius, const Number& dilation = 0);
+  ComputeScaleFactorFixedOrder(const Necklace::Ptr& necklace, const Number& buffer_rad = 0);
 
-  Number OptimizeScaleFactor();
+  Number Optimize();
 
  private:
-  // Optimize the scale factor for the glyphs in the range [I, J].
-  Number OptimizeSubProblem(const size_t I, const size_t J) const;
-}; // class FixedGlyphScaler
+  // Optimize the scale factor for the beads in the range [I, J].
+  Number OptimizeSubProblem(const size_t I, const size_t J, Number& max_buffer_rad) const;
+}; // class ComputeScaleFactorFixedOrder
 
 } // namespace detail
 } // namespace necklace_map
 } // namespace geoviz
 
-#endif //GEOVIZ_NECKLACE_MAP_DETAIL_GLYPH_SCALER_H
+#endif //GEOVIZ_NECKLACE_MAP_DETAIL_COMPUTE_SCALE_FACTOR_H

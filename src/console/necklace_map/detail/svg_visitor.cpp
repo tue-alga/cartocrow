@@ -182,10 +182,10 @@ bool NecklaceMapSvgVisitor::FinalizeSvg()
     CHECK(index_iter != id_to_necklace_index_.end());
 
     Necklace::Ptr& necklace = necklaces_[index_iter->second];
-    NecklaceGlyph::Ptr glyph = std::make_shared<necklace_map::NecklaceGlyph>(CGAL::sqrt(element->value));
+    Bead::Ptr bead = std::make_shared<necklace_map::Bead>(CGAL::sqrt(element->value));
 
-    element->glyphs[necklace] = glyph;
-    necklace->beads.push_back(glyph);
+    element->beads[necklace] = bead;
+    necklace->beads.push_back(bead);
   }
   return true;
 }

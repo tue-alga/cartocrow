@@ -20,8 +20,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Created by tvl (t.vanlankveld@esciencecenter.nl) on 09-12-2019
 */
 
-#ifndef GEOVIZ_NECKLACE_MAP_NECKLACE_INTERVAL_H
-#define GEOVIZ_NECKLACE_MAP_NECKLACE_INTERVAL_H
+#ifndef GEOVIZ_NECKLACE_MAP_RANGE_H
+#define GEOVIZ_NECKLACE_MAP_RANGE_H
 
 #include <memory>
 
@@ -32,15 +32,17 @@ namespace geoviz
 namespace necklace_map
 {
 
-class NecklaceInterval
+class CircleRange
 {
  public:
-  using Ptr = std::shared_ptr<NecklaceInterval>;
+  using Ptr = std::shared_ptr<CircleRange>;
 
-  NecklaceInterval(const Number& angle_cw_rad, const Number& angle_ccw_rad);
+  CircleRange(const Number& angle_cw_rad, const Number& angle_ccw_rad);
 
   const Number& angle_cw_rad() const;
+  Number& angle_cw_rad();
   const Number& angle_ccw_rad() const;
+  Number& angle_ccw_rad();
 
   bool IsValid() const;
 
@@ -55,10 +57,10 @@ class NecklaceInterval
  protected:
   Number angle_cw_rad_; // Internally, this angle is adjusted to be in the range [0, 2*pi).
   Number angle_ccw_rad_; // For convenience, this angle is adjusted to be in the range [angle_from_rad, angle_from_rad+2*pi).
-}; // class NecklaceInterval
+}; // class CircleRange
 
 
-class IntervalCentroid : public NecklaceInterval
+class IntervalCentroid : public CircleRange
 {
  public:
   IntervalCentroid(const Number& angle_cw_rad, const Number& angle_ccw_rad);
@@ -67,7 +69,7 @@ class IntervalCentroid : public NecklaceInterval
 }; // class IntervalCentroid
 
 
-class IntervalWedge : public NecklaceInterval
+class IntervalWedge : public CircleRange
 {
  public:
   IntervalWedge(const Number& angle_cw_rad, const Number& angle_ccw_rad);
@@ -78,4 +80,4 @@ class IntervalWedge : public NecklaceInterval
 } // namespace necklace_map
 } // namespace geoviz
 
-#endif //GEOVIZ_NECKLACE_MAP_NECKLACE_INTERVAL_H
+#endif //GEOVIZ_NECKLACE_MAP_RANGE_H

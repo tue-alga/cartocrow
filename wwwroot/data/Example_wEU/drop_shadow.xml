@@ -1,0 +1,33 @@
+<svg width='250' viewBox='0 0 200 85' xmlns='http://www.w3.org/2000/svg' version='1.1'
+     bounds='[[52.356,4.945],[52.354,4.947]]'>Sorry, your browser does not support the svg tag.
+    <defs><!-- Filter declaration -->
+        <filter id='filterDropShadow' filterUnits='userSpaceOnUse'>
+            <!-- Reduce opacity -->
+            <feColorMatrix in="SourceAlpha"
+                           type="matrix"
+                           values="0 0 0 0 0
+                                   0 0 0 0 0
+                                   0 0 0 0 0
+                                   0 0 0 2 0" result="sourceOblique" />
+            <!-- offsetBlur -->
+            <feGaussianBlur in='sourceOblique' stdDeviation='4' result='blur'/>
+            <feOffset in='blur' dx='4' dy='4' result='offsetBlur'/>
+            <feComposite in2="sourceOblique" in="offsetBlur" operator="xor" result="offsetBlurAndSource" />
+            <feComposite in='sourceOblique' in2='offsetBlurAndSource' operator='arithmetic' k1='0' k2='-1' k3='1' k4='0' result='dropShadow'/>
+            <feMerge>
+                <feMergeNode in='dropShadow'/>
+                <feMergeNode in='SourceGraphic'/>
+            </feMerge>
+        </filter>
+    </defs>
+    <rect x="0" y="0" width="80" height="80" fill="blue"/>
+    <g filter='url(#filterDropShadow)'>
+        <circle style="fill-rule:evenodd;fill:rgb(56.1%,73.7%,75.7%);fill-opacity:0.5;stroke-width:0.2;stroke-linecap:butt;stroke-linejoin:round;stroke:rgb(0%,0%,0%);stroke-opacity:1;stroke-miterlimit:10;" cx="40" cy="40" r="30"/>
+    </g>
+    <g font-size='20' font-family='Verdana'>
+        <text x='40' y='40' text-anchor="middle" alignment-baseline="central">ID</text>
+    </g>
+    <!--<circle style="fill-rule:evenodd;fill:rgba(100%,100%,100%,0%);fill-opacity:1;stroke-width:0.2;stroke-linecap:butt;stroke-linejoin:round;stroke:rgba(100%,100%,100%,0%);stroke-opacity:1;stroke-miterlimit:10;" cx="40" cy="40" r="30"/>-->
+    <!--<circle style="fill-rule:evenodd;fill:rgb(56.1%,73.7%,75.7%);fill-opacity:0.5;stroke-width:0.2;stroke-linecap:butt;stroke-linejoin:round;stroke:rgb(0%,0%,0%);stroke-opacity:1;stroke-miterlimit:10;" cx="40" cy="40" r="30"/>-->
+</svg>
+

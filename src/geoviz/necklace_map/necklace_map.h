@@ -29,14 +29,18 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-2019
 
 #include "geoviz/common/core_types.h"
 #include "geoviz/common/region.h"
-#include "geoviz/necklace_map/glyph_scaler.h"
-#include "geoviz/necklace_map/interval_generator.h"
+#include "geoviz/necklace_map/compute_feasible_interval.h"
+#include "geoviz/necklace_map/compute_scale_factor.h"
+#include "geoviz/necklace_map/compute_valid_placement.h"
 #include "geoviz/necklace_map/map_element.h"
 #include "geoviz/necklace_map/necklace.h"
-#include "geoviz/necklace_map/positioner.h"
 
 
 // TODO(tvl) this should probably end up as forwarding file, to functional parts that may each have their own subdirectory... However, it should probably also contain functionality for running 'the full pipeline'.
+
+// TODO(tvl) make "settings.h" file with parameter struct containing alg type, min separation, aversion factor, etc. Add factory methods to base functors to construct functors based on this struct.
+
+// TODO(tvl) should this file contain the factories?
 
 
 namespace geoviz
@@ -46,61 +50,6 @@ namespace necklace_map
 
 
 
-struct GlyphPositioner
-{
-  GlyphPositioner(const Number& centroid_attraction_ratio);
-
-  virtual void operator()
-  (
-    const std::vector<NecklaceInterval>& intervals,
-    const std::vector<Number>& values,
-    const Number& scale_factor,
-    std::vector<Number>& angles_rad
-  ) const = 0;
-
-  const Number& centroid_attraction_ratio;  // Ratio between attraction to interval center (1) and repulsion from neighboring glyphs (0).
-}; // struct GlyphPositioner
-
-// TODO(tvl) Note, the fixed order positioner has implemented incorrectly; the paper version was corrected, so use this instead!
-struct FixedOrderPositioner : public GlyphPositioner
-{
-  FixedOrderPositioner(const Number& centroid_attraction_ratio);
-
-  virtual void operator()
-  (
-    const std::vector<NecklaceInterval>& intervals,
-    const std::vector<Number>& values,
-    const Number& scale_factor,
-    std::vector<Number>& angles_rad
-  ) const;
-}; // struct FixedOrderPositioner
-
-struct AnyOrderPositioner : public GlyphPositioner
-{
-  AnyOrderPositioner(const Number& centroid_attraction_ratio);
-
-  virtual void operator()
-    (
-      const std::vector<NecklaceInterval>& intervals,
-      const std::vector<Number>& values,
-      const Number& scale_factor,
-      std::vector<Number>& angles_rad
-    ) const;
-}; // struct AnyOrderPositioner
-
-// Heuristic any-order positioner.
-struct HeuristicPositioner : public GlyphPositioner
-{
-  HeuristicPositioner(const Number& centroid_attraction_ratio);
-
-  virtual void operator()
-    (
-      const std::vector<NecklaceInterval>& intervals,
-      const std::vector<Number>& values,
-      const Number& scale_factor,
-      std::vector<Number>& angles_rad
-    ) const;
-}; // struct HeuristicPositioner
 
 
 } // namespace necklace_map

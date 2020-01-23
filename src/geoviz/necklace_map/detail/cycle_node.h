@@ -17,44 +17,43 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-Created by tvl (t.vanlankveld@esciencecenter.nl) on 28-11-2019
+Created by tvl (t.vanlankveld@esciencecenter.nl) on 23-01-2020
 */
 
-#ifndef GEOVIZ_NECKLACE_MAP_MAP_ELEMENT_H
-#define GEOVIZ_NECKLACE_MAP_MAP_ELEMENT_H
+#ifndef GEOVIZ_NECKLACE_MAP_DETAIL_CYCLE_NODE_H
+#define GEOVIZ_NECKLACE_MAP_DETAIL_CYCLE_NODE_H
 
 #include <memory>
-#include <unordered_map>
 
 #include "geoviz/common/core_types.h"
-#include "geoviz/common/region.h"
 #include "geoviz/necklace_map/bead.h"
-#include "geoviz/necklace_map/necklace.h"
 
 
 namespace geoviz
 {
 namespace necklace_map
 {
-
-struct MapElement
+namespace detail
 {
-  using Ptr = std::shared_ptr<MapElement>;
-  using BeadMap = std::unordered_map<Necklace::Ptr, Bead::Ptr>;
 
-  explicit MapElement(const std::string& id);
-  explicit MapElement(const Region& region);
+// A node to cycle through the beads.
+// As opposed to beads, these nodes may have a feasible interval completely outside [0, 2pi).
+// This means that they can be used to cycle through the nodes multiple times in order.
+struct BeadCycleNode
+{
+  using Ptr = std::shared_ptr<BeadCycleNode>;
 
-  //@param strict whether the value associated with each region must be strictly larger than 0.
-  bool IsValid(const bool strict = true) const;
+  BeadCycleNode(const Bead::Ptr& bead);
 
-  Region region;
-  Number value;  // Note that the value is correlated with the area of the bead, so its squared radius.
+  Bead::Ptr bead;
 
-  BeadMap beads;
-}; // struct MapElement
+  // Note that unlike the bead's feasible interval, these can be larger than 2*PI.
+  Number interval_cw_rad;
+  Number interval_ccw_rad;
+}; // struct BeadCycleNode
 
+} // namespace detail
 } // namespace necklace_map
 } // namespace geoviz
 
-#endif //GEOVIZ_NECKLACE_MAP_MAP_ELEMENT_H
+#endif //GEOVIZ_NECKLACE_MAP_DETAIL_CYCLE_NODE_H

@@ -33,7 +33,7 @@ namespace necklace_map
 /**@struct MapElement
  * @brief A region and its associated data for use in a necklace map.
  *
- * This element has a region, a numeric value that should be visualized in the necklace map, and a glyph used for this visualization.
+ * This element has a region, a numeric value that should be visualized in the necklace map, and a bead used for this visualization.
  *
  * Note that the Necklace Map algorithms ignore holes in the region for all intents and purposes. Also note that polygons of a region may intersect, although polygon self-intersection will produce undefined results. Similarly, different regions may intersect.
  *
@@ -51,7 +51,7 @@ namespace necklace_map
  * @endparblock
  */
 MapElement::MapElement(const std::string& id)
-  : region(id), value(0), glyphs() {}
+  : region(id), value(0), beads() {}
 
 /**@brief Construct a necklace region and data element from a region.
  * @param region @parblock the region of the element.
@@ -60,7 +60,7 @@ MapElement::MapElement(const std::string& id)
  * @endparblock
  */
 MapElement::MapElement(const Region& region)
-  : region(region), value(0), glyphs() {}
+  : region(region), value(0), beads() {}
 
 /**@brief Check whether the necklace element is valid.
  *

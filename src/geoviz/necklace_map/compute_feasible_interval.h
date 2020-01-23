@@ -20,17 +20,17 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Created by tvl (t.vanlankveld@esciencecenter.nl) on 05-12-2019
 */
 
-#ifndef GEOVIZ_NECKLACE_MAP_INTERVAL_GENERATOR_H
-#define GEOVIZ_NECKLACE_MAP_INTERVAL_GENERATOR_H
+#ifndef GEOVIZ_NECKLACE_MAP_COMPUTE_FEASIBLE_INTERVAL_H
+#define GEOVIZ_NECKLACE_MAP_COMPUTE_FEASIBLE_INTERVAL_H
 
 #include <memory>
 #include <unordered_map>
 #include <vector>
 
 #include "geoviz/common/core_types.h"
+#include "geoviz/necklace_map/bead.h"
 #include "geoviz/necklace_map/map_element.h"
 #include "geoviz/necklace_map/necklace.h"
-#include "geoviz/necklace_map/necklace_glyph.h"
 
 
 namespace geoviz
@@ -38,9 +38,9 @@ namespace geoviz
 namespace necklace_map
 {
 
-struct IntervalGenerator
+struct ComputeFeasibleInterval
 {
-  virtual NecklaceInterval::Ptr operator()
+  virtual CircleRange::Ptr operator()
   (
     const Polygon& extent,
     const Necklace::Ptr& necklace
@@ -49,14 +49,14 @@ struct IntervalGenerator
   void operator()(MapElement::Ptr& element) const;
 
   void operator()(std::vector<MapElement::Ptr>& elements) const;
-}; // struct IntervalGenerator
+}; // struct ComputeFeasibleInterval
 
 
-struct IntervalCentroidGenerator : public IntervalGenerator
+struct ComputeFeasibleCentroidInterval : public ComputeFeasibleInterval
 {
-  IntervalCentroidGenerator(const Number& length_rad);
+  ComputeFeasibleCentroidInterval(const Number& length_rad);
 
-  NecklaceInterval::Ptr operator()
+  CircleRange::Ptr operator()
   (
     const Polygon& extent,
     const Necklace::Ptr& necklace
@@ -64,19 +64,19 @@ struct IntervalCentroidGenerator : public IntervalGenerator
 
  private:
   Number half_length_rad_;
-}; // struct IntervalCentroidGenerator
+}; // struct ComputeFeasibleCentroidInterval
 
 
-struct IntervalWedgeGenerator : public IntervalGenerator
+struct ComputeFeasibleWedgeInterval : public ComputeFeasibleInterval
 {
-  NecklaceInterval::Ptr operator()
+  CircleRange::Ptr operator()
   (
     const Polygon& extent,
     const Necklace::Ptr& necklace
   ) const;
-}; // struct IntervalWedgeGenerator
+}; // struct ComputeFeasibleWedgeInterval
 
 } // namespace necklace_map
 } // namespace geoviz
 
-#endif //GEOVIZ_NECKLACE_MAP_INTERVAL_GENERATOR_H
+#endif //GEOVIZ_NECKLACE_MAP_COMPUTE_FEASIBLE_INTERVAL_H

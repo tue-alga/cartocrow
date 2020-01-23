@@ -18,10 +18,10 @@ Necklace intervals 2 methods: centroid, wedge.
 * Assumption: each interval < PI.
 * Fixed order output (O(n*log(n))), versus arbitrary order output exact (O(n*log(n) + n^2*K*4^K)), versus arbitrary order output heuristic (O(n*log(n) + n*K*2^K)).
 
-Output: positions of necklace glyph centers (assuming circular glyphs) and global scale factor. The scale factor times the squared root of each value gives the glyph radius.
-* No glyph can cover necklace 'center'.
+Output: positions of necklace bead centers (assuming circular beads) and global scale factor. The scale factor times the squared root of each value gives the bead radius.
+* No bead can cover necklace 'center'.
 
-Multiple necklaces: compute per necklace. However, the algorithms do not check whether the glyphs of one necklace overlap the glyphs of another. Perhaps this can be addressed by indicating disallowed regions on a necklace? Or at least by checking whether the necklaces overlap or are close to eachother?
+Multiple necklaces: compute per necklace. However, the algorithms do not check whether the beads of one necklace overlap the beads of another. Perhaps this can be addressed by indicating disallowed regions on a necklace? Or at least by checking whether the necklaces overlap or are close to eachother?
 
 
 
@@ -44,9 +44,9 @@ Notes on Java implementation
     * Algorithm.computeRanges() computes the valid intervals according to the specified Algorithm (AlgCentroid, or AlgWedge with some weighting factor).
     * Optimizer.computeOptSize(...) computes the scale factor. Note that the optimum is calculated per necklace, but then the minimum over all necklaces must be taken.
       - Apparently, there is an error in the fixed order implementation of the optimum scaling factor. The 2015 paper is correct though.
-    * Optimizer.optFixedOrder(...) computes the positions of the glyph centers. Note that the fixed order is based on the interval centers for the centroid intervals and based on the interval start for wedge intervals.
+    * Optimizer.optFixedOrder(...) computes the positions of the bead centers. Note that the fixed order is based on the interval centers for the centroid intervals and based on the interval start for wedge intervals.
   * The applet allows multiple necklaces by adding "_#" to the polygon/value IDs (which are otherwise 2-character country/region identifiers).
-  * Note that no check seems to be made whether the glyphs of different nacklaces overlap.
-  * Recalculates when using the "Buffer size" slider, but not the "Force focus" slider (this does not change the scale factor, but it does change the glyph centers). Finally, the "Zoom" slider changes the screen positions, but not the relative positions of the glyphs and base map.
+  * Note that no check seems to be made whether the beads of different nacklaces overlap.
+  * Recalculates when using the "Buffer size" slider, but not the "Force focus" slider (this does not change the scale factor, but it does change the bead centers). Finally, the "Zoom" slider changes the screen positions, but not the relative positions of the beads and base map.
 * Code contains a lot of surrounding nonsense, unused experimental code, and things such as a 'water waves simulater".
 

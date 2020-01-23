@@ -12,6 +12,78 @@ const SUPPORT_CARD_INNER_CLASS = 'geoviz-support-inner';
 let map_obj;
 let world_map = false;
 
+let last_update = Date.now();
+
+function GetBuffer() {
+  let buffer_rad = parseFloat(buffer_rad_in.value);
+  return (Math.pow(buffer_rad, 4) * Math.PI).toPrecision(4);
+}
+
+function GetAversion() {
+  let aversion = parseFloat(aversion_in.value);
+  return (Math.pow(aversion, 4) + 0.001).toPrecision(4);
+}
+
+//TODO(tvl) clean code!
+function settingsChanged() {
+  if (Date.now() - last_update < 20) return;
+
+  last_update = Date.now();
+  let buffer_rad = GetBuffer();
+  let glyph_aversion = GetAversion();
+  tryReplaceMapBySvg(
+    '/script/run_necklace_map.php?args=--buffer_rad:' +
+      buffer_rad +
+      '|--glyph_repulsion:' +
+      glyph_aversion +
+      '|--draw_intervals'
+  );
+}
+
+//TODO(tvl) clean code!
+function settingsInput() {
+  let buffer_rad = GetBuffer();
+  let glyph_aversion = GetAversion();
+  buffer_rad_out.value = '= ' + buffer_rad;
+  aversion_out.value = '= ' + glyph_aversion;
+  settingsChanged();
+}
+
+//TODO(tvl) clean code!
+L.Control.NecklaceSettings = L.Control.extend({
+  options: {
+    position: 'bottomleft'
+  },
+  onAdd: function(map) {
+    let control = L.DomUtil.create('div');
+    control.innerHTML =
+      '<div class="aga-control aga-theme-main">' +
+      '<p>Glyph Separation Settings</p>' +
+      '<form style="display: block;">' +
+      '<div oninput="settingsInput();" onchange="settingsChanged();">' +
+      '<input id="buffer_rad_in" type="range" name="buffer_rad" min="0.0" max="1.0" step="0.01" value="0.0" />' +
+      '<label for="buffer_rad" style="margin-left: 8px;">Buffer</label>' +
+      '<output id="buffer_rad_out" name="buffer_rad" for="buffer_rad"></output>' +
+      '</div>' +
+      '<div oninput="settingsInput();" onchange="settingsChanged();">' +
+      '<input id="aversion_in" type="range" name="aversion" min="0.0" max="1.0" step="0.01" value="0.0" list="aversion_extremes"/>' +
+      '<label for="aversion" style="margin-left: 8px;">Aversion</label>' +
+      '<output id="aversion_out" name="aversion" for="aversion"></output>' +
+      '</div>' +
+      '</form>' +
+      '</div>';
+
+    L.DomEvent.disableClickPropagation(control);
+    return control;
+  },
+
+  onRemove: function(map) {}
+});
+
+L.control.neclaceSettings = function(opts) {
+  return new L.Control.NecklaceSettings(opts);
+};
+
 // Focus on a specific support card.
 function focusSupportCard(cardId = null) {
   let card = document.getElementById(cardId);
@@ -174,13 +246,37 @@ function tryAddSvgToMap(url) {
   ajaxGet(url, addSvgResponseToMap());
 }
 
+//TODO(tvl) clean code!
+L.SVG.include({
+  _destroyContainer: function() {
+    L.DomUtil.remove(this._container);
+    L.DomEvent.off(this._container);
+    delete this._container;
+    delete this._rootGroup;
+
+    // Make sure to also clear the cache for svgSize,
+    // so that next container width and height will be set.
+    delete this._svgSize;
+  }
+});
+
 // Callback function to replace the map by the SVG direct child elements in the response text.
 function replaceMapBySvgResponse() {
   return function(response) {
+    let was_world = world_map;
     if (world_map) {
       map_obj.remove();
       map_obj = L.map('map', { crs: L.CRS.Simple });
+      L.control.neclaceSettings().addTo(map_obj);
       world_map = false;
+    } else {
+      //TODO(tvl) clean code!
+      map_obj.eachLayer(function(thisLayer) {
+        map_obj.removeLayer(thisLayer);
+      });
+
+      //TODO(tvl) probably replace by explicitly removing added SVG layers...
+      //if (svgLayer) { svgLayer.remove(); }
     }
 
     // Add the response text as a new element.
@@ -213,7 +309,7 @@ function replaceMapBySvgResponse() {
     }
     if (map_bounds[0][0] === Infinity) return;
 
-    map_obj.fitBounds(map_bounds);
+    if (was_world) map_obj.fitBounds(map_bounds);
 
     // Add all svg children of the wrapper element to the map.
     for (let child of wrapperElement.children) {

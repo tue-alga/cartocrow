@@ -20,7 +20,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Created by tvl (t.vanlankveld@esciencecenter.nl) on 09-12-2019
 */
 
-#include "necklace_interval.h"
+#include "range.h"
 
 #include <glog/logging.h>
 
@@ -47,7 +47,7 @@ namespace necklace_map
  * @param angle_cw_rad the clockwise endpoint of the interval.
  * @param angle_ccw_rad the counterclockwise endpoint of the interval.
  */
-NecklaceInterval::NecklaceInterval(const Number& angle_cw_rad, const Number& angle_ccw_rad)
+CircleRange::CircleRange(const Number& angle_cw_rad, const Number& angle_ccw_rad)
   : angle_cw_rad_(angle_cw_rad), angle_ccw_rad_(angle_ccw_rad)
 {
   if (angle_cw_rad_ == angle_ccw_rad_)
@@ -75,7 +75,16 @@ NecklaceInterval::NecklaceInterval(const Number& angle_cw_rad, const Number& ang
  * This angle is guaranteed to be in the range [0, 2*pi).
  * @endparblock
  */
-const Number& NecklaceInterval::angle_cw_rad() const { return angle_cw_rad_; }
+const Number& CircleRange::angle_cw_rad() const { return angle_cw_rad_; }
+
+/**@brief The angle where the interval ends when traversing the interval in clockwise direction.
+ *
+ * @return @parblock the clockwise ending angle.
+ *
+ * This angle is guaranteed to be in the range [0, 2*pi).
+ * @endparblock
+ */
+Number& CircleRange::angle_cw_rad() { return angle_cw_rad_; }
 
 /**@brief The angle where the interval ends when traversing the interval in counterclockwise direction.
  *
@@ -84,12 +93,21 @@ const Number& NecklaceInterval::angle_cw_rad() const { return angle_cw_rad_; }
  * This angle is guaranteed to be in the range [angle_cw_rad, angle_cw_rad+2*pi).
  * @endparblock
  */
-const Number& NecklaceInterval::angle_ccw_rad() const { return angle_ccw_rad_; }
+const Number& CircleRange::angle_ccw_rad() const { return angle_ccw_rad_; }
+
+/**@brief The angle where the interval ends when traversing the interval in counterclockwise direction.
+ *
+ * @return @parblock the counterclockwise ending angle.
+ *
+ * This angle is guaranteed to be in the range [angle_cw_rad, angle_cw_rad+2*pi).
+ * @endparblock
+ */
+Number& CircleRange::angle_ccw_rad() { return angle_ccw_rad_; }
 
 /**@brief Check whether the interval is in a valid state.
  * @return whether the interval is valid.
  */
-bool NecklaceInterval::IsValid() const
+bool CircleRange::IsValid() const
 {
   return
     0 <= angle_cw_rad_ && angle_cw_rad_ < M_2xPI &&
@@ -103,7 +121,7 @@ bool NecklaceInterval::IsValid() const
  * @endparblock
  * @return whether the interval contains the intersection of the ray with the necklace.
  */
-bool NecklaceInterval::IntersectsRay(const Number& angle_rad) const
+bool CircleRange::IntersectsRay(const Number& angle_rad) const
 {
   CHECK_GE(angle_rad, 0);
   CHECK_LT(angle_rad, M_2xPI);
@@ -112,21 +130,21 @@ bool NecklaceInterval::IntersectsRay(const Number& angle_rad) const
     (angle_rad < angle_cw_rad_ ? angle_rad + M_2xPI : angle_rad) < angle_ccw_rad_;
 }
 
-Number NecklaceInterval::ComputeCentroid() const
+Number CircleRange::ComputeCentroid() const
 {
   const Number centroid = .5 * (angle_cw_rad() + angle_ccw_rad());
   CHECK_GE(centroid, 0);
   return (M_2xPI < centroid) ? centroid - M_2xPI : centroid;
 }
 
-Number NecklaceInterval::ComputeLength() const
+Number CircleRange::ComputeLength() const
 {
   const Number length = angle_ccw_rad() - angle_cw_rad();
   CHECK_GE(length, 0);
   return length;
 }
 
-Number NecklaceInterval::ComputeOrder() const
+Number CircleRange::ComputeOrder() const
 {
   return 0;
 }
@@ -149,7 +167,7 @@ Number NecklaceInterval::ComputeOrder() const
  * @param angle_ccw_rad the counterclockwise endpoint of the interval.
  */
 IntervalCentroid::IntervalCentroid(const Number& angle_cw_rad, const Number& angle_ccw_rad)
-  : NecklaceInterval(angle_cw_rad, angle_ccw_rad) {}
+  : CircleRange(angle_cw_rad, angle_ccw_rad) {}
 
 Number IntervalCentroid::ComputeOrder() const
 {
@@ -178,7 +196,7 @@ Number IntervalCentroid::ComputeOrder() const
  * @param angle_ccw_rad the counterclockwise endpoint of the interval.
  */
 IntervalWedge::IntervalWedge(const Number& angle_cw_rad, const Number& angle_ccw_rad)
-  : NecklaceInterval(angle_cw_rad, angle_ccw_rad) {}
+  : CircleRange(angle_cw_rad, angle_ccw_rad) {}
 
 Number IntervalWedge::ComputeOrder() const
 {

@@ -29,7 +29,7 @@ namespace necklace_map
 {
 
 /**@class NecklaceShape
- * @brief A star-shaped curve that guides the placement of data visualization glyphs.
+ * @brief A star-shaped curve that guides the placement of data visualization symbols.
  */
 
 /**@fn virtual const Point& NecklaceShape::kernel() const
@@ -59,6 +59,13 @@ namespace necklace_map
  * @return the necklace length.
  */
 
+/**@fn virtual Number NecklaceShape::ComputeRadius() const = 0
+ * @brief Compute the radius of the necklace.
+ *
+ * Note that for non-circular necklaces, this radius will be an approximation.
+ * @return the necklace radius.
+ */
+
 
 /**@class CircleNecklace
  * @brief A full circle necklace.
@@ -70,8 +77,11 @@ namespace necklace_map
  *
  * @param shape the circle covered by the necklace.
  */
-CircleNecklace::CircleNecklace(const Circle& shape)
-  : NecklaceShape(), shape_(shape) {}
+CircleNecklace::CircleNecklace(const Circle& shape) : NecklaceShape(), shape_(shape)
+{
+  radius_ = CGAL::sqrt(shape_.squared_radius());
+  length_ = M_2xPI * radius_;
+}
 
 const Point& CircleNecklace::kernel() const
 {
@@ -99,15 +109,19 @@ Box CircleNecklace::ComputeBoundingBox() const
 
 Number CircleNecklace::ComputeLength() const
 {
-  const Number radius = CGAL::sqrt(shape_.squared_radius());
-  return M_2xPI * radius;
+  return length_;
+}
+
+Number CircleNecklace::ComputeRadius() const
+{
+  return radius_;
 }
 
 
 /**@class CurveNecklace
  * @brief A circular arc necklace.
  *
- * Note that the circular arc may cover the full circle. In this case, the glyph placement will be identical to the placement on a CircleNecklace of the supporting circle.
+ * Note that the circular arc may cover the full circle. In this case, the bead placement will be identical to the placement on a CircleNecklace of the supporting circle.
  */
 
 /**@brief Construct a curve necklace.

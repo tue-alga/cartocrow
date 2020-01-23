@@ -32,8 +32,8 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 26-11-2019
 
 #include "console/common/detail/svg_visitor.h"
 #include "geoviz/common/core_types.h"
+#include "geoviz/necklace_map/bead.h"
 #include "geoviz/necklace_map/necklace.h"
-#include "geoviz/necklace_map/necklace_glyph.h"
 #include "geoviz/necklace_map/map_element.h"
 
 
@@ -46,7 +46,7 @@ class NecklaceMapSvgVisitor : public SvgVisitor
 {
  private:
   using MapElement = necklace_map::MapElement;
-  using NecklaceGlyph = necklace_map::NecklaceGlyph;
+  using Bead = necklace_map::Bead;
   using Necklace = necklace_map::Necklace;
   using LookupTable = std::unordered_map<std::string, size_t>;
 

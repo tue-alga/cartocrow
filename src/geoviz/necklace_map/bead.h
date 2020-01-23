@@ -20,7 +20,13 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Created by tvl (t.vanlankveld@esciencecenter.nl) on 15-01-2020
 */
 
-#include "necklace_glyph.h"
+#ifndef GEOVIZ_NECKLACE_MAP_BEAD_H
+#define GEOVIZ_NECKLACE_MAP_BEAD_H
+
+#include <memory>
+
+#include "geoviz/common/core_types.h"
+#include "geoviz/necklace_map/range.h"
 
 
 namespace geoviz
@@ -28,27 +34,28 @@ namespace geoviz
 namespace necklace_map
 {
 
-/**@struct NecklaceGlyph
- * @brief A visualization element to show the numeric value associated with a map region.
- *
- * Each region with a value larger than 0 that is also assigned a necklace will get a necklace glyph. The value is visualized using the area of the element. While this does not directly convey the absolute value, the difference between glyphs exposes their relative values.
- *
- * While glyphs could have various shapes, we currently only support disks.
- */
-
-/**@brief Construct a necklace glyph.
- */
-NecklaceGlyph::NecklaceGlyph(const Number& radius_base)
-  : interval(), angle_rad(0), angle_min_rad(0), angle_max_rad(0) {}
-
-/**@brief Check whether the glyph is valid.
- *
- * This validity depends on three aspects: the interval must not be null, the interval must be valid, and the glyph's position must be in the interval.
- */
-bool NecklaceGlyph::IsValid() const
+struct Bead
 {
-  return interval != nullptr && interval->IsValid() && interval->IntersectsRay(angle_rad);
-}
+  using Ptr = std::shared_ptr<Bead>;
+
+  Bead(const Number& radius_base);
+
+  bool IsValid() const;
+
+  // Variables before scaling.
+  Number radius_base;
+
+  CircleRange::Ptr feasible;
+
+  // Variables after scaling.
+  Number covering_radius_scaled_rad;
+
+  CircleRange::Ptr valid;
+
+  Number angle_rad;
+}; // struct Bead
 
 } // namespace necklace_map
 } // namespace geoviz
+
+#endif //GEOVIZ_NECKLACE_MAP_BEAD_H

@@ -47,6 +47,17 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-2019
 #include "console/necklace_map/data_reader.h"
 
 
+DEFINE_double(buffer_rad, 0, "Minimum distance between the necklace beads (in radians). Must be in range [0, pi]. Note that large values are likely to force the necklace bead area to 0. Also note that values close to 0 are a lot more influential. A 4th degree scaling is recommended.");
+
+//TODO(tvl) rename glyph_aversion?
+DEFINE_double(glyph_repulsion, 0.001, "Measure for repulsion between the necklace beads. Must be in the range (0, 1]. Note that values close to 0 are a lot more influential, so a 4th degree scaling is recommended.");
+
+DEFINE_bool(draw_intervals, false, "Whether to draw the feasible and valid intervals.");
+
+DEFINE_bool(debug_out, false, "Whether to generate additional debug output.");
+
+DEFINE_double(centroid_interval_length_rad, 0.2 * M_PI, "The length of the centroid intervals (in radians).");
+
 
 // Source files for
 // * generic SVG parser
@@ -114,12 +125,15 @@ bool writeDummySvg
   bool write_debug_info = false
 )
 {
+  const double symbol_opacity = write_debug_info ? 0.5 : 1;
+
+
   //std::vector<Number> angles_rad = {0, M_PI_4, M_PI_2, M_PI_2 + M_PI_4, M_PI, M_PI + M_PI_2};
   //const std::vector<MapElement::Ptr>& elements = necklace->beads;
-  const std::vector<NecklaceGlyph::Ptr>& beads = necklace->beads;
+  const std::vector<Bead::Ptr>& beads = necklace->beads;
 
 
-  // Create dummy necklace glyphs and write everything to an SVG string.
+  // Create dummy necklace beads and write everything to an SVG string.
   const Point& kernel = necklace->shape->kernel();
 
   //std::shared_ptr<CircleNecklace> circle_necklace = std::static_pointer_cast<CircleNecklace>(necklace);
@@ -129,23 +143,21 @@ bool writeDummySvg
 
 
 
-  Number bounds[] = {kernel.x(), kernel.y(), kernel.x(), kernel.y()};
+  Number bounds[] = {bounding_box.xmin(), bounding_box.ymin(), bounding_box.xmax(), bounding_box.ymax()};
 
   // Necklace
-  std::vector<Number> glyph_radii(beads.size(), 0);
-  std::vector<Point> glyph_centers;
-  for (const NecklaceGlyph::Ptr& bead : beads)
+  for (const Bead::Ptr& bead : beads)
   {
     CHECK_NOTNULL(bead);
-    Point glyph_center;
-    CHECK(necklace->shape->IntersectRay(bead->angle_rad, glyph_center));
+    Point symbol_center;
+    CHECK(necklace->shape->IntersectRay(bead->angle_rad, symbol_center));
 
     const Number& radius = scale_factor * bead->radius_base;
 
-    bounds[0] = std::min(bounds[0], glyph_center.x() - radius);
-    bounds[1] = std::min(bounds[1], glyph_center.y() - radius);
-    bounds[2] = std::max(bounds[2], glyph_center.x() + radius);
-    bounds[3] = std::max(bounds[3], glyph_center.y() + radius);
+    bounds[0] = std::min(bounds[0], symbol_center.x() - radius);
+    bounds[1] = std::min(bounds[1], symbol_center.y() - radius);
+    bounds[2] = std::max(bounds[2], symbol_center.x() + radius);
+    bounds[3] = std::max(bounds[3], symbol_center.y() + radius);
   }
 
   // Regions.
@@ -179,6 +191,7 @@ bool writeDummySvg
   const Number height = bounds[3] - bounds[1];
   const Number pixel_width = 500;
   const Number pixel_height = pixel_width * height / width;
+  const Number unit_px = width / pixel_width;
 
   const Number transform_scale = 1;
   std::stringstream transform_str;
@@ -218,9 +231,89 @@ bool writeDummySvg
     //printer.PushAttribute("bounds", "[[52.356,4.945],[52.354,4.947]]");  // TODO(tvl) Note: lat-lon!
   }
 
-  for (const MapElement& element : elements)
   {
-    const Region& region = element.region;
+    // Define drop shadow filter.
+
+    printer.OpenElement("defs");
+    printer.OpenElement("filter");
+    printer.PushAttribute("id", "filterDropShadow");
+    printer.PushAttribute("filterUnits", "userSpaceOnUse");
+    {
+      double mult = 0.9 / symbol_opacity;
+      std::stringstream stream;
+      stream << "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 " << mult << " 0";
+      const std::string opaque_matrix = stream.str();
+
+      printer.OpenElement("feColorMatrix");
+      printer.PushAttribute("in", "SourceAlpha");
+      printer.PushAttribute("type", "matrix");
+      printer.PushAttribute("values", opaque_matrix.c_str());
+      printer.PushAttribute("result", "sourceOblique");
+      printer.CloseElement(); // feColorMatrix
+    }
+    {
+      const Number extent_px = 2;
+      const Number extent = extent_px * unit_px;
+
+      std::stringstream stream;
+      stream << extent;
+      const std::string blur = stream.str();
+      const std::string dx = blur;
+      const std::string dy = blur;
+
+      printer.OpenElement("feGaussianBlur");
+      printer.PushAttribute("in", "sourceOblique");
+      printer.PushAttribute("stdDeviation", blur.c_str());
+      printer.PushAttribute("result", "blur");
+      printer.CloseElement(); // feGaussianBlur
+      printer.OpenElement("feOffset");
+      printer.PushAttribute("in", "blur");
+      printer.PushAttribute("dx", dx.c_str());
+      printer.PushAttribute("dy", dy.c_str());
+      printer.PushAttribute("result", "offsetBlur");
+      printer.CloseElement(); // feOffset
+    }
+    printer.OpenElement("feComposite");
+    printer.PushAttribute("in", "offsetBlur");
+    printer.PushAttribute("in2", "sourceOblique");
+    printer.PushAttribute("operator", "xor");
+    if (write_debug_info)
+    {
+      // Subtract the original from the shadow.
+      printer.PushAttribute("result", "offsetBlurAndSource");
+      printer.CloseElement(); // feComposite
+      printer.OpenElement("feComposite");
+      printer.PushAttribute("in", "sourceOblique");
+      printer.PushAttribute("in2", "offsetBlurAndSource");
+      printer.PushAttribute("operator", "arithmetic");
+      printer.PushAttribute("k1", "0");
+      printer.PushAttribute("k2", "-1");
+      printer.PushAttribute("k3", "1");
+      printer.PushAttribute("k4", "0");
+      printer.PushAttribute("result", "dropShadow");
+    }
+    else
+    {
+      printer.PushAttribute("result", "dropShadow");
+    }
+    printer.CloseElement(); // feComposite
+    printer.OpenElement("feMerge");
+    printer.OpenElement("feMergeNode");
+    //printer.PushAttribute("in", "dropShadow");
+    printer.PushAttribute("in", "dropShadow");
+    printer.CloseElement(); // feMergeNode
+    printer.OpenElement("feMergeNode");
+    printer.PushAttribute("in", "SourceGraphic");
+    printer.CloseElement(); // feMergeNode
+    printer.CloseElement(); // feMerge
+    printer.CloseElement(); // filter
+    printer.CloseElement(); // defs
+  }
+
+  // Write regions.
+  for (const MapElement::Ptr& element : elements)
+  {
+    const Region& region = element->region;
 
     printer.OpenElement("path");
     printer.PushAttribute("style", region.style.c_str());
@@ -230,6 +323,7 @@ bool writeDummySvg
     printer.CloseElement();
   }
 
+  // Write necklace.
   printer.OpenElement("circle");
   printer.PushAttribute("style", "fill:none;stroke-width:0.4;stroke-linecap:butt;stroke-linejoin:round;stroke:rgb(0%,0%,0%);stroke-opacity:1;stroke-miterlimit:10;");
   printer.PushAttribute("cx", kernel.x());
@@ -238,86 +332,216 @@ bool writeDummySvg
   printer.PushAttribute("transform", transform_str.str().c_str());
   printer.CloseElement();
 
-  for (size_t n = 0; n < centers.size(); ++n)
+  // TODO(tvl) make separate loops to draw the different aspects of the elements (e.g. first draw all intervals, then all lines, etc.).
+  size_t c = 0;
+  for (const MapElement::Ptr& element : elements)
   {
-    const std::string style = elements[n].region.style;
-
+    const std::string style = element->region.style;
+    for (const MapElement::BeadMap::value_type& map_value : element->beads)
     {
-      const std::shared_ptr<NecklaceInterval>& interval = elements[n].glyph.interval;
+      const Bead::Ptr& bead = map_value.second;
 
-      const size_t from = style.find("fill:");
-      const size_t to = style.find(")", from);
-      const std::string color = style.substr(from + 5, to - from - 4);
-      const std::string interval_style =
-        "fill:none;stroke-width:0.4;stroke-linecap:butt;stroke-linejoin:round;stroke:"
-        + color +
-        ";stroke-opacity:1;stroke-miterlimit:10;";
+      // Interval
+      if (write_debug_info)
+      {
+        const std::shared_ptr<CircleRange>& interval = bead->feasible;
 
-      const Number my_radius = necklace_radius + (0.4 * (n+1));
+        const size_t from = style.find("fill:");
+        const size_t to = style.find(")", from);
+        const std::string color = style.substr(from + 5, to - from - 4);
+        const std::string interval_style =
+          "fill:none;stroke-width:0.4;stroke-linecap:butt;stroke-linejoin:round;stroke:"
+          + color +
+          ";stroke-opacity:1;stroke-miterlimit:10;";
 
-      CircleNecklace my_necklace(Circle(kernel, my_radius * my_radius));
+        const Number my_radius = necklace_radius + (0.4 * ++c);
 
-      Point from_pt, to_pt;
-      my_necklace.IntersectRay(interval->angle_cw_rad(), from_pt);
-      my_necklace.IntersectRay(interval->angle_ccw_rad(), to_pt);
+        CircleNecklace my_necklace(Circle(kernel, my_radius * my_radius));
 
-      std::stringstream sout;
-      sout << std::setprecision(9);  // TODO(tvl) we should align this precision with the maximum expected precision of the data. Probably should be a parameter with default.
-      sout << "M " << from_pt.x() << " " << from_pt.y();
-      sout << " A " << my_radius << " " << my_radius << " 0 0 1 ";
-      sout  << to_pt.x() << " " << to_pt.y();
-      std::string path_str = sout.str();
+        std::string path_str;
 
-      printer.OpenElement("path");
-      printer.PushAttribute("style", interval_style.c_str());
-      printer.PushAttribute("d", path_str.c_str());
-      printer.PushAttribute("transform", transform_str.str().c_str());
-      printer.CloseElement();
+        if (bead->valid)
+        {
+          // Write line to interval through bead.
+
+          Point endpoint;
+          //CHECK(necklace->IntersectRay(angle_rad, endpoint));
+          CHECK(my_necklace.IntersectRay(bead->angle_rad, endpoint));
+
+          {
+            std::stringstream sout;
+            sout << std::setprecision(
+              9
+                                     );  // TODO(tvl) we should align this precision with the maximum expected precision of the data. Probably should be a parameter with default.
+            sout << "M " << kernel.x() << " " << kernel.y() << " L " << endpoint.x() << " " << endpoint.y();
+            path_str = sout.str();
+          }
+
+          printer.OpenElement("path");
+          printer.PushAttribute
+            (
+              "style",
+              "fill:none;stroke-width:0.2;stroke-linecap:butt;stroke-linejoin:round;stroke:rgb(0%,0%,0%);stroke-opacity:1;stroke-miterlimit:10;"
+            );
+          printer.PushAttribute("d", path_str.c_str());
+          printer.PushAttribute("transform", transform_str.str().c_str());
+          printer.CloseElement();
+        }
+
+        if (bead->valid)
+        {
+          // Write allowed wedge.
+
+          //const Number angle_rad = (interval->angle_cw_rad() + interval->angle_ccw_rad()) / 2.0;
+          const Number angle_cw_rad = bead->valid->angle_cw_rad();
+          const Number angle_ccw_rad = bead->valid->angle_ccw_rad();
+
+          Point endpoint_cw, endpoint_ccw;
+          //CHECK(necklace->IntersectRay(angle_rad, endpoint));
+          CHECK(my_necklace.IntersectRay(angle_cw_rad, endpoint_cw));
+          CHECK(my_necklace.IntersectRay(angle_ccw_rad, endpoint_ccw));
+
+          {
+            std::stringstream sout;
+            sout << std::setprecision(
+              9
+                                     );  // TODO(tvl) we should align this precision with the maximum expected precision of the data. Probably should be a parameter with default.
+            sout <<
+                 "M " << endpoint_cw.x() << " " << endpoint_cw.y() <<
+                 " L " << kernel.x() << " " << kernel.y() <<
+                 " L " << endpoint_ccw.x() << " " << endpoint_ccw.y();
+            path_str = sout.str();
+          }
+
+          printer.OpenElement("path");
+          printer.PushAttribute
+            (
+              "style",
+              "fill:none;stroke-width:0.2;stroke-linecap:butt;stroke-linejoin:round;stroke:rgb(70%,70%,70%);stroke-opacity:1;stroke-miterlimit:10;"
+            );
+          printer.PushAttribute("d", path_str.c_str());
+          printer.PushAttribute("transform", transform_str.str().c_str());
+          printer.CloseElement();
+        }
+
+
+        if(true)
+        {
+          // Write interval.
+          Point from_pt, to_pt;
+          my_necklace.IntersectRay(interval->angle_cw_rad(), from_pt);
+          my_necklace.IntersectRay(interval->angle_ccw_rad(), to_pt);
+
+          {
+            std::stringstream sout;
+            sout
+              << std::setprecision(9);  // TODO(tvl) we should align this precision with the maximum expected precision of the data. Probably should be a parameter with default.
+            sout << "M " << from_pt.x() << " " << from_pt.y();
+            sout << " A " << my_radius << " " << my_radius << " 0 0 1 ";
+            sout << to_pt.x() << " " << to_pt.y();
+            path_str = sout.str();
+          }
+
+          printer.OpenElement("path");
+          printer.PushAttribute("style", interval_style.c_str());
+          printer.PushAttribute("d", path_str.c_str());
+          printer.PushAttribute("transform", transform_str.str().c_str());
+          printer.CloseElement();
+        }
+      }
     }
+  }
 
+  // Write beads.
+  printer.OpenElement("g");
+  printer.PushAttribute("filter", "url(#filterDropShadow)");
+  for (const MapElement::Ptr& element : elements)
+  {
+    const std::string style = element->region.style;
+    for (const MapElement::BeadMap::value_type& map_value : element->beads)
     {
-      const Number radius = std::sqrt(elements[n].value);
+      const Bead::Ptr& bead = map_value.second;
+      if (!bead->valid)
+        continue;
+
+      Point symbol_center;
+      CHECK(necklace->shape->IntersectRay(bead->angle_rad, symbol_center));
+      const Number& radius = scale_factor * bead->radius_base;
 
       const size_t from = style.find("fill-opacity:");
       const size_t to = style.find(";", from);
-      const std::string glyph_style =
-        style.substr(0, from+13)
-        + "0.5" +
-        style.substr(to);
+
+      std::stringstream stream;
+      stream << style.substr(0, from + 13) << symbol_opacity << style.substr(to);
+      const std::string symbol_style = stream.str();
 
       printer.OpenElement("circle");
-      printer.PushAttribute("style", glyph_style.c_str());
-      printer.PushAttribute("cx", centers[n].x());
-      printer.PushAttribute("cy", centers[n].y());
+      printer.PushAttribute("style", symbol_style.c_str());
+      printer.PushAttribute("cx", symbol_center.x());
+      printer.PushAttribute("cy", symbol_center.y());
       printer.PushAttribute("r", radius);
       printer.PushAttribute("transform", transform_str.str().c_str());
-      printer.CloseElement();
-    }
-
-    {
-      std::stringstream sout;
-      sout << std::setprecision(9
-                               );  // TODO(tvl) we should align this precision with the maximum expected precision of the data. Probably should be a parameter with default.
-      sout << "M " << kernel.x() << " " << kernel.y() << " L " << centers[n].x() << " " << centers[n].y();
-      std::string path_str = sout.str();
-
-      printer.OpenElement("path");
-      printer.PushAttribute
-      (
-        "style",
-        "fill:none;stroke-width:0.2;stroke-linecap:butt;stroke-linejoin:round;stroke:rgb(0%,0%,0%);stroke-opacity:1;stroke-miterlimit:10;"
-      );
-      printer.PushAttribute("d", path_str.c_str());
-      printer.PushAttribute("transform", transform_str.str().c_str());
-      printer.CloseElement();
+      printer.CloseElement(); // circle
     }
   }
+  printer.CloseElement(); // g
+
+  // Write bead IDs.
+  printer.OpenElement("g");
+  printer.PushAttribute("font-family", "Verdana");
+  {
+    const Number font_px = 16;
+    const Number font = font_px * unit_px;
+    std::stringstream stream;
+    stream << font;
+    const std::string size = stream.str();
+    printer.PushAttribute("font-size", size.c_str());
+  }
+  for (const MapElement::Ptr& element : elements)
+  {
+    const std::string id = element->region.id;
+    for (const MapElement::BeadMap::value_type& map_value : element->beads)
+    {
+      const Bead::Ptr& bead = map_value.second;
+      if (!bead->valid)
+        continue;
+
+      Point symbol_center;
+      CHECK(necklace->shape->IntersectRay(bead->angle_rad, symbol_center));
+
+      // Note that the transform argument does not apply to text coordinates.
+      const Point transformed_center
+      (
+        transform_scale * (symbol_center.x() - bounds[0]),
+        transform_scale * (bounds[3] - symbol_center.y())
+      );
+
+      printer.OpenElement("text");
+      printer.PushAttribute("text-anchor", "middle");
+      printer.PushAttribute("alignment-baseline", "central");
+      {
+        std::stringstream stream;
+        stream << transformed_center.x();
+        const std::string x = stream.str();
+        printer.PushAttribute("x", x.c_str());
+      }
+      {
+        std::stringstream stream;
+        stream << transformed_center.y();
+        const std::string y = stream.str();
+        printer.PushAttribute("y", y.c_str());
+      }
+      //printer.PushAttribute("transform", transform_str.str().c_str());
+      printer.PushText(id.c_str());
+      printer.CloseElement(); // text
+    }
+  }
+  printer.CloseElement(); // g
 
   printer.PushText("Sorry, your browser does not support the svg tag.");
   printer.CloseElement();
   svg = printer.CStr();
 }
-
 
 int main(int argc, char **argv)
 {
@@ -411,257 +635,26 @@ int main(int argc, char **argv)
   } while (max_tries < ++c);
 
   // Generate intervals based on the regions and necklaces.
-  std::unique_ptr<IntervalGenerator> make_intervals;
-  make_intervals.reset(new IntervalCentroidGenerator(FLAGS_centroid_interval_length_rad));
-  (*make_intervals)(elements);
+  std::unique_ptr<ComputeFeasibleInterval> compute_feasible_intervals;
+  compute_feasible_intervals.reset(new ComputeFeasibleCentroidInterval(FLAGS_centroid_interval_length_rad));
+  (*compute_feasible_intervals)(elements);
 
   // Compute the scaling factor.
-  std::unique_ptr<GlyphScaler> scaler(new GlyphScalerFixedOrder(FLAGS_min_separation)); // TODO(tvl) Note the min_separation should depend on the number of elements per necklace: make sure that this separation cannot break the algorithm. i.e. there is a scale factor such that the glyphs have at least radius 0...
-  const Number scale_factor = (*scaler)(necklaces);
+  std::unique_ptr<ComputeScaleFactor> compute_scale_factor(new ComputeScaleFactorFixedOrder(FLAGS_buffer_rad));
+  const Number scale_factor = (*compute_scale_factor)(necklaces);
 
-
-
-
-
-
-
-
-
-
-
-  // TODO(tvl) move determining the positioning limits into positioner?
-
-  // Position the glyphs at the start of their interval.
-  Necklace::Ptr necklace = necklaces[0];
-  for (NecklaceGlyph::Ptr& glyph : necklace->beads)
-  {
-    CHECK_NOTNULL(glyph);
-
-    glyph->angle_min_rad = glyph->interval->angle_cw_rad();
-    glyph->angle_max_rad = glyph->interval->angle_ccw_rad();
-  }
-
-  // Adjust the glyphs position so there are no overlapping glyphs.
-  const Number necklace_radius = necklaces[0]->shape->ComputeLength() / M_2xPI;
-  std::vector<Number> covering_radii_scaled_rad(elements.size(), 0);
-
-  Number angle_prev_end_rad = -M_2xPI;
-  for (int i = 0; i < 2; ++i)
-  for (size_t e = 0; e < necklace->beads.size(); ++e)
-  {
-    NecklaceGlyph::Ptr& glyph = necklace->beads[e];
-    CHECK_NOTNULL(glyph);
-
-    // Determine the covering radius.
-    const Number radius_scaled = scale_factor * glyph->radius_base + (FLAGS_min_separation / 2);
-    //const Number& covering_radius_scaled_rad = covering_radii_scaled_rad[n] = 2 * std::asin(radius_scaled / (2 * necklace_radius));
-    const Number& covering_radius_scaled_rad = covering_radii_scaled_rad[e] = std::asin(radius_scaled / necklace_radius);
-    // The glyph must start past the previous endpoint.
-    Number start = glyph->angle_min_rad - covering_radius_scaled_rad;
-    if (start < 0) start += M_2xPI;
-    if (start < angle_prev_end_rad)
-    {
-      glyph->angle_min_rad = angle_prev_end_rad + covering_radius_scaled_rad;
-      if (glyph->interval->angle_ccw_rad() < glyph->angle_min_rad)
-        glyph->angle_min_rad = glyph->interval->angle_ccw_rad();
-      if (M_2xPI < glyph->angle_min_rad)
-        glyph->angle_min_rad -= M_2xPI;
-    }
-
-    angle_prev_end_rad = glyph->angle_min_rad + covering_radius_scaled_rad;
-    if (M_2xPI < angle_prev_end_rad)
-      angle_prev_end_rad -= M_2xPI;
-  }
-
-  Number angle_prev_start_rad = 2 * M_2xPI;
-  for (int i = 0; i < 2; ++i)
-  for (ptrdiff_t n = necklace->beads.size()-1; 0 <= n; --n)
-  {
-    NecklaceGlyph::Ptr& glyph = necklace->beads[n];
-    CHECK_NOTNULL(glyph);
-
-    const Number& covering_radius_scaled_rad = covering_radii_scaled_rad[n];
-
-    // The glyph must end before the previous startpoint.
-    Number end = glyph->angle_max_rad + covering_radius_scaled_rad;
-    /*if (M_2xPI < end)
-      end -= M_2xPI;*/
-    if (angle_prev_start_rad < end)
-    {
-      glyph->angle_max_rad = angle_prev_start_rad - covering_radius_scaled_rad;
-      if (glyph->angle_max_rad < 0)
-        glyph->angle_max_rad += M_2xPI;
-      if (glyph->angle_max_rad < glyph->interval->angle_cw_rad())
-        glyph->angle_max_rad = glyph->interval->angle_cw_rad();
-    }
-
-    angle_prev_start_rad = glyph->angle_max_rad - covering_radius_scaled_rad;
-    if (angle_prev_start_rad < 0)
-      angle_prev_start_rad += M_2xPI;
-  }
-
-
-
-
-
-
-
-
-  // Tested: the elements must start in a valid position.
-  for (NecklaceGlyph::Ptr& glyph : necklace->beads)
-    glyph->angle_rad = glyph->angle_min_rad;
-
-  const Number repVal = FLAGS_glyph_repulsion;
-
-  const Number midStr = 1;
-  const Number repStr = std::pow(repVal, 4);
-  const Number EPSILON = 1e-7;
-
-  const size_t num_beads = necklace->beads.size();
-  for (int n = 0; n < 30; ++n)
-  {
-    for (size_t i = 0; i < num_beads; ++i)
-    {
-      NecklaceGlyph::Ptr& glyph = necklace->beads[i];
-      CHECK_NOTNULL(glyph);
-
-      int j1 = (i + num_beads - 1)%num_beads;
-      /*while (!necklace->beads[j1]->glyph)
-        j1 = (j1 + num_beads - 1)%num_beads;*/
-      int j2 = (i+1)%num_beads;
-      /*while (!necklace->beads[j2]->glyph)
-        j2 = (j2+1)%num_beads;*/
-
-      NecklaceGlyph::Ptr& prev = necklace->beads[j1];
-      NecklaceGlyph::Ptr& next = necklace->beads[j2];
-
-      NecklaceInterval r1(prev->angle_rad, glyph->angle_rad);
-      NecklaceInterval r2(prev->angle_rad, next->angle_rad);
-      NecklaceInterval r3(glyph->interval->ComputeCentroid(), glyph->angle_rad);
-
-      const Number length_r1 = r1.ComputeLength();
-      const Number length_r2 = r2.ComputeLength();
-      const Number length_r3 = r3.ComputeLength();
-      
-      // determ. cov. radii (can be stored in vector, but then make sure these are also swapped if the elements are swapped...)
-      const Number elem_radius = std::asin((scale_factor * glyph->radius_base + (FLAGS_min_separation / 2)) / necklace_radius);
-      const Number prev_radius = std::asin((scale_factor * prev->radius_base + (FLAGS_min_separation / 2)) / necklace_radius);
-      const Number next_radius = std::asin((scale_factor * next->radius_base + (FLAGS_min_separation / 2)) / necklace_radius);
-
-
-      double d1 = prev_radius + elem_radius;
-      double d2 = length_r2 - next_radius - elem_radius;
-      if (j1 == j2)
-        d2 = M_2xPI - next_radius - elem_radius;
-      double m =
-        ((length_r3 < M_PI)
-         ? (length_r1 - length_r3)
-         : (length_r1 + (M_2xPI - length_r3)));
-      double e = midStr * m * d1 * d2 - repStr * (d1 + d2);
-      double f = 2.0 * repStr - midStr * ((d1 + m) * (d2 + m) - m * m);
-      double g = midStr * (d1 + d2 + m);
-      double h = -midStr;
-
-
-
-      // solve h x^3 + g x^2 + f x + e == 0
-      if (std::abs(h) < EPSILON && std::abs(g) < EPSILON)
-      {
-        double x = -e / f + prev->angle_rad;
-        while (x > M_2xPI) x -= M_2xPI;
-        while (x < 0) x += M_2xPI;
-        if (!glyph->interval->IntersectsRay(x))
-        {
-          if (2.0 * length_r1 - (d1 + d2) > 0.0)
-            x = glyph->interval->angle_cw_rad();
-          else
-            x = glyph->interval->angle_ccw_rad();
-        }
-        glyph->angle_rad = x;
-      }
-      else
-      {
-        double q = (3.0 * h * f - g * g) / (9.0 * h * h);
-        double r = (9.0 * h * g * f - 27.0 * h * h * e - 2.0 * g * g * g) / (54.0 * h * h * h);
-        //double z = q * q * q + r * r;
-        double rho = CGAL::sqrt(-q * q * q);
-        if (std::abs(r) > rho) rho = std::abs(r);
-        double theta = std::acos(r / rho);
-        rho = std::pow(rho, 1.0 / 3.0);
-        double x = -rho * std::cos(theta / 3.0) - g / (3.0 * h) + rho * CGAL::sqrt(3.0) * std::sin(theta/3.0);
-        x += prev->angle_rad;
-        while (x > M_2xPI) x -= M_2xPI;
-        while (x < 0) x += M_2xPI;
-        if (!glyph->interval->IntersectsRay(x)) {
-          if (repStr * (2.0 * length_r1 - (d1 + d2)) + midStr * (m - length_r1) * (length_r1 - d1) * (length_r1 - d2) > 0.0)
-            x = glyph->interval->angle_cw_rad();
-          else x = glyph->interval->angle_ccw_rad();
-        }
-        glyph->angle_rad = x;
-      }
-    }
-
-
-
-
-
-
-    // swapping action
-    for (int i = 0; i < num_beads; i++)
-    {
-      int j = (i+1)%num_beads;
-
-      NecklaceGlyph::Ptr& glyph = necklace->beads[i];
-      NecklaceGlyph::Ptr& next = necklace->beads[j];
-
-      const Number elem_radius = std::asin((scale_factor * glyph->radius_base + (FLAGS_min_separation / 2)) / necklace_radius);
-      const Number next_radius = std::asin((scale_factor * next->radius_base + (FLAGS_min_separation / 2)) / necklace_radius);
-
-
-      double newAngle1 = next->angle_rad + next_radius - elem_radius;
-      double newAngle2 = glyph->angle_rad - elem_radius + next_radius;
-      while (M_2xPI < newAngle1) newAngle1 -= M_2xPI;
-      while (newAngle1 < 0) newAngle1 += M_2xPI;
-      while (M_2xPI < newAngle2) newAngle2 -= M_2xPI;
-      while (newAngle2 < 0) newAngle2 += M_2xPI;
-
-
-
-      if (glyph->interval->IntersectsRay(newAngle1) && next->interval->IntersectsRay(newAngle2))
-      {
-        double mid1 = glyph->interval->ComputeCentroid();
-        double mid2 = next->interval->ComputeCentroid();
-
-        NecklaceInterval r1(glyph->angle_rad, mid1);
-        if (r1.ComputeLength() > M_PI) r1 = NecklaceInterval(mid1, glyph->angle_rad);
-        NecklaceInterval r2(next->angle_rad, mid2);
-        if (r2.ComputeLength() > M_PI) r2 = NecklaceInterval(mid2, next->angle_rad);
-        double dif1 = r1.ComputeLength() * r1.ComputeLength() + r2.ComputeLength() * r2.ComputeLength();
-
-        r1 = NecklaceInterval(newAngle1, mid1);
-        if (r1.ComputeLength() > M_PI) r1 = NecklaceInterval(mid1, newAngle1);
-        r2 = NecklaceInterval(newAngle2, mid2);
-        if (r2.ComputeLength() > M_PI) r2 = NecklaceInterval(mid2, newAngle2);
-        double dif2 = r1.ComputeLength() * r1.ComputeLength() + r2.ComputeLength() * r2.ComputeLength();
-
-        if (dif2 < dif1) {
-          glyph->angle_rad = newAngle1;
-          next->angle_rad = newAngle2;
-
-          std::swap(necklace->beads[i], necklace->beads[j]);
-        }
-      }
-    }
-  }
-
-
+  std::unique_ptr<ComputeValidPlacement> compute_valid_placement(new ComputeValidPlacementFixedOrder(scale_factor, FLAGS_glyph_repulsion, FLAGS_buffer_rad));
+  (*compute_valid_placement)(necklaces);
 
 
   std::string out;
   writeDummySvg
   (
     elements,
-    out
+    necklaces[0],
+    scale_factor,
+    out,
+    FLAGS_draw_intervals
   );
 
   std::cout << out;

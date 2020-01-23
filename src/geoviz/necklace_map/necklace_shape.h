@@ -42,11 +42,12 @@ class NecklaceShape
   virtual bool IntersectRay(const Number& angle_rad, Point& intersection) const = 0;
   virtual Box ComputeBoundingBox() const = 0;
   virtual Number ComputeLength() const = 0;
+  virtual Number ComputeRadius() const = 0;
 
   // TODO(tvl) should the necklace contain methods for adapting the 1D solution to the 2D solution?
   // This would mainly come into play for Bezier necklaces. For impl: check the 30x for loop in the Java prototype code.
-  // Another case would be when a Glyph contains the necklace center;
-  // in this case, the scale factor should be reduced such that the glyph does not contain the necklace center
+  // Another case would be when a bead contains the necklace center;
+  // in this case, the scale factor should be reduced such that the bead does not contain the necklace center
   // (could this cause recursive failure and if so, in which cases? This *may* actually prove scientifically interesting).
 }; // class NecklaceShape
 
@@ -59,9 +60,12 @@ class CircleNecklace : public NecklaceShape
   bool IntersectRay(const Number& angle_rad, Point& intersection) const;
   Box ComputeBoundingBox() const;
   Number ComputeLength() const;
+  Number ComputeRadius() const;
 
  protected:
   Circle shape_;
+  Number radius_;
+  Number length_;
 }; // class CircleNecklace
 
 
@@ -84,10 +88,12 @@ class GenericNecklace : public NecklaceShape
   bool IntersectRay(const Number& angle_rad, Point& intersection) const;
   Box ComputeBoundingBox() const;
   Number ComputeLength() const;
+  Number ComputeRadius() const;
 
  private:
   Point kernel_;
   std::vector<Point> points_;  // TODO(tvl) the generic necklace will probably require different markers than just points.
+  Number radius_;
 }; // class GenericNecklace
 
 } // namespace necklace_map

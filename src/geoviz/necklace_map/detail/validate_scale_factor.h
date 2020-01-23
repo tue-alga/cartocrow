@@ -17,13 +17,12 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-Created by tvl (t.vanlankveld@esciencecenter.nl) on 28-11-2019
+Created by tvl (t.vanlankveld@esciencecenter.nl) on 20-01-2020
 */
 
-#ifndef GEOVIZ_NECKLACE_MAP_GLYPH_SCALER_H
-#define GEOVIZ_NECKLACE_MAP_GLYPH_SCALER_H
+#ifndef GEOVIZ_NECKLACE_MAP_DETAIL_VALIDATE_SCALE_FACTOR_H
+#define GEOVIZ_NECKLACE_MAP_DETAIL_VALIDATE_SCALE_FACTOR_H
 
-#include <unordered_map>
 #include <vector>
 
 #include "geoviz/common/core_types.h"
@@ -34,31 +33,23 @@ namespace geoviz
 {
 namespace necklace_map
 {
-
-class GlyphScaler
+namespace detail
 {
- public:
-  explicit GlyphScaler(const Number& min_separation = 0);
 
-  // Note that elements with value 0 will not be included in the ordering.
-  virtual Number operator()(Necklace::Ptr& necklace) const = 0;
-
-  Number operator()(std::vector<Necklace::Ptr>& necklaces) const;
-
- protected:
-  Number dilation_;
-}; // class GlyphScaler
-
-
-class GlyphScalerFixedOrder : public GlyphScaler
+struct ValidateScaleFactor
 {
- public:
-  explicit GlyphScalerFixedOrder(const Number& min_separation = 0);
+  ValidateScaleFactor(const Number& scale_factor, const Number& buffer_rad = 0);
 
-  Number operator()(Necklace::Ptr& necklaces) const;
-}; // class GlyphScalerFixedOrder
+  bool operator()(Necklace::Ptr& necklace) const;
 
+  bool operator()(std::vector<Necklace::Ptr>& necklaces) const;
+
+  Number scale_factor;
+  Number buffer_rad;
+}; // struct ValidateScaleFactor
+
+} // namespace detail
 } // namespace necklace_map
 } // namespace geoviz
 
-#endif //GEOVIZ_NECKLACE_MAP_GLYPH_SCALER_H
+#endif //GEOVIZ_NECKLACE_MAP_DETAIL_VALIDATE_SCALE_FACTOR_H

@@ -20,7 +20,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Created by tvl (t.vanlankveld@esciencecenter.nl) on 05-12-2019
 */
 
-#include "interval_generator.h"
+#include "compute_feasible_interval.h"
 
 #include <cmath>
 
@@ -33,25 +33,25 @@ namespace necklace_map
 {
 
 /**@struct IntervalGenerator
- * @brief An interface for a functor to generate feasible intervals for necklace glyph placement.
+ * @brief An interface for a functor to generate feasible intervals for necklace bead placement.
  */
 
 /**@fn virtual void IntervalGenerator::operator()(const Polygon& extent, const std::shared_ptr<NecklaceType>& necklace, std::shared_ptr<NecklaceInterval>& interval) const = 0
  * @brief Apply the functor to a region and necklace.
  * @param extent the spatial extent of the region.
  * @param necklace the necklace.
- * @param interval the feasible interval for placing the necklace glyph of the region on the necklace.
+ * @param interval the feasible interval for placing the region's bead on the necklace.
  */
 
 /**@brief Apply the functor to a map element.
  * @param[in,out] element the element.
  */
-void IntervalGenerator::operator()(MapElement::Ptr& element) const
+void ComputeFeasibleInterval::operator()(MapElement::Ptr& element) const
 {
-  for (MapElement::GlyphMap::value_type& map_value : element->glyphs)
+  for (MapElement::BeadMap::value_type& map_value : element->beads)
   {
     const Necklace::Ptr& necklace = map_value.first;
-    NecklaceGlyph::Ptr& bead = map_value.second;
+    Bead::Ptr& bead = map_value.second;
 
     CHECK_NOTNULL(necklace);
     CHECK_NOTNULL(bead);
@@ -59,14 +59,14 @@ void IntervalGenerator::operator()(MapElement::Ptr& element) const
     Polygon extent;
     element->region.MakeSimple(extent);
 
-    bead->interval = (*this)(extent, necklace);
+    bead->feasible = (*this)(extent, necklace);
   }
 }
 
 /**@brief Apply the functor to a collection of map elements.
  * @param[in,out] elements the elements.
  */
-void IntervalGenerator::operator()(std::vector<MapElement::Ptr>& elements) const
+void ComputeFeasibleInterval::operator()(std::vector<MapElement::Ptr>& elements) const
 {
   for (MapElement::Ptr& element : elements)
     (*this)(element);
@@ -74,7 +74,7 @@ void IntervalGenerator::operator()(std::vector<MapElement::Ptr>& elements) const
 
 
 /**@struct IntervalCentroidGenerator
- * @brief A functor to generate feasible centroid intervals for necklace glyph placement.
+ * @brief A functor to generate feasible centroid intervals for necklace bead placement.
  *
  * The generated centroid interval is the intersection of the necklace and a wedge @f$W@f$, such that the apex of @f$W@f$ is the necklace kernel, the inner bisector of @f$W@f$ intersects the centroid of a map region, and the inner angle of @f$W@f$ is twice some predefined angle.
  *
@@ -87,10 +87,10 @@ void IntervalGenerator::operator()(std::vector<MapElement::Ptr>& elements) const
  * In other words, this is the angle between the inner bisector of the wedge and either boundary ray of the wedge.
  * @endparblock
  */
-IntervalCentroidGenerator::IntervalCentroidGenerator(const Number& length_rad)
-  : IntervalGenerator(), half_length_rad_(0.5 * length_rad) {}
+ComputeFeasibleCentroidInterval::ComputeFeasibleCentroidInterval(const Number& length_rad)
+  : ComputeFeasibleInterval(), half_length_rad_(0.5 * length_rad) {}
 
-NecklaceInterval::Ptr IntervalCentroidGenerator::operator()
+CircleRange::Ptr ComputeFeasibleCentroidInterval::operator()
 (
   const Polygon& extent,
   const Necklace::Ptr& necklace
@@ -110,20 +110,20 @@ NecklaceInterval::Ptr IntervalCentroidGenerator::operator()
 
 
 /**@struct IntervalWedgeGenerator
- * @brief A functor to generate feasible wedge intervals for necklace glyph placement.
+ * @brief A functor to generate feasible wedge intervals for necklace bead placement.
  *
  * The generated wedge interval is the intersection of the necklace and a wedge @f$W@f$, such that the apex of @f$W@f$ is the necklace kernel, @f$W@f$ contains a map region, and the inner angle of @f$W@f$ is minimal.
  *
  * If the region contains the necklace kernel, the wedge interval would cover the complete plane. In this case, a centroid interval in generated instead.
  */
 
-NecklaceInterval::Ptr IntervalWedgeGenerator::operator()
+CircleRange::Ptr ComputeFeasibleWedgeInterval::operator()
 (
   const Polygon& extent,
   const Necklace::Ptr& necklace
 ) const
 {
-  //TODO(tvl) implement 'toggle' to always use centroid interval for empty-interval regions (e.g. point regions).
+  //TODO(tvl) implement 'toggle' to always use centroid interval for empty-interval regions (e.g. point regions). Waarom niet sowieso?
   LOG(FATAL) << "Not implemented yet.";
 }
 
