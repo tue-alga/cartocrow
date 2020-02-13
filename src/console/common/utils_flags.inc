@@ -31,7 +31,7 @@ inline bool EmptyOr(const std::string& value)
   return value.empty() || F_(value);
 }
 
-
+#ifndef DOXYGEN_RUNNING
 template<typename V_>
 class IsBounded<V_, BoundSide::kLower, Closure::kClosed>
 {
@@ -78,7 +78,7 @@ class IsBounded<V_, BoundSide::kUpper, Closure::kOpen>
  private:
   V_ bound_;
 }; // class IsBounded<V_, BoundSide::kUpper, Closure::kOpen>
-
+#endif // DOXYGEN_RUNNING
 
 template <typename V_, Closure closed_lower /*= Closure::kClosed*/, Closure closed_upper /*= closed_lower*/>
 class InRange

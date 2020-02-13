@@ -30,10 +30,36 @@ namespace necklace_map
 namespace detail
 {
 
+/**@struct BeadCycleNode
+ * @brief A node to cycle through the beads.
+ *
+ * As opposed to beads, these nodes may have a feasible interval completely outside [0, 2pi).
+ * This means that they can be used to cycle through the nodes multiple times in order.
+ */
+
+/**@brief Construct a node for a particular bead.
+ * @param bead the bead to add to the cycle.
+ */
 BeadCycleNode::BeadCycleNode(const Bead::Ptr& bead) :
   bead(bead),
   interval_cw_rad(bead->feasible->angle_cw_rad()),
   interval_ccw_rad(bead->feasible->angle_ccw_rad()) {}
+
+/**@fn Bead::Ptr BeadCycleNode::bead;
+ * @brief The bead.
+ */
+
+/**@fn Number BeadCycleNode::interval_cw_rad;
+ * @brief The clockwise extreme of the nodes interval on the cycle.
+ *
+ * Note that unlike the bead's feasible interval, this can be larger than 2*PI.
+ */
+
+/**@fn Number BeadCycleNode::interval_ccw_rad;
+ * @brief The counterclockwise extreme of the nodes interval on the cycle.
+ *
+ * Note that unlike the bead's feasible interval, this can be larger than 2*PI.
+ */
 
 } // namespace detail
 } // namespace necklace_map

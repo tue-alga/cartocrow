@@ -36,9 +36,6 @@ namespace necklace_map
 namespace detail
 {
 
-// A node to cycle through the beads.
-// As opposed to beads, these nodes may have a feasible interval completely outside [0, 2pi).
-// This means that they can be used to cycle through the nodes multiple times in order.
 struct BeadCycleNode
 {
   using Ptr = std::shared_ptr<BeadCycleNode>;

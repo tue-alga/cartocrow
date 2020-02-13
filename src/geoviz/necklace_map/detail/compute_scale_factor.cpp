@@ -32,6 +32,16 @@ namespace necklace_map
 namespace detail
 {
 
+/**@class ComputeScaleFactor
+ * @brief The base class for computing the scale factor.
+ *
+ * This mainly implements simple functions that are reused by the specific scale factor computation functors.
+ */
+
+/**@brief Construct a scale factor computation functor.
+ * @param necklace the necklace for which to compute the scale factor.
+ * @param buffer_rad the minimum angle in radians of the empty wedge between neighboring necklace beads that has the necklace kernel as apex.
+ */
 ComputeScaleFactor::ComputeScaleFactor(const Necklace::Ptr& necklace, const Number& buffer_rad /*= 0*/)
   : max_buffer_rad_(-1), nodes_(), necklace_radius_(necklace->shape->ComputeRadius()), buffer_rad_(buffer_rad)
 {
@@ -62,6 +72,16 @@ ComputeScaleFactor::ComputeScaleFactor(const Necklace::Ptr& necklace, const Numb
     nodes_.back().interval_ccw_rad += M_2xPI;
   }
 }
+
+/**@fn virtual Number ComputeScaleFactor::Optimize() = 0;
+ * @brief Compute the optimal scale factor.
+ * @return the maximum value by which the necklace bead radii can be multiplied such that they maintain the required buffer size.
+ */
+
+/**@fn const Number& ComputeScaleFactor::max_buffer_rad() const;
+ * @brief Get the minimum angle in radians of the empty wedge between neighboring necklace beads that has the necklace kernel as apex.
+ * @return the buffer size in radians.
+ */
 
 inline size_t ComputeScaleFactor::size() const
 {
@@ -133,6 +153,14 @@ Number ComputeScaleFactor::CorrectScaleFactor(const Number& rho) const
 }
 
 
+/**@class ComputeScaleFactorFixedOrder
+ * @brief Computes the scale factor for collections ordered by their interval.
+ */
+
+/**@brief Construct a fuixed order scale factor computation functor.
+ * @param necklace the necklace for which to compute the scale factor.
+ * @param buffer_rad the minimum angle in radians of the empty wedge between neighboring necklace beads that has the necklace kernel as apex.
+ */
 ComputeScaleFactorFixedOrder::ComputeScaleFactorFixedOrder(const Necklace::Ptr& necklace, const Number& buffer_rad /*= 0*/) :
   ComputeScaleFactor(necklace, buffer_rad) {}
 

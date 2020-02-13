@@ -54,6 +54,10 @@ DataColumn::DataColumn(const std::string& name) : name(name) {}
  * @param value the value as string.
  */
 
+/**@fn std::string DataColumn::name;
+ * @brief The name of the column.
+ */
+
 
 /**@class TableParser
  * @brief A parser for tabular data input.

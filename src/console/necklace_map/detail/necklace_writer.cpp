@@ -69,7 +69,7 @@ constexpr const char* kBeadAngleStyle = "fill:none;"
 
 constexpr const double kTransformScale = 1;
 
-constexpr const double kBoundingBoxBufferPx = 2;
+constexpr const double kBoundingBoxBufferPx = 5;
 
 constexpr const double kBeadIdFontSizePx = 16;
 
@@ -249,6 +249,19 @@ WriterOptions::Ptr WriterOptions::Debug()
 namespace detail
 {
 
+/**@class NecklaceWriter
+ * @brief Implementation for writing the necklace map to a stream.
+ *
+ * Note that the actual writing is performed when this object is destroyed. While the object lives, various features can be added to the output.
+ */
+
+/**@brief Construct a writer for the necklace map.
+ * @param elements the elements of the necklace map.
+ * @param necklaces the necklaces of the map.
+ * @param scale_factor the factor by which to scale the necklace beads.
+ * @param options the options that influence how and what to write.
+ * @param out the destination to write to.
+ */
 NecklaceWriter::NecklaceWriter
 (
   const std::vector<MapElement::Ptr>& elements,
@@ -275,6 +288,10 @@ NecklaceWriter::~NecklaceWriter()
   out_ << printer_.CStr();
 }
 
+/**@brief Add the regions.
+ *
+ * These are drawn with the same style as the input, with the exception of the opacity. The opacity can either be set to the input opacity, or to some fixed value.
+ */
 void NecklaceWriter::DrawRegions()
 {
   printer_.OpenElement("g");
@@ -302,6 +319,10 @@ void NecklaceWriter::DrawRegions()
   printer_.CloseElement(); // g
 }
 
+/**@brief Add the necklace curves.
+ *
+ * The necklace curves are always drawn as a solid black curve.
+ */
 void NecklaceWriter::DrawNecklaces()
 {
   if (!options_->draw_necklace_curve)
@@ -319,6 +340,11 @@ void NecklaceWriter::DrawNecklaces()
   printer_.CloseElement(); // g
 }
 
+/**@brief Add the necklace beads.
+ *
+ * The necklace beads use mostly the same style as the regions, with drop-shadows to differentiate them for the underlying geography.
+ * However, they can be forced to be semi-transparant. This also influences how their drop shadows and their borders are drawn.
+ */
 void NecklaceWriter::DrawBeads()
 {
   printer_.OpenElement("g");
@@ -370,6 +396,10 @@ void NecklaceWriter::DrawBeads()
   DrawBeadIds();
 }
 
+/**@brief Add the feasible intervals.
+ *
+ * The feasible intervals are drawn as non-overlapping circular arcs with their color matching the interior color of the regions.
+ */
 void NecklaceWriter::DrawFeasibleIntervals()
 {
   if (!options_->draw_feasible_intervals)
@@ -430,6 +460,12 @@ void NecklaceWriter::DrawFeasibleIntervals()
   printer_.CloseElement(); // g
 }
 
+/**@brief Add the valid intervals.
+ *
+ * The valid intervals are drawn as wedges with their stroke color matching the interior color of the regions.
+ *
+ * If the feasible regions are also drawn, the valid intervals extend to their corresponding feasible interval. Otherwise, they extend to the necklace curve.
+ */
 void NecklaceWriter::DrawValidIntervals()
 {
   if (!options_->draw_valid_intervals)
@@ -493,6 +529,12 @@ void NecklaceWriter::DrawValidIntervals()
   printer_.CloseElement(); // g
 }
 
+/**@brief Add line segments connecting the necklace kernel(s) with the region centroids.
+ *
+ * These line segments are always colored gray.
+ *
+ * If the feasible regions are also drawn, the region angles extend to their corresponding feasible interval. Otherwise, they extend to the necklace curve.
+ */
 void NecklaceWriter::DrawRegionAngles()
 {
   if (!options_->draw_region_angles)
@@ -546,6 +588,10 @@ void NecklaceWriter::DrawRegionAngles()
   printer_.CloseElement(); // g
 }
 
+/**@brief Add line segments connecting the necklace kernel(s) with the bead centers.
+ *
+ * These line segments are always colored black.
+ */
 void NecklaceWriter::DrawBeadAngles()
 {
   if (!options_->draw_bead_angles)

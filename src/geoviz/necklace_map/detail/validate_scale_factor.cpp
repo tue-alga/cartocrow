@@ -36,10 +36,21 @@ namespace necklace_map
 namespace detail
 {
 
+/**@class ValidateScaleFactor
+ * @brief Functor to validate whether for a given scale factor and buffer angle there exists a valid necklace map.
+ */
+
+/**@brief Construct a necklace map validator functor.
+ * @param scale_factor the scale factor for which to validate the necklace map.
+ * @param buffer_rad the buffer angle in radians for which to validate the necklace map.
+ */
 ValidateScaleFactor::ValidateScaleFactor(const Number& scale_factor, const Number& buffer_rad /*= 0*/)
   : scale_factor(scale_factor), buffer_rad(buffer_rad) {}
 
-
+/**@brief Validate a necklace.
+ * @param necklace the necklace to validate.
+ * @return whether there exists a valid placement of the necklace beads, given the scale factor and buffer angle of the validator.
+ */
 bool ValidateScaleFactor::operator()(Necklace::Ptr& necklace) const
 {
   const Number num_beads = necklace->beads.size();
@@ -149,6 +160,10 @@ bool ValidateScaleFactor::operator()(Necklace::Ptr& necklace) const
   return valid;
 }
 
+/**@brief Validate a collection of necklaces.
+ * @param necklace the necklaces to validate.
+ * @return whether for each necklace there exists a valid placement of the necklace beads, given the scale factor and buffer angle of the validator.
+ */
 bool ValidateScaleFactor::operator()(std::vector<Necklace::Ptr>& necklaces) const
 {
   bool valid = true;
@@ -156,6 +171,15 @@ bool ValidateScaleFactor::operator()(std::vector<Necklace::Ptr>& necklaces) cons
     valid &= (*this)(necklace);
   return valid;
 }
+
+/**@fn Number ValidateScaleFactor::scale_factor;
+ * @brief The scale factor at which to validate the necklace maps.
+ */
+
+
+/**@fn Number ValidateScaleFactor::buffer_rad;
+ * @brief The buffer angle at which to validate the necklace maps.
+ */
 
 } // namespace detail
 } // namespace necklace_map

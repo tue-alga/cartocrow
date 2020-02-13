@@ -67,7 +67,6 @@ namespace detail
 class NecklaceWriter
 {
  public:
-  using Bead = necklace_map::Bead;
   using MapElement = necklace_map::MapElement;
   using Necklace = necklace_map::Necklace;
 
@@ -97,6 +96,8 @@ class NecklaceWriter
   void DrawBeadAngles();
 
  private:
+  using Bead = necklace_map::Bead;
+
   using NecklaceShape = necklace_map::NecklaceShape;
   using CircleNecklace = necklace_map::CircleNecklace;
   using CurveNecklace = necklace_map::CurveNecklace;

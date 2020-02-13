@@ -38,7 +38,6 @@ namespace necklace_map
 namespace detail
 {
 
-// Base class for computing the scale factor, implementing simple recurring functions.
 class ComputeScaleFactor
 {
  public:
@@ -88,7 +87,6 @@ class ComputeScaleFactor
 };
 
 
-// Computes the scale factor for collections ordered by their interval.
 class ComputeScaleFactorFixedOrder : public ComputeScaleFactor
 {
  public:
