@@ -102,4 +102,7 @@ void InitApplication
 
   // Note that the command line flags are parsed after applying the defaults above.
   gflags::ParseCommandLineFlags(&argc, &argv, true);
+
+  // Writing to the standard output is generally reserved for text to return to a calling website.
+  FLAGS_logtostderr = true;
 }

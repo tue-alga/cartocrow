@@ -28,6 +28,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 28-11-2019
 
 #include "geoviz/common/core_types.h"
 #include "geoviz/necklace_map/necklace.h"
+#include "geoviz/necklace_map/parameters.h"
 
 
 namespace geoviz
@@ -38,6 +39,10 @@ namespace necklace_map
 class ComputeScaleFactor
 {
  public:
+  using Ptr = std::unique_ptr<ComputeScaleFactor>;
+
+  static Ptr New(const Parameters& parameters);
+
   explicit ComputeScaleFactor(const Number& buffer_rad = 0);
 
   // Note that elements with value 0 will not be included in the ordering.

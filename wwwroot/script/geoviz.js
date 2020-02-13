@@ -13,6 +13,7 @@ let map_obj;
 let world_map = false;
 
 let last_update = Date.now();
+let update_miliseconds = 50;
 
 function GetBuffer() {
   let buffer_rad = parseFloat(buffer_rad_in.value);
@@ -21,22 +22,22 @@ function GetBuffer() {
 
 function GetAversion() {
   let aversion = parseFloat(aversion_in.value);
-  return (Math.pow(aversion, 4) + 0.001).toPrecision(4);
+  return Math.max(Math.pow(aversion, 4).toPrecision(4), 0.001);
 }
 
 //TODO(tvl) clean code!
 function settingsChanged() {
-  if (Date.now() - last_update < 20) return;
+  if (Date.now() - last_update < update_miliseconds) return;
 
   last_update = Date.now();
   let buffer_rad = GetBuffer();
   let glyph_aversion = GetAversion();
   tryReplaceMapBySvg(
-    '/script/run_necklace_map.php?args=--buffer_rad:' +
+    '/script/run_necklace_map.php?args=--out_website|' +
+      '--buffer_rad:' +
       buffer_rad +
-      '|--glyph_repulsion:' +
-      glyph_aversion +
-      '|--draw_intervals'
+      '|--aversion_ratio:' +
+      glyph_aversion
   );
 }
 

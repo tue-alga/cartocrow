@@ -30,7 +30,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 07-11-2019
 namespace geoviz
 {
 
-/**@struct Region
+/**@class Region
  * A collection of polygons.
  *
  * The polygons may be disconnected (e.g. an island group), and each polygon may contain holes (e.g. lakes).

@@ -31,6 +31,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 05-12-2019
 #include "geoviz/necklace_map/bead.h"
 #include "geoviz/necklace_map/map_element.h"
 #include "geoviz/necklace_map/necklace.h"
+#include "geoviz/necklace_map/parameters.h"
 
 
 namespace geoviz
@@ -38,8 +39,13 @@ namespace geoviz
 namespace necklace_map
 {
 
-struct ComputeFeasibleInterval
+class ComputeFeasibleInterval
 {
+ public:
+  using Ptr = std::unique_ptr<ComputeFeasibleInterval>;
+
+  static Ptr New(const Parameters& parameters);
+
   virtual CircleRange::Ptr operator()
   (
     const Polygon& extent,
@@ -49,11 +55,12 @@ struct ComputeFeasibleInterval
   void operator()(MapElement::Ptr& element) const;
 
   void operator()(std::vector<MapElement::Ptr>& elements) const;
-}; // struct ComputeFeasibleInterval
+}; // class ComputeFeasibleInterval
 
 
-struct ComputeFeasibleCentroidInterval : public ComputeFeasibleInterval
+class ComputeFeasibleCentroidInterval : public ComputeFeasibleInterval
 {
+ public:
   ComputeFeasibleCentroidInterval(const Number& length_rad);
 
   CircleRange::Ptr operator()
@@ -64,17 +71,18 @@ struct ComputeFeasibleCentroidInterval : public ComputeFeasibleInterval
 
  private:
   Number half_length_rad_;
-}; // struct ComputeFeasibleCentroidInterval
+}; // class ComputeFeasibleCentroidInterval
 
 
-struct ComputeFeasibleWedgeInterval : public ComputeFeasibleInterval
+class ComputeFeasibleWedgeInterval : public ComputeFeasibleInterval
 {
+ public:
   CircleRange::Ptr operator()
   (
     const Polygon& extent,
     const Necklace::Ptr& necklace
   ) const;
-}; // struct ComputeFeasibleWedgeInterval
+}; // class ComputeFeasibleWedgeInterval
 
 } // namespace necklace_map
 } // namespace geoviz

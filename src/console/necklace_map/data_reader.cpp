@@ -23,6 +23,9 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 03-12-2019
 
 #include "data_reader.h"
 
+#include <exception>
+#include <fstream>
+
 #include <glog/logging.h>
 
 
@@ -36,37 +39,68 @@ constexpr const char* kNameId = "id";
 } // anonymous namespace
 
 /**@class DataReader
- * @brief A file reader for necklace map values.
+ * @brief A reader for necklace map values.
  */
 
-/**@brief Construct a file reader for necklace map values.
- * @param elements the necklace map elements associated with the values.
+/**@brief Construct a reader for necklace map values.
  */
-DataReader::DataReader(std::vector<necklace_map::MapElement::Ptr>& elements)
-  : detail::TableReader(), elements_(elements)
-{
-  // Add the elements to the lookup table, while checking for duplicates.
-  for (const necklace_map::MapElement::Ptr& element : elements_)
-  {
-    CHECK_NOTNULL(element);
-    const size_t next_index = id_to_element_index_.size();
-    const size_t n = id_to_element_index_.insert({element->region.id, next_index}).first->second;
-    CHECK_EQ(next_index, n);
-  }
-}
+DataReader::DataReader()
+  : detail::TableParser()
+{}
 
-/**@brief Read a necklace map value file.
+/**@brief Read a necklace map data file.
  *
- * The table in the file must contain a string collumn called "ID" and a double column containing the necklace element values.
+ * The table in the file must contain a string column called "ID" and a double column containing the necklace element values.
  *
- * See @f detail::TableReader::read(const std::string& filename) for more info on the file format.
+ * See @f detail::TableParser::Parse(std::istream& in) for more info on the file format.
  * @param filename the name of the file.
  * @param value_name the name of the data column.
- * @return whether the table could be read successfully.
+ * @param elements the necklace map elements associated with the values.
+ * @param max_retries the maximum number of times to retry reading after an error.
+ * @return whether the element values could be read successfully.
  */
-bool DataReader::Read(const std::string& filename, const std::string& value_name)
+bool DataReader::ReadFile
+(
+  const std::string& filename,
+  const std::string& value_name,
+  std::vector<necklace_map::MapElement::Ptr>& elements,
+  int max_retries /*= 2*/
+)
 {
-  CHECK(detail::TableReader::Read(filename));
+  std::fstream fin;
+  int retry = 0;
+  do
+  {
+    try
+    {
+      fin.open(filename);
+      if (fin)
+        break;
+    }
+    catch (const std::exception& e)
+    {
+      LOG(ERROR) << e.what();
+    }
+
+    if (max_retries < retry++)
+    {
+      LOG(INFO) << "Failed to open necklace map data file: " << filename;
+      return false;
+    }
+  } while (true);
+
+  return Parse(fin, value_name, elements);
+}
+
+bool DataReader::Parse
+(
+  std::istream& in,
+  const std::string& value_name,
+  std::vector<necklace_map::MapElement::Ptr>& elements
+)
+{
+  if (!detail::TableParser::Parse(in))
+    return false;
 
   // Find the ID and value columns and check that they are the correct types.
   using ColumnDouble = detail::ValueColumn<double>;
@@ -74,7 +108,7 @@ bool DataReader::Read(const std::string& filename, const std::string& value_name
   const ColumnString* column_id;
   const ColumnDouble* column_value;
 
-  for (const detail::TableReader::ColumnPtr& column : table_)
+  for (const detail::TableParser::ColumnPtr& column : table_)
   {
     std::string lower_name = column->name;
     std::transform
@@ -94,23 +128,35 @@ bool DataReader::Read(const std::string& filename, const std::string& value_name
   CHECK_NOTNULL(column_value);
   CHECK_EQ(column_id->values.size(), column_value->values.size());
 
+  // Create a lookup table for the elements.
+  using LookupTable = std::unordered_map<std::string, size_t>;
+  LookupTable id_to_element_index;
+  for (const necklace_map::MapElement::Ptr& element : elements)
+  {
+    CHECK_NOTNULL(element);
+    const size_t next_index = id_to_element_index.size();
+    const size_t n = id_to_element_index.insert({element->region.id, next_index}).first->second;
+    CHECK_EQ(next_index, n);
+  }
+
   // Add the values to their associated element.
   for (size_t v = 0; v < column_id->values.size(); ++v)
   {
     const std::string& id = column_id->values[v];
 
     // Get the region with the given ID, or create a new one if it does not yet exist.
-    std::pair<LookupTable::iterator, bool> result = id_to_element_index_.emplace(id, elements_.size());
+    std::pair<LookupTable::iterator, bool> result = id_to_element_index.emplace(id, elements.size());
     const size_t e = result.first->second;
-    if (e == elements_.size())
-      elements_.push_back(std::make_shared<necklace_map::MapElement>(id));
-    necklace_map::MapElement::Ptr& element = elements_[e];
+    if (e == elements.size())
+      elements.push_back(std::make_shared<necklace_map::MapElement>(id));
+    necklace_map::MapElement::Ptr& element = elements[e];
     CHECK_NOTNULL(element);
     CHECK_EQ(id, element->region.id);
 
     element->value = column_value->values[v];
   }
 
+  LOG(INFO) << "Successfully parsed necklace map data for " << elements.size() << " elements.";
   return true;
 }
 

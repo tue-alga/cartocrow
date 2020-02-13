@@ -17,16 +17,13 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-Created by tvl (t.vanlankveld@esciencecenter.nl) on 15-01-2020
+Created by tvl (t.vanlankveld@esciencecenter.nl) on 28-01-2020
 */
 
-#ifndef GEOVIZ_NECKLACE_MAP_BEAD_H
-#define GEOVIZ_NECKLACE_MAP_BEAD_H
-
-#include <memory>
+#ifndef GEOVIZ_NECKLACE_MAP_PARAMETERS_H
+#define GEOVIZ_NECKLACE_MAP_PARAMETERS_H
 
 #include "geoviz/common/core_types.h"
-#include "geoviz/necklace_map/range.h"
 
 
 namespace geoviz
@@ -34,30 +31,37 @@ namespace geoviz
 namespace necklace_map
 {
 
-struct Bead
+enum IntervalType
 {
-  using Ptr = std::shared_ptr<Bead>;
+  kCentroid,
+  kWedge
+};
 
-  Bead(const Number& radius_base, const std::string& style);
+enum OrderType
+{
+  kFixed,
+  kAny,
+  kHeuristicAny
+};
 
-  bool IsValid() const;
 
-  // Variables before scaling.
-  Number radius_base;
+struct Parameters
+{
+  Parameters();
 
-  CircleRange::Ptr feasible;
+  void Init();
 
-  // Variables after scaling.
-  Number covering_radius_scaled_rad;
+  // Feasible interval.
+  IntervalType interval_type;
+  Number centroid_interval_length_rad;
 
-  CircleRange::Ptr valid;
-
-  Number angle_rad;
-
-  std::string style;
-}; // struct Bead
+  // Scale factor and placement.
+  OrderType order_type;
+  Number buffer_rad;
+  Number aversion_ratio;
+}; // struct Parameters
 
 } // namespace necklace_map
 } // namespace geoviz
 
-#endif //GEOVIZ_NECKLACE_MAP_BEAD_H
+#endif //GEOVIZ_NECKLACE_MAP_PARAMETERS_H

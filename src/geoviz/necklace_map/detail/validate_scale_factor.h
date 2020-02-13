@@ -36,8 +36,9 @@ namespace necklace_map
 namespace detail
 {
 
-struct ValidateScaleFactor
+class ValidateScaleFactor
 {
+ public:
   ValidateScaleFactor(const Number& scale_factor, const Number& buffer_rad = 0);
 
   bool operator()(Necklace::Ptr& necklace) const;
@@ -46,7 +47,7 @@ struct ValidateScaleFactor
 
   Number scale_factor;
   Number buffer_rad;
-}; // struct ValidateScaleFactor
+}; // class ValidateScaleFactor
 
 } // namespace detail
 } // namespace necklace_map

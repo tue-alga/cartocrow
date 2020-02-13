@@ -42,6 +42,21 @@ namespace necklace_map
  * Note that we do not restrict the beads of different necklaces to overlap. In case of overlap between different necklaces, the user can manually adjust the buffer thickness or the positioning forces (see @f ComputeValidPlacement) to prevent overlapping beads.
  */
 
+/**@brief Construct a new scale factor computation functor.
+ * @param parameters the parameters describing the desired type of functor.
+ * @return a unique pointer containing a new functor or a nullptr if the functor could not be constructed.
+ */
+ComputeScaleFactor::Ptr ComputeScaleFactor::New(const Parameters& parameters)
+{
+  switch (parameters.order_type)
+  {
+    case OrderType::kFixed:
+      return Ptr(new ComputeScaleFactorFixedOrder(parameters.buffer_rad));
+    default:
+      return nullptr;
+  }
+}
+
 /**@brief Construct a bead scale factor computation functor.
  * @param buffer_rad @parblock the minimum distance in radians between necklace beads.
  *

@@ -16,43 +16,12 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-Created by tvl (t.vanlankveld@esciencecenter.nl) on 07-11-2019
+Created by tvl (t.vanlankveld@esciencecenter.nl) on 29-01-2020
 */
 
-#ifndef GEOVIZ_NECKLACE_MAP_REGION_H
-#define GEOVIZ_NECKLACE_MAP_REGION_H
-
-#include <string>
-#include <vector>
-
-#include "geoviz/common/core_types.h"
-
+#include "bounding_box.h"
 
 namespace geoviz
 {
 
-///@brief A geographically significant shape.
-class Region
-{
- public:
-  //using PolygonSet = CGAL::Polygon_set_2<Kernel>; // Polygon_set_2 fails to initialize with the EPIC kernel: using simple list instead.
-  using PolygonSet = std::vector<Polygon_with_holes>;
-
- public:
-  explicit Region(const std::string& id);
-
-  bool IsValid() const;
-
-  bool MakeValid();
-
-  void MakeSimple(Polygon& simple);
-
-  std::string id;
-  PolygonSet shape;
-
-  std::string style;
-}; // class Region
-
 } // namespace geoviz
-
-#endif //GEOVIZ_NECKLACE_MAP_REGION_H

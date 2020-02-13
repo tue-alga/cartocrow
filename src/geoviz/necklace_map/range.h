@@ -37,6 +37,8 @@ class CircleRange
  public:
   using Ptr = std::shared_ptr<CircleRange>;
 
+  static Number Modulo(const Number& value_rad, const Number& start_rad = 0);
+
   CircleRange(const Number& angle_cw_rad, const Number& angle_ccw_rad);
 
   const Number& angle_cw_rad() const;

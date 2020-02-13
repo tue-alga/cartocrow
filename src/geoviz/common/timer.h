@@ -16,43 +16,41 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-Created by tvl (t.vanlankveld@esciencecenter.nl) on 07-11-2019
+Created by tvl (t.vanlankveld@esciencecenter.nl) on 04-02-2020
 */
 
-#ifndef GEOVIZ_NECKLACE_MAP_REGION_H
-#define GEOVIZ_NECKLACE_MAP_REGION_H
+#ifndef GEOVIZ_COMMON_TIMER_H
+#define GEOVIZ_COMMON_TIMER_H
 
-#include <string>
-#include <vector>
-
-#include "geoviz/common/core_types.h"
+#include <deque>
+#include "time.h"
 
 
 namespace geoviz
 {
 
-///@brief A geographically significant shape.
-class Region
+class Timer
 {
  public:
-  //using PolygonSet = CGAL::Polygon_set_2<Kernel>; // Polygon_set_2 fails to initialize with the EPIC kernel: using simple list instead.
-  using PolygonSet = std::vector<Polygon_with_holes>;
+  Timer(const size_t memory = 10);
 
- public:
-  explicit Region(const std::string& id);
+  void Reset();
 
-  bool IsValid() const;
+  double Stamp();
 
-  bool MakeValid();
+  double Peek(const size_t skip = 0) const;
 
-  void MakeSimple(Polygon& simple);
+  double Span() const;
 
-  std::string id;
-  PolygonSet shape;
+ private:
+  // If skip is too large, the starting time is used.
+  double Compare(const clock_t time, const size_t skip = 0) const;
 
-  std::string style;
-}; // class Region
+  clock_t start_;
+  std::deque<clock_t> times_;
+  size_t memory_;
+}; // class Timer
 
 } // namespace geoviz
 
-#endif //GEOVIZ_NECKLACE_MAP_REGION_H
+#endif //GEOVIZ_COMMON_TIMER_H

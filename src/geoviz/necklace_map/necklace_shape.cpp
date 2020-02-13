@@ -66,6 +66,17 @@ namespace necklace_map
  * @return the necklace radius.
  */
 
+Number NecklaceShape::ComputeAngle(const Point& point) const
+{
+  const Vector offset = point - kernel();
+
+  // Note the special case where the centroid overlaps the necklace kernel.
+  return
+    offset.squared_length() == 0
+    ? 0
+    : std::atan2(offset.y(), offset.x());
+}
+
 
 /**@class CircleNecklace
  * @brief A full circle necklace.
@@ -117,6 +128,11 @@ Number CircleNecklace::ComputeRadius() const
   return radius_;
 }
 
+void CircleNecklace::Accept(NecklaceShapeVisitor& visitor)
+{
+  visitor.Visit(*this);
+}
+
 
 /**@class CurveNecklace
  * @brief A circular arc necklace.
@@ -139,40 +155,23 @@ Number CircleNecklace::ComputeRadius() const
  * @param angle_cw_rad the clockwise endpoint of the curve.
  * @param angle_ccw_rad the counterclockwise endpoint of the curve.
  */
-CurveNecklace::CurveNecklace(const Circle& shape, const Number& angle_cw_rad, const Number& angle_ccw_rad)
-  : CircleNecklace(shape),
-    angle_cw_rad_(angle_cw_rad),
-    angle_ccw_rad_(angle_ccw_rad)
-{
-  if (angle_cw_rad_ == angle_ccw_rad_)
-  {
-    // If the necklace covers the whole circle, we set the angles to 0 for convenience.
-    angle_cw_rad_ = angle_ccw_rad_ = 0;
-    return;
-  }
-
-  while (angle_cw_rad_ < 0)
-    angle_cw_rad_ += M_2xPI;
-  while (M_2xPI <= angle_cw_rad_)
-    angle_cw_rad_ -= M_2xPI;
-
-  while (angle_ccw_rad_ <= angle_cw_rad_)
-    angle_ccw_rad_ += M_2xPI;
-  while (angle_cw_rad_ + M_2xPI < angle_ccw_rad_)
-    angle_ccw_rad_ -= M_2xPI;
-}
+CurveNecklace::CurveNecklace(const Circle& shape, const Number& angle_cw_rad, const Number& angle_ccw_rad) :
+  CircleNecklace(shape),
+  interval_(angle_cw_rad, angle_ccw_rad)
+{}
 
 bool CurveNecklace::IntersectRay(const Number& angle_rad, Point& intersection) const
 {
   // Check whether the angle lies in the covered part of the supporting circle.
-  if
-  (
-    angle_ccw_rad_ < angle_rad ||
-    (angle_rad < angle_cw_rad_ && angle_ccw_rad_ < angle_rad + M_2xPI)
-  )
+  if (!interval_.IntersectsRay(angle_rad))
     return false;
 
   return CircleNecklace::IntersectRay(angle_rad, intersection);
+}
+
+void CurveNecklace::Accept(NecklaceShapeVisitor& visitor)
+{
+  visitor.Visit(*this);
 }
 
 

@@ -30,10 +30,24 @@ namespace geoviz
 namespace necklace_map
 {
 
-
-/**@class NecklaceInterval
- * @brief A connected part of a necklace.
+/**@class CircleRange
+ * @brief A continuous interval on a circle.
  */
+
+/**@brief Constrain a value to be beyond some starting value by at most 2*pi.
+ * @param value the value (in radians) to constrain.
+ * @param start the starting value in radians.
+ * @return the value in the constrained range.
+ */
+Number CircleRange::Modulo(const Number& value_rad, const Number& start_rad /*= 0*/)
+{
+  Number constrained_rad = value_rad;
+  while (constrained_rad < start_rad)
+    constrained_rad += M_2xPI;
+  while (start_rad + M_2xPI <= constrained_rad)
+    constrained_rad -= M_2xPI;
+  return constrained_rad;
+}
 
 /**@brief Construct a necklace interval.
  *
@@ -57,15 +71,8 @@ CircleRange::CircleRange(const Number& angle_cw_rad, const Number& angle_ccw_rad
     return;
   }
 
-  while (angle_cw_rad_ < 0)
-    angle_cw_rad_ += M_2xPI;
-  while (M_2xPI <= angle_cw_rad_)
-    angle_cw_rad_ -= M_2xPI;
-
-  while (angle_ccw_rad_ <= angle_cw_rad_)
-    angle_ccw_rad_ += M_2xPI;
-  while (angle_cw_rad_ + M_2xPI < angle_ccw_rad_)
-    angle_ccw_rad_ -= M_2xPI;
+  angle_cw_rad_ = Modulo(angle_cw_rad_);
+  angle_ccw_rad_ = Modulo(angle_ccw_rad_, angle_cw_rad_);
 }
 
 /**@brief The angle where the interval ends when traversing the interval in clockwise direction.

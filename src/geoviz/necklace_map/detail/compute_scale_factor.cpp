@@ -245,9 +245,9 @@ Number ComputeScaleFactorFixedOrder::OptimizeSubProblem(const size_t I, const si
 
       // The scaling factor is the minimum or rho_1, rho_2, and rho (ignoring negative values).
       Number scale_factor = rho;
-      if (0 < rho_1 && rho_1 < scale_factor)
+      if (0 <= rho_1 && rho_1 < scale_factor)
         scale_factor = rho_1;
-      if (0 < rho_2 && rho_2 < scale_factor)
+      if (0 <= rho_2 && rho_2 < scale_factor)
         scale_factor = rho_2;
       return scale_factor;
     }

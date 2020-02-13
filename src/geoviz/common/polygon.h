@@ -34,11 +34,12 @@ using Polygon = CGAL::Polygon_2<Kernel>;
 using Polygon_with_holes = CGAL::Polygon_with_holes_2<Kernel>;
 
 
-struct ComputeCentroid
+class ComputeCentroid
 {
+ public:
   Point operator()(const Polygon& shape) const;
   Point operator()(const Polygon_with_holes& shape) const;
-}; // struct ComputeCentroid
+}; // class ComputeCentroid
 
 } // namespace geoviz
 

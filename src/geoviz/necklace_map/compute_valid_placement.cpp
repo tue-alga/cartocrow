@@ -24,6 +24,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 07-01-2020
 
 #include <glog/logging.h>
 
+#include "geoviz/necklace_map/range.h"
 #include "geoviz/necklace_map/detail/cycle_node.h"
 
 
@@ -31,21 +32,61 @@ namespace geoviz
 {
 namespace necklace_map
 {
+namespace detail
+{
+
+inline Number DistanceOnCircle(const Number& from_rad, const Number& to_rad)
+{
+  const Number dist = std::abs(to_rad - from_rad);
+  return std::min(dist, M_2xPI - dist);
+}
+
+} // namespace detail
+
+/**@class ComputeValidPlacement
+ * @brief A functor to compute a valid placement for a collection of necklace beads.
+ *
+ * A placement for a set of necklace beads is a set of angles that describes the position of each bead on the necklace. A placement is valid if all scaled beads are inside their feasible interval and the distance between any two beads is at least some non-negative buffer distance. Note that this buffer distance guarantees that the beads do not overlap.
+ *
+ * There is often a range of valid placements. In this case, the placement is guided by an attraction-repulsion force: the beads are attracted to the center of their interval and repelled by the neighboring beads.
+ *
+ * Note that the placements are computed independently per necklace. This means that if a map contains multiple necklaces, no guarantees can be given about overlap of beads on different necklaces. However, such overlap can often be prevented manually by tuning the attraction-replusion force and the buffer distance.
+ */
+
+/**@brief Construct a new valid placement computation functor.
+ * @param parameters the parameters describing the desired type of functor.
+ * @return a unique pointer containing a new functor or a nullptr if the functor could not be constructed.
+ */
+ComputeValidPlacement::Ptr ComputeValidPlacement::New(const Parameters& parameters)
+{
+  switch (parameters.order_type)
+  {
+    case OrderType::kFixed:
+      return Ptr(new ComputeValidPlacementFixedOrder(parameters.aversion_ratio, parameters.buffer_rad));
+    default:
+      return nullptr;
+  }
+}
 
 ComputeValidPlacement::ComputeValidPlacement
 (
-  const Number& scale_factor,
   const Number& aversion_ratio,
   const Number& buffer_rad /*= 0*/
 ) :
-  aversion_ratio(aversion_ratio),
-  scale_factor(scale_factor),
-  buffer_rad(buffer_rad)
+  buffer_rad(buffer_rad),
+  aversion_ratio(aversion_ratio)
 {}
 
-void ComputeValidPlacement::operator()(Necklace::Ptr& necklace) const
+void ComputeValidPlacement::operator()(const Number& scale_factor, Necklace::Ptr& necklace) const
 {
   const Number necklace_radius = necklace->shape->ComputeRadius();
+  for (const Bead::Ptr& bead : necklace->beads)
+  {
+    // Compute the scaled covering radius.
+    CHECK_NOTNULL(bead);
+    const Number radius_scaled = scale_factor * bead->radius_base;
+    bead->covering_radius_scaled_rad = std::asin(radius_scaled / necklace_radius);
+  }
 
   // Compute the valid intervals.
   detail::ValidateScaleFactor validate(scale_factor, buffer_rad);
@@ -54,174 +95,175 @@ void ComputeValidPlacement::operator()(Necklace::Ptr& necklace) const
   if (!valid)
     return;
 
-  const Number EPSILON = 1e-7;
-  const Number center_attraction_factor = 1;  // Note that while this factor is constant, it gives insight into the forces that pull the bead towards the center of the interval.
+  const double precision = 1e-7;
 
   const size_t num_beads = necklace->beads.size();
   for (int epoch = 0; epoch < 30; ++epoch)
   {
-    for (size_t n = 0; n < num_beads; ++n)
+    for (size_t index_bead = 0; index_bead < num_beads; ++index_bead)
     {
-      Bead::Ptr& bead = necklace->beads[n];
+      Bead::Ptr& bead = necklace->beads[index_bead];
       CHECK_NOTNULL(bead);
 
-      int j1 = (n + num_beads - 1)%num_beads;
-      int j2 = (n+1)%num_beads;
+      const size_t index_prev = (index_bead + num_beads - 1) % num_beads;
+      const size_t index_next = (index_bead + 1) % num_beads;
 
-      // TODO(tvl) fix naming!
+      Bead::Ptr& prev = necklace->beads[index_prev];
+      const Bead::Ptr& next = necklace->beads[index_next];
 
-      Bead::Ptr& prev = necklace->beads[j1];
-      Bead::Ptr& next = necklace->beads[j2];
+      const Number offset_from_prev_rad = CircleRange(prev->angle_rad, bead->angle_rad).ComputeLength();
+      const Number distance_neighbors_rad = CircleRange(prev->angle_rad, next->angle_rad).ComputeLength();
+      const Number offset_from_centroid_rad = CircleRange
+      (
+        bead->feasible->ComputeCentroid(),
+        bead->angle_rad
+      ).ComputeLength();
 
-      CircleRange r1(prev->angle_rad, bead->angle_rad);
-      CircleRange r2(prev->angle_rad, next->angle_rad);
-      CircleRange r3(bead->feasible->ComputeCentroid(), bead->angle_rad);
+      const Number& radius_bead = bead->covering_radius_scaled_rad;
+      const Number& radius_prev = prev->covering_radius_scaled_rad;
+      const Number& radius_next = next->covering_radius_scaled_rad;
 
-      const Number length_r1 = r1.ComputeLength();
-      const Number length_r2 = r2.ComputeLength();
-      const Number length_r3 = r3.ComputeLength();
+      // Note that we cannot guarantee better than double precision because of the trigonometric functions.
 
-      // determ. cov. radii (can be stored in vector, but then make sure these are also swapped if the elements are swapped...)
-      const Number elem_radius = bead->covering_radius_scaled_rad;
-      const Number prev_radius = prev->covering_radius_scaled_rad;
-      const Number next_radius = next->covering_radius_scaled_rad;
+      const double distance_to_prev_min = radius_prev + radius_bead + buffer_rad;
+      const double distance_to_prev_max =
+        (index_prev == index_next ? M_2xPI : distance_neighbors_rad) - radius_next - radius_bead - buffer_rad;
 
+      // The 'bubble' is the largest range centered on the bead that does not contain the centroid.
+      const double offset_prev_to_bubble =
+        offset_from_centroid_rad < M_PI
+        ? (offset_from_prev_rad - offset_from_centroid_rad)
+        : (offset_from_prev_rad + (M_2xPI - offset_from_centroid_rad));
 
-      double d1 = prev_radius + elem_radius + buffer_rad;
-      double d2 = length_r2 - next_radius - elem_radius - buffer_rad;
-      if (j1 == j2)
-        d2 = M_2xPI - next_radius - elem_radius - buffer_rad;
-      double m =
-        ((length_r3 < M_PI)
-         ? (length_r1 - length_r3)
-         : (length_r1 + (M_2xPI - length_r3)));
-      double e = center_attraction_factor * m * d1 * d2 - aversion_ratio * (d1 + d2);
-      double f = 2.0 * aversion_ratio - center_attraction_factor * ((d1 + m) * (d2 + m) - m * m);
-      double g = center_attraction_factor * (d1 + d2 + m);
-      double h = -center_attraction_factor;
+      const double w_0 =
+        centroid_ratio * offset_prev_to_bubble * distance_to_prev_min * distance_to_prev_max -
+        aversion_ratio * (distance_to_prev_min + distance_to_prev_max);
+      const double w_1 =
+        aversion_ratio * 2 -
+        centroid_ratio *
+        (
+          (distance_to_prev_min + offset_prev_to_bubble) * (distance_to_prev_max + offset_prev_to_bubble) -
+          offset_prev_to_bubble * offset_prev_to_bubble
+        );
+      const double w_2 = centroid_ratio * (distance_to_prev_min + distance_to_prev_max + offset_prev_to_bubble);
+      const double w_3 = -centroid_ratio;
 
-
-
-      // solve h x^3 + g x^2 + f x + e == 0
-      if (std::abs(h) < EPSILON && std::abs(g) < EPSILON)
+      // Solve w_3 * x^3 + w_2 * x^2 + w_1 * x + w_0 = 0 up to the specified precision.
+      if (std::abs(w_3) < precision && std::abs(w_2) < precision)
       {
-        double x = -e / f + prev->angle_rad;
-        while (x > M_2xPI) x -= M_2xPI;
-        while (x < 0) x += M_2xPI;
+        const Number x = CircleRange::Modulo(-w_0 / w_1 + prev->angle_rad);
+
         if (!bead->feasible->IntersectsRay(x))
         {
-          if (2.0 * length_r1 - (d1 + d2) > 0.0)
-            x = bead->feasible->angle_cw_rad();
+          if (0 < 2 * offset_from_prev_rad - distance_to_prev_min + distance_to_prev_max)
+            bead->angle_rad = bead->feasible->angle_cw_rad();
           else
-            x = bead->feasible->angle_ccw_rad();
+            bead->angle_rad = bead->feasible->angle_ccw_rad();
         }
-        bead->angle_rad = x;
+        else
+          bead->angle_rad = x;
       }
       else
       {
-        double q = (3.0 * h * f - g * g) / (9.0 * h * h);
-        double r = (9.0 * h * g * f - 27.0 * h * h * e - 2.0 * g * g * g) / (54.0 * h * h * h);
-        //double z = q * q * q + r * r;
-        double rho = CGAL::sqrt(-q * q * q);
-        if (std::abs(r) > rho) rho = std::abs(r);
-        double theta = std::acos(r / rho);
-        rho = std::pow(rho, 1.0 / 3.0);
-        double x = -rho * std::cos(theta / 3.0) - g / (3.0 * h) + rho * CGAL::sqrt(3.0) * std::sin(theta/3.0);
-        x += prev->angle_rad;
-        while (x > M_2xPI) x -= M_2xPI;
-        while (x < 0) x += M_2xPI;
-        if (!bead->feasible->IntersectsRay(x)) {
-          if (aversion_ratio * (2.0 * length_r1 - (d1 + d2)) + center_attraction_factor * (m - length_r1) * (length_r1 - d1) * (length_r1 - d2) > 0.0)
-            x = bead->feasible->angle_cw_rad();
-          else x = bead->feasible->angle_ccw_rad();
+        const double q = (3 * w_3 * w_1 - w_2 * w_2) / (9 * w_3 * w_3);
+        const double r = (9 * w_3 * w_2 * w_1 - 27 * w_3 * w_3 * w_0 - 2 * w_2 * w_2 * w_2) / (54 * w_3 * w_3 * w_3);
+
+        const double rho = std::max(std::sqrt(-q * q * q), std::abs(r));
+
+        const double theta_3 = std::acos(r / rho) / 3;
+        const double rho_3 = std::pow(rho, 1 / 3.0);
+
+        const Number x = CircleRange::Modulo
+        (
+          prev->angle_rad -
+          rho_3 * std::cos(theta_3) - w_2 / (3 * w_3) +
+          rho_3 * std::sqrt(3.0) * std::sin(theta_3)
+        );
+
+        if (!bead->feasible->IntersectsRay(x))
+        {
+          if
+          (
+            0 <
+            aversion_ratio * (2 * offset_from_prev_rad - (distance_to_prev_min + distance_to_prev_max)) +
+            centroid_ratio * (offset_prev_to_bubble - offset_from_prev_rad) *
+            (offset_from_prev_rad - distance_to_prev_min) * (offset_from_prev_rad - distance_to_prev_max)
+          )
+            bead->angle_rad = bead->feasible->angle_cw_rad();
+          else
+            bead->angle_rad = bead->feasible->angle_ccw_rad();
         }
-        bead->angle_rad = x;
+        else
+          bead->angle_rad = x;
       }
     }
 
     SwapBeads(necklace);
   }
-
 }
 
-void ComputeValidPlacement::operator()(std::vector<Necklace::Ptr>& necklaces) const
+void ComputeValidPlacement::operator()(const Number& scale_factor, std::vector<Necklace::Ptr>& necklaces) const
 {
   for (Necklace::Ptr& necklace : necklaces)
-    (*this)(necklace);
+    (*this)(scale_factor, necklace);
 }
 
 
 ComputeValidPlacementFixedOrder::ComputeValidPlacementFixedOrder
 (
-  const Number& scale_factor,
   const Number& aversion_ratio,
   const Number& buffer_rad /*= 0*/
 ) :
-  ComputeValidPlacement(scale_factor, aversion_ratio, buffer_rad)
+  ComputeValidPlacement(aversion_ratio, buffer_rad)
 {}
 
 
 ComputeValidPlacementAnyOrder::ComputeValidPlacementAnyOrder
 (
-  const Number& scale_factor,
   const Number& aversion_ratio,
   const Number& min_separation /*= 0*/
 ) :
-  ComputeValidPlacement(scale_factor, aversion_ratio, min_separation) {}
+  ComputeValidPlacement(aversion_ratio, min_separation) {}
 
 void ComputeValidPlacementAnyOrder::SwapBeads(Necklace::Ptr& necklace) const
 {
-
   const Number necklace_radius = necklace->shape->ComputeRadius();
 
-  // TODO(tvl) fix naming!
-
-  // swapping action
   const size_t num_beads = necklace->beads.size();
-  for (int n = 0; n < num_beads; n++)
+  for (int index_bead = 0; index_bead < num_beads; index_bead++)
   {
-    int j = (n+1)%num_beads;
+    const size_t index_next = (index_bead+1)%num_beads;
 
-    Bead::Ptr& bead = necklace->beads[n];
-    Bead::Ptr& next = necklace->beads[j];
+    Bead::Ptr& bead = necklace->beads[index_bead];
+    Bead::Ptr& next = necklace->beads[index_next];
 
-    const Number elem_radius = bead->covering_radius_scaled_rad;
-    const Number next_radius = next->covering_radius_scaled_rad;
+    const Number& radius_bead = bead->covering_radius_scaled_rad;
+    const Number& radius_next = next->covering_radius_scaled_rad;
 
+    // Note that for the swapped angles, the buffers cancel each other out.
+    const Number swapped_angle_bead_rad = CircleRange::Modulo(next->angle_rad + radius_next - radius_bead);
+    const Number swapped_angle_next_rad = CircleRange::Modulo(bead->angle_rad - radius_bead + radius_next);
 
-
-    // Note that for the new angles, the buffers cancel each other out.
-    double newAngle1 = next->angle_rad + next_radius - elem_radius;
-    double newAngle2 = bead->angle_rad - elem_radius + next_radius;
-    while (M_2xPI < newAngle1) newAngle1 -= M_2xPI;
-    while (newAngle1 < 0) newAngle1 += M_2xPI;
-    while (M_2xPI < newAngle2) newAngle2 -= M_2xPI;
-    while (newAngle2 < 0) newAngle2 += M_2xPI;
-
-
-
-    if (bead->feasible->IntersectsRay(newAngle1) && next->feasible->IntersectsRay(newAngle2))
+    if (bead->feasible->IntersectsRay(swapped_angle_bead_rad) && next->feasible->IntersectsRay(swapped_angle_next_rad))
     {
-      double mid1 = bead->feasible->ComputeCentroid();
-      double mid2 = next->feasible->ComputeCentroid();
+      const Number centroid_bead_rad = bead->feasible->ComputeCentroid();
+      const Number centroid_next_rad = next->feasible->ComputeCentroid();
 
-      CircleRange r1(bead->angle_rad, mid1);
-      if (r1.ComputeLength() > M_PI) r1 = CircleRange(mid1, bead->angle_rad);
-      CircleRange r2(next->angle_rad, mid2);
-      if (r2.ComputeLength() > M_PI) r2 = CircleRange(mid2, next->angle_rad);
-      double dif1 = r1.ComputeLength() * r1.ComputeLength() + r2.ComputeLength() * r2.ComputeLength();
+      const Number dist_original_bead = detail::DistanceOnCircle(bead->angle_rad, centroid_bead_rad);
+      const Number dist_original_next = detail::DistanceOnCircle(next->angle_rad, centroid_next_rad);
+      const Number dist_swapped_bead = detail::DistanceOnCircle(swapped_angle_bead_rad, centroid_bead_rad);
+      const Number dist_swapped_next = detail::DistanceOnCircle(swapped_angle_next_rad, centroid_next_rad);
 
-      r1 = CircleRange(newAngle1, mid1);
-      if (r1.ComputeLength() > M_PI) r1 = CircleRange(mid1, newAngle1);
-      r2 = CircleRange(newAngle2, mid2);
-      if (r2.ComputeLength() > M_PI) r2 = CircleRange(mid2, newAngle2);
-      double dif2 = r1.ComputeLength() * r1.ComputeLength() + r2.ComputeLength() * r2.ComputeLength();
+      const Number cost_original = dist_original_bead * dist_original_bead + dist_original_next * dist_original_next;
+      const Number cost_swapped = dist_swapped_bead * dist_swapped_bead + dist_swapped_next * dist_swapped_next;
 
-      if (dif2 < dif1) {
-        bead->angle_rad = newAngle1;
-        next->angle_rad = newAngle2;
+      if (cost_swapped < cost_original)
+      {
+        // Swap the beads.
+        bead->angle_rad = swapped_angle_bead_rad;
+        next->angle_rad = swapped_angle_next_rad;
 
-        std::swap(necklace->beads[n], necklace->beads[j]);
+        std::swap(necklace->beads[index_bead], necklace->beads[index_next]);
       }
     }
   }

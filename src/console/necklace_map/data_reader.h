@@ -24,31 +24,37 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 03-12-2019
 #ifndef CONSOLE_NECKLACE_MAP_DATA_READER_H
 #define CONSOLE_NECKLACE_MAP_DATA_READER_H
 
-#include <unordered_map>
+#include <iostream>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
-#include "console/common/detail/table_reader.h"
+#include "console/common/detail/table_parser.h"
 #include "geoviz/necklace_map/map_element.h"
 
 
 namespace geoviz
 {
 
-class DataReader : public detail::TableReader
+class DataReader : public detail::TableParser
 {
- private:
-  using LookupTable = std::unordered_map<std::string, size_t>;
-
  public:
-  explicit DataReader(std::vector<necklace_map::MapElement::Ptr>& elements);
+  DataReader();
 
-  bool Read(const std::string& filename, const std::string& value_name);
+  bool ReadFile
+  (
+    const std::string& filename,
+    const std::string& value_name,
+    std::vector<necklace_map::MapElement::Ptr>& elements,
+    int max_retries = 2
+  );
 
- private:
-  std::vector<necklace_map::MapElement::Ptr>& elements_;
-
-  LookupTable id_to_element_index_;
+  bool Parse
+  (
+    std::istream& in,
+    const std::string& value_name,
+    std::vector<necklace_map::MapElement::Ptr>& elements
+  );
 }; // class DataReader
 
 } // namespace geoviz

@@ -34,13 +34,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-2019
 #include "geoviz/necklace_map/compute_valid_placement.h"
 #include "geoviz/necklace_map/map_element.h"
 #include "geoviz/necklace_map/necklace.h"
-
-
-// TODO(tvl) this should probably end up as forwarding file, to functional parts that may each have their own subdirectory... However, it should probably also contain functionality for running 'the full pipeline'.
-
-// TODO(tvl) make "settings.h" file with parameter struct containing alg type, min separation, aversion factor, etc. Add factory methods to base functors to construct functors based on this struct.
-
-// TODO(tvl) should this file contain the factories?
+#include "geoviz/necklace_map/parameters.h"
 
 
 namespace geoviz
@@ -48,9 +42,19 @@ namespace geoviz
 namespace necklace_map
 {
 
+Number ComputeScaleFactor
+(
+  const Parameters& parameters,
+  std::vector<MapElement::Ptr>& elements,
+  std::vector<Necklace::Ptr>& necklaces
+);
 
-
-
+void ComputePlacement
+(
+  const Parameters& parameters,
+  const Number& scale_factor,
+  std::vector<Necklace::Ptr>& necklaces
+);
 
 } // namespace necklace_map
 

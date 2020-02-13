@@ -65,7 +65,7 @@ Vector ComputeCentroid(const Polygon_with_holes& shape, Number& area)
 } // namespace detail
 
 
-/**@struct ComputeCentroid
+/**@class ComputeCentroid
  * @brief Compute the centroid of a 2D shape.
  *
  * Note that while CGAL provides functionality for computing the centroid of a point set, the centroid of a shape depends on the space it covers, not just its boundary.

@@ -26,12 +26,15 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 15-01-2020
 #include <memory>
 
 #include "geoviz/common/core_types.h"
+#include "geoviz/necklace_map/range.h"
 
 
 namespace geoviz
 {
 namespace necklace_map
 {
+
+class NecklaceShapeVisitor;
 
 class NecklaceShape
 {
@@ -43,7 +46,9 @@ class NecklaceShape
   virtual Box ComputeBoundingBox() const = 0;
   virtual Number ComputeLength() const = 0;
   virtual Number ComputeRadius() const = 0;
+  Number ComputeAngle(const Point& point) const;
 
+  virtual void Accept(NecklaceShapeVisitor& visitor) = 0;
   // TODO(tvl) should the necklace contain methods for adapting the 1D solution to the 2D solution?
   // This would mainly come into play for Bezier necklaces. For impl: check the 30x for loop in the Java prototype code.
   // Another case would be when a bead contains the necklace center;
@@ -62,6 +67,8 @@ class CircleNecklace : public NecklaceShape
   Number ComputeLength() const;
   Number ComputeRadius() const;
 
+  virtual void Accept(NecklaceShapeVisitor& visitor);
+
  protected:
   Circle shape_;
   Number radius_;
@@ -75,9 +82,10 @@ class CurveNecklace : public CircleNecklace
   CurveNecklace(const Circle& shape, const Number& angle_cw_rad, const Number& angle_ccw_rad);
   bool IntersectRay(const Number& angle_rad, Point& intersection) const;
 
+  void Accept(NecklaceShapeVisitor& visitor);
+
  private:
-  Number angle_cw_rad_; // Internally, this angle is adjusted to be in the range [0, 2*pi).
-  Number angle_ccw_rad_; // For convenience, this angle is adjusted to be in the range [angle_from_rad, angle_from_rad+2*pi).
+  CircleRange interval_;
 }; // class CurveNecklace
 
 
@@ -90,11 +98,22 @@ class GenericNecklace : public NecklaceShape
   Number ComputeLength() const;
   Number ComputeRadius() const;
 
+  void Accept(NecklaceShapeVisitor& visitor);
+
  private:
   Point kernel_;
   std::vector<Point> points_;  // TODO(tvl) the generic necklace will probably require different markers than just points.
   Number radius_;
 }; // class GenericNecklace
+
+
+class NecklaceShapeVisitor
+{
+ public:
+  virtual void Visit(CircleNecklace& shape) {}
+  virtual void Visit(CurveNecklace& shape) {}
+  virtual void Visit(GenericNecklace& shape) {}
+};
 
 } // namespace necklace_map
 } // namespace geoviz

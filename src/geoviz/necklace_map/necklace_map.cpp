@@ -28,6 +28,34 @@ namespace geoviz
 namespace necklace_map
 {
 
+Number ComputeScaleFactor
+(
+  const Parameters& parameters,
+  std::vector<MapElement::Ptr>& elements,
+  std::vector<Necklace::Ptr>& necklaces
+)
+{
+  // Generate intervals based on the regions and necklaces.
+  (*ComputeFeasibleInterval::New(parameters))(elements);
+
+  // Compute the scaling factor.
+  const Number scale_factor = (*ComputeScaleFactor::New(parameters))(necklaces);
+
+  ComputePlacement(parameters, scale_factor, necklaces);
+
+  return scale_factor;
+}
+
+void ComputePlacement
+(
+  const Parameters& parameters,
+  const Number& scale_factor,
+  std::vector<Necklace::Ptr>& necklaces
+)
+{
+  // Compute valid placement.
+  (*ComputeValidPlacement::New(parameters))(scale_factor, necklaces);
+}
 
 } // namespace necklace_map
 

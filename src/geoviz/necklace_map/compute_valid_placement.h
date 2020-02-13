@@ -27,6 +27,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 07-01-2020
 
 #include "geoviz/common/core_types.h"
 #include "geoviz/necklace_map/necklace.h"
+#include "geoviz/necklace_map/parameters.h"
 #include "geoviz/necklace_map/detail/validate_scale_factor.h"
 
 
@@ -34,39 +35,48 @@ namespace geoviz
 {
 namespace necklace_map
 {
-// TODO(tvl) Add a note on multiple necklaces that the different necklaces may generate overlapping beads; these can often be corrected by manually tuning the buffer and attraction-repulsion parameters. We don't fix this, or even check for occurrence of overlapping beads.
 
-struct ComputeValidPlacement
+class ComputeValidPlacement
 {
-  ComputeValidPlacement(const Number& scale_factor, const Number& aversion_ratio, const Number& buffer_rad = 0);
+ public:
+  using Ptr = std::unique_ptr<ComputeValidPlacement>;
 
-  void operator()(Necklace::Ptr& necklace) const;
+  static Ptr New(const Parameters& parameters);
 
-  void operator()(std::vector<Necklace::Ptr>& necklaces) const;
+  ComputeValidPlacement(const Number& aversion_ratio, const Number& buffer_rad = 0);
 
-  Number scale_factor;
-  Number aversion_ratio;  // Ratio between attraction to interval center (0) and repulsion from neighboring beads (1).
+  void operator()(const Number& scale_factor, Necklace::Ptr& necklace) const;
+
+  void operator()(const Number& scale_factor, std::vector<Necklace::Ptr>& necklaces) const;
+
   Number buffer_rad;
+
+  Number aversion_ratio;  // Ratio between attraction to interval center (0) and repulsion from neighboring beads (1).
+  const Number centroid_ratio = 1;  // Note that while this factor is superfluous, it gives insight into the forces that pull the bead towards the center of the interval.
 
  protected:
   virtual void SwapBeads(Necklace::Ptr& necklace) const = 0;
-}; // struct ComputeValidPlacement
+}; // class ComputeValidPlacement
 
-struct ComputeValidPlacementFixedOrder : public ComputeValidPlacement
+
+class ComputeValidPlacementFixedOrder : public ComputeValidPlacement
 {
-  ComputeValidPlacementFixedOrder(const Number& scale_factor, const Number& aversion_ratio, const Number& min_separation = 0);
+ public:
+  ComputeValidPlacementFixedOrder(const Number& aversion_ratio, const Number& min_separation = 0);
 
  protected:
   void SwapBeads(Necklace::Ptr& necklace) const {}
-}; // struct ComputeValidPlacementFixedOrder
+}; // class ComputeValidPlacementFixedOrder
 
-struct ComputeValidPlacementAnyOrder : public ComputeValidPlacement
+
+class ComputeValidPlacementAnyOrder : public ComputeValidPlacement
 {
-  ComputeValidPlacementAnyOrder(const Number& scale_factor, const Number& aversion_ratio, const Number& min_separation = 0);
+ public:
+  ComputeValidPlacementAnyOrder(const Number& aversion_ratio, const Number& min_separation = 0);
 
  protected:
   void SwapBeads(Necklace::Ptr& necklace) const;
-}; // struct ComputeValidPlacementAnyOrder
+}; // class ComputeValidPlacementAnyOrder
 
 } // namespace necklace_map
 } // namespace geoviz

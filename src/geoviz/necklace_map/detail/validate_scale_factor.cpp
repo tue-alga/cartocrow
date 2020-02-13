@@ -70,9 +70,6 @@ bool ValidateScaleFactor::operator()(Necklace::Ptr& necklace) const
   {
     // Compute the scaled covering radius.
     CHECK_NOTNULL(bead);
-    const Number radius_scaled = scale_factor * bead->radius_base;
-    bead->covering_radius_scaled_rad = std::asin(radius_scaled / necklace_radius);
-
     nodes.emplace_back(bead);
   }
 
@@ -88,7 +85,6 @@ bool ValidateScaleFactor::operator()(Necklace::Ptr& necklace) const
   }
 
   // Compute the valid intervals at the specified scale factor, where beads can be placed without pairwise overlap.
-  // TODO(tvl) adjust so beads are placed based on distance between centers as opposed to wedges.
 
   // Adjust the clockwise extremes.
   for (size_t n = 1; n < nodes.size(); ++n)
@@ -99,7 +95,8 @@ bool ValidateScaleFactor::operator()(Necklace::Ptr& necklace) const
     // The bead must not overlap the previous one.
     const Number distance_rad = current.interval_cw_rad - previous.interval_cw_rad;
     const Number min_distance_rad =
-      previous.bead->covering_radius_scaled_rad + current.bead->covering_radius_scaled_rad + buffer_rad;
+      2 * std::asin(scale_factor * (current.bead->radius_base + previous.bead->radius_base) / (2 * necklace_radius)) +
+      buffer_rad;
 
     if (distance_rad < min_distance_rad)
     {
@@ -124,7 +121,7 @@ bool ValidateScaleFactor::operator()(Necklace::Ptr& necklace) const
     // The bead must not overlap the next one.
     const Number distance_rad = next.interval_ccw_rad - current.interval_ccw_rad;
     const Number min_distance_rad =
-      current.bead->covering_radius_scaled_rad + next.bead->covering_radius_scaled_rad + buffer_rad;
+      2 * std::asin(scale_factor * (next.bead->radius_base + current.bead->radius_base) / (2 * necklace_radius));
 
     if (distance_rad < min_distance_rad)
     {

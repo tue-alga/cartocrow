@@ -23,13 +23,20 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 26-11-2019
 
 #include "svg_reader.h"
 
+#include <fstream>
+
+#include <glog/logging.h>
+
+#include "console/necklace_map/detail/svg_visitor.h"
+
 DEFINE_bool
 (
   strict_validity,
   true,
   "Whether failures in validity should generate a breaking error. Otherwise, some faults"
   " may be corrected silently. Note that this may break some assumptions on input-output"
-  " data similarity."
+  " data similarity. For example, some regions may be reversed in the output compared to"
+  " the input."
 );
 
 
@@ -37,31 +44,78 @@ namespace geoviz
 {
 
 /**@class SvgReader
- * @brief A file reader for SVG necklace map input geometry.
+ * @brief A reader for SVG necklace map input geometry.
  */
 
-/**@brief Construct a file reader for SVG necklace map input geometry.
- * @param regions the collection in which to collect the regions in the input.
- * @param necklace where to place the necklace.
+/**@brief Construct a reader for SVG necklace map input geometry.
  */
-SvgReader::SvgReader
-(
-  std::vector<necklace_map::MapElement::Ptr>& elements,
-  std::vector<necklace_map::Necklace::Ptr>& necklaces
-) : visitor_(elements, necklaces, FLAGS_strict_validity) {}
+SvgReader::SvgReader() {}
 
 /**@brief Read necklace map SVG input from a file.
  * @param filename the file to read.
+ * @param regions the collection in which to collect the regions in the input.
+ * @param necklace where to place the necklace.
  * @return whether the read operation could be completed successfully.
  */
-bool SvgReader::Read(const std::string& filename)
+bool SvgReader::ReadFile
+(
+  const std::string& filename,
+  std::vector<necklace_map::MapElement::Ptr>& elements,
+  std::vector<necklace_map::Necklace::Ptr>& necklaces,
+  int max_retries /*= 2*/
+)
+{
+  std::string input;
+  int retry = 0;
+  do
+  {
+    try
+    {
+      std::fstream fin(filename);
+      if (fin)
+      {
+        using Iterator = std::istreambuf_iterator<char>;
+        input.assign(Iterator(fin), Iterator());
+        break;
+      }
+    }
+    catch (const std::exception& e)
+    {
+      LOG(ERROR) << e.what();
+    }
+
+    if (max_retries < retry++)
+    {
+      LOG(INFO) << "Failed to open necklace map geometry file: " << filename;
+      return false;
+    }
+  } while (true);
+
+  return Parse(input, elements, necklaces);
+}
+
+bool SvgReader::Parse
+(
+  const std::string& input,
+  std::vector<necklace_map::MapElement::Ptr>& elements,
+  std::vector<necklace_map::Necklace::Ptr>& necklaces
+)
 {
   tinyxml2::XMLDocument doc;
-  tinyxml2::XMLError result = doc.LoadFile(filename.c_str());
+  tinyxml2::XMLError result = doc.Parse(input.data());
   //tinyxml2::XMLError result = doc.Parse(content_str); // This would be how to parse a string instead of a file using tinyxml2
   if (result != tinyxml2::XML_SUCCESS) return false;
 
-  doc.Accept(&visitor_);
+  using Visitor = detail::NecklaceMapSvgVisitor;
+  Visitor visitor(elements, necklaces, FLAGS_strict_validity);
+  doc.Accept(&visitor);
+
+  // Note(tvl) we should allow the SVG to not contain the necklace: then create the necklace as smallest enclosing circle.
+  LOG(INFO) <<
+    "Successfully parsed necklace map geometry for " <<
+    elements.size() << " regions and " <<
+    necklaces.size() << " necklaces.";
+
   return true;
 }
 

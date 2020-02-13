@@ -16,14 +16,13 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-Created by tvl (t.vanlankveld@esciencecenter.nl) on 07-11-2019
+Created by tvl (t.vanlankveld@esciencecenter.nl) on 29-01-2020
 */
 
-#ifndef GEOVIZ_NECKLACE_MAP_REGION_H
-#define GEOVIZ_NECKLACE_MAP_REGION_H
+#ifndef GEOVIZ_COMMON_BOUNDING_BOX_H
+#define GEOVIZ_COMMON_BOUNDING_BOX_H
 
-#include <string>
-#include <vector>
+#include <glog/logging.h>
 
 #include "geoviz/common/core_types.h"
 
@@ -31,28 +30,18 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 07-11-2019
 namespace geoviz
 {
 
-///@brief A geographically significant shape.
-class Region
+inline Box GrowBoundingBox(const Box& box, const Number& buffer)
 {
- public:
-  //using PolygonSet = CGAL::Polygon_set_2<Kernel>; // Polygon_set_2 fails to initialize with the EPIC kernel: using simple list instead.
-  using PolygonSet = std::vector<Polygon_with_holes>;
+  CHECK_GE(buffer, 0);
+  return Box(box.xmin() - buffer, box.ymin() - buffer, box.xmax() + buffer, box.ymax() + buffer);
+}
 
- public:
-  explicit Region(const std::string& id);
-
-  bool IsValid() const;
-
-  bool MakeValid();
-
-  void MakeSimple(Polygon& simple);
-
-  std::string id;
-  PolygonSet shape;
-
-  std::string style;
-}; // class Region
+inline Box GrowBoundingBox(const Point& center, const Number& buffer)
+{
+  CHECK_GE(buffer, 0);
+  return Box(center.x() - buffer, center.y() - buffer, center.x() + buffer, center.y() + buffer);
+}
 
 } // namespace geoviz
 
-#endif //GEOVIZ_NECKLACE_MAP_REGION_H
+#endif //GEOVIZ_COMMON_BOUNDING_BOX_H

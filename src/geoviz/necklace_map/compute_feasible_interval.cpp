@@ -32,9 +32,26 @@ namespace geoviz
 namespace necklace_map
 {
 
-/**@struct IntervalGenerator
+/**@class IntervalGenerator
  * @brief An interface for a functor to generate feasible intervals for necklace bead placement.
  */
+
+/**@brief Construct a new feasible interval computation functor.
+ * @param parameters the parameters describing the desired type of functor.
+ * @return a unique pointer containing a new functor or a nullptr if the functor could not be constructed.
+ */
+ComputeFeasibleInterval::Ptr ComputeFeasibleInterval::New(const Parameters& parameters)
+{
+  switch (parameters.interval_type)
+  {
+    case IntervalType::kCentroid:
+      return Ptr(new ComputeFeasibleCentroidInterval(parameters.centroid_interval_length_rad));
+    case IntervalType::kWedge:
+      return Ptr(new ComputeFeasibleWedgeInterval());
+    default:
+      return nullptr;
+  }
+}
 
 /**@fn virtual void IntervalGenerator::operator()(const Polygon& extent, const std::shared_ptr<NecklaceType>& necklace, std::shared_ptr<NecklaceInterval>& interval) const = 0
  * @brief Apply the functor to a region and necklace.
@@ -73,7 +90,7 @@ void ComputeFeasibleInterval::operator()(std::vector<MapElement::Ptr>& elements)
 }
 
 
-/**@struct IntervalCentroidGenerator
+/**@class IntervalCentroidGenerator
  * @brief A functor to generate feasible centroid intervals for necklace bead placement.
  *
  * The generated centroid interval is the intersection of the necklace and a wedge @f$W@f$, such that the apex of @f$W@f$ is the necklace kernel, the inner bisector of @f$W@f$ intersects the centroid of a map region, and the inner angle of @f$W@f$ is twice some predefined angle.
@@ -82,13 +99,17 @@ void ComputeFeasibleInterval::operator()(std::vector<MapElement::Ptr>& elements)
  */
 
 /**@brief Construct a centroid interval generator.
- * @param buffer_rad @parblock half the inner angle (in radians) of the wedge used when generating an interval.
+ * @param length_rad @parblock the inner angle (in radians) of the wedge used when generating an interval.
  *
- * In other words, this is the angle between the inner bisector of the wedge and either boundary ray of the wedge.
+ * The centroid intervals cannot be empty or cover the whole necklace, i.e. the length is restricted to the range (0, 2*pi).
  * @endparblock
  */
 ComputeFeasibleCentroidInterval::ComputeFeasibleCentroidInterval(const Number& length_rad)
-  : ComputeFeasibleInterval(), half_length_rad_(0.5 * length_rad) {}
+  : ComputeFeasibleInterval(), half_length_rad_(0.5 * length_rad)
+{
+  CHECK_GT(half_length_rad_, 0);
+  CHECK_LT(half_length_rad_, M_PI);
+}
 
 CircleRange::Ptr ComputeFeasibleCentroidInterval::operator()
 (
@@ -97,19 +118,13 @@ CircleRange::Ptr ComputeFeasibleCentroidInterval::operator()
 ) const
 {
   const Point centroid = ComputeCentroid()(extent);
-  const Vector centroid_offset = centroid - necklace->shape->kernel();
-
-  // Note the special case where the centroid overlaps the necklace kernel.
-  const Number angle_rad =
-    centroid_offset.squared_length() == 0
-    ? 0
-    : std::atan2(centroid_offset.y(), centroid_offset.x());
+  const Number angle_rad = necklace->shape->ComputeAngle(centroid);
 
   return std::make_shared<IntervalCentroid>(angle_rad - half_length_rad_, angle_rad + half_length_rad_);
 }
 
 
-/**@struct IntervalWedgeGenerator
+/**@class IntervalWedgeGenerator
  * @brief A functor to generate feasible wedge intervals for necklace bead placement.
  *
  * The generated wedge interval is the intersection of the necklace and a wedge @f$W@f$, such that the apex of @f$W@f$ is the necklace kernel, @f$W@f$ contains a map region, and the inner angle of @f$W@f$ is minimal.
