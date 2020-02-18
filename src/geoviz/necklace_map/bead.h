@@ -54,7 +54,7 @@ struct Bead
 
   Number angle_rad;
 
-  std::string style;
+  std::string region_style;
 }; // struct Bead
 
 } // namespace necklace_map

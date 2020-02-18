@@ -51,8 +51,7 @@ class ComputeValidPlacement
 
   Number buffer_rad;
 
-  Number aversion_ratio;  // Ratio between attraction to interval center (0) and repulsion from neighboring beads (1).
-  const Number centroid_ratio = 1;  // Note that while this factor is superfluous, it gives insight into the forces that pull the bead towards the center of the interval.
+  Number aversion_ratio;
 
  protected:
   virtual void SwapBeads(Necklace::Ptr& necklace) const = 0;

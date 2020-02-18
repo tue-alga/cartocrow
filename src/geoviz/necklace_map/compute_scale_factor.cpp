@@ -70,12 +70,18 @@ ComputeScaleFactor::ComputeScaleFactor(const Number& buffer_rad /*= 0*/)
   CHECK_LE(buffer_rad_, M_PI);
 }
 
-/**@fn virtual Number ComputeScaleFactor::operator()(const std::vector<MapElement::Ptr>& elements, NecklaceOrderMap& ordering) const = 0
- * @brief Apply the scaler to a collection of elements.
- * @param elements the elements for which to determine the optimal scale factor.
+/**@fn virtual Number ComputeScaleFactor::operator()(Necklace::Ptr& necklace) = 0;
+ * @brief Apply the scaler to a necklace.
+ *
+ * Note that elements with value 0 will not be included in the ordering.
+ * @param necklace the necklace for which to determine the optimal scale factor.
  * @return the optimal scale factor.
  */
 
+/**@brief Apply the scaler to a collection of necklaces.
+ * @param necklaces the necklaces for which to determine the optimal scale factor.
+ * @return the optimal scale factor.
+ */
 Number ComputeScaleFactor::operator()(std::vector<Necklace::Ptr>& necklaces)
 {
   // Determine the optimal scale factor per necklace;
@@ -90,6 +96,12 @@ Number ComputeScaleFactor::operator()(std::vector<Necklace::Ptr>& necklaces)
   }
   return scale_factor;
 }
+
+/**@fn const Number& ComputeScaleFactor::max_buffer_rad() const;
+ * @brief Get the maximum buffer (in radians) between beads for which there exists a valid bead placement on the processed necklaces.
+ *
+ * If a buffer larger that this value is used, the functor will never produce an optimal scale factor larger than 0.
+ */
 
 
 /**@struct ComputeScaleFactorFixedOrder

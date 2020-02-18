@@ -42,7 +42,7 @@ namespace necklace_map
  * @param radius_base the unscaled radius of the bead.
  */
 Bead::Bead(const Number& radius_base, const std::string& style)
-  : radius_base(radius_base), feasible(), covering_radius_scaled_rad(-1), valid(), angle_rad(0), style(style) {}
+  : radius_base(radius_base), feasible(), covering_radius_scaled_rad(-1), valid(), angle_rad(0), region_style(style) {}
 
 /**@brief Check whether the bead is valid.
  *
@@ -55,6 +55,32 @@ bool Bead::IsValid() const
   CHECK(false) << "Implementation not checked";
   return feasible != nullptr && feasible->IsValid() && feasible->IntersectsRay(angle_rad);
 }
+
+/**@fn Number Bead::radius_base;
+ * @brief The radius before scaling.
+ */
+
+/**@fn CircleRange::Ptr Bead::feasible;
+ * @brief The feasible interval.
+ */
+
+/**@fn Number Bead::covering_radius_scaled_rad;
+ * @brief The covering radius of the scaled bead in radians.
+ *
+ * This covering radius is the inner angle of the wedge that has the necklace kernel as apex and for which one leg intersects the bead center and the other leg is tangent to the boundary of the bead.
+ */
+
+/**@fn CircleRange::Ptr Bead::valid;
+ * @brief The valid interval.
+ */
+
+/**@fn Number Bead::angle_rad;
+ * @brief The angle in radians of the final position of the bead.
+ */
+
+/**@fn std::string Bead::region_style;
+ * @brief The style of the region associated with the bead.
+ */
 
 } // namespace necklace_map
 } // namespace geoviz

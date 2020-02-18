@@ -137,6 +137,9 @@ bool CircleRange::IntersectsRay(const Number& angle_rad) const
     (angle_rad < angle_cw_rad_ ? angle_rad + M_2xPI : angle_rad) < angle_ccw_rad_;
 }
 
+/**@brief Compute the angle of the centroid of the range.
+ * @return the centroid angle in radians.
+ */
 Number CircleRange::ComputeCentroid() const
 {
   const Number centroid = .5 * (angle_cw_rad() + angle_ccw_rad());
@@ -144,6 +147,9 @@ Number CircleRange::ComputeCentroid() const
   return (M_2xPI < centroid) ? centroid - M_2xPI : centroid;
 }
 
+/**@brief Compute the total length of the range.
+ * @return the total length in radians.
+ */
 Number CircleRange::ComputeLength() const
 {
   const Number length = angle_ccw_rad() - angle_cw_rad();
@@ -151,6 +157,11 @@ Number CircleRange::ComputeLength() const
   return length;
 }
 
+/**@brief Compute a metric to order different ranges on the same necklace.
+ *
+ * This value can be compared to the ordering value of other ranges on the same necklace to imply a strict ordering of the ranges.
+ * @return the ordering metric.
+ */
 Number CircleRange::ComputeOrder() const
 {
   return 0;

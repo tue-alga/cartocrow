@@ -68,6 +68,13 @@ ComputeValidPlacement::Ptr ComputeValidPlacement::New(const Parameters& paramete
   }
 }
 
+/**@brief Construct a valid placement computation functor.
+ * @param aversion_ratio @parblock the ratio between attraction to the interval center (0) and repulsion from the neighboring beads (1).
+ *
+ * This ratio must be in the range (0, 1].
+ * @endparblock
+ * @param buffer_rad the minimum distance (in radians on the necklace) between the beads.
+ */
 ComputeValidPlacement::ComputeValidPlacement
 (
   const Number& aversion_ratio,
@@ -77,6 +84,12 @@ ComputeValidPlacement::ComputeValidPlacement
   aversion_ratio(aversion_ratio)
 {}
 
+/**@brief Apply the functor place the beads on a necklace.
+ *
+ * The beads must start in a valid placement. This valid placement is guaranteed immediately after computing the optimal scale factor of the necklace.
+ * @param scale_factor the factor by which to multiply the radius of the beads.
+ * @param necklace the necklace to which to apply the functor.
+ */
 void ComputeValidPlacement::operator()(const Number& scale_factor, Necklace::Ptr& necklace) const
 {
   const Number necklace_radius = necklace->shape->ComputeRadius();
@@ -96,6 +109,7 @@ void ComputeValidPlacement::operator()(const Number& scale_factor, Necklace::Ptr
     return;
 
   const double precision = 1e-7;
+  const Number centroid_ratio = 1;
 
   const size_t num_beads = necklace->beads.size();
   for (int epoch = 0; epoch < 30; ++epoch)
@@ -202,13 +216,44 @@ void ComputeValidPlacement::operator()(const Number& scale_factor, Necklace::Ptr
   }
 }
 
+/**@fn Number ComputeValidPlacement::buffer_rad;
+ * @brief The minimum distance (in radians on the necklace) between the beads.
+ */
+
+/**@fn Number ComputeValidPlacement::aversion_ratio;
+ * @brief The ratio between attraction to the interval center (0) and repulsion from the neighboring beads (1).
+ */
+
+
+/**@brief Apply the functor place the beads on a collection of necklaces.
+ * @param scale_factor the factor by which to multiply the radius of the beads.
+ * @param necklace the necklaces to which to apply the functor.
+ */
 void ComputeValidPlacement::operator()(const Number& scale_factor, std::vector<Necklace::Ptr>& necklaces) const
 {
   for (Necklace::Ptr& necklace : necklaces)
     (*this)(scale_factor, necklace);
 }
 
+/**@class ComputeValidPlacementFixedOrder
+ * @brief A functor to compute a valid placement for a collection of unordered necklace beads.
+ *
+ * A placement for a set of necklace beads is a set of angles that describes the position of each bead on the necklace. A placement is valid if all scaled beads are inside their feasible interval and the distance between any two beads is at least some non-negative buffer distance. Note that this buffer distance guarantees that the beads do not overlap.
+ *
+ * Beads must be ordered by the clockwise extreme of their feasible interval.
+ *
+ * There is often a range of valid placements. In this case, the placement is guided by an attraction-repulsion force: the beads are attracted to the center of their interval and repelled by the neighboring beads.
+ *
+ * Note that the placements are computed independently per necklace. This means that if a map contains multiple necklaces, no guarantees can be given about overlap of beads on different necklaces. However, such overlap can often be prevented manually by tuning the attraction-replusion force and the buffer distance.
+ */
 
+/**@brief Construct a valid placement computation functor.
+ * @param aversion_ratio @parblock the ratio between attraction to the interval center (0) and repulsion from the neighboring beads (1).
+ *
+ * This ratio must be in the range (0, 1].
+ * @endparblock
+ * @param buffer_rad the minimum distance (in radians on the necklace) between the beads.
+ */
 ComputeValidPlacementFixedOrder::ComputeValidPlacementFixedOrder
 (
   const Number& aversion_ratio,
@@ -218,6 +263,25 @@ ComputeValidPlacementFixedOrder::ComputeValidPlacementFixedOrder
 {}
 
 
+/**@class ComputeValidPlacementAnyOrder
+ * @brief A functor to compute a valid placement for a collection of unordered necklace beads.
+ *
+ * A placement for a set of necklace beads is a set of angles that describes the position of each bead on the necklace. A placement is valid if all scaled beads are inside their feasible interval and the distance between any two beads is at least some non-negative buffer distance. Note that this buffer distance guarantees that the beads do not overlap.
+ *
+ * Beads may be reordered if this would result in a valid placement where the beads are closer to the centroid of their feasible intervals.
+ *
+ * There is often a range of valid placements. In this case, the placement is guided by an attraction-repulsion force: the beads are attracted to the center of their interval and repelled by the neighboring beads.
+ *
+ * Note that the placements are computed independently per necklace. This means that if a map contains multiple necklaces, no guarantees can be given about overlap of beads on different necklaces. However, such overlap can often be prevented manually by tuning the attraction-replusion force and the buffer distance.
+ */
+
+/**@brief Construct a valid placement computation functor.
+ * @param aversion_ratio @parblock the ratio between attraction to the interval center (0) and repulsion from the neighboring beads (1).
+ *
+ * This ratio must be in the range (0, 1].
+ * @endparblock
+ * @param buffer_rad the minimum distance (in radians on the necklace) between the beads.
+ */
 ComputeValidPlacementAnyOrder::ComputeValidPlacementAnyOrder
 (
   const Number& aversion_ratio,

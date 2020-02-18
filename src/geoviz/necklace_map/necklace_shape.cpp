@@ -66,6 +66,12 @@ namespace necklace_map
  * @return the necklace radius.
  */
 
+/**@brief Compute the angle of a point on the shape.
+ *
+ * This angle is relative to the positive x-asis.
+ * @param point the point on the necklace shape.
+ * @return the angle of the point in radians.
+ */
 Number NecklaceShape::ComputeAngle(const Point& point) const
 {
   const Vector offset = point - kernel();
@@ -76,6 +82,11 @@ Number NecklaceShape::ComputeAngle(const Point& point) const
     ? 0
     : std::atan2(offset.y(), offset.x());
 }
+
+/**@fn virtual void NecklaceShape::Accept(NecklaceShapeVisitor& visitor) = 0;
+ * @brief Part of the visitor pattern to apply a visitor to the shape.
+ * @param visitor the visitor to apply to the shape.
+ */
 
 
 /**@class CircleNecklace

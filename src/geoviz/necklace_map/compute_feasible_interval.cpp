@@ -32,7 +32,7 @@ namespace geoviz
 namespace necklace_map
 {
 
-/**@class IntervalGenerator
+/**@class ComputeFeasibleInterval
  * @brief An interface for a functor to generate feasible intervals for necklace bead placement.
  */
 
@@ -53,11 +53,11 @@ ComputeFeasibleInterval::Ptr ComputeFeasibleInterval::New(const Parameters& para
   }
 }
 
-/**@fn virtual void IntervalGenerator::operator()(const Polygon& extent, const std::shared_ptr<NecklaceType>& necklace, std::shared_ptr<NecklaceInterval>& interval) const = 0
+/**@fn virtual CircleRange::Ptr ComputeFeasibleInterval::operator()(const Polygon& extent, const Necklace::Ptr& necklace) const = 0;
  * @brief Apply the functor to a region and necklace.
  * @param extent the spatial extent of the region.
  * @param necklace the necklace.
- * @param interval the feasible interval for placing the region's bead on the necklace.
+ * @return the feasible interval for placing the region's bead on the necklace.
  */
 
 /**@brief Apply the functor to a map element.
@@ -90,7 +90,7 @@ void ComputeFeasibleInterval::operator()(std::vector<MapElement::Ptr>& elements)
 }
 
 
-/**@class IntervalCentroidGenerator
+/**@class ComputeFeasibleCentroidInterval
  * @brief A functor to generate feasible centroid intervals for necklace bead placement.
  *
  * The generated centroid interval is the intersection of the necklace and a wedge @f$W@f$, such that the apex of @f$W@f$ is the necklace kernel, the inner bisector of @f$W@f$ intersects the centroid of a map region, and the inner angle of @f$W@f$ is twice some predefined angle.
@@ -124,7 +124,7 @@ CircleRange::Ptr ComputeFeasibleCentroidInterval::operator()
 }
 
 
-/**@class IntervalWedgeGenerator
+/**@class ComputeFeasibleWedgeInterval
  * @brief A functor to generate feasible wedge intervals for necklace bead placement.
  *
  * The generated wedge interval is the intersection of the necklace and a wedge @f$W@f$, such that the apex of @f$W@f$ is the necklace kernel, @f$W@f$ contains a map region, and the inner angle of @f$W@f$ is minimal.

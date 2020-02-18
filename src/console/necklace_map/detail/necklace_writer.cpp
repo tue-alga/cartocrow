@@ -367,7 +367,7 @@ void NecklaceWriter::DrawBeads()
 
         printer_.OpenElement("circle");
         {
-          const std::string base_style = ForceStyle(bead->style, "fill-opacity:", options_->bead_opacity);
+          const std::string base_style = ForceStyle(bead->region_style, "fill-opacity:", options_->bead_opacity);
           const std::string bead_style =
             (0 <= options_->bead_opacity && options_->bead_opacity < 1)
             ? ForceStyle(base_style, "stroke-width:", 0)
@@ -423,7 +423,7 @@ void NecklaceWriter::DrawFeasibleIntervals()
         printer_.OpenElement("path");
         {
           // The color of the interval is based on the region color.
-          const std::string& style = bead->style;
+          const std::string& style = bead->region_style;
           std::string color;
           GetStyle(style, "fill:", color);
 
@@ -489,7 +489,7 @@ void NecklaceWriter::DrawValidIntervals()
         printer_.OpenElement("path");
         {
           // The color of the interval is based on the region color.
-          const std::string& style = bead->style;
+          const std::string& style = bead->region_style;
           std::string color;
           GetStyle(style, "fill:", color);
 
