@@ -38,6 +38,8 @@ namespace filesystem = std::experimental::filesystem;
 
 bool IsFile(const std::string& value)
 {
+  // TODO(tvl) check that there is indeed no way in the current filesystem implementation to check whether a string would be a valid path.
+  return true;
   try
   {
     return filesystem::is_regular_file(value);
@@ -66,7 +68,7 @@ bool ExistsFile(const std::string& value)
 {
   try
   {
-    return IsFile(value) && ExistsPath(value);
+    return filesystem::is_regular_file(value) && ExistsPath(value);
   }
   catch (const std::exception& e)
   {
@@ -106,7 +108,7 @@ bool AvailableFile(const std::string& value)
   try
   {
     filesystem::path path(value);
-    if (path.has_parent_path() && !IsDirectory(path.parent_path()))
+    if (path.has_parent_path() && !ExistsDirectory(path.parent_path()))
       return false;
     return IsFile(value) && !ExistsPath(value);
   }
