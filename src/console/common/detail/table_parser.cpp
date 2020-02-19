@@ -81,6 +81,8 @@ TableParser::TableParser() : table_() {}
  * The remainder of the tokens are the element values, grouped per element and ordered as described in the format token.
  *
  * For example, a stream starting with "5 ssd ID name value " should be followed by five elements with each two string values and one double value. The string columns are called "ID" and "name"; the double column is called "value".
+ *
+ * Tokens for string values may contain whitespace if the string starts and end with quotation marks (").
  * @param[in/out] in the stream to parse.
  * @return whether the table could be parsed successfully.
  */
@@ -131,26 +133,53 @@ bool TableParser::Parse(std::istream& in)
   // Read the element values.
   for (size_t e = 0; e < num_elements; ++e)
   {
-    for (ColumnPtr& ptr : table_)
+    for (Table::iterator column_iter = table_.begin(); column_iter != table_.end();)
     {
       std::string value;
       in >> value;
       if (!in)
         return false;
-      if (value.find("\"") != std::string::npos)
-      {
-        // Parse full string.
-        std::stringstream stream;
-        stream << value;
-        do
-        {
-          in >> value;
-          stream << " " << value;
-        } while (value.find("\"") == std::string::npos);
-        value = stream.str();
-      }
 
-      ptr->push_back(value);
+      while (!value.empty())
+      {
+        size_t pos = value.find("\"");
+        if (pos != std::string::npos)
+        {
+          if (0 < pos)
+          {
+            const std::string before = value.substr(0, pos);
+            (*column_iter++)->push_back(before);
+            value = value.substr(pos);
+          }
+
+          // Parse quoted string.
+          std::stringstream stream;
+          stream << value;
+          do
+          {
+            in >> value;
+            if (!in)
+              return false;
+            pos = value.find("\"");
+            if (pos == std::string::npos)
+              stream << " " << value;
+            else
+              stream << " " << value.substr(0, pos+1);
+          } while (pos == std::string::npos);
+          const std::string quote = stream.str();
+          (*column_iter++)->push_back(quote);
+
+          if (pos + 1 < value.length())
+            value = value.substr(pos+1);
+          else
+            value = "";
+        }
+        else
+        {
+          (*column_iter++)->push_back(value);
+          value = "";
+        }
+      }
     }
   }
 

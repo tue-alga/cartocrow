@@ -57,7 +57,8 @@ class TableParser
 
  protected:
   using ColumnPtr = std::unique_ptr<DataColumn>;
-  std::vector<ColumnPtr> table_;
+  using Table = std::vector<ColumnPtr>;
+  Table table_;
 }; // class TableParser
 
 } // namespace detail
