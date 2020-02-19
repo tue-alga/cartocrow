@@ -1,0 +1,51 @@
+12 ssdi
+ID name poverty null
+MNG
+Mongolia
+36.1
+0
+CHN
+China
+2.8
+0
+LAO
+"Lao People's Dem Republic"
+33.5
+0
+THA
+Thailand
+13.6
+0
+KHM
+Cambodia
+30.1
+0
+VNM
+"Viet Nam"
+28.9
+0
+TLS
+Timor-Leste
+39.7
+0
+PNG
+"Papua New Guinea"
+37.5
+0
+PHL
+Philippines
+25.1
+0
+MYS
+Malaysia
+15.5
+0
+IDN
+Indonesia
+16.7
+0
+MMR
+Myanmar
+32.0
+0
+
