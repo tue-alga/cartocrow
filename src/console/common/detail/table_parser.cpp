@@ -137,6 +137,19 @@ bool TableParser::Parse(std::istream& in)
       in >> value;
       if (!in)
         return false;
+      if (value.find("\"") != std::string::npos)
+      {
+        // Parse full string.
+        std::stringstream stream;
+        stream << value;
+        do
+        {
+          in >> value;
+          stream << " " << value;
+        } while (value.find("\"") == std::string::npos);
+        value = stream.str();
+      }
+
       ptr->push_back(value);
     }
   }
