@@ -26,7 +26,7 @@ namespace geoviz
 {
 
 /**@class Timer
- * @brief A small timer that keeps track of a fixed number of timestamps.
+ * @brief A simple timer that keeps track of a fixed number of timestamps.
  *
  * When a large amount of timestamps are collected, the oldest one(s) get discarded.
  *

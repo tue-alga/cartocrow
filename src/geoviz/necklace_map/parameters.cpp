@@ -28,17 +28,58 @@ namespace geoviz
 namespace necklace_map
 {
 
-Parameters::Parameters() { Init(); }
+/**@class geoviz::necklace_map::IntervalType
+ * @brief A type of feasible interval on a necklace.
+ */
 
-void Parameters::Init()
-{
-  interval_type = IntervalType::kCentroid;
-  centroid_interval_length_rad = 1;
+/**@class geoviz::necklace_map::OrderType
+ * @brief A type of ordering to apply when computing the optimal scale factor and bead placement.
+ */
 
-  order_type = OrderType::kFixed;
-  buffer_rad = 0;
-  aversion_ratio = 0;
-}
+
+/**@struct Parameters
+ * @brief A struct to collect the parameters used for computing the necklace map.
+ *
+ * These parameters include those needed for computing the feasible intervals, the optimal scale factor, and a valid placement for the necklace beads.
+ */
+
+/**@brief Construct a collection of parameters;
+ *
+ * All parameters are initialized as valid values.
+ */
+Parameters::Parameters() :
+  interval_type(IntervalType::kCentroid),
+  centroid_interval_length_rad(1),
+  order_type(OrderType::kFixed),
+  buffer_rad(0),
+  aversion_ratio(0)
+{}
+
+/**@fn IntervalType Parameters::interval_type;
+ * @brief The type of feasible intervals to compute.
+ */
+
+/**@fn Number Parameters::centroid_interval_length_rad;
+ * @brief The length of any centroid intervals generated when computing the feasible intervals.
+ */
+
+/**@fn OrderType Parameters::order_type;
+ * @brief The type of order imposed on the necklace beads.
+ *
+ * This order is used when computing the optimal scale factor and when computing a valid placement.
+ */
+
+/**@fn Number Parameters::buffer_rad;
+ * @brief The minimum angle in radians of the empty wedge between neighboring necklace beads that has the necklace kernel as apex.
+ *
+ * This buffer is used when computing the optimal scale factor and when computing a valid placement.
+ */
+
+/**@fn Number Parameters::aversion_ratio;
+ * @brief The ratio between attraction to the interval center (0) and repulsion from the neighboring beads (1).
+ *
+ * This ratio must be in the range (0, 1].
+ */
 
 } // namespace necklace_map
 } // namespace geoviz

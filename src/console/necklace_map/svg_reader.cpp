@@ -53,7 +53,7 @@ SvgReader::SvgReader() {}
 
 /**@brief Read necklace map SVG input from a file.
  * @param filename the file to read.
- * @param regions the collection in which to collect the regions in the input.
+ * @param elements the collection in which to collect the regions in the input.
  * @param necklace where to place the necklace.
  * @return whether the read operation could be completed successfully.
  */
@@ -94,6 +94,13 @@ bool SvgReader::ReadFile
   return Parse(input, elements, necklaces);
 }
 
+
+/**@brief Parse necklace map SVG input from a string.
+ * @param input the string to parse.
+ * @param elements the collection in which to collect the regions in the input.
+ * @param necklace where to place the necklace.
+ * @return whether the string could be parsed successfully.
+ */
 bool SvgReader::Parse
 (
   const std::string& input,

@@ -192,5 +192,27 @@ void CurveNecklace::Accept(NecklaceShapeVisitor& visitor)
  * Note that for this necklace, the kernel must be set explicitly.
  */
 
+
+/**@class NecklaceShapeVisitor
+ * @brief The base class to visit the different necklace shape types.
+ *
+ * This follows the visitor pattern to handle different necklace shape types in a different manner.
+ */
+
+/**@fn virtual void NecklaceShapeVisitor::Visit(CircleNecklace& shape);
+ * @brief Visit a circle necklace shape.
+ * @param shape the shape to visit.
+ */
+
+/**@fn virtual void NecklaceShapeVisitor::Visit(CurveNecklace& shape);
+ * @brief Visit a circular curve necklace shape.
+ * @param shape the shape to visit.
+ */
+
+/**@fn virtual void NecklaceShapeVisitor::Visit(GenericNecklace& shape);
+ * @brief Visit a generic necklace shape.
+ * @param shape the shape to visit.
+ */
+
 } // namespace necklace_map
 } // namespace geoviz

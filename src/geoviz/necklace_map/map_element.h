@@ -49,7 +49,7 @@ struct MapElement
   bool IsValid(const bool strict = true) const;
 
   Region region;
-  Number value;  // Note that the value is correlated with the area of the bead, so its squared radius.
+  Number value;  // Note that the value is correlated with the area of the bead, i.e. its squared radius.
 
   BeadMap beads;
 }; // struct MapElement

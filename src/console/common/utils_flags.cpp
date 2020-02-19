@@ -35,7 +35,6 @@ namespace validate
 
 namespace filesystem = std::experimental::filesystem;
 
-
 bool IsFile(const std::string& value)
 {
   // TODO(tvl) check that there is indeed no way in the current filesystem implementation to check whether a string would be a valid path.

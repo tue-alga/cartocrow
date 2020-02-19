@@ -29,9 +29,23 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 29-01-2020
 namespace geoviz
 {
 
+/**@class NecklaceWriter
+ * @brief A writer for necklace map output geometry.
+ */
+
+/**@brief Construct a necklace map geometry writer.
+ */
 NecklaceWriter::NecklaceWriter()
 {}
 
+/**@brief Write a necklace map to a stream.
+ * @param elements the elements of the necklace map.
+ * @param necklaces the necklaces of the map.
+ * @param scale_factor the factor by which to scale the neacklace beads.
+ * @param options the options for how to write the necklace map.
+ * @param out the stream to which to write.
+ * @return whether the necklace map could be successfully written to the stream.
+ */
 bool NecklaceWriter::Write
 (
   const std::vector<MapElement::Ptr>& elements,

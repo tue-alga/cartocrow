@@ -92,6 +92,30 @@ bool DataReader::ReadFile
   return Parse(fin, value_name, elements);
 }
 
+/**@brief Parse a necklace map data string.
+ *
+ * The string must be composed of string 'tokens' separated by whitespace characters.
+ *
+ * The first token must be an integer describing the number of data elements.
+ * Note that if this number is 0, the stream is still checked for integrity.
+ *
+ * The second token must be the format token: a string describing the value types per element.
+ * Allowed format tokens are 's' for strings, 'd' for double values, and 'i' for integer values.
+ *
+ * The following tokens give the name per value.
+ *
+ * The columns must include a string column called "ID" and a double column containing the necklace element values.
+ *
+ * The remainder of the tokens are the element values, grouped per element and ordered as described in the format token.
+ *
+ * For example, a stream starting with "5 ssd ID name value " should be followed by five elements with each two string values and one double value. The string columns are called "ID" and "name"; the double column is called "value".
+ *
+ * Tokens for string values may contain whitespace if the string starts and end with quotation marks (").
+ * @param in the string to parse.
+ * @param value_name the name of the data column.
+ * @param elements the necklace map elements associated with the values.
+ * @return whether the element values could be read successfully.
+ */
 bool DataReader::Parse
 (
   std::istream& in,

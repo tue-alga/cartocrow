@@ -31,11 +31,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-02-2020
 namespace validate
 {
 
-template <typename V_>
-inline bool True(const V_&) { return true; }
-
-template <typename V_>
-inline bool False(const V_&) { return true; }
+#ifndef DOXYGEN_RUNNING
 
 bool IsFile(const std::string& value);
 bool IsDirectory(const std::string& value);
@@ -111,26 +107,28 @@ IsBounded<V_, BoundSide::kUpper, Closure::kOpen> IsNegative();
 template <typename V_>
 IsBounded<V_, BoundSide::kUpper, Closure::kClosed> IsStrictlyNegative();
 
+#endif // DOXYGEN_RUNNING
+
 } // namespace validate
 
 
 #define FLAGS_NAME_AND_VALUE(v) #v, FLAGS_ ## v
 
-// Print a flag's name and value.
+// Log a flag's name and value.
 template<typename F_>
 inline void PrintFlag(const std::string& name, const F_& flag)
 {
   LOG(INFO) << "  " << name << ":\t\"" << flag << "\"";
 }
 
-// Print a flag's name and value.
+// Log a flag's name and value.
 template<>
 inline void PrintFlag<bool>(const std::string& name, const bool& flag)
 {
   LOG(INFO) << "  " << name << ":\t\"" << (flag ? "TRUE" : "FALSE") << "\"";
 }
 
-// Print a flag and apply a boolean function to validate it.
+// Log a flag and apply a boolean function to validate it.
 template<typename V_>
 inline bool CheckAndPrintFlag(const std::string& name, const V_& value, std::function<bool(const V_&)> check)
 {
@@ -140,20 +138,21 @@ inline bool CheckAndPrintFlag(const std::string& name, const V_& value, std::fun
   return correct;
 }
 
-// Print a flag and apply a boolean operator to validate it.
+// Log a flag and apply a boolean operator to validate it.
 template<typename V_>
 inline bool CheckAndPrintFlag(const std::string& name, const V_& value, bool(*check)(const V_&))
 {
   return CheckAndPrintFlag(name, value, std::function<bool(const V_&)>(check));
 }
 
-// Print a flag and apply a boolean functor to validate it.
+// Log a flag and apply a boolean functor to validate it.
 template<typename V_, typename F_>
 inline bool CheckAndPrintFlag(const std::string& name, const V_& value, F_ check)
 {
   return CheckAndPrintFlag(name, value, std::function<bool(const V_&)>(check));
 }
 
+// Check whether exactly one of the flags is not empty.
 inline bool CheckMutuallyExclusive
 (
   const std::string& name_1,

@@ -73,5 +73,19 @@ bool MapElement::IsValid(const bool strict /*= true*/) const
   LOG(FATAL) << "Not implemented yet!";
 }
 
+/**@fn Region MapElement::region;
+ * @brief The region of the map associated with this element.
+ */
+
+/**@fn Number MapElement::value;
+ * @brief The data value associated with this element.
+ */
+
+/**@fn BeadMap MapElement::beads;
+ * @brief The necklace beads associated with this element.
+ *
+ * Note that one element may have beads on multiple necklaces.
+ */
+
 } // namespace necklace_map
 } // namespace geoviz"

@@ -119,4 +119,14 @@ void Region::MakeSimple(Polygon& simple)
  * This IDs often follows ISO-3166-2 (ISO-3166-1 alpha-2, possibly followed by a subdivision number), or ISO-3166-1 alpha-3. However, any ID that is unique within the collection of regions is allowed.
  */
 
+/**@fn PolygonSet Region::shape;
+ * @brief The shape of the region.
+ */
+
+/**@fn std::string Region::style;
+ * @brief The style used to draw the region.
+ *
+ * This must be a valid SVG element style attribute.
+ */
+
 } // namespace geoviz

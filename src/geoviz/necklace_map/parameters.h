@@ -31,13 +31,13 @@ namespace geoviz
 namespace necklace_map
 {
 
-enum IntervalType
+enum class IntervalType
 {
   kCentroid,
   kWedge
 };
 
-enum OrderType
+enum class OrderType
 {
   kFixed,
   kAny,
@@ -48,8 +48,6 @@ enum OrderType
 struct Parameters
 {
   Parameters();
-
-  void Init();
 
   // Feasible interval.
   IntervalType interval_type;

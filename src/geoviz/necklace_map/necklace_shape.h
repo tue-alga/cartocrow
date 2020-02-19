@@ -92,7 +92,7 @@ class CurveNecklace : public CircleNecklace
 class GenericNecklace : public NecklaceShape
 {
  public:
-  const Point& getKernel() const;
+  const Point& kernel() const;
   bool IntersectRay(const Number& angle_rad, Point& intersection) const;
   Box ComputeBoundingBox() const;
   Number ComputeLength() const;

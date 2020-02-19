@@ -58,5 +58,13 @@ void Necklace::SortBeads()
   );
 }
 
+/**@fn NecklaceShape::Ptr Necklace::shape;
+ * @brief The shape of the necklace.
+ */
+
+/**@fn std::vector<Bead::Ptr> Necklace::beads;
+ * @brief The beads on the necklace.
+ */
+
 } // namespace necklace_map
 } // namespace geoviz

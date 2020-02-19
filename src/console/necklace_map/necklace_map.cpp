@@ -240,7 +240,7 @@ void ValidateFlags(geoviz::necklace_map::Parameters& parameters, geoviz::WriterO
 
   // Interval parameters.
   {
-    correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(interval_type), IntervalTypeParser(parameters.interval_type));
+    correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(interval_type), geoviz::IntervalTypeParser(parameters.interval_type));
 
     validate::MakeRangeCheck(0.0, M_PI)(FLAGS_centroid_interval_length_rad);
     parameters.centroid_interval_length_rad = FLAGS_centroid_interval_length_rad;
@@ -248,7 +248,7 @@ void ValidateFlags(geoviz::necklace_map::Parameters& parameters, geoviz::WriterO
 
   // Scale factor optimization parameters.
   {
-    correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(order_type), OrderTypeParser(parameters.order_type));
+    correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(order_type), geoviz::OrderTypeParser(parameters.order_type));
 
     correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(buffer_rad), validate::MakeRangeCheck(0.0, M_PI));
     parameters.buffer_rad = FLAGS_buffer_rad;
@@ -358,10 +358,10 @@ int main(int argc, char **argv)
 
 
   // TODO(tvl) Temporary to keep the website runnign with the demo data.
-  FLAGS_in_geometry_filename = "/storage/GeoViz/wwwroot/data/Example_wEU/wEU_svg.xml";
+  /*FLAGS_in_geometry_filename = "/storage/GeoViz/wwwroot/data/Example_wEU/wEU_svg.xml";
   FLAGS_in_data_filename = "/storage/GeoViz/wwwroot/data/Example_wEU/wEU.txt";
   FLAGS_in_value_name = "value";
-  FLAGS_out_filename = "/storage/GeoViz/wwwroot/data/Example_wEU/test_out.xml";
+  FLAGS_out_filename = "/storage/GeoViz/wwwroot/data/Example_wEU/test_out.xml";*/
 
 
   // Validate the settings.

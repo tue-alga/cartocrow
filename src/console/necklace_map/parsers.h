@@ -29,6 +29,9 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 13-02-2020
 #include <geoviz/necklace_map/parameters.h>
 
 
+namespace geoviz
+{
+
 class IntervalTypeParser
 {
  public:
@@ -40,6 +43,7 @@ class IntervalTypeParser
   IntervalTypeParser(IntervalType& type);
 
   bool operator()(const std::string& str) const;
+
   std::string Serialize() const;
 
   IntervalType& type;
@@ -58,9 +62,12 @@ class OrderTypeParser
   OrderTypeParser(OrderType& type);
 
   bool operator()(const std::string& str) const;
+
   std::string Serialize() const;
 
   OrderType& type;
 }; // class OrderTypeParser
+
+} // namespace geoviz
 
 #endif //CONSOLE_NECKLACE_MAP_PARSERS_H
