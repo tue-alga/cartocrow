@@ -1,0 +1,79 @@
+<!-- To be loaded as support card. -->
+<div class="aga-padded">
+  <form style="display: block;">
+    <p>Geometry Input</p>
+    <div>
+      <!--style="display: none;"-->
+      <input
+        id="geometry_in"
+        type="text"
+        name="geometry"
+        value=""
+        readonly="true"
+        onchange="onChangedNecklaceSettings();"
+      />
+      <input
+        type="file"
+        id="geometry_file_in"
+        name="geometry_file"
+        accept="text/xml"
+        onchange="onChangedGeometryFile(this.files[0]);"
+      />
+    </div>
+  </form>
+  <form style="display: block;">
+    <p>Data Input</p>
+    <div>
+      <!--style="display: none;"-->
+      <input
+        id="data_in"
+        type="text"
+        name="data"
+        value=""
+        readonly="true"
+        onchange="onChangedNecklaceSettings();"
+      />
+      <input
+        type="file"
+        id="data_file_in"
+        name="data_file"
+        accept="text/plain"
+        onchange="onChangedDataFile(this.files[0]);"
+      />
+    </div>
+  </form>
+  <form
+    oninput="onInputNecklaceSettings();"
+    onchange="onChangedNecklaceSettings();"
+    style="display: block;"
+  >
+    <p>Glyph Separation Settings</p>
+    <div>
+      <input
+        id="buffer_rad_in"
+        type="range"
+        name="buffer_rad"
+        min="0.0"
+        max="1.0"
+        step="0.01"
+        value="0.0"
+      />
+      <label for="buffer_rad" style="margin-left: 8px;">Buffer</label>
+      <output id="buffer_rad_out" name="buffer_rad" for="buffer_rad"></output>
+    </div>
+    <div>
+      <input
+        id="aversion_in"
+        type="range"
+        name="aversion"
+        min="0.0"
+        max="1.0"
+        step="0.01"
+        value="0.0"
+        list="aversion_extremes"
+      />
+      <label for="aversion" style="margin-left: 8px;">Aversion</label>
+      <output id="aversion_out" name="aversion" for="aversion"></output>
+    </div>
+  </form>
+</div>

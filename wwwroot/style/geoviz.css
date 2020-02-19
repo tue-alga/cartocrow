@@ -15,9 +15,6 @@
   will-change: auto !important;
 }
 
-.geoviz-support {
-  width: 100%;
-}
-.geoviz-support > * {
-  transition: all 200ms;
+.geoviz-map-control {
+  padding: 1px 8px;
 }

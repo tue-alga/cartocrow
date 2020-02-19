@@ -47,26 +47,16 @@
     <!-- Scripts. -->
     <script src="/script/aga.js"></script>
     <script src="/script/geoviz.js"></script>
+    <script src="/script/necklace.js"></script>
   </head>
 
   <body class="aga-fill">
-    <header class="aga-header aga-theme-meta">
-      <!-- On mobile devices, initially only the menu toggle button and website brand are visible. -->
-      <div class="aga-brand-container">
-        <a
-          title="Toggle navigation menu"
-          href="javascript:void(0)"
-          onclick="toggleNavigation(false);"
-          class="aga-button aga-hide-medium"
-          ><i class="fa fa-bars"></i
-        ></a>
-        <a href="/" class="aga-button aga-theme-brand">GeoViz</a>
-      </div>
+    <header class="aga-card aga-header aga-stack-1 aga-theme-meta">
       <!-- On mobile devices, the navigation button container dangles below the header,
            on larger devices, the navigation button container is part of the header. -->
       <!-- Note that we minimize reloading the functional panel (the map) by loading other content into the same page. -->
-      <div id="nav" class="aga-nav-container aga-hide-small">
-        <nav class="aga-nav aga-card aga-theme-meta">
+      <div id="nav" class="aga-nav-menu aga-stack-2 aga-hide-small">
+        <nav class="aga-nav aga-card aga-stack-2 aga-theme-meta">
           <a
             href="javascript:void(0)"
             class="aga-button"
@@ -82,23 +72,22 @@
           <a
             href="javascript:void(0)"
             class="aga-button"
-            onclick="tryAddSupportCard('/page/other_alt.html','support_other');"
-            >Other</a
-          >
-          <a
-            href="javascript:void(0)"
-            class="aga-button"
-            onclick="tryAddSupportCard('/script/run_print_arguments.php?args=none|some|all','print_arguments');"
-            >Test CLA</a
-          >
-          <a
-            href="javascript:void(0)"
-            class="aga-button"
-            onclick="tryReplaceMapBySvg('/script/run_necklace_map.php?args=--out_website');focusSupportCard();"
+            onclick="InitNecklaceMap();"
             >Necklace Map</a
           >
           <a href="/html/index.html" class="aga-button">Documentation</a>
         </nav>
+      </div>
+      <!-- On mobile devices, initially only the menu toggle button and website brand are visible. -->
+      <div class="aga-brand-container">
+        <a
+          title="Toggle navigation menu"
+          href="javascript:void(0)"
+          onclick="toggleNavigation(false);"
+          class="aga-button aga-hide-medium"
+          ><i class="fa fa-bars"></i
+        ></a>
+        <a href="/" class="aga-button aga-theme-brand">GeoViz</a>
       </div>
     </header>
 
@@ -106,12 +95,17 @@
       <!-- The support panels. -->
       <div id="support_cards"></div>
 
+      <!-- The settings panels. -->
+      <div id="settings_cards"></div>
+
       <!-- The main content: the map. -->
       <div id="map" class="aga-fill"></div>
     </div>
 
     <!-- Acknowledgements -->
-    <footer class="aga-footer aga-card aga-theme-meta aga-hide-small">
+    <footer
+      class="aga-card aga-footer aga-stack-1 aga-theme-meta aga-hide-small"
+    >
       <p>
         Website by
         <a href="https://www.esciencecenter.nl/" target="_blank"
