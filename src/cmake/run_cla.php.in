@@ -7,6 +7,7 @@
     $delim = isset($_REQUEST["delim"]) ? $_REQUEST["delim"] : "|";
     $assign = isset($_REQUEST["assign"]) ? $_REQUEST["assign"] : ":";
     $arg_str = str_replace($delim, " ", str_replace($assign, "=", $args));
+    //TODO(tvl) replace shell_exec(...) by the variant that requires a local absolute path to the executable and an array of arguments.
     $result = shell_exec(escapeshellcmd("../@CMAKE_INSTALL_BINARY_DIR@/@CURRENT_CLA@ $arg_str"));
     echo $result;
 ?>
