@@ -1,4 +1,4 @@
 build/
 *.swp
-wwwroot/data/Example_wEU/test_out*.xml
+wwwroot/data/*/test_out*.xml
 

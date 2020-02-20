@@ -7,41 +7,17 @@
 
 const MAX_FILE_SIZE_BYTES = 100 * 1024;
 
-function getNecklaceBuffer() {
-  let buffer_rad = parseFloat(buffer_rad_in.value);
-  return (Math.pow(buffer_rad, 4) * Math.PI).toPrecision(4);
-}
+let necklace_geometry_base64 = null;
+let necklace_data_base64 = null;
 
-function getNecklaceAversion() {
-  let aversion = parseFloat(aversion_in.value);
-  return Math.max(Math.pow(aversion, 4).toPrecision(4), 0.001);
-}
+function initNecklaceMap() {
+  focusSupportCard();
+  tryAddSettingsCard('/page/settings_necklace.html', 'settings_necklace');
 
-function onChangedNecklaceSettings() {
-  if (Date.now() - last_update < UPDATE_MILISECONDS) return;
-  if (geometry_in.value == '' || data_in.value == '') return;
-
-  const geometry_str = geometry_in.value;
-  const data_str = data_in.value;
-
-  last_update = Date.now();
-  let buffer_rad = getNecklaceBuffer();
-  let glyph_aversion = getNecklaceAversion();
-  tryReplaceMapBySvg(
-    '/script/run_necklace_map.php?args=--out_website|' +
-      '--buffer_rad:' +
-      buffer_rad +
-      '|--aversion_ratio:' +
-      glyph_aversion
-  );
-}
-
-function onInputNecklaceSettings() {
-  let buffer_rad = getNecklaceBuffer();
-  let glyph_aversion = getNecklaceAversion();
-  buffer_rad_out.value = '= ' + buffer_rad;
-  aversion_out.value = '= ' + glyph_aversion;
-  onChangedNecklaceSettings();
+  necklace_geometry_base64 = null;
+  necklace_data_base64 = null;
+  geometry_file_in.value = '';
+  data_file_in.value = '';
 }
 
 function onChangedGeometryFile(file) {
@@ -55,13 +31,19 @@ function onChangedGeometryFile(file) {
     return;
   }
 
+  // Reset the data file.
+  necklace_data_base64 = null;
+  data_file_in.value = '';
+
   // Read the file contents.
   var reader = new FileReader();
   reader.onload = function(e) {
-    geometry_in.value = e.target.result;
+    necklace_geometry_base64 = btoa(
+      String.fromCharCode(...new Uint8Array(e.target.result))
+    );
     onChangedNecklaceSettings();
   };
-  reader.readAsText(file);
+  reader.readAsArrayBuffer(file);
 }
 
 function onChangedDataFile(file) {
@@ -78,14 +60,48 @@ function onChangedDataFile(file) {
   // Read the file contents.
   var reader = new FileReader();
   reader.onload = function(e) {
-    data_in.value = e.target.result;
+    necklace_data_base64 = btoa(
+      String.fromCharCode(...new Uint8Array(e.target.result))
+    );
     onChangedNecklaceSettings();
   };
-  reader.readAsText(file);
+  reader.readAsArrayBuffer(file);
 }
 
-function InitNecklaceMap() {
-  //tryReplaceMapBySvg('/script/run_necklace_map.php?args=--out_website');
-  focusSupportCard();
-  tryAddSettingsCard('/page/settings_necklace.html', 'settings_necklace');
+function getNecklaceBuffer() {
+  let buffer_rad = parseFloat(buffer_rad_in.value);
+  return (Math.pow(buffer_rad, 4) * Math.PI).toPrecision(4);
+}
+
+function getNecklaceAversion() {
+  let aversion = parseFloat(aversion_in.value);
+  return Math.max(Math.pow(aversion, 4).toPrecision(4), 0.001);
+}
+
+function onChangedNecklaceSettings() {
+  if (Date.now() - last_update < UPDATE_MILLISECONDS) return;
+  if (necklace_geometry_base64 === null || necklace_data_base64 === null)
+    return;
+
+  last_update = Date.now();
+
+  // Collect the necklace map parameters.
+  let body = JSON.stringify({
+    geometry_base64: necklace_geometry_base64,
+    data_base64: necklace_data_base64,
+    value: escape(data_value_in.value),
+    buffer_rad: parseFloat(getNecklaceBuffer()),
+    aversion_ratio: parseFloat(getNecklaceAversion())
+  });
+
+  // Run the necklace map PHP script on the server.
+  ajaxPost('/script/run_necklace_map.php', body, replaceMapBySvgResponse());
+}
+
+function onInputNecklaceSettings() {
+  let buffer_rad = getNecklaceBuffer();
+  let glyph_aversion = getNecklaceAversion();
+  buffer_rad_out.value = '= ' + buffer_rad;
+  aversion_out.value = '= ' + glyph_aversion;
+  onChangedNecklaceSettings();
 }

@@ -44,12 +44,12 @@ macro(geoviz_add_cla NAME)
 
     # PHP script to run the executable.
     # Note that the configure file uses the ${CURRENT_CLA} variable to determine the executable to run.
-    set(CURRENT_CLA ${TARGET})
-    configure_file(
-        "${SOURCE_CONFIG_DIR}/run_cla.php.in"
-        "${CMAKE_CURRENT_BINARY_DIR}/${PHP}"
-    )
-    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${PHP}" DESTINATION "${CMAKE_INSTALL_SCRIPT_DIR}")
+    #set(CURRENT_CLA ${TARGET})
+    #configure_file(
+    #    "${SOURCE_CONFIG_DIR}/run_cla.php.in"
+    #    "${CMAKE_CURRENT_BINARY_DIR}/${PHP}"
+    #)
+    #install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${PHP}" DESTINATION "${CMAKE_INSTALL_SCRIPT_DIR}")
 endmacro(geoviz_add_cla)
 
 
