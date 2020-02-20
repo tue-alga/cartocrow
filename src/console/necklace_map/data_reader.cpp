@@ -129,8 +129,8 @@ bool DataReader::Parse
   // Find the ID and value columns and check that they are the correct types.
   using ColumnDouble = detail::ValueColumn<double>;
   using ColumnString = detail::ValueColumn<std::string>;
-  const ColumnString* column_id;
-  const ColumnDouble* column_value;
+  const ColumnString* column_id = nullptr;
+  const ColumnDouble* column_value = nullptr;
 
   for (const detail::TableParser::ColumnPtr& column : table_)
   {
@@ -148,9 +148,13 @@ bool DataReader::Parse
     else if (lower_name == value_name)
       column_value = dynamic_cast<const ColumnDouble*>(column.get());
   }
-  CHECK_NOTNULL(column_id);
-  CHECK_NOTNULL(column_value);
-  CHECK_EQ(column_id->values.size(), column_value->values.size());
+  if
+  (
+    column_id == nullptr ||
+    column_value == nullptr ||
+    column_id->values.size() != column_value->values.size()
+  )
+    return false;
 
   // Create a lookup table for the elements.
   using LookupTable = std::unordered_map<std::string, size_t>;

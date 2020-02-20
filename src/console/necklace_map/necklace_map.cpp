@@ -382,12 +382,12 @@ int main(int argc, char **argv)
   // Read the data and geometry.
   const bool success_read_data = ReadData(elements);
   const bool success_read_svg = ReadGeometry(elements, necklaces);
-  CHECK(success_read_data && success_read_svg) << "Terminating program.";
+  CHECK(success_read_svg) << "Terminating program.";
   const double time_read = time.Stamp();
 
 
   // Compute the optimal scale factor and placement.
-  const geoviz::Number scale_factor = ComputeScaleFactor(parameters, elements, necklaces);
+  const geoviz::Number scale_factor = success_read_data ? ComputeScaleFactor(parameters, elements, necklaces) : 0;
   LOG(INFO) << "Computed scale factor: " << scale_factor;
   const double time_compute = time.Stamp();
 

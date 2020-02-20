@@ -64,13 +64,25 @@ MapElement::MapElement(const Region& region)
 
 /**@brief Check whether the necklace element is valid.
  *
- * This validity is based on two conditions: the region must be valid and the value must be at least 0.
+ * This validity is based on three conditions: the region must be valid, the value must be at least 0, and the beads must be valid.
  * @param strict whether the value must be strictly larger than 0.
  * @return whether the element is valid.
  */
 bool MapElement::IsValid(const bool strict /*= true*/) const
 {
-  LOG(FATAL) << "Not implemented yet!";
+  if (!region.IsValid())
+    return false;
+
+  if (value < 0)
+    return false;
+  if (strict && value == 0)
+    return false;
+
+  for (const BeadMap::value_type& bead_value : beads)
+    if (!bead_value.second->IsValid())
+      return false;
+
+  return true;
 }
 
 /**@fn Region MapElement::region;
