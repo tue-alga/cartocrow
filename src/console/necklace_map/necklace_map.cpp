@@ -325,19 +325,11 @@ int main(int argc, char **argv)
   );
 
 
-  // TODO(tvl) Temporary to keep the website runnign with the demo data.
-  /*FLAGS_in_geometry_filename = "/storage/GeoViz/wwwroot/data/Example_wEU/wEU_svg.xml";
-  FLAGS_in_data_filename = "/storage/GeoViz/wwwroot/data/Example_wEU/wEU.txt";
-  FLAGS_in_value_name = "value";
-  FLAGS_out_filename = "/storage/GeoViz/wwwroot/data/Example_wEU/test_out.xml";*/
-
-
   // Validate the settings.
   geoviz::necklace_map::Parameters parameters;
   geoviz::WriterOptions::Ptr write_options;
   ValidateFlags(parameters, write_options);
 
-  // TODO(tvl) when moving to text input as flag, be careful of special characters such as ':', '"', ''', '='!
 
   geoviz::Timer time;
 

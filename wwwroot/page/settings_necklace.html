@@ -65,4 +65,21 @@
       <output id="aversion_out" name="aversion" for="aversion"></output>
     </div>
   </div>
+  <div style="display: block;">
+    <div>
+      <input
+        id="geometry_out"
+        type="text"
+        name="geometry_out"
+        value=""
+        readonly="true"
+      />
+      <label for="geometry_out" style="margin-left: 8px;">Output</label>
+    </div>
+    <div>
+      <button onclick="navigator.clipboard.writeText(geometry_out.value);">
+        Copy to Clipboard
+      </button>
+    </div>
+  </div>
 </div>

@@ -30,12 +30,14 @@
 
   $exec = "../bin/necklace_map_cla";
   $args =
-    "--in_geometry_filename $geometry_tmp".
+    " --in_geometry_filename $geometry_tmp".
     " --in_data_filename $data_tmp".
     " --in_value_name $data->value".
     " --buffer_rad $data->buffer_rad".
     " --aversion_ratio $data->aversion_ratio".
-    " --out_website";
+    " --out_website".
+    " --log_dir $tmpdir".
+    " --minloglevel=2";
   $result = shell_exec(escapeshellcmd("$exec $args"));
   echo $result;
 

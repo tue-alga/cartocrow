@@ -16,8 +16,9 @@ function initNecklaceMap() {
 
   necklace_geometry_base64 = null;
   necklace_data_base64 = null;
-  geometry_file_in.value = '';
-  data_file_in.value = '';
+  if (document.getElementById('geometry_file_in') !== null)
+    geometry_file_in.value = '';
+  if (document.getElementById('data_file_in') !== null) data_file_in.value = '';
 }
 
 function onChangedGeometryFile(file) {
@@ -78,6 +79,13 @@ function getNecklaceAversion() {
   return Math.max(Math.pow(aversion, 4).toPrecision(4), 0.001);
 }
 
+function processNecklaceMapResponse() {
+  return function(response) {
+    replaceMapBySvgResponse()(response);
+    geometry_out.value = response;
+  };
+}
+
 function onChangedNecklaceSettings() {
   if (Date.now() - last_update < UPDATE_MILLISECONDS) return;
   if (necklace_geometry_base64 === null || necklace_data_base64 === null)
@@ -95,7 +103,8 @@ function onChangedNecklaceSettings() {
   });
 
   // Run the necklace map PHP script on the server.
-  ajaxPost('/script/run_necklace_map.php', body, replaceMapBySvgResponse());
+  //ajaxPost('/script/run_necklace_map.php', body, replaceMapBySvgResponse());
+  ajaxPost('/script/run_necklace_map.php', body, processNecklaceMapResponse());
 }
 
 function onInputNecklaceSettings() {

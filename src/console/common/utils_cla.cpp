@@ -104,5 +104,5 @@ void InitApplication
   gflags::ParseCommandLineFlags(&argc, &argv, true);
 
   // Writing to the standard output is generally reserved for text to return to a calling website.
-  FLAGS_logtostderr = true;
+  FLAGS_stderrthreshold = 2;
 }
