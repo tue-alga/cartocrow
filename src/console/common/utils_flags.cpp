@@ -37,17 +37,7 @@ namespace filesystem = std::experimental::filesystem;
 
 bool IsFile(const std::string& value)
 {
-  // TODO(tvl) check that there is indeed no way in the current filesystem implementation to check whether a string would be a valid path.
-  return true;
-  try
-  {
-    return filesystem::is_regular_file(value);
-  }
-  catch (const std::exception& e)
-  {
-    LOG(INFO) << e.what();
-    return false;
-  }
+  return !IsDirectory(value);
 }
 
 bool IsDirectory(const std::string& value)

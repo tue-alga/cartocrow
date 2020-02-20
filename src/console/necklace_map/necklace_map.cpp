@@ -44,28 +44,14 @@ DEFINE_string
 (
   in_geometry_filename,
   "",
-  "The input map geometry filename. Mutually exclusive with '--in_geometry'."
-);
-
-DEFINE_string
-(
-  in_geometry,
-  "",
-  "The input map geometry as string. Mutually exclusive with '--in_geometry_filename'."
+  "The input map geometry filename."
 );
 
 DEFINE_string
 (
   in_data_filename,
   "",
-  "The input numeric data filename. Mutually exclusive with '--in_data'."
-);
-
-DEFINE_string
-(
-  in_data,
-  "",
-  "The input numeric data as string. Mutually exclusive with '--in_data_filename'."
+  "The input numeric data filename."
 );
 
 DEFINE_string
@@ -79,7 +65,7 @@ DEFINE_string
 (
   out_filename,
   "",
-  "The file to which to write the output, or empty if no file should be writen."
+  "The file to which to write the output, or empty if no file should be written."
 );
 
 DEFINE_bool
@@ -220,19 +206,8 @@ void ValidateFlags(geoviz::necklace_map::Parameters& parameters, geoviz::WriterO
   // Note that we may skip some low-level flags that almost never change.
 
   // There must be input geometry and input numeric data.
-  correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(in_geometry_filename), validate::EmptyOr<validate::ExistsFile>);
-  correct &= CheckMutuallyExclusive
-  (
-    FLAGS_NAME_AND_VALUE(in_geometry_filename),
-    FLAGS_NAME_AND_VALUE(in_geometry)
-  );
-
-  correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(in_data_filename), validate::EmptyOr<validate::ExistsFile>);
-  correct &= CheckMutuallyExclusive
-  (
-    FLAGS_NAME_AND_VALUE(in_data_filename),
-    FLAGS_NAME_AND_VALUE(in_data)
-  );
+  correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(in_geometry_filename), validate::ExistsFile);
+  correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(in_data_filename), validate::ExistsFile);
   correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(in_value_name), validate::NotEmpty);
 
   // Note that we allow overwriting existing output.
@@ -305,11 +280,7 @@ void ValidateFlags(geoviz::necklace_map::Parameters& parameters, geoviz::WriterO
 bool ReadData(std::vector<geoviz::necklace_map::MapElement::Ptr>& elements)
 {
   geoviz::DataReader data_reader;
-  if (FLAGS_in_geometry.empty())
-    return data_reader.ReadFile(FLAGS_in_data_filename, FLAGS_in_value_name, elements);
-
-  std::stringstream stream(FLAGS_in_data);
-  return data_reader.Parse(stream, FLAGS_in_value_name, elements);
+  return data_reader.ReadFile(FLAGS_in_data_filename, FLAGS_in_value_name, elements);
 }
 
 bool ReadGeometry
@@ -319,10 +290,7 @@ bool ReadGeometry
 )
 {
   geoviz::SvgReader svg_reader;
-  if (FLAGS_in_geometry.empty())
-    return svg_reader.ReadFile(FLAGS_in_geometry_filename, elements, necklaces);
-
-  return svg_reader.Parse(FLAGS_in_geometry, elements, necklaces);
+  return svg_reader.ReadFile(FLAGS_in_geometry_filename, elements, necklaces);
 }
 
 void WriteOutput
