@@ -41,6 +41,8 @@ class Region
  public:
   explicit Region(const std::string& id);
 
+  bool IsPoint() const;
+
   bool IsValid() const;
 
   bool MakeValid();

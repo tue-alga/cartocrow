@@ -48,6 +48,14 @@ namespace geoviz
 Region::Region(const std::string& id)
   : id(id), shape(), style("") {}
 
+/**@brief Check whether the region covers a sinlge point.
+ * @return whether the region covers a sinlge point.
+ */
+bool Region::IsPoint() const
+{
+  return shape.size() == 1 && shape[0].outer_boundary().size() == 1;
+}
+
 /**@brief Check whether the region is valid.
  *
  * The region is valid if all its polygons have a counter-clockwise outer boundary that is not self-intersecting.

@@ -81,7 +81,9 @@ class NecklaceWriter
 
   ~NecklaceWriter();
 
-  void DrawRegions();
+  void DrawPolygonRegions();
+
+  void DrawPointRegions();
 
   void DrawNecklaces();
 
@@ -113,8 +115,6 @@ class NecklaceWriter
   void CreateBeadIntervalShapes();
 
   void AddDropShadowFilter();
-
-  void DrawRegion(const Region& region);
 
   void DrawBeadIds();
 

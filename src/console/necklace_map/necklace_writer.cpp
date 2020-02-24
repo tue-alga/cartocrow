@@ -58,7 +58,8 @@ bool NecklaceWriter::Write
   detail::NecklaceWriter writer(elements, necklaces, scale_factor, options, out);
 
   // The order of drawing the features determines their stacking order, i.e. the last one will be on top.
-  writer.DrawRegions();
+  writer.DrawPolygonRegions();
+  writer.DrawPointRegions();
   writer.DrawNecklaces();
   writer.DrawValidIntervals();
   writer.DrawRegionAngles();
