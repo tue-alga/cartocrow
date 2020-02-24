@@ -1,4 +1,4 @@
-11 ssdi
+12 ssdi
 ID name value null
 NLD
 Netherlands
@@ -27,6 +27,10 @@ Norway
 DEU
 Germany
 32
+0
+BER
+Berlin
+12
 0
 DNK
 Denmark

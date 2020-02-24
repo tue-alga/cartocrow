@@ -114,6 +114,8 @@ class NecklaceWriter
 
   void AddDropShadowFilter();
 
+  void DrawRegion(const Region& region);
+
   void DrawBeadIds();
 
   const std::vector<MapElement::Ptr>& elements_;

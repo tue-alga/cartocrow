@@ -45,14 +45,23 @@ namespace detail
 ComputeScaleFactor::ComputeScaleFactor(const Necklace::Ptr& necklace, const Number& buffer_rad /*= 0*/)
   : max_buffer_rad_(-1), nodes_(), necklace_radius_(necklace->shape->ComputeRadius()), buffer_rad_(buffer_rad)
 {
+  // Clean beads without a feasible interval.
+  std::vector<Bead::Ptr> keep_beads;
+  for (const Bead::Ptr& bead : necklace->beads)
+    if (bead->feasible)
+      keep_beads.push_back(bead);
+  necklace->beads.swap(keep_beads);
+
   // The necklace must be sorted by the feasible intervals of its beads.
   necklace->SortBeads();
 
-  // Per element that should not be ignored (i.e. that has a bead), add a node to the scale factor computation functor.
+  // Per element that should not be ignored (i.e. that has a bead with a feasible interval), add a node to the scale factor computation functor.
   nodes_.reserve(2 * necklace->beads.size());
   for (const Bead::Ptr& bead : necklace->beads)
   {
     CHECK_GT(bead->radius_base, 0);
+    // Ignore beads without a feasible interval.
+
     bead->covering_radius_scaled_rad = std::asin(bead->radius_base / necklace_radius_);
     // Note that for an exact computation, the scaling factor should be inside this arcsine function.
     // This can be solved by performing a bisection search on the scale factors using a feasibility check to see if the scaled beads fit.

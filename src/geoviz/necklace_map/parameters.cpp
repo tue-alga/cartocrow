@@ -50,6 +50,7 @@ namespace necklace_map
 Parameters::Parameters() :
   interval_type(IntervalType::kCentroid),
   centroid_interval_length_rad(1),
+  ignore_point_regions(false),
   order_type(OrderType::kFixed),
   buffer_rad(0),
   aversion_ratio(0)
@@ -61,6 +62,12 @@ Parameters::Parameters() :
 
 /**@fn Number Parameters::centroid_interval_length_rad;
  * @brief The length of any centroid intervals generated when computing the feasible intervals.
+ */
+
+/**@fn bool Parameters::ignore_point_regions;
+ * @brief Whether to ignore degenerate (point) regions.
+ *
+ * Point regions that are not ignored are always assigned a centroid region.
  */
 
 /**@fn OrderType Parameters::order_type;

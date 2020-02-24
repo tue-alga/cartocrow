@@ -80,7 +80,7 @@ Number NecklaceShape::ComputeAngle(const Point& point) const
   return
     offset.squared_length() == 0
     ? 0
-    : std::atan2(offset.y(), offset.x());
+    : CircleRange::Modulo(std::atan2(offset.y(), offset.x()));
 }
 
 /**@fn virtual void NecklaceShape::Accept(NecklaceShapeVisitor& visitor) = 0;

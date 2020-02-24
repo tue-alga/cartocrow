@@ -48,6 +48,10 @@ class CircleRange
 
   bool IsValid() const;
 
+  bool IsDegenerate() const;
+
+  bool IsCircle() const;
+
   bool IntersectsRay(const Number& angle_rad) const;
 
   Number ComputeCentroid() const;

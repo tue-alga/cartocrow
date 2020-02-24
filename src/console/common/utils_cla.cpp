@@ -100,9 +100,9 @@ void InitApplication
   gflags::SetUsageMessage(UsageMessage(argv[0], description, sample_arguments));
   gflags::SetVersionString(GEOVIZ_VERSION);
 
-  // Note that the command line flags are parsed after applying the defaults above.
-  gflags::ParseCommandLineFlags(&argc, &argv, true);
-
   // Writing to the standard output is generally reserved for text to return to a calling website.
   FLAGS_stderrthreshold = 2;
+
+  // Note that the command line flags are parsed after applying the defaults above.
+  gflags::ParseCommandLineFlags(&argc, &argv, true);
 }

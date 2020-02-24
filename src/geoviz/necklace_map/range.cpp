@@ -36,7 +36,7 @@ namespace necklace_map
 
 /**@brief Constrain a value to be beyond some starting value by at most 2*pi.
  * @param value the value (in radians) to constrain.
- * @param start the starting value in radians.
+ * @param start the minimum value in radians.
  * @return the value in the constrained range.
  */
 Number CircleRange::Modulo(const Number& value_rad, const Number& start_rad /*= 0*/)
@@ -49,13 +49,13 @@ Number CircleRange::Modulo(const Number& value_rad, const Number& start_rad /*= 
   return constrained_rad;
 }
 
-/**@brief Construct a necklace interval.
+/**@brief Construct a range on a circle.
  *
  * The interval covers the intersection of the necklace and a wedge with its apex at the necklace kernel. This wedge is bounded by two rays from the center, which are described by their angle relative to the positive x axis in counterclockwise direction.
  *
  * The order of these rays is important: the interval is used that lies counterclockwise relative to the first angle.
  *
- * If the rays are identical, the interval covers the full necklace. This should not occur in practice.
+ * If the rays are identical, the interval covers a single point. If the rays are exactly 0 and 2*pi, the interval covers the full circle. This should not occur in practice.
  *
  * Note that the interval includes the intersections of the wedge boundaries with the necklace, i.e. the interval is closed.
  * @param angle_cw_rad the clockwise endpoint of the interval.
@@ -66,13 +66,13 @@ CircleRange::CircleRange(const Number& angle_cw_rad, const Number& angle_ccw_rad
 {
   if (angle_cw_rad_ == angle_ccw_rad_)
   {
-    // If the interval covers the whole necklace, we set the angles to 0 for convenience.
-    angle_cw_rad_ = angle_ccw_rad_ = 0;
-    return;
+    angle_cw_rad_ = angle_ccw_rad_ = Modulo(angle_cw_rad_);
   }
-
-  angle_cw_rad_ = Modulo(angle_cw_rad_);
-  angle_ccw_rad_ = Modulo(angle_ccw_rad_, angle_cw_rad_);
+  else
+  {
+    angle_cw_rad_ = Modulo(angle_cw_rad_);
+    angle_ccw_rad_ = Modulo(angle_ccw_rad_, angle_cw_rad_);
+  }
 }
 
 /**@brief The angle where the interval ends when traversing the interval in clockwise direction.
@@ -116,9 +116,28 @@ Number& CircleRange::angle_ccw_rad() { return angle_ccw_rad_; }
  */
 bool CircleRange::IsValid() const
 {
+  if (angle_cw_rad_ == M_2xPI)
+    return angle_cw_rad_ == 0;
+
   return
     0 <= angle_cw_rad_ && angle_cw_rad_ < M_2xPI &&
-    angle_cw_rad_ <= angle_ccw_rad_ && angle_ccw_rad_ < angle_cw_rad_ + M_2xPI;
+    0 <= angle_ccw_rad_ && angle_ccw_rad_ < M_2xPI;
+}
+
+/**@brief Check whether the range is degenerate.
+ * @return true if the range is a single point/
+ */
+bool CircleRange::IsDegenerate() const
+{
+  return angle_cw_rad_ == angle_ccw_rad_;
+}
+
+/**@brief Check whether the range covers the full circle.
+ * @return true if and only if the range covers the full circle.
+ */
+bool CircleRange::IsCircle() const
+{
+  return angle_cw_rad_ == 0 && angle_ccw_rad_ == M_2xPI;
 }
 
 /**@brief Check whether the interval intersects a ray from the necklace kernel.
@@ -133,8 +152,9 @@ bool CircleRange::IntersectsRay(const Number& angle_rad) const
   CHECK_GE(angle_rad, 0);
   CHECK_LT(angle_rad, M_2xPI);
   return
-    angle_cw_rad_ == angle_ccw_rad_ ||
-    (angle_rad < angle_cw_rad_ ? angle_rad + M_2xPI : angle_rad) < angle_ccw_rad_;
+    angle_cw_rad_ <= angle_ccw_rad_
+    ? (angle_cw_rad_ <= angle_rad && angle_rad <= angle_ccw_rad_)
+    : (angle_rad <= angle_ccw_rad_ || angle_cw_rad_ <= angle_rad);
 }
 
 /**@brief Compute the angle of the centroid of the range.
@@ -144,7 +164,7 @@ Number CircleRange::ComputeCentroid() const
 {
   const Number centroid = .5 * (angle_cw_rad() + angle_ccw_rad());
   CHECK_GE(centroid, 0);
-  return (M_2xPI < centroid) ? centroid - M_2xPI : centroid;
+  return angle_cw_rad_ < angle_ccw_rad_ ? centroid : centroid + M_PI;
 }
 
 /**@brief Compute the total length of the range.
@@ -153,8 +173,7 @@ Number CircleRange::ComputeCentroid() const
 Number CircleRange::ComputeLength() const
 {
   const Number length = angle_ccw_rad() - angle_cw_rad();
-  CHECK_GE(length, 0);
-  return length;
+  return Modulo(length);
 }
 
 /**@brief Compute a metric to order different ranges on the same necklace.

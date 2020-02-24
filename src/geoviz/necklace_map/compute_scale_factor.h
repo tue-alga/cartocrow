@@ -63,7 +63,7 @@ class ComputeScaleFactorFixedOrder : public ComputeScaleFactor
  public:
   explicit ComputeScaleFactorFixedOrder(const Number& buffer_rad = 0);
 
-  Number operator()(Necklace::Ptr& necklaces);
+  Number operator()(Necklace::Ptr& necklace);
 }; // class ComputeScaleFactorFixedOrder
 
 } // namespace necklace_map

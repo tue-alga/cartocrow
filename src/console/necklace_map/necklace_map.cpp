@@ -78,7 +78,7 @@ DEFINE_bool
 DEFINE_string
 (
   interval_type,
-  "centroid",
+  "wedge",
   "The interval type used to map regions onto feasible intervals. Must be one of {'centroid', 'wedge'}."
 );
 
@@ -88,6 +88,13 @@ DEFINE_double
   0.2 * M_PI,
   "The arc length of centroid intervals (in radians). Must be in the range [0, pi]."
   " Note that small intervals greatly restrict the available scale factors."
+);
+
+DEFINE_bool
+(
+  ignore_point_regions,
+  false,
+  "Whether to ignore regions covering a single point on the map. If these are not ignored, their feasible interval type is set to centroid."
 );
 
 DEFINE_string
@@ -219,6 +226,7 @@ void ValidateFlags(geoviz::necklace_map::Parameters& parameters, geoviz::WriterO
 
     validate::MakeRangeCheck(0.0, M_PI)(FLAGS_centroid_interval_length_rad);
     parameters.centroid_interval_length_rad = FLAGS_centroid_interval_length_rad;
+    parameters.ignore_point_regions = FLAGS_ignore_point_regions;
   }
 
   // Scale factor optimization parameters.

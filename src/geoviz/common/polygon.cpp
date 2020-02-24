@@ -31,6 +31,9 @@ namespace detail
 
 Vector ComputeCentroid(const Polygon& shape, Number& area)
 {
+  if (shape.size() == 1)
+    return shape[0] - Point(CGAL::ORIGIN);
+
   Vector sum(0, 0);
   for (Polygon::Edge_const_iterator edge_iter = shape.edges_begin(); edge_iter != shape.edges_end(); ++edge_iter)
   {

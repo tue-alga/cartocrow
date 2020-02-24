@@ -42,12 +42,19 @@ namespace necklace_map
  */
 ComputeFeasibleInterval::Ptr ComputeFeasibleInterval::New(const Parameters& parameters)
 {
+  // The wedge interval functor also needs a centroid interval functor as fallback.
+  Ptr compute_centroid(new ComputeFeasibleCentroidInterval(parameters));
+
   switch (parameters.interval_type)
   {
     case IntervalType::kCentroid:
-      return Ptr(new ComputeFeasibleCentroidInterval(parameters.centroid_interval_length_rad));
+      return compute_centroid;
     case IntervalType::kWedge:
-      return Ptr(new ComputeFeasibleWedgeInterval());
+    {
+      Ptr compute_wedge(new ComputeFeasibleWedgeInterval(parameters));
+      static_cast<ComputeFeasibleWedgeInterval*>(compute_wedge.get())->fallback_.swap( compute_centroid );
+      return compute_wedge;
+    }
     default:
       return nullptr;
   }
@@ -65,6 +72,11 @@ ComputeFeasibleInterval::Ptr ComputeFeasibleInterval::New(const Parameters& para
  */
 void ComputeFeasibleInterval::operator()(MapElement::Ptr& element) const
 {
+  Polygon extent;
+  element->region.MakeSimple(extent);
+
+  const bool ignore_region = ignore_point_regions_ && extent.size() < 2;
+
   for (MapElement::BeadMap::value_type& map_value : element->beads)
   {
     const Necklace::Ptr& necklace = map_value.first;
@@ -73,11 +85,11 @@ void ComputeFeasibleInterval::operator()(MapElement::Ptr& element) const
     CHECK_NOTNULL(necklace);
     CHECK_NOTNULL(bead);
 
-    Polygon extent;
-    element->region.MakeSimple(extent);
-
-    bead->feasible = (*this)(extent, necklace);
+    bead->feasible = ignore_region ? nullptr : (*this)(extent, necklace);
   }
+
+  if (ignore_region)
+    element->beads.clear();
 }
 
 /**@brief Apply the functor to a collection of map elements.
@@ -89,6 +101,10 @@ void ComputeFeasibleInterval::operator()(std::vector<MapElement::Ptr>& elements)
     (*this)(element);
 }
 
+ComputeFeasibleInterval::ComputeFeasibleInterval(const Parameters& parameters) :
+  ignore_point_regions_(parameters.ignore_point_regions)
+{}
+
 
 /**@class ComputeFeasibleCentroidInterval
  * @brief A functor to generate feasible centroid intervals for necklace bead placement.
@@ -97,19 +113,6 @@ void ComputeFeasibleInterval::operator()(std::vector<MapElement::Ptr>& elements)
  *
  * If the centroid of the region is the necklace kernel, the wedge bisector is undefined. In this case the wedge is chosen such that the inner bisector has the same direction as the positive x axis.
  */
-
-/**@brief Construct a centroid interval generator.
- * @param length_rad @parblock the inner angle (in radians) of the wedge used when generating an interval.
- *
- * The centroid intervals cannot be empty or cover the whole necklace, i.e. the length is restricted to the range (0, 2*pi).
- * @endparblock
- */
-ComputeFeasibleCentroidInterval::ComputeFeasibleCentroidInterval(const Number& length_rad)
-  : ComputeFeasibleInterval(), half_length_rad_(0.5 * length_rad)
-{
-  CHECK_GT(half_length_rad_, 0);
-  CHECK_LT(half_length_rad_, M_PI);
-}
 
 CircleRange::Ptr ComputeFeasibleCentroidInterval::operator()
 (
@@ -121,6 +124,20 @@ CircleRange::Ptr ComputeFeasibleCentroidInterval::operator()
   const Number angle_rad = necklace->shape->ComputeAngle(centroid);
 
   return std::make_shared<IntervalCentroid>(angle_rad - half_length_rad_, angle_rad + half_length_rad_);
+}
+
+/**@brief Construct a centroid interval generator.
+ * @param length_rad @parblock the inner angle (in radians) of the wedge used when generating an interval.
+ *
+ * The centroid intervals cannot be empty or cover the whole necklace, i.e. the length is restricted to the range (0, 2*pi).
+ * @endparblock
+ */
+ComputeFeasibleCentroidInterval::ComputeFeasibleCentroidInterval(const Parameters& parameters) :
+  ComputeFeasibleInterval(parameters),
+  half_length_rad_(0.5 * parameters.centroid_interval_length_rad)
+{
+  CHECK_GT(half_length_rad_, 0);
+  CHECK_LT(half_length_rad_, M_PI);
 }
 
 
@@ -138,9 +155,42 @@ CircleRange::Ptr ComputeFeasibleWedgeInterval::operator()
   const Necklace::Ptr& necklace
 ) const
 {
-  //TODO(tvl) implement 'toggle' to always use centroid interval for empty-interval regions (e.g. point regions). Waarom niet sowieso?
-  LOG(FATAL) << "Not implemented yet.";
+  CHECK_GT(extent.size(), 0);
+  if (extent.size() == 1)
+    return (*fallback_)(extent, necklace);
+
+  const Number angle = necklace->shape->ComputeAngle(*extent.vertices_begin());
+  CircleRange range(angle, angle);
+
+  const Point& kernel = necklace->shape->kernel();
+  for (Polygon::Edge_const_iterator edge_iter = extent.edges_begin(); edge_iter != extent.edges_end(); ++edge_iter)
+  {
+    const Segment& segment = *edge_iter;
+    const Number angle_target = necklace->shape->ComputeAngle(segment[1]);
+    if
+    (
+      angle_target == range.angle_ccw_rad() ||
+      angle_target == range.angle_cw_rad() ||
+      !range.IntersectsRay(angle_target)
+    )
+    {
+      if (CGAL::left_turn( segment[0], segment[1], kernel ))
+        range.angle_ccw_rad() = angle_target;
+      else
+        range.angle_cw_rad() = angle_target;
+    }
+  }
+
+  if (range.IsDegenerate() || M_2xPI <= range.ComputeLength())
+    return (*fallback_)(extent, necklace);
+
+  // Force the angles into the correct range.
+  return std::make_shared<CircleRange>(range.angle_cw_rad(), range.angle_ccw_rad());
 }
+
+ComputeFeasibleWedgeInterval::ComputeFeasibleWedgeInterval(const Parameters& parameters) :
+  ComputeFeasibleInterval(parameters)
+{}
 
 } // namespace necklace_map
 } // namespace geoviz

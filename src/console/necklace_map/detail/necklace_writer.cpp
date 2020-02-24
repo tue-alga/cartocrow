@@ -71,6 +71,7 @@ constexpr const double kTransformScale = 1;
 
 constexpr const double kBoundingBoxBufferPx = 5;
 
+constexpr const double kPointRegionRadiusPx = 3;
 constexpr const double kBeadIdFontSizePx = 16;
 
 constexpr const double kIntervalWidth = 0.4;
@@ -299,21 +300,7 @@ void NecklaceWriter::DrawRegions()
 
   {
     for (const MapElement::Ptr& element : elements_)
-    {
-      // Draw the region with the region as a piecewise linear polygon with same style as the input, except the opacity may be adjusted.
-      const Region& region = element->region;
-      const std::string style =
-        options_->region_opacity < 0
-        ? region.style
-        : ForceStyle(region.style, "fill-opacity:", options_->region_opacity);
-
-      printer_.OpenElement("path");
-      printer_.PushAttribute("style", style.c_str());
-      printer_.PushAttribute("d", RegionToPath(region, options_->region_precision).c_str());
-      printer_.PushAttribute("id", region.id.c_str());
-      printer_.PushAttribute("transform", transform_matrix_.c_str());
-      printer_.CloseElement();
-    }
+      DrawRegion(element->region);
   }
 
   printer_.CloseElement(); // g
@@ -872,6 +859,57 @@ void NecklaceWriter::AddDropShadowFilter()
 
   printer_.CloseElement(); // filter
   printer_.CloseElement(); // defs
+}
+
+void NecklaceWriter::DrawRegion(const Region& region)
+{
+  const std::string style =
+    options_->region_opacity < 0
+    ? region.style
+    : ForceStyle(region.style, "fill-opacity:", options_->region_opacity);
+
+  if (region.shape.size() == 1 && region.shape[0].outer_boundary().size() == 1)
+  {
+    const Point& position = region.shape[0].outer_boundary()[0];
+
+    // Draw the region with the region as a circle with same style as the input, except the opacity may be adjusted.
+    printer_.OpenElement("circle");
+    printer_.PushAttribute("style", style.c_str());
+
+    {
+      std::stringstream stream;
+      stream << std::setprecision(options_->region_precision);
+      stream << position.x();
+      printer_.PushAttribute("cx", stream.str().c_str());
+    }
+    {
+      std::stringstream stream;
+      stream << std::setprecision(options_->region_precision);
+      stream << position.y();
+      printer_.PushAttribute("cy", stream.str().c_str());
+    }
+    {
+      std::stringstream stream;
+      stream << std::setprecision(kIntervalNumericPrecision);
+      const Number radius = kPointRegionRadiusPx * unit_px_;
+      stream << radius;
+      printer_.PushAttribute("r", stream.str().c_str());
+    }
+
+    printer_.PushAttribute("id", region.id.c_str());
+    printer_.PushAttribute("transform", transform_matrix_.c_str());
+    printer_.CloseElement();
+
+    return;
+  }
+
+  // Draw the region with the region as a piecewise linear polygon with same style as the input, except the opacity may be adjusted.
+  printer_.OpenElement("path");
+  printer_.PushAttribute("style", style.c_str());
+  printer_.PushAttribute("d", RegionToPath(region, options_->region_precision).c_str());
+  printer_.PushAttribute("id", region.id.c_str());
+  printer_.PushAttribute("transform", transform_matrix_.c_str());
+  printer_.CloseElement();
 }
 
 void NecklaceWriter::DrawBeadIds()

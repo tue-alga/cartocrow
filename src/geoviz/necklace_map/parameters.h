@@ -52,6 +52,7 @@ struct Parameters
   // Feasible interval.
   IntervalType interval_type;
   Number centroid_interval_length_rad;
+  bool ignore_point_regions;
 
   // Scale factor and placement.
   OrderType order_type;

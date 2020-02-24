@@ -24,6 +24,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 05-12-2019
 #define GEOVIZ_NECKLACE_MAP_COMPUTE_FEASIBLE_INTERVAL_H
 
 #include <memory>
+#include <set>
 #include <unordered_map>
 #include <vector>
 
@@ -55,21 +56,30 @@ class ComputeFeasibleInterval
   void operator()(MapElement::Ptr& element) const;
 
   void operator()(std::vector<MapElement::Ptr>& elements) const;
+
+ protected:
+  ComputeFeasibleInterval(const Parameters& parameters);
+
+  bool ignore_point_regions_;
+
+  std::set<Necklace::Ptr> to_clean_;
 }; // class ComputeFeasibleInterval
 
 
 class ComputeFeasibleCentroidInterval : public ComputeFeasibleInterval
 {
  public:
-  ComputeFeasibleCentroidInterval(const Number& length_rad);
-
   CircleRange::Ptr operator()
   (
     const Polygon& extent,
     const Necklace::Ptr& necklace
   ) const;
 
+ protected:
+  ComputeFeasibleCentroidInterval(const Parameters& parameters);
+
  private:
+  friend ComputeFeasibleInterval;
   Number half_length_rad_;
 }; // class ComputeFeasibleCentroidInterval
 
@@ -82,6 +92,13 @@ class ComputeFeasibleWedgeInterval : public ComputeFeasibleInterval
     const Polygon& extent,
     const Necklace::Ptr& necklace
   ) const;
+
+ protected:
+  ComputeFeasibleWedgeInterval(const Parameters& parameters);
+
+ private:
+  friend ComputeFeasibleInterval;
+  ComputeFeasibleInterval::Ptr fallback_;
 }; // class ComputeFeasibleWedgeInterval
 
 } // namespace necklace_map

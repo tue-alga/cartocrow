@@ -60,9 +60,15 @@ bool Region::IsValid() const
   bool correct = true;
   for (const Polygon_with_holes& polygon : shape)
   {
+    const Polygon& outer = polygon.outer_boundary();
+
+    // Degenerate polygons are considered correct.
+    if (outer.size() == 1)
+      continue;
+
     correct &=
-      polygon.outer_boundary().orientation() == CGAL::COUNTERCLOCKWISE &&
-      polygon.outer_boundary().is_simple();
+      outer.orientation() == CGAL::COUNTERCLOCKWISE &&
+      outer.is_simple();
   }
   return correct;
 }
@@ -79,10 +85,16 @@ bool Region::MakeValid()
   bool correct = true;
   for (Polygon_with_holes& polygon : shape)
   {
-    if (!polygon.outer_boundary().is_simple())
+    Polygon& outer = polygon.outer_boundary();
+
+    // Degenerate polygons are considered correct.
+    if (outer.size() == 1)
+      continue;
+
+    if (!outer.is_simple())
       correct = false;
-    else if (polygon.outer_boundary().orientation() != CGAL::COUNTERCLOCKWISE)
-      polygon.outer_boundary().reverse_orientation();
+    else if (outer.orientation() != CGAL::COUNTERCLOCKWISE)
+      outer.reverse_orientation();
   }
   return correct;
 }
