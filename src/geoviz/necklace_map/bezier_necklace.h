@@ -17,19 +17,15 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-Created by tvl (t.vanlankveld@esciencecenter.nl) on 07-11-2019
+Created by tvl (t.vanlankveld@esciencecenter.nl) on 25-02-2020
 */
 
-#ifndef GEOVIZ_NECKLACE_MAP_NECKLACE_H
-#define GEOVIZ_NECKLACE_MAP_NECKLACE_H
+#ifndef GEOVIZ_NECKLACE_MAP_BEZIER_NECKLACE_H
+#define GEOVIZ_NECKLACE_MAP_BEZIER_NECKLACE_H
 
-#include <memory>
 #include <vector>
 
 #include "geoviz/common/core_types.h"
-#include "geoviz/necklace_map/bead.h"
-#include "geoviz/necklace_map/bezier_necklace.h"
-#include "geoviz/necklace_map/circle_necklace.h"
 #include "geoviz/necklace_map/necklace_shape.h"
 
 
@@ -38,19 +34,24 @@ namespace geoviz
 namespace necklace_map
 {
 
-struct Necklace
+class BezierNecklace : public NecklaceShape
 {
-  using Ptr = std::shared_ptr<Necklace>;
+ public:
+  const Point& kernel() const;
+  bool IntersectRay(const Number& angle_rad, Point& intersection) const;
+  Box ComputeBoundingBox() const;
+  //Number ComputeLength() const;
+  Number ComputeRadius() const;
 
-  Necklace(const NecklaceShape::Ptr& shape);
+  void Accept(NecklaceShapeVisitor& visitor);
 
-  void SortBeads();
-
-  NecklaceShape::Ptr shape;
-  std::vector<Bead::Ptr> beads;
-}; // struct Necklace
+ private:
+  Point kernel_;
+  std::vector<Point> points_;  // TODO(tvl) the generic necklace will probably require different markers than just points.
+  Number radius_;
+}; // class BezierNecklace
 
 } // namespace necklace_map
 } // namespace geoviz
 
-#endif //GEOVIZ_NECKLACE_MAP_NECKLACE_H
+#endif //GEOVIZ_NECKLACE_MAP_BEZIER_NECKLACE_H

@@ -17,20 +17,10 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-Created by tvl (t.vanlankveld@esciencecenter.nl) on 07-11-2019
+Created by tvl (t.vanlankveld@esciencecenter.nl) on 25-02-2020
 */
 
-#ifndef GEOVIZ_NECKLACE_MAP_NECKLACE_H
-#define GEOVIZ_NECKLACE_MAP_NECKLACE_H
-
-#include <memory>
-#include <vector>
-
-#include "geoviz/common/core_types.h"
-#include "geoviz/necklace_map/bead.h"
-#include "geoviz/necklace_map/bezier_necklace.h"
-#include "geoviz/necklace_map/circle_necklace.h"
-#include "geoviz/necklace_map/necklace_shape.h"
+#include "bezier_necklace.h"
 
 
 namespace geoviz
@@ -38,19 +28,16 @@ namespace geoviz
 namespace necklace_map
 {
 
-struct Necklace
-{
-  using Ptr = std::shared_ptr<Necklace>;
+/**@class BezierNecklace
+ * @brief A cubic Bezier curve necklace.
+ *
+ * Note that for this necklace, the kernel must be set explicitly.
+ */
 
-  Necklace(const NecklaceShape::Ptr& shape);
 
-  void SortBeads();
 
-  NecklaceShape::Ptr shape;
-  std::vector<Bead::Ptr> beads;
-}; // struct Necklace
+
+
 
 } // namespace necklace_map
 } // namespace geoviz
-
-#endif //GEOVIZ_NECKLACE_MAP_NECKLACE_H

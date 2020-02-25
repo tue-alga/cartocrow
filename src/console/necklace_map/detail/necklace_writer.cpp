@@ -185,12 +185,12 @@ class DrawNecklaceShapeVisitor : public necklace_map::NecklaceShapeVisitor
     printer_.CloseElement();
   }
 
-  void Visit(necklace_map::CurveNecklace& shape)
+  /*void Visit(necklace_map::CurveNecklace& shape)
   {
     LOG(FATAL) << "Not implemented yet.";
-  }
+  }*/
 
-  void Visit(necklace_map::GenericNecklace& shape)
+  void Visit(necklace_map::BezierNecklace& shape)
   {
     LOG(FATAL) << "Not implemented yet.";
   }

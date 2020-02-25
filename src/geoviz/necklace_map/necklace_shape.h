@@ -34,7 +34,19 @@ namespace geoviz
 namespace necklace_map
 {
 
-class NecklaceShapeVisitor;
+class CircleNecklace;
+//class CurveNecklace;
+class BezierNecklace;
+
+
+class NecklaceShapeVisitor
+{
+ public:
+  virtual void Visit(CircleNecklace& shape) {}
+  //virtual void Visit(CurveNecklace& shape) {}
+  virtual void Visit(BezierNecklace& shape) {}
+}; // class NecklaceShapeVisitor
+
 
 class NecklaceShape
 {
@@ -44,7 +56,7 @@ class NecklaceShape
   virtual const Point& kernel() const = 0;
   virtual bool IntersectRay(const Number& angle_rad, Point& intersection) const = 0;
   virtual Box ComputeBoundingBox() const = 0;
-  virtual Number ComputeLength() const = 0;
+  //virtual Number ComputeLength() const = 0;
   virtual Number ComputeRadius() const = 0;
   Number ComputeAngle(const Point& point) const;
 
@@ -55,65 +67,6 @@ class NecklaceShape
   // in this case, the scale factor should be reduced such that the bead does not contain the necklace center
   // (could this cause recursive failure and if so, in which cases? This *may* actually prove scientifically interesting).
 }; // class NecklaceShape
-
-
-class CircleNecklace : public NecklaceShape
-{
- public:
-  explicit CircleNecklace(const Circle& shape);
-  const Point& kernel() const;
-  bool IntersectRay(const Number& angle_rad, Point& intersection) const;
-  Box ComputeBoundingBox() const;
-  Number ComputeLength() const;
-  Number ComputeRadius() const;
-
-  virtual void Accept(NecklaceShapeVisitor& visitor);
-
- protected:
-  Circle shape_;
-  Number radius_;
-  Number length_;
-}; // class CircleNecklace
-
-
-class CurveNecklace : public CircleNecklace
-{
- public:
-  CurveNecklace(const Circle& shape, const Number& angle_cw_rad, const Number& angle_ccw_rad);
-  bool IntersectRay(const Number& angle_rad, Point& intersection) const;
-
-  void Accept(NecklaceShapeVisitor& visitor);
-
- private:
-  CircleRange interval_;
-}; // class CurveNecklace
-
-
-class GenericNecklace : public NecklaceShape
-{
- public:
-  const Point& kernel() const;
-  bool IntersectRay(const Number& angle_rad, Point& intersection) const;
-  Box ComputeBoundingBox() const;
-  Number ComputeLength() const;
-  Number ComputeRadius() const;
-
-  void Accept(NecklaceShapeVisitor& visitor);
-
- private:
-  Point kernel_;
-  std::vector<Point> points_;  // TODO(tvl) the generic necklace will probably require different markers than just points.
-  Number radius_;
-}; // class GenericNecklace
-
-
-class NecklaceShapeVisitor
-{
- public:
-  virtual void Visit(CircleNecklace& shape) {}
-  virtual void Visit(CurveNecklace& shape) {}
-  virtual void Visit(GenericNecklace& shape) {}
-};
 
 } // namespace necklace_map
 } // namespace geoviz
