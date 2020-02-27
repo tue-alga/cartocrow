@@ -33,8 +33,6 @@ namespace geoviz
 namespace
 {
 
-constexpr const char* kCopyrightNotice = "Copyright 2019 Netherlands eScience Center and TU Eindhoven\n"
-                                         "Licensed under the Apache License, version 2.0. See LICENSE for details.";
 constexpr const char* kSvgVersion = "1.1";
 constexpr const char* kSvgAttributeBounds = "bounds";
 
@@ -698,8 +696,7 @@ void NecklaceWriter::DrawBeadAngles()
 
 void NecklaceWriter::OpenSvg()
 {
-  // The file must start with the copyright notice,
-  printer_.PushComment(kCopyrightNotice);
+  // TODO(tvl) add note to documentation that we explicitly do not claim any copyright over the output of the system, with the intention that the user is able to reserve any rights for themselves.
 
   // Compute the bounding box and determine the conversion units (world -> pixel).
   ComputeBoundingBox();
