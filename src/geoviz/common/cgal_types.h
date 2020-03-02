@@ -34,9 +34,10 @@ using Number = Kernel::FT;
 using Point = CGAL::Point_2<Kernel>;
 using Vector = CGAL::Vector_2<Kernel>;
 
-using Segment = CGAL::Segment_2<Kernel>;
-using Circle = CGAL::Circle_2<Kernel>;
 using Box = CGAL::Bbox_2;
+using Circle = CGAL::Circle_2<Kernel>;
+using Line = CGAL::Line_2<Kernel>;
+using Segment = CGAL::Segment_2<Kernel>;
 
 } // namespace geoviz
 

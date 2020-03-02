@@ -23,6 +23,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 25-02-2020
 #ifndef GEOVIZ_NECKLACE_MAP_BEZIER_NECKLACE_H
 #define GEOVIZ_NECKLACE_MAP_BEZIER_NECKLACE_H
 
+#include <array>
 #include <vector>
 
 #include "geoviz/common/core_types.h"
@@ -34,21 +35,58 @@ namespace geoviz
 namespace necklace_map
 {
 
+class BezierCurve
+{
+ public:
+  BezierCurve(const Point& source, const Point& control, const Point& target);
+  BezierCurve(const Point& source, const Point& source_control, const Point& target_control, const Point& target);
+
+  Point source() const;
+  Point source_control() const;
+  Point target_control() const;
+  Point target() const;
+
+  Point Evaluate(const Number& t) const;
+
+  // There can be up to three intersections.
+  bool IntersectRay(const Point& source, const Point& target, std::vector<Point>& intersections) const;
+
+ protected:
+  // Note that the control points are stored as vectors, because this simplifies most operations.
+  std::array<Vector, 4> control_points_;
+}; // class BezierCurve
+
+
 class BezierNecklace : public NecklaceShape
 {
  public:
+  BezierNecklace(const Point& kernel);
+
   const Point& kernel() const;
-  bool IntersectRay(const Number& angle_rad, Point& intersection) const;
+
+  bool IsValid() const;
+
+  void AppendCurve(const Point& source, const Point& source_control, const Point& target_control, const Point& target);
+
+  void AppendCurve(const Point& source_control, const Point& target_control, const Point& target);
+
+  void Finalize();
+
   Box ComputeBoundingBox() const;
+
   //Number ComputeLength() const;
   Number ComputeRadius() const;
+
+  bool IntersectRay(const Number& angle_rad, Point& intersection) const;
 
   void Accept(NecklaceShapeVisitor& visitor);
 
  private:
+  using CurveSet = std::vector<BezierCurve>;
+
   Point kernel_;
-  std::vector<Point> points_;  // TODO(tvl) the generic necklace will probably require different markers than just points.
-  Number radius_;
+
+  CurveSet curves_;
 }; // class BezierNecklace
 
 } // namespace necklace_map

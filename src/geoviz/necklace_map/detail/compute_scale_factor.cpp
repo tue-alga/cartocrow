@@ -62,6 +62,20 @@ ComputeScaleFactor::ComputeScaleFactor(const Necklace::Ptr& necklace, const Numb
     CHECK_GT(bead->radius_base, 0);
     // Ignore beads without a feasible interval.
 
+    // Compute the covering radius.
+    // This metric will be compared to the feasible intervals when determining how close together beads can be placed.
+    // For this reason, the covering radius must be in the same unit as the feasible intervals, so in radians describing the wedges around the necklace kernel.
+    // For circle necklaces, this only depends on the radius of the unscaled bead.
+    // However, for Bezier necklaces, the distance between the necklace and the kernel is not constant and neither is the local curvature of the necklace.
+    // For example, the intersection of a bead with fixed radius and the necklace will fall in a smaller wedge if the bead is placed further from the necklace kernel or if the necklace is oriented less orthogonal to the line connecting kernel and bead.
+    // As a safe approximation of a fixed covering radius, the largest covering radius that a bead can have when placed inside its feasible interval is used.
+    //
+    // Note that when considering Bezier splines that are far from circular, using the intersection of the bead with the necklace actually breaks down: there can be situations where a fixed size bead can be placed in two non-contiguous intervals but not the space between them.
+    // We should probably solve this by using non-overlapping wedges as opposed to the part of the necklace covered by the bead...
+
+
+
+
     bead->covering_radius_scaled_rad = std::asin(bead->radius_base / necklace_radius_);
     // Note that for an exact computation, the scaling factor should be inside this arcsine function.
     // This can be solved by performing a bisection search on the scale factors using a feasibility check to see if the scaled beads fit.
