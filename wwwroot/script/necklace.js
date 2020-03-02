@@ -10,6 +10,21 @@ const MAX_FILE_SIZE_BYTES = 100 * 1024;
 let necklace_geometry_base64 = null;
 let necklace_data_base64 = null;
 let region_focused = false;
+let column_list = null;
+
+function setColumnList(result) {
+  var lines = result.split('\n');
+  if (lines.length < 2) return;
+  var columns = lines[1].split(/ +/);
+
+  let list = '';
+  for (let column of columns) {
+    let col_str = escape(column.replace(/\r/, ''));
+    if (col_str != 'ID' && col_str != 'name' && col_str != 'null')
+      list += '<option value="' + col_str + '">' + col_str + '</option>';
+  }
+  document.getElementById('data_value_in').innerHTML = list;
+}
 
 function initNecklaceMap() {
   focusSupportCard();
@@ -23,6 +38,8 @@ function initNecklaceMap() {
 }
 
 function onChangedGeometryFile(file) {
+  if (file === undefined) return;
+
   // Check mime type and file size.
   if (file.type != 'text/xml') {
     alert('XML file type required.');
@@ -50,6 +67,8 @@ function onChangedGeometryFile(file) {
 }
 
 function onChangedDataFile(file) {
+  if (file === undefined) return;
+
   // Check mime type and file size.
   if (file.type != 'text/plain') {
     alert('Plain text file type required.');
@@ -63,9 +82,9 @@ function onChangedDataFile(file) {
   // Read the file contents.
   var reader = new FileReader();
   reader.onload = function(e) {
-    necklace_data_base64 = btoa(
-      String.fromCharCode(...new Uint8Array(e.target.result))
-    );
+    let result = String.fromCharCode(...new Uint8Array(e.target.result));
+    necklace_data_base64 = btoa(result);
+    setColumnList(result);
     onChangedNecklaceSettings();
   };
   reader.readAsArrayBuffer(file);
@@ -95,6 +114,9 @@ function onChangedNecklaceSettings() {
     return;
 
   last_update = Date.now();
+
+  let value_str = escape(data_value_in.value);
+  if (value_str == '') return;
 
   // Collect the necklace map parameters.
   let body = JSON.stringify({
