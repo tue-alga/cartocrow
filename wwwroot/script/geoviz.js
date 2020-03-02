@@ -134,7 +134,7 @@ L.SVG.include({
 });
 
 // Callback function to replace the map by the SVG direct child elements in the response text.
-function replaceMapBySvgResponse() {
+function replaceMapBySvgResponse(focus = false) {
   return function(response) {
     let was_world = world_map;
     if (world_map) {
@@ -181,7 +181,7 @@ function replaceMapBySvgResponse() {
     }
     if (map_bounds[0][0] === Infinity) return;
 
-    if (was_world) map_obj.fitBounds(map_bounds);
+    if (focus || was_world) map_obj.fitBounds(map_bounds);
 
     // Add all svg children of the wrapper element to the map.
     for (let child of wrapperElement.children) {

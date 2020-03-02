@@ -9,6 +9,7 @@ const MAX_FILE_SIZE_BYTES = 100 * 1024;
 
 let necklace_geometry_base64 = null;
 let necklace_data_base64 = null;
+let region_focused = false;
 
 function initNecklaceMap() {
   focusSupportCard();
@@ -42,6 +43,7 @@ function onChangedGeometryFile(file) {
     necklace_geometry_base64 = btoa(
       String.fromCharCode(...new Uint8Array(e.target.result))
     );
+    region_focused = false;
     onChangedNecklaceSettings();
   };
   reader.readAsArrayBuffer(file);
@@ -81,7 +83,8 @@ function getNecklaceAversion() {
 
 function processNecklaceMapResponse() {
   return function(response) {
-    replaceMapBySvgResponse()(response);
+    replaceMapBySvgResponse(!region_focused)(response);
+    region_focused = true;
     geometry_out.value = response;
   };
 }
