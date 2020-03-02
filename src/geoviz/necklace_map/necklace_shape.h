@@ -35,7 +35,6 @@ namespace necklace_map
 {
 
 class CircleNecklace;
-//class CurveNecklace;
 class BezierNecklace;
 
 
@@ -43,7 +42,6 @@ class NecklaceShapeVisitor
 {
  public:
   virtual void Visit(CircleNecklace& shape) {}
-  //virtual void Visit(CurveNecklace& shape) {}
   virtual void Visit(BezierNecklace& shape) {}
 }; // class NecklaceShapeVisitor
 
@@ -54,10 +52,16 @@ class NecklaceShape
   using Ptr = std::shared_ptr<NecklaceShape>;
 
   virtual const Point& kernel() const = 0;
-  virtual bool IntersectRay(const Number& angle_rad, Point& intersection) const = 0;
+
+  virtual bool IsValid() const = 0;
+
   virtual Box ComputeBoundingBox() const = 0;
+
   //virtual Number ComputeLength() const = 0;
-  virtual Number ComputeRadius() const = 0;
+  virtual Number ComputeRadius() const = 0;  // TODO(tvl) replace by ComputeLength()?
+
+  virtual bool IntersectRay(const Number& angle_rad, Point& intersection) const = 0;
+
   Number ComputeAngle(const Point& point) const;
 
   virtual void Accept(NecklaceShapeVisitor& visitor) = 0;

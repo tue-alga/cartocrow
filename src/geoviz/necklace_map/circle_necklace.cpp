@@ -49,23 +49,14 @@ const Point& CircleNecklace::kernel() const
   return shape_.center();
 }
 
-bool CircleNecklace::IntersectRay(const Number& angle_rad, Point& intersection) const
+bool CircleNecklace::IsValid() const
 {
-  const Vector relative = CGAL::sqrt(shape_.squared_radius()) * Vector( std::cos(angle_rad), std::sin(angle_rad) );
-  intersection = kernel() + relative;
-  return true;
+  return 0 < radius_;
 }
 
 Box CircleNecklace::ComputeBoundingBox() const
 {
-  const Number radius = CGAL::sqrt(shape_.squared_radius());
-  return Box
-    (
-      shape_.center().x() - radius,
-      shape_.center().y() - radius,
-      shape_.center().x() + radius,
-      shape_.center().y() + radius
-    );
+  return shape_.bbox();
 }
 
 /*Number CircleNecklace::ComputeLength() const
@@ -78,51 +69,17 @@ Number CircleNecklace::ComputeRadius() const
   return radius_;
 }
 
+bool CircleNecklace::IntersectRay(const Number& angle_rad, Point& intersection) const
+{
+  const Vector relative = CGAL::sqrt(shape_.squared_radius()) * Vector( std::cos(angle_rad), std::sin(angle_rad) );
+  intersection = kernel() + relative;
+  return true;
+}
+
 void CircleNecklace::Accept(NecklaceShapeVisitor& visitor)
 {
   visitor.Visit(*this);
 }
-
-
-/**@class CurveNecklace
- * @brief A circular arc necklace.
- *
- * Note that the circular arc may cover the full circle. In this case, the bead placement will be identical to the placement on a CircleNecklace of the supporting circle.
- */
-
-/**@brief Construct a curve necklace.
- *
- * The curve covers the intersection of the circle and a wedge with its apex at the circle center. This wedge is bounded by two rays from the center, which are described by their angle relative to the positive x axis in counterclockwise direction.
- *
- * The order of these rays is important: the wedge is used that lies counterclockwise relative to the first angle.
- *
- * If the rays are identical, the necklace covers the full circle.
- *
- * Note that the necklace includes the intersections of the wedge boundaries with the circle, i.e. the curve is closed.
- *
- * The necklace kernel is the circle center.
- * @param shape the supporting circle of the necklace.
- * @param angle_cw_rad the clockwise endpoint of the curve.
- * @param angle_ccw_rad the counterclockwise endpoint of the curve.
- */
-/*CurveNecklace::CurveNecklace(const Circle& shape, const Number& angle_cw_rad, const Number& angle_ccw_rad) :
-  CircleNecklace(shape),
-  interval_(angle_cw_rad, angle_ccw_rad)
-{}
-
-bool CurveNecklace::IntersectRay(const Number& angle_rad, Point& intersection) const
-{
-  // Check whether the angle lies in the covered part of the supporting circle.
-  if (!interval_.IntersectsRay(angle_rad))
-    return false;
-
-  return CircleNecklace::IntersectRay(angle_rad, intersection);
-}
-
-void CurveNecklace::Accept(NecklaceShapeVisitor& visitor)
-{
-  visitor.Visit(*this);
-}*/
 
 } // namespace necklace_map
 } // namespace geoviz

@@ -76,7 +76,6 @@ bool ValidateScaleFactor::operator()(Necklace::Ptr& necklace) const
   nodes.reserve(2 * num_beads);
 
   // Create a sorted cycle based on the feasible intervals of the necklace beads and compute the scaled covering radii.
-  const Number necklace_radius = necklace->shape->ComputeRadius();
   for (const Bead::Ptr& bead : necklace->beads)
   {
     // Compute the scaled covering radius.
@@ -96,6 +95,7 @@ bool ValidateScaleFactor::operator()(Necklace::Ptr& necklace) const
   }
 
   // Compute the valid intervals at the specified scale factor, where beads can be placed without pairwise overlap.
+  const Number necklace_radius = necklace->shape->ComputeRadius();
 
   // Adjust the clockwise extremes.
   for (size_t n = 1; n < nodes.size(); ++n)

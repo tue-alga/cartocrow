@@ -36,11 +36,17 @@ class CircleNecklace : public NecklaceShape
 {
  public:
   explicit CircleNecklace(const Circle& shape);
+
   const Point& kernel() const;
-  bool IntersectRay(const Number& angle_rad, Point& intersection) const;
+
+  bool IsValid() const;
+
   Box ComputeBoundingBox() const;
+
   //Number ComputeLength() const;
   Number ComputeRadius() const;
+
+  bool IntersectRay(const Number& angle_rad, Point& intersection) const;
 
   virtual void Accept(NecklaceShapeVisitor& visitor);
 
@@ -49,20 +55,6 @@ class CircleNecklace : public NecklaceShape
   Number radius_;
   Number length_;
 }; // class CircleNecklace
-
-
-// TODO(tvl) remove? Note that an open necklace shape may pose irrecoverable problems when determining feasible intervals.
-/*class CurveNecklace : public CircleNecklace
-{
- public:
-  CurveNecklace(const Circle& shape, const Number& angle_cw_rad, const Number& angle_ccw_rad);
-  bool IntersectRay(const Number& angle_rad, Point& intersection) const;
-
-  void Accept(NecklaceShapeVisitor& visitor);
-
- private:
-  CircleRange interval_;
-}; // class CurveNecklace*/
 
 } // namespace necklace_map
 } // namespace geoviz

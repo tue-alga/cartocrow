@@ -39,11 +39,6 @@ namespace necklace_map
  * @param shape the shape to visit.
  */
 
-/**@fn virtual void NecklaceShapeVisitor::Visit(CurveNecklace& shape);
- * @brief Visit a circular curve necklace shape.
- * @param shape the shape to visit.
- */
-
 /**@fn virtual void NecklaceShapeVisitor::Visit(BezierNecklace& shape);
  * @brief Visit a generic necklace shape.
  * @param shape the shape to visit.
@@ -61,14 +56,9 @@ namespace necklace_map
  * @return the kernel of the necklace.
  */
 
-/**@fn virtual bool NecklaceShape::IntersectRay(const Number& angle_rad, Point& intersection) const
- * @brief Intersect a ray originating from the kernel with the necklace.
- * @param angle_rad the counterclockwise angle between the ray and the positive x-axis in radians.
- * @param intersection the intersection of the ray with the necklace, if it exists.
- * @return @parblock a ray in the specified direction intersects the necklace.
- *
- * Note that a false return value does not indicate an invalid necklace. The necklace may not fully surround the kernel, for example a circular arc necklace covering half its supporting circle.
- * @endparblock
+/**@fn bool NecklaceShape::IsValid() const = 0
+ * @brief Check whether the necklace is valid.
+ * @return whether the necklace is valid.
  */
 
 /**@fn virtual Box NecklaceShape::ComputeBoundingBox() const = 0
@@ -86,6 +76,16 @@ namespace necklace_map
  *
  * Note that for non-circular necklaces, this radius will be an approximation.
  * @return the necklace radius.
+ */
+
+/**@fn virtual bool NecklaceShape::IntersectRay(const Number& angle_rad, Point& intersection) const
+ * @brief Intersect a ray originating from the kernel with the necklace.
+ * @param angle_rad the counterclockwise angle between the ray and the positive x-axis in radians.
+ * @param intersection the intersection of the ray with the necklace, if it exists.
+ * @return @parblock a ray in the specified direction intersects the necklace.
+ *
+ * Note that a false return value does not indicate an invalid necklace. The necklace may not fully surround the kernel, for example a circular arc necklace covering half its supporting circle.
+ * @endparblock
  */
 
 /**@brief Compute the angle of a point on the shape.

@@ -102,7 +102,6 @@ class NecklaceWriter
 
   using NecklaceShape = necklace_map::NecklaceShape;
   using CircleNecklace = necklace_map::CircleNecklace;
-  //using CurveNecklace = necklace_map::CurveNecklace;
   using BezierNecklace = necklace_map::BezierNecklace;
   using BeadShapeMap = std::unordered_map<Bead::Ptr, NecklaceShape::Ptr>;
 
