@@ -47,14 +47,20 @@ struct Bead
 
   CircleRange::Ptr feasible;
 
+  std::string region_style;
+
+  // Variables during scaling.
+  // TODO(tvl) move into subclass?
+  Number covering_radius_rad;
+
+  int check;
+
   // Variables after scaling.
-  Number covering_radius_scaled_rad;
+  // TODO(tvl) move into subclass?
 
   CircleRange::Ptr valid;
 
   Number angle_rad;
-
-  std::string region_style;
 }; // struct Bead
 
 } // namespace necklace_map

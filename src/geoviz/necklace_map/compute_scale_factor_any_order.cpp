@@ -22,14 +22,857 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 03-03-2020
 
 #include "compute_scale_factor_any_order.h"
 
+#include <algorithm>
+#include <limits.h>
+
 #include <glog/logging.h>
 
 #include "geoviz/necklace_map/detail/compute_scale_factor.h"
+
+
+#include "geoviz/necklace_map/detail/cycle_node.h"
+
 
 namespace geoviz
 {
 namespace necklace_map
 {
+
+constexpr const Number EPSILON = 0.0000001;
+
+// TODO(tvl) Note, directly based on the Java implementation: clean up.
+// TODO(tvl) Should this contain the functionality of the CycleNode, or should it just be a Bead with (comp and) layer?
+struct DynamicProgrammingCycleNode : detail::BeadCycleNode
+{
+  DynamicProgrammingCycleNode
+  (
+    const Bead::Ptr& bead,
+    const double angle_rad,
+    const CircleRange::Ptr feasible,
+    const int comp
+  ) : BeadCycleNode(bead), angle_rad(angle_rad), feasible(feasible), comp(comp), layer(-1) {}
+
+  double angle_rad;
+  CircleRange::Ptr feasible;
+  int comp;  // TODO(tvl) remove from this node type (each sort operation determines type of comparison)?
+  int layer;  // TODO(tvl) size_t? short?
+}; // struct DynamicProgrammingCycleNode
+
+class CompareByAngle  // comp == 0
+{
+ public:
+  inline bool operator()(const DynamicProgrammingCycleNode& a, const DynamicProgrammingCycleNode& b) const
+  {
+    return a.angle_rad < b.angle_rad;
+  }
+}; // class CompareBezierCurves
+
+class CompareByRange  // comp == 1
+{
+ public:
+  inline bool operator()(const DynamicProgrammingCycleNode& a, const DynamicProgrammingCycleNode& b) const
+  {
+    return a.feasible->from_rad() < b.feasible->from_rad();
+  }
+}; // class CompareBezierCurves
+
+
+struct TaskEvent
+{
+  TaskEvent(const int layer, const double time, const bool start, const int/*size_t?*/ caID) :
+    layer(layer), time(time), start(start), caID(caID) {}
+
+  TaskEvent() {}
+
+  int layer;
+  double time;
+  bool start;  // Whether this is a "start feasible interval" event.
+  int caID;
+}; // class TaskEvent
+
+class CompareTaskEvent
+{
+ public:
+  inline bool operator()(const TaskEvent& a, const TaskEvent& b) const
+  {
+    if (a.time == b.time) {
+      if (a.start && !b.start) return 1;
+      else if (!a.start && b.start) return -1;
+      else return 0;
+    }
+    return a.time < b.time;
+  }
+}; // class CompareBezierCurves
+
+
+struct CountryData  // TODO(tvl) rename BeadData?
+{
+  using Ptr = std::shared_ptr<CountryData>;
+
+//  static constexpr const double LOOKUP_TABLE_STEP = 0.01;
+
+  CountryData(const Bead::Ptr& bead, const int layer) :
+    bead(bead),
+    radius_cur(bead ? bead->radius_base : 0),
+    layer(layer),
+    disabled(bead)
+  {
+    if (bead)
+      range_cur = std::make_shared<CircleRange>(*bead->feasible);
+    else
+      range_cur = std::make_shared<CircleRange>(0, 0);
+  }
+
+ CountryData(const CountryData& cd) {
+    bead = cd.bead;
+    layer = cd.layer;
+    disabled = false;
+    radius_cur = cd.radius_cur;
+    range_cur = std::make_shared<CircleRange>(*cd.range_cur);
+  }
+
+  // Supposedly, this was developed for splines, but the piece of caode that computes this lookup table is commented out.
+  double lookUpSize(double angle) {
+    /*CircleRange r(range_cur->from_rad(), angle);
+    int k = (int)std::round(r.ComputeLength() / LOOKUP_TABLE_STEP);
+    if (k >= 0 && k < c.lookUpSize.length) return c.lookUpSize[k];
+    else*/
+      return radius_cur;
+  }
+
+  Bead::Ptr bead;
+  CircleRange::Ptr range_cur;
+  Number radius_cur;  // TODO(tvl) check whether this is actually used or could just forward to bead->covering_radius_rad
+  int layer;
+  bool disabled;  // TODO(tvl) replace by check for bead validity.
+}; // struct CountryData
+
+class TaskSlice
+{
+ public:
+  TaskSlice() : eventLeft(), eventRight(), tasks(), taskCount(0), left(0), right(0), sets(), layers() {}
+
+  TaskSlice(const TaskEvent& eLeft, const TaskEvent& eRight, const int K, const double right) :  // TODO(tvl) note Java code had bug here, where 'right' was not actually used; is this parameter needed?
+    eventLeft(eLeft),
+    eventRight(eRight),
+    taskCount(0),
+    left(eLeft.time),
+    right(right)
+  {
+    tasks.resize(K);
+  }
+
+  TaskSlice(const TaskSlice& ts, const double offset, const int step) :
+    eventLeft(ts.eventLeft),
+    eventRight(ts.eventRight),
+    taskCount(ts.taskCount),
+    sets(ts.sets),
+    layers(ts.layers)
+  {
+    left = eventLeft.time - offset + step * M_2xPI;
+    if (left < step * M_2xPI) left += M_2xPI;
+    right = eventRight.time - offset + step * M_2xPI;
+    if (right < left) right += M_2xPI;
+
+    tasks.resize(ts.tasks.size());
+    for (int i = 0; i < tasks.size(); i++) {
+      if (ts.tasks[i] == nullptr) tasks[i] = nullptr;
+      else {
+        //if (ts.tasks[i].range.from <= ts.tasks[i].range.to || step > 0 || right > ts.tasks[i].range.from) {
+        if (step > 0 || right > ts.tasks[i]->range_cur->to_rad() - offset || !ts.tasks[i]->range_cur->IntersectsRay(offset) || ts.tasks[i]->range_cur->from_rad() == offset) {
+          tasks[i] = std::make_shared<CountryData>(*ts.tasks[i]);
+          CircleRange r1(tasks[i]->range_cur->from_rad(), eventLeft.time);
+          CircleRange r2(eventLeft.time, tasks[i]->range_cur->to_rad());
+          tasks[i]->range_cur->from_rad() = left - r1.ComputeLength();
+          tasks[i]->range_cur->to_rad() = left + r2.ComputeLength();
+        }
+        else tasks[i] = nullptr;
+      }
+    }
+  }
+
+ void reset()
+ {
+    left = eventLeft.time;
+    right = eventRight.time;
+    for (int i = 0; i < tasks.size(); i++) {
+      if (tasks[i] != nullptr) {
+        CountryData::Ptr cd = tasks[i];
+        cd->range_cur = std::make_shared<CircleRange>(*cd->bead->feasible);
+        cd->disabled = false;
+      }
+    }
+  }
+ void rotate(const double value, const std::vector<CountryData::Ptr>& cds, const int split) {
+   CircleRange r1(value, left);
+   CircleRange r2(value, right);
+    left = r1.ComputeLength();
+    right = r2.ComputeLength();
+    if (right < EPSILON) right = M_2xPI;
+
+    for (int i = 0; i < tasks.size(); i++) {
+      if (tasks[i] != nullptr) {
+        CountryData::Ptr cd = tasks[i];
+        if (cds[i] != nullptr && cds[i]->bead == cd->bead) {
+          if (((1 << i)&split) > 0) {
+            r2 = CircleRange(value, cd->range_cur->to_rad());
+            cd->range_cur->from_rad() = 0.0;
+            cd->range_cur->to_rad() = r2.ComputeLength();
+            if (r2.ComputeLength() - EPSILON <= left)
+              cd->disabled = true;
+          }
+          else {
+            r1 = CircleRange(value, cd->range_cur->from_rad());
+            cd->range_cur->from_rad() = r1.ComputeLength();
+            cd->range_cur->to_rad() = M_2xPI;
+            if (r1.ComputeLength() + EPSILON >= right)
+              cd->disabled = true;
+          }
+        }
+        else {
+          r1 = CircleRange(value, cd->range_cur->from_rad());
+          r2 = CircleRange(value, cd->range_cur->to_rad());
+          cd->range_cur->from_rad() = r1.ComputeLength();
+          cd->range_cur->to_rad() = r2.ComputeLength();
+          if (cd->range_cur->to_rad() < EPSILON)
+            cd->range_cur->to_rad() = M_2xPI;
+        }
+      }
+    }
+  }
+
+  void addTask(const CountryData::Ptr& task)
+  {
+    CHECK_LT(task->layer, tasks.size());
+    tasks[task->layer] = task;
+    taskCount++;
+  }
+
+  void produceSets()
+  {
+    sets.resize(1 << taskCount);  // TODO(tvl) bitset?
+    std::vector<bool> filter(tasks.size());
+    for (int i = 0; i < tasks.size(); i++)
+      filter[i] = (tasks[i] != nullptr);
+    int n = (1 << tasks.size());
+    int k = 0;
+    for (int i = 0; i < n; i++) {
+      bool valid = true;
+      for (int j = 0, q = 1; j < tasks.size(); j++, q = (q << 1)) {
+        if ((q&i) > 0 && !filter[j]) valid = false;
+      }
+      if (valid) sets[k++] = i;
+    }
+
+    layers.resize(taskCount);
+    k = 0;
+    for (int i = 0; i < tasks.size(); i++) {
+      if (tasks[i] != nullptr)
+        layers[k++] = i;
+    }
+  }
+
+  TaskEvent eventLeft, eventRight;
+  std::vector<CountryData::Ptr> tasks;
+  int taskCount;
+  double left, right;  // TODO(tvl) should this be left_time, right_time?
+  std::vector<int> sets;
+  std::vector<int> layers;
+}; // class TaskSlice
+
+
+struct OptValue
+{
+  OptValue()
+  {
+    Initialize();
+  }
+
+  void Initialize()
+  {
+    time = std::numeric_limits<double>::max();
+    time2 = std::numeric_limits<double>::max();
+    layer = -1;
+    cd = nullptr;
+  }
+
+  double time;
+  double time2;
+  int layer;
+  CountryData::Ptr cd;
+}; // struct OptValue
+
+
+// TODO(tvl) Note, directly based on the Java implementation: clean up.
+class Optimizer
+{
+ public:
+  double computeOptSize
+  (
+    const double bufferSize/*rename buffer_rad*/,
+    const int precision,
+    const Necklace::Ptr& cg/*rename: necklace*/,
+    const int heurSteps,
+    const bool ingot
+  )
+  { // heurSteps == 0 -> Exact algo
+
+
+    // gather Country range pairs
+    // Note that the country sympbolAngle and range have been set by the interval algorithm.
+    cas.clear();  // TODO(tvl) reserve
+    for (const Bead::Ptr& bead : cg->beads)
+    {
+      if (bead->radius_base <= 0)
+        continue;
+
+      cas.emplace_back(bead, bead->angle_rad, bead->feasible, 1);
+    }
+    std::sort(cas.begin(), cas.end(), CompareByRange());
+
+    // assign tasks to layers
+    std::vector<TaskEvent> events;  // TODO(tvl) reserve
+    for (size_t i = 0; i < cas.size(); i++) {
+      DynamicProgrammingCycleNode ca = cas[i];
+      events.emplace_back(-1, ca.feasible->from_rad(), true, i);
+      events.emplace_back(-1, ca.feasible->to_rad(), false, i);
+    }
+    std::sort(events.begin(), events.end(), CompareTaskEvent());
+
+    // find angle with max thickness
+    int K = 0;
+    double angle = cas[0].feasible->from_rad();
+    for (const DynamicProgrammingCycleNode& node : cas) {
+      CircleRange::Ptr r = node.feasible;
+      if (r->IntersectsRay(angle)) K++;
+    }
+    int optK = K;
+    int opt = 0;
+    for (const TaskEvent& event : events) {
+      if (event.time <= angle) continue;
+      if (event.start) {
+        K++;
+        if (K > optK) {
+          optK = K;
+          angle = event.time;
+          opt = event.caID;
+        }
+      }
+      else K--;
+    }
+
+    std::vector<int> L;  // TODO(tvl) reserve
+    int count = cas.size() - 1;
+    CircleRange::Ptr curRange = cas[opt].feasible;
+    cas[opt].layer = 0;
+    L.push_back(opt);
+    while (count > 0) {
+      int next = -1;
+      double minAngleDif = M_2xPI;
+
+      for (int i = 0; i < cas.size(); i++) {
+        if (cas[i].layer >= 0) continue;
+        CircleRange r(curRange->to_rad(), cas[i].feasible->from_rad());
+        const Number length_rad = r.ComputeLength();
+        if (length_rad < minAngleDif) {
+          minAngleDif = length_rad;
+          next = i;
+        }
+      }
+      count--;
+      L.push_back(next);
+      cas[next].layer = 0;
+      curRange = cas[next].feasible;
+    }
+
+    // now really assign layers
+    K = 1;
+    for (int i = 0; i < L.size(); i++) {
+      bool good = true;
+      int k1 = L[i];
+      for (int j = 0; j < i; j++) {
+        int k2 = L[j];
+        if (cas[k2].layer != K - 1) continue;
+        if (cas[k2].feasible->Intersects(cas[k1].feasible)) good = false;
+      }
+      if (!good) {
+        cas[k1].layer = K;
+        K++;
+      }
+      else cas[k1].layer = K - 1;
+    }
+
+    // Failure case: too thick.
+    if (K >= 15) return 0;
+    //System.out.println(cas.size());
+    //System.out.println(K);
+
+    // TODO(tvl) why does this repeat the earlier initialization? layer is set...
+    events.clear();
+    for (int i = 0; i < cas.size(); i++) {
+      DynamicProgrammingCycleNode ca = cas[i];
+      events.emplace_back(ca.layer, ca.feasible->from_rad(), true, i);
+      events.emplace_back(ca.layer, ca.feasible->to_rad(), false, i);
+    }
+    std::sort(events.begin(), events.end(), CompareTaskEvent());
+
+
+    Bead::Ptr curTasks[K];
+    // initialize
+    for (DynamicProgrammingCycleNode& node : cas) {
+      if (node.feasible->IntersectsRay(-M_PI) && node.feasible->from_rad() > -M_PI) // TODO(tvl) should this be moved to the angle 0, seeing how I generally use the ranges [0,2pi] instead of [-pi,pi]?
+        curTasks[node.layer] = node.bead;
+    }
+
+    //find taskslices
+    std::vector<TaskSlice> slices(events.size());
+    for (int i = 0; i < events.size(); i++) {
+      TaskEvent e = events[i];
+      TaskEvent e2 = events[(i+1)%events.size()];
+      slices[i] = TaskSlice(e, e2, K, e2.time);
+      if (e.start) curTasks[e.layer] = cas[e.caID].bead;
+      else curTasks[e.layer] = nullptr;
+      for (int j = 0; j < K; j++) if (curTasks[j] != nullptr)
+        slices[i].addTask(std::make_shared<CountryData>(curTasks[j], j));
+    }
+
+    for (TaskSlice& slice : slices)
+      slice.produceSets();
+
+    // make sure first slice is start of task
+    while (!slices[0].eventLeft.start) {
+      const TaskSlice& ts = slices[0];
+      for (int i = 0; i < slices.size() - 1; i++)
+        slices[i] = slices[i+1];
+      slices[slices.size() - 1] = ts;
+    }
+
+    // compute upper bound scale
+    double maxScale = -1;
+    double length = cg->shape->ComputeLength();
+    for (int i = 0; i < cas.size(); i++) {
+      double max_bead_scale = length / (2.0 * cas[i].bead->radius_base);
+      if (maxScale < 0 || max_bead_scale < maxScale)
+        maxScale = max_bead_scale;
+    }
+    if (ingot) maxScale = M_PI / cas.size();  // TODO(tvl) even with ingot mode enabled: why do the previous calculations in this case?
+
+    // 1st binary search
+    double x = 0.0;
+    double y = maxScale;
+    for (int j = 0; j < 10; j++) {
+      double h = 0.5 * (x + y);
+      double totalSize = 0.0;
+      for (int i = 0; i < cas.size(); i++) {
+        if (!ingot) totalSize += cg->shape->ComputeCoveringSize(cas[i].feasible, cas[i].bead->radius_base * h) + bufferSize;
+        else totalSize += h + bufferSize;
+      }
+      if (totalSize <= M_PI) x = h;
+      else y = h;
+    }
+    maxScale = x;
+
+    // binary search
+    x = 0.0;
+    y = maxScale;
+    for (int i = 0; i < precision; i++) {
+      double h = 0.5 * (x + y);
+      if (heurSteps == 0) {
+        if (feasible(slices, h, K, bufferSize, cg, ingot)) x = h;
+        else y = h;
+      }
+      else {
+        if (feasible2(slices, h, K, bufferSize, cg, heurSteps, ingot)) x = h;
+        else y = h;
+      }
+    }
+    //System.out.println(x);
+    return x;
+  }
+
+
+  bool feasible
+  (
+    std::vector<TaskSlice>& slices,
+    const double scale,
+    const int K,
+    const double bufferSize,
+    const Necklace::Ptr necklace,
+    const bool ingot
+  )
+  {
+    // set sizes
+    for (int i = 0; i < cas.size(); i++) {
+      if (!ingot) cas[i].bead->covering_radius_rad = necklace->shape->ComputeCoveringSize(cas[i].feasible, cas[i].bead->radius_base * scale) + bufferSize;
+      else cas[i].bead->covering_radius_rad = scale + bufferSize;
+    }
+    for (int i = 0; i < slices.size(); i++) {
+      for (int j = 0; j < K; j++) {
+        if (slices[i].tasks[j] != nullptr) slices[i].tasks[j]->radius_cur = slices[i].tasks[j]->bead->covering_radius_rad;
+      }
+    }
+
+    // setup DP array
+    int nSubSets = (1 << K);
+    std::vector<std::vector<OptValue> > opt(slices.size());
+    for (int i = 0; i < slices.size(); i++) {
+      opt[i] = std::vector<OptValue>(nSubSets);
+      for (int j = 0; j < nSubSets; j++) {
+        opt[i][j].Initialize();
+      }
+    }
+
+    // try all possibilities
+    for (int i = 0; i < slices.size(); i++) {
+      if (slices[i].eventLeft.start) {
+        int q = (1 << slices[i].eventLeft.layer);
+        for (int j = 0; j < slices[i].sets.size(); j++) {
+          int q2 = slices[i].sets[j];
+          if ((q2&q) > 0) {
+
+            // split the circle (ranges, event times, the works)
+            splitCircle(slices, K, i, q2);
+
+            // compute
+            bool good = feasibleLine(slices, K, opt, i, q2);
+
+            if (good) return true;
+          }
+        }
+      }
+    }
+
+    return false;
+  }
+
+
+ void splitCircle(std::vector<TaskSlice>& slices, const int K, const int slice, const int split) {
+    // reset everything, then rotate
+    for (int i = 0; i < slices.size(); i++) {
+      slices[i].reset();
+      slices[i].rotate(slices[slice].eventLeft.time, slices[slice].tasks, split);
+    }
+  }
+
+  bool feasibleLine(const std::vector<TaskSlice>& slices, const int K, std::vector<std::vector<OptValue> >& opt, const int slice, const int split)
+  {
+    int split2 = split^(slices[slice].sets.back());  //TODO(tvl) rename split_inverse?
+
+    // initialization
+    //const TaskSlice& ts = slices[slice];
+    opt[0][0].time = 0.0;
+    opt[0][0].layer = -1;
+    opt[0][0].cd = std::make_shared<CountryData>(nullptr, -1);
+
+    for (int i = 0; i < slices.size(); i++) {
+      int s = (slice+i)%slices.size();
+      const TaskSlice& ts = slices[s];
+      for (int j = 0; j < ts.sets.size(); j++) {
+        int q = ts.sets[j];
+        if (i == 0 && q == 0) continue;
+
+        opt[i][q].time = std::numeric_limits<double>::max();
+        opt[i][q].layer = -1;
+        opt[i][q].cd = nullptr;
+
+        if (i == 0 && (q&split2) > 0) continue;
+        if (i == slices.size() - 1 && (q&split) > 0) continue;
+
+        if (i != 0) {
+          // check previous slice
+          if (ts.eventLeft.start) {
+            if ((q&(1 << ts.eventLeft.layer)) == 0) {
+              opt[i][q].time = opt[i-1][q].time;
+              opt[i][q].layer = opt[i-1][q].layer;
+              opt[i][q].cd = opt[i-1][q].cd;
+            }
+          }
+          else {
+            int q2 = q + (1 << ts.eventLeft.layer);
+            if (slices[(s+slices.size()-1)%slices.size()].tasks[ts.eventLeft.layer]->disabled) q2 -= (1 << ts.eventLeft.layer); // special case
+            opt[i][q].time = opt[i-1][q2].time;
+            opt[i][q].layer = opt[i-1][q2].layer;
+            opt[i][q].cd = opt[i-1][q2].cd;
+          }
+        }
+        if (opt[i][q].time < std::numeric_limits<double>::max()) continue;
+
+        for (int x = 0; x < ts.taskCount; x++) {
+          int k = ts.layers[x];
+          CountryData::Ptr cd = ts.tasks[k];
+          int k2 = (1 << k);
+          if ((k2&q) == 0) continue;
+          if (cd->disabled) continue;
+
+          double t1 = opt[i][q - k2].time;
+          if (t1 == std::numeric_limits<double>::max()) continue;
+          // special check
+          if (opt[i][q-k2].cd->radius_cur == 0.0) {
+            if (k != slices[slice].eventLeft.layer) continue;
+          }
+          else t1 += cd->radius_cur;
+
+          t1 = std::max(t1, cd->range_cur->from_rad());
+          if (t1 <= cd->range_cur->to_rad() && t1 + cd->radius_cur < opt[i][q].time) {
+            opt[i][q].time = t1 + cd->radius_cur;
+            opt[i][q].layer = k;
+            opt[i][q].cd = cd;
+          }
+        }
+
+      }
+    }
+
+
+    const TaskSlice& ts = slices[slice];
+    if (opt[slices.size()-1][split2].time == std::numeric_limits<double>::max()) return false;
+    if (opt[slices.size()-1][split2].time <= M_2xPI - ts.tasks[ts.eventLeft.layer]->radius_cur) {
+      // feasible! construct solution
+      int s = slices.size() - 1;
+      int s2 = (slice + s)%slices.size();
+      int q = split2;
+      double t = opt[s][q].time - opt[s][q].cd->radius_cur;
+
+      while (slices[s2].left > t + EPSILON) {
+        if (!slices[s2].eventLeft.start) {
+          q += (1 << slices[s2].eventLeft.layer);
+          if (s > 0 && slices[(s2+slices.size()-1)%slices.size()].tasks[slices[s2].eventLeft.layer]->disabled) q -= (1 << slices[s2].eventLeft.layer);
+        }
+        s--;
+        s2 = (slice + s)%slices.size();
+        if (s < 0) break;
+      }
+
+
+      while (s >= 0 && opt[s][q].layer != -1) {
+        //System.out.println(s + ", " + q);
+        CountryData::Ptr cd = opt[s][q].cd;
+        if ((q&(1 << opt[s][q].layer)) == 0) return false;
+        q -= (1 << opt[s][q].layer);
+        cd->bead->angle_rad = t + slices[slice].eventLeft.time;
+        t = opt[s][q].time - opt[s][q].cd->radius_cur;
+        while (slices[s2].left > t + EPSILON) {
+          if (!slices[s2].eventLeft.start) {
+            q += (1 << slices[s2].eventLeft.layer);
+            if (s > 0 && slices[(s2+slices.size()-1)%slices.size()].tasks[slices[s2].eventLeft.layer]->disabled) q -= (1 << slices[s2].eventLeft.layer);
+          }
+          s--;
+          s2 = (slice + s)%slices.size();
+          if (s < 0) break;
+        }
+      }
+      return true;
+    }
+
+    return false;
+  }
+
+
+
+
+  bool feasible2(const std::vector<TaskSlice>& slices, const double scale, const int K, const double bufferSize, const Necklace::Ptr& necklace, const int copies, const bool ingot) {
+    // set sizes
+    for (int i = 0; i < cas.size(); i++) {
+      if (!ingot) cas[i].bead->covering_radius_rad = necklace->shape->ComputeCoveringSize(cas[i].feasible, cas[i].bead->radius_base * scale) + bufferSize;
+      else cas[i].bead->covering_radius_rad = scale + bufferSize;
+    }
+    for (int i = 0; i < slices.size(); i++) {
+      for (int j = 0; j < K; j++) {
+        if (slices[i].tasks[j] != nullptr) slices[i].tasks[j]->radius_cur = slices[i].tasks[j]->bead->covering_radius_rad;
+      }
+    }
+
+    // make new slices
+    std::vector<TaskSlice> slices2(slices.size() * copies);
+    for (int i = 0; i < copies; i++) {
+      for (int j = 0; j < slices.size(); j++) {
+        int q = i * slices.size() + j;
+        slices2[q] = TaskSlice(slices[j], slices[0].left, i);
+      }
+    }
+
+    // setup DP array
+    int nSubSets = (1 << K);
+    std::vector<std::vector<OptValue> > opt(slices2.size());
+    for (int i = 0; i < slices2.size(); i++)
+    {
+      opt[i] = std::vector<OptValue>(nSubSets);
+      for (int j = 0; j < nSubSets; j++) {
+        opt[i][j].Initialize();
+      }
+    }
+
+    return feasibleLine2(slices2, K, opt, false);
+  }
+
+
+  bool feasibleLine2(const std::vector<TaskSlice>& slices, const int K, std::vector<std::vector<OptValue> >& opt, const bool lookup/*note, not used in practice*/)
+  {
+    // initialization
+    //const TaskSlice& ts = slices[0];
+    opt[0][0].time = 0.0;
+    opt[0][0].time2 = 0.0;
+    opt[0][0].layer = -1;
+    opt[0][0].cd = std::make_shared<CountryData>(nullptr, -1);
+
+    for (int i = 0; i < slices.size(); i++) {
+      const TaskSlice& ts = slices[i];
+      for (int j = 0; j < ts.sets.size(); j++) {
+        int q = ts.sets[j];
+        if (i == 0 && q == 0) continue;
+
+        opt[i][q].time = std::numeric_limits<double>::max();
+        opt[i][q].time2 = opt[i][q].time;
+        opt[i][q].layer = -1;
+        opt[i][q].cd = nullptr;
+
+        if (i != 0) {
+          // check previous slice
+          if (ts.eventLeft.start) {
+            if ((q&(1 << ts.eventLeft.layer)) == 0) {
+              opt[i][q].time = opt[i-1][q].time;
+              opt[i][q].time2 = opt[i-1][q].time2;
+              opt[i][q].layer = opt[i-1][q].layer;
+              opt[i][q].cd = opt[i-1][q].cd;
+            }
+          }
+          else {
+            int q2 = q + (1 << ts.eventLeft.layer);
+            if (slices[i-1].tasks[ts.eventLeft.layer] == nullptr) q2 -= (1 << ts.eventLeft.layer); // special case
+            opt[i][q].time = opt[i-1][q2].time;
+            opt[i][q].time2 = opt[i-1][q2].time2;
+            opt[i][q].layer = opt[i-1][q2].layer;
+            opt[i][q].cd = opt[i-1][q2].cd;
+          }
+        }
+
+        if (opt[i][q].time < std::numeric_limits<double>::max()) continue;
+
+        for (int x = 0; x < ts.taskCount; x++) {
+          int k = ts.layers[x];
+          CountryData::Ptr cd = ts.tasks[k];
+          int k2 = (1 << k);
+          if ((k2&q) == 0) continue;
+          if (cd == nullptr) continue;
+
+          double t1 = opt[i][q - k2].time;
+          if (t1 == std::numeric_limits<double>::max()) continue;
+          // lookup size if spline
+          double size = cd->radius_cur;
+          // special check
+          if (opt[i][q-k2].cd->radius_cur != 0.0) {
+            if (lookup) {
+              double angle = t1 + size;
+              for (int z = 0; z < 5; z++) {
+                size = cd->lookUpSize(angle);
+                angle = t1 + size;
+              }
+              t1 = angle;
+            }
+            else t1 += size;
+          }
+          else if (lookup) size = cd->lookUpSize(t1);
+
+          t1 = std::max(t1, cd->range_cur->from_rad());
+          if (lookup) size = cd->lookUpSize(t1);
+          if (t1 <= cd->range_cur->to_rad() && t1 + size < opt[i][q].time) {
+            opt[i][q].time = t1 + size;
+            opt[i][q].time2 = t1;
+            opt[i][q].layer = k;
+            opt[i][q].cd = cd;
+          }
+        }
+
+      }
+    }
+
+
+    CountryAngleSet listCA;
+
+    int s = slices.size() - 1;
+    int q = slices[s].sets[slices[s].sets.size() - 1];
+    double t = opt[s][q].time;
+    if (t == std::numeric_limits<double>::max()) return false;
+    //t -= opt[s][q].cd.size;
+    t = opt[s][q].time2;
+
+    while (slices[s].left > t + EPSILON) {
+      if (!slices[s].eventLeft.start) {
+        q += (1 << slices[s].eventLeft.layer);
+        if (s > 0 && slices[s-1].tasks[slices[s].eventLeft.layer] == nullptr) q -= (1 << slices[s].eventLeft.layer);
+      }
+      s--;
+      if (s < 0) break;
+    }
+
+    while (s >= 0 && opt[s][q].layer != -1) {
+      CountryData::Ptr cd = opt[s][q].cd;
+      q -= (1 << opt[s][q].layer);
+      if (q < 0 || cd == nullptr) return false;
+      double size = cd->radius_cur;
+      if (lookup) size = cd->lookUpSize(t);
+      listCA.emplace_back(cd->bead, t + slices[0].eventLeft.time, std::make_shared<CircleRange>(t + slices[0].eventLeft.time - size, t + slices[0].eventLeft.time + size), 0);
+      t = opt[s][q].time2;
+      while (slices[s].left > t + EPSILON) {
+        if (!slices[s].eventLeft.start) {
+          q += (1 << slices[s].eventLeft.layer);
+          if (s > 0 && slices[s-1].tasks[slices[s].eventLeft.layer] == nullptr) q -= (1 << slices[s].eventLeft.layer);
+        }
+        s--;
+        if (s < 0) break;
+      }
+    }
+
+
+    // set to not found
+    int count = 0;
+    for (int i = 0; i < cas.size(); i++) {
+      cas[i].bead->check = 0;
+    }
+
+    int li = listCA.size() - 1;
+    int ri = listCA.size() - 1;
+    while (li >= 0 && listCA[li].feasible->to_rad() <= listCA[ri].feasible->from_rad() + M_2xPI) {
+      Bead::Ptr c = listCA[li].bead;
+      c->check++;
+      if (c->check == 1) count++;
+      li--;
+    }
+
+    while(li >= 0) {
+      if (count == cas.size()) break;
+      DynamicProgrammingCycleNode& ca1 = listCA[li];
+      DynamicProgrammingCycleNode& ca2 = listCA[ri];
+      if (ca2.feasible->from_rad() + M_2xPI < ca1.feasible->to_rad()) {
+        ca2.bead->check--;
+        if (ca2.bead->check == 0) count--;
+        ri--;
+      }
+      else {
+        ca1.bead->check++;
+        if (ca1.bead->check == 1) count++;
+        li--;
+      }
+    }
+    li++;
+
+    if (count == cas.size()) {
+      // good stuff
+      for (int i = li; i <= ri; i++) {
+        const DynamicProgrammingCycleNode& ca = listCA[i];
+        ca.bead->angle_rad = ca.angle_rad;
+      }
+      return true;
+    }
+
+    return false;
+  }
+
+ private:
+  using CountryAngleSet = std::vector<DynamicProgrammingCycleNode>;
+  CountryAngleSet cas;  //TODO(tvl) move from class member to function parameter.
+}; // class Optimizer
+
 
 /**@struct ComputeScaleFactorAnyOrder
  * @brief A functor to compute the optimal scale factor for a collection of necklace map elements with undefined order.
@@ -53,8 +896,13 @@ ComputeScaleFactorAnyOrder::ComputeScaleFactorAnyOrder(const Number& buffer_rad 
 
 Number ComputeScaleFactorAnyOrder::operator()(Necklace::Ptr& necklace)
 {
-  LOG(FATAL) << "Not implemented yet!";
-  return 0;
+  // TODO(tvl) Note, directly based on the Java implementation: clean up.
+  Optimizer opt; // Note, only one necklace!
+  //double symbolScale = std::numeric_limits<double>::max();
+  //for (int i = 0; i < curMap.groups.size(); i++) {
+
+    return opt.computeOptSize(buffer_rad_, 10/*const value; remove?*/, necklace, 5/*const value; remove?*/, false/*INGOT_MODE*/);
+  //}
 }
 
 } // namespace necklace_map

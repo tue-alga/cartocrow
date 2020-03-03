@@ -57,8 +57,10 @@ class NecklaceShape
 
   virtual Box ComputeBoundingBox() const = 0;
 
-  //virtual Number ComputeLength() const = 0;
+  virtual Number ComputeLength() const = 0;
   virtual Number ComputeRadius() const = 0;  // TODO(tvl) replace by ComputeLength()?
+
+  virtual Number ComputeCoveringSize(const CircleRange::Ptr range, const Number& radius) const = 0;
 
   virtual bool IntersectRay(const Number& angle_rad, Point& intersection) const = 0;
 

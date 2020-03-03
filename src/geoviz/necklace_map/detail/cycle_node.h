@@ -45,6 +45,7 @@ struct BeadCycleNode
   Bead::Ptr bead;
 
   // Note that unlike the bead's feasible interval, these can be larger than 2*PI.
+  // TODO(tvl) add mode to feasible interval to enable enforcing bounds within [0, 2pi]?
   Number interval_cw_rad;
   Number interval_ccw_rad;
 }; // struct BeadCycleNode

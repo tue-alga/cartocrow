@@ -76,7 +76,7 @@ ComputeScaleFactor::ComputeScaleFactor(const Necklace::Ptr& necklace, const Numb
 
 
 
-    bead->covering_radius_scaled_rad = std::asin(bead->radius_base / necklace_radius_);
+    bead->covering_radius_rad = std::asin(bead->radius_base / necklace_radius_);
     // Note that for an exact computation, the scaling factor should be inside this arcsine function.
     // This can be solved by performing a bisection search on the scale factors using a feasibility check to see if the scaled beads fit.
     // Note that this correction is performed after estimating the scale factor, in CorrectScaleFactor().
@@ -134,7 +134,7 @@ inline const Number& ComputeScaleFactor::b(const size_t i) const
 // Radius r_i.
 inline const Number& ComputeScaleFactor::r(const size_t i) const
 {
-  return nodes_[i].bead->covering_radius_scaled_rad;
+  return nodes_[i].bead->covering_radius_rad;
 }
 
 Number ComputeScaleFactor::r(const size_t i, const size_t j) const

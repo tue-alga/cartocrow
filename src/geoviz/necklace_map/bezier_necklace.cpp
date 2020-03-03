@@ -314,12 +314,17 @@ Box BezierNecklace::ComputeBoundingBox() const
   return bounding_box;
 }
 
-/*Number BezierNecklace::ComputeLength() const
+Number BezierNecklace::ComputeLength() const
 {
   LOG(FATAL) << "Not implemented yet!";
-}*/
+}
 
 Number BezierNecklace::ComputeRadius() const
+{
+  LOG(FATAL) << "Not implemented yet!";
+}
+
+Number BezierNecklace::ComputeCoveringSize(const CircleRange::Ptr range, const Number& radius) const
 {
   LOG(FATAL) << "Not implemented yet!";
 }

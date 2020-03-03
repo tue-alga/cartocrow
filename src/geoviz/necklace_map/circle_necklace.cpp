@@ -59,14 +59,19 @@ Box CircleNecklace::ComputeBoundingBox() const
   return shape_.bbox();
 }
 
-/*Number CircleNecklace::ComputeLength() const
+Number CircleNecklace::ComputeLength() const
 {
   return length_;
-}*/
+}
 
 Number CircleNecklace::ComputeRadius() const
 {
   return radius_;
+}
+
+Number CircleNecklace::ComputeCoveringSize(const CircleRange::Ptr range, const Number& radius) const
+{
+  return std::asin(radius / ComputeRadius());
 }
 
 bool CircleNecklace::IntersectRay(const Number& angle_rad, Point& intersection) const

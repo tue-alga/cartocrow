@@ -92,6 +92,8 @@ Number ComputeScaleFactor::operator()(std::vector<Necklace::Ptr>& necklaces)
   Number scale_factor = -1;
   for (Necklace::Ptr& necklace : necklaces)
   {
+    CHECK_GT(necklace->beads.size(), 0);
+
     const Number necklace_scale_factor = (*this)(necklace);
 
     if (scale_factor < 0 || necklace_scale_factor < scale_factor)

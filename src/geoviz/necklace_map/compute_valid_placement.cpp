@@ -98,7 +98,7 @@ void ComputeValidPlacement::operator()(const Number& scale_factor, Necklace::Ptr
     // Compute the scaled covering radius.
     CHECK_NOTNULL(bead);
     const Number radius_scaled = scale_factor * bead->radius_base;
-    bead->covering_radius_scaled_rad = std::asin(radius_scaled / necklace_radius);
+    bead->covering_radius_rad = std::asin(radius_scaled / necklace_radius);
   }
 
   // Compute the valid intervals.
@@ -133,9 +133,9 @@ void ComputeValidPlacement::operator()(const Number& scale_factor, Necklace::Ptr
         bead->angle_rad
       ).ComputeLength();
 
-      const Number& radius_bead = bead->covering_radius_scaled_rad;
-      const Number& radius_prev = prev->covering_radius_scaled_rad;
-      const Number& radius_next = next->covering_radius_scaled_rad;
+      const Number& radius_bead = bead->covering_radius_rad;
+      const Number& radius_prev = prev->covering_radius_rad;
+      const Number& radius_next = next->covering_radius_rad;
 
       // Note that we cannot guarantee better than double precision because of the trigonometric functions.
 
@@ -301,8 +301,8 @@ void ComputeValidPlacementAnyOrder::SwapBeads(Necklace::Ptr& necklace) const
     Bead::Ptr& bead = necklace->beads[index_bead];
     Bead::Ptr& next = necklace->beads[index_next];
 
-    const Number& radius_bead = bead->covering_radius_scaled_rad;
-    const Number& radius_next = next->covering_radius_scaled_rad;
+    const Number& radius_bead = bead->covering_radius_rad;
+    const Number& radius_next = next->covering_radius_rad;
 
     // Note that for the swapped angles, the buffers cancel each other out.
     const Number swapped_angle_bead_rad = CircleRange::Modulo(next->angle_rad + radius_next - radius_bead);

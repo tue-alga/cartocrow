@@ -40,11 +40,18 @@ class CircleRange
   static Number Modulo(const Number& value_rad, const Number& start_rad = 0);
 
   CircleRange(const Number& angle_cw_rad, const Number& angle_ccw_rad);
+  CircleRange(const CircleRange& range);
 
+  // TODO(tvl) renaming to from_rad(), to_rad() may be more natural for ranges...
   const Number& angle_cw_rad() const;
   Number& angle_cw_rad();
   const Number& angle_ccw_rad() const;
   Number& angle_ccw_rad();
+
+  inline const Number& from_rad() const { return angle_cw_rad(); }
+  inline Number& from_rad() { return angle_cw_rad(); }
+  inline const Number& to_rad() const { return angle_ccw_rad(); }
+  inline Number& to_rad() { return angle_ccw_rad(); }
 
   bool IsValid() const;
 
@@ -53,6 +60,8 @@ class CircleRange
   bool IsCircle() const;
 
   bool IntersectsRay(const Number& angle_rad) const;
+
+  bool Intersects(const CircleRange::Ptr& range) const;
 
   Number ComputeCentroid() const;
 

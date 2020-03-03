@@ -75,6 +75,13 @@ CircleRange::CircleRange(const Number& angle_cw_rad, const Number& angle_ccw_rad
   }
 }
 
+/**@brief Copy a range on a circle.
+ * @param range the range to copy.
+ */
+CircleRange::CircleRange(const CircleRange& range) :
+  angle_cw_rad_(range.angle_cw_rad_), angle_ccw_rad_(range.angle_ccw_rad_)
+{}
+
 /**@brief The angle where the interval ends when traversing the interval in clockwise direction.
  *
  * @return @parblock the clockwise ending angle.
@@ -155,6 +162,17 @@ bool CircleRange::IntersectsRay(const Number& angle_rad) const
     angle_cw_rad_ <= angle_ccw_rad_
     ? (angle_cw_rad_ <= angle_rad && angle_rad <= angle_ccw_rad_)
     : (angle_rad <= angle_ccw_rad_ || angle_cw_rad_ <= angle_rad);
+}
+
+/**@brief Check whether this range and another range intersect in their interior.
+ * @param range the range for which to check the intersection.
+ * @return whether the ranges intersect in their interior.
+ */
+bool CircleRange::Intersects(const CircleRange::Ptr& range) const
+{
+  return
+    (range->IntersectsRay(from_rad()) && from_rad() != range->to_rad()) ||
+    (IntersectsRay(range->from_rad()) && range->from_rad() != to_rad());
 }
 
 /**@brief Compute the angle of the centroid of the range.

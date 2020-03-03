@@ -87,6 +87,7 @@ class ComputeScaleFactor
 };
 
 
+// TODO(tvl) check whether this specialization should be merged with the base class: do the any-order computations benefit from a similar approach?
 class ComputeScaleFactorFixedOrder : public ComputeScaleFactor
 {
  public:
