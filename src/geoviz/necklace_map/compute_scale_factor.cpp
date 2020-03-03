@@ -24,7 +24,8 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 28-11-2019
 
 #include <glog/logging.h>
 
-#include "geoviz/necklace_map/detail/compute_scale_factor.h"
+#include "geoviz/necklace_map/compute_scale_factor_any_order.h"
+#include "geoviz/necklace_map/compute_scale_factor_fixed_order.h"
 
 
 namespace geoviz
@@ -52,6 +53,8 @@ ComputeScaleFactor::Ptr ComputeScaleFactor::New(const Parameters& parameters)
   {
     case OrderType::kFixed:
       return Ptr(new ComputeScaleFactorFixedOrder(parameters.buffer_rad));
+    case OrderType::kAny:
+      return Ptr(new ComputeScaleFactorAnyOrder(parameters.buffer_rad));
     default:
       return nullptr;
   }
@@ -102,41 +105,6 @@ Number ComputeScaleFactor::operator()(std::vector<Necklace::Ptr>& necklaces)
  *
  * If a buffer larger that this value is used, the functor will never produce an optimal scale factor larger than 0.
  */
-
-
-/**@struct ComputeScaleFactorFixedOrder
- * @brief A functor to compute the optimal scale factor for a collection of necklace map elements with fixed order.
- *
- * The necklace map elements will always be ordered by the clockwise endpoint of their interval.
- *
- * The optimal scale factor is the maximum value such that if all necklace beads have radius scale factor * sqrt(data value), none of these beads are within the minimum separation distance of another bead on the same necklace.
- *
- * Note that this scale factor is the minimum over the scale factors per necklace. These scale factors per necklace can be determined independently.
- *
- * Note that we do not restrict the beads of different necklaces to overlap. In case of overlap between different necklaces, the user can manually adjust the buffer thickness or the positioning forces (see @f ComputeValidPlacement) to prevent overlapping beads.
- */
-
-/**@brief Construct a bead scale factor computation functor that maintains the order of the beads.
- *
- * The order of the beads is based on the clockwise extreme of their feasible interval.
- * @param buffer_rad @parblock the minimum distance between necklace beads.
- *
- * This distance must be in the range [0, @f$T@f$], where @f$T@f$ is half the length of the necklace divided by the number of beads on the necklace. While the lower bound is validated immediately, the upper bound can only be validated when applying the functor to a collection of necklace beads.
- * @endparblock
- */
-ComputeScaleFactorFixedOrder::ComputeScaleFactorFixedOrder(const Number& buffer_rad /*= 0*/)
-  : ComputeScaleFactor(buffer_rad)
-{}
-
-Number ComputeScaleFactorFixedOrder::operator()(Necklace::Ptr& necklace)
-{
-  detail::ComputeScaleFactorFixedOrder impl(necklace, buffer_rad_);
-  const Number max_scale_factor = impl.Optimize();
-  if (max_buffer_rad_ < 0 || impl.max_buffer_rad() < max_buffer_rad_)
-    max_buffer_rad_ = impl.max_buffer_rad();
-
-  return max_scale_factor;
-}
 
 } // namespace necklace_map
 } // namespace geoviz"

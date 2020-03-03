@@ -17,17 +17,15 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-Created by tvl (t.vanlankveld@esciencecenter.nl) on 28-11-2019
+Created by tvl (t.vanlankveld@esciencecenter.nl) on 03-03-2020
 */
 
-#ifndef GEOVIZ_NECKLACE_MAP_COMPUTE_SCALE_FACTOR_H
-#define GEOVIZ_NECKLACE_MAP_COMPUTE_SCALE_FACTOR_H
-
-#include <vector>
+#ifndef GEOVIZ_NECKLACE_MAP_COMPUTE_SCALE_FACTOR_ANY_ORDER_H
+#define GEOVIZ_NECKLACE_MAP_COMPUTE_SCALE_FACTOR_ANY_ORDER_H
 
 #include "geoviz/common/core_types.h"
+#include "geoviz/necklace_map/compute_scale_factor.h"
 #include "geoviz/necklace_map/necklace.h"
-#include "geoviz/necklace_map/parameters.h"
 
 
 namespace geoviz
@@ -35,28 +33,15 @@ namespace geoviz
 namespace necklace_map
 {
 
-class ComputeScaleFactor
+class ComputeScaleFactorAnyOrder : public ComputeScaleFactor
 {
  public:
-  using Ptr = std::unique_ptr<ComputeScaleFactor>;
+  explicit ComputeScaleFactorAnyOrder(const Number& buffer_rad = 0);
 
-  static Ptr New(const Parameters& parameters);
-
-  explicit ComputeScaleFactor(const Number& buffer_rad = 0);
-
-  // Note that elements with value 0 will not be included in the ordering.
-  virtual Number operator()(Necklace::Ptr& necklace) = 0;
-
-  Number operator()(std::vector<Necklace::Ptr>& necklaces);
-
-  const Number& max_buffer_rad() const { return max_buffer_rad_; }
-
- protected:
-  Number buffer_rad_;
-  Number max_buffer_rad_;
-}; // class ComputeScaleFactor
+  Number operator()(Necklace::Ptr& necklace);
+}; // class ComputeScaleFactorAnyOrder
 
 } // namespace necklace_map
 } // namespace geoviz
 
-#endif //GEOVIZ_NECKLACE_MAP_COMPUTE_SCALE_FACTOR_H
+#endif //GEOVIZ_NECKLACE_MAP_COMPUTE_SCALE_FACTOR_ANY_ORDER_H
