@@ -27,8 +27,8 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 05-12-2019
 #include <glog/logging.h>
 
 #include "geoviz/necklace_map/bead.h"
-#include "geoviz/necklace_map/compute_feasible_centroid_interval.h"
-#include "geoviz/necklace_map/compute_feasible_wedge_interval.h"
+#include "geoviz/necklace_map/compute_feasible_interval_centroid.h"
+#include "geoviz/necklace_map/compute_feasible_interval_wedge.h"
 
 
 namespace geoviz

@@ -20,7 +20,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Created by tvl (t.vanlankveld@esciencecenter.nl) on 03-03-2020
 */
 
-#include "compute_feasible_centroid_interval.h"
+#include "compute_feasible_interval_centroid.h"
 
 #include <glog/logging.h>
 
