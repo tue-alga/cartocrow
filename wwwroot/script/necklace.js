@@ -13,16 +13,28 @@ let region_focused = false;
 let column_list = null;
 
 function setColumnList(result) {
-  var lines = result.split('\n');
-  if (lines.length < 2) return;
-  var columns = lines[1].split(/ +/);
+  let lines = result.split('\n');
+  let token = 0;
+  let num_col = 0;
 
   let list = '';
-  for (let column of columns) {
-    let col_str = escape(column.replace(/\r/, ''));
-    if (col_str != 'ID' && col_str != 'name' && col_str != 'null')
-      list += '<option value="' + col_str + '">' + col_str + '</option>';
+  for (let line of lines) {
+    let columns = line.split(/ +/);
+
+    for (let column of columns) {
+      token++;
+      if (token == 1) continue;
+      else if (token == 2) num_col = column.length - 1;
+      else {
+        let col_str = escape(column.replace(/\r/, ''));
+        if (col_str != 'ID' && col_str != 'name' && col_str != 'null')
+          list += '<option value="' + col_str + '">' + col_str + '</option>';
+      }
+    }
+
+    if (2 + num_col <= token) break;
   }
+
   document.getElementById('data_value_in').innerHTML = list;
 }
 
