@@ -26,6 +26,10 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 05-12-2019
 
 #include <glog/logging.h>
 
+#include "geoviz/necklace_map/bead.h"
+#include "geoviz/necklace_map/compute_feasible_centroid_interval.h"
+#include "geoviz/necklace_map/compute_feasible_wedge_interval.h"
+
 
 namespace geoviz
 {
@@ -105,92 +109,6 @@ ComputeFeasibleInterval::ComputeFeasibleInterval(const Parameters& parameters) :
   ignore_point_regions_(parameters.ignore_point_regions)
 {}
 
-
-/**@class ComputeFeasibleCentroidInterval
- * @brief A functor to generate feasible centroid intervals for necklace bead placement.
- *
- * The generated centroid interval is the intersection of the necklace and a wedge @f$W@f$, such that the apex of @f$W@f$ is the necklace kernel, the inner bisector of @f$W@f$ intersects the centroid of a map region, and the inner angle of @f$W@f$ is twice some predefined angle.
- *
- * If the centroid of the region is the necklace kernel, the wedge bisector is undefined. In this case the wedge is chosen such that the inner bisector has the same direction as the positive x axis.
- */
-
-CircleRange::Ptr ComputeFeasibleCentroidInterval::operator()
-(
-  const Polygon& extent,
-  const Necklace::Ptr& necklace
-) const
-{
-  const Point centroid = ComputeCentroid()(extent);
-  const Number angle_rad = necklace->shape->ComputeAngle(centroid);
-
-  return std::make_shared<IntervalCentroid>(angle_rad - half_length_rad_, angle_rad + half_length_rad_);
-}
-
-/**@brief Construct a centroid interval generator.
- * @param length_rad @parblock the inner angle (in radians) of the wedge used when generating an interval.
- *
- * The centroid intervals cannot be empty or cover the whole necklace, i.e. the length is restricted to the range (0, 2*pi).
- * @endparblock
- */
-ComputeFeasibleCentroidInterval::ComputeFeasibleCentroidInterval(const Parameters& parameters) :
-  ComputeFeasibleInterval(parameters),
-  half_length_rad_(0.5 * parameters.centroid_interval_length_rad)
-{
-  CHECK_GT(half_length_rad_, 0);
-  CHECK_LT(half_length_rad_, M_PI);
-}
-
-
-/**@class ComputeFeasibleWedgeInterval
- * @brief A functor to generate feasible wedge intervals for necklace bead placement.
- *
- * The generated wedge interval is the intersection of the necklace and a wedge @f$W@f$, such that the apex of @f$W@f$ is the necklace kernel, @f$W@f$ contains a map region, and the inner angle of @f$W@f$ is minimal.
- *
- * If the region contains the necklace kernel, the wedge interval would cover the complete plane. In this case, a centroid interval in generated instead.
- */
-
-CircleRange::Ptr ComputeFeasibleWedgeInterval::operator()
-(
-  const Polygon& extent,
-  const Necklace::Ptr& necklace
-) const
-{
-  CHECK_GT(extent.size(), 0);
-  if (extent.size() == 1)
-    return (*fallback_)(extent, necklace);
-
-  const Number angle = necklace->shape->ComputeAngle(*extent.vertices_begin());
-  CircleRange range(angle, angle);
-
-  const Point& kernel = necklace->shape->kernel();
-  for (Polygon::Edge_const_iterator edge_iter = extent.edges_begin(); edge_iter != extent.edges_end(); ++edge_iter)
-  {
-    const Segment& segment = *edge_iter;
-    const Number angle_target = necklace->shape->ComputeAngle(segment[1]);
-    if
-    (
-      angle_target == range.angle_ccw_rad() ||
-      angle_target == range.angle_cw_rad() ||
-      !range.IntersectsRay(angle_target)
-    )
-    {
-      if (CGAL::left_turn( segment[0], segment[1], kernel ))
-        range.angle_ccw_rad() = angle_target;
-      else
-        range.angle_cw_rad() = angle_target;
-    }
-  }
-
-  if (range.IsDegenerate() || M_2xPI <= range.ComputeLength())
-    return (*fallback_)(extent, necklace);
-
-  // Force the angles into the correct range.
-  return std::make_shared<CircleRange>(range.angle_cw_rad(), range.angle_ccw_rad());
-}
-
-ComputeFeasibleWedgeInterval::ComputeFeasibleWedgeInterval(const Parameters& parameters) :
-  ComputeFeasibleInterval(parameters)
-{}
 
 } // namespace necklace_map
 } // namespace geoviz

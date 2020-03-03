@@ -17,20 +17,17 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-Created by tvl (t.vanlankveld@esciencecenter.nl) on 05-12-2019
+Created by tvl (t.vanlankveld@esciencecenter.nl) on 03-03-2020
 */
 
-#ifndef GEOVIZ_NECKLACE_MAP_COMPUTE_FEASIBLE_INTERVAL_H
-#define GEOVIZ_NECKLACE_MAP_COMPUTE_FEASIBLE_INTERVAL_H
-
-#include <memory>
-#include <set>
-#include <vector>
+#ifndef GEOVIZ_NECKLACE_MAP_COMPUTE_FEASIBLE_WEDGE_INTERVAL_H
+#define GEOVIZ_NECKLACE_MAP_COMPUTE_FEASIBLE_WEDGE_INTERVAL_H
 
 #include "geoviz/common/core_types.h"
-#include "geoviz/necklace_map/map_element.h"
+#include "geoviz/necklace_map/compute_feasible_interval.h"
 #include "geoviz/necklace_map/necklace.h"
 #include "geoviz/necklace_map/parameters.h"
+#include "geoviz/necklace_map/range.h"
 
 
 namespace geoviz
@@ -38,32 +35,24 @@ namespace geoviz
 namespace necklace_map
 {
 
-class ComputeFeasibleInterval
+class ComputeFeasibleWedgeInterval : public ComputeFeasibleInterval
 {
  public:
-  using Ptr = std::unique_ptr<ComputeFeasibleInterval>;
-
-  static Ptr New(const Parameters& parameters);
-
-  virtual CircleRange::Ptr operator()
-  (
-    const Polygon& extent,
-    const Necklace::Ptr& necklace
-  ) const = 0;
-
-  void operator()(MapElement::Ptr& element) const;
-
-  void operator()(std::vector<MapElement::Ptr>& elements) const;
+  CircleRange::Ptr operator()
+    (
+      const Polygon& extent,
+      const Necklace::Ptr& necklace
+    ) const;
 
  protected:
-  ComputeFeasibleInterval(const Parameters& parameters);
+  ComputeFeasibleWedgeInterval(const Parameters& parameters);
 
-  bool ignore_point_regions_;
-
-  std::set<Necklace::Ptr> to_clean_;
-}; // class ComputeFeasibleInterval
+ private:
+  friend ComputeFeasibleInterval;
+  ComputeFeasibleInterval::Ptr fallback_;
+}; // class ComputeFeasibleWedgeInterval
 
 } // namespace necklace_map
 } // namespace geoviz
 
-#endif //GEOVIZ_NECKLACE_MAP_COMPUTE_FEASIBLE_INTERVAL_H
+#endif //GEOVIZ_NECKLACE_MAP_COMPUTE_FEASIBLE_WEDGE_INTERVAL_H
