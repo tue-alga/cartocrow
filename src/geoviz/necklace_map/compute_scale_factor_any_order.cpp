@@ -420,7 +420,8 @@ class Optimizer
     Bead::Ptr curTasks[K];
     // initialize
     for (DynamicProgrammingCycleNode& node : cas) {
-      if (node.feasible->IntersectsRay(-M_PI) && node.feasible->from_rad() > -M_PI) // TODO(tvl) should this be moved to the angle 0, seeing how I generally use the ranges [0,2pi] instead of [-pi,pi]?
+      //if (node.feasible->IntersectsRay(-M_PI) && node.feasible->from_rad() > -M_PI) // TODO(tvl) should this be moved to the angle 0, seeing how I generally use the ranges [0,2pi] instead of [-pi,pi]?
+      if (node.feasible->IntersectsRay(0) && node.feasible->from_rad() > 0)
         curTasks[node.layer] = node.bead;
     }
 

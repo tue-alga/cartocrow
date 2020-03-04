@@ -36,7 +36,27 @@
     onchange="onChangedNecklaceSettings();"
     style="display: block;"
   >
-    <p>Glyph Separation Settings</p>
+    <p>Parameters</p>
+    <div>
+      <div>
+        <input
+          type="checkbox"
+          id="ignore_point_regions_in"
+          name="point_regions"
+        />
+        <label for="point_regions">Ignore Point Regions</label>
+      </div>
+      <select id="interval_in" name="interval">
+        <option value="centroid">Centroid</option>
+        <option value="wedge">Wedge</option>
+      </select>
+    </div>
+    <div>
+      <select id="order_in" name="order">
+        <option value="fixed">Fixed Order</option>
+        <option value="any">Any Order</option>
+      </select>
+    </div>
     <div>
       <input
         id="buffer_rad_in"

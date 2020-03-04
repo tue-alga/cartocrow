@@ -63,6 +63,8 @@ ComputeValidPlacement::Ptr ComputeValidPlacement::New(const Parameters& paramete
   {
     case OrderType::kFixed:
       return Ptr(new ComputeValidPlacementFixedOrder(parameters.aversion_ratio, parameters.buffer_rad));
+    case OrderType::kAny:
+      return Ptr(new ComputeValidPlacementAnyOrder(parameters.aversion_ratio, parameters.buffer_rad));
     default:
       return nullptr;
   }
@@ -100,6 +102,14 @@ void ComputeValidPlacement::operator()(const Number& scale_factor, Necklace::Ptr
     const Number radius_scaled = scale_factor * bead->radius_base;
     bead->covering_radius_rad = std::asin(radius_scaled / necklace_radius);
   }
+
+  // Sort the necklace beads by their current angle.
+  std::sort
+  (
+    necklace->beads.begin(),
+    necklace->beads.end(),
+    [](const Bead::Ptr& a, const Bead::Ptr& b) -> bool { return a->angle_rad < b->angle_rad; }
+  );
 
   // Compute the valid intervals.
   detail::ValidateScaleFactor validate(scale_factor, buffer_rad);

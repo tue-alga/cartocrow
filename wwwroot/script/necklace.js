@@ -135,9 +135,14 @@ function onChangedNecklaceSettings() {
     geometry_base64: necklace_geometry_base64,
     data_base64: necklace_data_base64,
     value: escape(data_value_in.value),
+    interval: interval_in.value,
+    ignore_point_regions: ignore_point_regions_in.checked,
+    order: order_in.value,
     buffer_rad: parseFloat(getNecklaceBuffer()),
     aversion_ratio: parseFloat(getNecklaceAversion())
   });
+
+  geometry_out.value = '';
 
   // Run the necklace map PHP script on the server.
   //ajaxPost('/script/run_necklace_map.php', body, replaceMapBySvgResponse());

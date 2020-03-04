@@ -466,7 +466,7 @@ void NecklaceWriter::DrawFeasibleIntervals()
     {
       for (const Bead::Ptr& bead : necklace->beads)
       {
-        if (!bead->valid)
+        if (!bead->feasible)
           continue;
 
         NecklaceShape::Ptr interval_shape = bead_shape_map_[bead];
@@ -816,7 +816,7 @@ void NecklaceWriter::CreateBeadIntervalShapes()
     size_t count = 0;
     for (const Bead::Ptr& bead : necklace->beads)
     {
-      if (!bead->valid)
+      if (!bead->feasible)
         continue;
 
       if (bead_shape_map_.find(bead) != bead_shape_map_.end())
