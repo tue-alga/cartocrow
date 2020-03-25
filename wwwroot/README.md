@@ -26,7 +26,7 @@ Subdirectories are organized as follows:
 - data : data stores such as databases.
 - html : doxygen-generated HTML documentation.
 - include : source code for native applications.
-- latex : docygen-generated LaTeX docuementation.
+- latex : doxygen-generated LaTeX documentation.
 - lib : native (server-side C++) libraries.
 - page : referenced webpages.
 - res : webpage resources like images and icons.
