@@ -121,10 +121,20 @@ function processNecklaceMapResponse() {
 }
 
 function onChangedNecklaceSettings() {
-  if (Date.now() - last_update < UPDATE_MILLISECONDS) return;
-  if (necklace_geometry_base64 === null || necklace_data_base64 === null)
-    return;
+  if (necklace_geometry_base64 === null) return;
 
+  if (necklace_data_base64 === null) {
+    let necklace_geometry = atob(necklace_geometry_base64);
+    processNecklaceMapResponse()(necklace_geometry);
+
+    // The geometry has not been processed yet.
+    geometry_out.value = '';
+    setColumnList('');
+
+    return;
+  }
+
+  if (Date.now() - last_update < UPDATE_MILLISECONDS) return;
   last_update = Date.now();
 
   let value_str = escape(data_value_in.value);

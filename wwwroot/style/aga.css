@@ -53,6 +53,9 @@ body,
 .aga-theme-meta.aga-panel {
   color: unset;
 }
+.aga-theme-meta a {
+  color: #777777;
+}
 .aga-theme-meta .aga-button:hover,
 .aga-theme-meta a:hover {
   background: #e7e7e7;
