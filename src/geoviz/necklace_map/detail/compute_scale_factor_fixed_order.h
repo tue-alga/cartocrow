@@ -82,7 +82,7 @@ class ComputeScaleFactorFixedOrder
 
  private:
   // Note that the scaler must be able to access the set by index.
-  using NodeSet = std::vector<BeadCycleNode>;
+  using NodeSet = std::vector<CycleNode>;
   NodeSet nodes_;
 
   Number necklace_radius_;

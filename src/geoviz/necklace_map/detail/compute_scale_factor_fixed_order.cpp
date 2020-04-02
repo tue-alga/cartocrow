@@ -90,8 +90,8 @@ ComputeScaleFactorFixedOrder::ComputeScaleFactorFixedOrder(const Necklace::Ptr& 
     CHECK_NOTNULL(node_iter->bead);
     nodes_.emplace_back(node_iter->bead);
 
-    nodes_.back().interval_cw_rad += M_2xPI;
-    nodes_.back().interval_ccw_rad += M_2xPI;
+    nodes_.back().valid->from() += M_2xPI;
+    nodes_.back().valid->to() += M_2xPI;
   }
 }
 
@@ -138,13 +138,13 @@ inline Number ComputeScaleFactorFixedOrder::buffer(const size_t i, const size_t 
 // Interval start a_i.
 inline const Number& ComputeScaleFactorFixedOrder::a(const size_t i) const
 {
-  return nodes_[i].interval_cw_rad;
+  return nodes_[i].valid->from();
 }
 
 // Interval end b_i.
 inline const Number& ComputeScaleFactorFixedOrder::b(const size_t i) const
 {
-  return nodes_[i].interval_ccw_rad;
+  return nodes_[i].valid->to();
 }
 
 // Radius r_i.

@@ -32,11 +32,13 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 03-03-2020
 #include "geoviz/necklace_map/detail/cycle_node.h"
 
 
+// TODO(tvl) if ever moving to C++17, implement nested namespace definition "namespace geoviz::necklace_map {"
 namespace geoviz
 {
 namespace necklace_map
 {
 
+// TODO(tvl) Note, directly based on the Java implementation: clean up.
 // TODO(tvl) move lots of functional stuff into the detail namespace
 
 // TODO(tvl) fix prototype code: const where possible
@@ -49,19 +51,24 @@ namespace necklace_map
 
 constexpr const Number EPSILON = 0.0000001;
 
-// TODO(tvl) Note, directly based on the Java implementation: clean up.
-// TODO(tvl) Should this contain the functionality of the CycleNode, or should it just be a Bead with (comp and) layer?
-struct AnyOrderCycleNode : detail::BeadCycleNode
+struct AnyOrderCycleNode : detail::CycleNode
 {
+  AnyOrderCycleNode(const Bead::Ptr& bead) :
+    CycleNode(bead), layer(-1)
+  {}
+
   AnyOrderCycleNode
   (
     const Bead::Ptr& bead,
-    const double angle_rad,
-    const Range::Ptr valid
-  ) : BeadCycleNode(bead), angle_rad(Modulo(angle_rad)), valid(valid), layer(-1) {}
+    const Number& angle_rad,
+    const Number& buffer_rad
+  ) :
+    CycleNode(bead, std::make_shared<Range>(angle_rad - buffer_rad, angle_rad + buffer_rad)),
+    layer(-1)
+  {
+    bead->angle_rad = angle_rad;
+  }
 
-  double angle_rad; // TODO(tvl) check if I can use bead.angle_rad instead.
-  Range::Ptr valid;
   int layer;
 }; // struct AnyOrderCycleNode
 
@@ -326,7 +333,7 @@ class Optimizer
       if (bead->radius_base <= 0)
         continue;
 
-      cas.emplace_back(bead, bead->angle_rad, bead->feasible);
+      cas.emplace_back(bead);
     }
     std::sort(cas.begin(), cas.end(), CompareByRange());
 
@@ -815,7 +822,7 @@ class Optimizer
       if (q < 0 || cd == nullptr) return false;
       double size = cd->radius_cur;
       if (lookup) size = cd->lookUpSize(t);
-      listCA.emplace_back(cd->bead, t + slices[0].eventLeft.time, std::make_shared<Range>(t + slices[0].eventLeft.time - size, t + slices[0].eventLeft.time + size));
+      listCA.emplace_back(cd->bead, t + slices[0].eventLeft.time, size);
       t = opt[s][q].time2;
       while (slices[s].left > t + EPSILON) {
         if (!slices[s].eventLeft.is_start) {
@@ -862,10 +869,10 @@ class Optimizer
 
     if (count == cas.size()) {
       // good stuff
-      for (int i = li; i <= ri; i++) {
+      /*for (int i = li; i <= ri; i++) {
         const AnyOrderCycleNode& ca = listCA[i];
         ca.bead->angle_rad = ca.angle_rad;
-      }
+      }*/
       return true;
     }
 

@@ -36,19 +36,19 @@ namespace necklace_map
 namespace detail
 {
 
-struct BeadCycleNode
+struct CycleNode
 {
-  using Ptr = std::shared_ptr<BeadCycleNode>;
+  using Ptr = std::shared_ptr<CycleNode>;
 
-  BeadCycleNode(const Bead::Ptr& bead);
+  CycleNode(const Bead::Ptr& bead);
+
+  CycleNode(const Bead::Ptr& bead, const Range::Ptr& valid);
 
   Bead::Ptr bead;
 
   // Note that unlike the bead's feasible interval, these can be larger than 2*PI.
-  // TODO(tvl) add mode to feasible interval to enable enforcing bounds within [0, 2pi]?
-  Number interval_cw_rad;
-  Number interval_ccw_rad;
-}; // struct BeadCycleNode
+  Range::Ptr valid;
+}; // struct CycleNode
 
 } // namespace detail
 } // namespace necklace_map

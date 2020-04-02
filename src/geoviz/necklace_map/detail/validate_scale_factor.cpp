@@ -71,7 +71,7 @@ bool ValidateScaleFactor::operator()(Necklace::Ptr& necklace) const
   // The validator expects the necklace sorted by the feasible intervals of its beads.
   //necklace->SortBeads();
 
-  using NodeSet = std::vector<detail::BeadCycleNode>;
+  using NodeSet = std::vector<detail::CycleNode>;
   NodeSet nodes;
   nodes.reserve(2 * num_beads);
 
@@ -90,8 +90,8 @@ bool ValidateScaleFactor::operator()(Necklace::Ptr& necklace) const
     CHECK_NOTNULL(node_iter->bead);
     nodes.emplace_back(node_iter->bead);
 
-    nodes.back().interval_cw_rad += M_2xPI;
-    nodes.back().interval_ccw_rad += M_2xPI;
+    nodes.back().valid->from() += M_2xPI;
+    nodes.back().valid->to() += M_2xPI;
   }
 
   // Compute the valid intervals at the specified scale factor, where beads can be placed without pairwise overlap.
@@ -100,22 +100,22 @@ bool ValidateScaleFactor::operator()(Necklace::Ptr& necklace) const
   // Adjust the clockwise extremes.
   for (size_t n = 1; n < nodes.size(); ++n)
   {
-    detail::BeadCycleNode& previous = nodes[n - 1];
-    detail::BeadCycleNode& current = nodes[n];
+    detail::CycleNode& previous = nodes[n - 1];
+    detail::CycleNode& current = nodes[n];
 
     // The bead must not overlap the previous one.
-    const Number distance_rad = current.interval_cw_rad - previous.interval_cw_rad;
+    const Number distance_rad = current.valid->from() - previous.valid->from();
     const Number min_distance_rad =
       2 * std::asin(scale_factor * (current.bead->radius_base + previous.bead->radius_base) / (2 * necklace_radius)) +
       buffer_rad;
 
     if (distance_rad < min_distance_rad)
     {
-      current.interval_cw_rad = previous.interval_cw_rad + min_distance_rad;
-      if (current.interval_ccw_rad < current.interval_cw_rad)
+      current.valid->from() = previous.valid->from() + min_distance_rad;
+      if (current.valid->to() < current.valid->from())
       {
         valid = false;
-        current.interval_cw_rad = current.interval_ccw_rad;
+        current.valid->from() = current.valid->to();
       }
     }
   }
@@ -126,19 +126,19 @@ bool ValidateScaleFactor::operator()(Necklace::Ptr& necklace) const
   // Adjust the counterclockwise extremes.
   for (ptrdiff_t n = nodes.size() - 2; 0 <= n; --n)
   {
-    detail::BeadCycleNode& next = nodes[n + 1];
-    detail::BeadCycleNode& current = nodes[n];
+    detail::CycleNode& next = nodes[n + 1];
+    detail::CycleNode& current = nodes[n];
 
     // The bead must not overlap the next one.
-    const Number distance_rad = next.interval_ccw_rad - current.interval_ccw_rad;
+    const Number distance_rad = next.valid->to() - current.valid->to();
     const Number min_distance_rad =
       2 * std::asin(scale_factor * (next.bead->radius_base + current.bead->radius_base) / (2 * necklace_radius));
 
     if (distance_rad < min_distance_rad)
     {
-      current.interval_ccw_rad = next.interval_ccw_rad - min_distance_rad;
-      if (current.interval_ccw_rad < current.interval_cw_rad)
-        current.interval_ccw_rad = current.interval_cw_rad;
+      current.valid->to() = next.valid->to() - min_distance_rad;
+      if (current.valid->to() < current.valid->from())
+        current.valid->to() = current.valid->from();
     }
   }
 
@@ -148,10 +148,10 @@ bool ValidateScaleFactor::operator()(Necklace::Ptr& necklace) const
     Bead::Ptr& bead = necklace->beads[n];
 
     // The second half of the nodes have the correct clockwise extreme (offset by 2pi).
-    const Number& from_rad = nodes[num_beads + n].interval_cw_rad - M_2xPI;
+    const Number& from_rad = nodes[num_beads + n].valid->from() - M_2xPI;
 
     // The first half of the nodes have the correct counterclockwise extreme.
-    const Number& to_rad = nodes[n].interval_ccw_rad;
+    const Number& to_rad = nodes[n].valid->to();
 
     bead->valid = std::make_shared<NecklaceInterval>(from_rad, to_rad);
     bead->angle_rad = bead->valid->from_rad();
