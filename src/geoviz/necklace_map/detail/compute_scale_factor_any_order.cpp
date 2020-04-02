@@ -64,9 +64,9 @@ AnyOrderCycleNode::AnyOrderCycleNode
   bead->angle_rad = angle_rad;
 }
 
-bool CompareAnyOrderCycleNode::operator()(const AnyOrderCycleNode& a, const AnyOrderCycleNode& b) const
+bool CompareAnyOrderCycleNode::operator()(const AnyOrderCycleNode::Ptr& a, const AnyOrderCycleNode::Ptr& b) const
 {
-  return a.valid->from() < b.valid->from();
+  return a->valid->from() < b->valid->from();
 }
 
 
@@ -296,7 +296,7 @@ double Optimizer::computeOptSize
     if (bead->radius_base <= 0)
       continue;
 
-    cas.emplace_back(bead);
+    cas.push_back(std::make_shared<AnyOrderCycleNode>(bead));
   }
   std::sort(cas.begin(), cas.end(), CompareAnyOrderCycleNode());
 
@@ -304,17 +304,17 @@ double Optimizer::computeOptSize
   std::vector<TaskEvent> events;  // TODO(tvl) reserve
   for (size_t i = 0; i < cas.size(); i++)
   {
-    AnyOrderCycleNode ca = cas[i];
-    events.emplace_back(-1, ca.valid->from(), true, i);
-    events.emplace_back(-1, ca.valid->to(), false, i);
+    const AnyOrderCycleNode::Ptr& ca = cas[i];
+    events.emplace_back(-1, ca->valid->from(), true, i);
+    events.emplace_back(-1, ca->valid->to(), false, i);
   }
   std::sort(events.begin(), events.end(), CompareTaskEvent());
 
   // find angle with max thickness
   int K = 0;
-  double angle = cas[0].valid->from();
-  for (const AnyOrderCycleNode& node : cas)
-    if (node.valid->Contains(angle))
+  double angle = cas[0]->valid->from();
+  for (const AnyOrderCycleNode::Ptr& node : cas)
+    if (node->valid->Contains(angle))
       K++;
   int optK = K;
   size_t opt = 0;
@@ -337,8 +337,8 @@ double Optimizer::computeOptSize
   std::vector<int> L;
   L.reserve(cas.size());
   int count = cas.size() - 1;
-  Range::Ptr curRange = cas[opt].valid;
-  cas[opt].layer = 0;
+  Range::Ptr curRange = cas[opt]->valid;
+  cas[opt]->layer = 0;
   L.push_back(opt);
   while (count > 0)
   {
@@ -347,8 +347,8 @@ double Optimizer::computeOptSize
 
     for (int i = 0; i < cas.size(); i++)
     {
-      if (cas[i].layer >= 0) continue;
-      Range r(curRange->to(), cas[i].valid->from());
+      if (cas[i]->layer >= 0) continue;
+      Range r(curRange->to(), cas[i]->valid->from());
       const Number length_rad = r.ComputeLength();
       if (length_rad < minAngleDif)
       {
@@ -358,8 +358,8 @@ double Optimizer::computeOptSize
     }
     count--;
     L.push_back(next);
-    cas[next].layer = 0;
-    curRange = cas[next].valid;
+    cas[next]->layer = 0;
+    curRange = cas[next]->valid;
   }
 
   // now really assign layers
@@ -371,14 +371,14 @@ double Optimizer::computeOptSize
     for (int j = 0; j < i; j++)
     { // TODO(tvl) this may be done more efficiently (as opposed to a full double loop)?
       int k2 = L[j];
-      if (cas[k2].layer != K - 1) continue;
-      if (cas[k2].valid->Intersects(cas[k1].valid)) good = false;
+      if (cas[k2]->layer != K - 1) continue;
+      if (cas[k2]->valid->Intersects(cas[k1]->valid)) good = false;
     }
     if (!good)
     {
-      cas[k1].layer = K;
+      cas[k1]->layer = K;
       K++;
-    } else cas[k1].layer = K - 1;
+    } else cas[k1]->layer = K - 1;
   }
 
   // Failure case: too thick.
@@ -391,19 +391,19 @@ double Optimizer::computeOptSize
   events.clear();
   for (int i = 0; i < cas.size(); i++)
   {
-    AnyOrderCycleNode ca = cas[i];
-    events.emplace_back(ca.layer, ca.valid->from(), true, i);
-    events.emplace_back(ca.layer, ca.valid->to(), false, i);
+    const AnyOrderCycleNode::Ptr& ca = cas[i];
+    events.emplace_back(ca->layer, ca->valid->from(), true, i);
+    events.emplace_back(ca->layer, ca->valid->to(), false, i);
   }
   std::sort(events.begin(), events.end(), CompareTaskEvent());
 
 
   Bead::Ptr curTasks[K];
   // initialize
-  for (AnyOrderCycleNode& node : cas)
+  for (const AnyOrderCycleNode::Ptr& node : cas)
   {
-    if (node.valid->Contains(0) && node.valid->from() > 0)
-      curTasks[node.layer] = node.bead;
+    if (node->valid->Contains(0) && node->valid->to() < M_2xPI)
+      curTasks[node->layer] = node->bead;
   }
 
   //find taskslices
@@ -413,7 +413,7 @@ double Optimizer::computeOptSize
     TaskEvent e = events[i];
     TaskEvent e2 = events[(i + 1) % events.size()];
     slices[i] = TaskSlice(e, e2, K, e2.time);
-    if (e.is_start) curTasks[e.layer] = cas[e.index_node].bead;
+    if (e.is_start) curTasks[e.layer] = cas[e.index_node]->bead;
     else curTasks[e.layer] = nullptr;
     for (int j = 0; j < K; j++)
       if (curTasks[j] != nullptr)
@@ -437,13 +437,12 @@ double Optimizer::computeOptSize
   double length = cg->shape->ComputeLength();
   for (int i = 0; i < cas.size(); i++)
   {
-    double max_bead_scale = length / (2.0 * cas[i].bead->radius_base);
+    double max_bead_scale = length / (2.0 * cas[i]->bead->radius_base);
     if (maxScale < 0 || max_bead_scale < maxScale)
       maxScale = max_bead_scale;
   }
   if (ingot)
-    maxScale = M_PI /
-               cas.size();  // TODO(tvl) even with ingot mode enabled: why do the previous calculations in this case?
+    maxScale = M_PI / cas.size();  // TODO(tvl) even with ingot mode enabled: why do the previous calculations in this case?
 
   // 1st binary search
   double x = 0.0;
@@ -455,7 +454,7 @@ double Optimizer::computeOptSize
     for (int i = 0; i < cas.size(); i++)
     {
       if (!ingot)
-        totalSize += cg->shape->ComputeCoveringSize(cas[i].valid, cas[i].bead->radius_base * h) + bufferSize;
+        totalSize += cg->shape->ComputeCoveringSize(cas[i]->valid, cas[i]->bead->radius_base * h) + bufferSize;
       else totalSize += h + bufferSize;
     }
     if (totalSize <= M_PI) x = h;
@@ -497,9 +496,9 @@ bool Optimizer::feasible
   for (int i = 0; i < cas.size(); i++)
   {
     if (!ingot)
-      cas[i].bead->covering_radius_rad =
-        necklace->shape->ComputeCoveringSize(cas[i].valid, cas[i].bead->radius_base * scale) + bufferSize;
-    else cas[i].bead->covering_radius_rad = scale + bufferSize;
+      cas[i]->bead->covering_radius_rad =
+        necklace->shape->ComputeCoveringSize(cas[i]->valid, cas[i]->bead->radius_base * scale) + bufferSize;
+    else cas[i]->bead->covering_radius_rad = scale + bufferSize;
   }
   for (int i = 0; i < slices.size(); i++)
   {
@@ -710,9 +709,9 @@ bool Optimizer::feasible2
   for (int i = 0; i < cas.size(); i++)
   {
     if (!ingot)
-      cas[i].bead->covering_radius_rad =
-        necklace->shape->ComputeCoveringSize(cas[i].valid, cas[i].bead->radius_base * scale) + bufferSize;
-    else cas[i].bead->covering_radius_rad = scale + bufferSize;
+      cas[i]->bead->covering_radius_rad =
+        necklace->shape->ComputeCoveringSize(cas[i]->valid, cas[i]->bead->radius_base * scale) + bufferSize;
+    else cas[i]->bead->covering_radius_rad = scale + bufferSize;
   }
   for (int i = 0; i < slices.size(); i++)
   {
@@ -871,7 +870,7 @@ bool Optimizer::feasibleLine2
     if (q < 0 || cd == nullptr) return false;
     double size = cd->radius_cur;
     if (lookup) size = cd->lookUpSize(t);
-    listCA.emplace_back(cd->bead, t + slices[0].eventLeft.time, size);
+    listCA.push_back(std::make_shared<AnyOrderCycleNode>(cd->bead, t + slices[0].eventLeft.time, size));
     t = opt[s][q].time2;
     while (slices[s].left > t + EPSILON)
     {
@@ -889,15 +888,13 @@ bool Optimizer::feasibleLine2
   // set to not found
   int count = 0;
   for (int i = 0; i < cas.size(); i++)
-  {
-    cas[i].bead->check = 0;
-  }
+    cas[i]->bead->check = 0;
 
   int li = listCA.size() - 1;
   int ri = listCA.size() - 1;
-  while (li >= 0 && listCA[li].valid->to() <= listCA[ri].valid->from() + M_2xPI)
+  while (li >= 0 && listCA[li]->valid->to() <= listCA[ri]->valid->from() + M_2xPI)
   {
-    Bead::Ptr c = listCA[li].bead;
+    Bead::Ptr c = listCA[li]->bead;
     c->check++;
     if (c->check == 1) count++;
     li--;
@@ -906,17 +903,17 @@ bool Optimizer::feasibleLine2
   while (li >= 0)
   {
     if (count == cas.size()) break;
-    AnyOrderCycleNode& ca1 = listCA[li];
-    AnyOrderCycleNode& ca2 = listCA[ri];
-    if (ca2.valid->from() + M_2xPI < ca1.valid->to())
+    AnyOrderCycleNode::Ptr& ca1 = listCA[li];
+    AnyOrderCycleNode::Ptr& ca2 = listCA[ri];
+    if (ca2->valid->from() + M_2xPI < ca1->valid->to())
     {
-      ca2.bead->check--;
-      if (ca2.bead->check == 0) count--;
+      ca2->bead->check--;
+      if (ca2->bead->check == 0) count--;
       ri--;
     } else
     {
-      ca1.bead->check++;
-      if (ca1.bead->check == 1) count++;
+      ca1->bead->check++;
+      if (ca1->bead->check == 1) count++;
       li--;
     }
   }

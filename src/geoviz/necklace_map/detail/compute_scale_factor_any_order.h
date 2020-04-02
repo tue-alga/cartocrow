@@ -43,6 +43,8 @@ namespace detail
 
 struct AnyOrderCycleNode : CycleNode
 {
+  using Ptr = std::shared_ptr<AnyOrderCycleNode>;
+
   AnyOrderCycleNode(const Bead::Ptr& bead);
 
   AnyOrderCycleNode(const Bead::Ptr& bead, const Number& angle_rad, const Number& buffer_rad);
@@ -53,7 +55,7 @@ struct AnyOrderCycleNode : CycleNode
 class CompareAnyOrderCycleNode
 {
  public:
-  bool operator()(const AnyOrderCycleNode& a, const AnyOrderCycleNode& b) const;
+  bool operator()(const AnyOrderCycleNode::Ptr& a, const AnyOrderCycleNode::Ptr& b) const;
 }; // class CompareAnyOrderCycleNode
 
 
@@ -185,7 +187,7 @@ class Optimizer
   );
 
  private:
-  using CountryAngleSet = std::vector<AnyOrderCycleNode>;
+  using CountryAngleSet = std::vector<AnyOrderCycleNode::Ptr>;
   CountryAngleSet cas;  //TODO(tvl) move from class member to function parameter?
 }; // class Optimizer
 
