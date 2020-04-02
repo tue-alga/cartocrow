@@ -26,7 +26,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 15-01-2020
 #include <memory>
 
 #include "geoviz/common/core_types.h"
-#include "geoviz/necklace_map/range.h"
+#include "geoviz/necklace_map/necklace_interval.h"
 
 
 namespace geoviz
@@ -60,7 +60,7 @@ class NecklaceShape
   virtual Number ComputeLength() const = 0;
   virtual Number ComputeRadius() const = 0;  // TODO(tvl) replace by ComputeLength()?
 
-  virtual Number ComputeCoveringSize(const CircleRange::Ptr range, const Number& radius) const = 0;
+  virtual Number ComputeCoveringSize(const Range::Ptr& range, const Number& radius) const = 0; // TODO(tvl) rename "ComputeCoveringRadius" and document.
 
   virtual bool IntersectRay(const Number& angle_rad, Point& intersection) const = 0;
 

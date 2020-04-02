@@ -38,11 +38,8 @@ namespace necklace_map
  * If the centroid of the region is the necklace kernel, the wedge bisector is undefined. In this case the wedge is chosen such that the inner bisector has the same direction as the positive x axis.
  */
 
-CircleRange::Ptr ComputeFeasibleCentroidInterval::operator()
-  (
-    const Polygon& extent,
-    const Necklace::Ptr& necklace
-  ) const
+NecklaceInterval::Ptr
+ComputeFeasibleCentroidInterval::operator()(const Polygon& extent, const Necklace::Ptr& necklace) const
 {
   const Point centroid = ComputeCentroid()(extent);
   const Number angle_rad = necklace->shape->ComputeAngle(centroid);

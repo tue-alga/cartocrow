@@ -53,7 +53,7 @@ void Necklace::SortBeads()
     beads.end(),
     [](const Bead::Ptr& a, const Bead::Ptr& b)
     {
-      return a->feasible->angle_cw_rad() < b->feasible->angle_cw_rad();
+      return a->feasible->from_rad() < b->feasible->from_rad();
     }
   );
 }

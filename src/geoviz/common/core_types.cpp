@@ -16,25 +16,29 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-Created by tvl (t.vanlankveld@esciencecenter.nl) on 05-12-2019
+Created by tvl (t.vanlankveld@esciencecenter.nl) on 01-04-2020
 */
 
-#ifndef GEOVIZ_COMMON_CORE_TYPES_H
-#define GEOVIZ_COMMON_CORE_TYPES_H
+#include "core_types.h"
 
-#include <cmath>
-
-#include "geoviz/common/cgal_types.h"
-#include "geoviz/common/polygon.h"
 
 namespace geoviz
 {
 
-/// The value 2*PI, defined for convenience.
-constexpr const Number M_2xPI = 2 * M_PI;
-
-Number Modulo(const Number& value, const Number& start = 0, const Number& range = M_2xPI);
+/**@brief Constrain a value to be beyond some starting value by at most some range.
+ * @param value the value to constrain.
+ * @param start the minimum value.
+ * @param range the maximum beyond the start value.
+ * @return the value in the constrained range of [start, start+range].
+ */
+Number Modulo(const Number& value, const Number& start /*= 0*/, const Number& range /*= M_2xPI*/)
+{
+  Number constrained = value;
+  while (constrained < start)
+    constrained += range;
+  while (start + range <= constrained)
+    constrained -= range;
+  return constrained;
+}
 
 } // namespace geoviz
-
-#endif //GEOVIZ_COMMON_CORE_TYPES_H

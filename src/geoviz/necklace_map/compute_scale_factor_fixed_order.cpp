@@ -22,7 +22,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 03-03-2020
 
 #include "compute_scale_factor_fixed_order.h"
 
-#include "geoviz/necklace_map/detail/compute_scale_factor.h"
+#include "geoviz/necklace_map/detail/compute_scale_factor_fixed_order.h"
 
 
 namespace geoviz

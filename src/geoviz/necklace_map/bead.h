@@ -26,7 +26,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 15-01-2020
 #include <memory>
 
 #include "geoviz/common/core_types.h"
-#include "geoviz/necklace_map/range.h"
+#include "geoviz/necklace_map/necklace_interval.h"
 
 
 namespace geoviz
@@ -45,7 +45,7 @@ struct Bead
   // Variables before scaling.
   Number radius_base;
 
-  CircleRange::Ptr feasible;
+  NecklaceInterval::Ptr feasible;
 
   std::string region_style;
 
@@ -58,7 +58,7 @@ struct Bead
   // Variables after scaling.
   // TODO(tvl) move into subclass?
 
-  CircleRange::Ptr valid;
+  NecklaceInterval::Ptr valid;
 
   Number angle_rad;
 }; // struct Bead

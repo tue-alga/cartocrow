@@ -20,7 +20,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Created by tvl (t.vanlankveld@esciencecenter.nl) on 06-01-2020
 */
 
-#include "compute_scale_factor.h"
+#include "compute_scale_factor_fixed_order.h"
 
 #include <glog/logging.h>
 
@@ -32,18 +32,20 @@ namespace necklace_map
 namespace detail
 {
 
-/**@class ComputeScaleFactor
- * @brief The base class for computing the scale factor.
- *
- * This mainly implements simple functions that are reused by the specific scale factor computation functors.
+
+/**@class ComputeScaleFactorFixedOrder
+ * @brief Computes the scale factor for collections ordered by their interval.
  */
 
-/**@brief Construct a scale factor computation functor.
+/**@brief Construct a fuixed order scale factor computation functor.
  * @param necklace the necklace for which to compute the scale factor.
  * @param buffer_rad the minimum angle in radians of the empty wedge between neighboring necklace beads that has the necklace kernel as apex.
  */
-ComputeScaleFactor::ComputeScaleFactor(const Necklace::Ptr& necklace, const Number& buffer_rad /*= 0*/)
-  : max_buffer_rad_(-1), nodes_(), necklace_radius_(necklace->shape->ComputeRadius()), buffer_rad_(buffer_rad)
+ComputeScaleFactorFixedOrder::ComputeScaleFactorFixedOrder(const Necklace::Ptr& necklace, const Number& buffer_rad /*= 0*/) :
+  max_buffer_rad_(-1),
+  nodes_(),
+  necklace_radius_(necklace->shape->ComputeRadius()),
+  buffer_rad_(buffer_rad)
 {
   // Clean beads without a feasible interval.
   std::vector<Bead::Ptr> keep_beads;
@@ -73,9 +75,6 @@ ComputeScaleFactor::ComputeScaleFactor(const Necklace::Ptr& necklace, const Numb
     // Note that when considering Bezier splines that are far from circular, using the intersection of the bead with the necklace actually breaks down: there can be situations where a fixed size bead can be placed in two non-contiguous intervals but not the space between them.
     // We should probably solve this by using non-overlapping wedges as opposed to the part of the necklace covered by the bead...
 
-
-
-
     bead->covering_radius_rad = std::asin(bead->radius_base / necklace_radius_);
     // Note that for an exact computation, the scaling factor should be inside this arcsine function.
     // This can be solved by performing a bisection search on the scale factors using a feasibility check to see if the scaled beads fit.
@@ -96,97 +95,9 @@ ComputeScaleFactor::ComputeScaleFactor(const Necklace::Ptr& necklace, const Numb
   }
 }
 
-/**@fn virtual Number ComputeScaleFactor::Optimize() = 0;
- * @brief Compute the optimal scale factor.
+/**@brief Compute the optimal scale factor.
  * @return the maximum value by which the necklace bead radii can be multiplied such that they maintain the required buffer size.
  */
-
-/**@fn const Number& ComputeScaleFactor::max_buffer_rad() const;
- * @brief Get the minimum angle in radians of the empty wedge between neighboring necklace beads that has the necklace kernel as apex.
- * @return the buffer size in radians.
- */
-
-inline size_t ComputeScaleFactor::size() const
-{
-  return nodes_.size();
-}
-
-// Buffer between i and j.
-inline Number ComputeScaleFactor::buffer(const size_t i, const size_t j) const
-{
-  CHECK_LE(i, j);
-  const ptrdiff_t num_buffers = j - i;
-  return num_buffers * buffer_rad_;
-}
-
-// Interval start a_i.
-inline const Number& ComputeScaleFactor::a(const size_t i) const
-{
-  return nodes_[i].interval_cw_rad;
-}
-
-// Interval end b_i.
-inline const Number& ComputeScaleFactor::b(const size_t i) const
-{
-  return nodes_[i].interval_ccw_rad;
-}
-
-// Radius r_i.
-inline const Number& ComputeScaleFactor::r(const size_t i) const
-{
-  return nodes_[i].bead->covering_radius_rad;
-}
-
-Number ComputeScaleFactor::r(const size_t i, const size_t j) const
-{
-  // Note that we could store (partial) results, but the gains would be minimal.
-  Number aggregate_radius = 0;
-  for (size_t n = i; n <= j; ++n)
-    aggregate_radius += r(n);
-  return aggregate_radius;
-}
-
-inline Point ComputeScaleFactor::l_(const size_t i, const size_t k) const
-{
-  Number x = 1 / (2 * r(i, k) - r(i));
-  CHECK_GE(x, 0);
-  return Point(x, (a(i) + buffer(i, k)) * x);
-}
-
-inline Point ComputeScaleFactor::r_(const size_t j, const size_t k) const
-{
-  Number x = -1 / (2 * r(k + 1, j) - r(j));
-  CHECK_LE(x, 0);
-  return Point(x, (b(j) - buffer(k, j)) * x);
-}
-
-Number ComputeScaleFactor::CorrectScaleFactor(const Number& rho) const
-{
-  // Determine a lower bound on the scale factor by reverse engineering based on the dilated covering radius.
-  // Note that while this forces the scale factor to be such that none of the scaled beads cover more than their scaled covering radius, the scale factor may often be increased slightly to exploit the freed up space on the scaled covering radius of the bead's neighbors.
-  Number scale_factor = rho;
-  for (size_t n = 0; n < size(); ++n)
-  {
-    const Number rho_prime =
-      necklace_radius_ * std::sin(rho * r(n)) / nodes_[n].bead->radius_base;
-    if (rho_prime < scale_factor)
-      scale_factor = rho_prime;
-  }
-  return scale_factor;
-}
-
-
-/**@class ComputeScaleFactorFixedOrder
- * @brief Computes the scale factor for collections ordered by their interval.
- */
-
-/**@brief Construct a fuixed order scale factor computation functor.
- * @param necklace the necklace for which to compute the scale factor.
- * @param buffer_rad the minimum angle in radians of the empty wedge between neighboring necklace beads that has the necklace kernel as apex.
- */
-ComputeScaleFactorFixedOrder::ComputeScaleFactorFixedOrder(const Necklace::Ptr& necklace, const Number& buffer_rad /*= 0*/) :
-  ComputeScaleFactor(necklace, buffer_rad) {}
-
 Number ComputeScaleFactorFixedOrder::Optimize()
 {
   // Check whether the buffer allows any nodes.
@@ -204,6 +115,80 @@ Number ComputeScaleFactorFixedOrder::Optimize()
     ? rho_fill_circle
     : std::min(CorrectScaleFactor(rho), rho_fill_circle);
   //TODO(tvl) add bisection search for true (valid) scale factor.
+}
+
+/**@fn const Number& ComputeScaleFactorFixedOrder::max_buffer_rad() const;
+ * @brief Get the minimum angle in radians of the empty wedge between neighboring necklace beads that has the necklace kernel as apex.
+ * @return the buffer size in radians.
+ */
+
+inline size_t ComputeScaleFactorFixedOrder::size() const
+{
+  return nodes_.size();
+}
+
+// Buffer between i and j.
+inline Number ComputeScaleFactorFixedOrder::buffer(const size_t i, const size_t j) const
+{
+  CHECK_LE(i, j);
+  const ptrdiff_t num_buffers = j - i;
+  return num_buffers * buffer_rad_;
+}
+
+// Interval start a_i.
+inline const Number& ComputeScaleFactorFixedOrder::a(const size_t i) const
+{
+  return nodes_[i].interval_cw_rad;
+}
+
+// Interval end b_i.
+inline const Number& ComputeScaleFactorFixedOrder::b(const size_t i) const
+{
+  return nodes_[i].interval_ccw_rad;
+}
+
+// Radius r_i.
+inline const Number& ComputeScaleFactorFixedOrder::r(const size_t i) const
+{
+  return nodes_[i].bead->covering_radius_rad;
+}
+
+Number ComputeScaleFactorFixedOrder::r(const size_t i, const size_t j) const
+{
+  // Note that we could store (partial) results, but the gains would be minimal.
+  Number aggregate_radius = 0;
+  for (size_t n = i; n <= j; ++n)
+    aggregate_radius += r(n);
+  return aggregate_radius;
+}
+
+inline Point ComputeScaleFactorFixedOrder::l_(const size_t i, const size_t k) const
+{
+  Number x = 1 / (2 * r(i, k) - r(i));
+  CHECK_GE(x, 0);
+  return Point(x, (a(i) + buffer(i, k)) * x);
+}
+
+inline Point ComputeScaleFactorFixedOrder::r_(const size_t j, const size_t k) const
+{
+  Number x = -1 / (2 * r(k + 1, j) - r(j));
+  CHECK_LE(x, 0);
+  return Point(x, (b(j) - buffer(k, j)) * x);
+}
+
+Number ComputeScaleFactorFixedOrder::CorrectScaleFactor(const Number& rho) const
+{
+  // Determine a lower bound on the scale factor by reverse engineering based on the dilated covering radius.
+  // Note that while this forces the scale factor to be such that none of the scaled beads cover more than their scaled covering radius, the scale factor may often be increased slightly to exploit the freed up space on the scaled covering radius of the bead's neighbors.
+  Number scale_factor = rho;
+  for (size_t n = 0; n < size(); ++n)
+  {
+    const Number rho_prime =
+      necklace_radius_ * std::sin(rho * r(n)) / nodes_[n].bead->radius_base;
+    if (rho_prime < scale_factor)
+      scale_factor = rho_prime;
+  }
+  return scale_factor;
 }
 
 // Note that this computes the subproblem including J (unlike C++ customs defining the end as one-past).

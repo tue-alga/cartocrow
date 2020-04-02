@@ -32,65 +32,33 @@ namespace geoviz
 namespace necklace_map
 {
 
-class CircleRange
+class Range
 {
  public:
-  using Ptr = std::shared_ptr<CircleRange>;
+  using Ptr = std::shared_ptr<Range>;
 
-  static Number Modulo(const Number& value_rad, const Number& start_rad = 0);
+  Range(const Number& from, const Number& to);
+  Range(const Range& range);
 
-  CircleRange(const Number& angle_cw_rad, const Number& angle_ccw_rad);
-  CircleRange(const CircleRange& range);
+  const Number& from() const;
+  Number& from();
+  const Number& to() const;
+  Number& to();
 
-  // TODO(tvl) renaming to from_rad(), to_rad() may be more natural for ranges...
-  const Number& angle_cw_rad() const;
-  Number& angle_cw_rad();
-  const Number& angle_ccw_rad() const;
-  Number& angle_ccw_rad();
-
-  inline const Number& from_rad() const { return angle_cw_rad(); }
-  inline Number& from_rad() { return angle_cw_rad(); }
-  inline const Number& to_rad() const { return angle_ccw_rad(); }
-  inline Number& to_rad() { return angle_ccw_rad(); }
-
-  bool IsValid() const;
+  virtual bool IsValid() const;
 
   bool IsDegenerate() const;
 
-  bool IsCircle() const;
+  bool Contains(const Number& value) const;
 
-  bool IntersectsRay(const Number& angle_rad) const;
-
-  bool Intersects(const CircleRange::Ptr& range) const;
-
-  Number ComputeCentroid() const;
+  bool Intersects(const Range::Ptr& range) const;
 
   Number ComputeLength() const;
 
-  virtual Number ComputeOrder() const;
-
- protected:
-  Number angle_cw_rad_; // Internally, this angle is adjusted to be in the range [0, 2*pi).
-  Number angle_ccw_rad_; // For convenience, this angle is adjusted to be in the range [angle_from_rad, angle_from_rad+2*pi).
-}; // class CircleRange
-
-
-class IntervalCentroid : public CircleRange
-{
- public:
-  IntervalCentroid(const Number& angle_cw_rad, const Number& angle_ccw_rad);
-
-  Number ComputeOrder() const;  // Order based on centroid.
-}; // class IntervalCentroid
-
-
-class IntervalWedge : public CircleRange
-{
- public:
-  IntervalWedge(const Number& angle_cw_rad, const Number& angle_ccw_rad);
-
-  Number ComputeOrder() const;  // Order based on begin.
-}; // class IntervalWedge
+ private:
+  Number from_;
+  Number to_;
+}; // class Range
 
 } // namespace necklace_map
 } // namespace geoviz

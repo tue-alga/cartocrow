@@ -38,18 +38,15 @@ namespace necklace_map
  * If the region contains the necklace kernel, the wedge interval would cover the complete plane. In this case, a centroid interval in generated instead.
  */
 
-CircleRange::Ptr ComputeFeasibleWedgeInterval::operator()
-  (
-    const Polygon& extent,
-    const Necklace::Ptr& necklace
-  ) const
+NecklaceInterval::Ptr
+ComputeFeasibleWedgeInterval::operator()(const Polygon& extent, const Necklace::Ptr& necklace) const
 {
   CHECK_GT(extent.size(), 0);
   if (extent.size() == 1)
     return (*fallback_)(extent, necklace);
 
   const Number angle = necklace->shape->ComputeAngle(*extent.vertices_begin());
-  CircleRange range(angle, angle);
+  NecklaceInterval obscured(angle, angle);
 
   const Point& kernel = necklace->shape->kernel();
   for (Polygon::Edge_const_iterator edge_iter = extent.edges_begin(); edge_iter != extent.edges_end(); ++edge_iter)
@@ -57,24 +54,24 @@ CircleRange::Ptr ComputeFeasibleWedgeInterval::operator()
     const Segment& segment = *edge_iter;
     const Number angle_target = necklace->shape->ComputeAngle(segment[1]);
     if
-      (
-      angle_target == range.angle_ccw_rad() ||
-      angle_target == range.angle_cw_rad() ||
-      !range.IntersectsRay(angle_target)
-      )
+    (
+      angle_target == obscured.to_rad() ||
+      angle_target == obscured.from_rad() ||
+      !obscured.Contains(angle_target)
+    )
     {
       if (CGAL::left_turn( segment[0], segment[1], kernel ))
-        range.angle_ccw_rad() = angle_target;
+        obscured.to_rad() = angle_target;
       else
-        range.angle_cw_rad() = angle_target;
+        obscured.from_rad() = angle_target;
     }
   }
 
-  if (range.IsDegenerate() || M_2xPI <= range.ComputeLength())
+  if (obscured.IsDegenerate() || M_2xPI <= obscured.ComputeLength())
     return (*fallback_)(extent, necklace);
 
-  // Force the angles into the correct range.
-  return std::make_shared<CircleRange>(range.angle_cw_rad(), range.angle_ccw_rad());
+  // Force the angles into the correct interval.
+  return std::make_shared<IntervalWedge>(obscured.from_rad(), obscured.to_rad());
 }
 
 ComputeFeasibleWedgeInterval::ComputeFeasibleWedgeInterval(const Parameters& parameters) :

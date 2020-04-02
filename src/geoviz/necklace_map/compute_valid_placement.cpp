@@ -24,7 +24,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 07-01-2020
 
 #include <glog/logging.h>
 
-#include "geoviz/necklace_map/range.h"
+#include "geoviz/necklace_map/necklace_interval.h"
 #include "geoviz/necklace_map/detail/cycle_node.h"
 
 
@@ -135,9 +135,9 @@ void ComputeValidPlacement::operator()(const Number& scale_factor, Necklace::Ptr
       Bead::Ptr& prev = necklace->beads[index_prev];
       const Bead::Ptr& next = necklace->beads[index_next];
 
-      const Number offset_from_prev_rad = CircleRange(prev->angle_rad, bead->angle_rad).ComputeLength();
-      const Number distance_neighbors_rad = CircleRange(prev->angle_rad, next->angle_rad).ComputeLength();
-      const Number offset_from_centroid_rad = CircleRange
+      const Number offset_from_prev_rad = NecklaceInterval(prev->angle_rad, bead->angle_rad).ComputeLength();
+      const Number distance_neighbors_rad = NecklaceInterval(prev->angle_rad, next->angle_rad).ComputeLength();
+      const Number offset_from_centroid_rad = NecklaceInterval
       (
         bead->feasible->ComputeCentroid(),
         bead->angle_rad
@@ -175,14 +175,14 @@ void ComputeValidPlacement::operator()(const Number& scale_factor, Necklace::Ptr
       // Solve w_3 * x^3 + w_2 * x^2 + w_1 * x + w_0 = 0 up to the specified precision.
       if (std::abs(w_3) < precision && std::abs(w_2) < precision)
       {
-        const Number x = CircleRange::Modulo(-w_0 / w_1 + prev->angle_rad);
+        const Number x = Modulo(-w_0 / w_1 + prev->angle_rad);
 
-        if (!bead->feasible->IntersectsRay(x))
+        if (!bead->feasible->Contains(x))
         {
           if (0 < 2 * offset_from_prev_rad - distance_to_prev_min + distance_to_prev_max)
-            bead->angle_rad = bead->feasible->angle_cw_rad();
+            bead->angle_rad = bead->feasible->from_rad();
           else
-            bead->angle_rad = bead->feasible->angle_ccw_rad();
+            bead->angle_rad = bead->feasible->to_rad();
         }
         else
           bead->angle_rad = x;
@@ -197,14 +197,14 @@ void ComputeValidPlacement::operator()(const Number& scale_factor, Necklace::Ptr
         const double theta_3 = std::acos(r / rho) / 3;
         const double rho_3 = std::pow(rho, 1 / 3.0);
 
-        const Number x = CircleRange::Modulo
+        const Number x = Modulo
         (
           prev->angle_rad -
           rho_3 * std::cos(theta_3) - w_2 / (3 * w_3) +
           rho_3 * std::sqrt(3.0) * std::sin(theta_3)
         );
 
-        if (!bead->feasible->IntersectsRay(x))
+        if (!bead->feasible->Contains(x))
         {
           if
           (
@@ -213,9 +213,9 @@ void ComputeValidPlacement::operator()(const Number& scale_factor, Necklace::Ptr
             centroid_ratio * (offset_prev_to_bubble - offset_from_prev_rad) *
             (offset_from_prev_rad - distance_to_prev_min) * (offset_from_prev_rad - distance_to_prev_max)
           )
-            bead->angle_rad = bead->feasible->angle_cw_rad();
+            bead->angle_rad = bead->feasible->from_rad();
           else
-            bead->angle_rad = bead->feasible->angle_ccw_rad();
+            bead->angle_rad = bead->feasible->to_rad();
         }
         else
           bead->angle_rad = x;
@@ -315,10 +315,10 @@ void ComputeValidPlacementAnyOrder::SwapBeads(Necklace::Ptr& necklace) const
     const Number& radius_next = next->covering_radius_rad;
 
     // Note that for the swapped angles, the buffers cancel each other out.
-    const Number swapped_angle_bead_rad = CircleRange::Modulo(next->angle_rad + radius_next - radius_bead);
-    const Number swapped_angle_next_rad = CircleRange::Modulo(bead->angle_rad - radius_bead + radius_next);
+    const Number swapped_angle_bead_rad = Modulo(next->angle_rad + radius_next - radius_bead);
+    const Number swapped_angle_next_rad = Modulo(bead->angle_rad - radius_bead + radius_next);
 
-    if (bead->feasible->IntersectsRay(swapped_angle_bead_rad) && next->feasible->IntersectsRay(swapped_angle_next_rad))
+    if (bead->feasible->Contains(swapped_angle_bead_rad) && next->feasible->Contains(swapped_angle_next_rad))
     {
       const Number centroid_bead_rad = bead->feasible->ComputeCentroid();
       const Number centroid_next_rad = next->feasible->ComputeCentroid();

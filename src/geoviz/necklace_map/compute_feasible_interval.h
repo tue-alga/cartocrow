@@ -30,6 +30,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 05-12-2019
 #include "geoviz/common/core_types.h"
 #include "geoviz/necklace_map/map_element.h"
 #include "geoviz/necklace_map/necklace.h"
+#include "geoviz/necklace_map/necklace_interval.h"
 #include "geoviz/necklace_map/parameters.h"
 
 
@@ -45,11 +46,7 @@ class ComputeFeasibleInterval
 
   static Ptr New(const Parameters& parameters);
 
-  virtual CircleRange::Ptr operator()
-  (
-    const Polygon& extent,
-    const Necklace::Ptr& necklace
-  ) const = 0;
+  virtual NecklaceInterval::Ptr operator()(const Polygon& extent, const Necklace::Ptr& necklace) const = 0;
 
   void operator()(MapElement::Ptr& element) const;
 

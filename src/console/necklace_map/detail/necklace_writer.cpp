@@ -485,12 +485,12 @@ void NecklaceWriter::DrawFeasibleIntervals()
         }
         {
           // Draw the feasible interval as a circular path.
-          const Number& angle_cw_rad = bead->feasible->angle_cw_rad();
-          const Number& angle_ccw_rad = bead->feasible->angle_ccw_rad();
+          const Number& from_rad = bead->feasible->from_rad();
+          const Number& to_rad = bead->feasible->to_rad();
 
           Point endpoint_cw, endpoint_ccw;
-          CHECK(interval_shape->IntersectRay(angle_cw_rad, endpoint_cw));
-          CHECK(interval_shape->IntersectRay(angle_ccw_rad, endpoint_ccw));
+          CHECK(interval_shape->IntersectRay(from_rad, endpoint_cw));
+          CHECK(interval_shape->IntersectRay(to_rad, endpoint_ccw));
           const Number radius = interval_shape->ComputeRadius();
 
           std::stringstream stream;
@@ -555,12 +555,12 @@ void NecklaceWriter::DrawValidIntervals()
         }
         {
           // Draw the valid interval as a wedge from the necklace kernel to either the necklace, or the feasible interval if it is also drawn.
-          const Number& angle_cw_rad = bead->valid->angle_cw_rad();
-          const Number& angle_ccw_rad = bead->valid->angle_ccw_rad();
+          const Number& from_rad = bead->valid->from_rad();
+          const Number& to_rad = bead->valid->to_rad();
 
           Point endpoint_cw, endpoint_ccw;
-          CHECK(interval_shape->IntersectRay(angle_cw_rad, endpoint_cw));
-          CHECK(interval_shape->IntersectRay(angle_ccw_rad, endpoint_ccw));
+          CHECK(interval_shape->IntersectRay(from_rad, endpoint_cw));
+          CHECK(interval_shape->IntersectRay(to_rad, endpoint_ccw));
 
           std::stringstream stream;
           stream << std::setprecision(kIntervalNumericPrecision);

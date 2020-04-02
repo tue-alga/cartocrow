@@ -42,8 +42,8 @@ namespace detail
  */
 BeadCycleNode::BeadCycleNode(const Bead::Ptr& bead) :
   bead(bead),
-  interval_cw_rad(bead->feasible->angle_cw_rad()),
-  interval_ccw_rad(bead->feasible->angle_ccw_rad()) {}
+  interval_cw_rad(bead->feasible->from_rad()),
+  interval_ccw_rad(bead->feasible->to_rad()) {}
 
 /**@fn Bead::Ptr BeadCycleNode::bead;
  * @brief The bead.

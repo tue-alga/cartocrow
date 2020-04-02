@@ -53,14 +53,14 @@ Bead::Bead(const Number& radius_base, const std::string& style)
 bool Bead::IsValid() const
 {
   CHECK(false) << "Implementation not checked";
-  return feasible != nullptr && feasible->IsValid() && feasible->IntersectsRay(angle_rad);
+  return feasible != nullptr && feasible->IsValid() && feasible->Contains(angle_rad);
 }
 
 /**@fn Number Bead::radius_base;
  * @brief The radius before scaling.
  */
 
-/**@fn CircleRange::Ptr Bead::feasible;
+/**@fn Range::Ptr Bead::feasible;
  * @brief The feasible interval.
  */
 
@@ -70,7 +70,7 @@ bool Bead::IsValid() const
  * This covering radius is the inner angle of the wedge that has the necklace kernel as apex and for which one leg intersects the bead center and the other leg is tangent to the boundary of the bead.
  */
 
-/**@fn CircleRange::Ptr Bead::valid;
+/**@fn Range::Ptr Bead::valid;
  * @brief The valid interval.
  */
 

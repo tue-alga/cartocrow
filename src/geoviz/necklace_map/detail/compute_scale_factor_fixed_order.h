@@ -38,16 +38,16 @@ namespace necklace_map
 namespace detail
 {
 
-class ComputeScaleFactor
+class ComputeScaleFactorFixedOrder
 {
  public:
-  ComputeScaleFactor(const Necklace::Ptr& necklace, const Number& buffer_rad = 0);
+  ComputeScaleFactorFixedOrder(const Necklace::Ptr& necklace, const Number& buffer_rad = 0);
 
-  virtual Number Optimize() = 0;
+  Number Optimize();
 
   const Number& max_buffer_rad() const { return max_buffer_rad_; }
 
- protected:
+ private:
   // Number of nodes.
   size_t size() const;
 
@@ -74,6 +74,9 @@ class ComputeScaleFactor
 
   Number CorrectScaleFactor(const Number& rho) const;
 
+  // Optimize the scale factor for the beads in the range [I, J].
+  Number OptimizeSubProblem(const size_t I, const size_t J, Number& max_buffer_rad) const;
+
  protected:
   Number max_buffer_rad_;
 
@@ -84,20 +87,6 @@ class ComputeScaleFactor
 
   Number necklace_radius_;
   Number buffer_rad_;
-};
-
-
-// TODO(tvl) check whether this specialization should be merged with the base class: do the any-order computations benefit from a similar approach?
-class ComputeScaleFactorFixedOrder : public ComputeScaleFactor
-{
- public:
-  ComputeScaleFactorFixedOrder(const Necklace::Ptr& necklace, const Number& buffer_rad = 0);
-
-  Number Optimize();
-
- private:
-  // Optimize the scale factor for the beads in the range [I, J].
-  Number OptimizeSubProblem(const size_t I, const size_t J, Number& max_buffer_rad) const;
 }; // class ComputeScaleFactorFixedOrder
 
 } // namespace detail

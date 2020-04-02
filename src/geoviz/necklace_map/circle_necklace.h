@@ -45,7 +45,7 @@ class CircleNecklace : public NecklaceShape
 
   Number ComputeLength() const;
   Number ComputeRadius() const;
-  Number ComputeCoveringSize(const CircleRange::Ptr range, const Number& radius) const;
+  Number ComputeCoveringSize(const Range::Ptr& range, const Number& radius) const;
 
   bool IntersectRay(const Number& angle_rad, Point& intersection) const;
 
