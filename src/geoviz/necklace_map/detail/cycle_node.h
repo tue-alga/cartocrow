@@ -36,6 +36,8 @@ namespace necklace_map
 namespace detail
 {
 
+// A bead with valid interval.
+// The main use is in a sorted cycle of beads that may go around the circle multiple times.
 struct CycleNode
 {
   using Ptr = std::shared_ptr<CycleNode>;
@@ -46,7 +48,7 @@ struct CycleNode
 
   Bead::Ptr bead;
 
-  // Note that unlike the bead's feasible interval, these can be larger than 2*PI.
+  // Note that unlike the bead's feasible interval, the valid interval may go outside the [0, 2pi) range.
   Range::Ptr valid;
 }; // struct CycleNode
 

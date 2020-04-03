@@ -88,45 +88,39 @@ bool CompareTaskEvent::operator()(const TaskEvent& a, const TaskEvent& b) const
   return a.type == TaskEvent::Type::kTo && b.type == TaskEvent::Type::kFrom;
 }
 
+
+
+
+
+BeadData::BeadData(const Bead::Ptr& bead, const int layer) :
+  bead(bead),
+  layer(layer),
+  disabled(bead)
+{
+  if (bead)
+    valid = std::make_shared<Range>(*bead->feasible);
+  else
+    valid = std::make_shared<Range>(0, 0);
+}
+
+BeadData::BeadData(const BeadData& data)
+{
+  bead = data.bead;
+  layer = data.layer;
+  disabled = false;
+  valid = std::make_shared<Range>(*data.valid);
+}
+
+
+
+
+
+
 bool BitString::CheckFit(const int bit) { return bit < 32; }
 
 void BitString::SetBit(const int bit) { CHECK(CheckFit(bit)); bits = 1 << bit; }
 
 bool BitString::AddBit(const int bit) { CHECK(CheckFit(bit)); return bits |= (1 << bit); }
-
-
-
-
-
-CountryData::CountryData(const Bead::Ptr& bead, const int layer) :
-  bead(bead),
-  radius_cur(bead ? bead->radius_base : 0),
-  layer(layer),
-  disabled(bead)
-{
-  if (bead)
-    range_cur = std::make_shared<Range>(*bead->feasible);
-  else
-    range_cur = std::make_shared<Range>(0, 0);
-}
-
-CountryData::CountryData(const CountryData& cd)
-{
-  bead = cd.bead;
-  layer = cd.layer;
-  disabled = false;
-  radius_cur = cd.radius_cur;
-  range_cur = std::make_shared<Range>(*cd.range_cur);
-}
-
-double CountryData::lookUpSize(double angle)
-{
-  /*Range r(range_cur->from_rad(), angle);
-  int k = (int)std::round(r.ComputeLength() / LOOKUP_TABLE_STEP);
-  if (k >= 0 && k < c.lookUpSize.length) return c.lookUpSize[k];
-  else*/
-  return radius_cur;
-}
 
 
 TaskSlice::TaskSlice() : eventLeft(), eventRight(), tasks(), taskCount(0), left(0), right(0), sets(), layers() {}
@@ -136,7 +130,7 @@ TaskSlice::TaskSlice(
   const TaskEvent& eRight,
   const int K,
   const double right
-) :  // TODO(tvl) note Java code had bug here, where 'right' was not actually used; is this parameter needed?
+) :  // TODO(tvl) note Java code had bug (?) here, where 'right' was not actually used; is this parameter needed?
   eventLeft(eLeft),
   eventRight(eRight),
   taskCount(0),
@@ -165,14 +159,14 @@ TaskSlice::TaskSlice(const TaskSlice& ts, const double offset, const int step) :
     else
     {
       //if (ts.tasks[i].range.from <= ts.tasks[i].range.to || step > 0 || right > ts.tasks[i].range.from) {
-      if (step > 0 || right > ts.tasks[i]->range_cur->to() - offset || !ts.tasks[i]->range_cur->Contains(offset) ||
-          ts.tasks[i]->range_cur->from() == offset)
+      if (step > 0 || right > ts.tasks[i]->valid->to() - offset || !ts.tasks[i]->valid->Contains(offset) ||
+          ts.tasks[i]->valid->from() == offset)
       {
-        tasks[i] = std::make_shared<CountryData>(*ts.tasks[i]);  // TODO(tvl) check whether this should be a new pointer or could also be a pointer to the existing object.
-        Range r1(tasks[i]->range_cur->from(), eventLeft.angle_rad);
-        Range r2(eventLeft.angle_rad, tasks[i]->range_cur->to());
-        tasks[i]->range_cur->from() = left - r1.ComputeLength();
-        tasks[i]->range_cur->to() = left + r2.ComputeLength();
+        tasks[i] = std::make_shared<BeadData>(*ts.tasks[i]);  // TODO(tvl) check whether this should be a new pointer or could also be a pointer to the existing object.
+        Range r1(tasks[i]->valid->from(), eventLeft.angle_rad);
+        Range r2(eventLeft.angle_rad, tasks[i]->valid->to());
+        tasks[i]->valid->from() = left - r1.ComputeLength();
+        tasks[i]->valid->to() = left + r2.ComputeLength();
       } else tasks[i] = nullptr;
     }
   }
@@ -186,14 +180,14 @@ void TaskSlice::reset()
   {
     if (tasks[i] != nullptr)
     {
-      CountryData::Ptr cd = tasks[i];
-      cd->range_cur = std::make_shared<Range>(*cd->bead->feasible);
+      BeadData::Ptr cd = tasks[i];
+      cd->valid = std::make_shared<Range>(*cd->bead->feasible);
       cd->disabled = false;
     }
   }
 }
 
-void TaskSlice::rotate(const double value, const std::vector<CountryData::Ptr>& cds, const BitString& split)
+void TaskSlice::rotate(const double value, const std::vector<BeadData::Ptr>& cds, const BitString& split)
 {
   Range r1(value, left);
   Range r2(value, right);
@@ -206,42 +200,43 @@ void TaskSlice::rotate(const double value, const std::vector<CountryData::Ptr>& 
   {
     if (tasks[i] != nullptr)
     {
-      CountryData::Ptr cd = tasks[i];
+      BeadData::Ptr cd = tasks[i];
       if (cds[i] != nullptr && cds[i]->bead == cd->bead)
       {
         if (split.HasBit(i))
         {
-          r2 = Range(value, cd->range_cur->to());
-          cd->range_cur->from() = 0.0;
-          cd->range_cur->to() = r2.ComputeLength();
+          r2 = Range(value, cd->valid->to());
+          cd->valid->from() = 0.0;
+          cd->valid->to() = r2.ComputeLength();
           if (r2.ComputeLength() - EPSILON <= left)
             cd->disabled = true;
         } else
         {
-          r1 = Range(value, cd->range_cur->from());
-          cd->range_cur->from() = r1.ComputeLength();
-          cd->range_cur->to() = M_2xPI;
+          r1 = Range(value, cd->valid->from());
+          cd->valid->from() = r1.ComputeLength();
+          cd->valid->to() = M_2xPI;
           if (r1.ComputeLength() + EPSILON >= right)
             cd->disabled = true;
         }
       } else
       {
-        r1 = Range(value, cd->range_cur->from());
-        r2 = Range(value, cd->range_cur->to());
-        cd->range_cur->from() = r1.ComputeLength();
-        cd->range_cur->to() = r2.ComputeLength();
-        if (cd->range_cur->to() < EPSILON)
-          cd->range_cur->to() = M_2xPI;
+        r1 = Range(value, cd->valid->from());
+        r2 = Range(value, cd->valid->to());
+        cd->valid->from() = r1.ComputeLength();
+        cd->valid->to() = r2.ComputeLength();
+        if (cd->valid->to() < EPSILON)
+          cd->valid->to() = M_2xPI;
       }
     }
   }
 }
 
-void TaskSlice::addTask(const CountryData::Ptr& task)
+void TaskSlice::addTask(const BeadData::Ptr& task)
 {
   CHECK_LT(task->layer, tasks.size());
   tasks[task->layer] = task;
   taskCount++;
+  CHECK(BitString::CheckFit(taskCount));
 }
 
 void TaskSlice::produceSets()
@@ -427,7 +422,7 @@ double Optimizer::computeOptSize
     else curTasks[e.node->layer] = nullptr;
     for (int j = 0; j < K; j++)
       if (curTasks[j] != nullptr)
-        slices[i].addTask(std::make_shared<CountryData>(curTasks[j], j));
+        slices[i].addTask(std::make_shared<BeadData>(curTasks[j], j));
   }
 
   for (TaskSlice& slice : slices)
@@ -510,14 +505,6 @@ bool Optimizer::feasible
         necklace->shape->ComputeCoveringSize(cas[i]->valid, cas[i]->bead->radius_base * scale) + bufferSize;
     else cas[i]->bead->covering_radius_rad = scale + bufferSize;
   }
-  for (int i = 0; i < slices.size(); i++)
-  {
-    for (int j = 0; j < K; j++)
-    {
-      if (slices[i].tasks[j] != nullptr)
-        slices[i].tasks[j]->radius_cur = slices[i].tasks[j]->bead->covering_radius_rad;
-    }
-  }
 
   // setup DP array
   int nSubSets = (1 << K);
@@ -584,7 +571,7 @@ bool Optimizer::feasibleLine
   //const TaskSlice& ts = slices[slice];
   opt[0][0].angle_rad = 0.0;
   opt[0][0].layer = -1;
-  opt[0][0].cd = std::make_shared<CountryData>(nullptr, -1);
+  opt[0][0].cd = std::make_shared<BeadData>(nullptr, -1);
 
   for (int i = 0; i < slices.size(); i++)
   {
@@ -629,7 +616,7 @@ bool Optimizer::feasibleLine
       for (int x = 0; x < ts.taskCount; x++)
       {
         int k = ts.layers[x];
-        CountryData::Ptr cd = ts.tasks[k];
+        BeadData::Ptr cd = ts.tasks[k];
         int k2 = (1 << k);
         if ((k2 & q) == 0) continue;
         if (cd->disabled) continue;
@@ -637,15 +624,16 @@ bool Optimizer::feasibleLine
         double t1 = opt[i][q - k2].angle_rad;
         if (t1 == std::numeric_limits<double>::max()) continue;
         // special check
-        if (opt[i][q - k2].cd->radius_cur == 0.0)
+        if (!opt[i][q - k2].cd->bead || opt[i][q - k2].cd->bead->covering_radius_rad == 0.0)
         {
           if (k != slices[slice].eventLeft.node->layer) continue;
-        } else t1 += cd->radius_cur;
+        }
+        else t1 += cd->bead->covering_radius_rad;
 
-        t1 = std::max(t1, cd->range_cur->from());
-        if (t1 <= cd->range_cur->to() && t1 + cd->radius_cur < opt[i][q].angle_rad)
+        t1 = std::max(t1, cd->valid->from());
+        if (t1 <= cd->valid->to() && t1 + cd->bead->covering_radius_rad < opt[i][q].angle_rad)
         {
-          opt[i][q].angle_rad = t1 + cd->radius_cur;
+          opt[i][q].angle_rad = t1 + cd->bead->covering_radius_rad;
           opt[i][q].layer = k;
           opt[i][q].cd = cd;
         }
@@ -657,13 +645,13 @@ bool Optimizer::feasibleLine
 
   const TaskSlice& ts = slices[slice];
   if (opt[slices.size() - 1][split2.Get()].angle_rad == std::numeric_limits<double>::max()) return false;
-  if (opt[slices.size() - 1][split2.Get()].angle_rad <= M_2xPI - ts.tasks[ts.eventLeft.node->layer]->radius_cur)
+  if (opt[slices.size() - 1][split2.Get()].angle_rad <= M_2xPI - ts.tasks[ts.eventLeft.node->layer]->bead->covering_radius_rad)
   {
     // feasible! construct solution
     int s = slices.size() - 1;
     int s2 = (slice + s) % slices.size();
     int q = split2.Get();  // TODO(tvl) remove q.
-    double t = opt[s][q].angle_rad - opt[s][q].cd->radius_cur;
+    double t = opt[s][q].angle_rad - opt[s][q].cd->bead->covering_radius_rad;
 
     while (slices[s2].left > t + EPSILON)
     {
@@ -682,11 +670,11 @@ bool Optimizer::feasibleLine
     while (s >= 0 && opt[s][q].layer != -1)
     {
       //System.out.println(s + ", " + q);
-      CountryData::Ptr cd = opt[s][q].cd;
+      BeadData::Ptr cd = opt[s][q].cd;
       if ((q & (1 << opt[s][q].layer)) == 0) return false;
       q -= (1 << opt[s][q].layer);
       cd->bead->angle_rad = t + slices[slice].eventLeft.angle_rad;
-      t = opt[s][q].angle_rad - opt[s][q].cd->radius_cur;
+      t = opt[s][q].angle_rad - opt[s][q].cd->bead->covering_radius_rad;
       while (slices[s2].left > t + EPSILON)
       {
         if (slices[s2].eventLeft.type == TaskEvent::Type::kTo)
@@ -725,14 +713,6 @@ bool Optimizer::feasible2
         necklace->shape->ComputeCoveringSize(cas[i]->valid, cas[i]->bead->radius_base * scale) + bufferSize;
     else cas[i]->bead->covering_radius_rad = scale + bufferSize;
   }
-  for (int i = 0; i < slices.size(); i++)
-  {
-    for (int j = 0; j < K; j++)
-    {
-      if (slices[i].tasks[j] != nullptr)
-        slices[i].tasks[j]->radius_cur = slices[i].tasks[j]->bead->covering_radius_rad;
-    }
-  }
 
   // make new slices
   std::vector<TaskSlice> slices2(slices.size() * copies);
@@ -749,13 +729,7 @@ bool Optimizer::feasible2
   int nSubSets = (1 << K);
   std::vector<std::vector<OptValue> > opt(slices2.size());
   for (int i = 0; i < slices2.size(); i++)
-  {
     opt[i].resize(nSubSets);
-    // TODO(tvl) check whether default initialization is done correctly...
-    /*for (int j = 0; j < nSubSets; j++) {
-      opt[i][j].Initialize();
-    }*/
-  }
 
   return feasibleLine2(slices2, K, opt, false);
 }
@@ -773,7 +747,7 @@ bool Optimizer::feasibleLine2
   opt[0][0].angle_rad = 0.0;
   opt[0][0].angle2_rad = 0.0;
   opt[0][0].layer = -1;
-  opt[0][0].cd = std::make_shared<CountryData>(nullptr, -1);
+  opt[0][0].cd = std::make_shared<BeadData>(nullptr, -1);
 
   for (int i = 0; i < slices.size(); i++)
   {
@@ -816,7 +790,7 @@ bool Optimizer::feasibleLine2
       for (int x = 0; x < ts.taskCount; x++)
       {
         int k = ts.layers[x];
-        CountryData::Ptr cd = ts.tasks[k];
+        BeadData::Ptr cd = ts.tasks[k];
         int k2 = (1 << k);
         if ((k2 & q) == 0) continue;
         if (cd == nullptr) continue;
@@ -824,25 +798,25 @@ bool Optimizer::feasibleLine2
         double t1 = opt[i][q - k2].angle_rad;
         if (t1 == std::numeric_limits<double>::max()) continue;
         // lookup size if spline
-        double size = cd->radius_cur;
+        double size = cd->bead ? cd->bead->covering_radius_rad : 0;
         // special check
-        if (opt[i][q - k2].cd->radius_cur != 0.0)
+        if (opt[i][q - k2].cd->bead && opt[i][q - k2].cd->bead->covering_radius_rad != 0.0)
         {
           if (lookup)
           {
             double angle = t1 + size;
             for (int z = 0; z < 5; z++)
             {
-              size = cd->lookUpSize(angle);
+              size = cd->bead->covering_radius_rad;
               angle = t1 + size;
             }
             t1 = angle;
           } else t1 += size;
-        } else if (lookup) size = cd->lookUpSize(t1);
+        } else if (lookup && cd->bead) size = cd->bead->covering_radius_rad;
 
-        t1 = std::max(t1, cd->range_cur->from());
-        if (lookup) size = cd->lookUpSize(t1);
-        if (t1 <= cd->range_cur->to() && t1 + size < opt[i][q].angle_rad)
+        t1 = std::max(t1, cd->valid->from());
+        if (lookup && cd->bead) size = cd->bead->covering_radius_rad;
+        if (t1 <= cd->valid->to() && t1 + size < opt[i][q].angle_rad)
         {
           opt[i][q].angle_rad = t1 + size;
           opt[i][q].angle2_rad = t1;
@@ -877,11 +851,10 @@ bool Optimizer::feasibleLine2
 
   while (s >= 0 && opt[s][q].layer != -1)
   {
-    CountryData::Ptr cd = opt[s][q].cd;
+    BeadData::Ptr cd = opt[s][q].cd;
     q -= (1 << opt[s][q].layer);
     if (q < 0 || cd == nullptr) return false;
-    double size = cd->radius_cur;
-    if (lookup) size = cd->lookUpSize(t);
+    double size = cd->bead ? cd->bead->covering_radius_rad : 0;
     listCA.push_back(std::make_shared<AnyOrderCycleNode>(cd->bead, t + slices[0].eventLeft.angle_rad, size));
     t = opt[s][q].angle2_rad;
     while (slices[s].left > t + EPSILON)

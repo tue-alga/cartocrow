@@ -50,15 +50,12 @@ struct Bead
   std::string region_style;
 
   // Variables during scaling.
-  // TODO(tvl) move into subclass?
-  Number covering_radius_rad;
+  Number covering_radius_rad; // TODO(tvl) move into CycleNode?
 
-  int check;
+  int check; // TODO(tvl) move into AnyOrderCycleNode?
 
   // Variables after scaling.
-  // TODO(tvl) move into subclass?
-
-  NecklaceInterval::Ptr valid;
+  NecklaceInterval::Ptr valid; // TODO(tvl) replace CycleNode::valid by this one and see if this can mean that the positioner needs not compute it (may have to add computing valid in fixed order scaler)?
 
   Number angle_rad;
 }; // struct Bead

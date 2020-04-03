@@ -41,6 +41,8 @@ namespace necklace_map
 namespace detail
 {
 
+// A cycle node that can be assigned to a layer.
+// The cycle nodes on a single layer shall never have valid intervals that intersect in their interior.
 struct AnyOrderCycleNode : CycleNode
 {
   using Ptr = std::shared_ptr<AnyOrderCycleNode>;
@@ -59,6 +61,8 @@ class CompareAnyOrderCycleNode
 }; // class CompareAnyOrderCycleNode
 
 
+// The cycle nodes will be processed by moving from event to event.
+// Each event indicates that a valid interval starts or stops at the associated angle.
 struct TaskEvent
 {
   enum class Type { kFrom, kTo };
@@ -79,6 +83,30 @@ class CompareTaskEvent
 }; // class CompareTaskEvent
 
 
+
+
+
+// the bead as it is stored by the 'taskslice'.
+struct BeadData  // TODO(tvl) replace by AnyOrderCycleNode (and forward members)?
+{
+  using Ptr = std::shared_ptr<BeadData>;
+
+  BeadData(const Bead::Ptr& bead, const int layer);
+
+  BeadData(const BeadData& data);
+
+  Bead::Ptr bead;
+  Range::Ptr valid;  // TODO(tvl) check whether this can be const?
+  int layer;
+  bool disabled;  // TODO(tvl) replace by check for bead pointer validity?
+}; // struct BeadData
+
+
+
+
+
+
+// The bit strings are used to keep track of the layers that are 'active' within a certain angle interval.
 class BitString
 {
  public:
@@ -113,23 +141,6 @@ class BitString
 
 
 
-struct CountryData  // TODO(tvl) rename "BeadData"? replace by AnyOrderCycleNode?
-{
-  using Ptr = std::shared_ptr<CountryData>;
-
-  CountryData(const Bead::Ptr& bead, const int layer);
-
-  CountryData(const CountryData& cd);
-
-  double lookUpSize(double angle); // TODO(tvl) remove; replace by just querying radius_cur.
-
-  Bead::Ptr bead;
-  Range::Ptr range_cur; // TODO(tvl) rename "valid"?
-  Number radius_cur;  // TODO(tvl) check whether this is actually used or could just forward to bead->covering_radius_rad
-  int layer;
-  bool disabled;  // TODO(tvl) replace by check for bead pointer validity?
-}; // struct CountryData
-
 
 class TaskSlice
 {
@@ -142,14 +153,14 @@ class TaskSlice
 
   void reset();
 
-  void rotate(const double value, const std::vector<CountryData::Ptr>& cds, const BitString& split);
+  void rotate(const double value, const std::vector<BeadData::Ptr>& cds, const BitString& split);
 
-  void addTask(const CountryData::Ptr& task);
+  void addTask(const BeadData::Ptr& task);
 
   void produceSets();
 
   TaskEvent eventLeft, eventRight;
-  std::vector<CountryData::Ptr> tasks;
+  std::vector<BeadData::Ptr> tasks;
   int taskCount;
   double left, right;  // TODO(tvl) should this be left_time, right_time?
   std::vector<BitString> sets;
@@ -166,7 +177,7 @@ struct OptValue
   double angle_rad;
   double angle2_rad;
   int layer;
-  CountryData::Ptr cd;
+  BeadData::Ptr cd;
 }; // struct OptValue
 
 
