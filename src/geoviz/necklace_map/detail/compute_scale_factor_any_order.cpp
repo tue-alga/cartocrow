@@ -549,7 +549,7 @@ bool Optimizer::feasible
   return false;
 }
 
-void Optimizer::splitCircle(std::vector<TaskSlice>& slices, const int K, const int slice, const BitString& split)
+void Optimizer::splitCircle(std::vector<TaskSlice>& slices, const int K, const int slice, const int split)
 {
   // reset everything, then rotate
   for (int i = 0; i < slices.size(); i++)
@@ -597,7 +597,7 @@ bool Optimizer::feasibleLine
         // check previous slice
         if (ts.eventLeft.type == TaskEvent::Type::kFrom)
         {
-          if ((q & (1 << ts.eventLeft.layer)) == 0)
+          if ((q & (1 << ts.eventLeft.node->layer)) == 0)
           {
             opt[i][q].angle_rad = opt[i - 1][q].angle_rad;
             opt[i][q].layer = opt[i - 1][q].layer;
