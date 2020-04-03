@@ -78,7 +78,42 @@ class CompareTaskEvent
   bool operator()(const TaskEvent& a, const TaskEvent& b) const;
 }; // class CompareTaskEvent
 
-struct CountryData  // TODO(tvl) rename "BeadData"?
+
+class BitString
+{
+ public:
+  static bool CheckFit(const int bit);
+
+  BitString() : bits(0) {}
+
+  explicit BitString(const int string) : bits(string) {}
+
+  inline const int& Get() const { return bits; }
+
+  inline bool IsEmpty() const { return bits == 0; }
+
+  inline bool HasBit(const int bit) const { return (1 << bit) & bits != 0; }
+
+  inline bool HasAny(const BitString& string) const { return (string.bits & bits) != 0; }
+
+  void SetBit(const int bit);
+
+  inline void SetString(const int string) { bits = string; }
+
+  bool AddBit(const int bit);
+
+  inline BitString Xor(const BitString& string) const { return BitString(bits ^ string.bits); }
+
+ private:
+  int bits;
+}; // class BitString
+
+
+
+
+
+
+struct CountryData  // TODO(tvl) rename "BeadData"? replace by AnyOrderCycleNode?
 {
   using Ptr = std::shared_ptr<CountryData>;
 
@@ -107,7 +142,7 @@ class TaskSlice
 
   void reset();
 
-  void rotate(const double value, const std::vector<CountryData::Ptr>& cds, const int split);
+  void rotate(const double value, const std::vector<CountryData::Ptr>& cds, const BitString& split);
 
   void addTask(const CountryData::Ptr& task);
 
@@ -117,7 +152,7 @@ class TaskSlice
   std::vector<CountryData::Ptr> tasks;
   int taskCount;
   double left, right;  // TODO(tvl) should this be left_time, right_time?
-  std::vector<int> sets;
+  std::vector<BitString> sets;
   std::vector<int> layers;
 }; // class TaskSlice
 
@@ -157,7 +192,7 @@ class Optimizer
     const bool ingot
   );
 
-  void splitCircle(std::vector<TaskSlice>& slices, const int K, const int slice, const int split);
+  void splitCircle(std::vector<TaskSlice>& slices, const int K, const int slice, const BitString& split);
 
   bool feasibleLine
   (
@@ -165,7 +200,7 @@ class Optimizer
     const int K,
     std::vector<std::vector<OptValue> >& opt,
     const int slice,
-    const int split
+    const BitString& split
   );
 
   bool feasible2

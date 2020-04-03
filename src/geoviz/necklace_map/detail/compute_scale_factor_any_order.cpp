@@ -88,6 +88,15 @@ bool CompareTaskEvent::operator()(const TaskEvent& a, const TaskEvent& b) const
   return a.type == TaskEvent::Type::kTo && b.type == TaskEvent::Type::kFrom;
 }
 
+bool BitString::CheckFit(const int bit) { return bit < 32; }
+
+void BitString::SetBit(const int bit) { CHECK(CheckFit(bit)); bits = 1 << bit; }
+
+bool BitString::AddBit(const int bit) { CHECK(CheckFit(bit)); return bits |= (1 << bit); }
+
+
+
+
 
 CountryData::CountryData(const Bead::Ptr& bead, const int layer) :
   bead(bead),
@@ -184,7 +193,7 @@ void TaskSlice::reset()
   }
 }
 
-void TaskSlice::rotate(const double value, const std::vector<CountryData::Ptr>& cds, const int split)
+void TaskSlice::rotate(const double value, const std::vector<CountryData::Ptr>& cds, const BitString& split)
 {
   Range r1(value, left);
   Range r2(value, right);
@@ -200,7 +209,7 @@ void TaskSlice::rotate(const double value, const std::vector<CountryData::Ptr>& 
       CountryData::Ptr cd = tasks[i];
       if (cds[i] != nullptr && cds[i]->bead == cd->bead)
       {
-        if (((1 << i) & split) > 0)
+        if (split.HasBit(i))
         {
           r2 = Range(value, cd->range_cur->to());
           cd->range_cur->from() = 0.0;
@@ -250,7 +259,7 @@ void TaskSlice::produceSets()
     {
       if ((q & i) > 0 && !filter[j]) valid = false;
     }
-    if (valid) sets[k++] = i;
+    if (valid) sets[k++].SetString(i);
   }
 
   layers.resize(taskCount);
@@ -530,15 +539,16 @@ bool Optimizer::feasible
       int q = (1 << slices[i].eventLeft.node->layer);
       for (int j = 0; j < slices[i].sets.size(); j++)
       {
-        int q2 = slices[i].sets[j];
-        if ((q2 & q) > 0)
+        const BitString& str2 = slices[i].sets[j];
+        int q2 = str2.Get();
+        if (str2.HasBit(q))
         {
 
           // split the circle (ranges, event times, the works)
-          splitCircle(slices, K, i, q2);
+          splitCircle(slices, K, i, str2);
 
           // compute
-          bool good = feasibleLine(slices, K, opt, i, q2);
+          bool good = feasibleLine(slices, K, opt, i, str2);
 
           if (good) return true;
         }
@@ -549,7 +559,7 @@ bool Optimizer::feasible
   return false;
 }
 
-void Optimizer::splitCircle(std::vector<TaskSlice>& slices, const int K, const int slice, const int split)
+void Optimizer::splitCircle(std::vector<TaskSlice>& slices, const int K, const int slice, const BitString& split)
 {
   // reset everything, then rotate
   for (int i = 0; i < slices.size(); i++)
@@ -565,10 +575,10 @@ bool Optimizer::feasibleLine
   const int K,
   std::vector<std::vector<OptValue> >& opt,
   const int slice,
-  const int split
+  const BitString& split
 )
 {
-  int split2 = split ^(slices[slice].sets.back());  //TODO(tvl) rename split_inverse?
+  BitString split2 = split.Xor(slices[slice].sets.back());  //TODO(tvl) rename split_inverse?
 
   // initialization
   //const TaskSlice& ts = slices[slice];
@@ -582,15 +592,16 @@ bool Optimizer::feasibleLine
     const TaskSlice& ts = slices[s];
     for (int j = 0; j < ts.sets.size(); j++)
     {
-      int q = ts.sets[j];
+      const BitString& str = ts.sets[j];
+      int q = str.Get();  // TODO(tvl) remove q.
       if (i == 0 && q == 0) continue;
 
       opt[i][q].angle_rad = std::numeric_limits<double>::max();
       opt[i][q].layer = -1;
       opt[i][q].cd = nullptr;
 
-      if (i == 0 && (q & split2) > 0) continue;
-      if (i == slices.size() - 1 && (q & split) > 0) continue;
+      if (i == 0 && split2.HasAny(str)) continue;
+      if (i == slices.size() - 1 && split.HasAny(str)) continue;
 
       if (i != 0)
       {
@@ -645,13 +656,13 @@ bool Optimizer::feasibleLine
 
 
   const TaskSlice& ts = slices[slice];
-  if (opt[slices.size() - 1][split2].angle_rad == std::numeric_limits<double>::max()) return false;
-  if (opt[slices.size() - 1][split2].angle_rad <= M_2xPI - ts.tasks[ts.eventLeft.node->layer]->radius_cur)
+  if (opt[slices.size() - 1][split2.Get()].angle_rad == std::numeric_limits<double>::max()) return false;
+  if (opt[slices.size() - 1][split2.Get()].angle_rad <= M_2xPI - ts.tasks[ts.eventLeft.node->layer]->radius_cur)
   {
     // feasible! construct solution
     int s = slices.size() - 1;
     int s2 = (slice + s) % slices.size();
-    int q = split2;
+    int q = split2.Get();  // TODO(tvl) remove q.
     double t = opt[s][q].angle_rad - opt[s][q].cd->radius_cur;
 
     while (slices[s2].left > t + EPSILON)
@@ -769,7 +780,7 @@ bool Optimizer::feasibleLine2
     const TaskSlice& ts = slices[i];
     for (int j = 0; j < ts.sets.size(); j++)
     {
-      int q = ts.sets[j];
+      int q = ts.sets[j].Get();  // TODO(tvl) remove q.
       if (i == 0 && q == 0) continue;
 
       opt[i][q].angle_rad = std::numeric_limits<double>::max();
@@ -847,7 +858,7 @@ bool Optimizer::feasibleLine2
   CountryAngleSet listCA;
 
   int s = slices.size() - 1;
-  int q = slices[s].sets[slices[s].sets.size() - 1];
+  int q = slices[s].sets[slices[s].sets.size() - 1].Get();  // TODO(tvl) remove q.
   double t = opt[s][q].angle_rad;
   if (t == std::numeric_limits<double>::max()) return false;
   //t -= opt[s][q].cd.size;
