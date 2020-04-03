@@ -61,14 +61,15 @@ class CompareAnyOrderCycleNode
 
 struct TaskEvent
 {
+  enum class Type { kFrom, kTo };
+
   TaskEvent();
 
-  TaskEvent(const int layer, const double time, const bool is_start, const size_t index_node);
+  TaskEvent(AnyOrderCycleNode::Ptr& node, const Number& angle_rad, const Type& type);
 
-  int layer;
-  double time; // TODO(tvl) rename "order"?
-  bool is_start;  // Whether this is a "start feasible interval" event.
-  size_t index_node;  // index of the country angle.
+  AnyOrderCycleNode::Ptr node;
+  Number angle_rad;
+  Type type;
 }; // class TaskEvent
 
 class CompareTaskEvent
@@ -127,8 +128,8 @@ struct OptValue
 
   void Initialize();
 
-  double time;
-  double time2;
+  double angle_rad;
+  double angle2_rad;
   int layer;
   CountryData::Ptr cd;
 }; // struct OptValue

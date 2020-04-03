@@ -72,19 +72,20 @@ bool CompareAnyOrderCycleNode::operator()(const AnyOrderCycleNode::Ptr& a, const
 
 TaskEvent::TaskEvent() {}
 
-TaskEvent::TaskEvent(const int layer, const double time, const bool is_start, const size_t index_node) :
-  layer(layer),
-  time(time),
-  is_start(is_start),
-  index_node(index_node)
+TaskEvent::TaskEvent(AnyOrderCycleNode::Ptr& node, const Number& angle_rad, const Type& type) :
+  node(node),
+  angle_rad(angle_rad),
+  type(type)
 {}
 
 bool CompareTaskEvent::operator()(const TaskEvent& a, const TaskEvent& b) const
 {
-  if (a.time != b.time)
-    return a.time < b.time;
+  if (a.angle_rad != b.angle_rad)
+    return a.angle_rad < b.angle_rad;
 
-  return static_cast<int>(a.is_start) - static_cast<int>(b.is_start);
+  // Note that we should return false whenever a is not 'smaller' than b.
+  // Practically, 'end' events should be handled before 'start' events.
+  return a.type == TaskEvent::Type::kTo && b.type == TaskEvent::Type::kFrom;
 }
 
 
@@ -130,7 +131,7 @@ TaskSlice::TaskSlice(
   eventLeft(eLeft),
   eventRight(eRight),
   taskCount(0),
-  left(eLeft.time),
+  left(eLeft.angle_rad),
   right(right)
 {
   tasks.resize(K);
@@ -143,9 +144,9 @@ TaskSlice::TaskSlice(const TaskSlice& ts, const double offset, const int step) :
   sets(ts.sets),
   layers(ts.layers)
 {
-  left = eventLeft.time - offset + step * M_2xPI;
+  left = eventLeft.angle_rad - offset + step * M_2xPI;
   if (left < step * M_2xPI) left += M_2xPI;
-  right = eventRight.time - offset + step * M_2xPI;
+  right = eventRight.angle_rad - offset + step * M_2xPI;
   if (right < left) right += M_2xPI;
 
   tasks.resize(ts.tasks.size());
@@ -159,8 +160,8 @@ TaskSlice::TaskSlice(const TaskSlice& ts, const double offset, const int step) :
           ts.tasks[i]->range_cur->from() == offset)
       {
         tasks[i] = std::make_shared<CountryData>(*ts.tasks[i]);  // TODO(tvl) check whether this should be a new pointer or could also be a pointer to the existing object.
-        Range r1(tasks[i]->range_cur->from(), eventLeft.time);
-        Range r2(eventLeft.time, tasks[i]->range_cur->to());
+        Range r1(tasks[i]->range_cur->from(), eventLeft.angle_rad);
+        Range r2(eventLeft.angle_rad, tasks[i]->range_cur->to());
         tasks[i]->range_cur->from() = left - r1.ComputeLength();
         tasks[i]->range_cur->to() = left + r2.ComputeLength();
       } else tasks[i] = nullptr;
@@ -170,8 +171,8 @@ TaskSlice::TaskSlice(const TaskSlice& ts, const double offset, const int step) :
 
 void TaskSlice::reset()
 {
-  left = eventLeft.time;
-  right = eventRight.time;
+  left = eventLeft.angle_rad;
+  right = eventRight.angle_rad;
   for (int i = 0; i < tasks.size(); i++)
   {
     if (tasks[i] != nullptr)
@@ -269,8 +270,8 @@ OptValue::OptValue()
 
 void OptValue::Initialize()
 {
-  time = std::numeric_limits<double>::max();
-  time2 = std::numeric_limits<double>::max();
+  angle_rad = std::numeric_limits<double>::max();
+  angle2_rad = std::numeric_limits<double>::max();
   layer = -1;
   cd = nullptr;
 }
@@ -304,9 +305,9 @@ double Optimizer::computeOptSize
   std::vector<TaskEvent> events;  // TODO(tvl) reserve
   for (size_t i = 0; i < cas.size(); i++)
   {
-    const AnyOrderCycleNode::Ptr& ca = cas[i];
-    events.emplace_back(-1, ca->valid->from(), true, i);
-    events.emplace_back(-1, ca->valid->to(), false, i);
+    AnyOrderCycleNode::Ptr& ca = cas[i];
+    events.emplace_back(ca, ca->valid->from(), TaskEvent::Type::kFrom);
+    events.emplace_back(ca, ca->valid->to(), TaskEvent::Type::kTo);
   }
   std::sort(events.begin(), events.end(), CompareTaskEvent());
 
@@ -317,32 +318,32 @@ double Optimizer::computeOptSize
     if (node->valid->Contains(angle))
       K++;
   int optK = K;
-  size_t opt = 0;
+  AnyOrderCycleNode::Ptr opt_node = 0;
   for (const TaskEvent& event : events)
   {
-    if (event.time <= angle) continue;
-    if (event.is_start)
+    if (event.angle_rad <= angle) continue;
+    if (event.type == TaskEvent::Type::kFrom)
     {
       K++;
       if (K > optK)
       {
         optK = K;
-        angle = event.time;
-        opt = event.index_node;
+        angle = event.angle_rad;
+        opt_node = event.node;
       }
     } else K--;
   }
 
   // Find a non-overlapping order of ca's (where the next ca is the closest one to the current one.)
-  std::vector<int> L;
+  CountryAngleSet L;
   L.reserve(cas.size());
   int count = cas.size() - 1;
-  Range::Ptr curRange = cas[opt]->valid;
-  cas[opt]->layer = 0;
-  L.push_back(opt);
+  Range::Ptr curRange = opt_node->valid;
+  opt_node->layer = 0;
+  L.push_back(opt_node);
   while (count > 0)
   {
-    int next = -1;
+    AnyOrderCycleNode::Ptr next_node;
     double minAngleDif = M_2xPI;
 
     for (int i = 0; i < cas.size(); i++)
@@ -353,13 +354,13 @@ double Optimizer::computeOptSize
       if (length_rad < minAngleDif)
       {
         minAngleDif = length_rad;
-        next = i;
+        next_node = cas[i];
       }
     }
     count--;
-    L.push_back(next);
-    cas[next]->layer = 0;
-    curRange = cas[next]->valid;
+    L.push_back(next_node);
+    next_node->layer = 0;
+    curRange = next_node->valid;
   }
 
   // now really assign layers
@@ -367,18 +368,18 @@ double Optimizer::computeOptSize
   for (int i = 0; i < L.size(); i++)
   {
     bool good = true;
-    int k1 = L[i];
+    AnyOrderCycleNode::Ptr& k1 = L[i];
     for (int j = 0; j < i; j++)
     { // TODO(tvl) this may be done more efficiently (as opposed to a full double loop)?
-      int k2 = L[j];
-      if (cas[k2]->layer != K - 1) continue;
-      if (cas[k2]->valid->Intersects(cas[k1]->valid)) good = false;
+      AnyOrderCycleNode::Ptr& k2 = L[j];
+      if (k2->layer != K - 1) continue;
+      if (k2->valid->Intersects(k1->valid)) good = false;
     }
     if (!good)
     {
-      cas[k1]->layer = K;
+      k1->layer = K;
       K++;
-    } else cas[k1]->layer = K - 1;
+    } else k1->layer = K - 1;
   }
 
   // Failure case: too thick.
@@ -388,14 +389,14 @@ double Optimizer::computeOptSize
 
   // TODO(tvl) why does this repeat the earlier initialization? layer is set...
   // TODO(tvl) this recreation of the event list could be replaced by a link in the events to the CA...
-  events.clear();
+  /*events.clear();
   for (int i = 0; i < cas.size(); i++)
   {
-    const AnyOrderCycleNode::Ptr& ca = cas[i];
-    events.emplace_back(ca->layer, ca->valid->from(), true, i);
-    events.emplace_back(ca->layer, ca->valid->to(), false, i);
-  }
-  std::sort(events.begin(), events.end(), CompareTaskEvent());
+    AnyOrderCycleNode::Ptr& ca = cas[i];
+    events.emplace_back(ca, ca->valid->from(), true);
+    events.emplace_back(ca, ca->valid->to(), false);
+  }*/
+  std::sort(events.begin(), events.end(), CompareTaskEvent());  // TODO(tvl) is this even useful?
 
 
   Bead::Ptr curTasks[K];
@@ -412,9 +413,9 @@ double Optimizer::computeOptSize
   {
     TaskEvent e = events[i];
     TaskEvent e2 = events[(i + 1) % events.size()];
-    slices[i] = TaskSlice(e, e2, K, e2.time);
-    if (e.is_start) curTasks[e.layer] = cas[e.index_node]->bead;
-    else curTasks[e.layer] = nullptr;
+    slices[i] = TaskSlice(e, e2, K, e2.angle_rad);
+    if (e.type == TaskEvent::Type::kFrom) curTasks[e.node->layer] = e.node->bead;
+    else curTasks[e.node->layer] = nullptr;
     for (int j = 0; j < K; j++)
       if (curTasks[j] != nullptr)
         slices[i].addTask(std::make_shared<CountryData>(curTasks[j], j));
@@ -424,7 +425,7 @@ double Optimizer::computeOptSize
     slice.produceSets();
 
   // make sure first slice is start of task
-  while (!slices[0].eventLeft.is_start)
+  while (slices[0].eventLeft.type == TaskEvent::Type::kTo)
   {
     const TaskSlice& ts = slices[0];
     for (int i = 0; i < slices.size() - 1; i++)
@@ -524,9 +525,9 @@ bool Optimizer::feasible
   // try all possibilities
   for (int i = 0; i < slices.size(); i++)
   {
-    if (slices[i].eventLeft.is_start)
+    if (slices[i].eventLeft.type == TaskEvent::Type::kFrom)
     {
-      int q = (1 << slices[i].eventLeft.layer);
+      int q = (1 << slices[i].eventLeft.node->layer);
       for (int j = 0; j < slices[i].sets.size(); j++)
       {
         int q2 = slices[i].sets[j];
@@ -548,13 +549,13 @@ bool Optimizer::feasible
   return false;
 }
 
-void Optimizer::splitCircle(std::vector<TaskSlice>& slices, const int K, const int slice, const int split)
+void Optimizer::splitCircle(std::vector<TaskSlice>& slices, const int K, const int slice, const BitString& split)
 {
   // reset everything, then rotate
   for (int i = 0; i < slices.size(); i++)
   {
     slices[i].reset();
-    slices[i].rotate(slices[slice].eventLeft.time, slices[slice].tasks, split);
+    slices[i].rotate(slices[slice].eventLeft.angle_rad, slices[slice].tasks, split);
   }
 }
 
@@ -571,7 +572,7 @@ bool Optimizer::feasibleLine
 
   // initialization
   //const TaskSlice& ts = slices[slice];
-  opt[0][0].time = 0.0;
+  opt[0][0].angle_rad = 0.0;
   opt[0][0].layer = -1;
   opt[0][0].cd = std::make_shared<CountryData>(nullptr, -1);
 
@@ -584,7 +585,7 @@ bool Optimizer::feasibleLine
       int q = ts.sets[j];
       if (i == 0 && q == 0) continue;
 
-      opt[i][q].time = std::numeric_limits<double>::max();
+      opt[i][q].angle_rad = std::numeric_limits<double>::max();
       opt[i][q].layer = -1;
       opt[i][q].cd = nullptr;
 
@@ -594,25 +595,25 @@ bool Optimizer::feasibleLine
       if (i != 0)
       {
         // check previous slice
-        if (ts.eventLeft.is_start)
+        if (ts.eventLeft.type == TaskEvent::Type::kFrom)
         {
           if ((q & (1 << ts.eventLeft.layer)) == 0)
           {
-            opt[i][q].time = opt[i - 1][q].time;
+            opt[i][q].angle_rad = opt[i - 1][q].angle_rad;
             opt[i][q].layer = opt[i - 1][q].layer;
             opt[i][q].cd = opt[i - 1][q].cd;
           }
         } else
         {
-          int q2 = q + (1 << ts.eventLeft.layer);
-          if (slices[(s + slices.size() - 1) % slices.size()].tasks[ts.eventLeft.layer]->disabled)
-            q2 -= (1 << ts.eventLeft.layer); // special case
-          opt[i][q].time = opt[i - 1][q2].time;
+          int q2 = q + (1 << ts.eventLeft.node->layer);
+          if (slices[(s + slices.size() - 1) % slices.size()].tasks[ts.eventLeft.node->layer]->disabled)
+            q2 -= (1 << ts.eventLeft.node->layer); // special case
+          opt[i][q].angle_rad = opt[i - 1][q2].angle_rad;
           opt[i][q].layer = opt[i - 1][q2].layer;
           opt[i][q].cd = opt[i - 1][q2].cd;
         }
       }
-      if (opt[i][q].time < std::numeric_limits<double>::max()) continue;
+      if (opt[i][q].angle_rad < std::numeric_limits<double>::max()) continue;
 
       for (int x = 0; x < ts.taskCount; x++)
       {
@@ -622,18 +623,18 @@ bool Optimizer::feasibleLine
         if ((k2 & q) == 0) continue;
         if (cd->disabled) continue;
 
-        double t1 = opt[i][q - k2].time;
+        double t1 = opt[i][q - k2].angle_rad;
         if (t1 == std::numeric_limits<double>::max()) continue;
         // special check
         if (opt[i][q - k2].cd->radius_cur == 0.0)
         {
-          if (k != slices[slice].eventLeft.layer) continue;
+          if (k != slices[slice].eventLeft.node->layer) continue;
         } else t1 += cd->radius_cur;
 
         t1 = std::max(t1, cd->range_cur->from());
-        if (t1 <= cd->range_cur->to() && t1 + cd->radius_cur < opt[i][q].time)
+        if (t1 <= cd->range_cur->to() && t1 + cd->radius_cur < opt[i][q].angle_rad)
         {
-          opt[i][q].time = t1 + cd->radius_cur;
+          opt[i][q].angle_rad = t1 + cd->radius_cur;
           opt[i][q].layer = k;
           opt[i][q].cd = cd;
         }
@@ -644,22 +645,22 @@ bool Optimizer::feasibleLine
 
 
   const TaskSlice& ts = slices[slice];
-  if (opt[slices.size() - 1][split2].time == std::numeric_limits<double>::max()) return false;
-  if (opt[slices.size() - 1][split2].time <= M_2xPI - ts.tasks[ts.eventLeft.layer]->radius_cur)
+  if (opt[slices.size() - 1][split2].angle_rad == std::numeric_limits<double>::max()) return false;
+  if (opt[slices.size() - 1][split2].angle_rad <= M_2xPI - ts.tasks[ts.eventLeft.node->layer]->radius_cur)
   {
     // feasible! construct solution
     int s = slices.size() - 1;
     int s2 = (slice + s) % slices.size();
     int q = split2;
-    double t = opt[s][q].time - opt[s][q].cd->radius_cur;
+    double t = opt[s][q].angle_rad - opt[s][q].cd->radius_cur;
 
     while (slices[s2].left > t + EPSILON)
     {
-      if (!slices[s2].eventLeft.is_start)
+      if (slices[s2].eventLeft.type == TaskEvent::Type::kTo)
       {
-        q += (1 << slices[s2].eventLeft.layer);
-        if (s > 0 && slices[(s2 + slices.size() - 1) % slices.size()].tasks[slices[s2].eventLeft.layer]->disabled)
-          q -= (1 << slices[s2].eventLeft.layer);
+        q += (1 << slices[s2].eventLeft.node->layer);
+        if (s > 0 && slices[(s2 + slices.size() - 1) % slices.size()].tasks[slices[s2].eventLeft.node->layer]->disabled)
+          q -= (1 << slices[s2].eventLeft.node->layer);
       }
       s--;
       s2 = (slice + s) % slices.size();
@@ -673,15 +674,15 @@ bool Optimizer::feasibleLine
       CountryData::Ptr cd = opt[s][q].cd;
       if ((q & (1 << opt[s][q].layer)) == 0) return false;
       q -= (1 << opt[s][q].layer);
-      cd->bead->angle_rad = t + slices[slice].eventLeft.time;
-      t = opt[s][q].time - opt[s][q].cd->radius_cur;
+      cd->bead->angle_rad = t + slices[slice].eventLeft.angle_rad;
+      t = opt[s][q].angle_rad - opt[s][q].cd->radius_cur;
       while (slices[s2].left > t + EPSILON)
       {
-        if (!slices[s2].eventLeft.is_start)
+        if (slices[s2].eventLeft.type == TaskEvent::Type::kTo)
         {
-          q += (1 << slices[s2].eventLeft.layer);
-          if (s > 0 && slices[(s2 + slices.size() - 1) % slices.size()].tasks[slices[s2].eventLeft.layer]->disabled)
-            q -= (1 << slices[s2].eventLeft.layer);
+          q += (1 << slices[s2].eventLeft.node->layer);
+          if (s > 0 && slices[(s2 + slices.size() - 1) % slices.size()].tasks[slices[s2].eventLeft.node->layer]->disabled)
+            q -= (1 << slices[s2].eventLeft.node->layer);
         }
         s--;
         s2 = (slice + s) % slices.size();
@@ -758,8 +759,8 @@ bool Optimizer::feasibleLine2
 {
   // initialization
   //const TaskSlice& ts = slices[0];
-  opt[0][0].time = 0.0;
-  opt[0][0].time2 = 0.0;
+  opt[0][0].angle_rad = 0.0;
+  opt[0][0].angle2_rad = 0.0;
   opt[0][0].layer = -1;
   opt[0][0].cd = std::make_shared<CountryData>(nullptr, -1);
 
@@ -771,35 +772,35 @@ bool Optimizer::feasibleLine2
       int q = ts.sets[j];
       if (i == 0 && q == 0) continue;
 
-      opt[i][q].time = std::numeric_limits<double>::max();
-      opt[i][q].time2 = opt[i][q].time;
+      opt[i][q].angle_rad = std::numeric_limits<double>::max();
+      opt[i][q].angle2_rad = opt[i][q].angle_rad;
       opt[i][q].layer = -1;
       opt[i][q].cd = nullptr;
 
       if (i != 0)
       {
         // check previous slice
-        if (ts.eventLeft.is_start)
+        if (ts.eventLeft.type == TaskEvent::Type::kFrom)
         {
-          if ((q & (1 << ts.eventLeft.layer)) == 0)
+          if ((q & (1 << ts.eventLeft.node->layer)) == 0)
           {
-            opt[i][q].time = opt[i - 1][q].time;
-            opt[i][q].time2 = opt[i - 1][q].time2;
+            opt[i][q].angle_rad = opt[i - 1][q].angle_rad;
+            opt[i][q].angle2_rad = opt[i - 1][q].angle2_rad;
             opt[i][q].layer = opt[i - 1][q].layer;
             opt[i][q].cd = opt[i - 1][q].cd;
           }
         } else
         {
-          int q2 = q + (1 << ts.eventLeft.layer);
-          if (slices[i - 1].tasks[ts.eventLeft.layer] == nullptr) q2 -= (1 << ts.eventLeft.layer); // special case
-          opt[i][q].time = opt[i - 1][q2].time;
-          opt[i][q].time2 = opt[i - 1][q2].time2;
+          int q2 = q + (1 << ts.eventLeft.node->layer);
+          if (slices[i - 1].tasks[ts.eventLeft.node->layer] == nullptr) q2 -= (1 << ts.eventLeft.node->layer); // special case
+          opt[i][q].angle_rad = opt[i - 1][q2].angle_rad;
+          opt[i][q].angle2_rad = opt[i - 1][q2].angle2_rad;
           opt[i][q].layer = opt[i - 1][q2].layer;
           opt[i][q].cd = opt[i - 1][q2].cd;
         }
       }
 
-      if (opt[i][q].time < std::numeric_limits<double>::max()) continue;
+      if (opt[i][q].angle_rad < std::numeric_limits<double>::max()) continue;
 
       for (int x = 0; x < ts.taskCount; x++)
       {
@@ -809,7 +810,7 @@ bool Optimizer::feasibleLine2
         if ((k2 & q) == 0) continue;
         if (cd == nullptr) continue;
 
-        double t1 = opt[i][q - k2].time;
+        double t1 = opt[i][q - k2].angle_rad;
         if (t1 == std::numeric_limits<double>::max()) continue;
         // lookup size if spline
         double size = cd->radius_cur;
@@ -830,10 +831,10 @@ bool Optimizer::feasibleLine2
 
         t1 = std::max(t1, cd->range_cur->from());
         if (lookup) size = cd->lookUpSize(t1);
-        if (t1 <= cd->range_cur->to() && t1 + size < opt[i][q].time)
+        if (t1 <= cd->range_cur->to() && t1 + size < opt[i][q].angle_rad)
         {
-          opt[i][q].time = t1 + size;
-          opt[i][q].time2 = t1;
+          opt[i][q].angle_rad = t1 + size;
+          opt[i][q].angle2_rad = t1;
           opt[i][q].layer = k;
           opt[i][q].cd = cd;
         }
@@ -847,17 +848,17 @@ bool Optimizer::feasibleLine2
 
   int s = slices.size() - 1;
   int q = slices[s].sets[slices[s].sets.size() - 1];
-  double t = opt[s][q].time;
+  double t = opt[s][q].angle_rad;
   if (t == std::numeric_limits<double>::max()) return false;
   //t -= opt[s][q].cd.size;
-  t = opt[s][q].time2;
+  t = opt[s][q].angle2_rad;
 
   while (slices[s].left > t + EPSILON)
   {
-    if (!slices[s].eventLeft.is_start)
+    if (slices[s].eventLeft.type == TaskEvent::Type::kTo)
     {
-      q += (1 << slices[s].eventLeft.layer);
-      if (s > 0 && slices[s - 1].tasks[slices[s].eventLeft.layer] == nullptr) q -= (1 << slices[s].eventLeft.layer);
+      q += (1 << slices[s].eventLeft.node->layer);
+      if (s > 0 && slices[s - 1].tasks[slices[s].eventLeft.node->layer] == nullptr) q -= (1 << slices[s].eventLeft.node->layer);
     }
     s--;
     if (s < 0) break;
@@ -870,14 +871,14 @@ bool Optimizer::feasibleLine2
     if (q < 0 || cd == nullptr) return false;
     double size = cd->radius_cur;
     if (lookup) size = cd->lookUpSize(t);
-    listCA.push_back(std::make_shared<AnyOrderCycleNode>(cd->bead, t + slices[0].eventLeft.time, size));
-    t = opt[s][q].time2;
+    listCA.push_back(std::make_shared<AnyOrderCycleNode>(cd->bead, t + slices[0].eventLeft.angle_rad, size));
+    t = opt[s][q].angle2_rad;
     while (slices[s].left > t + EPSILON)
     {
-      if (!slices[s].eventLeft.is_start)
+      if (slices[s].eventLeft.type == TaskEvent::Type::kTo)
       {
-        q += (1 << slices[s].eventLeft.layer);
-        if (s > 0 && slices[s - 1].tasks[slices[s].eventLeft.layer] == nullptr) q -= (1 << slices[s].eventLeft.layer);
+        q += (1 << slices[s].eventLeft.node->layer);
+        if (s > 0 && slices[s - 1].tasks[slices[s].eventLeft.node->layer] == nullptr) q -= (1 << slices[s].eventLeft.node->layer);
       }
       s--;
       if (s < 0) break;
