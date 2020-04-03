@@ -45,8 +45,8 @@
     " --order_type=$data->order".
     " --buffer_rad=$data->buffer_rad".
     " --aversion_ratio=$data->aversion_ratio".
-    " --bead_opacity=0.5".
-    " --draw_feasible_intervals".
+    //" --bead_opacity=0.5".
+    //" --draw_feasible_intervals".
     " --out_website".
     " --log_dir $tmpdir".
     " --minloglevel=2";
