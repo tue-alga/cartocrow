@@ -731,15 +731,14 @@ bool Optimizer::feasible2
   for (int i = 0; i < slices2.size(); i++)
     opt[i].resize(nSubSets);
 
-  return feasibleLine2(slices2, K, opt, false);
+  return feasibleLine2(slices2, K, opt);
 }
 
 bool Optimizer::feasibleLine2
 (
   const std::vector<TaskSlice>& slices,
   const int K,
-  std::vector<std::vector<OptValue> >& opt,
-  const bool lookup/*note, not used in practice*/
+  std::vector<std::vector<OptValue> >& opt
 )
 {
   // initialization
@@ -797,25 +796,13 @@ bool Optimizer::feasibleLine2
 
         double t1 = opt[i][q - k2].angle_rad;
         if (t1 == std::numeric_limits<double>::max()) continue;
-        // lookup size if spline
+
         double size = cd->bead ? cd->bead->covering_radius_rad : 0;
         // special check
         if (opt[i][q - k2].cd->bead && opt[i][q - k2].cd->bead->covering_radius_rad != 0.0)
-        {
-          if (lookup)
-          {
-            double angle = t1 + size;
-            for (int z = 0; z < 5; z++)
-            {
-              size = cd->bead->covering_radius_rad;
-              angle = t1 + size;
-            }
-            t1 = angle;
-          } else t1 += size;
-        } else if (lookup && cd->bead) size = cd->bead->covering_radius_rad;
+          t1 += size;
 
         t1 = std::max(t1, cd->valid->from());
-        if (lookup && cd->bead) size = cd->bead->covering_radius_rad;
         if (t1 <= cd->valid->to() && t1 + size < opt[i][q].angle_rad)
         {
           opt[i][q].angle_rad = t1 + size;

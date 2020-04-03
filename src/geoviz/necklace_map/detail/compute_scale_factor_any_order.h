@@ -229,8 +229,7 @@ class Optimizer
   (
     const std::vector<TaskSlice>& slices,
     const int K,
-    std::vector<std::vector<OptValue> >& opt,
-    const bool lookup/*note, not used in practice*/
+    std::vector<std::vector<OptValue> >& opt
   );
 
  private:
