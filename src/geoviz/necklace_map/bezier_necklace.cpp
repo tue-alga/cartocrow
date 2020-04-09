@@ -324,7 +324,7 @@ Number BezierNecklace::ComputeRadius() const
   LOG(FATAL) << "Not implemented yet!";
 }
 
-Number BezierNecklace::ComputeCoveringSize(const Range::Ptr& range, const Number& radius) const
+Number BezierNecklace::ComputeCoveringRadius(const Range::Ptr& range, const Number& radius) const
 {
   LOG(FATAL) << "Not implemented yet!";
 }

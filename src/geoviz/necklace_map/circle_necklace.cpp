@@ -69,7 +69,7 @@ Number CircleNecklace::ComputeRadius() const
   return radius_;
 }
 
-Number CircleNecklace::ComputeCoveringSize(const Range::Ptr& range, const Number& radius) const
+Number CircleNecklace::ComputeCoveringRadius(const Range::Ptr& range, const Number& radius) const
 {
   return std::asin(radius / ComputeRadius());
 }

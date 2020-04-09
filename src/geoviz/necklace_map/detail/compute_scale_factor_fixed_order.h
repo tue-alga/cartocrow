@@ -77,9 +77,6 @@ class ComputeScaleFactorFixedOrder
   // Optimize the scale factor for the beads in the range [I, J].
   Number OptimizeSubProblem(const size_t I, const size_t J, Number& max_buffer_rad) const;
 
- protected:
-  Number max_buffer_rad_;
-
  private:
   // Note that the scaler must be able to access the set by index.
   using NodeSet = std::vector<CycleNode>;
@@ -87,6 +84,7 @@ class ComputeScaleFactorFixedOrder
 
   Number necklace_radius_;
   Number buffer_rad_;
+  Number max_buffer_rad_;
 }; // class ComputeScaleFactorFixedOrder
 
 } // namespace detail

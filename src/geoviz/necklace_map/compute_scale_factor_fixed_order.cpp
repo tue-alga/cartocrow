@@ -57,11 +57,12 @@ ComputeScaleFactorFixedOrder::ComputeScaleFactorFixedOrder(const Number& buffer_
 Number ComputeScaleFactorFixedOrder::operator()(Necklace::Ptr& necklace)
 {
   detail::ComputeScaleFactorFixedOrder impl(necklace, buffer_rad_);
-  const Number max_scale_factor = impl.Optimize();
+  const Number scale_factor = impl.Optimize();
+
   if (max_buffer_rad_ < 0 || impl.max_buffer_rad() < max_buffer_rad_)
     max_buffer_rad_ = impl.max_buffer_rad();
 
-  return max_scale_factor;
+  return scale_factor;
 }
 
 } // namespace necklace_map
