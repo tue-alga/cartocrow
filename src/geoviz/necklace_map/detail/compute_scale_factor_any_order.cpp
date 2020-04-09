@@ -459,7 +459,7 @@ double Optimizer::computeOptSize
     for (int i = 0; i < cas.size(); i++)
     {
       if (!ingot)
-        totalSize += cg->shape->ComputeCoveringSize(cas[i]->valid, cas[i]->bead->radius_base * h) + bufferSize;
+        totalSize += cg->shape->ComputeCoveringRadius(cas[i]->valid, cas[i]->bead->radius_base * h) + bufferSize;
       else totalSize += h + bufferSize;
     }
     if (totalSize <= M_PI) x = h;
@@ -502,7 +502,7 @@ bool Optimizer::feasible
   {
     if (!ingot)
       cas[i]->bead->covering_radius_rad =
-        necklace->shape->ComputeCoveringSize(cas[i]->valid, cas[i]->bead->radius_base * scale) + bufferSize;
+        necklace->shape->ComputeCoveringRadius(cas[i]->valid, cas[i]->bead->radius_base * scale) + bufferSize;
     else cas[i]->bead->covering_radius_rad = scale + bufferSize;
   }
 
@@ -710,7 +710,7 @@ bool Optimizer::feasible2
   {
     if (!ingot)
       cas[i]->bead->covering_radius_rad =
-        necklace->shape->ComputeCoveringSize(cas[i]->valid, cas[i]->bead->radius_base * scale) + bufferSize;
+        necklace->shape->ComputeCoveringRadius(cas[i]->valid, cas[i]->bead->radius_base * scale) + bufferSize;
     else cas[i]->bead->covering_radius_rad = scale + bufferSize;
   }
 
