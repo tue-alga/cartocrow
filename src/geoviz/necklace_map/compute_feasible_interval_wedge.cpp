@@ -57,7 +57,7 @@ ComputeFeasibleWedgeInterval::operator()(const Polygon& extent, const Necklace::
     (
       angle_target == obscured.to_rad() ||
       angle_target == obscured.from_rad() ||
-      !obscured.Contains(angle_target)
+      !obscured.Contains(Modulo(angle_target, obscured.from_rad()))
     )
     {
       if (CGAL::left_turn( segment[0], segment[1], kernel ))
