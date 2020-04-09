@@ -35,6 +35,8 @@ constexpr const Number M_2xPI = 2 * M_PI;
 
 Number Modulo(const Number& value, const Number& start = 0, const Number& range = M_2xPI);
 
+Number ModuloNonZero(const Number& value, const Number& start = 0, const Number& range = M_2xPI);
+
 } // namespace geoviz
 
 #endif //GEOVIZ_COMMON_CORE_TYPES_H

@@ -38,7 +38,7 @@ struct Bead
 {
   using Ptr = std::shared_ptr<Bead>;
 
-  Bead(const Number& radius_base, const std::string& style);
+  Bead(const Number& radius_base, const std::string& style, const std::string& id/*tmp debug*/);
 
   bool IsValid() const;
 
@@ -48,6 +48,7 @@ struct Bead
   NecklaceInterval::Ptr feasible;
 
   std::string region_style;
+  std::string id; // TODO(tvl) tmp for debugging.
 
   // Variables during scaling.
   Number covering_radius_rad; // TODO(tvl) move into CycleNode?

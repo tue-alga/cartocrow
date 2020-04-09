@@ -61,13 +61,18 @@ ComputeFeasibleWedgeInterval::operator()(const Polygon& extent, const Necklace::
     )
     {
       if (CGAL::left_turn( segment[0], segment[1], kernel ))
-        obscured.to_rad() = angle_target;
+      {
+        obscured.to_rad() = ModuloNonZero(angle_target, obscured.from_rad());
+      }
       else
-        obscured.from_rad() = angle_target;
+      {
+        obscured.from_rad() = Modulo(angle_target);
+        obscured.to_rad() = ModuloNonZero(obscured.to_rad(), obscured.from_rad());
+      }
     }
   }
 
-  if (obscured.IsDegenerate() || M_2xPI <= obscured.ComputeLength())
+  if (obscured.IsDegenerate() || obscured.IsFull())
     return (*fallback_)(extent, necklace);
 
   // Force the angles into the correct interval.

@@ -43,7 +43,7 @@ namespace detail
 
 // A cycle node that can be assigned to a layer.
 // The cycle nodes on a single layer shall never have valid intervals that intersect in their interior.
-struct AnyOrderCycleNode : CycleNode
+struct AnyOrderCycleNode : public CycleNode
 {
   using Ptr = std::shared_ptr<AnyOrderCycleNode>;
 

@@ -25,7 +25,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 01-04-2020
 namespace geoviz
 {
 
-/**@brief Constrain a value to be beyond some starting value by at most some range.
+/**@brief Constrain a value to be beyond some starting value by less than some range.
  * @param value the value to constrain.
  * @param start the minimum value.
  * @param range the maximum beyond the start value.
@@ -37,6 +37,22 @@ Number Modulo(const Number& value, const Number& start /*= 0*/, const Number& ra
   while (constrained < start)
     constrained += range;
   while (start + range <= constrained)
+    constrained -= range;
+  return constrained;
+}
+
+/**@brief Constrain a value to be strictly beyond some starting value by at most some range.
+ * @param value the value to constrain.
+ * @param start the minimum value.
+ * @param range the maximum beyond the start value.
+ * @return the value in the constrained range of [start, start+range].
+ */
+Number ModuloNonZero(const Number& value, const Number& start /*= 0*/, const Number& range /*= M_2xPI*/)
+{
+  Number constrained = value;
+  while (constrained <= start)
+    constrained += range;
+  while (start + range < constrained)
     constrained -= range;
   return constrained;
 }
