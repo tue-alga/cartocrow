@@ -72,7 +72,7 @@ ComputeFeasibleWedgeInterval::operator()(const Polygon& extent, const Necklace::
     }
   }
 
-  if (obscured.IsDegenerate() || obscured.IsFull())
+  if (obscured.IsDegenerate() || M_2xPI <= obscured.ComputeLength())
     return (*fallback_)(extent, necklace);
 
   // Force the angles into the correct interval.
