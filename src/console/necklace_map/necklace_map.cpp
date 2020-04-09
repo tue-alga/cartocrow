@@ -100,7 +100,7 @@ DEFINE_bool
 DEFINE_string
 (
   order_type,
-  "fixed",
+  "any",
   "The order type enforced by the scale factor algorithm. Must be one of {'fixed', 'any', 'heuristic'}."
 );
 

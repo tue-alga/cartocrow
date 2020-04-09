@@ -69,6 +69,8 @@ constexpr const double kTransformScale = 1;
 
 constexpr const double kBoundingBoxBufferPx = 5;
 
+constexpr const double kNecklaceKernelRadiusPx = 0.8;
+
 constexpr const double kPointRegionRadiusPx = 3;
 constexpr const double kBeadIdFontSizePx = 16;
 
@@ -387,7 +389,40 @@ void NecklaceWriter::DrawNecklaces()
   // We use a visitor pattern to overcome this ambiguity.
   DrawNecklaceShapeVisitor draw_visitor(transform_matrix_, printer_);
   for (const Necklace::Ptr& necklace : necklaces_)
+  {
+    printer_.OpenElement("g");
     necklace->shape->Accept(draw_visitor);
+
+    // Draw the necklace kernel as dot.
+    const Point& kernel = necklace->shape->kernel();
+
+    printer_.OpenElement("circle");
+    printer_.PushAttribute("style", kNecklaceStyle);
+
+    {
+      std::stringstream stream;
+      stream << std::setprecision(options_->region_precision);
+      stream << kernel.x();
+      printer_.PushAttribute("cx", stream.str().c_str());
+    }
+    {
+      std::stringstream stream;
+      stream << std::setprecision(options_->region_precision);
+      stream << kernel.y();
+      printer_.PushAttribute("cy", stream.str().c_str());
+    }
+    {
+      std::stringstream stream;
+      stream << std::setprecision(kIntervalNumericPrecision);
+      const Number radius = kNecklaceKernelRadiusPx * unit_px_;
+      stream << radius;
+      printer_.PushAttribute("r", stream.str().c_str());
+    }
+
+    printer_.PushAttribute("transform", transform_matrix_.c_str());
+    printer_.CloseElement(); // circle
+    printer_.CloseElement(); // g
+  }
 
   printer_.CloseElement(); // g
 }
