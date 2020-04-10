@@ -22,15 +22,32 @@ To generate and start serving the site (note that these scripts expect to be cal
 The code depends on several packages that may need to be installed before it can compile successfully:
 * CMake
 * convert
+* CGAL
 * DoxyGen
 * gflags
 * glog
 * latex
 * php
+* tinyxml2
+* unittest-cpp
 
-On Ubuntu, this can be installed by running:
+On Ubuntu, most can be installed by running:
 
 ```sh
-sudo apt install build-essential cmake doxygen libgoogle-glog-dev libgflags-dev imagemagick-6.q16 texlive-xetex php7.2-cli
+sudo apt install build-essential cmake libcgal-dev doxygen libgoogle-glog-dev libgflags-dev imagemagick-6.q16 texlive-xetex php7.2-cli libtinyxml2-dev
+```
+
+unittest-cpp requires manually cloning, building, and installation (see https://github.com/unittest-cpp/unittest-cpp):
+```sh
+git clone -b v2.0.0 https://github.com/unittest-cpp/unittest-cpp
+cd unittest-cpp/builds/
+cmake ../
+make && sudo make install
+```
+
+To run unit tests (from the current directory):
+
+```sh
+./test.sh
 ```
 

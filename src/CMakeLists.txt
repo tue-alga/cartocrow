@@ -73,6 +73,9 @@ add_subdirectory(geoviz)
 # Executables that use or expose GeoViz.
 add_subdirectory(console)
 
+# Unit tests of the GeoViz library.
+add_subdirectory(test)
+
 
 # Install rules.
 install(
@@ -82,10 +85,11 @@ install(
     DESTINATION ${INSTALL_CONFIG_DIR}/GeoViz
 )
 
-# Custom install target for CLion.
+# Custom install target for IDE.
+set(CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_SOURCE_DIR}")
 add_custom_target(
     install_${PROJECT_NAME}
     "${CMAKE_COMMAND}" --build "${CMAKE_BINARY_DIR}" --target install
-    DEPENDS ${PROJECT_NAME}
+    DEPENDS ${GEOVIZ_TARGET}
     COMMENT "Installing ${PROJECT_NAME}"
 )

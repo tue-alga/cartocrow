@@ -22,22 +22,8 @@ Subdirectories are organized as follows:
 - cmake : configuration and template files for CMake.
 - console : command-line applications to expose the functionality of the library.
 - geoviz : all the functional code. Note that I/O methods can be found with the relevant applications.
+- test : unit testing applications.
 
 # Dependencies
 
-The code depends on several packages that may need to be installed before it can compile successfully:
-- CMake
-- convert
-- CGAL
-- DoxyGen
-- gflags
-- glog
-- latex
-- php
-- tinyxml2
-
-On Ubuntu, this can be installed by running:
-
-```sh
-sudo apt install build-essential cmake libcgal-dev doxygen libgoogle-glog-dev libgflags-dev imagemagick-6.q16 texlive-xetex php7.2-cli libtinyxml2-dev
-```
+For the code dependencies, see the top level README.md

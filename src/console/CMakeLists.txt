@@ -7,8 +7,7 @@ endif(MSVC)
 
 ### MACROS ###
 
-# Add Visual Studio specific constructs to a target.
-macro(add_exe_properties target)
+macro(add_cla_exe_properties target)
     set_target_properties( ${target} PROPERTIES DEBUG_POSTFIX d )
     target_link_libraries(
         ${target}
@@ -19,10 +18,11 @@ macro(add_exe_properties target)
     )
 
     if(MSVC)
+        # Add Visual Studio specific constructs to a target.
         source_group( "src" FILES ${HDRS} ${SRCS} )
         set_target_properties( ${target} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "$(Configuration)" )
     endif(MSVC)
-endmacro(add_exe_properties)
+endmacro(add_cla_exe_properties)
 
 macro(geoviz_add_cla NAME)
     set(TARGET "${NAME}_cla")
@@ -35,7 +35,7 @@ macro(geoviz_add_cla NAME)
     file(GLOB_RECURSE SRCS "*.cpp")
 
     add_executable( ${TARGET} ${HDRS} ${SRCS} )
-    add_exe_properties(${TARGET})
+    add_cla_exe_properties(${TARGET})
 
     # Install rules.
     install(TARGETS ${TARGET} DESTINATION ${CMAKE_INSTALL_BINARY_DIR})
