@@ -161,7 +161,14 @@ DEFINE_bool
 (
   draw_necklace_curve,
   true,
-  "Whether to draw the necklace in the output."
+  "Whether to draw the necklace shape in the output."
+);
+
+DEFINE_bool
+(
+  draw_necklace_kernel,
+  false,
+  "Whether to draw the necklace kernel in the output."
 );
 
 DEFINE_bool
@@ -265,6 +272,9 @@ void ValidateFlags(geoviz::necklace_map::Parameters& parameters, geoviz::WriterO
 
     PrintFlag(FLAGS_NAME_AND_VALUE(draw_necklace_curve));
     write_options->draw_necklace_curve = FLAGS_draw_necklace_curve;
+
+    PrintFlag(FLAGS_NAME_AND_VALUE(draw_necklace_kernel));
+    write_options->draw_necklace_kernel = FLAGS_draw_necklace_kernel;
 
     PrintFlag(FLAGS_NAME_AND_VALUE(draw_bead_ids));
     write_options->draw_bead_ids = FLAGS_draw_bead_ids;

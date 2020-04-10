@@ -182,7 +182,7 @@ class DrawNecklaceShapeVisitor : public necklace_map::NecklaceShapeVisitor
     printer_.PushAttribute("cy", kernel.y());
     printer_.PushAttribute("r", radius);
     printer_.PushAttribute("transform", transform_matrix_.c_str());
-    printer_.CloseElement();
+    printer_.CloseElement();  // circle
   }
 
   void Visit(necklace_map::BezierNecklace& shape)
@@ -311,7 +311,7 @@ void NecklaceWriter::DrawPolygonRegions()
       printer_.PushAttribute("d", RegionToPath(region, options_->region_precision).c_str());
       printer_.PushAttribute("id", region.id.c_str());
       printer_.PushAttribute("transform", transform_matrix_.c_str());
-      printer_.CloseElement();
+      printer_.CloseElement(); // path
     }
   }
 
@@ -366,7 +366,7 @@ void NecklaceWriter::DrawPointRegions()
 
       printer_.PushAttribute("id", region.id.c_str());
       printer_.PushAttribute("transform", transform_matrix_.c_str());
-      printer_.CloseElement();
+      printer_.CloseElement(); // circle
     }
   }
 
@@ -392,35 +392,7 @@ void NecklaceWriter::DrawNecklaces()
   {
     printer_.OpenElement("g");
     necklace->shape->Accept(draw_visitor);
-
-    // Draw the necklace kernel as dot.
-    const Point& kernel = necklace->shape->kernel();
-
-    printer_.OpenElement("circle");
-    printer_.PushAttribute("style", kNecklaceStyle);
-
-    {
-      std::stringstream stream;
-      stream << std::setprecision(options_->region_precision);
-      stream << kernel.x();
-      printer_.PushAttribute("cx", stream.str().c_str());
-    }
-    {
-      std::stringstream stream;
-      stream << std::setprecision(options_->region_precision);
-      stream << kernel.y();
-      printer_.PushAttribute("cy", stream.str().c_str());
-    }
-    {
-      std::stringstream stream;
-      stream << std::setprecision(kIntervalNumericPrecision);
-      const Number radius = kNecklaceKernelRadiusPx * unit_px_;
-      stream << radius;
-      printer_.PushAttribute("r", stream.str().c_str());
-    }
-
-    printer_.PushAttribute("transform", transform_matrix_.c_str());
-    printer_.CloseElement(); // circle
+    DrawKernel(necklace->shape->kernel());
     printer_.CloseElement(); // g
   }
 
@@ -539,7 +511,7 @@ void NecklaceWriter::DrawFeasibleIntervals()
         }
 
         printer_.PushAttribute("transform", transform_matrix_.c_str());
-        printer_.CloseElement();
+        printer_.CloseElement(); // path
       }
     }
   }
@@ -608,7 +580,7 @@ void NecklaceWriter::DrawValidIntervals()
         }
 
         printer_.PushAttribute("transform", transform_matrix_.c_str());
-        printer_.CloseElement();
+        printer_.CloseElement(); // path
       }
     }
   }
@@ -716,7 +688,7 @@ void NecklaceWriter::DrawBeadAngles()
           printer_.PushAttribute("d", stream.str().c_str());
         }
         printer_.PushAttribute("transform", transform_matrix_.c_str());
-        printer_.CloseElement();
+        printer_.CloseElement(); // path
       }
     }
   }
@@ -782,7 +754,7 @@ void NecklaceWriter::CloseSvg()
 {
   // Add hint to display when the geometry could not be drawn.
   printer_.PushText("Sorry, your browser does not support the svg tag.");
-  printer_.CloseElement();
+  printer_.CloseElement(); // svg
 }
 
 void NecklaceWriter::ComputeBoundingBox()
@@ -958,6 +930,39 @@ void NecklaceWriter::AddDropShadowFilter()
 
   printer_.CloseElement(); // filter
   printer_.CloseElement(); // defs
+}
+
+void NecklaceWriter::DrawKernel(const Point& kernel)
+{
+  if (!options_->draw_necklace_kernel)
+    return;
+
+  // Draw the necklace kernel as dot.
+  printer_.OpenElement("circle");
+  printer_.PushAttribute("style", kNecklaceStyle);
+
+  {
+    std::stringstream stream;
+    stream << std::setprecision(options_->region_precision);
+    stream << kernel.x();
+    printer_.PushAttribute("cx", stream.str().c_str());
+  }
+  {
+    std::stringstream stream;
+    stream << std::setprecision(options_->region_precision);
+    stream << kernel.y();
+    printer_.PushAttribute("cy", stream.str().c_str());
+  }
+  {
+    std::stringstream stream;
+    stream << std::setprecision(kIntervalNumericPrecision);
+    const Number radius = kNecklaceKernelRadiusPx * unit_px_;
+    stream << radius;
+    printer_.PushAttribute("r", stream.str().c_str());
+  }
+
+  printer_.PushAttribute("transform", transform_matrix_.c_str());
+  printer_.CloseElement(); // circle
 }
 
 void NecklaceWriter::DrawBeadIds()

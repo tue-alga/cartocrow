@@ -52,6 +52,7 @@ struct WriterOptions
   double bead_opacity;
 
   bool draw_necklace_curve;
+  bool draw_necklace_kernel;
   bool draw_bead_ids;
 
   bool draw_feasible_intervals;
@@ -114,6 +115,8 @@ class NecklaceWriter
   void CreateBeadIntervalShapes();
 
   void AddDropShadowFilter();
+
+  void DrawKernel(const Point& kernel);
 
   void DrawBeadIds();
 
