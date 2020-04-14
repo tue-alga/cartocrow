@@ -21,8 +21,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Created by tvl (t.vanlankveld@esciencecenter.nl) on 26-11-2019
 */
 
-#ifndef CONSOLE_NECKLACE_MAP_DETAIL_SVG_VISITOR_H
-#define CONSOLE_NECKLACE_MAP_DETAIL_SVG_VISITOR_H
+#ifndef CONSOLE_NECKLACE_MAP_IO_DETAIL_NECKLACE_SVG_VISITOR_H
+#define CONSOLE_NECKLACE_MAP_IO_DETAIL_NECKLACE_SVG_VISITOR_H
 
 #include <memory>
 #include <unordered_map>
@@ -92,4 +92,4 @@ class NecklaceMapSvgVisitor : public SvgVisitor
 } // namespace detail
 } // namespace geoviz
 
-#endif //CONSOLE_NECKLACE_MAP_DETAIL_SVG_VISITOR_H
+#endif //CONSOLE_NECKLACE_MAP_IO_DETAIL_NECKLACE_SVG_VISITOR_H

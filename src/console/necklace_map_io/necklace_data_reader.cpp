@@ -21,7 +21,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Created by tvl (t.vanlankveld@esciencecenter.nl) on 03-12-2019
 */
 
-#include "data_reader.h"
+#include "necklace_data_reader.h"
 
 #include <exception>
 #include <fstream>

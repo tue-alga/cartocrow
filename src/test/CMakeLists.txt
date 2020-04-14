@@ -10,10 +10,7 @@ endif(MSVC)
 macro(add_test_exe_properties target)
     set_target_properties( ${target} PROPERTIES DEBUG_POSTFIX d )
     target_link_libraries(
-        ${target}
-        gflags
-        glog
-        stdc++fs
+        ${TARGET}
         UnitTest++
     )
 
@@ -50,16 +47,28 @@ macro(geoviz_add_test NAME)
     )
 endmacro(geoviz_add_test)
 
-macro(test_link_libraries LIBRARIES)
-    target_link_libraries(
-        ${target}
-        ${LIBRARIES}
-    )
-    target_link_libraries(
-        ${TEST_ALL_TARGET}
-        ${LIBRARIES}
-    )
+macro(test_link_libraries)
+    foreach(LIBRARY ${ARGN})
+        target_link_libraries(
+            ${TARGET}
+            ${LIBRARY}
+        )
+        target_link_libraries(
+            ${TEST_ALL_TARGET}
+            ${LIBRARY}
+        )
+    endforeach(LIBRARY)
 endmacro(test_link_libraries)
+
+
+# Configure a header file to pass CMake settings to the source code.
+set(TEST_DIR ${CMAKE_SOURCE_DIR}/../test)
+configure_file(
+    "${SOURCE_CONFIG_DIR}/geoviz_test_config.h.in"
+    "${SOURCE_CONFIG_DIR}/geoviz_test_config.h"
+)
+install(FILES "${SOURCE_CONFIG_DIR}/geoviz_geoviz_config.h" DESTINATION "${CMAKE_INSTALL_SOURCE_DIR}/cmake")
+
 
 # Most command-line applications use gflags to parse command-line arguments.
 find_package(UnitTest++ REQUIRED)
@@ -70,6 +79,7 @@ find_package(UnitTest++ REQUIRED)
 
 # The test_all executable runs all unit tests
 geoviz_add_test(all)
+set(TEST_ALL_TARGET ${TARGET})
 target_compile_definitions(${TARGET} PUBLIC "GEOVIZ_DISABLE_SUITE_MAIN")
 
 

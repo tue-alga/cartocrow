@@ -32,10 +32,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-2019
 
 #include "console/common/utils_cla.h"
 #include "console/common/utils_flags.h"
-#include "console/necklace_map/data_reader.h"
-#include "console/necklace_map/necklace_writer.h"
-#include "console/necklace_map/parsers.h"
-#include "console/necklace_map/svg_reader.h"
+#include "console/necklace_map_io/necklace_map_io.h"
 
 
 // the input flags are mutually exclusive per type to prevent accidentally setting both and 'the wrong one' being used.

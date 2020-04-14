@@ -21,7 +21,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Created by tvl (t.vanlankveld@esciencecenter.nl) on 13-02-2020
 */
 
-#include "parsers.h"
+#include "necklace_parsers.h"
 
 
 namespace geoviz

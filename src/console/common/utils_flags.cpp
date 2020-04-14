@@ -21,19 +21,11 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-02-2020
 
 #include "utils_flags.h"
 
-// Note that GCC 7.4.0 implements the C++17 filesystem specification as experimental.
-// This experimental implementation requires linking the "stdc++fs" static library.
-// Note that this choice for compiler and version is made for convenience:
-// it is currently shipped with my operating system.
-// Other compilers or later versions may fully implement the C++17 standard,
-// in which case this namespace will need to be updated as well.
-#include <experimental/filesystem>
+#include "console/common/utils_filesystem.h"
 
 
 namespace validate
 {
-
-namespace filesystem = std::experimental::filesystem;
 
 bool IsFile(const std::string& value)
 {

@@ -7,6 +7,24 @@ endif(MSVC)
 
 ### MACROS ###
 
+macro(geoviz_add_console_library TARGET INSTALL_DIR)
+    # - While CMake will try various file extensions when adding files,
+    #   specifying the files without extension may give problems due to ambiguity.
+    file(GLOB_RECURSE HDRS "*.h")
+    file(GLOB_RECURSE SRCS "*.cpp")
+
+    add_library(${TARGET} ${HDRS} ${SRCS})
+
+    # Install rules.
+    install(
+        TARGETS ${TARGET}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBRARY_DIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBRARY_DIR}
+    )
+    install_files_and_directories("${HDRS}" ${INSTALL_DIR})
+    install_files_and_directories("${SRCS}" ${INSTALL_DIR})
+endmacro(geoviz_add_console_library)
+
 macro(add_cla_exe_properties target)
     set_target_properties( ${target} PROPERTIES DEBUG_POSTFIX d )
     target_link_libraries(
@@ -59,6 +77,11 @@ find_package(gflags REQUIRED)
 ### LIBRARIES ###
 
 add_subdirectory(common)
+add_subdirectory(necklace_map_io)
+
+# Propagate variables up.
+set(COMMON_CLA_TARGET ${COMMON_CLA_TARGET} PARENT_SCOPE)
+set(NECKLACE_MAP_IO_TARGET ${NECKLACE_MAP_IO_TARGET} PARENT_SCOPE)
 
 ### EXECUTABLES ###
 # A few notes:
@@ -68,7 +91,6 @@ add_subdirectory(common)
 add_subdirectory(print_arguments)
 add_subdirectory(draw_logo)
 add_subdirectory(multi_library_app)
-
 add_subdirectory(necklace_map)
 
 # Set the default executable to run in Visual Studio.

@@ -18,43 +18,48 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-Created by tvl (t.vanlankveld@esciencecenter.nl) on 29-01-2020
+Created by tvl (t.vanlankveld@esciencecenter.nl) on 26-11-2019
 */
 
-#ifndef CONSOLE_NECKLACE_MAP_NECKLACE_WRITER_H
-#define CONSOLE_NECKLACE_MAP_NECKLACE_WRITER_H
+#ifndef CONSOLE_NECKLACE_MAP_IO_NECKLACE_SVG_READER_H
+#define CONSOLE_NECKLACE_MAP_IO_NECKLACE_SVG_READER_H
 
-#include <memory>
-#include <ostream>
+#include <iostream>
+#include <string>
 #include <vector>
 
-#include "geoviz/common/core_types.h"
+#include <gflags/gflags.h>
+
 #include "geoviz/necklace_map/map_element.h"
 #include "geoviz/necklace_map/necklace.h"
-#include "console/necklace_map/detail/necklace_writer.h"
+
+DECLARE_bool(strict_validity);
 
 
 namespace geoviz
 {
 
-class NecklaceWriter
+class SvgReader
 {
  public:
-  using MapElement = necklace_map::MapElement;
-  using Necklace = necklace_map::Necklace;
+  SvgReader();
 
-  NecklaceWriter();
-
-  bool Write
+  bool ReadFile
   (
-    const std::vector<MapElement::Ptr>& elements,
-    const std::vector<Necklace::Ptr>& necklaces,
-    const Number& scale_factor,
-    const WriterOptions::Ptr& options,
-    std::ostream& out
-  ) const;
-}; // class NecklaceWriter
+    const std::string& filename,
+    std::vector<necklace_map::MapElement::Ptr>& elements,
+    std::vector<necklace_map::Necklace::Ptr>& necklaces,
+    int max_retries = 2
+  );
+
+  bool Parse
+  (
+    const std::string& input,
+    std::vector<necklace_map::MapElement::Ptr>& elements,
+    std::vector<necklace_map::Necklace::Ptr>& necklaces
+  );
+}; // class SvgReader
 
 } // namespace geoviz
 
-#endif //CONSOLE_NECKLACE_MAP_NECKLACE_WRITER_H
+#endif //CONSOLE_NECKLACE_MAP_IO_NECKLACE_SVG_READER_H

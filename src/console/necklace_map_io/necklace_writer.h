@@ -18,45 +18,43 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-Created by tvl (t.vanlankveld@esciencecenter.nl) on 03-12-2019
+Created by tvl (t.vanlankveld@esciencecenter.nl) on 29-01-2020
 */
 
-#ifndef CONSOLE_NECKLACE_MAP_DATA_READER_H
-#define CONSOLE_NECKLACE_MAP_DATA_READER_H
+#ifndef CONSOLE_NECKLACE_MAP_IO_NECKLACE_WRITER_H
+#define CONSOLE_NECKLACE_MAP_IO_NECKLACE_WRITER_H
 
-#include <iostream>
-#include <string>
-#include <unordered_map>
+#include <memory>
+#include <ostream>
 #include <vector>
 
-#include "console/common/detail/table_parser.h"
+#include "geoviz/common/core_types.h"
 #include "geoviz/necklace_map/map_element.h"
+#include "geoviz/necklace_map/necklace.h"
+#include "console/necklace_map_io/detail/necklace_writer.h"
 
 
 namespace geoviz
 {
 
-class DataReader : public detail::TableParser
+class NecklaceWriter
 {
  public:
-  DataReader();
+  using MapElement = necklace_map::MapElement;
+  using Necklace = necklace_map::Necklace;
 
-  bool ReadFile
-  (
-    const std::string& filename,
-    const std::string& value_name,
-    std::vector<necklace_map::MapElement::Ptr>& elements,
-    int max_retries = 2
-  );
+  NecklaceWriter();
 
-  bool Parse
+  bool Write
   (
-    std::istream& in,
-    const std::string& value_name,
-    std::vector<necklace_map::MapElement::Ptr>& elements
-  );
-}; // class DataReader
+    const std::vector<MapElement::Ptr>& elements,
+    const std::vector<Necklace::Ptr>& necklaces,
+    const Number& scale_factor,
+    const WriterOptions::Ptr& options,
+    std::ostream& out
+  ) const;
+}; // class NecklaceWriter
 
 } // namespace geoviz
 
-#endif //CONSOLE_NECKLACE_MAP_DATA_READER_H
+#endif //CONSOLE_NECKLACE_MAP_IO_NECKLACE_WRITER_H

@@ -21,13 +21,13 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Created by tvl (t.vanlankveld@esciencecenter.nl) on 26-11-2019
 */
 
-#include "svg_reader.h"
+#include "necklace_svg_reader.h"
 
 #include <fstream>
 
 #include <glog/logging.h>
 
-#include "console/necklace_map/detail/svg_visitor.h"
+#include "console/necklace_map_io/detail/necklace_svg_visitor.h"
 
 DEFINE_bool
 (

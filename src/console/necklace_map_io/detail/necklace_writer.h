@@ -21,8 +21,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Created by tvl (t.vanlankveld@esciencecenter.nl) on 29-01-2020
 */
 
-#ifndef CONSOLE_NECKLACE_MAP_DETAIL_NECKLACE_WRITER_H
-#define CONSOLE_NECKLACE_MAP_DETAIL_NECKLACE_WRITER_H
+#ifndef CONSOLE_NECKLACE_MAP_IO_DETAIL_NECKLACE_WRITER_H
+#define CONSOLE_NECKLACE_MAP_IO_DETAIL_NECKLACE_WRITER_H
 
 #include <string>
 #include <unordered_map>
@@ -139,4 +139,4 @@ class NecklaceWriter
 } // namespace detail
 } // namespace geoviz
 
-#endif //CONSOLE_NECKLACE_MAP_DETAIL_NECKLACE_WRITER_H
+#endif //CONSOLE_NECKLACE_MAP_IO_DETAIL_NECKLACE_WRITER_H
