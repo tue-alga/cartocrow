@@ -55,8 +55,6 @@ class ComputeFeasibleInterval
  protected:
   ComputeFeasibleInterval(const Parameters& parameters);
 
-  bool ignore_point_regions_;
-
   std::set<Necklace::Ptr> to_clean_;
 }; // class ComputeFeasibleInterval
 

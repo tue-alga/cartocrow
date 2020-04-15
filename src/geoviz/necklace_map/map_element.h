@@ -30,6 +30,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 28-11-2019
 #include "geoviz/common/region.h"
 #include "geoviz/necklace_map/bead.h"
 #include "geoviz/necklace_map/necklace.h"
+#include "geoviz/necklace_map/parameters.h"
 
 
 namespace geoviz
@@ -48,7 +49,7 @@ struct MapElement
   //@param strict whether the value associated with each region must be strictly larger than 0.
   bool IsValid(const bool strict = true) const;
 
-  void InitializeBeads();
+  void InitializeBeads(const Parameters& parameters);
 
   Region region;
   Number value;  // Note that the value is correlated with the area of the bead, i.e. its squared radius.

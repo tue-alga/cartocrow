@@ -989,7 +989,7 @@ void NecklaceWriter::DrawBeadIds()
       {
         const Necklace::Ptr& necklace = map_value.first;
         const Bead::Ptr& bead = map_value.second;
-        if (!bead->valid)
+        if (!bead || !bead->valid)
           continue;
 
         printer_.OpenElement("text");

@@ -88,11 +88,20 @@ bool MapElement::IsValid(const bool strict /*= true*/) const
 /**@brief Create a bead per necklace.
  *
  * This is skipped if this element has a positive value.
+ * @param parameters the parameters describing the desired type of beads.
  */
-void MapElement::InitializeBeads()
+void MapElement::InitializeBeads(const Parameters& parameters)
 {
   // Elements on a necklace must have strictly positive value.
   if (value <= 0) return;
+  if (parameters.ignore_point_regions)
+  {
+    Polygon extent;
+    region.MakeSimple(extent);
+
+    if (extent.size() < 2)
+      return;
+  }
 
   for (BeadMap::iterator bead_iter = beads.begin(); bead_iter != beads.end(); ++bead_iter)
   {

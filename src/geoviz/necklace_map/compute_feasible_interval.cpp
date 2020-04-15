@@ -79,8 +79,6 @@ void ComputeFeasibleInterval::operator()(MapElement::Ptr& element) const
   Polygon extent;
   element->region.MakeSimple(extent);
 
-  const bool ignore_region = ignore_point_regions_ && extent.size() < 2;
-
   for (MapElement::BeadMap::value_type& map_value : element->beads)
   {
     const Necklace::Ptr& necklace = map_value.first;
@@ -90,7 +88,7 @@ void ComputeFeasibleInterval::operator()(MapElement::Ptr& element) const
     if(!bead)
       continue;
 
-    bead->feasible = ignore_region ? nullptr : (*this)(extent, necklace);
+    bead->feasible = (*this)(extent, necklace);
   }
 }
 
@@ -103,9 +101,7 @@ void ComputeFeasibleInterval::operator()(std::vector<MapElement::Ptr>& elements)
     (*this)(element);
 }
 
-ComputeFeasibleInterval::ComputeFeasibleInterval(const Parameters& parameters) :
-  ignore_point_regions_(parameters.ignore_point_regions)
-{}
+ComputeFeasibleInterval::ComputeFeasibleInterval(const Parameters& parameters) {}
 
 
 } // namespace necklace_map
