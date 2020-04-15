@@ -34,6 +34,7 @@ namespace geoviz
 namespace necklace_map
 {
 
+// TODO(tvl) rename "CircularRange"
 class NecklaceInterval : public Range
 {
  public:

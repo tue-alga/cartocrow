@@ -281,7 +281,12 @@ void OptValue::Initialize()
 }
 
 
-double Optimizer::computeOptSize
+ComputeScaleFactorFixedOrder::ComputeScaleFactorFixedOrder()
+{
+
+}
+
+Number ComputeScaleFactorFixedOrder::Optimize
 (
   const double bufferSize/*rename buffer_rad*/,
   const int precision,
@@ -339,7 +344,7 @@ double Optimizer::computeOptSize
   }
 
   // Find a non-overlapping order of ca's (where the next ca is the closest one to the current one.)
-  CountryAngleSet L;
+  NodeSet L;
   L.reserve(cas.size());
   int count = cas.size() - 1;
   Range::Ptr curRange = opt_node->valid;
@@ -487,7 +492,7 @@ double Optimizer::computeOptSize
   return x;
 }
 
-bool Optimizer::feasible
+bool ComputeScaleFactorFixedOrder::feasible
 (
   std::vector<TaskSlice>& slices,
   const double scale,
@@ -546,7 +551,7 @@ bool Optimizer::feasible
   return false;
 }
 
-void Optimizer::splitCircle(std::vector<TaskSlice>& slices, const int K, const int slice, const BitString& split)
+void ComputeScaleFactorFixedOrder::splitCircle(std::vector<TaskSlice>& slices, const int K, const int slice, const BitString& split)
 {
   // reset everything, then rotate
   for (int i = 0; i < slices.size(); i++)
@@ -556,7 +561,7 @@ void Optimizer::splitCircle(std::vector<TaskSlice>& slices, const int K, const i
   }
 }
 
-bool Optimizer::feasibleLine
+bool ComputeScaleFactorFixedOrder::feasibleLine
 (
   const std::vector<TaskSlice>& slices,
   const int K,
@@ -694,7 +699,7 @@ bool Optimizer::feasibleLine
   return false;
 }
 
-bool Optimizer::feasible2
+bool ComputeScaleFactorFixedOrder::feasible2
 (
   const std::vector<TaskSlice>& slices,
   const double scale,
@@ -734,7 +739,7 @@ bool Optimizer::feasible2
   return feasibleLine2(slices2, K, opt);
 }
 
-bool Optimizer::feasibleLine2
+bool ComputeScaleFactorFixedOrder::feasibleLine2
 (
   const std::vector<TaskSlice>& slices,
   const int K,
@@ -816,7 +821,7 @@ bool Optimizer::feasibleLine2
   }
 
 
-  CountryAngleSet listCA;
+  NodeSet listCA;
 
   int s = slices.size() - 1;
   int q = slices[s].sets[slices[s].sets.size() - 1].Get();  // TODO(tvl) remove q.

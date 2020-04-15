@@ -181,10 +181,15 @@ struct OptValue
 }; // struct OptValue
 
 
-class Optimizer
+class ComputeScaleFactorFixedOrder
 {
+ protected:
+  using NodeSet = std::vector<AnyOrderCycleNode::Ptr>;
+
  public:
-  double computeOptSize
+  ComputeScaleFactorFixedOrder();
+
+  Number Optimize
   (
     const double bufferSize/*rename buffer_rad*/,
     const int precision,
@@ -233,9 +238,8 @@ class Optimizer
   );
 
  private:
-  using CountryAngleSet = std::vector<AnyOrderCycleNode::Ptr>;
-  CountryAngleSet cas;  //TODO(tvl) move from class member to function parameter?
-}; // class Optimizer
+  NodeSet cas;  //TODO(tvl) move from class member to function parameter?
+}; // class ComputeScaleFactorFixedOrder
 
 } // namespace detail
 } // namespace necklace_map
