@@ -281,40 +281,45 @@ void OptValue::Initialize()
 }
 
 
-ComputeScaleFactorFixedOrder::ComputeScaleFactorFixedOrder()
-{
-
-}
-
-Number ComputeScaleFactorFixedOrder::Optimize
+ComputeScaleFactorAnyOrder::ComputeScaleFactorAnyOrder
 (
-  const double bufferSize/*rename buffer_rad*/,
-  const int precision,
-  const Necklace::Ptr& cg/*rename: necklace*/,
-  const int heurSteps, // heurSteps == 0 -> Exact algo
+  const Necklace::Ptr& necklace,
+  const Number& buffer_rad,
+  const int binary_search_depth,
+  const int heuristic_steps,
   const bool ingot  // TODO(tvl) remove.
-)
+) :
+  necklace_shape_(necklace->shape),
+  necklace_length_(necklace_shape_->ComputeLength()),
+  buffer_rad_(buffer_rad),
+  binary_search_depth_(binary_search_depth),
+  heuristic_steps_(heuristic_steps),
+  ingot_(ingot)
 {
-  // TODO(tvl) check which vectors can be replaced by simple fixed size arrays.
-
 
   // gather Country range pairs
   // Note that the country sympbolAngle and range have been set by the interval algorithm.
-  cas.clear();  // TODO(tvl) reserve
-  for (const Bead::Ptr& bead : cg->beads)
+  nodes_.clear();  // TODO(tvl) reserve
+  for (const Bead::Ptr& bead : necklace->beads)
   {
-    if (bead->radius_base <= 0)
-      continue;
-
-    cas.push_back(std::make_shared<AnyOrderCycleNode>(bead));
+    nodes_.push_back(std::make_shared<AnyOrderCycleNode>(bead));
   }
-  std::sort(cas.begin(), cas.end(), CompareAnyOrderCycleNode());
+  std::sort(nodes_.begin(), nodes_.end(), CompareAnyOrderCycleNode());
+}
+
+Number ComputeScaleFactorAnyOrder::Optimize()
+{
+
+
+  // TODO(tvl) check which vectors can be replaced by simple fixed size arrays.
+
+
 
   // assign tasks to layers
   std::vector<TaskEvent> events;  // TODO(tvl) reserve
-  for (size_t i = 0; i < cas.size(); i++)
+  for (size_t i = 0; i < nodes_.size(); i++)
   {
-    AnyOrderCycleNode::Ptr& ca = cas[i];
+    AnyOrderCycleNode::Ptr& ca = nodes_[i];
     events.emplace_back(ca, ca->valid->from(), TaskEvent::Type::kFrom);
     events.emplace_back(ca, ca->valid->to(), TaskEvent::Type::kTo);
   }
@@ -322,8 +327,8 @@ Number ComputeScaleFactorFixedOrder::Optimize
 
   // find angle with max thickness
   int K = 0;
-  double angle = cas[0]->valid->from();
-  for (const AnyOrderCycleNode::Ptr& node : cas)
+  double angle = nodes_[0]->valid->from();
+  for (const AnyOrderCycleNode::Ptr& node : nodes_)
     if (node->valid->Contains(angle))
       K++;
   int optK = K;
@@ -345,8 +350,8 @@ Number ComputeScaleFactorFixedOrder::Optimize
 
   // Find a non-overlapping order of ca's (where the next ca is the closest one to the current one.)
   NodeSet L;
-  L.reserve(cas.size());
-  int count = cas.size() - 1;
+  L.reserve(nodes_.size());
+  int count = nodes_.size() - 1;
   Range::Ptr curRange = opt_node->valid;
   opt_node->layer = 0;
   L.push_back(opt_node);
@@ -355,15 +360,15 @@ Number ComputeScaleFactorFixedOrder::Optimize
     AnyOrderCycleNode::Ptr next_node;
     double minAngleDif = M_2xPI;
 
-    for (int i = 0; i < cas.size(); i++)
+    for (int i = 0; i < nodes_.size(); i++)
     {
-      if (cas[i]->layer >= 0) continue;
-      Range r(curRange->to(), cas[i]->valid->from());
+      if (nodes_[i]->layer >= 0) continue;
+      Range r(curRange->to(), nodes_[i]->valid->from());
       const Number length_rad = r.ComputeLength();
       if (length_rad < minAngleDif)
       {
         minAngleDif = length_rad;
-        next_node = cas[i];
+        next_node = nodes_[i];
       }
     }
     count--;
@@ -393,15 +398,15 @@ Number ComputeScaleFactorFixedOrder::Optimize
 
   // Failure case: too thick.
   if (K >= 15) return 0;
-  //System.out.println(cas.size());
+  //System.out.println(nodes_.size());
   //System.out.println(K);
 
   // TODO(tvl) why does this repeat the earlier initialization? layer is set...
   // TODO(tvl) this recreation of the event list could be replaced by a link in the events to the CA...
   /*events.clear();
-  for (int i = 0; i < cas.size(); i++)
+  for (int i = 0; i < nodes_.size(); i++)
   {
-    AnyOrderCycleNode::Ptr& ca = cas[i];
+    AnyOrderCycleNode::Ptr& ca = nodes_[i];
     events.emplace_back(ca, ca->valid->from(), true);
     events.emplace_back(ca, ca->valid->to(), false);
   }*/
@@ -410,7 +415,7 @@ Number ComputeScaleFactorFixedOrder::Optimize
 
   Bead::Ptr curTasks[K];
   // initialize
-  for (const AnyOrderCycleNode::Ptr& node : cas)
+  for (const AnyOrderCycleNode::Ptr& node : nodes_)
   {
     if (node->valid->Contains(0) && node->valid->to() < M_2xPI)
       curTasks[node->layer] = node->bead;
@@ -444,28 +449,27 @@ Number ComputeScaleFactorFixedOrder::Optimize
 
   // compute upper bound scale
   double maxScale = -1;
-  double length = cg->shape->ComputeLength();
-  for (int i = 0; i < cas.size(); i++)
+  for (int i = 0; i < nodes_.size(); i++)
   {
-    double max_bead_scale = length / (2.0 * cas[i]->bead->radius_base);
+    double max_bead_scale = necklace_length_ / (2.0 * nodes_[i]->bead->radius_base);
     if (maxScale < 0 || max_bead_scale < maxScale)
       maxScale = max_bead_scale;
   }
-  if (ingot)
-    maxScale = M_PI / cas.size();  // TODO(tvl) even with ingot mode enabled: why do the previous calculations in this case?
+  if (ingot_)
+    maxScale = M_PI / nodes_.size();  // TODO(tvl) even with ingot mode enabled: why do the previous calculations in this case?
 
   // 1st binary search
   double x = 0.0;
   double y = maxScale;
-  for (int j = 0; j < 10; j++)
+  for (int j = 0; j < binary_search_depth_; j++)
   {
     double h = 0.5 * (x + y);
     double totalSize = 0.0;
-    for (int i = 0; i < cas.size(); i++)
+    for (int i = 0; i < nodes_.size(); i++)
     {
-      if (!ingot)
-        totalSize += cg->shape->ComputeCoveringRadius(cas[i]->valid, cas[i]->bead->radius_base * h) + bufferSize;
-      else totalSize += h + bufferSize;
+      if (!ingot_)
+        totalSize += necklace_shape_->ComputeCoveringRadius(nodes_[i]->valid, nodes_[i]->bead->radius_base * h) + buffer_rad_;
+      else totalSize += h + buffer_rad_;
     }
     if (totalSize <= M_PI) x = h;
     else y = h;
@@ -475,16 +479,16 @@ Number ComputeScaleFactorFixedOrder::Optimize
   // binary search
   x = 0.0;
   y = maxScale;
-  for (int i = 0; i < precision; i++)
+  for (int i = 0; i < binary_search_depth_; i++)
   {
     double h = 0.5 * (x + y);
-    if (heurSteps == 0)
+    if (heuristic_steps_ == 0)  // TODO(tvl) Merge in method that switches between feasible methods based on heuristic steps.
     {
-      if (feasible(slices, h, K, bufferSize, cg, ingot)) x = h;
+      if (feasible(slices, h, K)) x = h;
       else y = h;
     } else
     {
-      if (feasible2(slices, h, K, bufferSize, cg, heurSteps, ingot)) x = h;
+      if (feasible2(slices, h, K, heuristic_steps_)) x = h;
       else y = h;
     }
   }
@@ -492,23 +496,20 @@ Number ComputeScaleFactorFixedOrder::Optimize
   return x;
 }
 
-bool ComputeScaleFactorFixedOrder::feasible
+bool ComputeScaleFactorAnyOrder::feasible
 (
   std::vector<TaskSlice>& slices,
   const double scale,
-  const int K,
-  const double bufferSize,
-  const Necklace::Ptr& necklace,
-  const bool ingot
+  const int K
 )
 {
   // set sizes
-  for (int i = 0; i < cas.size(); i++)
+  for (int i = 0; i < nodes_.size(); i++)
   {
-    if (!ingot)
-      cas[i]->bead->covering_radius_rad =
-        necklace->shape->ComputeCoveringRadius(cas[i]->valid, cas[i]->bead->radius_base * scale) + bufferSize;
-    else cas[i]->bead->covering_radius_rad = scale + bufferSize;
+    if (!ingot_)
+      nodes_[i]->bead->covering_radius_rad =
+        necklace_shape_->ComputeCoveringRadius(nodes_[i]->valid, nodes_[i]->bead->radius_base * scale) + buffer_rad_;
+    else nodes_[i]->bead->covering_radius_rad = scale + buffer_rad_;
   }
 
   // setup DP array
@@ -551,7 +552,7 @@ bool ComputeScaleFactorFixedOrder::feasible
   return false;
 }
 
-void ComputeScaleFactorFixedOrder::splitCircle(std::vector<TaskSlice>& slices, const int K, const int slice, const BitString& split)
+void ComputeScaleFactorAnyOrder::splitCircle(std::vector<TaskSlice>& slices, const int K, const int slice, const BitString& split)
 {
   // reset everything, then rotate
   for (int i = 0; i < slices.size(); i++)
@@ -561,7 +562,7 @@ void ComputeScaleFactorFixedOrder::splitCircle(std::vector<TaskSlice>& slices, c
   }
 }
 
-bool ComputeScaleFactorFixedOrder::feasibleLine
+bool ComputeScaleFactorAnyOrder::feasibleLine
 (
   const std::vector<TaskSlice>& slices,
   const int K,
@@ -699,24 +700,21 @@ bool ComputeScaleFactorFixedOrder::feasibleLine
   return false;
 }
 
-bool ComputeScaleFactorFixedOrder::feasible2
+bool ComputeScaleFactorAnyOrder::feasible2  // TODO(tvl) rename feasible heuristic.
 (
   const std::vector<TaskSlice>& slices,
   const double scale,
   const int K,
-  const double bufferSize,
-  const Necklace::Ptr& necklace,
-  const int copies,
-  const bool ingot
+  const int copies
 )
 {
   // set sizes
-  for (int i = 0; i < cas.size(); i++)
+  for (int i = 0; i < nodes_.size(); i++)
   {
-    if (!ingot)
-      cas[i]->bead->covering_radius_rad =
-        necklace->shape->ComputeCoveringRadius(cas[i]->valid, cas[i]->bead->radius_base * scale) + bufferSize;
-    else cas[i]->bead->covering_radius_rad = scale + bufferSize;
+    if (!ingot_)
+      nodes_[i]->bead->covering_radius_rad =
+        necklace_shape_->ComputeCoveringRadius(nodes_[i]->valid, nodes_[i]->bead->radius_base * scale) + buffer_rad_;
+    else nodes_[i]->bead->covering_radius_rad = scale + buffer_rad_;
   }
 
   // make new slices
@@ -739,7 +737,7 @@ bool ComputeScaleFactorFixedOrder::feasible2
   return feasibleLine2(slices2, K, opt);
 }
 
-bool ComputeScaleFactorFixedOrder::feasibleLine2
+bool ComputeScaleFactorAnyOrder::feasibleLine2
 (
   const std::vector<TaskSlice>& slices,
   const int K,
@@ -864,8 +862,8 @@ bool ComputeScaleFactorFixedOrder::feasibleLine2
 
   // set to not found
   int count = 0;
-  for (int i = 0; i < cas.size(); i++)
-    cas[i]->bead->check = 0;
+  for (int i = 0; i < nodes_.size(); i++)
+    nodes_[i]->bead->check = 0;
 
   int li = listCA.size() - 1;
   int ri = listCA.size() - 1;
@@ -879,7 +877,7 @@ bool ComputeScaleFactorFixedOrder::feasibleLine2
 
   while (li >= 0)
   {
-    if (count == cas.size()) break;
+    if (count == nodes_.size()) break;
     AnyOrderCycleNode::Ptr& ca1 = listCA[li];
     AnyOrderCycleNode::Ptr& ca2 = listCA[ri];
     if (ca2->valid->from() + M_2xPI < ca1->valid->to())
@@ -896,7 +894,7 @@ bool ComputeScaleFactorFixedOrder::feasibleLine2
   }
   li++;
 
-  if (count == cas.size())
+  if (count == nodes_.size())
     return true;
 
   return false;

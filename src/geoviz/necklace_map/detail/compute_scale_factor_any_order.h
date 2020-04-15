@@ -181,31 +181,34 @@ struct OptValue
 }; // struct OptValue
 
 
-class ComputeScaleFactorFixedOrder
+class ComputeScaleFactorAnyOrder
 {
  protected:
   using NodeSet = std::vector<AnyOrderCycleNode::Ptr>;
 
  public:
-  ComputeScaleFactorFixedOrder();
-
-  Number Optimize
+  ComputeScaleFactorAnyOrder
   (
-    const double bufferSize/*rename buffer_rad*/,
-    const int precision,
-    const Necklace::Ptr& cg/*rename: necklace*/,
-    const int heurSteps, // heurSteps == 0 -> Exact algo
+    const Necklace::Ptr& necklace,
+    const Number& buffer_rad,
+    const int binary_search_depth,
+    const int heuristic_steps,
     const bool ingot  // TODO(tvl) remove.
   );
+
+  Number Optimize();
+
+ protected:
+
+ private:
+
+
 
   bool feasible
   (
     std::vector<TaskSlice>& slices,
     const double scale,
-    const int K,
-    const double bufferSize,
-    const Necklace::Ptr& necklace,
-    const bool ingot
+    const int K
   );
 
   void splitCircle(std::vector<TaskSlice>& slices, const int K, const int slice, const BitString& split);
@@ -224,10 +227,7 @@ class ComputeScaleFactorFixedOrder
     const std::vector<TaskSlice>& slices,
     const double scale,
     const int K,
-    const double bufferSize,
-    const Necklace::Ptr& necklace,
-    const int copies,
-    const bool ingot
+    const int copies
   );
 
   bool feasibleLine2
@@ -237,9 +237,20 @@ class ComputeScaleFactorFixedOrder
     std::vector<std::vector<OptValue> >& opt
   );
 
- private:
-  NodeSet cas;  //TODO(tvl) move from class member to function parameter?
-}; // class ComputeScaleFactorFixedOrder
+ protected:
+  NecklaceShape::Ptr necklace_shape_;
+
+  // Note that the scaler must be able to access the set by index.
+  NodeSet nodes_;
+
+  Number necklace_length_;
+  Number buffer_rad_;
+  //Number max_buffer_rad_;  // Based on smallest scaled radius?
+
+  int binary_search_depth_;
+  int heuristic_steps_; // TODO(tvl) const value: remove?
+  bool ingot_;  // TODO(tvl) replace by specialization class (and methods).
+}; // class ComputeScaleFactorAnyOrder
 
 } // namespace detail
 } // namespace necklace_map
