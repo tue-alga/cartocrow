@@ -35,6 +35,12 @@ Number ComputeScaleFactor
   std::vector<Necklace::Ptr>& necklaces
 )
 {
+  // Create a bead per necklace that an element is part of.
+  for (Necklace::Ptr& necklace : necklaces)
+    necklace->beads.clear();
+  for(MapElement::Ptr& element : elements)
+    element->InitializeBeads();
+
   // Generate intervals based on the regions and necklaces.
   (*ComputeFeasibleInterval::New(parameters))(elements);
 

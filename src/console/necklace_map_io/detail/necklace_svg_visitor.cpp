@@ -74,7 +74,6 @@ NecklaceMapSvgVisitor::NecklaceMapSvgVisitor
   for (const MapElement::Ptr& element : elements_)
   {
     CHECK_NOTNULL(element);
-
     const size_t next_index = id_to_region_index_.size();
     const size_t n = id_to_region_index_.insert({element->region.id, next_index}).first->second;
     CHECK_EQ(next_index, n);
@@ -173,19 +172,12 @@ bool NecklaceMapSvgVisitor::FinalizeSvg()
     MapElement::Ptr& element = elements_[n];
     CHECK_NOTNULL(element);
 
-    // Elements on a necklace must have strictly positive value.
-    if (element->value <= 0)
-      continue;
-
     const std::string& necklace_id = necklace_ids_[n];
     LookupTable::const_iterator index_iter = id_to_necklace_index_.find(necklace_id);
     CHECK(index_iter != id_to_necklace_index_.end());
 
     Necklace::Ptr& necklace = necklaces_[index_iter->second];
-    Bead::Ptr bead = std::make_shared<necklace_map::Bead>(CGAL::sqrt(element->value), element->region.style, element->region.id);
-
-    element->beads[necklace] = bead;
-    necklace->beads.push_back(bead);
+    element->beads[necklace] = nullptr;
   }
   return true;
 }

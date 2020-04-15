@@ -165,6 +165,9 @@ bool DataReader::Parse
     const size_t next_index = id_to_element_index.size();
     const size_t n = id_to_element_index.insert({element->region.id, next_index}).first->second;
     CHECK_EQ(next_index, n);
+
+    // Set the value to 0 in case the elements are reused.
+    element->value = 0;
   }
 
   // Add the values to their associated element.

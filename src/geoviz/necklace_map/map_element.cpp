@@ -85,6 +85,23 @@ bool MapElement::IsValid(const bool strict /*= true*/) const
   return true;
 }
 
+/**@brief Create a bead per necklace.
+ *
+ * This is skipped if this element has a positive value.
+ */
+void MapElement::InitializeBeads()
+{
+  // Elements on a necklace must have strictly positive value.
+  if (value <= 0) return;
+
+  for (BeadMap::iterator bead_iter = beads.begin(); bead_iter != beads.end(); ++bead_iter)
+  {
+    const Necklace::Ptr& necklace = bead_iter->first;
+    bead_iter->second = std::make_shared<necklace_map::Bead>(CGAL::sqrt(value), region.style, region.id);
+    necklace->beads.push_back(bead_iter->second);
+  }
+}
+
 /**@fn Region MapElement::region;
  * @brief The region of the map associated with this element.
  */

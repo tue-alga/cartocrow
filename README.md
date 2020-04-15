@@ -48,6 +48,6 @@ make && sudo make install
 To run unit tests (from the current directory):
 
 ```sh
-./test.sh
+./unit_test.sh
 ```
 

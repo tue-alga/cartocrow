@@ -29,11 +29,11 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-04-2020
 
 void TestFlowDiagram() {}  // Linking hack, each new test cpp file has it.
 
-SUITE(suite_FlowDiagram) {
+UNITTEST_SUITE(suite_FlowDiagram) {
 
-TEST(SanityFlowDiagram)
+UNITTEST_TEST(SanityFlowDiagram)
 {
-  CHECK_EQUAL(2, 2);
+  UNITTEST_CHECK_EQUAL(2, 2);
 }
 
 } // suite_FlowDiagram

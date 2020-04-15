@@ -48,6 +48,8 @@ struct MapElement
   //@param strict whether the value associated with each region must be strictly larger than 0.
   bool IsValid(const bool strict = true) const;
 
+  void InitializeBeads();
+
   Region region;
   Number value;  // Note that the value is correlated with the area of the bead, i.e. its squared radius.
 

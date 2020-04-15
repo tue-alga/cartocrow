@@ -87,13 +87,11 @@ void ComputeFeasibleInterval::operator()(MapElement::Ptr& element) const
     Bead::Ptr& bead = map_value.second;
 
     CHECK_NOTNULL(necklace);
-    CHECK_NOTNULL(bead);
+    if(!bead)
+      continue;
 
     bead->feasible = ignore_region ? nullptr : (*this)(extent, necklace);
   }
-
-  if (ignore_region)
-    element->beads.clear();
 }
 
 /**@brief Apply the functor to a collection of map elements.
