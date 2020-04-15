@@ -190,15 +190,17 @@ class ComputeScaleFactorAnyOrder
   ComputeScaleFactorAnyOrder
   (
     const Necklace::Ptr& necklace,
-    const Number& buffer_rad,
-    const int binary_search_depth,
-    const int heuristic_steps,
-    const bool ingot  // TODO(tvl) remove.
+    const Number& buffer_rad = 0,
+    const int binary_search_depth = 10,
+    const int heuristic_steps = 5
   );
 
   Number Optimize();
 
  protected:
+  virtual Number ComputeScaleUpperBound() const;
+
+  virtual Number ComputeCoveringRadii(const Number& scale);
 
  private:
 
@@ -207,16 +209,19 @@ class ComputeScaleFactorAnyOrder
   bool feasible
   (
     std::vector<TaskSlice>& slices,
-    const double scale,
     const int K
   );
 
-  void splitCircle(std::vector<TaskSlice>& slices, const int K, const int slice, const BitString& split);
+  void splitCircle
+  (
+    std::vector<TaskSlice>& slices,
+    const int slice,
+    const BitString& split
+  );
 
   bool feasibleLine
   (
     const std::vector<TaskSlice>& slices,
-    const int K,
     std::vector<std::vector<OptValue> >& opt,
     const int slice,
     const BitString& split
@@ -225,7 +230,6 @@ class ComputeScaleFactorAnyOrder
   bool feasible2
   (
     const std::vector<TaskSlice>& slices,
-    const double scale,
     const int K,
     const int copies
   );
@@ -233,7 +237,6 @@ class ComputeScaleFactorAnyOrder
   bool feasibleLine2
   (
     const std::vector<TaskSlice>& slices,
-    const int K,
     std::vector<std::vector<OptValue> >& opt
   );
 
@@ -248,9 +251,25 @@ class ComputeScaleFactorAnyOrder
   //Number max_buffer_rad_;  // Based on smallest scaled radius?
 
   int binary_search_depth_;
-  int heuristic_steps_; // TODO(tvl) const value: remove?
-  bool ingot_;  // TODO(tvl) replace by specialization class (and methods).
+  int heuristic_steps_; // TODO(tvl) const value: remove? Make separate class/struct hierarchy?
 }; // class ComputeScaleFactorAnyOrder
+
+class ComputeScaleFactorAnyOrderIngot : public ComputeScaleFactorAnyOrder
+{
+ public:
+  ComputeScaleFactorAnyOrderIngot
+  (
+    const Necklace::Ptr& necklace,
+    const Number& buffer_rad = 0,
+    const int binary_search_depth = 10,
+    const int heuristic_steps = 5
+  );
+
+ protected:
+  Number ComputeScaleUpperBound() const override;
+
+  Number ComputeCoveringRadii(const Number& scale) override;
+}; // class ComputeScaleFactorAnyOrderIngot
 
 } // namespace detail
 } // namespace necklace_map

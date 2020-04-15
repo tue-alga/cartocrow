@@ -53,7 +53,7 @@ ComputeScaleFactorAnyOrder::ComputeScaleFactorAnyOrder(const Number& buffer_rad 
 
 Number ComputeScaleFactorAnyOrder::operator()(Necklace::Ptr& necklace)
 {
-  detail::ComputeScaleFactorAnyOrder opt(necklace, buffer_rad_, 10/*const value; remove?*/, 5/*const value; remove?*/, false/*INGOT_MODE*/); // Note, only one necklace!
+  detail::ComputeScaleFactorAnyOrder opt(necklace, buffer_rad_);
   const Number scale_factor = opt.Optimize();
 
   return scale_factor;

@@ -284,17 +284,15 @@ void OptValue::Initialize()
 ComputeScaleFactorAnyOrder::ComputeScaleFactorAnyOrder
 (
   const Necklace::Ptr& necklace,
-  const Number& buffer_rad,
-  const int binary_search_depth,
-  const int heuristic_steps,
-  const bool ingot  // TODO(tvl) remove.
+  const Number& buffer_rad /*= 0*/,
+  const int binary_search_depth /*= 10*/,
+  const int heuristic_steps /*= 5*/
 ) :
   necklace_shape_(necklace->shape),
   necklace_length_(necklace_shape_->ComputeLength()),
   buffer_rad_(buffer_rad),
   binary_search_depth_(binary_search_depth),
-  heuristic_steps_(heuristic_steps),
-  ingot_(ingot)
+  heuristic_steps_(heuristic_steps)
 {
 
   // gather Country range pairs
@@ -309,6 +307,8 @@ ComputeScaleFactorAnyOrder::ComputeScaleFactorAnyOrder
 
 Number ComputeScaleFactorAnyOrder::Optimize()
 {
+
+
 
 
   // TODO(tvl) check which vectors can be replaced by simple fixed size arrays.
@@ -448,6 +448,40 @@ Number ComputeScaleFactorAnyOrder::Optimize()
   }
 
   // compute upper bound scale
+  const Number maxScale = ComputeScaleUpperBound();
+
+
+
+  // binary search
+  Number x = 0.0;
+  Number y = maxScale;
+  for (int i = 0; i < binary_search_depth_; i++)
+  {
+    double h = 0.5 * (x + y);
+    ComputeCoveringRadii(h);
+
+
+
+    if (heuristic_steps_ == 0)  // TODO(tvl) Merge in method that switches between feasible methods based on heuristic steps.
+    {
+      if (feasible(slices, K)) x = h;
+      else y = h;
+    } else
+    {
+      if (feasible2(slices, K, heuristic_steps_)) x = h;
+      else y = h;
+    }
+  }
+  //System.out.println(x);
+  return x;
+}
+
+Number ComputeScaleFactorAnyOrder::ComputeScaleUpperBound() const
+{
+
+
+
+
   double maxScale = -1;
   for (int i = 0; i < nodes_.size(); i++)
   {
@@ -455,8 +489,6 @@ Number ComputeScaleFactorAnyOrder::Optimize()
     if (maxScale < 0 || max_bead_scale < maxScale)
       maxScale = max_bead_scale;
   }
-  if (ingot_)
-    maxScale = M_PI / nodes_.size();  // TODO(tvl) even with ingot mode enabled: why do the previous calculations in this case?
 
   // 1st binary search
   double x = 0.0;
@@ -467,50 +499,32 @@ Number ComputeScaleFactorAnyOrder::Optimize()
     double totalSize = 0.0;
     for (int i = 0; i < nodes_.size(); i++)
     {
-      if (!ingot_)
         totalSize += necklace_shape_->ComputeCoveringRadius(nodes_[i]->valid, nodes_[i]->bead->radius_base * h) + buffer_rad_;
-      else totalSize += h + buffer_rad_;
+
     }
     if (totalSize <= M_PI) x = h;
     else y = h;
   }
-  maxScale = x;
-
-  // binary search
-  x = 0.0;
-  y = maxScale;
-  for (int i = 0; i < binary_search_depth_; i++)
-  {
-    double h = 0.5 * (x + y);
-    if (heuristic_steps_ == 0)  // TODO(tvl) Merge in method that switches between feasible methods based on heuristic steps.
-    {
-      if (feasible(slices, h, K)) x = h;
-      else y = h;
-    } else
-    {
-      if (feasible2(slices, h, K, heuristic_steps_)) x = h;
-      else y = h;
-    }
-  }
-  //System.out.println(x);
   return x;
+}
+
+Number ComputeScaleFactorAnyOrder::ComputeCoveringRadii(const Number& scale)
+{
+  // set sizes
+  for (int i = 0; i < nodes_.size(); i++)
+  {
+      nodes_[i]->bead->covering_radius_rad =
+        necklace_shape_->ComputeCoveringRadius(nodes_[i]->valid, nodes_[i]->bead->radius_base * scale) + buffer_rad_;
+
+  }
 }
 
 bool ComputeScaleFactorAnyOrder::feasible
 (
   std::vector<TaskSlice>& slices,
-  const double scale,
   const int K
 )
 {
-  // set sizes
-  for (int i = 0; i < nodes_.size(); i++)
-  {
-    if (!ingot_)
-      nodes_[i]->bead->covering_radius_rad =
-        necklace_shape_->ComputeCoveringRadius(nodes_[i]->valid, nodes_[i]->bead->radius_base * scale) + buffer_rad_;
-    else nodes_[i]->bead->covering_radius_rad = scale + buffer_rad_;
-  }
 
   // setup DP array
   int nSubSets = (1 << K);
@@ -538,10 +552,10 @@ bool ComputeScaleFactorAnyOrder::feasible
         {
 
           // split the circle (ranges, event times, the works)
-          splitCircle(slices, K, i, str2);
+          splitCircle(slices, i, str2);
 
           // compute
-          bool good = feasibleLine(slices, K, opt, i, str2);
+          bool good = feasibleLine(slices, opt, i, str2);
 
           if (good) return true;
         }
@@ -552,7 +566,12 @@ bool ComputeScaleFactorAnyOrder::feasible
   return false;
 }
 
-void ComputeScaleFactorAnyOrder::splitCircle(std::vector<TaskSlice>& slices, const int K, const int slice, const BitString& split)
+void ComputeScaleFactorAnyOrder::splitCircle
+(
+  std::vector<TaskSlice>& slices,
+  const int slice,
+  const BitString& split
+)
 {
   // reset everything, then rotate
   for (int i = 0; i < slices.size(); i++)
@@ -565,7 +584,6 @@ void ComputeScaleFactorAnyOrder::splitCircle(std::vector<TaskSlice>& slices, con
 bool ComputeScaleFactorAnyOrder::feasibleLine
 (
   const std::vector<TaskSlice>& slices,
-  const int K,
   std::vector<std::vector<OptValue> >& opt,
   const int slice,
   const BitString& split
@@ -703,20 +721,10 @@ bool ComputeScaleFactorAnyOrder::feasibleLine
 bool ComputeScaleFactorAnyOrder::feasible2  // TODO(tvl) rename feasible heuristic.
 (
   const std::vector<TaskSlice>& slices,
-  const double scale,
   const int K,
   const int copies
 )
 {
-  // set sizes
-  for (int i = 0; i < nodes_.size(); i++)
-  {
-    if (!ingot_)
-      nodes_[i]->bead->covering_radius_rad =
-        necklace_shape_->ComputeCoveringRadius(nodes_[i]->valid, nodes_[i]->bead->radius_base * scale) + buffer_rad_;
-    else nodes_[i]->bead->covering_radius_rad = scale + buffer_rad_;
-  }
-
   // make new slices
   std::vector<TaskSlice> slices2(slices.size() * copies);
   for (int i = 0; i < copies; i++)
@@ -734,13 +742,12 @@ bool ComputeScaleFactorAnyOrder::feasible2  // TODO(tvl) rename feasible heurist
   for (int i = 0; i < slices2.size(); i++)
     opt[i].resize(nSubSets);
 
-  return feasibleLine2(slices2, K, opt);
+  return feasibleLine2(slices2, opt);
 }
 
 bool ComputeScaleFactorAnyOrder::feasibleLine2
 (
   const std::vector<TaskSlice>& slices,
-  const int K,
   std::vector<std::vector<OptValue> >& opt
 )
 {
@@ -898,6 +905,27 @@ bool ComputeScaleFactorAnyOrder::feasibleLine2
     return true;
 
   return false;
+}
+
+
+ComputeScaleFactorAnyOrderIngot::ComputeScaleFactorAnyOrderIngot
+(
+  const Necklace::Ptr& necklace,
+  const Number& buffer_rad /*= 0*/,
+  const int binary_search_depth /*= 10*/,
+  const int heuristic_steps /*= 5*/
+) : ComputeScaleFactorAnyOrder(necklace, buffer_rad, binary_search_depth, heuristic_steps)
+{}
+
+Number ComputeScaleFactorAnyOrderIngot::ComputeScaleUpperBound() const
+{
+  return M_PI / nodes_.size() - buffer_rad_;
+}
+
+Number ComputeScaleFactorAnyOrderIngot::ComputeCoveringRadii(const Number& scale)
+{
+  for (AnyOrderCycleNode::Ptr& node : nodes_)
+    node->bead->covering_radius_rad = scale + buffer_rad_;
 }
 
 } // namespace detail
