@@ -23,6 +23,4 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-04-2020
 
 #include "necklace_map.h"
 
-NecklaceData SingletonData::instance;
-
 GEOVIZ_RUN_TESTS(TestNecklaceMap)

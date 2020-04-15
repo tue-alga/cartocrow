@@ -44,33 +44,30 @@ struct NecklaceData
   {
     // Disable logging to INFO and WARNING.
     FLAGS_minloglevel = 2;
-
-    parameters.centroid_interval_length_rad = 0.2 * M_PI;
-    parameters.ignore_point_regions = false;
-    parameters.buffer_rad = 0;
-    parameters.aversion_ratio = 0.001;
   }
 
   std::vector<geoviz::necklace_map::MapElement::Ptr> elements;
   std::vector<geoviz::necklace_map::Necklace::Ptr> necklaces;
-  geoviz::necklace_map::Parameters parameters;
 }; // struct NecklaceData
 
-struct SingletonData
-{
-  SingletonData() : elements(instance.elements), necklaces(instance.necklaces), parameters(instance.parameters) {}
-
-  std::vector<geoviz::necklace_map::MapElement::Ptr>& elements;
-  std::vector<geoviz::necklace_map::Necklace::Ptr>& necklaces;
-  geoviz::necklace_map::Parameters& parameters;
- private:
-  static NecklaceData instance;
-}; // struct SingletonData
+static NecklaceData kEastAsia = NecklaceData();
+static NecklaceData kWesternEurope = NecklaceData();
 
 UNITTEST_SUITE(NecklaceMap)
 {
 
-UNITTEST_TEST_FIXTURE(NecklaceData, WesternEurope)
+void InitializeParameters(geoviz::necklace_map::Parameters& parameters)
+{
+  parameters.interval_type = geoviz::necklace_map::IntervalType::kWedge;
+  parameters.centroid_interval_length_rad = 0.2 * M_PI;
+  parameters.ignore_point_regions = false;
+
+  parameters.order_type = geoviz::necklace_map::OrderType::kAny;
+  parameters.buffer_rad = 0;
+  parameters.aversion_ratio = 0.001;
+}
+
+UNITTEST_TEST(WesternEuropeCentroidFixed)
 {
   const filesystem::path test_dir = GEOVIZ_TEST_DIR;
 
@@ -78,21 +75,85 @@ UNITTEST_TEST_FIXTURE(NecklaceData, WesternEurope)
   const filesystem::path in_data_path = test_dir / "wEU.txt";
   const std::string in_value_name = "value";
 
+  NecklaceData& data = kWesternEurope;
+
   // Read the data and geometry.
+  if (data.elements.empty())
+  {
+    geoviz::SvgReader svg_reader;
+    UNITTEST_REQUIRE UNITTEST_CHECK(svg_reader.ReadFile(in_geometry_path, data.elements, data.necklaces));
+  }
+
   geoviz::DataReader data_reader;
-  geoviz::SvgReader svg_reader;
+  UNITTEST_CHECK(data_reader.ReadFile(in_data_path, in_value_name, data.elements));
 
-  UNITTEST_REQUIRE UNITTEST_CHECK(data_reader.ReadFile(in_data_path, in_value_name, elements));
-  UNITTEST_CHECK(svg_reader.ReadFile(in_geometry_path, elements, necklaces));
+  geoviz::necklace_map::Parameters parameters;
+  InitializeParameters(parameters);
+  parameters.interval_type = geoviz::necklace_map::IntervalType::kCentroid;
+  parameters.order_type = geoviz::necklace_map::OrderType::kFixed;
 
-  parameters.interval_type = geoviz::necklace_map::IntervalType::kWedge;
-  parameters.order_type = geoviz::necklace_map::OrderType::kAny;
+  const geoviz::Number scale_factor = ComputeScaleFactor(parameters, data.elements, data.necklaces);
+  UNITTEST_CHECK_CLOSE(scale_factor, 1.687, 0.001);
+}
 
-  const geoviz::Number scale_factor = ComputeScaleFactor(parameters, elements, necklaces);
+UNITTEST_TEST(WesternEuropeIgnorePointRegion)
+{
+  const filesystem::path test_dir = GEOVIZ_TEST_DIR;
+
+  const filesystem::path in_geometry_path = test_dir / "wEU.xml";
+  const filesystem::path in_data_path = test_dir / "wEU.txt";
+  const std::string in_value_name = "value";
+
+  NecklaceData& data = kWesternEurope;
+
+  // Read the data and geometry.
+  if (data.elements.empty())
+  {
+    geoviz::SvgReader svg_reader;
+    UNITTEST_REQUIRE UNITTEST_CHECK(svg_reader.ReadFile(in_geometry_path, data.elements, data.necklaces));
+  }
+
+  geoviz::DataReader data_reader;
+  UNITTEST_CHECK(data_reader.ReadFile(in_data_path, in_value_name, data.elements));
+
+  geoviz::necklace_map::Parameters parameters;
+  InitializeParameters(parameters);
+  parameters.interval_type = geoviz::necklace_map::IntervalType::kCentroid;
+  parameters.ignore_point_regions = true;
+  parameters.order_type = geoviz::necklace_map::OrderType::kFixed;
+
+  const geoviz::Number scale_factor = ComputeScaleFactor(parameters, data.elements, data.necklaces);
+  UNITTEST_CHECK_CLOSE(scale_factor, 1.822, 0.001);
+}
+
+UNITTEST_TEST(WesternEuropeWedgeAny)
+{
+  const filesystem::path test_dir = GEOVIZ_TEST_DIR;
+
+  const filesystem::path in_geometry_path = test_dir / "wEU.xml";
+  const filesystem::path in_data_path = test_dir / "wEU.txt";
+  const std::string in_value_name = "value";
+
+  NecklaceData& data = kWesternEurope;
+
+  // Read the data and geometry.
+  if (data.elements.empty())
+  {
+    geoviz::SvgReader svg_reader;
+    UNITTEST_REQUIRE UNITTEST_CHECK(svg_reader.ReadFile(in_geometry_path, data.elements, data.necklaces));
+  }
+
+  geoviz::DataReader data_reader;
+  UNITTEST_CHECK(data_reader.ReadFile(in_data_path, in_value_name, data.elements));
+
+  geoviz::necklace_map::Parameters parameters;
+  InitializeParameters(parameters);
+
+  const geoviz::Number scale_factor = ComputeScaleFactor(parameters, data.elements, data.necklaces);
   UNITTEST_CHECK_CLOSE(scale_factor, 1.675, 0.001);
 }
 
-UNITTEST_TEST_FIXTURE(SingletonData, EastAsiaAgriculture)
+UNITTEST_TEST(EastAsiaWedgeAnyAgriculture)
 {
   const filesystem::path test_dir = GEOVIZ_TEST_DIR;
 
@@ -100,24 +161,26 @@ UNITTEST_TEST_FIXTURE(SingletonData, EastAsiaAgriculture)
   const filesystem::path in_data_path = test_dir / "eAsia.txt";
   const std::string in_value_name = "agriculture";
 
+  NecklaceData& data = kEastAsia;
+
   // Read the data and geometry.
-  if (elements.empty())
+  if (data.elements.empty())
   {
     geoviz::SvgReader svg_reader;
-    UNITTEST_REQUIRE UNITTEST_CHECK(svg_reader.ReadFile(in_geometry_path, elements, necklaces));
+    UNITTEST_REQUIRE UNITTEST_CHECK(svg_reader.ReadFile(in_geometry_path, data.elements, data.necklaces));
   }
 
   geoviz::DataReader data_reader;
-  UNITTEST_CHECK(data_reader.ReadFile(in_data_path, in_value_name, elements));
+  UNITTEST_CHECK(data_reader.ReadFile(in_data_path, in_value_name, data.elements));
 
-  parameters.interval_type = geoviz::necklace_map::IntervalType::kWedge;
-  parameters.order_type = geoviz::necklace_map::OrderType::kAny;
+  geoviz::necklace_map::Parameters parameters;
+  InitializeParameters(parameters);
 
-  const geoviz::Number scale_factor = ComputeScaleFactor(parameters, elements, necklaces);
+  const geoviz::Number scale_factor = ComputeScaleFactor(parameters, data.elements, data.necklaces);
   UNITTEST_CHECK_CLOSE(scale_factor, 1.006, 0.001);
 }
 
-UNITTEST_TEST_FIXTURE(SingletonData, EastAsiaPoverty)
+UNITTEST_TEST(EastAsiaWedgeAnyPoverty)
 {
   const filesystem::path test_dir = GEOVIZ_TEST_DIR;
 
@@ -125,24 +188,26 @@ UNITTEST_TEST_FIXTURE(SingletonData, EastAsiaPoverty)
   const filesystem::path in_data_path = test_dir / "eAsia.txt";
   const std::string in_value_name = "poverty";
 
+  NecklaceData& data = kEastAsia;
+
   // Read the data and geometry.
-  if (elements.empty())
+  if (data.elements.empty())
   {
     geoviz::SvgReader svg_reader;
-    UNITTEST_REQUIRE UNITTEST_CHECK(svg_reader.ReadFile(in_geometry_path, elements, necklaces));
+    UNITTEST_REQUIRE UNITTEST_CHECK(svg_reader.ReadFile(in_geometry_path, data.elements, data.necklaces));
   }
 
   geoviz::DataReader data_reader;
-  UNITTEST_CHECK(data_reader.ReadFile(in_data_path, in_value_name, elements));
+  UNITTEST_CHECK(data_reader.ReadFile(in_data_path, in_value_name, data.elements));
 
-  parameters.interval_type = geoviz::necklace_map::IntervalType::kWedge;
-  parameters.order_type = geoviz::necklace_map::OrderType::kAny;
+  geoviz::necklace_map::Parameters parameters;
+  InitializeParameters(parameters);
 
-  const geoviz::Number scale_factor = ComputeScaleFactor(parameters, elements, necklaces);
+  const geoviz::Number scale_factor = ComputeScaleFactor(parameters, data.elements, data.necklaces);
   UNITTEST_CHECK_CLOSE(scale_factor, 1.004, 0.001);
 }
 
-UNITTEST_TEST_FIXTURE(SingletonData, EastAsiaInternet)
+UNITTEST_TEST(EastAsiaWedgeAnyInternet)
 {
   const filesystem::path test_dir = GEOVIZ_TEST_DIR;
 
@@ -150,20 +215,22 @@ UNITTEST_TEST_FIXTURE(SingletonData, EastAsiaInternet)
   const filesystem::path in_data_path = test_dir / "eAsia.txt";
   const std::string in_value_name = "internet";
 
+  NecklaceData& data = kEastAsia;
+
   // Read the data and geometry.
-  if (elements.empty())
+  if (data.elements.empty())
   {
     geoviz::SvgReader svg_reader;
-    UNITTEST_REQUIRE UNITTEST_CHECK(svg_reader.ReadFile(in_geometry_path, elements, necklaces));
+    UNITTEST_REQUIRE UNITTEST_CHECK(svg_reader.ReadFile(in_geometry_path, data.elements, data.necklaces));
   }
 
   geoviz::DataReader data_reader;
-  UNITTEST_CHECK(data_reader.ReadFile(in_data_path, in_value_name, elements));
+  UNITTEST_CHECK(data_reader.ReadFile(in_data_path, in_value_name, data.elements));
 
-  parameters.interval_type = geoviz::necklace_map::IntervalType::kWedge;
-  parameters.order_type = geoviz::necklace_map::OrderType::kAny;
+  geoviz::necklace_map::Parameters parameters;
+  InitializeParameters(parameters);
 
-  const geoviz::Number scale_factor = ComputeScaleFactor(parameters, elements, necklaces);
+  const geoviz::Number scale_factor = ComputeScaleFactor(parameters, data.elements, data.necklaces);
   UNITTEST_CHECK_CLOSE(scale_factor, 1.511, 0.001);
 }
 } // suite_NecklaceMap
