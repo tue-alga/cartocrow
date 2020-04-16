@@ -93,7 +93,7 @@ UNITTEST_TEST(WesternEuropeCentroidFixed)
   parameters.order_type = geoviz::necklace_map::OrderType::kFixed;
 
   const geoviz::Number scale_factor = ComputeScaleFactor(parameters, data.elements, data.necklaces);
-  UNITTEST_CHECK_CLOSE(scale_factor, 1.687, 0.001);
+  UNITTEST_CHECK_CLOSE(1.687, scale_factor, 0.001);
 }
 
 UNITTEST_TEST(WesternEuropeIgnorePointRegion)
@@ -123,7 +123,7 @@ UNITTEST_TEST(WesternEuropeIgnorePointRegion)
   parameters.order_type = geoviz::necklace_map::OrderType::kFixed;
 
   const geoviz::Number scale_factor = ComputeScaleFactor(parameters, data.elements, data.necklaces);
-  UNITTEST_CHECK_CLOSE(scale_factor, 1.822, 0.001);
+  UNITTEST_CHECK_CLOSE(1.822, scale_factor, 0.001);
 }
 
 UNITTEST_TEST(WesternEuropeWedgeAny)
@@ -150,7 +150,7 @@ UNITTEST_TEST(WesternEuropeWedgeAny)
   InitializeParameters(parameters);
 
   const geoviz::Number scale_factor = ComputeScaleFactor(parameters, data.elements, data.necklaces);
-  UNITTEST_CHECK_CLOSE(scale_factor, 1.675, 0.001);
+  UNITTEST_CHECK_CLOSE(1.675, scale_factor, 0.001);
 }
 
 UNITTEST_TEST(WesternEuropeWedgeAnyIgnorePoints)
@@ -178,7 +178,7 @@ UNITTEST_TEST(WesternEuropeWedgeAnyIgnorePoints)
   parameters.ignore_point_regions = true;
 
   const geoviz::Number scale_factor = ComputeScaleFactor(parameters, data.elements, data.necklaces);
-  UNITTEST_CHECK_CLOSE(scale_factor, 1.675, 0.001);
+  UNITTEST_CHECK_CLOSE(1.675, scale_factor, 0.001);
 }
 
 UNITTEST_TEST(WesternEuropeWedgeAnyBuffer)
@@ -233,7 +233,7 @@ UNITTEST_TEST(EastAsiaWedgeAnyAgriculture)
   InitializeParameters(parameters);
 
   const geoviz::Number scale_factor = ComputeScaleFactor(parameters, data.elements, data.necklaces);
-  UNITTEST_CHECK_CLOSE(scale_factor, 1.006, 0.001);
+  UNITTEST_CHECK_CLOSE(1.006, scale_factor, 0.001);
 }
 
 UNITTEST_TEST(EastAsiaWedgeAnyPoverty)
@@ -260,7 +260,7 @@ UNITTEST_TEST(EastAsiaWedgeAnyPoverty)
   InitializeParameters(parameters);
 
   const geoviz::Number scale_factor = ComputeScaleFactor(parameters, data.elements, data.necklaces);
-  UNITTEST_CHECK_CLOSE(scale_factor, 1.004, 0.001);
+  UNITTEST_CHECK_CLOSE(1.003, scale_factor, 0.001);
 }
 
 UNITTEST_TEST(EastAsiaWedgeAnyInternet)
@@ -287,7 +287,7 @@ UNITTEST_TEST(EastAsiaWedgeAnyInternet)
   InitializeParameters(parameters);
 
   const geoviz::Number scale_factor = ComputeScaleFactor(parameters, data.elements, data.necklaces);
-  UNITTEST_CHECK_CLOSE(scale_factor, 1.511, 0.001);
+  UNITTEST_CHECK_CLOSE(1.509, scale_factor, 0.001);
 }
 } // suite_NecklaceMap
 
