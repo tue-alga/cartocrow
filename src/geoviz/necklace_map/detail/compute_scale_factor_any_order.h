@@ -200,9 +200,13 @@ class ComputeScaleFactorAnyOrder
  protected:
   virtual Number ComputeScaleUpperBound() const;
 
-  virtual Number ComputeCoveringRadii(const Number& scale);
+  virtual Number ComputeCoveringRadii(const Number& scale_factor);
 
  private:
+
+
+
+
 
 
 
@@ -247,7 +251,7 @@ class ComputeScaleFactorAnyOrder
   NodeSet nodes_;
 
   Number necklace_length_;
-  Number buffer_rad_;
+  Number half_buffer_rad_;
   //Number max_buffer_rad_;  // Based on smallest scaled radius?
 
   int binary_search_depth_;
@@ -268,7 +272,7 @@ class ComputeScaleFactorAnyOrderIngot : public ComputeScaleFactorAnyOrder
  protected:
   Number ComputeScaleUpperBound() const override;
 
-  Number ComputeCoveringRadii(const Number& scale) override;
+  Number ComputeCoveringRadii(const Number& scale_factor) override;
 }; // class ComputeScaleFactorAnyOrderIngot
 
 } // namespace detail

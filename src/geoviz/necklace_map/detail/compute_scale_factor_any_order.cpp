@@ -290,7 +290,7 @@ ComputeScaleFactorAnyOrder::ComputeScaleFactorAnyOrder
 ) :
   necklace_shape_(necklace->shape),
   necklace_length_(necklace_shape_->ComputeLength()),
-  buffer_rad_(buffer_rad),
+  half_buffer_rad_(0.5 * buffer_rad),
   binary_search_depth_(binary_search_depth),
   heuristic_steps_(heuristic_steps)
 {
@@ -478,45 +478,38 @@ Number ComputeScaleFactorAnyOrder::Optimize()
 
 Number ComputeScaleFactorAnyOrder::ComputeScaleUpperBound() const
 {
+  // The initial upper bound make sure all beads would fit if they were the size of the smallest bead.
+  Number min_radius = nodes_.front()->bead->radius_base;
+  for (const AnyOrderCycleNode::Ptr& node : nodes_)
+    min_radius = std::min(min_radius, node->bead->radius_base);
 
-
-
-
-  double maxScale = -1;
-  for (int i = 0; i < nodes_.size(); i++)
+  // Perform a binary search to find the largest scale factor for which all beads could fit.
+  Number lower_bound = 0.0;
+  Number upper_bound = 0.5 * necklace_length_ / (min_radius + half_buffer_rad_);
+  for (int j = 0; j < binary_search_depth_; ++j)
   {
-    double max_bead_scale = necklace_length_ / (2.0 * nodes_[i]->bead->radius_base);
-    if (maxScale < 0 || max_bead_scale < maxScale)
-      maxScale = max_bead_scale;
+    Number scale_factor = 0.5 * (lower_bound + upper_bound);
+
+    Number totalSize = 0.0;
+    for (const AnyOrderCycleNode::Ptr& node : nodes_)
+        totalSize += necklace_shape_->ComputeCoveringRadius(node->valid, node->bead->radius_base * scale_factor) + half_buffer_rad_;
+
+    // Check whether the scaled beads could fit.
+    if (totalSize <= M_PI)
+      lower_bound = scale_factor;
+    else
+      upper_bound = scale_factor;
   }
 
-  // 1st binary search
-  double x = 0.0;
-  double y = maxScale;
-  for (int j = 0; j < binary_search_depth_; j++)
-  {
-    double h = 0.5 * (x + y);
-    double totalSize = 0.0;
-    for (int i = 0; i < nodes_.size(); i++)
-    {
-        totalSize += necklace_shape_->ComputeCoveringRadius(nodes_[i]->valid, nodes_[i]->bead->radius_base * h) + buffer_rad_;
-
-    }
-    if (totalSize <= M_PI) x = h;
-    else y = h;
-  }
-  return x;
+  // The lower bound is the largest confirmed scale factor for which all beads could fit.
+  return lower_bound;
 }
 
-Number ComputeScaleFactorAnyOrder::ComputeCoveringRadii(const Number& scale)
+Number ComputeScaleFactorAnyOrder::ComputeCoveringRadii(const Number& scale_factor)
 {
-  // set sizes
-  for (int i = 0; i < nodes_.size(); i++)
-  {
-      nodes_[i]->bead->covering_radius_rad =
-        necklace_shape_->ComputeCoveringRadius(nodes_[i]->valid, nodes_[i]->bead->radius_base * scale) + buffer_rad_;
-
-  }
+  for (AnyOrderCycleNode::Ptr& node : nodes_)
+    node->bead->covering_radius_rad =
+      necklace_shape_->ComputeCoveringRadius(node->valid, node->bead->radius_base * scale_factor) + half_buffer_rad_;
 }
 
 bool ComputeScaleFactorAnyOrder::feasible
@@ -919,13 +912,13 @@ ComputeScaleFactorAnyOrderIngot::ComputeScaleFactorAnyOrderIngot
 
 Number ComputeScaleFactorAnyOrderIngot::ComputeScaleUpperBound() const
 {
-  return M_PI / nodes_.size() - buffer_rad_;
+  return M_PI / nodes_.size() - half_buffer_rad_;
 }
 
-Number ComputeScaleFactorAnyOrderIngot::ComputeCoveringRadii(const Number& scale)
+Number ComputeScaleFactorAnyOrderIngot::ComputeCoveringRadii(const Number& scale_factor)
 {
   for (AnyOrderCycleNode::Ptr& node : nodes_)
-    node->bead->covering_radius_rad = scale + buffer_rad_;
+    node->bead->covering_radius_rad = scale_factor + half_buffer_rad_;
 }
 
 } // namespace detail
