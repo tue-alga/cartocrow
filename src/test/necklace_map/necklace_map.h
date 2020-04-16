@@ -181,6 +181,34 @@ UNITTEST_TEST(WesternEuropeWedgeAnyIgnorePoints)
   UNITTEST_CHECK_CLOSE(scale_factor, 1.675, 0.001);
 }
 
+UNITTEST_TEST(WesternEuropeWedgeAnyBuffer)
+{
+  const filesystem::path test_dir = GEOVIZ_TEST_DIR;
+
+  const filesystem::path in_geometry_path = test_dir / "wEU.xml";
+  const filesystem::path in_data_path = test_dir / "wEU.txt";
+  const std::string in_value_name = "value";
+
+  NecklaceData& data = kWesternEurope;
+
+  // Read the data and geometry.
+  if (data.elements.empty())
+  {
+    geoviz::SvgReader svg_reader;
+    UNITTEST_REQUIRE UNITTEST_CHECK(svg_reader.ReadFile(in_geometry_path, data.elements, data.necklaces));
+
+    geoviz::DataReader data_reader;
+    UNITTEST_CHECK(data_reader.ReadFile(in_data_path, in_value_name, data.elements));
+  }
+
+  geoviz::necklace_map::Parameters parameters;
+  InitializeParameters(parameters);
+  parameters.buffer_rad = 0.0349; // Roughly 2 degrees.
+
+  const geoviz::Number scale_factor = ComputeScaleFactor(parameters, data.elements, data.necklaces);
+  UNITTEST_CHECK_CLOSE(1.471, scale_factor, 0.001);
+}
+
 UNITTEST_TEST(EastAsiaWedgeAnyAgriculture)
 {
   const filesystem::path test_dir = GEOVIZ_TEST_DIR;
