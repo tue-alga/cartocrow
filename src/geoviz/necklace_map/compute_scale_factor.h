@@ -42,7 +42,7 @@ class ComputeScaleFactor
 
   static Ptr New(const Parameters& parameters);
 
-  explicit ComputeScaleFactor(const Number& buffer_rad = 0);
+  explicit ComputeScaleFactor(const Parameters& parameters);
 
   // Note that elements with value 0 will not be included in the ordering.
   virtual Number operator()(Necklace::Ptr& necklace) = 0;

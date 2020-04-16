@@ -54,9 +54,14 @@ struct Parameters
   Number centroid_interval_length_rad;
   bool ignore_point_regions;
 
-  // Scale factor and placement.
+  // Scale factor.
   OrderType order_type;
   Number buffer_rad;
+
+  int binary_search_depth;
+  int heuristic_steps;
+
+  // Placement.
   Number aversion_ratio;
 }; // struct Parameters
 

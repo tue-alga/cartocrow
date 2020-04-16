@@ -52,9 +52,9 @@ ComputeScaleFactor::Ptr ComputeScaleFactor::New(const Parameters& parameters)
   switch (parameters.order_type)
   {
     case OrderType::kFixed:
-      return Ptr(new ComputeScaleFactorFixedOrder(parameters.buffer_rad));
+      return Ptr(new ComputeScaleFactorFixedOrder(parameters));
     case OrderType::kAny:
-      return Ptr(new ComputeScaleFactorAnyOrder(parameters.buffer_rad));
+      return Ptr(new ComputeScaleFactorAnyOrder(parameters));
     default:
       return nullptr;
   }
@@ -66,8 +66,8 @@ ComputeScaleFactor::Ptr ComputeScaleFactor::New(const Parameters& parameters)
  * This distance must be in the range [0, pi]. Note that values beyond some threshold based on the input regions, the scale factor is forced to 0.
  * @endparblock
  */
-ComputeScaleFactor::ComputeScaleFactor(const Number& buffer_rad /*= 0*/)
-  : buffer_rad_(buffer_rad), max_buffer_rad_(-1)
+ComputeScaleFactor::ComputeScaleFactor(const Parameters& parameters)
+  : buffer_rad_(parameters.buffer_rad), max_buffer_rad_(-1)
 {
   CHECK_GE(buffer_rad_, 0);
   CHECK_LE(buffer_rad_, M_PI);

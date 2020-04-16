@@ -36,9 +36,13 @@ namespace necklace_map
 class ComputeScaleFactorAnyOrder : public ComputeScaleFactor
 {
  public:
-  explicit ComputeScaleFactorAnyOrder(const Number& buffer_rad = 0);
+  explicit ComputeScaleFactorAnyOrder(const Parameters& parameters);
 
   Number operator()(Necklace::Ptr& necklace);
+
+ private:
+  int binary_search_depth_;
+  int heuristic_steps_;
 }; // class ComputeScaleFactorAnyOrder
 
 } // namespace necklace_map

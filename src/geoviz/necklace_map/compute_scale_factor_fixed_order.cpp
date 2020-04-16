@@ -50,8 +50,8 @@ namespace necklace_map
  * This distance must be in the range [0, @f$T@f$], where @f$T@f$ is half the length of the necklace divided by the number of beads on the necklace. While the lower bound is validated immediately, the upper bound can only be validated when applying the functor to a collection of necklace beads.
  * @endparblock
  */
-ComputeScaleFactorFixedOrder::ComputeScaleFactorFixedOrder(const Number& buffer_rad /*= 0*/)
-  : ComputeScaleFactor(buffer_rad)
+ComputeScaleFactorFixedOrder::ComputeScaleFactorFixedOrder(const Parameters& parameters)
+  : ComputeScaleFactor(parameters)
 {}
 
 Number ComputeScaleFactorFixedOrder::operator()(Necklace::Ptr& necklace)

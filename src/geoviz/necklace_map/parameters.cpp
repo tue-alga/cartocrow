@@ -53,6 +53,8 @@ Parameters::Parameters() :
   ignore_point_regions(false),
   order_type(OrderType::kFixed),
   buffer_rad(0),
+  binary_search_depth(10),
+  heuristic_steps(5),
   aversion_ratio(0)
 {}
 
@@ -76,10 +78,23 @@ Parameters::Parameters() :
  * This order is used when computing the optimal scale factor and when computing a valid placement.
  */
 
+// TODO(tvl) fix this: the buffer is in radians only for circle necklaces...
 /**@fn Number Parameters::buffer_rad;
  * @brief The minimum angle in radians of the empty wedge between neighboring necklace beads that has the necklace kernel as apex.
  *
  * This buffer is used when computing the optimal scale factor and when computing a valid placement.
+ */
+
+/**@fn Number Parameters::binary_search_depth;
+ * @brief The depth of the binary search tree used for the any-order decision problem.
+ *
+ * A larger depth will produce higher precision at the cost of processing time.
+ */
+
+/**@fn Number Parameters::heuristic_steps;
+ * @brief The number of steps for the heuristic any-order scale factor computation.
+ *
+ * If the number of steps is 0, the exact algorithm is used. Otherwise, a larger number of steps results in a higher probability of generating the correct outcome of the any-order scale computation decision problem.
  */
 
 /**@fn Number Parameters::aversion_ratio;

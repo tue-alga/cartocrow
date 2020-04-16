@@ -47,13 +47,15 @@ namespace necklace_map
  * This distance must be in the range [0, @f$T@f$], where @f$T@f$ is half the length of the necklace divided by the number of beads on the necklace. While the lower bound is validated immediately, the upper bound can only be validated when applying the functor to a collection of necklace beads.
  * @endparblock
  */
-ComputeScaleFactorAnyOrder::ComputeScaleFactorAnyOrder(const Number& buffer_rad /*= 0*/)
-  : ComputeScaleFactor(buffer_rad)
+ComputeScaleFactorAnyOrder::ComputeScaleFactorAnyOrder(const Parameters& parameters) :
+  ComputeScaleFactor(parameters),
+  binary_search_depth_(parameters.binary_search_depth),
+  heuristic_steps_(parameters.heuristic_steps)
 {}
 
 Number ComputeScaleFactorAnyOrder::operator()(Necklace::Ptr& necklace)
 {
-  detail::ComputeScaleFactorAnyOrder opt(necklace, buffer_rad_);
+  detail::ComputeScaleFactorAnyOrder opt(necklace, buffer_rad_, binary_search_depth_, heuristic_steps_);
   const Number scale_factor = opt.Optimize();
 
   return scale_factor;
