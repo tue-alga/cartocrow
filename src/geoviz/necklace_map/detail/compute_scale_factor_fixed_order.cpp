@@ -44,20 +44,13 @@ namespace detail
 ComputeScaleFactorFixedOrder::ComputeScaleFactorFixedOrder(const Necklace::Ptr& necklace, const Number& buffer_rad /*= 0*/) :
   max_buffer_rad_(-1),
   nodes_(),
-  necklace_radius_(necklace->shape->ComputeRadius()),
+  necklace_shape_(necklace->shape),
   buffer_rad_(buffer_rad)
 {
-  // Clean beads without a feasible interval.
-  std::vector<Bead::Ptr> keep_beads;
-  for (const Bead::Ptr& bead : necklace->beads)
-    if (bead->feasible)
-      keep_beads.push_back(bead);
-  necklace->beads.swap(keep_beads);
-
   // The necklace must be sorted by the feasible intervals of its beads.
   necklace->SortBeads();
 
-  // Per element that should not be ignored (i.e. that has a bead with a feasible interval), add a node to the scale factor computation functor.
+  // Add a node to the scale factor computation functor per element.
   nodes_.reserve(2 * necklace->beads.size());
   for (const Bead::Ptr& bead : necklace->beads)
   {
@@ -75,7 +68,7 @@ ComputeScaleFactorFixedOrder::ComputeScaleFactorFixedOrder(const Necklace::Ptr& 
     // Note that when considering Bezier splines that are far from circular, using the intersection of the bead with the necklace actually breaks down: there can be situations where a fixed size bead can be placed in two non-contiguous intervals but not the space between them.
     // We should probably solve this by using non-overlapping wedges as opposed to the part of the necklace covered by the bead...
 
-    bead->covering_radius_rad = std::asin(bead->radius_base / necklace_radius_);
+    bead->covering_radius_rad = necklace->shape->ComputeCoveringRadiusRad(bead->feasible, bead->radius_base);
     // Note that for an exact computation, the scaling factor should be inside this arcsine function.
     // This can be solved by performing a bisection search on the scale factors using a feasibility check to see if the scaled beads fit.
     // Note that this correction is performed after estimating the scale factor, in CorrectScaleFactor().
@@ -101,20 +94,13 @@ ComputeScaleFactorFixedOrder::ComputeScaleFactorFixedOrder(const Necklace::Ptr& 
 Number ComputeScaleFactorFixedOrder::Optimize()
 {
   // Check whether the buffer allows any nodes.
-  // Note that the nodes are insterted twice.
+  // Note that the nodes are inserted twice.
   max_buffer_rad_ = M_2xPI / (size() / 2);
-  const Number total_buffer_rad = buffer(0, size() / 2);
+  const Number available_rad = M_2xPI - buffer(0, size() / 2);
 
   const Number rho = OptimizeSubProblem(0, size() - 1, max_buffer_rad_);
-  const Number rho_fill_circle =
-    M_2xPI < total_buffer_rad
-    ? 0
-    : (M_2xPI - total_buffer_rad) / (2 * r(0, (size() / 2) - 1));  // Note that the necklace beads were added twice.
-  return
-    rho < 0
-    ? rho_fill_circle
-    : std::min(CorrectScaleFactor(rho), rho_fill_circle);
-  //TODO(tvl) add bisection search for true (valid) scale factor.
+  const Number rho_full_necklace = available_rad <= 0 ? 0 : available_rad / (2 * r(0, (size() / 2) - 1));  // Note that the necklace beads were added twice.
+  return rho < 0 ? rho_full_necklace : std::min(CorrectScaleFactor(rho), rho_full_necklace);
 }
 
 /**@fn const Number& ComputeScaleFactorFixedOrder::max_buffer_rad() const;
@@ -183,10 +169,14 @@ Number ComputeScaleFactorFixedOrder::CorrectScaleFactor(const Number& rho) const
   Number scale_factor = rho;
   for (size_t n = 0; n < size(); ++n)
   {
-    const Number rho_prime =
-      necklace_radius_ * std::sin(rho * r(n)) / nodes_[n].bead->radius_base;
-    if (rho_prime < scale_factor)
-      scale_factor = rho_prime;
+    // After scaling the angle, we should determine the new bead radius such that it falls inside the wedge and base the scaling on that.
+    // Given a angle scale factor rho, covering (angle) radius c, necklace radius R, bead base radius r, and bead radius scale factor rho',
+    // rho' = R sin(rho * c) / r  (the scaled bead touches the edge of the scaled wedge)
+    //   c = asin(r / R)  =>  R = r / sin(c)
+    //   r * rho' = r * sin(rho * c) / sin(c)
+    // rho' = sin(rho * c) / sin(c)
+    const Number rho_prime = std::sin(rho * r(n)) / std::sin(r(n));
+    scale_factor = std::min(scale_factor, rho_prime);
   }
   return scale_factor;
 }

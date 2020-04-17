@@ -104,7 +104,7 @@ class NecklaceWriter
   using NecklaceShape = necklace_map::NecklaceShape;
   using CircleNecklace = necklace_map::CircleNecklace;
   using BezierNecklace = necklace_map::BezierNecklace;
-  using BeadShapeMap = std::unordered_map<Bead::Ptr, NecklaceShape::Ptr>;
+  using BeadIntervalMap = std::unordered_map<Bead::Ptr, CircleNecklace::Ptr>;
 
   void OpenSvg();
 
@@ -131,7 +131,7 @@ class NecklaceWriter
   double unit_px_;
   std::string transform_matrix_;
 
-  BeadShapeMap bead_shape_map_;
+  BeadIntervalMap bead_interval_map_;
 
   tinyxml2::XMLPrinter printer_;
 }; // class NecklaceWriter

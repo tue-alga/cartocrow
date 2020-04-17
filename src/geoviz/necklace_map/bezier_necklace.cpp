@@ -43,10 +43,10 @@ class CompareBezierCurves
 
   inline bool operator()(const BezierCurve& a, const BezierCurve& b) const
   {
-    return shape_.ComputeAngle(a.target()) < shape_.ComputeAngle(a.target());
+    return shape_.ComputeAngleRad(a.target()) < shape_.ComputeAngleRad(a.target());
   }
 
-  inline bool operator()(const BezierCurve& a, const Number& b) const { return shape_.ComputeAngle(a.target()) < b; }
+  inline bool operator()(const BezierCurve& a, const Number& b) const { return shape_.ComputeAngleRad(a.target()) < b; }
 
  private:
   const NecklaceShape& shape_;
@@ -271,6 +271,32 @@ bool BezierNecklace::IsValid() const
   LOG(FATAL) << "Not implemented yet!";
 }
 
+bool BezierNecklace::IntersectRay(const Number& angle_rad, Point& intersection) const
+{
+  // Find the curve that contains the angle.
+  CurveSet::const_iterator curve_iter = std::lower_bound
+    (
+      curves_.begin(),
+      curves_.end(),
+      angle_rad,
+      CompareBezierCurves(*this)
+    );
+  if (curve_iter == curves_.end())
+    return false;
+
+  const Point target(std::cos(angle_rad), std::sin(angle_rad));
+
+  std::vector<Point> intersections;
+  if (!curve_iter->IntersectRay(kernel(), target, intersections))
+    return false;
+
+  // Note that the set of Bezier curves must always be a star-shaped curve with the kernel as star point,
+  // meaning that a line through the kernel has at most one intersection with the curve.
+  CHECK_EQ(intersections.size(), 1);
+  intersection = intersections[0];
+  return true;
+}
+
 void BezierNecklace::AppendCurve
 (
   const Point& source,
@@ -314,45 +340,14 @@ Box BezierNecklace::ComputeBoundingBox() const
   return bounding_box;
 }
 
-Number BezierNecklace::ComputeLength() const
+Number BezierNecklace::ComputeCoveringRadiusRad(const Range::Ptr& range, const Number& radius) const
 {
   LOG(FATAL) << "Not implemented yet!";
 }
 
-Number BezierNecklace::ComputeRadius() const
+Number BezierNecklace::ComputeAngleAtDistanceRad(const Number& angle_rad, const Number& distance) const
 {
   LOG(FATAL) << "Not implemented yet!";
-}
-
-Number BezierNecklace::ComputeCoveringRadius(const Range::Ptr& range, const Number& radius) const
-{
-  LOG(FATAL) << "Not implemented yet!";
-}
-
-bool BezierNecklace::IntersectRay(const Number& angle_rad, Point& intersection) const
-{
-  // Find the curve that contains the angle.
-  CurveSet::const_iterator curve_iter = std::lower_bound
-  (
-    curves_.begin(),
-    curves_.end(),
-    angle_rad,
-    CompareBezierCurves(*this)
-  );
-  if (curve_iter == curves_.end())
-    return false;
-
-  const Point target(std::cos(angle_rad), std::sin(angle_rad));
-
-  std::vector<Point> intersections;
-  if (!curve_iter->IntersectRay(kernel(), target, intersections))
-    return false;
-
-  // Note that the set of Bezier curves must always be a star-shaped curve with the kernel as star point,
-  // meaning that a line through the kernel has at most one intersection with the curve.
-  CHECK_EQ(intersections.size(), 1);
-  intersection = intersections[0];
-  return true;
 }
 
 void BezierNecklace::Accept(NecklaceShapeVisitor& visitor)

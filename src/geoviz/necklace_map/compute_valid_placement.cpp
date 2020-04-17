@@ -94,13 +94,12 @@ ComputeValidPlacement::ComputeValidPlacement
  */
 void ComputeValidPlacement::operator()(const Number& scale_factor, Necklace::Ptr& necklace) const
 {
-  const Number necklace_radius = necklace->shape->ComputeRadius();
   for (const Bead::Ptr& bead : necklace->beads)
   {
     // Compute the scaled covering radius.
     CHECK_NOTNULL(bead);
     const Number radius_scaled = scale_factor * bead->radius_base;
-    bead->covering_radius_rad = std::asin(radius_scaled / necklace_radius);
+    bead->covering_radius_rad = necklace->shape->ComputeCoveringRadiusRad(nullptr, radius_scaled);
   }
 
   // Sort the necklace beads by their current angle.

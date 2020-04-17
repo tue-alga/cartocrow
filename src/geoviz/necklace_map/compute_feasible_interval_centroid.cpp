@@ -42,7 +42,7 @@ NecklaceInterval::Ptr
 ComputeFeasibleCentroidInterval::operator()(const Polygon& extent, const Necklace::Ptr& necklace) const
 {
   const Point centroid = ComputeCentroid()(extent);
-  const Number angle_rad = necklace->shape->ComputeAngle(centroid);
+  const Number angle_rad = necklace->shape->ComputeAngleRad(centroid);
 
   return std::make_shared<IntervalCentroid>(angle_rad - half_length_rad_, angle_rad + half_length_rad_);
 }

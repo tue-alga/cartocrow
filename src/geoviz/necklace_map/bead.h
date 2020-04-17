@@ -43,7 +43,7 @@ struct Bead
   bool IsValid() const;
 
   // Variables before scaling.
-  Number radius_base;
+  Number radius_base;  // TODO(tvl) express the radius in radians.
 
   NecklaceInterval::Ptr feasible;
 

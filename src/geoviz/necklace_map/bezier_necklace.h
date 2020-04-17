@@ -60,11 +60,15 @@ class BezierCurve
 class BezierNecklace : public NecklaceShape
 {
  public:
+  using Ptr = std::shared_ptr<BezierNecklace>;
+
   BezierNecklace(const Point& kernel);
 
-  const Point& kernel() const;
+  const Point& kernel() const override;
 
-  bool IsValid() const;
+  bool IsValid() const override;
+
+  bool IntersectRay(const Number& angle_rad, Point& intersection) const override;
 
   void AppendCurve(const Point& source, const Point& source_control, const Point& target_control, const Point& target);
 
@@ -72,15 +76,13 @@ class BezierNecklace : public NecklaceShape
 
   void Finalize();
 
-  Box ComputeBoundingBox() const;
+  Box ComputeBoundingBox() const override;
 
-  Number ComputeLength() const;
-  Number ComputeRadius() const;
-  Number ComputeCoveringRadius(const Range::Ptr& range, const Number& radius) const;
+  Number ComputeCoveringRadiusRad(const Range::Ptr& range, const Number& radius) const override;
 
-  bool IntersectRay(const Number& angle_rad, Point& intersection) const;
+  Number ComputeAngleAtDistanceRad(const Number& angle_rad, const Number& distance) const override;
 
-  void Accept(NecklaceShapeVisitor& visitor);
+  void Accept(NecklaceShapeVisitor& visitor) override;
 
  private:
   using CurveSet = std::vector<BezierCurve>;

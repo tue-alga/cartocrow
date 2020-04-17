@@ -55,16 +55,15 @@ class NecklaceShape
 
   virtual bool IsValid() const = 0;
 
-  virtual Box ComputeBoundingBox() const = 0;
-
-  virtual Number ComputeLength() const = 0;
-  virtual Number ComputeRadius() const = 0;  // TODO(tvl) replace by ComputeLength()?
-
-  virtual Number ComputeCoveringRadius(const Range::Ptr& range, const Number& radius) const = 0; // TODO(tvl) document.
-
   virtual bool IntersectRay(const Number& angle_rad, Point& intersection) const = 0;
 
-  Number ComputeAngle(const Point& point) const;
+  virtual Box ComputeBoundingBox() const = 0;
+
+  virtual Number ComputeCoveringRadiusRad(const Range::Ptr& range, const Number& radius) const = 0; // TODO(tvl) document.
+
+  Number ComputeAngleRad(const Point& point) const;
+
+  virtual Number ComputeAngleAtDistanceRad(const Number& angle_rad, const Number& distance) const = 0; // TODO(tvl) document.
 
   virtual void Accept(NecklaceShapeVisitor& visitor) = 0;
   // TODO(tvl) should the necklace contain methods for adapting the 1D solution to the 2D solution?

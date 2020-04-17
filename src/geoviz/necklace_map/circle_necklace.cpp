@@ -22,6 +22,8 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 25-02-2020
 
 #include "circle_necklace.h"
 
+#include <glog/logging.h>
+
 
 namespace geoviz
 {
@@ -41,7 +43,6 @@ namespace necklace_map
 CircleNecklace::CircleNecklace(const Circle& shape) : NecklaceShape(), shape_(shape)
 {
   radius_ = CGAL::sqrt(shape_.squared_radius());
-  length_ = M_2xPI * radius_;
 }
 
 const Point& CircleNecklace::kernel() const
@@ -54,14 +55,16 @@ bool CircleNecklace::IsValid() const
   return 0 < radius_;
 }
 
+bool CircleNecklace::IntersectRay(const Number& angle_rad, Point& intersection) const
+{
+  const Vector relative = CGAL::sqrt(shape_.squared_radius()) * Vector( std::cos(angle_rad), std::sin(angle_rad) );
+  intersection = kernel() + relative;
+  return true;
+}
+
 Box CircleNecklace::ComputeBoundingBox() const
 {
   return shape_.bbox();
-}
-
-Number CircleNecklace::ComputeLength() const
-{
-  return length_;
 }
 
 Number CircleNecklace::ComputeRadius() const
@@ -69,16 +72,18 @@ Number CircleNecklace::ComputeRadius() const
   return radius_;
 }
 
-Number CircleNecklace::ComputeCoveringRadius(const Range::Ptr& range, const Number& radius) const
+Number CircleNecklace::ComputeCoveringRadiusRad(const Range::Ptr& range, const Number& radius) const
 {
   return std::asin(radius / ComputeRadius());
 }
 
-bool CircleNecklace::IntersectRay(const Number& angle_rad, Point& intersection) const
+Number CircleNecklace::ComputeAngleAtDistanceRad(const Number& angle_rad, const Number& distance) const
 {
-  const Vector relative = CGAL::sqrt(shape_.squared_radius()) * Vector( std::cos(angle_rad), std::sin(angle_rad) );
-  intersection = kernel() + relative;
-  return true;
+  CHECK_LE(distance, 2 * ComputeRadius());
+  if (distance == 2 * radius_)
+    return angle_rad + M_PI;
+
+  return 2 * std::asin(distance / (2 * radius_));
 }
 
 void CircleNecklace::Accept(NecklaceShapeVisitor& visitor)

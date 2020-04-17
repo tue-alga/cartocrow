@@ -45,14 +45,14 @@ ComputeFeasibleWedgeInterval::operator()(const Polygon& extent, const Necklace::
   if (extent.size() == 1)
     return (*fallback_)(extent, necklace);
 
-  const Number angle = necklace->shape->ComputeAngle(*extent.vertices_begin());
+  const Number angle = necklace->shape->ComputeAngleRad(*extent.vertices_begin());
   NecklaceInterval obscured(angle, angle);
 
   const Point& kernel = necklace->shape->kernel();
   for (Polygon::Edge_const_iterator edge_iter = extent.edges_begin(); edge_iter != extent.edges_end(); ++edge_iter)
   {
     const Segment& segment = *edge_iter;
-    const Number angle_target = necklace->shape->ComputeAngle(segment[1]);
+    const Number angle_target = necklace->shape->ComputeAngleRad(segment[1]);
     if
     (
       angle_target == obscured.to_rad() ||

@@ -95,7 +95,6 @@ bool ValidateScaleFactor::operator()(Necklace::Ptr& necklace) const
   }
 
   // Compute the valid intervals at the specified scale factor, where beads can be placed without pairwise overlap.
-  const Number necklace_radius = necklace->shape->ComputeRadius();
 
   // Adjust the clockwise extremes.
   for (size_t n = 1; n < nodes.size(); ++n)
@@ -104,14 +103,13 @@ bool ValidateScaleFactor::operator()(Necklace::Ptr& necklace) const
     detail::CycleNode& current = nodes[n];
 
     // The bead must not overlap the previous one.
-    const Number distance_rad = current.valid->from() - previous.valid->from();
-    const Number min_distance_rad =
-      2 * std::asin(scale_factor * (current.bead->radius_base + previous.bead->radius_base) / (2 * necklace_radius)) +
-      buffer_rad;
+    const Number min_distance = current.bead->radius_base + previous.bead->radius_base;
+    const Number min_angle_rad =
+      necklace->shape->ComputeAngleAtDistanceRad(previous.valid->from(), min_distance) + buffer_rad;
 
-    if (distance_rad < min_distance_rad)
+    if (current.valid->from() < min_angle_rad)
     {
-      current.valid->from() = previous.valid->from() + min_distance_rad;
+      current.valid->from() = min_angle_rad;
       if (current.valid->to() < current.valid->from())
       {
         valid = false;
@@ -130,13 +128,13 @@ bool ValidateScaleFactor::operator()(Necklace::Ptr& necklace) const
     detail::CycleNode& current = nodes[n];
 
     // The bead must not overlap the next one.
-    const Number distance_rad = next.valid->to() - current.valid->to();
-    const Number min_distance_rad =
-      2 * std::asin(scale_factor * (next.bead->radius_base + current.bead->radius_base) / (2 * necklace_radius));
+    const Number min_distance = next.bead->radius_base + current.bead->radius_base;
+    const Number min_angle_rad =
+      necklace->shape->ComputeAngleAtDistanceRad(current.valid->from(), min_distance) + buffer_rad;
 
-    if (distance_rad < min_distance_rad)
+    if (next.valid->to() < min_angle_rad)
     {
-      current.valid->to() = next.valid->to() - min_distance_rad;
+      current.valid->to() += next.valid->to() - min_angle_rad;
       if (current.valid->to() < current.valid->from())
         current.valid->to() = current.valid->from();
     }

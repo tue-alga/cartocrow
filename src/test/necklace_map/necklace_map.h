@@ -206,7 +206,7 @@ UNITTEST_TEST(WesternEuropeWedgeAnyBuffer)
   parameters.buffer_rad = 0.0349; // Roughly 2 degrees.
 
   const geoviz::Number scale_factor = ComputeScaleFactor(parameters, data.elements, data.necklaces);
-  UNITTEST_CHECK_CLOSE(1.471, scale_factor, 0.001);
+  UNITTEST_CHECK_CLOSE(1.470, scale_factor, 0.001);
 }
 
 UNITTEST_TEST(EastAsiaWedgeAnyAgriculture)

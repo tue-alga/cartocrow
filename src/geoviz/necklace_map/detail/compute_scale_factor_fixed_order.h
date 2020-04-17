@@ -82,7 +82,7 @@ class ComputeScaleFactorFixedOrder
   using NodeSet = std::vector<CycleNode>;
   NodeSet nodes_;
 
-  Number necklace_radius_;
+  NecklaceShape::Ptr necklace_shape_;
   Number buffer_rad_;
   Number max_buffer_rad_;
 }; // class ComputeScaleFactorFixedOrder

@@ -164,6 +164,28 @@ std::string RegionToPath(const Region& region, const int precision)
 }
 
 
+class NecklaceIntervalVisitor : public necklace_map::NecklaceShapeVisitor
+{
+ public:
+  NecklaceIntervalVisitor() {}
+
+  const necklace_map::CircleNecklace::Ptr& interval_shape() { return interval_shape_; }
+
+  void Visit(necklace_map::CircleNecklace& shape)
+  {
+    interval_shape_ = std::make_shared<necklace_map::CircleNecklace>(shape);
+  }
+
+  void Visit(necklace_map::BezierNecklace& shape)
+  {
+    LOG(FATAL) << "Not implemented yet.";
+  }
+
+ private:
+  necklace_map::CircleNecklace::Ptr interval_shape_;
+}; // class NecklaceIntervalVisitor
+
+
 class DrawNecklaceShapeVisitor : public necklace_map::NecklaceShapeVisitor
 {
  public:
@@ -194,7 +216,7 @@ class DrawNecklaceShapeVisitor : public necklace_map::NecklaceShapeVisitor
   const std::string& transform_matrix_;
 
   tinyxml2::XMLPrinter& printer_;
-};
+}; // class DrawNecklaceShapeVisitor
 
 } // anonymous namespace
 
@@ -476,7 +498,7 @@ void NecklaceWriter::DrawFeasibleIntervals()
         if (!bead->feasible)
           continue;
 
-        NecklaceShape::Ptr interval_shape = bead_shape_map_[bead];
+        CircleNecklace::Ptr interval_shape = bead_interval_map_[bead];
         CHECK_NOTNULL(interval_shape);
 
         printer_.OpenElement("path");
@@ -542,7 +564,7 @@ void NecklaceWriter::DrawValidIntervals()
         if (!bead->valid)
           continue;
 
-        NecklaceShape::Ptr interval_shape = bead_shape_map_[bead];
+        CircleNecklace::Ptr interval_shape = bead_interval_map_[bead];
         CHECK_NOTNULL(interval_shape);
 
         printer_.OpenElement("path");
@@ -624,13 +646,13 @@ void NecklaceWriter::DrawRegionAngles()
         printer_.OpenElement("path");
         printer_.PushAttribute("style", kRegionAngleStyle);
         {
-          NecklaceShape::Ptr interval_shape = bead_shape_map_[bead];
+          CircleNecklace::Ptr interval_shape = bead_interval_map_[bead];
           CHECK_NOTNULL(interval_shape);
 
           const Point& kernel = interval_shape->kernel();
-          const Number angle_centroid = interval_shape->ComputeAngle(centroid);
+          const Number angle_centroid_rad = interval_shape->ComputeAngleRad(centroid);
           Point endpoint;
-          CHECK(interval_shape->IntersectRay(angle_centroid, endpoint));
+          CHECK(interval_shape->IntersectRay(angle_centroid_rad, endpoint));
 
           std::stringstream stream;
           stream << std::setprecision(kIntervalNumericPrecision);
@@ -664,7 +686,6 @@ void NecklaceWriter::DrawBeadAngles()
     for (const Necklace::Ptr& necklace : necklaces_)
     {
       const Point& kernel = necklace->shape->kernel();
-      const Number necklace_radius = necklace->shape->ComputeRadius();
 
       size_t count = 1;
       for (const Bead::Ptr& bead : necklace->beads)
@@ -675,7 +696,7 @@ void NecklaceWriter::DrawBeadAngles()
         printer_.OpenElement("path");
         printer_.PushAttribute("style", kBeadAngleStyle);
         {
-          NecklaceShape::Ptr interval_shape = bead_shape_map_[bead];
+          CircleNecklace::Ptr interval_shape = bead_interval_map_[bead];
           CHECK_NOTNULL(interval_shape);
 
           Point endpoint;
@@ -826,18 +847,21 @@ void NecklaceWriter::CreateBeadIntervalShapes()
       if (!bead->feasible)
         continue;
 
-      if (bead_shape_map_.find(bead) != bead_shape_map_.end())
+      if (bead_interval_map_.find(bead) != bead_interval_map_.end())
         continue;
 
-      NecklaceShape::Ptr interval_shape = necklace->shape;
+      NecklaceIntervalVisitor visitor;
+      necklace->shape->Accept(visitor);
+      CircleNecklace::Ptr interval_shape = visitor.interval_shape();
+
       if (options_->draw_feasible_intervals)
       {
         // Create a new circle shape to use for this bead.
-        const Number radius = necklace->shape->ComputeRadius() + kIntervalWidth * ++count;
+        const Number radius = interval_shape->ComputeRadius() + kIntervalWidth * ++count;
         interval_shape = std::make_shared<CircleNecklace>(Circle(necklace->shape->kernel(), radius * radius));
       }
 
-      bead_shape_map_[bead] = interval_shape;
+      bead_interval_map_[bead] = interval_shape;
     }
   }
 }

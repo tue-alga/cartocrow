@@ -250,7 +250,6 @@ class ComputeScaleFactorAnyOrder
   // Note that the scaler must be able to access the set by index.
   NodeSet nodes_;
 
-  Number necklace_length_;
   Number half_buffer_rad_;
   //Number max_buffer_rad_;  // Based on smallest scaled radius?
 

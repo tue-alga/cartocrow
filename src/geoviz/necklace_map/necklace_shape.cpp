@@ -61,23 +61,6 @@ namespace necklace_map
  * @return whether the necklace is valid.
  */
 
-/**@fn virtual Box NecklaceShape::ComputeBoundingBox() const = 0
- * @brief Construct a minimum bounding box of the necklace.
- * @return the minimum bounding box.
- */
-
-/**@fn virtual Number NecklaceShape::ComputeLength() const = 0
- * @brief Compute the total length of the necklace.
- * @return the necklace length.
- */
-
-/**@fn virtual Number NecklaceShape::ComputeRadius() const = 0
- * @brief Compute the radius of the necklace.
- *
- * Note that for non-circular necklaces, this radius will be an approximation.
- * @return the necklace radius.
- */
-
 /**@fn virtual bool NecklaceShape::IntersectRay(const Number& angle_rad, Point& intersection) const
  * @brief Intersect a ray originating from the kernel with the necklace.
  * @param angle_rad the counterclockwise angle between the ray and the positive x-axis in radians.
@@ -88,13 +71,18 @@ namespace necklace_map
  * @endparblock
  */
 
+/**@fn virtual Box NecklaceShape::ComputeBoundingBox() const = 0
+ * @brief Construct a minimum bounding box of the necklace.
+ * @return the minimum bounding box.
+ */
+
 /**@brief Compute the angle of a point on the shape.
  *
  * This angle is relative to the positive x-asis.
  * @param point the point on the necklace shape.
  * @return the angle of the point in radians.
  */
-Number NecklaceShape::ComputeAngle(const Point& point) const
+Number NecklaceShape::ComputeAngleRad(const Point& point) const
 {
   const Vector offset = point - kernel();
 

@@ -289,7 +289,6 @@ ComputeScaleFactorAnyOrder::ComputeScaleFactorAnyOrder
   const int heuristic_steps /*= 5*/
 ) :
   necklace_shape_(necklace->shape),
-  necklace_length_(necklace_shape_->ComputeLength()),
   half_buffer_rad_(0.5 * buffer_rad),
   binary_search_depth_(binary_search_depth),
   heuristic_steps_(heuristic_steps)
@@ -479,20 +478,22 @@ Number ComputeScaleFactorAnyOrder::Optimize()
 Number ComputeScaleFactorAnyOrder::ComputeScaleUpperBound() const
 {
   // The initial upper bound make sure all beads would fit if they were the size of the smallest bead.
-  Number min_radius = nodes_.front()->bead->radius_base;
+  Number upper_bound = 0;
   for (const AnyOrderCycleNode::Ptr& node : nodes_)
-    min_radius = std::min(min_radius, node->bead->radius_base);
+  {
+    const Number radius_rad = necklace_shape_->ComputeCoveringRadiusRad(node->bead->feasible, node->bead->radius_base);
+    upper_bound = std::max(upper_bound, M_PI / (radius_rad + half_buffer_rad_));
+  }
 
   // Perform a binary search to find the largest scale factor for which all beads could fit.
   Number lower_bound = 0.0;
-  Number upper_bound = 0.5 * necklace_length_ / (min_radius + half_buffer_rad_);
   for (int j = 0; j < binary_search_depth_; ++j)
   {
     Number scale_factor = 0.5 * (lower_bound + upper_bound);
 
     Number totalSize = 0.0;
     for (const AnyOrderCycleNode::Ptr& node : nodes_)
-        totalSize += necklace_shape_->ComputeCoveringRadius(node->valid, node->bead->radius_base * scale_factor) + half_buffer_rad_;
+        totalSize += necklace_shape_->ComputeCoveringRadiusRad(node->valid, node->bead->radius_base * scale_factor) + half_buffer_rad_;
 
     // Check whether the scaled beads could fit.
     if (totalSize <= M_PI)
@@ -509,7 +510,7 @@ Number ComputeScaleFactorAnyOrder::ComputeCoveringRadii(const Number& scale_fact
 {
   for (AnyOrderCycleNode::Ptr& node : nodes_)
     node->bead->covering_radius_rad =
-      necklace_shape_->ComputeCoveringRadius(node->valid, node->bead->radius_base * scale_factor) + half_buffer_rad_;
+      necklace_shape_->ComputeCoveringRadiusRad(node->valid, node->bead->radius_base * scale_factor) + half_buffer_rad_;
 }
 
 bool ComputeScaleFactorAnyOrder::feasible

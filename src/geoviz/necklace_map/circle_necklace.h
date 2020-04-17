@@ -35,26 +35,31 @@ namespace necklace_map
 class CircleNecklace : public NecklaceShape
 {
  public:
+  using Ptr = std::shared_ptr<CircleNecklace>;
+
   explicit CircleNecklace(const Circle& shape);
 
-  const Point& kernel() const;
+  const Point& kernel() const override;
 
-  bool IsValid() const;
+  bool IsValid() const override;
 
-  Box ComputeBoundingBox() const;
+  bool IntersectRay(const Number& angle_rad, Point& intersection) const override;
 
-  Number ComputeLength() const;
+  Box ComputeBoundingBox() const override;
+
   Number ComputeRadius() const;
-  Number ComputeCoveringRadius(const Range::Ptr& range, const Number& radius) const;
 
-  bool IntersectRay(const Number& angle_rad, Point& intersection) const;
+  Number ComputeCoveringRadiusRad(const Range::Ptr& range, const Number& radius) const override;
 
-  virtual void Accept(NecklaceShapeVisitor& visitor);
+  Number ComputeAngleAtDistanceRad(const Number& angle_rad, const Number& distance) const override;
+
+  virtual void Accept(NecklaceShapeVisitor& visitor) override;
 
  protected:
   Circle shape_;
+
+ private:
   Number radius_;
-  Number length_;
 }; // class CircleNecklace
 
 } // namespace necklace_map
