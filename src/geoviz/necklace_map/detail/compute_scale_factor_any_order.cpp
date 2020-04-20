@@ -293,24 +293,155 @@ ComputeScaleFactorAnyOrder::ComputeScaleFactorAnyOrder
   binary_search_depth_(binary_search_depth),
   heuristic_steps_(heuristic_steps)
 {
-
-  // gather Country range pairs
-  // Note that the country sympbolAngle and range have been set by the interval algorithm.
-  nodes_.clear();  // TODO(tvl) reserve
+  // Collect and order the beads based on the start of their valid interval (initialized as their feasible interval).
   for (const Bead::Ptr& bead : necklace->beads)
-  {
     nodes_.push_back(std::make_shared<AnyOrderCycleNode>(bead));
-  }
+
   std::sort(nodes_.begin(), nodes_.end(), CompareAnyOrderCycleNode());
 }
 
 Number ComputeScaleFactorAnyOrder::Optimize()
 {
-
-
+  const Number num_layers = AssignLayers();
+  int K = num_layers; // TODO(tvl) temp.
 
 
   // TODO(tvl) check which vectors can be replaced by simple fixed size arrays.
+
+
+
+
+  // Failure case: too thick.
+  if (K >= 15) return 0;
+  //System.out.println(nodes_.size());
+  //System.out.println(K);
+
+  // TODO(tvl) why does this repeat the earlier initialization? layer is set...
+  // TODO(tvl) this recreation of the event list could be replaced by a link in the events to the CA...
+  std::vector<TaskEvent> events;  // TODO(tvl) reserve
+  for (int i = 0; i < nodes_.size(); i++)
+  {
+    AnyOrderCycleNode::Ptr& ca = nodes_[i];
+    events.emplace_back(ca, ca->valid->from(), TaskEvent::Type::kFrom);
+    events.emplace_back(ca, ca->valid->to(), TaskEvent::Type::kTo);
+  }
+  std::sort(events.begin(), events.end(), CompareTaskEvent());  // TODO(tvl) is this even useful?
+
+
+  Bead::Ptr curTasks[K];
+  // initialize
+  for (const AnyOrderCycleNode::Ptr& node : nodes_)
+  {
+    if (node->valid->Contains(0) && node->valid->to() < M_2xPI)
+      curTasks[node->layer] = node->bead;
+  }
+
+  //find taskslices
+  std::vector<TaskSlice> slices(events.size());
+  for (int i = 0; i < events.size(); i++)
+  {
+    TaskEvent e = events[i];
+    TaskEvent e2 = events[(i + 1) % events.size()];
+    slices[i] = TaskSlice(e, e2, K, e2.angle_rad);
+    if (e.type == TaskEvent::Type::kFrom) curTasks[e.node->layer] = e.node->bead;
+    else curTasks[e.node->layer] = nullptr;
+    for (int j = 0; j < K; j++)
+      if (curTasks[j] != nullptr)
+        slices[i].addTask(std::make_shared<BeadData>(curTasks[j], j));
+  }
+
+  for (TaskSlice& slice : slices)
+    slice.produceSets();
+
+  // make sure first slice is start of task
+  while (slices[0].eventLeft.type == TaskEvent::Type::kTo)
+  {
+    const TaskSlice& ts = slices[0];
+    for (int i = 0; i < slices.size() - 1; i++)
+      slices[i] = slices[i + 1];
+    slices[slices.size() - 1] = ts;
+  }
+
+  // compute upper bound scale
+  const Number maxScale = ComputeScaleUpperBound();
+
+
+
+  // binary search
+  Number x = 0.0;
+  Number y = maxScale;
+  for (int i = 0; i < binary_search_depth_; i++)
+  {
+    double h = 0.5 * (x + y);
+    ComputeCoveringRadii(h);
+
+
+
+    if (heuristic_steps_ == 0)  // TODO(tvl) Merge in method that switches between feasible methods based on heuristic steps.
+    {
+      if (feasible(slices, K)) x = h;
+      else y = h;
+    } else
+    {
+      if (feasible2(slices, K, heuristic_steps_)) x = h;
+      else y = h;
+    }
+  }
+  //System.out.println(x);
+  return x;
+}
+
+Number ComputeScaleFactorAnyOrder::ComputeScaleUpperBound() const
+{
+  // The initial upper bound make sure all beads would fit if they were the size of the smallest bead.
+  Number upper_bound = 0;
+  for (const AnyOrderCycleNode::Ptr& node : nodes_)
+  {
+    const Number radius_rad = necklace_shape_->ComputeCoveringRadiusRad(node->valid, node->bead->radius_base);
+    upper_bound = std::max(upper_bound, M_PI / (radius_rad + half_buffer_rad_));
+  }
+
+  // Perform a binary search to find the largest scale factor for which all beads could fit.
+  Number lower_bound = 0.0;
+  for (int j = 0; j < binary_search_depth_; ++j)
+  {
+    Number scale_factor = 0.5 * (lower_bound + upper_bound);
+
+    Number totalSize = 0.0;
+    for (const AnyOrderCycleNode::Ptr& node : nodes_)
+        totalSize +=
+          necklace_shape_->ComputeCoveringRadiusRad(node->valid, scale_factor * node->bead->radius_base) +
+          half_buffer_rad_;
+
+    // Check whether the scaled beads could fit.
+    if (totalSize <= M_PI)
+      lower_bound = scale_factor;
+    else
+      upper_bound = scale_factor;
+  }
+
+  // The lower bound is the largest confirmed scale factor for which all beads could fit.
+  return lower_bound;
+}
+
+Number ComputeScaleFactorAnyOrder::ComputeCoveringRadii(const Number& scale_factor)
+{
+  for (AnyOrderCycleNode::Ptr& node : nodes_)
+    node->bead->covering_radius_rad =
+      necklace_shape_->ComputeCoveringRadiusRad(node->valid, node->bead->radius_base * scale_factor) + half_buffer_rad_;
+}
+
+Number ComputeScaleFactorAnyOrder::AssignLayers()
+{
+
+
+
+
+  // Note that this can be done a lot more efficiently!
+
+
+
+
 
 
 
@@ -395,123 +526,13 @@ Number ComputeScaleFactorAnyOrder::Optimize()
     } else k1->layer = K - 1;
   }
 
-  // Failure case: too thick.
-  if (K >= 15) return 0;
-  //System.out.println(nodes_.size());
-  //System.out.println(K);
+  return K;
 
-  // TODO(tvl) why does this repeat the earlier initialization? layer is set...
-  // TODO(tvl) this recreation of the event list could be replaced by a link in the events to the CA...
-  /*events.clear();
-  for (int i = 0; i < nodes_.size(); i++)
-  {
-    AnyOrderCycleNode::Ptr& ca = nodes_[i];
-    events.emplace_back(ca, ca->valid->from(), true);
-    events.emplace_back(ca, ca->valid->to(), false);
-  }*/
-  std::sort(events.begin(), events.end(), CompareTaskEvent());  // TODO(tvl) is this even useful?
-
-
-  Bead::Ptr curTasks[K];
-  // initialize
-  for (const AnyOrderCycleNode::Ptr& node : nodes_)
-  {
-    if (node->valid->Contains(0) && node->valid->to() < M_2xPI)
-      curTasks[node->layer] = node->bead;
-  }
-
-  //find taskslices
-  std::vector<TaskSlice> slices(events.size());
-  for (int i = 0; i < events.size(); i++)
-  {
-    TaskEvent e = events[i];
-    TaskEvent e2 = events[(i + 1) % events.size()];
-    slices[i] = TaskSlice(e, e2, K, e2.angle_rad);
-    if (e.type == TaskEvent::Type::kFrom) curTasks[e.node->layer] = e.node->bead;
-    else curTasks[e.node->layer] = nullptr;
-    for (int j = 0; j < K; j++)
-      if (curTasks[j] != nullptr)
-        slices[i].addTask(std::make_shared<BeadData>(curTasks[j], j));
-  }
-
-  for (TaskSlice& slice : slices)
-    slice.produceSets();
-
-  // make sure first slice is start of task
-  while (slices[0].eventLeft.type == TaskEvent::Type::kTo)
-  {
-    const TaskSlice& ts = slices[0];
-    for (int i = 0; i < slices.size() - 1; i++)
-      slices[i] = slices[i + 1];
-    slices[slices.size() - 1] = ts;
-  }
-
-  // compute upper bound scale
-  const Number maxScale = ComputeScaleUpperBound();
-
-
-
-  // binary search
-  Number x = 0.0;
-  Number y = maxScale;
-  for (int i = 0; i < binary_search_depth_; i++)
-  {
-    double h = 0.5 * (x + y);
-    ComputeCoveringRadii(h);
-
-
-
-    if (heuristic_steps_ == 0)  // TODO(tvl) Merge in method that switches between feasible methods based on heuristic steps.
-    {
-      if (feasible(slices, K)) x = h;
-      else y = h;
-    } else
-    {
-      if (feasible2(slices, K, heuristic_steps_)) x = h;
-      else y = h;
-    }
-  }
-  //System.out.println(x);
-  return x;
 }
 
-Number ComputeScaleFactorAnyOrder::ComputeScaleUpperBound() const
-{
-  // The initial upper bound make sure all beads would fit if they were the size of the smallest bead.
-  Number upper_bound = 0;
-  for (const AnyOrderCycleNode::Ptr& node : nodes_)
-  {
-    const Number radius_rad = necklace_shape_->ComputeCoveringRadiusRad(node->bead->feasible, node->bead->radius_base);
-    upper_bound = std::max(upper_bound, M_PI / (radius_rad + half_buffer_rad_));
-  }
 
-  // Perform a binary search to find the largest scale factor for which all beads could fit.
-  Number lower_bound = 0.0;
-  for (int j = 0; j < binary_search_depth_; ++j)
-  {
-    Number scale_factor = 0.5 * (lower_bound + upper_bound);
 
-    Number totalSize = 0.0;
-    for (const AnyOrderCycleNode::Ptr& node : nodes_)
-        totalSize += necklace_shape_->ComputeCoveringRadiusRad(node->valid, node->bead->radius_base * scale_factor) + half_buffer_rad_;
 
-    // Check whether the scaled beads could fit.
-    if (totalSize <= M_PI)
-      lower_bound = scale_factor;
-    else
-      upper_bound = scale_factor;
-  }
-
-  // The lower bound is the largest confirmed scale factor for which all beads could fit.
-  return lower_bound;
-}
-
-Number ComputeScaleFactorAnyOrder::ComputeCoveringRadii(const Number& scale_factor)
-{
-  for (AnyOrderCycleNode::Ptr& node : nodes_)
-    node->bead->covering_radius_rad =
-      necklace_shape_->ComputeCoveringRadiusRad(node->valid, node->bead->radius_base * scale_factor) + half_buffer_rad_;
-}
 
 bool ComputeScaleFactorAnyOrder::feasible
 (

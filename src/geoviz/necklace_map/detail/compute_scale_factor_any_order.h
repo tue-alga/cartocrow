@@ -203,6 +203,8 @@ class ComputeScaleFactorAnyOrder
   virtual Number ComputeCoveringRadii(const Number& scale_factor);
 
  private:
+  Number AssignLayers();
+
 
 
 
