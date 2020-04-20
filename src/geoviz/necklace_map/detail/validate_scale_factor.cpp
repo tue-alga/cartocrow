@@ -103,7 +103,7 @@ bool ValidateScaleFactor::operator()(Necklace::Ptr& necklace) const
     detail::CycleNode& current = nodes[n];
 
     // The bead must not overlap the previous one.
-    const Number min_distance = current.bead->radius_base + previous.bead->radius_base;
+    const Number min_distance = scale_factor * (current.bead->radius_base + previous.bead->radius_base);
     const Number min_angle_rad =
       necklace->shape->ComputeAngleAtDistanceRad(previous.valid->from(), min_distance) + buffer_rad;
 
@@ -128,9 +128,9 @@ bool ValidateScaleFactor::operator()(Necklace::Ptr& necklace) const
     detail::CycleNode& current = nodes[n];
 
     // The bead must not overlap the next one.
-    const Number min_distance = next.bead->radius_base + current.bead->radius_base;
+    const Number min_distance = scale_factor * (next.bead->radius_base + current.bead->radius_base);
     const Number min_angle_rad =
-      necklace->shape->ComputeAngleAtDistanceRad(current.valid->from(), min_distance) + buffer_rad;
+      necklace->shape->ComputeAngleAtDistanceRad(current.valid->to(), min_distance) + buffer_rad;
 
     if (next.valid->to() < min_angle_rad)
     {

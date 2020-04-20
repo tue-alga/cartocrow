@@ -83,7 +83,7 @@ Number CircleNecklace::ComputeAngleAtDistanceRad(const Number& angle_rad, const 
   if (distance == 2 * radius_)
     return angle_rad + M_PI;
 
-  return 2 * std::asin(distance / (2 * radius_));
+  return angle_rad + 2 * std::asin(distance / (2 * radius_));
 }
 
 void CircleNecklace::Accept(NecklaceShapeVisitor& visitor)
