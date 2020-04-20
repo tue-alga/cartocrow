@@ -49,9 +49,13 @@ class Range
 
   bool IsDegenerate() const;
 
-  bool Contains(const Number& value) const;
+  virtual bool Contains(const Number& value) const;
 
-  bool Intersects(const Range::Ptr& range) const;
+  virtual bool ContainsOpen(const Number& value) const;
+
+  virtual bool Intersects(const Range::Ptr& range) const;
+
+  virtual bool IntersectsOpen(const Range::Ptr& range) const;
 
   Number ComputeLength() const;
 

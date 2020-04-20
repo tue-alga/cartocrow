@@ -87,7 +87,7 @@ bool Range::IsDegenerate() const
 
 /**@brief Check whether the range contains a value.
  *
- * Note that the range includes its extremes, i.e. the interval is closed.
+ * For this check, the range is considered closed.
  * @param value the value to query.
  * @return whether the range contains the value.
  */
@@ -96,15 +96,41 @@ bool Range::Contains(const Number& value) const
   return from() <= value && value <= to();
 }
 
-/**@brief Check whether this range and another range intersect in their interior.
+/**@brief Check whether the range contains a value.
+ *
+ * For this check, the range is considered open.
+ * @param value the value to query.
+ * @return whether the range contains the value.
+ */
+bool Range::ContainsOpen(const Number& value) const
+{
+  return from() <= value && value <= to();
+}
+
+/**@brief Check whether this range and another range intersect.
+ *
+ * For this check, the ranges are considered closed.
  * @param range the range for which to check the intersection.
  * @return whether the ranges intersect in their interior.
  */
 bool Range::Intersects(const Range::Ptr& range) const
 {
   return
-    (range->Contains(from()) && from() != range->to()) ||
-    (Contains(range->from()) && range->from() != to());
+    Contains(range->from()) ||
+    range->Contains(from());
+}
+
+/**@brief Check whether this range and another range intersect.
+ *
+ * For this check, the ranges are considered open.
+ * @param range the range for which to check the intersection.
+ * @return whether the ranges intersect in their interior.
+ */
+bool Range::IntersectsOpen(const Range::Ptr& range) const
+{
+  return
+    (Contains(range->from()) && range->from() != to()) ||
+    (range->Contains(from()) && from() != range->to());
 }
 
 /**@brief Compute the total length of the range.

@@ -42,6 +42,8 @@ class NecklaceInterval : public Range
 
   NecklaceInterval(const Number& from_rad, const Number& to_rad);
 
+  explicit NecklaceInterval(const Range& range); // TODO(tvl) document
+
   inline const Number& from_rad() const { return from(); }
   inline Number& from_rad() { return from(); }
   inline const Number& to_rad() const { return to(); }
@@ -50,6 +52,14 @@ class NecklaceInterval : public Range
   bool IsValid() const override;
 
   bool IsFull() const;
+
+  virtual bool Contains(const Number& value) const override;
+
+  virtual bool ContainsOpen(const Number& value) const override;
+
+  virtual bool Intersects(const Range::Ptr& range) const override;
+
+  virtual bool IntersectsOpen(const Range::Ptr& range) const override;
 
   //virtual Number ComputeOrder() const;
 

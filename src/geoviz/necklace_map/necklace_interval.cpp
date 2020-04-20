@@ -59,6 +59,8 @@ NecklaceInterval::NecklaceInterval(const Number& from_rad, const Number& to_rad)
   }
 }
 
+NecklaceInterval::NecklaceInterval(const Range& range) : NecklaceInterval(range.from(), range.to()) {}
+
 /**@fn const Number& NecklaceInterval::from_rad() const;
  * @brief The angle where the interval starts.
  *
@@ -106,6 +108,34 @@ bool NecklaceInterval::IsValid() const
 bool NecklaceInterval::IsFull() const
 {
   return from_rad() == 0 && to_rad() == M_2xPI;
+}
+
+bool NecklaceInterval::Contains(const Number& value) const
+{
+  const Number value_mod = Modulo(value, from_rad());
+  return from_rad() <= value_mod && value_mod <= to_rad();
+}
+
+bool NecklaceInterval::ContainsOpen(const Number& value) const
+{
+  const Number value_mod = Modulo(value, from_rad());
+  return from_rad() < value_mod && value_mod < to_rad();
+}
+
+bool NecklaceInterval::Intersects(const Range::Ptr& range) const
+{
+  NecklaceInterval interval(*range);
+  return
+    Contains(interval.from_rad()) ||
+    interval.Contains(from_rad());
+}
+
+bool NecklaceInterval::IntersectsOpen(const Range::Ptr& range) const
+{
+  NecklaceInterval interval(*range);
+  return
+    (Contains(interval.from_rad()) && Modulo(interval.from_rad(), from_rad()) != to_rad()) ||
+    (interval.Contains(from_rad()) && Modulo(from_rad(), interval.from_rad()) != interval.to());
 }
 
 /**@brief Compute a metric to order intervals on a necklace.

@@ -433,101 +433,53 @@ Number ComputeScaleFactorAnyOrder::ComputeCoveringRadii(const Number& scale_fact
 
 Number ComputeScaleFactorAnyOrder::AssignLayers()
 {
+  // Each node should be assigned a layer such that each layer does not contain any pair of nodes that overlap in their valid interval.
+  // Note that this can be done greedily: assign the nodes by minimizing the distance between the last valid interval and the next.
 
+  using NodeList = std::list<AnyOrderCycleNode::Ptr>;
+  NodeList remaining_nodes(nodes_.begin(), nodes_.end());
 
+  int layer = 0;
+  remaining_nodes.front()->layer = layer;
+  NecklaceInterval layer_interval(*remaining_nodes.front()->valid);
 
+  remaining_nodes.pop_front();
+  NodeList::iterator node_iter = remaining_nodes.begin();
+  NodeList::iterator unused_iter = remaining_nodes.end();
 
-  // Note that this can be done a lot more efficiently!
-
-
-
-
-
-
-
-  // assign tasks to layers
-  std::vector<TaskEvent> events;  // TODO(tvl) reserve
-  for (size_t i = 0; i < nodes_.size(); i++)
+  // Note that the nodes are already ordered by the starting angle of their valid interval.
+  while (!remaining_nodes.empty())
   {
-    AnyOrderCycleNode::Ptr& ca = nodes_[i];
-    events.emplace_back(ca, ca->valid->from(), TaskEvent::Type::kFrom);
-    events.emplace_back(ca, ca->valid->to(), TaskEvent::Type::kTo);
-  }
-  std::sort(events.begin(), events.end(), CompareTaskEvent());
-
-  // find angle with max thickness
-  int K = 0;
-  double angle = nodes_[0]->valid->from();
-  for (const AnyOrderCycleNode::Ptr& node : nodes_)
-    if (node->valid->Contains(angle))
-      K++;
-  int optK = K;
-  AnyOrderCycleNode::Ptr opt_node = 0;
-  for (const TaskEvent& event : events)
-  {
-    if (event.angle_rad <= angle) continue;
-    if (event.type == TaskEvent::Type::kFrom)
+    if (!layer_interval.IntersectsOpen((*node_iter)->valid))
     {
-      K++;
-      if (K > optK)
-      {
-        optK = K;
-        angle = event.angle_rad;
-        opt_node = event.node;
-      }
-    } else K--;
-  }
-
-  // Find a non-overlapping order of ca's (where the next ca is the closest one to the current one.)
-  NodeSet L;
-  L.reserve(nodes_.size());
-  int count = nodes_.size() - 1;
-  Range::Ptr curRange = opt_node->valid;
-  opt_node->layer = 0;
-  L.push_back(opt_node);
-  while (count > 0)
-  {
-    AnyOrderCycleNode::Ptr next_node;
-    double minAngleDif = M_2xPI;
-
-    for (int i = 0; i < nodes_.size(); i++)
-    {
-      if (nodes_[i]->layer >= 0) continue;
-      Range r(curRange->to(), nodes_[i]->valid->from());
-      const Number length_rad = r.ComputeLength();
-      if (length_rad < minAngleDif)
-      {
-        minAngleDif = length_rad;
-        next_node = nodes_[i];
-      }
+      // Add the non-overlapping node to the layer.
+      (*node_iter)->layer = layer;
+      layer_interval.to_rad() = ModuloNonZero((*node_iter)->valid->to(), layer_interval.from_rad());
+      node_iter = remaining_nodes.erase(node_iter);
     }
-    count--;
-    L.push_back(next_node);
-    next_node->layer = 0;
-    curRange = next_node->valid;
-  }
-
-  // now really assign layers
-  K = 1;
-  for (int i = 0; i < L.size(); i++)
-  {
-    bool good = true;
-    AnyOrderCycleNode::Ptr& k1 = L[i];
-    for (int j = 0; j < i; j++)
-    { // TODO(tvl) this may be done more efficiently (as opposed to a full double loop)?
-      AnyOrderCycleNode::Ptr& k2 = L[j];
-      if (k2->layer != K - 1) continue;
-      if (k2->valid->Intersects(k1->valid)) good = false;
-    }
-    if (!good)
+    else if (node_iter == unused_iter)
     {
-      k1->layer = K;
-      K++;
-    } else k1->layer = K - 1;
+      // All nodes were checked: start a new layer.
+      ++layer;
+      (*node_iter)->layer = layer;
+      layer_interval = NecklaceInterval(*(*node_iter)->valid);
+
+      node_iter = remaining_nodes.erase(node_iter);
+      unused_iter = remaining_nodes.end();
+    }
+    else
+    {
+      if (unused_iter == remaining_nodes.end())
+        // Mark the node as the first one of the next layer.
+        unused_iter = node_iter;
+      ++node_iter;
+    }
+
+    if (node_iter == remaining_nodes.end())
+      node_iter = remaining_nodes.begin();
   }
 
-  return K;
-
+  return layer + 1;
 }
 
 
