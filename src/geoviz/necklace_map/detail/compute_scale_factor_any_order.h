@@ -155,7 +155,7 @@ class TaskSlice
     const Number angle_right_rad
   );
 
-  TaskSlice(const TaskSlice& ts, const Number offset, const int step);
+  TaskSlice(const TaskSlice& slice, const int step);
 
   void reset();
 
@@ -187,6 +187,73 @@ struct OptValue
 }; // struct OptValue
 
 
+
+
+
+class CheckFeasible
+{
+ public:
+  using NodeSet = std::vector<AnyOrderCycleNode::Ptr>;
+  using Ptr = std::shared_ptr<CheckFeasible>;
+
+  static Ptr New(NodeSet& nodes, const int heuristic_steps);
+
+  CheckFeasible(NodeSet& nodes);
+
+  virtual void InitializeSlices();
+
+  // Note that the covering radius of each node should be set before calling this.
+  virtual bool operator()() = 0;
+
+  std::vector<TaskSlice> slices;
+
+ protected:
+  NodeSet& nodes_;
+}; // class CheckFeasible
+
+
+class CheckFeasibleExact : public CheckFeasible
+{
+ public:
+  CheckFeasibleExact(NodeSet& nodes);
+
+  bool operator()() override;
+
+ private:
+  void splitCircle
+  (
+    const int slice,
+    const BitString& split
+  );
+
+  bool feasibleLine
+  (
+    std::vector<std::vector<OptValue> >& opt,
+    const int slice,
+    const BitString& split
+  );
+}; // class CheckFeasibleExact
+
+
+class CheckFeasibleHeuristic : public CheckFeasible
+{
+ public:
+  CheckFeasibleHeuristic(NodeSet& nodes, const int heuristic_steps);
+
+  void InitializeSlices() override;
+
+  bool operator()() override;
+
+ private:
+  bool feasibleLine2(std::vector<std::vector<OptValue> >& opt);
+
+  const int heuristic_steps_;
+}; // class CheckFeasibleHeuristic
+
+
+
+
+
 class ComputeScaleFactorAnyOrder
 {
  protected:
@@ -211,47 +278,6 @@ class ComputeScaleFactorAnyOrder
  private:
   int AssignLayers();
 
-
-
-
-
-
-
-
-  bool feasible
-  (
-    std::vector<TaskSlice>& slices,
-    const int num_layers
-  );
-
-  void splitCircle
-  (
-    std::vector<TaskSlice>& slices,
-    const int slice,
-    const BitString& split
-  );
-
-  bool feasibleLine
-  (
-    const std::vector<TaskSlice>& slices,
-    std::vector<std::vector<OptValue> >& opt,
-    const int slice,
-    const BitString& split
-  );
-
-  bool feasible2
-  (
-    const std::vector<TaskSlice>& slices,
-    const int num_layers,
-    const int copies
-  );
-
-  bool feasibleLine2
-  (
-    const std::vector<TaskSlice>& slices,
-    std::vector<std::vector<OptValue> >& opt
-  );
-
  protected:
   NecklaceShape::Ptr necklace_shape_;
 
@@ -262,6 +288,9 @@ class ComputeScaleFactorAnyOrder
   //Number max_buffer_rad_;  // Based on smallest scaled radius?
 
   int binary_search_depth_;
+  CheckFeasible::Ptr check_feasible_;
+
+
   int heuristic_steps_; // TODO(tvl) const value: remove? Make separate class/struct hierarchy?
 }; // class ComputeScaleFactorAnyOrder
 

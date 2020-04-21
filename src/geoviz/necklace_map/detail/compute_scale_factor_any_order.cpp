@@ -46,6 +46,7 @@ namespace detail
 // TODO(tvl) go over code and add "override" or "final" keywords where applicable..
 
 constexpr const Number EPSILON = 0.0000001;
+constexpr const int kMaxLayers = 15;
 
 
 AnyOrderCycleNode::AnyOrderCycleNode(const Bead::Ptr& bead) :
@@ -151,29 +152,28 @@ TaskSlice::TaskSlice(
   tasks.resize(num_layers);
 }
 
-TaskSlice::TaskSlice(const TaskSlice& ts, const double offset, const int step) :
-  event_left(ts.event_left),
-  event_right(ts.event_right),
-  num_tasks(ts.num_tasks),
-  sets(ts.sets),
-  layers(ts.layers)
+TaskSlice::TaskSlice(const TaskSlice& slice, const int step) :
+  event_left(slice.event_left),
+  event_right(slice.event_right),
+  num_tasks(slice.num_tasks),
+  sets(slice.sets),
+  layers(slice.layers)
 {
-  angle_left_rad = event_left.angle_rad - offset + step * M_2xPI;
+  angle_left_rad = event_left.angle_rad + step * M_2xPI;
   if (angle_left_rad < step * M_2xPI) angle_left_rad += M_2xPI;
-  angle_right_rad = event_right.angle_rad - offset + step * M_2xPI;
+  angle_right_rad = event_right.angle_rad + step * M_2xPI;
   if (angle_right_rad < angle_left_rad) angle_right_rad += M_2xPI;
 
-  tasks.resize(ts.tasks.size());
+  tasks.resize(slice.tasks.size());
   for (int i = 0; i < tasks.size(); i++)
   {
-    if (ts.tasks[i] == nullptr) tasks[i] = nullptr;
+    if (slice.tasks[i] == nullptr) tasks[i] = nullptr;
     else
     {
-      //if (ts.tasks[i].range.from <= ts.tasks[i].range.to || step > 0 || angle_right_rad > ts.tasks[i].range.from) {
-      if (step > 0 || angle_right_rad > ts.tasks[i]->valid->to() - offset || !ts.tasks[i]->valid->Contains(offset) ||
-          ts.tasks[i]->valid->from() == offset)
+      if (step > 0 || angle_right_rad > slice.tasks[i]->valid->to() || !slice.tasks[i]->valid->Contains(0) ||
+          slice.tasks[i]->valid->from() == 0)
       {
-        tasks[i] = std::make_shared<BeadData>(*ts.tasks[i]);  // TODO(tvl) check whether this should be a new pointer or could also be a pointer to the existing object.
+        tasks[i] = std::make_shared<BeadData>(*slice.tasks[i]);  // TODO(tvl) check whether this should be a new pointer or could also be a pointer to the existing object.
         Range r1(tasks[i]->valid->from(), event_left.angle_rad);
         Range r2(event_left.angle_rad, tasks[i]->valid->to());
         tasks[i]->valid->from() = angle_left_rad - r1.ComputeLength();
@@ -292,51 +292,38 @@ void OptValue::Initialize()
 }
 
 
-ComputeScaleFactorAnyOrder::ComputeScaleFactorAnyOrder
-(
-  const Necklace::Ptr& necklace,
-  const Number& buffer_rad /*= 0*/,
-  const int binary_search_depth /*= 10*/,
-  const int heuristic_steps /*= 5*/
-) :
-  necklace_shape_(necklace->shape),
-  half_buffer_rad_(0.5 * buffer_rad),
-  binary_search_depth_(binary_search_depth),
-  heuristic_steps_(heuristic_steps)
+CheckFeasible::Ptr CheckFeasible::New(NodeSet& nodes, const int heuristic_steps)
 {
-  // Collect and order the beads based on the start of their valid interval (initialized as their feasible interval).
-  for (const Bead::Ptr& bead : necklace->beads)
-    nodes_.push_back(std::make_shared<AnyOrderCycleNode>(bead));
-
-  std::sort(nodes_.begin(), nodes_.end(), CompareAnyOrderCycleNode());
+  if (heuristic_steps == 0)
+    return std::make_shared<CheckFeasibleExact>(nodes);
+  else
+    return std::make_shared<CheckFeasibleHeuristic>(nodes, heuristic_steps);
 }
 
-Number ComputeScaleFactorAnyOrder::Optimize()
+CheckFeasible::CheckFeasible(NodeSet& nodes): slices(), nodes_(nodes) {}
+
+void CheckFeasible::InitializeSlices()
 {
-  const int num_layers = AssignLayers();
+
+
 
 
   // TODO(tvl) check which vectors can be replaced by simple fixed size arrays.
+  std::vector<TaskEvent> events;
+  events.reserve(2 * nodes_.size());
 
-
-
-
-  // Failure case: too thick.
-  if (num_layers >= 15) return 0;
-
-  // compute upper bound scale
-  const Number maxScale = ComputeScaleUpperBound();
-
-  // TODO(tvl) why does this repeat the earlier initialization? layer is set...
-  // TODO(tvl) this recreation of the event list could be replaced by a link in the events to the CA...
-  std::vector<TaskEvent> events;  // TODO(tvl) reserve
+  int max_layer = 0;
   for (int i = 0; i < nodes_.size(); i++)
   {
     AnyOrderCycleNode::Ptr& ca = nodes_[i];
+    max_layer = std::max(max_layer, ca->layer);
+
     events.emplace_back(ca, ca->valid->from(), TaskEvent::Type::kFrom);
     events.emplace_back(ca, ca->valid->to(), TaskEvent::Type::kTo);
   }
   std::sort(events.begin(), events.end(), CompareTaskEvent());  // TODO(tvl) is this even useful?
+
+  const int num_layers = max_layer + 1;
 
 
   Bead::Ptr curTasks[num_layers];
@@ -347,8 +334,10 @@ Number ComputeScaleFactorAnyOrder::Optimize()
       curTasks[node->layer] = node->bead;
   }
 
+
+
   //find taskslices
-  std::vector<TaskSlice> slices(events.size());
+  slices.resize(events.size());
   for (int i = 0; i < events.size(); i++)
   {
     TaskEvent e = events[i];
@@ -367,139 +356,26 @@ Number ComputeScaleFactorAnyOrder::Optimize()
   // make sure first slice is start of task
   while (slices[0].event_left.type == TaskEvent::Type::kTo)
   {
-    const TaskSlice& ts = slices[0];
+    const TaskSlice& slice = slices[0];
     for (int i = 0; i < slices.size() - 1; i++)
       slices[i] = slices[i + 1];
-    slices[slices.size() - 1] = ts;
+    slices[slices.size() - 1] = slice;
   }
 
 
 
-  // binary search
-  Number x = 0.0;
-  Number y = maxScale;
-  for (int i = 0; i < binary_search_depth_; i++)
-  {
-    double h = 0.5 * (x + y);
-    ComputeCoveringRadii(h);
-
-
-
-    if (heuristic_steps_ == 0)  // TODO(tvl) Merge in method that switches between feasible methods based on heuristic steps.
-    {
-      if (feasible(slices, num_layers)) x = h;
-      else y = h;
-    } else
-    {
-      if (feasible2(slices, num_layers, heuristic_steps_)) x = h;
-      else y = h;
-    }
-  }
-  //System.out.println(x);
-  return x;
-}
-
-Number ComputeScaleFactorAnyOrder::ComputeScaleUpperBound() const
-{
-  // The initial upper bound make sure all beads would fit if they were the size of the smallest bead.
-  Number upper_bound = 0;
-  for (const AnyOrderCycleNode::Ptr& node : nodes_)
-  {
-    const Number radius_rad = necklace_shape_->ComputeCoveringRadiusRad(node->valid, node->bead->radius_base);
-    upper_bound = std::max(upper_bound, M_PI / (radius_rad + half_buffer_rad_));
-  }
-
-  // Perform a binary search to find the largest scale factor for which all beads could fit.
-  Number lower_bound = 0.0;
-  for (int j = 0; j < binary_search_depth_; ++j)
-  {
-    Number scale_factor = 0.5 * (lower_bound + upper_bound);
-
-    Number totalSize = 0.0;
-    for (const AnyOrderCycleNode::Ptr& node : nodes_)
-        totalSize +=
-          necklace_shape_->ComputeCoveringRadiusRad(node->valid, scale_factor * node->bead->radius_base) +
-          half_buffer_rad_;
-
-    // Check whether the scaled beads could fit.
-    if (totalSize <= M_PI)
-      lower_bound = scale_factor;
-    else
-      upper_bound = scale_factor;
-  }
-
-  // The lower bound is the largest confirmed scale factor for which all beads could fit.
-  return lower_bound;
-}
-
-Number ComputeScaleFactorAnyOrder::ComputeCoveringRadii(const Number& scale_factor)
-{
-  for (AnyOrderCycleNode::Ptr& node : nodes_)
-    node->bead->covering_radius_rad =
-      necklace_shape_->ComputeCoveringRadiusRad(node->valid, node->bead->radius_base * scale_factor) + half_buffer_rad_;
-}
-
-int ComputeScaleFactorAnyOrder::AssignLayers()
-{
-  // Each node should be assigned a layer such that each layer does not contain any pair of nodes that overlap in their valid interval.
-  // Note that this can be done greedily: assign the nodes by minimizing the distance between the last valid interval and the next.
-
-  using NodeList = std::list<AnyOrderCycleNode::Ptr>;
-  NodeList remaining_nodes(nodes_.begin(), nodes_.end());
-
-  int layer = 0;
-  remaining_nodes.front()->layer = layer;
-  NecklaceInterval layer_interval(*remaining_nodes.front()->valid);
-
-  remaining_nodes.pop_front();
-  NodeList::iterator node_iter = remaining_nodes.begin();
-  NodeList::iterator unused_iter = remaining_nodes.end();
-
-  // Note that the nodes are already ordered by the starting angle of their valid interval.
-  while (!remaining_nodes.empty())
-  {
-    if (!layer_interval.IntersectsOpen((*node_iter)->valid))
-    {
-      // Add the non-overlapping node to the layer.
-      (*node_iter)->layer = layer;
-      layer_interval.to_rad() = ModuloNonZero((*node_iter)->valid->to(), layer_interval.from_rad());
-      node_iter = remaining_nodes.erase(node_iter);
-    }
-    else if (node_iter == unused_iter)
-    {
-      // All nodes were checked: start a new layer.
-      ++layer;
-      (*node_iter)->layer = layer;
-      layer_interval = NecklaceInterval(*(*node_iter)->valid);
-
-      node_iter = remaining_nodes.erase(node_iter);
-      unused_iter = remaining_nodes.end();
-    }
-    else
-    {
-      if (unused_iter == remaining_nodes.end())
-        // Mark the node as the first one of the next layer.
-        unused_iter = node_iter;
-      ++node_iter;
-    }
-
-    if (node_iter == remaining_nodes.end())
-      node_iter = remaining_nodes.begin();
-  }
-
-  return layer + 1;
 }
 
 
+CheckFeasibleExact::CheckFeasibleExact(NodeSet& nodes) : CheckFeasible(nodes) {}
 
-
-
-bool ComputeScaleFactorAnyOrder::feasible
-(
-  std::vector<TaskSlice>& slices,
-  const int num_layers
-)
+bool CheckFeasibleExact::operator()()
 {
+
+  if (slices.empty())
+    return true;
+
+  const int num_layers = slices.front().tasks.size();
 
   // setup DP array
   int nSubSets = (1 << num_layers);
@@ -527,10 +403,10 @@ bool ComputeScaleFactorAnyOrder::feasible
         {
 
           // split the circle (ranges, event times, the works)
-          splitCircle(slices, i, str2);
+          splitCircle(i, str2);
 
           // compute
-          bool good = feasibleLine(slices, opt, i, str2);
+          bool good = feasibleLine(opt, i, str2);
 
           if (good) return true;
         }
@@ -541,44 +417,47 @@ bool ComputeScaleFactorAnyOrder::feasible
   return false;
 }
 
-void ComputeScaleFactorAnyOrder::splitCircle
+void CheckFeasibleExact::splitCircle
 (
-  std::vector<TaskSlice>& slices,
-  const int slice,
+  const int slice_index,
   const BitString& split
 )
 {
+
+
+
   // reset everything, then rotate
   for (int i = 0; i < slices.size(); i++)
   {
     slices[i].reset();
-    slices[i].rotate(slices[slice].event_left.angle_rad, slices[slice].tasks, split);
+    slices[i].rotate(slices[slice_index].event_left.angle_rad, slices[slice_index].tasks, split);
   }
 }
 
-bool ComputeScaleFactorAnyOrder::feasibleLine
+bool CheckFeasibleExact::feasibleLine
 (
-  const std::vector<TaskSlice>& slices,
   std::vector<std::vector<OptValue> >& opt,
-  const int slice,
+  const int slice_index,
   const BitString& split
 )
 {
-  BitString split2 = split.Xor(slices[slice].sets.back());  //TODO(tvl) rename split_inverse?
+
+
+  BitString split2 = split.Xor(slices[slice_index].sets.back());  //TODO(tvl) rename split_inverse?
 
   // initialization
-  //const TaskSlice& ts = slices[slice];
+  //const TaskSlice& slice = slices[slice];
   opt[0][0].angle_rad = 0.0;
   opt[0][0].layer = -1;
   opt[0][0].cd = std::make_shared<BeadData>(nullptr, -1);
 
   for (int i = 0; i < slices.size(); i++)
   {
-    int s = (slice + i) % slices.size();
-    const TaskSlice& ts = slices[s];
-    for (int j = 0; j < ts.sets.size(); j++)
+    int s = (slice_index + i) % slices.size();
+    const TaskSlice& slice = slices[s];
+    for (int j = 0; j < slice.sets.size(); j++)
     {
-      const BitString& str = ts.sets[j];
+      const BitString& str = slice.sets[j];
       int q = str.Get();  // TODO(tvl) remove q.
       if (i == 0 && q == 0) continue;
 
@@ -592,9 +471,9 @@ bool ComputeScaleFactorAnyOrder::feasibleLine
       if (i != 0)
       {
         // check previous slice
-        if (ts.event_left.type == TaskEvent::Type::kFrom)
+        if (slice.event_left.type == TaskEvent::Type::kFrom)
         {
-          if ((q & (1 << ts.event_left.node->layer)) == 0)
+          if ((q & (1 << slice.event_left.node->layer)) == 0)
           {
             opt[i][q].angle_rad = opt[i - 1][q].angle_rad;
             opt[i][q].layer = opt[i - 1][q].layer;
@@ -602,9 +481,9 @@ bool ComputeScaleFactorAnyOrder::feasibleLine
           }
         } else
         {
-          int q2 = q + (1 << ts.event_left.node->layer);
-          if (slices[(s + slices.size() - 1) % slices.size()].tasks[ts.event_left.node->layer]->disabled)
-            q2 -= (1 << ts.event_left.node->layer); // special case
+          int q2 = q + (1 << slice.event_left.node->layer);
+          if (slices[(s + slices.size() - 1) % slices.size()].tasks[slice.event_left.node->layer]->disabled)
+            q2 -= (1 << slice.event_left.node->layer); // special case
           opt[i][q].angle_rad = opt[i - 1][q2].angle_rad;
           opt[i][q].layer = opt[i - 1][q2].layer;
           opt[i][q].cd = opt[i - 1][q2].cd;
@@ -612,10 +491,10 @@ bool ComputeScaleFactorAnyOrder::feasibleLine
       }
       if (opt[i][q].angle_rad < std::numeric_limits<double>::max()) continue;
 
-      for (int x = 0; x < ts.num_tasks; x++)
+      for (int x = 0; x < slice.num_tasks; x++)
       {
-        int k = ts.layers[x];
-        BeadData::Ptr cd = ts.tasks[k];
+        int k = slice.layers[x];
+        BeadData::Ptr cd = slice.tasks[k];
         int k2 = (1 << k);
         if ((k2 & q) == 0) continue;
         if (cd->disabled) continue;
@@ -625,7 +504,7 @@ bool ComputeScaleFactorAnyOrder::feasibleLine
         // special check
         if (!opt[i][q - k2].cd->bead || opt[i][q - k2].cd->bead->covering_radius_rad == 0.0)
         {
-          if (k != slices[slice].event_left.node->layer) continue;
+          if (k != slices[slice_index].event_left.node->layer) continue;
         }
         else t1 += cd->bead->covering_radius_rad;
 
@@ -642,13 +521,13 @@ bool ComputeScaleFactorAnyOrder::feasibleLine
   }
 
 
-  const TaskSlice& ts = slices[slice];
+  const TaskSlice& slice = slices[slice_index];
   if (opt[slices.size() - 1][split2.Get()].angle_rad == std::numeric_limits<double>::max()) return false;
-  if (opt[slices.size() - 1][split2.Get()].angle_rad <= M_2xPI - ts.tasks[ts.event_left.node->layer]->bead->covering_radius_rad)
+  if (opt[slices.size() - 1][split2.Get()].angle_rad <= M_2xPI - slice.tasks[slice.event_left.node->layer]->bead->covering_radius_rad)
   {
     // feasible! construct solution
     int s = slices.size() - 1;
-    int s2 = (slice + s) % slices.size();
+    int s2 = (slice_index + s) % slices.size();
     int q = split2.Get();  // TODO(tvl) remove q.
     double t = opt[s][q].angle_rad - opt[s][q].cd->bead->covering_radius_rad;
 
@@ -661,7 +540,7 @@ bool ComputeScaleFactorAnyOrder::feasibleLine
           q -= (1 << slices[s2].event_left.node->layer);
       }
       s--;
-      s2 = (slice + s) % slices.size();
+      s2 = (slice_index + s) % slices.size();
       if (s < 0) break;
     }
 
@@ -672,7 +551,7 @@ bool ComputeScaleFactorAnyOrder::feasibleLine
       BeadData::Ptr cd = opt[s][q].cd;
       if ((q & (1 << opt[s][q].layer)) == 0) return false;
       q -= (1 << opt[s][q].layer);
-      cd->bead->angle_rad = t + slices[slice].event_left.angle_rad;
+      cd->bead->angle_rad = t + slices[slice_index].event_left.angle_rad;
       t = opt[s][q].angle_rad - opt[s][q].cd->bead->covering_radius_rad;
       while (slices[s2].angle_left_rad > t + EPSILON)
       {
@@ -683,7 +562,7 @@ bool ComputeScaleFactorAnyOrder::feasibleLine
             q -= (1 << slices[s2].event_left.node->layer);
         }
         s--;
-        s2 = (slice + s) % slices.size();
+        s2 = (slice_index + s) % slices.size();
         if (s < 0) break;
       }
     }
@@ -693,41 +572,54 @@ bool ComputeScaleFactorAnyOrder::feasibleLine
   return false;
 }
 
-bool ComputeScaleFactorAnyOrder::feasible2  // TODO(tvl) rename feasible heuristic.
-(
-  const std::vector<TaskSlice>& slices,
-  const int num_layers,
-  const int copies
-)
+
+CheckFeasibleHeuristic::CheckFeasibleHeuristic(NodeSet& nodes, const int heuristic_steps) :
+  CheckFeasible(nodes),
+  heuristic_steps_(heuristic_steps)
+{}
+
+bool CheckFeasibleHeuristic::operator()()
 {
-  // make new slices
-  std::vector<TaskSlice> slices2(slices.size() * copies);
-  for (int i = 0; i < copies; i++)
-  {
-    for (int j = 0; j < slices.size(); j++)
-    {
-      int q = i * slices.size() + j;
-      slices2[q] = TaskSlice(slices[j], slices[0].angle_left_rad, i);
-    }
-  }
+
+
+
+  if (slices.empty())
+    return true;
+
+  const int num_layers = slices.front().tasks.size();
 
   // setup DP array
   int nSubSets = (1 << num_layers);
-  std::vector<std::vector<OptValue> > opt(slices2.size());
-  for (int i = 0; i < slices2.size(); i++)
+  std::vector<std::vector<OptValue> > opt(slices.size());
+  for (int i = 0; i < slices.size(); i++)
     opt[i].resize(nSubSets);
 
-  return feasibleLine2(slices2, opt);
+  return feasibleLine2(opt);
 }
 
-bool ComputeScaleFactorAnyOrder::feasibleLine2
-(
-  const std::vector<TaskSlice>& slices,
-  std::vector<std::vector<OptValue> >& opt
-)
+void CheckFeasibleHeuristic::InitializeSlices()
 {
+  CheckFeasible::InitializeSlices();
+
+  // Clone the slices.
+  const size_t num_slices = slices.size();
+  slices.resize(num_slices * heuristic_steps_);
+  for (int i = 1; i < heuristic_steps_; i++)
+  {
+    for (int j = 0; j < num_slices; j++)
+    {
+      int q = i * num_slices + j;
+      slices[q] = TaskSlice(slices[j], i);
+    }
+  }
+}
+
+bool CheckFeasibleHeuristic::feasibleLine2(std::vector<std::vector<OptValue> >& opt)
+{
+
+
   // initialization
-  //const TaskSlice& ts = slices[0];
+  //const TaskSlice& slice = slices[0];
   opt[0][0].angle_rad = 0.0;
   opt[0][0].angle2_rad = 0.0;
   opt[0][0].layer = -1;
@@ -735,10 +627,10 @@ bool ComputeScaleFactorAnyOrder::feasibleLine2
 
   for (int i = 0; i < slices.size(); i++)
   {
-    const TaskSlice& ts = slices[i];
-    for (int j = 0; j < ts.sets.size(); j++)
+    const TaskSlice& slice = slices[i];
+    for (int j = 0; j < slice.sets.size(); j++)
     {
-      int q = ts.sets[j].Get();  // TODO(tvl) remove q.
+      int q = slice.sets[j].Get();  // TODO(tvl) remove q.
       if (i == 0 && q == 0) continue;
 
       opt[i][q].angle_rad = std::numeric_limits<double>::max();
@@ -749,9 +641,9 @@ bool ComputeScaleFactorAnyOrder::feasibleLine2
       if (i != 0)
       {
         // check previous slice
-        if (ts.event_left.type == TaskEvent::Type::kFrom)
+        if (slice.event_left.type == TaskEvent::Type::kFrom)
         {
-          if ((q & (1 << ts.event_left.node->layer)) == 0)
+          if ((q & (1 << slice.event_left.node->layer)) == 0)
           {
             opt[i][q].angle_rad = opt[i - 1][q].angle_rad;
             opt[i][q].angle2_rad = opt[i - 1][q].angle2_rad;
@@ -760,8 +652,8 @@ bool ComputeScaleFactorAnyOrder::feasibleLine2
           }
         } else
         {
-          int q2 = q + (1 << ts.event_left.node->layer);
-          if (slices[i - 1].tasks[ts.event_left.node->layer] == nullptr) q2 -= (1 << ts.event_left.node->layer); // special case
+          int q2 = q + (1 << slice.event_left.node->layer);
+          if (slices[i - 1].tasks[slice.event_left.node->layer] == nullptr) q2 -= (1 << slice.event_left.node->layer); // special case
           opt[i][q].angle_rad = opt[i - 1][q2].angle_rad;
           opt[i][q].angle2_rad = opt[i - 1][q2].angle2_rad;
           opt[i][q].layer = opt[i - 1][q2].layer;
@@ -771,10 +663,10 @@ bool ComputeScaleFactorAnyOrder::feasibleLine2
 
       if (opt[i][q].angle_rad < std::numeric_limits<double>::max()) continue;
 
-      for (int x = 0; x < ts.num_tasks; x++)
+      for (int x = 0; x < slice.num_tasks; x++)
       {
-        int k = ts.layers[x];
-        BeadData::Ptr cd = ts.tasks[k];
+        int k = slice.layers[x];
+        BeadData::Ptr cd = slice.tasks[k];
         int k2 = (1 << k);
         if ((k2 & q) == 0) continue;
         if (cd == nullptr) continue;
@@ -881,6 +773,166 @@ bool ComputeScaleFactorAnyOrder::feasibleLine2
 
   return false;
 }
+
+
+
+
+ComputeScaleFactorAnyOrder::ComputeScaleFactorAnyOrder
+(
+  const Necklace::Ptr& necklace,
+  const Number& buffer_rad /*= 0*/,
+  const int binary_search_depth /*= 10*/,
+  const int heuristic_steps /*= 5*/
+) :
+  necklace_shape_(necklace->shape),
+  half_buffer_rad_(0.5 * buffer_rad),
+  binary_search_depth_(binary_search_depth),
+  heuristic_steps_(heuristic_steps)
+{
+  // Collect and order the beads based on the start of their valid interval (initialized as their feasible interval).
+  for (const Bead::Ptr& bead : necklace->beads)
+    nodes_.push_back(std::make_shared<AnyOrderCycleNode>(bead));
+
+  std::sort(nodes_.begin(), nodes_.end(), CompareAnyOrderCycleNode());
+
+  // Prepare the feasibility check.
+  check_feasible_ = CheckFeasible::New(nodes_, heuristic_steps);
+}
+
+Number ComputeScaleFactorAnyOrder::Optimize()
+{
+  // Assign a layer to each node such that the nodes in a layer do not overlap in their feasibile intervals.
+  const int num_layers = AssignLayers();
+
+  // The algorithm is exponential in the number of layers, so we limit this number.
+  if (kMaxLayers < num_layers)
+    return 0;
+
+  // The algorithm performs a binary search on the scale factor, determining which are feasible.
+  // This requires a decent initial upper bound on the scale factor.
+  const Number maxScale = ComputeScaleUpperBound();
+
+  check_feasible_->InitializeSlices();
+
+
+
+
+
+
+
+
+  // binary search
+  Number x = 0.0;
+  Number y = maxScale;
+  for (int i = 0; i < binary_search_depth_; i++)
+  {
+    double h = 0.5 * (x + y);
+    ComputeCoveringRadii(h);
+
+    if ((*check_feasible_)()) x = h;
+    else y = h;
+  }
+  
+  return x;
+}
+
+Number ComputeScaleFactorAnyOrder::ComputeScaleUpperBound() const
+{
+  // The initial upper bound make sure all beads would fit if they were the size of the smallest bead.
+  Number upper_bound = 0;
+  for (const AnyOrderCycleNode::Ptr& node : nodes_)
+  {
+    const Number radius_rad = necklace_shape_->ComputeCoveringRadiusRad(node->valid, node->bead->radius_base);
+    upper_bound = std::max(upper_bound, M_PI / (radius_rad + half_buffer_rad_));
+  }
+
+  // Perform a binary search to find the largest scale factor for which all beads could fit.
+  Number lower_bound = 0.0;
+  for (int j = 0; j < binary_search_depth_; ++j)
+  {
+    Number scale_factor = 0.5 * (lower_bound + upper_bound);
+
+    Number totalSize = 0.0;
+    for (const AnyOrderCycleNode::Ptr& node : nodes_)
+        totalSize +=
+          necklace_shape_->ComputeCoveringRadiusRad(node->valid, scale_factor * node->bead->radius_base) +
+          half_buffer_rad_;
+
+    // Check whether the scaled beads could fit.
+    if (totalSize <= M_PI)
+      lower_bound = scale_factor;
+    else
+      upper_bound = scale_factor;
+  }
+
+  // The lower bound is the largest confirmed scale factor for which all beads could fit.
+  return lower_bound;
+}
+
+Number ComputeScaleFactorAnyOrder::ComputeCoveringRadii(const Number& scale_factor)
+{
+  for (AnyOrderCycleNode::Ptr& node : nodes_)
+    node->bead->covering_radius_rad =
+      necklace_shape_->ComputeCoveringRadiusRad(node->valid, node->bead->radius_base * scale_factor) + half_buffer_rad_;
+}
+
+int ComputeScaleFactorAnyOrder::AssignLayers()
+{
+  // Each node should be assigned a layer such that each layer does not contain any pair of nodes that overlap in their valid interval.
+  // Note that this can be done greedily: assign the nodes by minimizing the distance between the last valid interval and the next.
+
+  using NodeList = std::list<AnyOrderCycleNode::Ptr>;
+  NodeList remaining_nodes(nodes_.begin(), nodes_.end());
+
+  int layer = 0;
+  remaining_nodes.front()->layer = layer;
+  NecklaceInterval layer_interval(*remaining_nodes.front()->valid);
+
+  remaining_nodes.pop_front();
+  NodeList::iterator node_iter = remaining_nodes.begin();
+  NodeList::iterator unused_iter = remaining_nodes.end();
+
+  // Note that the nodes are already ordered by the starting angle of their valid interval.
+  while (!remaining_nodes.empty())
+  {
+    if (!layer_interval.IntersectsOpen((*node_iter)->valid))
+    {
+      // Add the non-overlapping node to the layer.
+      (*node_iter)->layer = layer;
+      layer_interval.to_rad() = ModuloNonZero((*node_iter)->valid->to(), layer_interval.from_rad());
+      node_iter = remaining_nodes.erase(node_iter);
+    }
+    else if (node_iter == unused_iter)
+    {
+      // All nodes were checked: start a new layer.
+      ++layer;
+      (*node_iter)->layer = layer;
+      layer_interval = NecklaceInterval(*(*node_iter)->valid);
+
+      node_iter = remaining_nodes.erase(node_iter);
+      unused_iter = remaining_nodes.end();
+    }
+    else
+    {
+      if (unused_iter == remaining_nodes.end())
+        // Mark the node as the first one of the next layer.
+        unused_iter = node_iter;
+      ++node_iter;
+    }
+
+    if (node_iter == remaining_nodes.end())
+      node_iter = remaining_nodes.begin();
+  }
+
+  return layer + 1;
+}
+
+
+
+
+
+
+
 
 
 ComputeScaleFactorAnyOrderIngot::ComputeScaleFactorAnyOrderIngot
