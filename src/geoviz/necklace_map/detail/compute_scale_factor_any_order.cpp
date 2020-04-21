@@ -92,6 +92,8 @@ bool CompareTaskEvent::operator()(const TaskEvent& a, const TaskEvent& b) const
 
 
 
+
+
 BeadData::BeadData(const Bead::Ptr& bead, const int layer) :
   bead(bead),
   layer(layer),
@@ -123,34 +125,43 @@ void BitString::SetBit(const int bit) { CHECK(CheckFit(bit)); bits = 1 << bit; }
 bool BitString::AddBit(const int bit) { CHECK(CheckFit(bit)); return bits |= (1 << bit); }
 
 
-TaskSlice::TaskSlice() : eventLeft(), eventRight(), tasks(), taskCount(0), left(0), right(0), sets(), layers() {}
+TaskSlice::TaskSlice() :
+  event_left(),
+  event_right(),
+  tasks(),
+  num_tasks(0),
+  angle_left_rad(0),
+  angle_right_rad(0),
+  sets(),
+  layers()
+{}
 
 TaskSlice::TaskSlice(
-  const TaskEvent& eLeft,
-  const TaskEvent& eRight,
-  const int K,
-  const double right
-) :  // TODO(tvl) note Java code had bug (?) here, where 'right' was not actually used; is this parameter needed?
-  eventLeft(eLeft),
-  eventRight(eRight),
-  taskCount(0),
-  left(eLeft.angle_rad),
-  right(right)
+  const TaskEvent& event_left,
+  const TaskEvent& event_right,
+  const int num_layers,
+  const double angle_right_rad
+) :
+  event_left(event_left),
+  event_right(event_right),
+  num_tasks(0),
+  angle_left_rad(event_left.angle_rad),
+  angle_right_rad(angle_right_rad)
 {
-  tasks.resize(K);
+  tasks.resize(num_layers);
 }
 
 TaskSlice::TaskSlice(const TaskSlice& ts, const double offset, const int step) :
-  eventLeft(ts.eventLeft),
-  eventRight(ts.eventRight),
-  taskCount(ts.taskCount),
+  event_left(ts.event_left),
+  event_right(ts.event_right),
+  num_tasks(ts.num_tasks),
   sets(ts.sets),
   layers(ts.layers)
 {
-  left = eventLeft.angle_rad - offset + step * M_2xPI;
-  if (left < step * M_2xPI) left += M_2xPI;
-  right = eventRight.angle_rad - offset + step * M_2xPI;
-  if (right < left) right += M_2xPI;
+  angle_left_rad = event_left.angle_rad - offset + step * M_2xPI;
+  if (angle_left_rad < step * M_2xPI) angle_left_rad += M_2xPI;
+  angle_right_rad = event_right.angle_rad - offset + step * M_2xPI;
+  if (angle_right_rad < angle_left_rad) angle_right_rad += M_2xPI;
 
   tasks.resize(ts.tasks.size());
   for (int i = 0; i < tasks.size(); i++)
@@ -158,15 +169,15 @@ TaskSlice::TaskSlice(const TaskSlice& ts, const double offset, const int step) :
     if (ts.tasks[i] == nullptr) tasks[i] = nullptr;
     else
     {
-      //if (ts.tasks[i].range.from <= ts.tasks[i].range.to || step > 0 || right > ts.tasks[i].range.from) {
-      if (step > 0 || right > ts.tasks[i]->valid->to() - offset || !ts.tasks[i]->valid->Contains(offset) ||
+      //if (ts.tasks[i].range.from <= ts.tasks[i].range.to || step > 0 || angle_right_rad > ts.tasks[i].range.from) {
+      if (step > 0 || angle_right_rad > ts.tasks[i]->valid->to() - offset || !ts.tasks[i]->valid->Contains(offset) ||
           ts.tasks[i]->valid->from() == offset)
       {
         tasks[i] = std::make_shared<BeadData>(*ts.tasks[i]);  // TODO(tvl) check whether this should be a new pointer or could also be a pointer to the existing object.
-        Range r1(tasks[i]->valid->from(), eventLeft.angle_rad);
-        Range r2(eventLeft.angle_rad, tasks[i]->valid->to());
-        tasks[i]->valid->from() = left - r1.ComputeLength();
-        tasks[i]->valid->to() = left + r2.ComputeLength();
+        Range r1(tasks[i]->valid->from(), event_left.angle_rad);
+        Range r2(event_left.angle_rad, tasks[i]->valid->to());
+        tasks[i]->valid->from() = angle_left_rad - r1.ComputeLength();
+        tasks[i]->valid->to() = angle_left_rad + r2.ComputeLength();
       } else tasks[i] = nullptr;
     }
   }
@@ -174,8 +185,8 @@ TaskSlice::TaskSlice(const TaskSlice& ts, const double offset, const int step) :
 
 void TaskSlice::reset()
 {
-  left = eventLeft.angle_rad;
-  right = eventRight.angle_rad;
+  angle_left_rad = event_left.angle_rad;
+  angle_right_rad = event_right.angle_rad;
   for (int i = 0; i < tasks.size(); i++)
   {
     if (tasks[i] != nullptr)
@@ -187,13 +198,13 @@ void TaskSlice::reset()
   }
 }
 
-void TaskSlice::rotate(const double value, const std::vector<BeadData::Ptr>& cds, const BitString& split)
+void TaskSlice::rotate(const Number value, const std::vector<BeadData::Ptr>& cds, const BitString& split)
 {
-  Range r1(value, left);
-  Range r2(value, right);
-  left = r1.ComputeLength();
-  right = r2.ComputeLength();
-  if (right < EPSILON) right = M_2xPI;
+  Range r1(value, angle_left_rad);
+  Range r2(value, angle_right_rad);
+  angle_left_rad = r1.ComputeLength();
+  angle_right_rad = r2.ComputeLength();
+  if (angle_right_rad < EPSILON) angle_right_rad = M_2xPI;
 
   // TODO(tvl) when changing r1/r2, only set the second value?
   for (int i = 0; i < tasks.size(); i++)
@@ -208,14 +219,14 @@ void TaskSlice::rotate(const double value, const std::vector<BeadData::Ptr>& cds
           r2 = Range(value, cd->valid->to());
           cd->valid->from() = 0.0;
           cd->valid->to() = r2.ComputeLength();
-          if (r2.ComputeLength() - EPSILON <= left)
+          if (r2.ComputeLength() - EPSILON <= angle_left_rad)
             cd->disabled = true;
         } else
         {
           r1 = Range(value, cd->valid->from());
           cd->valid->from() = r1.ComputeLength();
           cd->valid->to() = M_2xPI;
-          if (r1.ComputeLength() + EPSILON >= right)
+          if (r1.ComputeLength() + EPSILON >= angle_right_rad)
             cd->disabled = true;
         }
       } else
@@ -235,13 +246,13 @@ void TaskSlice::addTask(const BeadData::Ptr& task)
 {
   CHECK_LT(task->layer, tasks.size());
   tasks[task->layer] = task;
-  taskCount++;
-  CHECK(BitString::CheckFit(taskCount));
+  num_tasks++;
+  CHECK(BitString::CheckFit(num_tasks));
 }
 
 void TaskSlice::produceSets()
 {
-  sets.resize(1 << taskCount);  // TODO(tvl) bitset?
+  sets.resize(1 << num_tasks);  // TODO(tvl) bitset?
   std::vector<bool> filter(tasks.size());
   for (int i = 0; i < tasks.size(); i++)
     filter[i] = (tasks[i] != nullptr);
@@ -257,7 +268,7 @@ void TaskSlice::produceSets()
     if (valid) sets[k++].SetString(i);
   }
 
-  layers.resize(taskCount);
+  layers.resize(num_tasks);
   k = 0;
   for (int i = 0; i < tasks.size(); i++)
   {
@@ -302,8 +313,7 @@ ComputeScaleFactorAnyOrder::ComputeScaleFactorAnyOrder
 
 Number ComputeScaleFactorAnyOrder::Optimize()
 {
-  const Number num_layers = AssignLayers();
-  int K = num_layers; // TODO(tvl) temp.
+  const int num_layers = AssignLayers();
 
 
   // TODO(tvl) check which vectors can be replaced by simple fixed size arrays.
@@ -312,9 +322,10 @@ Number ComputeScaleFactorAnyOrder::Optimize()
 
 
   // Failure case: too thick.
-  if (K >= 15) return 0;
-  //System.out.println(nodes_.size());
-  //System.out.println(K);
+  if (num_layers >= 15) return 0;
+
+  // compute upper bound scale
+  const Number maxScale = ComputeScaleUpperBound();
 
   // TODO(tvl) why does this repeat the earlier initialization? layer is set...
   // TODO(tvl) this recreation of the event list could be replaced by a link in the events to the CA...
@@ -328,7 +339,7 @@ Number ComputeScaleFactorAnyOrder::Optimize()
   std::sort(events.begin(), events.end(), CompareTaskEvent());  // TODO(tvl) is this even useful?
 
 
-  Bead::Ptr curTasks[K];
+  Bead::Ptr curTasks[num_layers];
   // initialize
   for (const AnyOrderCycleNode::Ptr& node : nodes_)
   {
@@ -342,10 +353,10 @@ Number ComputeScaleFactorAnyOrder::Optimize()
   {
     TaskEvent e = events[i];
     TaskEvent e2 = events[(i + 1) % events.size()];
-    slices[i] = TaskSlice(e, e2, K, e2.angle_rad);
+    slices[i] = TaskSlice(e, e2, num_layers, e2.angle_rad);
     if (e.type == TaskEvent::Type::kFrom) curTasks[e.node->layer] = e.node->bead;
     else curTasks[e.node->layer] = nullptr;
-    for (int j = 0; j < K; j++)
+    for (int j = 0; j < num_layers; j++)
       if (curTasks[j] != nullptr)
         slices[i].addTask(std::make_shared<BeadData>(curTasks[j], j));
   }
@@ -354,16 +365,13 @@ Number ComputeScaleFactorAnyOrder::Optimize()
     slice.produceSets();
 
   // make sure first slice is start of task
-  while (slices[0].eventLeft.type == TaskEvent::Type::kTo)
+  while (slices[0].event_left.type == TaskEvent::Type::kTo)
   {
     const TaskSlice& ts = slices[0];
     for (int i = 0; i < slices.size() - 1; i++)
       slices[i] = slices[i + 1];
     slices[slices.size() - 1] = ts;
   }
-
-  // compute upper bound scale
-  const Number maxScale = ComputeScaleUpperBound();
 
 
 
@@ -379,11 +387,11 @@ Number ComputeScaleFactorAnyOrder::Optimize()
 
     if (heuristic_steps_ == 0)  // TODO(tvl) Merge in method that switches between feasible methods based on heuristic steps.
     {
-      if (feasible(slices, K)) x = h;
+      if (feasible(slices, num_layers)) x = h;
       else y = h;
     } else
     {
-      if (feasible2(slices, K, heuristic_steps_)) x = h;
+      if (feasible2(slices, num_layers, heuristic_steps_)) x = h;
       else y = h;
     }
   }
@@ -431,7 +439,7 @@ Number ComputeScaleFactorAnyOrder::ComputeCoveringRadii(const Number& scale_fact
       necklace_shape_->ComputeCoveringRadiusRad(node->valid, node->bead->radius_base * scale_factor) + half_buffer_rad_;
 }
 
-Number ComputeScaleFactorAnyOrder::AssignLayers()
+int ComputeScaleFactorAnyOrder::AssignLayers()
 {
   // Each node should be assigned a layer such that each layer does not contain any pair of nodes that overlap in their valid interval.
   // Note that this can be done greedily: assign the nodes by minimizing the distance between the last valid interval and the next.
@@ -489,12 +497,12 @@ Number ComputeScaleFactorAnyOrder::AssignLayers()
 bool ComputeScaleFactorAnyOrder::feasible
 (
   std::vector<TaskSlice>& slices,
-  const int K
+  const int num_layers
 )
 {
 
   // setup DP array
-  int nSubSets = (1 << K);
+  int nSubSets = (1 << num_layers);
   std::vector<std::vector<OptValue> > opt(slices.size());
   for (int i = 0; i < slices.size(); i++)
   {
@@ -508,9 +516,9 @@ bool ComputeScaleFactorAnyOrder::feasible
   // try all possibilities
   for (int i = 0; i < slices.size(); i++)
   {
-    if (slices[i].eventLeft.type == TaskEvent::Type::kFrom)
+    if (slices[i].event_left.type == TaskEvent::Type::kFrom)
     {
-      int q = (1 << slices[i].eventLeft.node->layer);
+      int q = (1 << slices[i].event_left.node->layer);
       for (int j = 0; j < slices[i].sets.size(); j++)
       {
         const BitString& str2 = slices[i].sets[j];
@@ -544,7 +552,7 @@ void ComputeScaleFactorAnyOrder::splitCircle
   for (int i = 0; i < slices.size(); i++)
   {
     slices[i].reset();
-    slices[i].rotate(slices[slice].eventLeft.angle_rad, slices[slice].tasks, split);
+    slices[i].rotate(slices[slice].event_left.angle_rad, slices[slice].tasks, split);
   }
 }
 
@@ -584,9 +592,9 @@ bool ComputeScaleFactorAnyOrder::feasibleLine
       if (i != 0)
       {
         // check previous slice
-        if (ts.eventLeft.type == TaskEvent::Type::kFrom)
+        if (ts.event_left.type == TaskEvent::Type::kFrom)
         {
-          if ((q & (1 << ts.eventLeft.node->layer)) == 0)
+          if ((q & (1 << ts.event_left.node->layer)) == 0)
           {
             opt[i][q].angle_rad = opt[i - 1][q].angle_rad;
             opt[i][q].layer = opt[i - 1][q].layer;
@@ -594,9 +602,9 @@ bool ComputeScaleFactorAnyOrder::feasibleLine
           }
         } else
         {
-          int q2 = q + (1 << ts.eventLeft.node->layer);
-          if (slices[(s + slices.size() - 1) % slices.size()].tasks[ts.eventLeft.node->layer]->disabled)
-            q2 -= (1 << ts.eventLeft.node->layer); // special case
+          int q2 = q + (1 << ts.event_left.node->layer);
+          if (slices[(s + slices.size() - 1) % slices.size()].tasks[ts.event_left.node->layer]->disabled)
+            q2 -= (1 << ts.event_left.node->layer); // special case
           opt[i][q].angle_rad = opt[i - 1][q2].angle_rad;
           opt[i][q].layer = opt[i - 1][q2].layer;
           opt[i][q].cd = opt[i - 1][q2].cd;
@@ -604,7 +612,7 @@ bool ComputeScaleFactorAnyOrder::feasibleLine
       }
       if (opt[i][q].angle_rad < std::numeric_limits<double>::max()) continue;
 
-      for (int x = 0; x < ts.taskCount; x++)
+      for (int x = 0; x < ts.num_tasks; x++)
       {
         int k = ts.layers[x];
         BeadData::Ptr cd = ts.tasks[k];
@@ -617,7 +625,7 @@ bool ComputeScaleFactorAnyOrder::feasibleLine
         // special check
         if (!opt[i][q - k2].cd->bead || opt[i][q - k2].cd->bead->covering_radius_rad == 0.0)
         {
-          if (k != slices[slice].eventLeft.node->layer) continue;
+          if (k != slices[slice].event_left.node->layer) continue;
         }
         else t1 += cd->bead->covering_radius_rad;
 
@@ -636,7 +644,7 @@ bool ComputeScaleFactorAnyOrder::feasibleLine
 
   const TaskSlice& ts = slices[slice];
   if (opt[slices.size() - 1][split2.Get()].angle_rad == std::numeric_limits<double>::max()) return false;
-  if (opt[slices.size() - 1][split2.Get()].angle_rad <= M_2xPI - ts.tasks[ts.eventLeft.node->layer]->bead->covering_radius_rad)
+  if (opt[slices.size() - 1][split2.Get()].angle_rad <= M_2xPI - ts.tasks[ts.event_left.node->layer]->bead->covering_radius_rad)
   {
     // feasible! construct solution
     int s = slices.size() - 1;
@@ -644,13 +652,13 @@ bool ComputeScaleFactorAnyOrder::feasibleLine
     int q = split2.Get();  // TODO(tvl) remove q.
     double t = opt[s][q].angle_rad - opt[s][q].cd->bead->covering_radius_rad;
 
-    while (slices[s2].left > t + EPSILON)
+    while (slices[s2].angle_left_rad > t + EPSILON)
     {
-      if (slices[s2].eventLeft.type == TaskEvent::Type::kTo)
+      if (slices[s2].event_left.type == TaskEvent::Type::kTo)
       {
-        q += (1 << slices[s2].eventLeft.node->layer);
-        if (s > 0 && slices[(s2 + slices.size() - 1) % slices.size()].tasks[slices[s2].eventLeft.node->layer]->disabled)
-          q -= (1 << slices[s2].eventLeft.node->layer);
+        q += (1 << slices[s2].event_left.node->layer);
+        if (s > 0 && slices[(s2 + slices.size() - 1) % slices.size()].tasks[slices[s2].event_left.node->layer]->disabled)
+          q -= (1 << slices[s2].event_left.node->layer);
       }
       s--;
       s2 = (slice + s) % slices.size();
@@ -664,15 +672,15 @@ bool ComputeScaleFactorAnyOrder::feasibleLine
       BeadData::Ptr cd = opt[s][q].cd;
       if ((q & (1 << opt[s][q].layer)) == 0) return false;
       q -= (1 << opt[s][q].layer);
-      cd->bead->angle_rad = t + slices[slice].eventLeft.angle_rad;
+      cd->bead->angle_rad = t + slices[slice].event_left.angle_rad;
       t = opt[s][q].angle_rad - opt[s][q].cd->bead->covering_radius_rad;
-      while (slices[s2].left > t + EPSILON)
+      while (slices[s2].angle_left_rad > t + EPSILON)
       {
-        if (slices[s2].eventLeft.type == TaskEvent::Type::kTo)
+        if (slices[s2].event_left.type == TaskEvent::Type::kTo)
         {
-          q += (1 << slices[s2].eventLeft.node->layer);
-          if (s > 0 && slices[(s2 + slices.size() - 1) % slices.size()].tasks[slices[s2].eventLeft.node->layer]->disabled)
-            q -= (1 << slices[s2].eventLeft.node->layer);
+          q += (1 << slices[s2].event_left.node->layer);
+          if (s > 0 && slices[(s2 + slices.size() - 1) % slices.size()].tasks[slices[s2].event_left.node->layer]->disabled)
+            q -= (1 << slices[s2].event_left.node->layer);
         }
         s--;
         s2 = (slice + s) % slices.size();
@@ -688,7 +696,7 @@ bool ComputeScaleFactorAnyOrder::feasibleLine
 bool ComputeScaleFactorAnyOrder::feasible2  // TODO(tvl) rename feasible heuristic.
 (
   const std::vector<TaskSlice>& slices,
-  const int K,
+  const int num_layers,
   const int copies
 )
 {
@@ -699,12 +707,12 @@ bool ComputeScaleFactorAnyOrder::feasible2  // TODO(tvl) rename feasible heurist
     for (int j = 0; j < slices.size(); j++)
     {
       int q = i * slices.size() + j;
-      slices2[q] = TaskSlice(slices[j], slices[0].left, i);
+      slices2[q] = TaskSlice(slices[j], slices[0].angle_left_rad, i);
     }
   }
 
   // setup DP array
-  int nSubSets = (1 << K);
+  int nSubSets = (1 << num_layers);
   std::vector<std::vector<OptValue> > opt(slices2.size());
   for (int i = 0; i < slices2.size(); i++)
     opt[i].resize(nSubSets);
@@ -741,9 +749,9 @@ bool ComputeScaleFactorAnyOrder::feasibleLine2
       if (i != 0)
       {
         // check previous slice
-        if (ts.eventLeft.type == TaskEvent::Type::kFrom)
+        if (ts.event_left.type == TaskEvent::Type::kFrom)
         {
-          if ((q & (1 << ts.eventLeft.node->layer)) == 0)
+          if ((q & (1 << ts.event_left.node->layer)) == 0)
           {
             opt[i][q].angle_rad = opt[i - 1][q].angle_rad;
             opt[i][q].angle2_rad = opt[i - 1][q].angle2_rad;
@@ -752,8 +760,8 @@ bool ComputeScaleFactorAnyOrder::feasibleLine2
           }
         } else
         {
-          int q2 = q + (1 << ts.eventLeft.node->layer);
-          if (slices[i - 1].tasks[ts.eventLeft.node->layer] == nullptr) q2 -= (1 << ts.eventLeft.node->layer); // special case
+          int q2 = q + (1 << ts.event_left.node->layer);
+          if (slices[i - 1].tasks[ts.event_left.node->layer] == nullptr) q2 -= (1 << ts.event_left.node->layer); // special case
           opt[i][q].angle_rad = opt[i - 1][q2].angle_rad;
           opt[i][q].angle2_rad = opt[i - 1][q2].angle2_rad;
           opt[i][q].layer = opt[i - 1][q2].layer;
@@ -763,7 +771,7 @@ bool ComputeScaleFactorAnyOrder::feasibleLine2
 
       if (opt[i][q].angle_rad < std::numeric_limits<double>::max()) continue;
 
-      for (int x = 0; x < ts.taskCount; x++)
+      for (int x = 0; x < ts.num_tasks; x++)
       {
         int k = ts.layers[x];
         BeadData::Ptr cd = ts.tasks[k];
@@ -802,12 +810,12 @@ bool ComputeScaleFactorAnyOrder::feasibleLine2
   //t -= opt[s][q].cd.size;
   t = opt[s][q].angle2_rad;
 
-  while (slices[s].left > t + EPSILON)
+  while (slices[s].angle_left_rad > t + EPSILON)
   {
-    if (slices[s].eventLeft.type == TaskEvent::Type::kTo)
+    if (slices[s].event_left.type == TaskEvent::Type::kTo)
     {
-      q += (1 << slices[s].eventLeft.node->layer);
-      if (s > 0 && slices[s - 1].tasks[slices[s].eventLeft.node->layer] == nullptr) q -= (1 << slices[s].eventLeft.node->layer);
+      q += (1 << slices[s].event_left.node->layer);
+      if (s > 0 && slices[s - 1].tasks[slices[s].event_left.node->layer] == nullptr) q -= (1 << slices[s].event_left.node->layer);
     }
     s--;
     if (s < 0) break;
@@ -819,14 +827,14 @@ bool ComputeScaleFactorAnyOrder::feasibleLine2
     q -= (1 << opt[s][q].layer);
     if (q < 0 || cd == nullptr) return false;
     double size = cd->bead ? cd->bead->covering_radius_rad : 0;
-    listCA.push_back(std::make_shared<AnyOrderCycleNode>(cd->bead, t + slices[0].eventLeft.angle_rad, size));
+    listCA.push_back(std::make_shared<AnyOrderCycleNode>(cd->bead, t + slices[0].event_left.angle_rad, size));
     t = opt[s][q].angle2_rad;
-    while (slices[s].left > t + EPSILON)
+    while (slices[s].angle_left_rad > t + EPSILON)
     {
-      if (slices[s].eventLeft.type == TaskEvent::Type::kTo)
+      if (slices[s].event_left.type == TaskEvent::Type::kTo)
       {
-        q += (1 << slices[s].eventLeft.node->layer);
-        if (s > 0 && slices[s - 1].tasks[slices[s].eventLeft.node->layer] == nullptr) q -= (1 << slices[s].eventLeft.node->layer);
+        q += (1 << slices[s].event_left.node->layer);
+        if (s > 0 && slices[s - 1].tasks[slices[s].event_left.node->layer] == nullptr) q -= (1 << slices[s].event_left.node->layer);
       }
       s--;
       if (s < 0) break;

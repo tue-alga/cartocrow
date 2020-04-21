@@ -147,22 +147,28 @@ class TaskSlice
  public:
   TaskSlice();
 
-  TaskSlice(const TaskEvent& eLeft, const TaskEvent& eRight, const int K, const double right);
+  TaskSlice
+  (
+    const TaskEvent& event_left,
+    const TaskEvent& event_right,
+    const int num_layers,
+    const Number angle_right_rad
+  );
 
-  TaskSlice(const TaskSlice& ts, const double offset, const int step);
+  TaskSlice(const TaskSlice& ts, const Number offset, const int step);
 
   void reset();
 
-  void rotate(const double value, const std::vector<BeadData::Ptr>& cds, const BitString& split);
+  void rotate(const Number value, const std::vector<BeadData::Ptr>& cds, const BitString& split);
 
   void addTask(const BeadData::Ptr& task);
 
   void produceSets();
 
-  TaskEvent eventLeft, eventRight;
+  TaskEvent event_left, event_right;
   std::vector<BeadData::Ptr> tasks;
-  int taskCount;
-  double left, right;  // TODO(tvl) should this be left_time, right_time?
+  int num_tasks;
+  Number angle_left_rad, angle_right_rad;
   std::vector<BitString> sets;
   std::vector<int> layers;
 }; // class TaskSlice
@@ -203,7 +209,7 @@ class ComputeScaleFactorAnyOrder
   virtual Number ComputeCoveringRadii(const Number& scale_factor);
 
  private:
-  Number AssignLayers();
+  int AssignLayers();
 
 
 
@@ -215,7 +221,7 @@ class ComputeScaleFactorAnyOrder
   bool feasible
   (
     std::vector<TaskSlice>& slices,
-    const int K
+    const int num_layers
   );
 
   void splitCircle
@@ -236,7 +242,7 @@ class ComputeScaleFactorAnyOrder
   bool feasible2
   (
     const std::vector<TaskSlice>& slices,
-    const int K,
+    const int num_layers,
     const int copies
   );
 
