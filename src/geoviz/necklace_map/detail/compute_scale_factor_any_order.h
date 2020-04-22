@@ -157,13 +157,13 @@ class TaskSlice
 
   TaskSlice(const TaskSlice& slice, const int step);
 
-  void reset();
+  void Reset();
 
-  void rotate(const Number value, const std::vector<BeadData::Ptr>& cds, const BitString& split);
+  void Rotate(const Number value, const std::vector<BeadData::Ptr>& cds, const BitString& split);
 
-  void addTask(const BeadData::Ptr& task);
+  void AddTask(const BeadData::Ptr& task);
 
-  void produceSets();
+  void produceSets();  // TODO(tvl) Rename to "?"
 
   TaskEvent event_left, event_right;
   std::vector<BeadData::Ptr> tasks;
@@ -180,10 +180,10 @@ struct OptValue
 
   void Initialize();
 
-  double angle_rad;
-  double angle2_rad;
+  Number angle_rad;
+  Number angle2_rad;
   int layer;
-  BeadData::Ptr cd;
+  BeadData::Ptr task;
 }; // struct OptValue
 
 
@@ -220,13 +220,13 @@ class CheckFeasibleExact : public CheckFeasible
   bool operator()() override;
 
  private:
-  void splitCircle
+  void SplitCircle
   (
     const int slice,
     const BitString& split
   );
 
-  bool feasibleLine
+  bool FeasibleLine
   (
     std::vector<std::vector<OptValue> >& opt,
     const int slice,
@@ -245,7 +245,7 @@ class CheckFeasibleHeuristic : public CheckFeasible
   bool operator()() override;
 
  private:
-  bool feasibleLine2(std::vector<std::vector<OptValue> >& opt);
+  bool FeasibleLine(std::vector<std::vector<OptValue> >& opt);
 
   const int heuristic_steps_;
 }; // class CheckFeasibleHeuristic
@@ -289,10 +289,8 @@ class ComputeScaleFactorAnyOrder
 
   int binary_search_depth_;
   CheckFeasible::Ptr check_feasible_;
-
-
-  int heuristic_steps_; // TODO(tvl) const value: remove? Make separate class/struct hierarchy?
 }; // class ComputeScaleFactorAnyOrder
+
 
 class ComputeScaleFactorAnyOrderIngot : public ComputeScaleFactorAnyOrder
 {

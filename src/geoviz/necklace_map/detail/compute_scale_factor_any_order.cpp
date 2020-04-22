@@ -45,7 +45,7 @@ namespace detail
 // TODO(tvl) fix prototype code: reduce looping behaviour.
 // TODO(tvl) go over code and add "override" or "final" keywords where applicable..
 
-constexpr const Number EPSILON = 0.0000001;
+constexpr const Number kEpsilon = 0.0000001;
 constexpr const int kMaxLayers = 15;
 
 
@@ -183,7 +183,7 @@ TaskSlice::TaskSlice(const TaskSlice& slice, const int step) :
   }
 }
 
-void TaskSlice::reset()
+void TaskSlice::Reset()
 {
   angle_left_rad = event_left.angle_rad;
   angle_right_rad = event_right.angle_rad;
@@ -198,13 +198,13 @@ void TaskSlice::reset()
   }
 }
 
-void TaskSlice::rotate(const Number value, const std::vector<BeadData::Ptr>& cds, const BitString& split)
+void TaskSlice::Rotate(const Number value, const std::vector<BeadData::Ptr>& cds, const BitString& split)
 {
   Range r1(value, angle_left_rad);
   Range r2(value, angle_right_rad);
   angle_left_rad = r1.ComputeLength();
   angle_right_rad = r2.ComputeLength();
-  if (angle_right_rad < EPSILON) angle_right_rad = M_2xPI;
+  if (angle_right_rad < kEpsilon) angle_right_rad = M_2xPI;
 
   // TODO(tvl) when changing r1/r2, only set the second value?
   for (int i = 0; i < tasks.size(); i++)
@@ -219,14 +219,14 @@ void TaskSlice::rotate(const Number value, const std::vector<BeadData::Ptr>& cds
           r2 = Range(value, cd->valid->to());
           cd->valid->from() = 0.0;
           cd->valid->to() = r2.ComputeLength();
-          if (r2.ComputeLength() - EPSILON <= angle_left_rad)
+          if (r2.ComputeLength() - kEpsilon <= angle_left_rad)
             cd->disabled = true;
         } else
         {
           r1 = Range(value, cd->valid->from());
           cd->valid->from() = r1.ComputeLength();
           cd->valid->to() = M_2xPI;
-          if (r1.ComputeLength() + EPSILON >= angle_right_rad)
+          if (r1.ComputeLength() + kEpsilon >= angle_right_rad)
             cd->disabled = true;
         }
       } else
@@ -235,14 +235,14 @@ void TaskSlice::rotate(const Number value, const std::vector<BeadData::Ptr>& cds
         r2 = Range(value, cd->valid->to());
         cd->valid->from() = r1.ComputeLength();
         cd->valid->to() = r2.ComputeLength();
-        if (cd->valid->to() < EPSILON)
+        if (cd->valid->to() < kEpsilon)
           cd->valid->to() = M_2xPI;
       }
     }
   }
 }
 
-void TaskSlice::addTask(const BeadData::Ptr& task)
+void TaskSlice::AddTask(const BeadData::Ptr& task)
 {
   CHECK_LT(task->layer, tasks.size());
   tasks[task->layer] = task;
@@ -288,7 +288,7 @@ void OptValue::Initialize()
   angle_rad = std::numeric_limits<double>::max();
   angle2_rad = std::numeric_limits<double>::max();
   layer = -1;
-  cd = nullptr;
+  task = nullptr;
 }
 
 
@@ -347,7 +347,7 @@ void CheckFeasible::InitializeSlices()
     else curTasks[e.node->layer] = nullptr;
     for (int j = 0; j < num_layers; j++)
       if (curTasks[j] != nullptr)
-        slices[i].addTask(std::make_shared<BeadData>(curTasks[j], j));
+        slices[i].AddTask(std::make_shared<BeadData>(curTasks[j], j));
   }
 
   for (TaskSlice& slice : slices)
@@ -403,10 +403,10 @@ bool CheckFeasibleExact::operator()()
         {
 
           // split the circle (ranges, event times, the works)
-          splitCircle(i, str2);
+          SplitCircle(i, str2);
 
           // compute
-          bool good = feasibleLine(opt, i, str2);
+          bool good = FeasibleLine(opt, i, str2);
 
           if (good) return true;
         }
@@ -417,7 +417,7 @@ bool CheckFeasibleExact::operator()()
   return false;
 }
 
-void CheckFeasibleExact::splitCircle
+void CheckFeasibleExact::SplitCircle
 (
   const int slice_index,
   const BitString& split
@@ -429,12 +429,12 @@ void CheckFeasibleExact::splitCircle
   // reset everything, then rotate
   for (int i = 0; i < slices.size(); i++)
   {
-    slices[i].reset();
-    slices[i].rotate(slices[slice_index].event_left.angle_rad, slices[slice_index].tasks, split);
+    slices[i].Reset();
+    slices[i].Rotate(slices[slice_index].event_left.angle_rad, slices[slice_index].tasks, split);
   }
 }
 
-bool CheckFeasibleExact::feasibleLine
+bool CheckFeasibleExact::FeasibleLine
 (
   std::vector<std::vector<OptValue> >& opt,
   const int slice_index,
@@ -449,7 +449,7 @@ bool CheckFeasibleExact::feasibleLine
   //const TaskSlice& slice = slices[slice];
   opt[0][0].angle_rad = 0.0;
   opt[0][0].layer = -1;
-  opt[0][0].cd = std::make_shared<BeadData>(nullptr, -1);
+  opt[0][0].task = std::make_shared<BeadData>(nullptr, -1);
 
   for (int i = 0; i < slices.size(); i++)
   {
@@ -463,7 +463,7 @@ bool CheckFeasibleExact::feasibleLine
 
       opt[i][q].angle_rad = std::numeric_limits<double>::max();
       opt[i][q].layer = -1;
-      opt[i][q].cd = nullptr;
+      opt[i][q].task = nullptr;
 
       if (i == 0 && split2.HasAny(str)) continue;
       if (i == slices.size() - 1 && split.HasAny(str)) continue;
@@ -477,7 +477,7 @@ bool CheckFeasibleExact::feasibleLine
           {
             opt[i][q].angle_rad = opt[i - 1][q].angle_rad;
             opt[i][q].layer = opt[i - 1][q].layer;
-            opt[i][q].cd = opt[i - 1][q].cd;
+            opt[i][q].task = opt[i - 1][q].task;
           }
         } else
         {
@@ -486,7 +486,7 @@ bool CheckFeasibleExact::feasibleLine
             q2 -= (1 << slice.event_left.node->layer); // special case
           opt[i][q].angle_rad = opt[i - 1][q2].angle_rad;
           opt[i][q].layer = opt[i - 1][q2].layer;
-          opt[i][q].cd = opt[i - 1][q2].cd;
+          opt[i][q].task = opt[i - 1][q2].task;
         }
       }
       if (opt[i][q].angle_rad < std::numeric_limits<double>::max()) continue;
@@ -494,26 +494,26 @@ bool CheckFeasibleExact::feasibleLine
       for (int x = 0; x < slice.num_tasks; x++)
       {
         int k = slice.layers[x];
-        BeadData::Ptr cd = slice.tasks[k];
+        BeadData::Ptr task = slice.tasks[k];
         int k2 = (1 << k);
         if ((k2 & q) == 0) continue;
-        if (cd->disabled) continue;
+        if (task->disabled) continue;
 
         double t1 = opt[i][q - k2].angle_rad;
         if (t1 == std::numeric_limits<double>::max()) continue;
         // special check
-        if (!opt[i][q - k2].cd->bead || opt[i][q - k2].cd->bead->covering_radius_rad == 0.0)
+        if (!opt[i][q - k2].task->bead || opt[i][q - k2].task->bead->covering_radius_rad == 0.0)
         {
           if (k != slices[slice_index].event_left.node->layer) continue;
         }
-        else t1 += cd->bead->covering_radius_rad;
+        else t1 += task->bead->covering_radius_rad;
 
-        t1 = std::max(t1, cd->valid->from());
-        if (t1 <= cd->valid->to() && t1 + cd->bead->covering_radius_rad < opt[i][q].angle_rad)
+        t1 = std::max(t1, task->valid->from());
+        if (t1 <= task->valid->to() && t1 + task->bead->covering_radius_rad < opt[i][q].angle_rad)
         {
-          opt[i][q].angle_rad = t1 + cd->bead->covering_radius_rad;
+          opt[i][q].angle_rad = t1 + task->bead->covering_radius_rad;
           opt[i][q].layer = k;
-          opt[i][q].cd = cd;
+          opt[i][q].task = task;
         }
       }
 
@@ -529,9 +529,9 @@ bool CheckFeasibleExact::feasibleLine
     int s = slices.size() - 1;
     int s2 = (slice_index + s) % slices.size();
     int q = split2.Get();  // TODO(tvl) remove q.
-    double t = opt[s][q].angle_rad - opt[s][q].cd->bead->covering_radius_rad;
+    double t = opt[s][q].angle_rad - opt[s][q].task->bead->covering_radius_rad;
 
-    while (slices[s2].angle_left_rad > t + EPSILON)
+    while (slices[s2].angle_left_rad > t + kEpsilon)
     {
       if (slices[s2].event_left.type == TaskEvent::Type::kTo)
       {
@@ -548,12 +548,12 @@ bool CheckFeasibleExact::feasibleLine
     while (s >= 0 && opt[s][q].layer != -1)
     {
       //System.out.println(s + ", " + q);
-      BeadData::Ptr cd = opt[s][q].cd;
+      BeadData::Ptr cd = opt[s][q].task;
       if ((q & (1 << opt[s][q].layer)) == 0) return false;
       q -= (1 << opt[s][q].layer);
       cd->bead->angle_rad = t + slices[slice_index].event_left.angle_rad;
-      t = opt[s][q].angle_rad - opt[s][q].cd->bead->covering_radius_rad;
-      while (slices[s2].angle_left_rad > t + EPSILON)
+      t = opt[s][q].angle_rad - opt[s][q].task->bead->covering_radius_rad;
+      while (slices[s2].angle_left_rad > t + kEpsilon)
       {
         if (slices[s2].event_left.type == TaskEvent::Type::kTo)
         {
@@ -594,7 +594,7 @@ bool CheckFeasibleHeuristic::operator()()
   for (int i = 0; i < slices.size(); i++)
     opt[i].resize(nSubSets);
 
-  return feasibleLine2(opt);
+  return FeasibleLine(opt);
 }
 
 void CheckFeasibleHeuristic::InitializeSlices()
@@ -614,7 +614,7 @@ void CheckFeasibleHeuristic::InitializeSlices()
   }
 }
 
-bool CheckFeasibleHeuristic::feasibleLine2(std::vector<std::vector<OptValue> >& opt)
+bool CheckFeasibleHeuristic::FeasibleLine(std::vector<std::vector<OptValue> >& opt)
 {
 
 
@@ -623,7 +623,7 @@ bool CheckFeasibleHeuristic::feasibleLine2(std::vector<std::vector<OptValue> >& 
   opt[0][0].angle_rad = 0.0;
   opt[0][0].angle2_rad = 0.0;
   opt[0][0].layer = -1;
-  opt[0][0].cd = std::make_shared<BeadData>(nullptr, -1);
+  opt[0][0].task = std::make_shared<BeadData>(nullptr, -1);
 
   for (int i = 0; i < slices.size(); i++)
   {
@@ -636,7 +636,7 @@ bool CheckFeasibleHeuristic::feasibleLine2(std::vector<std::vector<OptValue> >& 
       opt[i][q].angle_rad = std::numeric_limits<double>::max();
       opt[i][q].angle2_rad = opt[i][q].angle_rad;
       opt[i][q].layer = -1;
-      opt[i][q].cd = nullptr;
+      opt[i][q].task = nullptr;
 
       if (i != 0)
       {
@@ -648,7 +648,7 @@ bool CheckFeasibleHeuristic::feasibleLine2(std::vector<std::vector<OptValue> >& 
             opt[i][q].angle_rad = opt[i - 1][q].angle_rad;
             opt[i][q].angle2_rad = opt[i - 1][q].angle2_rad;
             opt[i][q].layer = opt[i - 1][q].layer;
-            opt[i][q].cd = opt[i - 1][q].cd;
+            opt[i][q].task = opt[i - 1][q].task;
           }
         } else
         {
@@ -657,7 +657,7 @@ bool CheckFeasibleHeuristic::feasibleLine2(std::vector<std::vector<OptValue> >& 
           opt[i][q].angle_rad = opt[i - 1][q2].angle_rad;
           opt[i][q].angle2_rad = opt[i - 1][q2].angle2_rad;
           opt[i][q].layer = opt[i - 1][q2].layer;
-          opt[i][q].cd = opt[i - 1][q2].cd;
+          opt[i][q].task = opt[i - 1][q2].task;
         }
       }
 
@@ -676,7 +676,7 @@ bool CheckFeasibleHeuristic::feasibleLine2(std::vector<std::vector<OptValue> >& 
 
         double size = cd->bead ? cd->bead->covering_radius_rad : 0;
         // special check
-        if (opt[i][q - k2].cd->bead && opt[i][q - k2].cd->bead->covering_radius_rad != 0.0)
+        if (opt[i][q - k2].task->bead && opt[i][q - k2].task->bead->covering_radius_rad != 0.0)
           t1 += size;
 
         t1 = std::max(t1, cd->valid->from());
@@ -685,7 +685,7 @@ bool CheckFeasibleHeuristic::feasibleLine2(std::vector<std::vector<OptValue> >& 
           opt[i][q].angle_rad = t1 + size;
           opt[i][q].angle2_rad = t1;
           opt[i][q].layer = k;
-          opt[i][q].cd = cd;
+          opt[i][q].task = cd;
         }
       }
 
@@ -702,7 +702,7 @@ bool CheckFeasibleHeuristic::feasibleLine2(std::vector<std::vector<OptValue> >& 
   //t -= opt[s][q].cd.size;
   t = opt[s][q].angle2_rad;
 
-  while (slices[s].angle_left_rad > t + EPSILON)
+  while (slices[s].angle_left_rad > t + kEpsilon)
   {
     if (slices[s].event_left.type == TaskEvent::Type::kTo)
     {
@@ -715,13 +715,13 @@ bool CheckFeasibleHeuristic::feasibleLine2(std::vector<std::vector<OptValue> >& 
 
   while (s >= 0 && opt[s][q].layer != -1)
   {
-    BeadData::Ptr cd = opt[s][q].cd;
+    BeadData::Ptr cd = opt[s][q].task;
     q -= (1 << opt[s][q].layer);
     if (q < 0 || cd == nullptr) return false;
     double size = cd->bead ? cd->bead->covering_radius_rad : 0;
     listCA.push_back(std::make_shared<AnyOrderCycleNode>(cd->bead, t + slices[0].event_left.angle_rad, size));
     t = opt[s][q].angle2_rad;
-    while (slices[s].angle_left_rad > t + EPSILON)
+    while (slices[s].angle_left_rad > t + kEpsilon)
     {
       if (slices[s].event_left.type == TaskEvent::Type::kTo)
       {
@@ -786,8 +786,7 @@ ComputeScaleFactorAnyOrder::ComputeScaleFactorAnyOrder
 ) :
   necklace_shape_(necklace->shape),
   half_buffer_rad_(0.5 * buffer_rad),
-  binary_search_depth_(binary_search_depth),
-  heuristic_steps_(heuristic_steps)
+  binary_search_depth_(binary_search_depth)
 {
   // Collect and order the beads based on the start of their valid interval (initialized as their feasible interval).
   for (const Bead::Ptr& bead : necklace->beads)
@@ -808,32 +807,27 @@ Number ComputeScaleFactorAnyOrder::Optimize()
   if (kMaxLayers < num_layers)
     return 0;
 
-  // The algorithm performs a binary search on the scale factor, determining which are feasible.
-  // This requires a decent initial upper bound on the scale factor.
-  const Number maxScale = ComputeScaleUpperBound();
-
+  // Initialize the collection of task slices: collections of fixed tasks that are relevant within some angle range.
   check_feasible_->InitializeSlices();
 
+  // Perform a binary search on the scale factor, determining which are feasible.
+  // This binary search requires a decent initial upper bound on the scale factor.
+  Number lower_bound = 0;
+  Number upper_bound = ComputeScaleUpperBound();
 
-
-
-
-
-
-
-  // binary search
-  Number x = 0.0;
-  Number y = maxScale;
-  for (int i = 0; i < binary_search_depth_; i++)
+  for (int step = 0; step < binary_search_depth_; ++step)
   {
-    double h = 0.5 * (x + y);
-    ComputeCoveringRadii(h);
+    double scale_factor = 0.5 * (lower_bound + upper_bound);
+    ComputeCoveringRadii(scale_factor);
 
-    if ((*check_feasible_)()) x = h;
-    else y = h;
+    if ((*check_feasible_)())
+      lower_bound = scale_factor;
+    else
+      upper_bound = scale_factor;
   }
-  
-  return x;
+
+  // The lower bound is the largest confirmed scale factor for which all beads could fit.
+  return lower_bound;
 }
 
 Number ComputeScaleFactorAnyOrder::ComputeScaleUpperBound() const
@@ -848,9 +842,9 @@ Number ComputeScaleFactorAnyOrder::ComputeScaleUpperBound() const
 
   // Perform a binary search to find the largest scale factor for which all beads could fit.
   Number lower_bound = 0.0;
-  for (int j = 0; j < binary_search_depth_; ++j)
+  for (int step = 0; step < binary_search_depth_; ++step)
   {
-    Number scale_factor = 0.5 * (lower_bound + upper_bound);
+    const Number scale_factor = 0.5 * (lower_bound + upper_bound);
 
     Number totalSize = 0.0;
     for (const AnyOrderCycleNode::Ptr& node : nodes_)
