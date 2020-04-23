@@ -174,18 +174,6 @@ class TaskSlice
 }; // class TaskSlice
 
 
-struct OptValue
-{
-  OptValue();
-
-  void Initialize();
-
-  Number angle_rad;
-  Number angle2_rad;
-  int layer;
-  Task::Ptr task;
-}; // struct OptValue
-
 
 
 
@@ -202,13 +190,26 @@ class CheckFeasible
 
   virtual void InitializeSlices();
 
+  void InitializeContainer();
+
   // Note that the covering radius of each node should be set before calling this.
   virtual bool operator()() = 0;
 
   std::vector<TaskSlice> slices;
 
  protected:
+  struct Value
+  {
+    Value();
+
+    Number angle_rad;
+    Number angle2_rad;
+    int layer;
+    Task::Ptr task;
+  }; // struct Value
+
   NodeSet& nodes_;
+  std::vector<std::vector<Value> > values_;
 }; // class CheckFeasible
 
 
@@ -228,7 +229,6 @@ class CheckFeasibleExact : public CheckFeasible
 
   bool FeasibleLine
   (
-    std::vector<std::vector<OptValue> >& opt,
     const int slice,
     const BitString& split
   );
@@ -245,7 +245,7 @@ class CheckFeasibleHeuristic : public CheckFeasible
   bool operator()() override;
 
  private:
-  bool FeasibleLine(std::vector<std::vector<OptValue> >& opt);
+  bool FeasibleLine();
 
   const int heuristic_steps_;
 }; // class CheckFeasibleHeuristic
