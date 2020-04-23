@@ -64,14 +64,6 @@ class CompareAnyOrderCycleNode
 }; // class CompareAnyOrderCycleNode
 
 
-
-
-
-
-
-
-
-
 // The cycle nodes will be processed by moving from event to event.
 // Each event indicates that a valid interval starts or stops at the associated angle.
 struct TaskEvent
@@ -186,12 +178,8 @@ class CheckFeasible
 
   virtual void InitializeSlices();
 
-  void InitializeContainer();
-
   // Note that the covering radius of each node should be set before calling this.
   virtual bool operator()() = 0;
-
-  std::vector<TaskSlice> slices;
 
  protected:
   struct Value
@@ -204,7 +192,10 @@ class CheckFeasible
     AnyOrderCycleNode::Ptr task;
   }; // struct Value
 
+  void InitializeContainer();
+
   NodeSet& nodes_;
+  std::vector<TaskSlice> slices_;
   std::vector<std::vector<Value> > values_;
 }; // class CheckFeasible
 
