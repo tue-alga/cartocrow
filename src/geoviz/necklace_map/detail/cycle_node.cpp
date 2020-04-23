@@ -72,6 +72,11 @@ CycleNode::CycleNode(const Bead::Ptr& bead, const Range::Ptr& valid) :
  * Note that unlike the bead's feasible interval, this can be larger than 2*PI.
  */
 
+CycleNode::CycleNode() :
+  bead(),
+  valid()
+{}
+
 } // namespace detail
 } // namespace necklace_map
 } // namespace geoviz

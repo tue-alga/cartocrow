@@ -50,6 +50,9 @@ struct CycleNode
 
   // Note that unlike the bead's feasible interval, the valid interval may go outside the [0, 2pi) range.
   Range::Ptr valid;
+
+ protected:
+  CycleNode();
 }; // struct CycleNode
 
 } // namespace detail

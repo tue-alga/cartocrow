@@ -49,20 +49,23 @@ constexpr const Number kEpsilon = 0.0000001;
 constexpr const int kMaxLayers = 15;
 
 
-AnyOrderCycleNode::AnyOrderCycleNode(const Bead::Ptr& bead) :
-  CycleNode(bead), layer(-1)
+AnyOrderCycleNode::AnyOrderCycleNode() :
+  CycleNode(), layer(-1), disabled(true)
 {}
 
-AnyOrderCycleNode::AnyOrderCycleNode
-(
-  const Bead::Ptr& bead,
-  const Number& angle_rad,
-  const Number& buffer_rad
-) :
-  CycleNode(bead, std::make_shared<Range>(angle_rad - buffer_rad, angle_rad + buffer_rad)),
-  layer(-1)
+AnyOrderCycleNode::AnyOrderCycleNode(const Bead::Ptr& bead) :
+  CycleNode(bead), layer(-1), disabled(!bead)
+{}
+
+AnyOrderCycleNode::AnyOrderCycleNode(const AnyOrderCycleNode::Ptr& node) :
+  CycleNode(), layer(-1), disabled(!node)
 {
-  bead->angle_rad = angle_rad;
+  if (node)
+  {
+    bead = node->bead;
+    valid = node->valid;
+    layer = node->layer;
+  }
 }
 
 bool CompareAnyOrderCycleNode::operator()(const AnyOrderCycleNode::Ptr& a, const AnyOrderCycleNode::Ptr& b) const
@@ -88,27 +91,6 @@ bool CompareTaskEvent::operator()(const TaskEvent& a, const TaskEvent& b) const
   // Practically, 'end' events should be handled before 'start' events.
   return a.type == TaskEvent::Type::kTo && b.type == TaskEvent::Type::kFrom;
 }
-
-
-Task::Task(const Bead::Ptr& bead, const int layer) :
-  bead(bead),
-  layer(layer),
-  disabled(bead)
-{
-  if (bead)
-    valid = std::make_shared<Range>(*bead->feasible);
-  else
-    valid = std::make_shared<Range>(0, 0);
-}
-
-Task::Task(const Task& data)
-{
-  bead = data.bead;
-  layer = data.layer;
-  disabled = false;
-  valid = std::make_shared<Range>(*data.valid);
-}
-
 
 
 
@@ -173,7 +155,9 @@ TaskSlice::TaskSlice(const TaskSlice& slice, const int step) :
       if (step > 0 || angle_right_rad > slice.tasks[i]->valid->to() || !slice.tasks[i]->valid->Contains(0) ||
           slice.tasks[i]->valid->from() == 0)
       {
-        tasks[i] = std::make_shared<Task>(*slice.tasks[i]);  // TODO(tvl) check whether this should be a new pointer or could also be a pointer to the existing object.
+        tasks[i] = std::make_shared<AnyOrderCycleNode>(*slice.tasks[i]);  // TODO(tvl) note, this must be a new pointer.
+        tasks[i]->valid = std::make_shared<Range>(*tasks[i]->valid);
+
         Range r1(tasks[i]->valid->from(), event_left.angle_rad);
         Range r2(event_left.angle_rad, tasks[i]->valid->to());
         tasks[i]->valid->from() = angle_left_rad - r1.ComputeLength();
@@ -191,14 +175,14 @@ void TaskSlice::Reset()
   {
     if (tasks[i] != nullptr)
     {
-      Task::Ptr cd = tasks[i];
+      AnyOrderCycleNode::Ptr cd = tasks[i];
       cd->valid = std::make_shared<Range>(*cd->bead->feasible);
       cd->disabled = false;
     }
   }
 }
 
-void TaskSlice::Rotate(const Number value, const std::vector<Task::Ptr>& cds, const BitString& split)
+void TaskSlice::Rotate(const Number value, const std::vector<AnyOrderCycleNode::Ptr>& cds, const BitString& split)
 {
   Range r1(value, angle_left_rad);
   Range r2(value, angle_right_rad);
@@ -211,7 +195,7 @@ void TaskSlice::Rotate(const Number value, const std::vector<Task::Ptr>& cds, co
   {
     if (tasks[i] != nullptr)
     {
-      Task::Ptr cd = tasks[i];
+      AnyOrderCycleNode::Ptr cd = tasks[i];
       if (cds[i] != nullptr && cds[i]->bead == cd->bead)
       {
         if (split.HasBit(i))
@@ -242,7 +226,7 @@ void TaskSlice::Rotate(const Number value, const std::vector<Task::Ptr>& cds, co
   }
 }
 
-void TaskSlice::AddTask(const Task::Ptr& task)
+void TaskSlice::AddTask(const AnyOrderCycleNode::Ptr& task)
 {
   CHECK_LT(task->layer, tasks.size());
   tasks[task->layer] = task;
@@ -313,12 +297,12 @@ void CheckFeasible::InitializeSlices()
   const int num_layers = max_layer + 1;
 
 
-  Bead::Ptr curTasks[num_layers];
+  AnyOrderCycleNode::Ptr curNodes[num_layers];
   // initialize
   for (const AnyOrderCycleNode::Ptr& node : nodes_)
   {
     if (node->valid->Contains(0) && node->valid->to() < M_2xPI)
-      curTasks[node->layer] = node->bead;
+      curNodes[node->layer] = node;
   }
 
 
@@ -330,11 +314,14 @@ void CheckFeasible::InitializeSlices()
     TaskEvent e = events[i];
     TaskEvent e2 = events[(i + 1) % events.size()];
     slices[i] = TaskSlice(e, e2, num_layers, e2.angle_rad);
-    if (e.type == TaskEvent::Type::kFrom) curTasks[e.node->layer] = e.node->bead;
-    else curTasks[e.node->layer] = nullptr;
+    if (e.type == TaskEvent::Type::kFrom)
+      curNodes[e.node->layer] = e.node;
+    else
+      curNodes[e.node->layer] = nullptr;
+
     for (int j = 0; j < num_layers; j++)
-      if (curTasks[j] != nullptr)
-        slices[i].AddTask(std::make_shared<Task>(curTasks[j], j));
+      if (curNodes[j] != nullptr)
+        slices[i].AddTask(std::make_shared<AnyOrderCycleNode>(curNodes[j]));
   }
 
   for (TaskSlice& slice : slices)
@@ -448,7 +435,7 @@ bool CheckFeasibleExact::FeasibleLine
   //const TaskSlice& slice = slices[slice];
   values_[0][0].angle_rad = 0.0;
   values_[0][0].layer = -1;
-  values_[0][0].task = std::make_shared<Task>(nullptr, -1);
+  values_[0][0].task = std::make_shared<AnyOrderCycleNode>();
 
   for (int i = 0; i < slices.size(); i++)
   {
@@ -493,7 +480,7 @@ bool CheckFeasibleExact::FeasibleLine
       for (int x = 0; x < slice.num_tasks; x++)
       {
         int k = slice.layers[x];
-        Task::Ptr task = slice.tasks[k];
+        AnyOrderCycleNode::Ptr task = slice.tasks[k];
         int k2 = (1 << k);
         if ((k2 & q) == 0) continue;
         if (task->disabled) continue;
@@ -547,7 +534,7 @@ bool CheckFeasibleExact::FeasibleLine
     while (s >= 0 && values_[s][q].layer != -1)
     {
       //System.out.println(s + ", " + q);
-      Task::Ptr cd = values_[s][q].task;
+      AnyOrderCycleNode::Ptr cd = values_[s][q].task;
       if ((q & (1 << values_[s][q].layer)) == 0) return false;
       q -= (1 << values_[s][q].layer);
       cd->bead->angle_rad = t + slices[slice_index].event_left.angle_rad;
@@ -617,7 +604,7 @@ bool CheckFeasibleHeuristic::FeasibleLine()
   values_[0][0].angle_rad = 0.0;
   values_[0][0].angle2_rad = 0.0;
   values_[0][0].layer = -1;
-  values_[0][0].task = std::make_shared<Task>(nullptr, -1);
+  values_[0][0].task = std::make_shared<AnyOrderCycleNode>();
 
   for (int i = 0; i < slices.size(); i++)
   {
@@ -660,7 +647,7 @@ bool CheckFeasibleHeuristic::FeasibleLine()
       for (int x = 0; x < slice.num_tasks; x++)
       {
         int k = slice.layers[x];
-        Task::Ptr cd = slice.tasks[k];
+        AnyOrderCycleNode::Ptr cd = slice.tasks[k];
         int k2 = (1 << k);
         if ((k2 & q) == 0) continue;
         if (cd == nullptr) continue;
@@ -709,11 +696,16 @@ bool CheckFeasibleHeuristic::FeasibleLine()
 
   while (s >= 0 && values_[s][q].layer != -1)
   {
-    Task::Ptr cd = values_[s][q].task;
+    AnyOrderCycleNode::Ptr cd = values_[s][q].task;
     q -= (1 << values_[s][q].layer);
     if (q < 0 || cd == nullptr) return false;
     double size = cd->bead ? cd->bead->covering_radius_rad : 0;
-    listCA.push_back(std::make_shared<AnyOrderCycleNode>(cd->bead, t + slices[0].event_left.angle_rad, size));
+
+    const Number angle_rad = t + slices[0].event_left.angle_rad;
+    listCA.push_back(std::make_shared<AnyOrderCycleNode>(cd->bead));
+    listCA.back()->valid = std::make_shared<Range>(angle_rad - size, angle_rad + size);
+    listCA.back()->bead->angle_rad = angle_rad;
+
     t = values_[s][q].angle2_rad;
     while (slices[s].angle_left_rad > t + kEpsilon)
     {

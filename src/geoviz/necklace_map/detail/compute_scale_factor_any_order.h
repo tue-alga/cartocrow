@@ -47,11 +47,14 @@ struct AnyOrderCycleNode : public CycleNode
 {
   using Ptr = std::shared_ptr<AnyOrderCycleNode>;
 
-  AnyOrderCycleNode(const Bead::Ptr& bead);
+  AnyOrderCycleNode();
 
-  AnyOrderCycleNode(const Bead::Ptr& bead, const Number& angle_rad, const Number& buffer_rad);
+  explicit AnyOrderCycleNode(const Bead::Ptr& bead);
+
+  AnyOrderCycleNode(const AnyOrderCycleNode::Ptr& node);
 
   int layer;
+  bool disabled;
 }; // struct AnyOrderCycleNode
 
 class CompareAnyOrderCycleNode
@@ -59,6 +62,14 @@ class CompareAnyOrderCycleNode
  public:
   bool operator()(const AnyOrderCycleNode::Ptr& a, const AnyOrderCycleNode::Ptr& b) const;
 }; // class CompareAnyOrderCycleNode
+
+
+
+
+
+
+
+
 
 
 // The cycle nodes will be processed by moving from event to event.
@@ -85,21 +96,6 @@ class CompareTaskEvent
 
 
 
-
-// the bead as it is stored by the 'taskslice'.
-struct Task  // TODO(tvl) replace by AnyOrderCycleNode (and forward members)?
-{
-  using Ptr = std::shared_ptr<Task>;
-
-  Task(const Bead::Ptr& bead, const int layer);
-
-  Task(const Task& data);
-
-  Bead::Ptr bead;
-  Range::Ptr valid;  // TODO(tvl) check whether this can be const?
-  int layer;
-  bool disabled;  // TODO(tvl) replace by check for bead pointer validity?
-}; // struct Task
 
 
 
@@ -159,14 +155,14 @@ class TaskSlice
 
   void Reset();
 
-  void Rotate(const Number value, const std::vector<Task::Ptr>& cds, const BitString& split);
+  void Rotate(const Number value, const std::vector<AnyOrderCycleNode::Ptr>& cds, const BitString& split);
 
-  void AddTask(const Task::Ptr& task);
+  void AddTask(const AnyOrderCycleNode::Ptr& task);
 
   void produceSets();  // TODO(tvl) Rename to "?"
 
   TaskEvent event_left, event_right;
-  std::vector<Task::Ptr> tasks;
+  std::vector<AnyOrderCycleNode::Ptr> tasks;
   int num_tasks;
   Number angle_left_rad, angle_right_rad;
   std::vector<BitString> sets;
@@ -205,7 +201,7 @@ class CheckFeasible
     Number angle_rad;
     Number angle2_rad;
     int layer;
-    Task::Ptr task;
+    AnyOrderCycleNode::Ptr task;
   }; // struct Value
 
   NodeSet& nodes_;
