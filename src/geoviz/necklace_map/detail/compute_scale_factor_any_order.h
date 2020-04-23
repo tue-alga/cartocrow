@@ -87,19 +87,19 @@ class CompareTaskEvent
 
 
 // the bead as it is stored by the 'taskslice'.
-struct BeadData  // TODO(tvl) replace by AnyOrderCycleNode (and forward members)?
+struct Task  // TODO(tvl) replace by AnyOrderCycleNode (and forward members)?
 {
-  using Ptr = std::shared_ptr<BeadData>;
+  using Ptr = std::shared_ptr<Task>;
 
-  BeadData(const Bead::Ptr& bead, const int layer);
+  Task(const Bead::Ptr& bead, const int layer);
 
-  BeadData(const BeadData& data);
+  Task(const Task& data);
 
   Bead::Ptr bead;
   Range::Ptr valid;  // TODO(tvl) check whether this can be const?
   int layer;
   bool disabled;  // TODO(tvl) replace by check for bead pointer validity?
-}; // struct BeadData
+}; // struct Task
 
 
 
@@ -159,14 +159,14 @@ class TaskSlice
 
   void Reset();
 
-  void Rotate(const Number value, const std::vector<BeadData::Ptr>& cds, const BitString& split);
+  void Rotate(const Number value, const std::vector<Task::Ptr>& cds, const BitString& split);
 
-  void AddTask(const BeadData::Ptr& task);
+  void AddTask(const Task::Ptr& task);
 
   void produceSets();  // TODO(tvl) Rename to "?"
 
   TaskEvent event_left, event_right;
-  std::vector<BeadData::Ptr> tasks;
+  std::vector<Task::Ptr> tasks;
   int num_tasks;
   Number angle_left_rad, angle_right_rad;
   std::vector<BitString> sets;

@@ -95,7 +95,7 @@ bool CompareTaskEvent::operator()(const TaskEvent& a, const TaskEvent& b) const
 
 
 
-BeadData::BeadData(const Bead::Ptr& bead, const int layer) :
+Task::Task(const Bead::Ptr& bead, const int layer) :
   bead(bead),
   layer(layer),
   disabled(bead)
@@ -106,7 +106,7 @@ BeadData::BeadData(const Bead::Ptr& bead, const int layer) :
     valid = std::make_shared<Range>(0, 0);
 }
 
-BeadData::BeadData(const BeadData& data)
+Task::Task(const Task& data)
 {
   bead = data.bead;
   layer = data.layer;
@@ -173,7 +173,7 @@ TaskSlice::TaskSlice(const TaskSlice& slice, const int step) :
       if (step > 0 || angle_right_rad > slice.tasks[i]->valid->to() || !slice.tasks[i]->valid->Contains(0) ||
           slice.tasks[i]->valid->from() == 0)
       {
-        tasks[i] = std::make_shared<BeadData>(*slice.tasks[i]);  // TODO(tvl) check whether this should be a new pointer or could also be a pointer to the existing object.
+        tasks[i] = std::make_shared<Task>(*slice.tasks[i]);  // TODO(tvl) check whether this should be a new pointer or could also be a pointer to the existing object.
         Range r1(tasks[i]->valid->from(), event_left.angle_rad);
         Range r2(event_left.angle_rad, tasks[i]->valid->to());
         tasks[i]->valid->from() = angle_left_rad - r1.ComputeLength();
@@ -191,14 +191,14 @@ void TaskSlice::Reset()
   {
     if (tasks[i] != nullptr)
     {
-      BeadData::Ptr cd = tasks[i];
+      Task::Ptr cd = tasks[i];
       cd->valid = std::make_shared<Range>(*cd->bead->feasible);
       cd->disabled = false;
     }
   }
 }
 
-void TaskSlice::Rotate(const Number value, const std::vector<BeadData::Ptr>& cds, const BitString& split)
+void TaskSlice::Rotate(const Number value, const std::vector<Task::Ptr>& cds, const BitString& split)
 {
   Range r1(value, angle_left_rad);
   Range r2(value, angle_right_rad);
@@ -211,7 +211,7 @@ void TaskSlice::Rotate(const Number value, const std::vector<BeadData::Ptr>& cds
   {
     if (tasks[i] != nullptr)
     {
-      BeadData::Ptr cd = tasks[i];
+      Task::Ptr cd = tasks[i];
       if (cds[i] != nullptr && cds[i]->bead == cd->bead)
       {
         if (split.HasBit(i))
@@ -242,7 +242,7 @@ void TaskSlice::Rotate(const Number value, const std::vector<BeadData::Ptr>& cds
   }
 }
 
-void TaskSlice::AddTask(const BeadData::Ptr& task)
+void TaskSlice::AddTask(const Task::Ptr& task)
 {
   CHECK_LT(task->layer, tasks.size());
   tasks[task->layer] = task;
@@ -347,7 +347,7 @@ void CheckFeasible::InitializeSlices()
     else curTasks[e.node->layer] = nullptr;
     for (int j = 0; j < num_layers; j++)
       if (curTasks[j] != nullptr)
-        slices[i].AddTask(std::make_shared<BeadData>(curTasks[j], j));
+        slices[i].AddTask(std::make_shared<Task>(curTasks[j], j));
   }
 
   for (TaskSlice& slice : slices)
@@ -449,7 +449,7 @@ bool CheckFeasibleExact::FeasibleLine
   //const TaskSlice& slice = slices[slice];
   opt[0][0].angle_rad = 0.0;
   opt[0][0].layer = -1;
-  opt[0][0].task = std::make_shared<BeadData>(nullptr, -1);
+  opt[0][0].task = std::make_shared<Task>(nullptr, -1);
 
   for (int i = 0; i < slices.size(); i++)
   {
@@ -494,7 +494,7 @@ bool CheckFeasibleExact::FeasibleLine
       for (int x = 0; x < slice.num_tasks; x++)
       {
         int k = slice.layers[x];
-        BeadData::Ptr task = slice.tasks[k];
+        Task::Ptr task = slice.tasks[k];
         int k2 = (1 << k);
         if ((k2 & q) == 0) continue;
         if (task->disabled) continue;
@@ -548,7 +548,7 @@ bool CheckFeasibleExact::FeasibleLine
     while (s >= 0 && opt[s][q].layer != -1)
     {
       //System.out.println(s + ", " + q);
-      BeadData::Ptr cd = opt[s][q].task;
+      Task::Ptr cd = opt[s][q].task;
       if ((q & (1 << opt[s][q].layer)) == 0) return false;
       q -= (1 << opt[s][q].layer);
       cd->bead->angle_rad = t + slices[slice_index].event_left.angle_rad;
@@ -623,7 +623,7 @@ bool CheckFeasibleHeuristic::FeasibleLine(std::vector<std::vector<OptValue> >& o
   opt[0][0].angle_rad = 0.0;
   opt[0][0].angle2_rad = 0.0;
   opt[0][0].layer = -1;
-  opt[0][0].task = std::make_shared<BeadData>(nullptr, -1);
+  opt[0][0].task = std::make_shared<Task>(nullptr, -1);
 
   for (int i = 0; i < slices.size(); i++)
   {
@@ -666,7 +666,7 @@ bool CheckFeasibleHeuristic::FeasibleLine(std::vector<std::vector<OptValue> >& o
       for (int x = 0; x < slice.num_tasks; x++)
       {
         int k = slice.layers[x];
-        BeadData::Ptr cd = slice.tasks[k];
+        Task::Ptr cd = slice.tasks[k];
         int k2 = (1 << k);
         if ((k2 & q) == 0) continue;
         if (cd == nullptr) continue;
@@ -715,7 +715,7 @@ bool CheckFeasibleHeuristic::FeasibleLine(std::vector<std::vector<OptValue> >& o
 
   while (s >= 0 && opt[s][q].layer != -1)
   {
-    BeadData::Ptr cd = opt[s][q].task;
+    Task::Ptr cd = opt[s][q].task;
     q -= (1 << opt[s][q].layer);
     if (q < 0 || cd == nullptr) return false;
     double size = cd->bead ? cd->bead->covering_radius_rad : 0;
