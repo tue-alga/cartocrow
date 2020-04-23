@@ -147,7 +147,7 @@ class TaskSlice
 
   void Reset();
 
-  void Rotate(const Number value, const std::vector<AnyOrderCycleNode::Ptr>& cds, const BitString& split);
+  void Rotate(const Number value, const std::vector<AnyOrderCycleNode::Ptr>& tasks, const BitString& split);
 
   void AddTask(const AnyOrderCycleNode::Ptr& task);
 

@@ -175,14 +175,14 @@ void TaskSlice::Reset()
   {
     if (tasks[i] != nullptr)
     {
-      AnyOrderCycleNode::Ptr cd = tasks[i];
-      cd->valid = std::make_shared<Range>(*cd->bead->feasible);
-      cd->disabled = false;
+      AnyOrderCycleNode::Ptr& task = tasks[i];
+      task->valid = std::make_shared<Range>(*task->bead->feasible);
+      task->disabled = false;
     }
   }
 }
 
-void TaskSlice::Rotate(const Number value, const std::vector<AnyOrderCycleNode::Ptr>& cds, const BitString& split)
+void TaskSlice::Rotate(const Number value, const std::vector<AnyOrderCycleNode::Ptr>& tasks, const BitString& split)
 {
   Range r1(value, angle_left_rad);
   Range r2(value, angle_right_rad);
@@ -195,32 +195,32 @@ void TaskSlice::Rotate(const Number value, const std::vector<AnyOrderCycleNode::
   {
     if (tasks[i] != nullptr)
     {
-      AnyOrderCycleNode::Ptr cd = tasks[i];
-      if (cds[i] != nullptr && cds[i]->bead == cd->bead)
+      const AnyOrderCycleNode::Ptr& task = tasks[i];
+      if (tasks[i] != nullptr && tasks[i]->bead == task->bead)
       {
         if (split.HasBit(i))
         {
-          r2 = Range(value, cd->valid->to());
-          cd->valid->from() = 0.0;
-          cd->valid->to() = r2.ComputeLength();
+          r2 = Range(value, task->valid->to());
+          task->valid->from() = 0.0;
+          task->valid->to() = r2.ComputeLength();
           if (r2.ComputeLength() - kEpsilon <= angle_left_rad)
-            cd->disabled = true;
+            task->disabled = true;
         } else
         {
-          r1 = Range(value, cd->valid->from());
-          cd->valid->from() = r1.ComputeLength();
-          cd->valid->to() = M_2xPI;
+          r1 = Range(value, task->valid->from());
+          task->valid->from() = r1.ComputeLength();
+          task->valid->to() = M_2xPI;
           if (r1.ComputeLength() + kEpsilon >= angle_right_rad)
-            cd->disabled = true;
+            task->disabled = true;
         }
       } else
       {
-        r1 = Range(value, cd->valid->from());
-        r2 = Range(value, cd->valid->to());
-        cd->valid->from() = r1.ComputeLength();
-        cd->valid->to() = r2.ComputeLength();
-        if (cd->valid->to() < kEpsilon)
-          cd->valid->to() = M_2xPI;
+        r1 = Range(value, task->valid->from());
+        r2 = Range(value, task->valid->to());
+        task->valid->from() = r1.ComputeLength();
+        task->valid->to() = r2.ComputeLength();
+        if (task->valid->to() < kEpsilon)
+          task->valid->to() = M_2xPI;
       }
     }
   }
@@ -534,10 +534,10 @@ bool CheckFeasibleExact::FeasibleLine
     while (s >= 0 && values_[s][q].layer != -1)
     {
       //System.out.println(s + ", " + q);
-      AnyOrderCycleNode::Ptr cd = values_[s][q].task;
+      AnyOrderCycleNode::Ptr& task = values_[s][q].task;
       if ((q & (1 << values_[s][q].layer)) == 0) return false;
       q -= (1 << values_[s][q].layer);
-      cd->bead->angle_rad = t + slices_[slice_index].event_left.angle_rad;
+      task->bead->angle_rad = t + slices_[slice_index].event_left.angle_rad;
       t = values_[s][q].angle_rad - values_[s][q].task->bead->covering_radius_rad;
       while (slices_[s2].angle_left_rad > t + kEpsilon)
       {
@@ -646,26 +646,26 @@ bool CheckFeasibleHeuristic::FeasibleLine()
       for (int x = 0; x < slice.num_tasks; x++)
       {
         int k = slice.layers[x];
-        AnyOrderCycleNode::Ptr cd = slice.tasks[k];
+        const AnyOrderCycleNode::Ptr& task = slice.tasks[k];
         int k2 = (1 << k);
         if ((k2 & q) == 0) continue;
-        if (cd == nullptr) continue;
+        if (task == nullptr) continue;
 
         double t1 = values_[i][q - k2].angle_rad;
         if (t1 == std::numeric_limits<double>::max()) continue;
 
-        double size = cd->bead ? cd->bead->covering_radius_rad : 0;
+        double size = task->bead ? task->bead->covering_radius_rad : 0;
         // special check
         if (values_[i][q - k2].task->bead && values_[i][q - k2].task->bead->covering_radius_rad != 0.0)
           t1 += size;
 
-        t1 = std::max(t1, cd->valid->from());
-        if (t1 <= cd->valid->to() && t1 + size < values_[i][q].angle_rad)
+        t1 = std::max(t1, task->valid->from());
+        if (t1 <= task->valid->to() && t1 + size < values_[i][q].angle_rad)
         {
           values_[i][q].angle_rad = t1 + size;
           values_[i][q].angle2_rad = t1;
           values_[i][q].layer = k;
-          values_[i][q].task = cd;
+          values_[i][q].task = task;
         }
       }
 
@@ -679,7 +679,6 @@ bool CheckFeasibleHeuristic::FeasibleLine()
   int q = slices_[s].sets[slices_[s].sets.size() - 1].Get();  // TODO(tvl) remove q.
   double t = values_[s][q].angle_rad;
   if (t == std::numeric_limits<double>::max()) return false;
-  //t -= values_[s][q].cd.size;
   t = values_[s][q].angle2_rad;
 
   while (slices_[s].angle_left_rad > t + kEpsilon)
@@ -695,13 +694,13 @@ bool CheckFeasibleHeuristic::FeasibleLine()
 
   while (s >= 0 && values_[s][q].layer != -1)
   {
-    AnyOrderCycleNode::Ptr cd = values_[s][q].task;
+    AnyOrderCycleNode::Ptr& task = values_[s][q].task;
     q -= (1 << values_[s][q].layer);
-    if (q < 0 || cd == nullptr) return false;
-    double size = cd->bead ? cd->bead->covering_radius_rad : 0;
+    if (q < 0 || task == nullptr) return false;
+    double size = task->bead ? task->bead->covering_radius_rad : 0;
 
     const Number angle_rad = t + slices_[0].event_left.angle_rad;
-    listCA.push_back(std::make_shared<AnyOrderCycleNode>(cd->bead));
+    listCA.push_back(std::make_shared<AnyOrderCycleNode>(task->bead));
     listCA.back()->valid = std::make_shared<Range>(angle_rad - size, angle_rad + size);
     listCA.back()->bead->angle_rad = angle_rad;
 
