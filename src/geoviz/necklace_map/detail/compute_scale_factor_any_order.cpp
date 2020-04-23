@@ -113,23 +113,21 @@ TaskSlice::TaskSlice() :
   event_right(),
   tasks(),
   num_tasks(0),
-  angle_left_rad(0),
-  angle_right_rad(0),
+  coverage(0, 0),
   sets(),
   layers()
 {}
 
-TaskSlice::TaskSlice(
+TaskSlice::TaskSlice
+(
   const TaskEvent& event_left,
   const TaskEvent& event_right,
-  const int num_layers,
-  const double angle_right_rad
+  const int num_layers
 ) :
   event_left(event_left),
   event_right(event_right),
   num_tasks(0),
-  angle_left_rad(event_left.angle_rad),
-  angle_right_rad(angle_right_rad)
+  coverage(event_left.angle_rad, event_right.angle_rad)
 {
   tasks.resize(num_layers);
 }
@@ -138,21 +136,24 @@ TaskSlice::TaskSlice(const TaskSlice& slice, const int step) :
   event_left(slice.event_left),
   event_right(slice.event_right),
   num_tasks(slice.num_tasks),
+  coverage(0, 0),
   sets(slice.sets),
   layers(slice.layers)
 {
-  angle_left_rad = event_left.angle_rad + step * M_2xPI;
-  if (angle_left_rad < step * M_2xPI) angle_left_rad += M_2xPI;
-  angle_right_rad = event_right.angle_rad + step * M_2xPI;
-  if (angle_right_rad < angle_left_rad) angle_right_rad += M_2xPI;
+  const Number offset = step * M_2xPI;
+  coverage.from() = event_left.angle_rad + offset;
+  coverage.to() = Modulo(event_right.angle_rad + offset, coverage.from());
+
+
+
 
   tasks.resize(slice.tasks.size());
-  for (int i = 0; i < tasks.size(); i++)
+  for (int i = 0; i < slice.tasks.size(); i++)
   {
     if (slice.tasks[i] == nullptr) tasks[i] = nullptr;
     else
     {
-      if (step > 0 || angle_right_rad > slice.tasks[i]->valid->to() || !slice.tasks[i]->valid->Contains(0) ||
+      if (step > 0 || coverage.to() > slice.tasks[i]->valid->to() || !slice.tasks[i]->valid->Contains(0) ||
           slice.tasks[i]->valid->from() == 0)
       {
         tasks[i] = std::make_shared<AnyOrderCycleNode>(*slice.tasks[i]);  // TODO(tvl) note, this must be a new pointer.
@@ -160,8 +161,8 @@ TaskSlice::TaskSlice(const TaskSlice& slice, const int step) :
 
         Range r1(tasks[i]->valid->from(), event_left.angle_rad);
         Range r2(event_left.angle_rad, tasks[i]->valid->to());
-        tasks[i]->valid->from() = angle_left_rad - r1.ComputeLength();
-        tasks[i]->valid->to() = angle_left_rad + r2.ComputeLength();
+        tasks[i]->valid->from() = coverage.from() - r1.ComputeLength();
+        tasks[i]->valid->to() = coverage.from() + r2.ComputeLength();
       } else tasks[i] = nullptr;
     }
   }
@@ -169,8 +170,8 @@ TaskSlice::TaskSlice(const TaskSlice& slice, const int step) :
 
 void TaskSlice::Reset()
 {
-  angle_left_rad = event_left.angle_rad;
-  angle_right_rad = event_right.angle_rad;
+  coverage.from() = event_left.angle_rad;
+  coverage.to() = event_right.angle_rad;
   for (int i = 0; i < tasks.size(); i++)
   {
     if (tasks[i] != nullptr)
@@ -184,11 +185,11 @@ void TaskSlice::Reset()
 
 void TaskSlice::Rotate(const Number value, const std::vector<AnyOrderCycleNode::Ptr>& tasks, const BitString& split)
 {
-  Range r1(value, angle_left_rad);
-  Range r2(value, angle_right_rad);
-  angle_left_rad = r1.ComputeLength();
-  angle_right_rad = r2.ComputeLength();
-  if (angle_right_rad < kEpsilon) angle_right_rad = M_2xPI;
+  Range r1(value, coverage.from());
+  Range r2(value, coverage.to());
+  coverage.from() = r1.ComputeLength();
+  coverage.to() = r2.ComputeLength();
+  if (coverage.to() < kEpsilon) coverage.to() = M_2xPI;
 
   // TODO(tvl) when changing r1/r2, only set the second value?
   for (int i = 0; i < tasks.size(); i++)
@@ -203,14 +204,14 @@ void TaskSlice::Rotate(const Number value, const std::vector<AnyOrderCycleNode::
           r2 = Range(value, task->valid->to());
           task->valid->from() = 0.0;
           task->valid->to() = r2.ComputeLength();
-          if (r2.ComputeLength() - kEpsilon <= angle_left_rad)
+          if (r2.ComputeLength() - kEpsilon <= coverage.from())
             task->disabled = true;
         } else
         {
           r1 = Range(value, task->valid->from());
           task->valid->from() = r1.ComputeLength();
           task->valid->to() = M_2xPI;
-          if (r1.ComputeLength() + kEpsilon >= angle_right_rad)
+          if (r1.ComputeLength() + kEpsilon >= coverage.to())
             task->disabled = true;
         }
       } else
@@ -313,7 +314,7 @@ void CheckFeasible::InitializeSlices()
   {
     TaskEvent e = events[i];
     TaskEvent e2 = events[(i + 1) % events.size()];
-    slices_[i] = TaskSlice(e, e2, num_layers, e2.angle_rad);
+    slices_[i] = TaskSlice(e, e2, num_layers);
     if (e.type == TaskEvent::Type::kFrom)
       curNodes[e.node->layer] = e.node;
     else
@@ -517,7 +518,7 @@ bool CheckFeasibleExact::FeasibleLine
     int q = split2.Get();  // TODO(tvl) remove q.
     double t = values_[s][q].angle_rad - values_[s][q].task->bead->covering_radius_rad;
 
-    while (slices_[s2].angle_left_rad > t + kEpsilon)
+    while (slices_[s2].coverage.from() > t + kEpsilon)
     {
       if (slices_[s2].event_left.type == TaskEvent::Type::kTo)
       {
@@ -539,7 +540,7 @@ bool CheckFeasibleExact::FeasibleLine
       q -= (1 << values_[s][q].layer);
       task->bead->angle_rad = t + slices_[slice_index].event_left.angle_rad;
       t = values_[s][q].angle_rad - values_[s][q].task->bead->covering_radius_rad;
-      while (slices_[s2].angle_left_rad > t + kEpsilon)
+      while (slices_[s2].coverage.from() > t + kEpsilon)
       {
         if (slices_[s2].event_left.type == TaskEvent::Type::kTo)
         {
@@ -681,7 +682,7 @@ bool CheckFeasibleHeuristic::FeasibleLine()
   if (t == std::numeric_limits<double>::max()) return false;
   t = values_[s][q].angle2_rad;
 
-  while (slices_[s].angle_left_rad > t + kEpsilon)
+  while (slices_[s].coverage.from() > t + kEpsilon)
   {
     if (slices_[s].event_left.type == TaskEvent::Type::kTo)
     {
@@ -705,7 +706,7 @@ bool CheckFeasibleHeuristic::FeasibleLine()
     listCA.back()->bead->angle_rad = angle_rad;
 
     t = values_[s][q].angle2_rad;
-    while (slices_[s].angle_left_rad > t + kEpsilon)
+    while (slices_[s].coverage.from() > t + kEpsilon)
     {
       if (slices_[s].event_left.type == TaskEvent::Type::kTo)
       {

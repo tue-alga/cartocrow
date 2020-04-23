@@ -139,8 +139,7 @@ class TaskSlice
   (
     const TaskEvent& event_left,
     const TaskEvent& event_right,
-    const int num_layers,
-    const Number angle_right_rad
+    const int num_layers
   );
 
   TaskSlice(const TaskSlice& slice, const int step);
@@ -155,10 +154,10 @@ class TaskSlice
 
   TaskEvent event_left, event_right;
   std::vector<AnyOrderCycleNode::Ptr> tasks;
-  int num_tasks;
-  Number angle_left_rad, angle_right_rad;
+  int num_tasks;  // TODO(tvl) necessary?
+  Range coverage;
   std::vector<BitString> sets;
-  std::vector<int> layers;
+  std::vector<int> layers;  // TODO(tvl) necessary?
 }; // class TaskSlice
 
 
