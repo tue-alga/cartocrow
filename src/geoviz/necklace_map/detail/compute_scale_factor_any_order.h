@@ -183,7 +183,7 @@ struct OptValue
   Number angle_rad;
   Number angle2_rad;
   int layer;
-  BeadData::Ptr task;
+  Task::Ptr task;
 }; // struct OptValue
 
 
