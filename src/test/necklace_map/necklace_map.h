@@ -50,8 +50,11 @@ struct NecklaceData
   std::vector<geoviz::necklace_map::Necklace::Ptr> necklaces;
 }; // struct NecklaceData
 
-static NecklaceData kEastAsia = NecklaceData();
+static const filesystem::path kTestDir = GEOVIZ_TEST_DIR;
+
 static NecklaceData kWesternEurope = NecklaceData();
+static NecklaceData kEastAsia = NecklaceData();
+
 
 UNITTEST_SUITE(NecklaceMap)
 {
@@ -67,27 +70,43 @@ void DefaultParameters(geoviz::necklace_map::Parameters& parameters)
   parameters.aversion_ratio = 0.001;
 }
 
-UNITTEST_TEST(WesternEuropeCentroidFixed)
+
+struct NecklaceDataWesternEurope
 {
-  const filesystem::path test_dir = GEOVIZ_TEST_DIR;
-
-  const filesystem::path in_geometry_path = test_dir / "wEU.xml";
-  const filesystem::path in_data_path = test_dir / "wEU.txt";
-  const std::string in_value_name = "value";
-
-  NecklaceData& data = kWesternEurope;
-
-  // Read the data and geometry.
-  if (data.elements.empty())
+  NecklaceDataWesternEurope() :
+    data(kWesternEurope)
   {
-    geoviz::SvgReader svg_reader;
-    UNITTEST_REQUIRE UNITTEST_CHECK(svg_reader.ReadFile(in_geometry_path, data.elements, data.necklaces));
+    if (data.elements.empty())
+    {
+      // Read the geometry.
+      geoviz::SvgReader svg_reader;
+      const filesystem::path in_geometry_path = kTestDir / "wEU.xml";
+      UNITTEST_REQUIRE UNITTEST_CHECK(svg_reader.ReadFile(in_geometry_path, data.elements, data.necklaces));
+
+      const std::string in_value_name = "value";
+      UNITTEST_CHECK(ReadValues(in_value_name));
+    }
   }
 
-  geoviz::DataReader data_reader;
-  UNITTEST_CHECK(data_reader.ReadFile(in_data_path, in_value_name, data.elements));
+  bool ReadValues(const std::string& in_value_name)
+  {
+    if (in_value_name == value_name)
+      return true;
+    value_name = in_value_name;
+
+    geoviz::DataReader data_reader;
+    const filesystem::path in_data_path = kTestDir / "wEU.txt";
+    return data_reader.ReadFile(in_data_path, in_value_name, data.elements);
+  }
+
+  NecklaceData& data;
+  std::string value_name;
 
   geoviz::necklace_map::Parameters parameters;
+}; // struct NecklaceDataWesternEurope
+
+UNITTEST_TEST_FIXTURE(NecklaceDataWesternEurope, WestEuropeCentroidFixed)
+{
   DefaultParameters(parameters);
   parameters.interval_type = geoviz::necklace_map::IntervalType::kCentroid;
   parameters.order_type = geoviz::necklace_map::OrderType::kFixed;
@@ -96,27 +115,8 @@ UNITTEST_TEST(WesternEuropeCentroidFixed)
   UNITTEST_CHECK_CLOSE(1.687, scale_factor, 0.001);
 }
 
-UNITTEST_TEST(WesternEuropeIgnorePointRegion)
+UNITTEST_TEST_FIXTURE(NecklaceDataWesternEurope, WestEuropeCentroidFixedNopoints)
 {
-  const filesystem::path test_dir = GEOVIZ_TEST_DIR;
-
-  const filesystem::path in_geometry_path = test_dir / "wEU.xml";
-  const filesystem::path in_data_path = test_dir / "wEU.txt";
-  const std::string in_value_name = "value";
-
-  NecklaceData& data = kWesternEurope;
-
-  // Read the data and geometry.
-  if (data.elements.empty())
-  {
-    geoviz::SvgReader svg_reader;
-    UNITTEST_REQUIRE UNITTEST_CHECK(svg_reader.ReadFile(in_geometry_path, data.elements, data.necklaces));
-
-    geoviz::DataReader data_reader;
-    UNITTEST_CHECK(data_reader.ReadFile(in_data_path, in_value_name, data.elements));
-  }
-
-  geoviz::necklace_map::Parameters parameters;
   DefaultParameters(parameters);
   parameters.interval_type = geoviz::necklace_map::IntervalType::kCentroid;
   parameters.ignore_point_regions = true;
@@ -126,54 +126,16 @@ UNITTEST_TEST(WesternEuropeIgnorePointRegion)
   UNITTEST_CHECK_CLOSE(1.822, scale_factor, 0.001);
 }
 
-UNITTEST_TEST(WesternEuropeWedgeAny)
+UNITTEST_TEST_FIXTURE(NecklaceDataWesternEurope, WestEurope)
 {
-  const filesystem::path test_dir = GEOVIZ_TEST_DIR;
-
-  const filesystem::path in_geometry_path = test_dir / "wEU.xml";
-  const filesystem::path in_data_path = test_dir / "wEU.txt";
-  const std::string in_value_name = "value";
-
-  NecklaceData& data = kWesternEurope;
-
-  // Read the data and geometry.
-  if (data.elements.empty())
-  {
-    geoviz::SvgReader svg_reader;
-    UNITTEST_REQUIRE UNITTEST_CHECK(svg_reader.ReadFile(in_geometry_path, data.elements, data.necklaces));
-
-    geoviz::DataReader data_reader;
-    UNITTEST_CHECK(data_reader.ReadFile(in_data_path, in_value_name, data.elements));
-  }
-
-  geoviz::necklace_map::Parameters parameters;
   DefaultParameters(parameters);
 
   const geoviz::Number scale_factor = ComputeScaleFactor(parameters, data.elements, data.necklaces);
   UNITTEST_CHECK_CLOSE(1.675, scale_factor, 0.001);
 }
 
-UNITTEST_TEST(WesternEuropeWedgeAnyIgnorePoints)
+UNITTEST_TEST_FIXTURE(NecklaceDataWesternEurope, WestEuropeNopoints)
 {
-  const filesystem::path test_dir = GEOVIZ_TEST_DIR;
-
-  const filesystem::path in_geometry_path = test_dir / "wEU.xml";
-  const filesystem::path in_data_path = test_dir / "wEU.txt";
-  const std::string in_value_name = "value";
-
-  NecklaceData& data = kWesternEurope;
-
-  // Read the data and geometry.
-  if (data.elements.empty())
-  {
-    geoviz::SvgReader svg_reader;
-    UNITTEST_REQUIRE UNITTEST_CHECK(svg_reader.ReadFile(in_geometry_path, data.elements, data.necklaces));
-
-    geoviz::DataReader data_reader;
-    UNITTEST_CHECK(data_reader.ReadFile(in_data_path, in_value_name, data.elements));
-  }
-
-  geoviz::necklace_map::Parameters parameters;
   DefaultParameters(parameters);
   parameters.ignore_point_regions = true;
 
@@ -181,27 +143,8 @@ UNITTEST_TEST(WesternEuropeWedgeAnyIgnorePoints)
   UNITTEST_CHECK_CLOSE(1.675, scale_factor, 0.001);
 }
 
-UNITTEST_TEST(WesternEuropeWedgeAnyBuffer)
+UNITTEST_TEST_FIXTURE(NecklaceDataWesternEurope, WestEuropeBuffer)
 {
-  const filesystem::path test_dir = GEOVIZ_TEST_DIR;
-
-  const filesystem::path in_geometry_path = test_dir / "wEU.xml";
-  const filesystem::path in_data_path = test_dir / "wEU.txt";
-  const std::string in_value_name = "value";
-
-  NecklaceData& data = kWesternEurope;
-
-  // Read the data and geometry.
-  if (data.elements.empty())
-  {
-    geoviz::SvgReader svg_reader;
-    UNITTEST_REQUIRE UNITTEST_CHECK(svg_reader.ReadFile(in_geometry_path, data.elements, data.necklaces));
-
-    geoviz::DataReader data_reader;
-    UNITTEST_CHECK(data_reader.ReadFile(in_data_path, in_value_name, data.elements));
-  }
-
-  geoviz::necklace_map::Parameters parameters;
   DefaultParameters(parameters);
   parameters.buffer_rad = 0.0349; // Roughly 2 degrees.
 
@@ -209,27 +152,8 @@ UNITTEST_TEST(WesternEuropeWedgeAnyBuffer)
   UNITTEST_CHECK_CLOSE(1.470, scale_factor, 0.001);
 }
 
-UNITTEST_TEST(WesternEuropeWedgeAnyExact)
+UNITTEST_TEST_FIXTURE(NecklaceDataWesternEurope, WestEuropeExact)
 {
-  const filesystem::path test_dir = GEOVIZ_TEST_DIR;
-
-  const filesystem::path in_geometry_path = test_dir / "wEU.xml";
-  const filesystem::path in_data_path = test_dir / "wEU.txt";
-  const std::string in_value_name = "value";
-
-  NecklaceData& data = kWesternEurope;
-
-  // Read the data and geometry.
-  if (data.elements.empty())
-  {
-    geoviz::SvgReader svg_reader;
-    UNITTEST_REQUIRE UNITTEST_CHECK(svg_reader.ReadFile(in_geometry_path, data.elements, data.necklaces));
-
-    geoviz::DataReader data_reader;
-    UNITTEST_CHECK(data_reader.ReadFile(in_data_path, in_value_name, data.elements));
-  }
-
-  geoviz::necklace_map::Parameters parameters;
   DefaultParameters(parameters);
   parameters.heuristic_steps = 0;
 
@@ -237,27 +161,8 @@ UNITTEST_TEST(WesternEuropeWedgeAnyExact)
   UNITTEST_CHECK_CLOSE(1.675, scale_factor, 0.001);
 }
 
-UNITTEST_TEST(WesternEuropeWedgeAnyExactBuffer)
+UNITTEST_TEST_FIXTURE(NecklaceDataWesternEurope, WestEuropeExactBuffer)
 {
-  const filesystem::path test_dir = GEOVIZ_TEST_DIR;
-
-  const filesystem::path in_geometry_path = test_dir / "wEU.xml";
-  const filesystem::path in_data_path = test_dir / "wEU.txt";
-  const std::string in_value_name = "value";
-
-  NecklaceData& data = kWesternEurope;
-
-  // Read the data and geometry.
-  if (data.elements.empty())
-  {
-    geoviz::SvgReader svg_reader;
-    UNITTEST_REQUIRE UNITTEST_CHECK(svg_reader.ReadFile(in_geometry_path, data.elements, data.necklaces));
-
-    geoviz::DataReader data_reader;
-    UNITTEST_CHECK(data_reader.ReadFile(in_data_path, in_value_name, data.elements));
-  }
-
-  geoviz::necklace_map::Parameters parameters;
   DefaultParameters(parameters);
   parameters.buffer_rad = 0.0349; // Roughly 2 degrees.
   parameters.heuristic_steps = 0;
@@ -266,108 +171,54 @@ UNITTEST_TEST(WesternEuropeWedgeAnyExactBuffer)
   UNITTEST_CHECK_CLOSE(1.470, scale_factor, 0.001);
 }
 
-UNITTEST_TEST(EastAsiaWedgeAnyAgriculture)
+
+struct NecklaceDataEastAsia
 {
-  const filesystem::path test_dir = GEOVIZ_TEST_DIR;
-
-  const filesystem::path in_geometry_path = test_dir / "eAsia.xml";
-  const filesystem::path in_data_path = test_dir / "eAsia.txt";
-  const std::string in_value_name = "agriculture";
-
-  NecklaceData& data = kEastAsia;
-
-  // Read the data and geometry.
-  if (data.elements.empty())
+  NecklaceDataEastAsia() :
+    data(kEastAsia)
   {
-    geoviz::SvgReader svg_reader;
-    UNITTEST_REQUIRE UNITTEST_CHECK(svg_reader.ReadFile(in_geometry_path, data.elements, data.necklaces));
+    if (data.elements.empty())
+    {
+      // Read the geometry.
+      geoviz::SvgReader svg_reader;
+      const filesystem::path in_geometry_path = kTestDir / "eAsia.xml";
+      UNITTEST_REQUIRE UNITTEST_CHECK(svg_reader.ReadFile(in_geometry_path, data.elements, data.necklaces));
+    }
   }
 
-  geoviz::DataReader data_reader;
-  UNITTEST_CHECK(data_reader.ReadFile(in_data_path, in_value_name, data.elements));
+  bool ReadValues(const std::string& in_value_name)
+  {
+    if (in_value_name == value_name)
+      return true;
+    value_name = in_value_name;
+
+    geoviz::DataReader data_reader;
+    const filesystem::path in_data_path = kTestDir / "eAsia.txt";
+    return data_reader.ReadFile(in_data_path, in_value_name, data.elements);
+  }
+
+  NecklaceData& data;
+  std::string value_name;
 
   geoviz::necklace_map::Parameters parameters;
+}; // struct NecklaceDataEastAsia
+
+UNITTEST_TEST_FIXTURE(NecklaceDataEastAsia, EastAsiaAgriculture)
+{
+  const std::string in_value_name = "agriculture";
+  UNITTEST_CHECK(ReadValues(in_value_name));
+
   DefaultParameters(parameters);
 
   const geoviz::Number scale_factor = ComputeScaleFactor(parameters, data.elements, data.necklaces);
   UNITTEST_CHECK_CLOSE(1.006, scale_factor, 0.001);
 }
 
-UNITTEST_TEST(EastAsiaWedgeAnyPoverty)
+UNITTEST_TEST_FIXTURE(NecklaceDataEastAsia, EastAsiaExactAgriculture)
 {
-  const filesystem::path test_dir = GEOVIZ_TEST_DIR;
-
-  const filesystem::path in_geometry_path = test_dir / "eAsia.xml";
-  const filesystem::path in_data_path = test_dir / "eAsia.txt";
-  const std::string in_value_name = "poverty";
-
-  NecklaceData& data = kEastAsia;
-
-  // Read the data and geometry.
-  if (data.elements.empty())
-  {
-    geoviz::SvgReader svg_reader;
-    UNITTEST_REQUIRE UNITTEST_CHECK(svg_reader.ReadFile(in_geometry_path, data.elements, data.necklaces));
-  }
-
-  geoviz::DataReader data_reader;
-  UNITTEST_CHECK(data_reader.ReadFile(in_data_path, in_value_name, data.elements));
-
-  geoviz::necklace_map::Parameters parameters;
-  DefaultParameters(parameters);
-
-  const geoviz::Number scale_factor = ComputeScaleFactor(parameters, data.elements, data.necklaces);
-  UNITTEST_CHECK_CLOSE(1.003, scale_factor, 0.001);
-}
-
-UNITTEST_TEST(EastAsiaWedgeAnyInternet)
-{
-  const filesystem::path test_dir = GEOVIZ_TEST_DIR;
-
-  const filesystem::path in_geometry_path = test_dir / "eAsia.xml";
-  const filesystem::path in_data_path = test_dir / "eAsia.txt";
-  const std::string in_value_name = "internet";
-
-  NecklaceData& data = kEastAsia;
-
-  // Read the data and geometry.
-  if (data.elements.empty())
-  {
-    geoviz::SvgReader svg_reader;
-    UNITTEST_REQUIRE UNITTEST_CHECK(svg_reader.ReadFile(in_geometry_path, data.elements, data.necklaces));
-  }
-
-  geoviz::DataReader data_reader;
-  UNITTEST_CHECK(data_reader.ReadFile(in_data_path, in_value_name, data.elements));
-
-  geoviz::necklace_map::Parameters parameters;
-  DefaultParameters(parameters);
-
-  const geoviz::Number scale_factor = ComputeScaleFactor(parameters, data.elements, data.necklaces);
-  UNITTEST_CHECK_CLOSE(1.509, scale_factor, 0.001);
-}
-
-UNITTEST_TEST(EastAsiaWedgeAnyExactAgriculture)
-{
-  const filesystem::path test_dir = GEOVIZ_TEST_DIR;
-
-  const filesystem::path in_geometry_path = test_dir / "eAsia.xml";
-  const filesystem::path in_data_path = test_dir / "eAsia.txt";
   const std::string in_value_name = "agriculture";
+  UNITTEST_CHECK(ReadValues(in_value_name));
 
-  NecklaceData& data = kEastAsia;
-
-  // Read the data and geometry.
-  if (data.elements.empty())
-  {
-    geoviz::SvgReader svg_reader;
-    UNITTEST_REQUIRE UNITTEST_CHECK(svg_reader.ReadFile(in_geometry_path, data.elements, data.necklaces));
-  }
-
-  geoviz::DataReader data_reader;
-  UNITTEST_CHECK(data_reader.ReadFile(in_data_path, in_value_name, data.elements));
-
-  geoviz::necklace_map::Parameters parameters;
   DefaultParameters(parameters);
   parameters.heuristic_steps = 0;
 
@@ -375,27 +226,22 @@ UNITTEST_TEST(EastAsiaWedgeAnyExactAgriculture)
   UNITTEST_CHECK_CLOSE(1.006, scale_factor, 0.001);
 }
 
-UNITTEST_TEST(EastAsiaWedgeAnyExactPoverty)
+UNITTEST_TEST_FIXTURE(NecklaceDataEastAsia, EastAsiaPoverty)
 {
-  const filesystem::path test_dir = GEOVIZ_TEST_DIR;
-
-  const filesystem::path in_geometry_path = test_dir / "eAsia.xml";
-  const filesystem::path in_data_path = test_dir / "eAsia.txt";
   const std::string in_value_name = "poverty";
+  UNITTEST_CHECK(ReadValues(in_value_name));
 
-  NecklaceData& data = kEastAsia;
+  DefaultParameters(parameters);
 
-  // Read the data and geometry.
-  if (data.elements.empty())
-  {
-    geoviz::SvgReader svg_reader;
-    UNITTEST_REQUIRE UNITTEST_CHECK(svg_reader.ReadFile(in_geometry_path, data.elements, data.necklaces));
-  }
+  const geoviz::Number scale_factor = ComputeScaleFactor(parameters, data.elements, data.necklaces);
+  UNITTEST_CHECK_CLOSE(1.003, scale_factor, 0.001);
+}
 
-  geoviz::DataReader data_reader;
-  UNITTEST_CHECK(data_reader.ReadFile(in_data_path, in_value_name, data.elements));
+UNITTEST_TEST_FIXTURE(NecklaceDataEastAsia, EastAsiaExactPoverty)
+{
+  const std::string in_value_name = "poverty";
+  UNITTEST_CHECK(ReadValues(in_value_name));
 
-  geoviz::necklace_map::Parameters parameters;
   DefaultParameters(parameters);
   parameters.heuristic_steps = 0;
 
@@ -403,27 +249,22 @@ UNITTEST_TEST(EastAsiaWedgeAnyExactPoverty)
   UNITTEST_CHECK_CLOSE(1.003, scale_factor, 0.001);
 }
 
-UNITTEST_TEST(EastAsiaWedgeAnyExactInternet)
+UNITTEST_TEST_FIXTURE(NecklaceDataEastAsia, EastAsiaInternet)
 {
-  const filesystem::path test_dir = GEOVIZ_TEST_DIR;
-
-  const filesystem::path in_geometry_path = test_dir / "eAsia.xml";
-  const filesystem::path in_data_path = test_dir / "eAsia.txt";
   const std::string in_value_name = "internet";
+  UNITTEST_CHECK(ReadValues(in_value_name));
 
-  NecklaceData& data = kEastAsia;
+  DefaultParameters(parameters);
 
-  // Read the data and geometry.
-  if (data.elements.empty())
-  {
-    geoviz::SvgReader svg_reader;
-    UNITTEST_REQUIRE UNITTEST_CHECK(svg_reader.ReadFile(in_geometry_path, data.elements, data.necklaces));
-  }
+  const geoviz::Number scale_factor = ComputeScaleFactor(parameters, data.elements, data.necklaces);
+  UNITTEST_CHECK_CLOSE(1.509, scale_factor, 0.001);
+}
 
-  geoviz::DataReader data_reader;
-  UNITTEST_CHECK(data_reader.ReadFile(in_data_path, in_value_name, data.elements));
+UNITTEST_TEST_FIXTURE(NecklaceDataEastAsia, EastAsiaExactInternet)
+{
+  const std::string in_value_name = "internet";
+  UNITTEST_CHECK(ReadValues(in_value_name));
 
-  geoviz::necklace_map::Parameters parameters;
   DefaultParameters(parameters);
   parameters.heuristic_steps = 0;
 
@@ -431,6 +272,6 @@ UNITTEST_TEST(EastAsiaWedgeAnyExactInternet)
   UNITTEST_CHECK_CLOSE(1.509, scale_factor, 0.001);
 }
 
-} // suite_NecklaceMap
+} // UNITTEST_SUITE(NecklaceMap)
 
 #endif //GEOVIZ_TEST_NECKLACE_MAP_NECKLACE_MAP_H
