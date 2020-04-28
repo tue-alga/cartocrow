@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.14.5)
+cmake_minimum_required(VERSION 3.13.4)
 
 # GeoViz project.
 set(PROJECT_NAME GeoViz)
@@ -65,7 +65,7 @@ find_package(CGAL)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 # By default, we use the C++11 dialect.
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
 
 # The GeoViz library.
 add_subdirectory(geoviz)
