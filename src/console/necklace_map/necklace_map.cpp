@@ -101,6 +101,20 @@ DEFINE_string
   "The order type enforced by the scale factor algorithm. Must be one of {'fixed', 'any', 'heuristic'}."
 );
 
+DEFINE_int32
+(
+  search_depth,
+  10,
+  "The search depth used during binary searches on the decision space. Must be strictly positive."
+);
+
+DEFINE_int32
+(
+  heuristic_steps,
+  5,
+  "The number of heuristic steps used by the any-order algorithm. Must be non-negative; if the number of 0, the exact algorithm is used."
+);
+
 DEFINE_double
 (
   buffer_rad,
@@ -209,9 +223,6 @@ void ValidateFlags(geoviz::necklace_map::Parameters& parameters, geoviz::WriterO
   bool correct = true;
   LOG(INFO) << "necklace_map_cla flags:";
 
-  using Closure = validate::Closure;
-  using BoundSide = validate::BoundSide;
-
   // Note that we mainly print flags to enable reproducibility.
   // Other flags are validated, but only printed if not valid.
   // Note that we may skip some low-level flags that almost never change.
@@ -239,10 +250,17 @@ void ValidateFlags(geoviz::necklace_map::Parameters& parameters, geoviz::WriterO
 
     correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(buffer_rad), validate::MakeRangeCheck(0.0, M_PI));
     parameters.buffer_rad = FLAGS_buffer_rad;
+
+    correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(search_depth), validate::MakeStrictLowerBoundCheck(0));
+    parameters.binary_search_depth = FLAGS_search_depth;
+
+    correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(heuristic_steps), validate::MakeLowerBoundCheck(0));
+    parameters.heuristic_steps = FLAGS_heuristic_steps;
   }
 
   // Placement parameters.
   {
+    using Closure = validate::Closure;
     correct &= CheckAndPrintFlag
     (
       FLAGS_NAME_AND_VALUE(aversion_ratio),
