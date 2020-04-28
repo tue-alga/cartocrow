@@ -56,7 +56,7 @@ static NecklaceData kWesternEurope = NecklaceData();
 UNITTEST_SUITE(NecklaceMap)
 {
 
-void InitializeParameters(geoviz::necklace_map::Parameters& parameters)
+void DefaultParameters(geoviz::necklace_map::Parameters& parameters)
 {
   parameters.interval_type = geoviz::necklace_map::IntervalType::kWedge;
   parameters.centroid_interval_length_rad = 0.2 * M_PI;
@@ -88,7 +88,7 @@ UNITTEST_TEST(WesternEuropeCentroidFixed)
   UNITTEST_CHECK(data_reader.ReadFile(in_data_path, in_value_name, data.elements));
 
   geoviz::necklace_map::Parameters parameters;
-  InitializeParameters(parameters);
+  DefaultParameters(parameters);
   parameters.interval_type = geoviz::necklace_map::IntervalType::kCentroid;
   parameters.order_type = geoviz::necklace_map::OrderType::kFixed;
 
@@ -117,7 +117,7 @@ UNITTEST_TEST(WesternEuropeIgnorePointRegion)
   }
 
   geoviz::necklace_map::Parameters parameters;
-  InitializeParameters(parameters);
+  DefaultParameters(parameters);
   parameters.interval_type = geoviz::necklace_map::IntervalType::kCentroid;
   parameters.ignore_point_regions = true;
   parameters.order_type = geoviz::necklace_map::OrderType::kFixed;
@@ -147,7 +147,7 @@ UNITTEST_TEST(WesternEuropeWedgeAny)
   }
 
   geoviz::necklace_map::Parameters parameters;
-  InitializeParameters(parameters);
+  DefaultParameters(parameters);
 
   const geoviz::Number scale_factor = ComputeScaleFactor(parameters, data.elements, data.necklaces);
   UNITTEST_CHECK_CLOSE(1.675, scale_factor, 0.001);
@@ -174,7 +174,7 @@ UNITTEST_TEST(WesternEuropeWedgeAnyIgnorePoints)
   }
 
   geoviz::necklace_map::Parameters parameters;
-  InitializeParameters(parameters);
+  DefaultParameters(parameters);
   parameters.ignore_point_regions = true;
 
   const geoviz::Number scale_factor = ComputeScaleFactor(parameters, data.elements, data.necklaces);
@@ -202,8 +202,65 @@ UNITTEST_TEST(WesternEuropeWedgeAnyBuffer)
   }
 
   geoviz::necklace_map::Parameters parameters;
-  InitializeParameters(parameters);
+  DefaultParameters(parameters);
   parameters.buffer_rad = 0.0349; // Roughly 2 degrees.
+
+  const geoviz::Number scale_factor = ComputeScaleFactor(parameters, data.elements, data.necklaces);
+  UNITTEST_CHECK_CLOSE(1.470, scale_factor, 0.001);
+}
+
+UNITTEST_TEST(WesternEuropeWedgeAnyExact)
+{
+  const filesystem::path test_dir = GEOVIZ_TEST_DIR;
+
+  const filesystem::path in_geometry_path = test_dir / "wEU.xml";
+  const filesystem::path in_data_path = test_dir / "wEU.txt";
+  const std::string in_value_name = "value";
+
+  NecklaceData& data = kWesternEurope;
+
+  // Read the data and geometry.
+  if (data.elements.empty())
+  {
+    geoviz::SvgReader svg_reader;
+    UNITTEST_REQUIRE UNITTEST_CHECK(svg_reader.ReadFile(in_geometry_path, data.elements, data.necklaces));
+
+    geoviz::DataReader data_reader;
+    UNITTEST_CHECK(data_reader.ReadFile(in_data_path, in_value_name, data.elements));
+  }
+
+  geoviz::necklace_map::Parameters parameters;
+  DefaultParameters(parameters);
+  parameters.heuristic_steps = 0;
+
+  const geoviz::Number scale_factor = ComputeScaleFactor(parameters, data.elements, data.necklaces);
+  UNITTEST_CHECK_CLOSE(1.675, scale_factor, 0.001);
+}
+
+UNITTEST_TEST(WesternEuropeWedgeAnyExactBuffer)
+{
+  const filesystem::path test_dir = GEOVIZ_TEST_DIR;
+
+  const filesystem::path in_geometry_path = test_dir / "wEU.xml";
+  const filesystem::path in_data_path = test_dir / "wEU.txt";
+  const std::string in_value_name = "value";
+
+  NecklaceData& data = kWesternEurope;
+
+  // Read the data and geometry.
+  if (data.elements.empty())
+  {
+    geoviz::SvgReader svg_reader;
+    UNITTEST_REQUIRE UNITTEST_CHECK(svg_reader.ReadFile(in_geometry_path, data.elements, data.necklaces));
+
+    geoviz::DataReader data_reader;
+    UNITTEST_CHECK(data_reader.ReadFile(in_data_path, in_value_name, data.elements));
+  }
+
+  geoviz::necklace_map::Parameters parameters;
+  DefaultParameters(parameters);
+  parameters.buffer_rad = 0.0349; // Roughly 2 degrees.
+  parameters.heuristic_steps = 0;
 
   const geoviz::Number scale_factor = ComputeScaleFactor(parameters, data.elements, data.necklaces);
   UNITTEST_CHECK_CLOSE(1.470, scale_factor, 0.001);
@@ -230,7 +287,7 @@ UNITTEST_TEST(EastAsiaWedgeAnyAgriculture)
   UNITTEST_CHECK(data_reader.ReadFile(in_data_path, in_value_name, data.elements));
 
   geoviz::necklace_map::Parameters parameters;
-  InitializeParameters(parameters);
+  DefaultParameters(parameters);
 
   const geoviz::Number scale_factor = ComputeScaleFactor(parameters, data.elements, data.necklaces);
   UNITTEST_CHECK_CLOSE(1.006, scale_factor, 0.001);
@@ -257,7 +314,7 @@ UNITTEST_TEST(EastAsiaWedgeAnyPoverty)
   UNITTEST_CHECK(data_reader.ReadFile(in_data_path, in_value_name, data.elements));
 
   geoviz::necklace_map::Parameters parameters;
-  InitializeParameters(parameters);
+  DefaultParameters(parameters);
 
   const geoviz::Number scale_factor = ComputeScaleFactor(parameters, data.elements, data.necklaces);
   UNITTEST_CHECK_CLOSE(1.003, scale_factor, 0.001);
@@ -284,11 +341,96 @@ UNITTEST_TEST(EastAsiaWedgeAnyInternet)
   UNITTEST_CHECK(data_reader.ReadFile(in_data_path, in_value_name, data.elements));
 
   geoviz::necklace_map::Parameters parameters;
-  InitializeParameters(parameters);
+  DefaultParameters(parameters);
 
   const geoviz::Number scale_factor = ComputeScaleFactor(parameters, data.elements, data.necklaces);
   UNITTEST_CHECK_CLOSE(1.509, scale_factor, 0.001);
 }
+
+UNITTEST_TEST(EastAsiaWedgeAnyExactAgriculture)
+{
+  const filesystem::path test_dir = GEOVIZ_TEST_DIR;
+
+  const filesystem::path in_geometry_path = test_dir / "eAsia.xml";
+  const filesystem::path in_data_path = test_dir / "eAsia.txt";
+  const std::string in_value_name = "agriculture";
+
+  NecklaceData& data = kEastAsia;
+
+  // Read the data and geometry.
+  if (data.elements.empty())
+  {
+    geoviz::SvgReader svg_reader;
+    UNITTEST_REQUIRE UNITTEST_CHECK(svg_reader.ReadFile(in_geometry_path, data.elements, data.necklaces));
+  }
+
+  geoviz::DataReader data_reader;
+  UNITTEST_CHECK(data_reader.ReadFile(in_data_path, in_value_name, data.elements));
+
+  geoviz::necklace_map::Parameters parameters;
+  DefaultParameters(parameters);
+  parameters.heuristic_steps = 0;
+
+  const geoviz::Number scale_factor = ComputeScaleFactor(parameters, data.elements, data.necklaces);
+  UNITTEST_CHECK_CLOSE(1.006, scale_factor, 0.001);
+}
+
+UNITTEST_TEST(EastAsiaWedgeAnyExactPoverty)
+{
+  const filesystem::path test_dir = GEOVIZ_TEST_DIR;
+
+  const filesystem::path in_geometry_path = test_dir / "eAsia.xml";
+  const filesystem::path in_data_path = test_dir / "eAsia.txt";
+  const std::string in_value_name = "poverty";
+
+  NecklaceData& data = kEastAsia;
+
+  // Read the data and geometry.
+  if (data.elements.empty())
+  {
+    geoviz::SvgReader svg_reader;
+    UNITTEST_REQUIRE UNITTEST_CHECK(svg_reader.ReadFile(in_geometry_path, data.elements, data.necklaces));
+  }
+
+  geoviz::DataReader data_reader;
+  UNITTEST_CHECK(data_reader.ReadFile(in_data_path, in_value_name, data.elements));
+
+  geoviz::necklace_map::Parameters parameters;
+  DefaultParameters(parameters);
+  parameters.heuristic_steps = 0;
+
+  const geoviz::Number scale_factor = ComputeScaleFactor(parameters, data.elements, data.necklaces);
+  UNITTEST_CHECK_CLOSE(1.003, scale_factor, 0.001);
+}
+
+UNITTEST_TEST(EastAsiaWedgeAnyExactInternet)
+{
+  const filesystem::path test_dir = GEOVIZ_TEST_DIR;
+
+  const filesystem::path in_geometry_path = test_dir / "eAsia.xml";
+  const filesystem::path in_data_path = test_dir / "eAsia.txt";
+  const std::string in_value_name = "internet";
+
+  NecklaceData& data = kEastAsia;
+
+  // Read the data and geometry.
+  if (data.elements.empty())
+  {
+    geoviz::SvgReader svg_reader;
+    UNITTEST_REQUIRE UNITTEST_CHECK(svg_reader.ReadFile(in_geometry_path, data.elements, data.necklaces));
+  }
+
+  geoviz::DataReader data_reader;
+  UNITTEST_CHECK(data_reader.ReadFile(in_data_path, in_value_name, data.elements));
+
+  geoviz::necklace_map::Parameters parameters;
+  DefaultParameters(parameters);
+  parameters.heuristic_steps = 0;
+
+  const geoviz::Number scale_factor = ComputeScaleFactor(parameters, data.elements, data.necklaces);
+  UNITTEST_CHECK_CLOSE(1.509, scale_factor, 0.001);
+}
+
 } // suite_NecklaceMap
 
 #endif //GEOVIZ_TEST_NECKLACE_MAP_NECKLACE_MAP_H

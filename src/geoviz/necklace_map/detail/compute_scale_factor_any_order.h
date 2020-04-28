@@ -150,7 +150,7 @@ class TaskSlice
 
   void AddTask(const AnyOrderCycleNode::Ptr& task);
 
-  void produceSets();  // TODO(tvl) Rename to "?"
+  void ConstructSets();  // TODO(tvl) Rename to "?"
 
   TaskEvent event_left, event_right;
   std::vector<AnyOrderCycleNode::Ptr> tasks;
@@ -187,7 +187,7 @@ class CheckFeasible
 
     Number angle_rad;
     Number angle2_rad;
-    int layer;
+    int layer;  // TODO(tvl) replace by task->layer?
     AnyOrderCycleNode::Ptr task;
   }; // struct Value
 
@@ -268,13 +268,13 @@ class ComputeScaleFactorAnyOrder
   NecklaceShape::Ptr necklace_shape_;
 
   // Note that the scaler must be able to access the set by index.
-  NodeSet nodes_;
+  NodeSet nodes_;  // TODO(tvl) replace by check_->nodes_;
 
   Number half_buffer_rad_;
   //Number max_buffer_rad_;  // Based on smallest scaled radius?
 
   int binary_search_depth_;
-  CheckFeasible::Ptr check_feasible_;
+  CheckFeasible::Ptr check_feasible_;  // TODO(tvl) rename "check_"
 }; // class ComputeScaleFactorAnyOrder
 
 

@@ -140,6 +140,7 @@ TaskSlice::TaskSlice(const TaskSlice& slice, const int step) :
   sets(slice.sets),
   layers(slice.layers)
 {
+  // Determine the part of the necklace covered by this slice, i.e. after circling the necklace a fixed number of times.
   const Number offset = step * M_2xPI;
   coverage.from() = event_left.angle_rad + offset;
   coverage.to() = Modulo(event_right.angle_rad + offset, coverage.from());
@@ -147,24 +148,37 @@ TaskSlice::TaskSlice(const TaskSlice& slice, const int step) :
 
 
 
+  // Copy the tasks.
   tasks.resize(slice.tasks.size());
-  for (int i = 0; i < slice.tasks.size(); i++)
+  ptrdiff_t i = -1;
+  for (const AnyOrderCycleNode::Ptr& task : slice.tasks)
   {
-    if (slice.tasks[i] == nullptr) tasks[i] = nullptr;
-    else
+    ++i;
+    if (task == nullptr)
     {
-      if (step > 0 || coverage.to() > slice.tasks[i]->valid->to() || !slice.tasks[i]->valid->Contains(0) ||
-          slice.tasks[i]->valid->from() == 0)
-      {
-        tasks[i] = std::make_shared<AnyOrderCycleNode>(*slice.tasks[i]);  // TODO(tvl) note, this must be a new pointer.
-        tasks[i]->valid = std::make_shared<Range>(*tasks[i]->valid);
-
-        Range r1(tasks[i]->valid->from(), event_left.angle_rad);
-        Range r2(event_left.angle_rad, tasks[i]->valid->to());
-        tasks[i]->valid->from() = coverage.from() - r1.ComputeLength();
-        tasks[i]->valid->to() = coverage.from() + r2.ComputeLength();
-      } else tasks[i] = nullptr;
+      tasks[i] = nullptr;
+      continue;
     }
+
+    if
+    (
+      step == 0 &&
+      coverage.to() <= task->valid->to() &&
+      task->valid->Contains(0) &&
+      task->valid->from() != 0
+    )
+    {
+      tasks[i] = nullptr;
+      continue;
+    }
+
+    // Note that we must clone the task, i.e. construct a separate object, with its valid range offset to fit the slice.
+    tasks[i] = std::make_shared<AnyOrderCycleNode>(*task);
+    tasks[i]->valid = std::make_shared<Range>
+    (
+      task->valid->from() + offset,
+      task->valid->to() + offset
+    );
   }
 }
 
@@ -172,24 +186,25 @@ void TaskSlice::Reset()
 {
   coverage.from() = event_left.angle_rad;
   coverage.to() = event_right.angle_rad;
-  for (int i = 0; i < tasks.size(); i++)
+  for (const AnyOrderCycleNode::Ptr& task : tasks)
   {
-    if (tasks[i] != nullptr)
-    {
-      AnyOrderCycleNode::Ptr& task = tasks[i];
-      task->valid = std::make_shared<Range>(*task->bead->feasible);
-      task->disabled = false;
-    }
+    if (!task)
+      continue;
+
+    task->valid = std::make_shared<Range>(*task->bead->feasible);
+    task->disabled = false;
   }
 }
 
-void TaskSlice::Rotate(const Number value, const std::vector<AnyOrderCycleNode::Ptr>& tasks, const BitString& split)
+void TaskSlice::Rotate(const Number value, const std::vector<AnyOrderCycleNode::Ptr>& cds, const BitString& split)
 {
-  Range r1(value, coverage.from());
-  Range r2(value, coverage.to());
-  coverage.from() = r1.ComputeLength();
-  coverage.to() = r2.ComputeLength();
-  if (coverage.to() < kEpsilon) coverage.to() = M_2xPI;
+  {
+    Range r1(value, coverage.from());
+    Range r2(value, coverage.to());
+    coverage.from() = r1.ComputeLength();
+    coverage.to() = r2.ComputeLength();
+    if (coverage.to() < kEpsilon) coverage.to() = M_2xPI;
+  }
 
   // TODO(tvl) when changing r1/r2, only set the second value?
   for (int i = 0; i < tasks.size(); i++)
@@ -197,18 +212,18 @@ void TaskSlice::Rotate(const Number value, const std::vector<AnyOrderCycleNode::
     if (tasks[i] != nullptr)
     {
       const AnyOrderCycleNode::Ptr& task = tasks[i];
-      if (tasks[i] != nullptr && tasks[i]->bead == task->bead)
+      if (cds[i] != nullptr && cds[i]->bead == task->bead)
       {
         if (split.HasBit(i))
         {
-          r2 = Range(value, task->valid->to());
+          Range r2(value, task->valid->to());
           task->valid->from() = 0.0;
           task->valid->to() = r2.ComputeLength();
           if (r2.ComputeLength() - kEpsilon <= coverage.from())
             task->disabled = true;
         } else
         {
-          r1 = Range(value, task->valid->from());
+          Range r1(value, task->valid->from());
           task->valid->from() = r1.ComputeLength();
           task->valid->to() = M_2xPI;
           if (r1.ComputeLength() + kEpsilon >= coverage.to())
@@ -216,8 +231,8 @@ void TaskSlice::Rotate(const Number value, const std::vector<AnyOrderCycleNode::
         }
       } else
       {
-        r1 = Range(value, task->valid->from());
-        r2 = Range(value, task->valid->to());
+        Range r1(value, task->valid->from());
+        Range r2(value, task->valid->to());
         task->valid->from() = r1.ComputeLength();
         task->valid->to() = r2.ComputeLength();
         if (task->valid->to() < kEpsilon)
@@ -235,12 +250,13 @@ void TaskSlice::AddTask(const AnyOrderCycleNode::Ptr& task)
   CHECK(BitString::CheckFit(num_tasks));
 }
 
-void TaskSlice::produceSets()
+void TaskSlice::ConstructSets()
 {
+  // Sets should be all the combinations of used layers (tasks).
+
+
   sets.resize(1 << num_tasks);  // TODO(tvl) bitset?
-  std::vector<bool> filter(tasks.size());
-  for (int i = 0; i < tasks.size(); i++)
-    filter[i] = (tasks[i] != nullptr);
+
   int n = (1 << tasks.size());
   int k = 0;
   for (int i = 0; i < n; i++)
@@ -248,9 +264,11 @@ void TaskSlice::produceSets()
     bool valid = true;
     for (int j = 0, q = 1; j < tasks.size(); j++, q = (q << 1))
     {
-      if ((q & i) > 0 && !filter[j]) valid = false;
+      if ((q & i) != 0 && tasks[j] == nullptr)
+        valid = false;
     }
-    if (valid) sets[k++].SetString(i);
+    if (valid)
+      sets[k++].SetString(i);
   }
 
   layers.resize(num_tasks);
@@ -326,7 +344,7 @@ void CheckFeasible::InitializeSlices()
   }
 
   for (TaskSlice& slice : slices_)
-    slice.produceSets();
+    slice.ConstructSets();
 
   // make sure first slice is start of task
   while (slices_[0].event_left.type == TaskEvent::Type::kTo)
@@ -383,12 +401,12 @@ bool CheckFeasibleExact::operator()()
     if (slices_[i].event_left.type == TaskEvent::Type::kFrom)
     {
       int q = (1 << slices_[i].event_left.node->layer);
+      //int q = slices_[i].event_left.node->layer;
       for (int j = 0; j < slices_[i].sets.size(); j++)
       {
         const BitString& str2 = slices_[i].sets[j];
         int q2 = str2.Get();
-        if (str2.HasBit(q))
-        {
+        if ((q2&q) != 0) {
 
           // split the circle (ranges, event times, the works)
           SplitCircle(i, str2);
@@ -428,12 +446,9 @@ bool CheckFeasibleExact::FeasibleLine
   const BitString& split
 )
 {
-
-
   BitString split2 = split.Xor(slices_[slice_index].sets.back());  //TODO(tvl) rename split_inverse?
 
   // initialization
-  //const TaskSlice& slice = slices_[slice];
   values_[0][0].angle_rad = 0.0;
   values_[0][0].layer = -1;
   values_[0][0].task = std::make_shared<AnyOrderCycleNode>();
@@ -539,7 +554,7 @@ bool CheckFeasibleExact::FeasibleLine
       if ((q & (1 << values_[s][q].layer)) == 0) return false;
       q -= (1 << values_[s][q].layer);
       task->bead->angle_rad = t + slices_[slice_index].event_left.angle_rad;
-      t = values_[s][q].angle_rad - values_[s][q].task->bead->covering_radius_rad;
+      t = values_[s][q].angle_rad - (!values_[s][q].task->bead ? 0 : values_[s][q].task->bead->covering_radius_rad);
       while (slices_[s2].coverage.from() > t + kEpsilon)
       {
         if (slices_[s2].event_left.type == TaskEvent::Type::kTo)
@@ -567,14 +582,10 @@ CheckFeasibleHeuristic::CheckFeasibleHeuristic(NodeSet& nodes, const int heurist
 
 bool CheckFeasibleHeuristic::operator()()
 {
-
-
-
   if (slices_.empty())
     return true;
 
   InitializeContainer();
-
 
   return FeasibleLine();
 }
