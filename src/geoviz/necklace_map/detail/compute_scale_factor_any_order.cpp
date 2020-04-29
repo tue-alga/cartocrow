@@ -148,35 +148,28 @@ TaskSlice::TaskSlice(const TaskSlice& slice, const int cycle) :
   coverage.to() = Modulo(event_right.angle_rad + offset, coverage.from());
 
   // Copy the tasks.
-  tasks.resize(slice.tasks.size());
-  ptrdiff_t i = -1;
+  tasks.reserve(slice.tasks.size());
   for (const AnyOrderCycleNode::Ptr& task : slice.tasks)
   {
-    ++i;
-    if (task == nullptr)
-    {
-      tasks[i] = nullptr;
-      continue;
-    }
-
+    tasks.emplace_back();
     if
     (
-      task->valid->to() < coverage.to() ||
-      task->valid->from() == 0 ||
-      !task->valid->Contains(0)
+      task &&
+      (
+        coverage.to() <= task->valid->to() &&
+        task->valid->from() != 0 &&
+        task->valid->Contains(0)
+      )
     )
     {
-      tasks[i] = nullptr;
-      continue;
+      // Note that we must clone the task, i.e. construct a separate object, with its valid range offset to fit the slice.
+      tasks.back() = std::make_shared<AnyOrderCycleNode>(*task);
+      tasks.back()->valid = std::make_shared<Range>
+      (
+        task->valid->from() + offset,
+        task->valid->to() + offset
+      );
     }
-
-    // Note that we must clone the task, i.e. construct a separate object, with its valid range offset to fit the slice.
-    tasks[i] = std::make_shared<AnyOrderCycleNode>(*task);
-    tasks[i]->valid = std::make_shared<Range>
-    (
-      task->valid->from() + offset,
-      task->valid->to() + offset
-    );
   }
 }
 
@@ -244,7 +237,7 @@ void TaskSlice::AddTask(const AnyOrderCycleNode::Ptr& task)
 {
   CHECK_LT(task->layer, tasks.size());
   tasks[task->layer] = task;
-  num_tasks++;
+  ++num_tasks;
   CHECK(BitString::CheckFit(num_tasks));
 }
 
@@ -376,12 +369,18 @@ void CheckFeasible::InitializeContainer()
 }
 
 
-CheckFeasible::Value::Value() :
-  angle_rad(std::numeric_limits<Number>::max()),
-  angle2_rad(std::numeric_limits<Number>::max()),
-  layer(-1),
-  task()
-{}
+CheckFeasible::Value::Value()
+{
+  Reset();
+}
+
+void CheckFeasible::Value::Reset()
+{
+  angle_rad = std::numeric_limits<Number>::max();
+  angle2_rad = std::numeric_limits<Number>::max();
+  layer = -1;
+  task.reset();
+}
 
 
 CheckFeasibleExact::CheckFeasibleExact(NodeSet& nodes) : CheckFeasible(nodes) {}
