@@ -194,48 +194,48 @@ void TaskSlice::Reset()
   }
 }
 
-void TaskSlice::Rotate(const Number value, const std::vector<AnyOrderCycleNode::Ptr>& cds, const BitString& split)
+void TaskSlice::Rotate(const TaskSlice& slice, const BitString& layer_set)
 {
-  {
-    Range r1(value, coverage.from());
-    Range r2(value, coverage.to());
-    coverage.from() = r1.ComputeLength();
-    coverage.to() = r2.ComputeLength();
-    if (coverage.to() < kEpsilon) coverage.to() = M_2xPI;
-  }
+  // Rotate this slice such that the origin is aligned with the start of the other slice.
+  const Number& angle_rad = slice.event_left.angle_rad;
+  coverage.from() -= angle_rad;
+  coverage.to() -= angle_rad;
+  if (coverage.to() < kEpsilon)
+    coverage.to() = M_2xPI;
 
-  // TODO(tvl) when changing r1/r2, only set the second value?
-  for (int i = 0; i < tasks.size(); i++)
+  for (int x = 0; x < tasks.size(); ++x)
   {
-    if (tasks[i] != nullptr)
+    const AnyOrderCycleNode::Ptr& task = tasks[x];
+    const int& layer = x;
+    if (!task)
+      continue;
+
+
+
+
+    if (slice.tasks[layer] && slice.tasks[layer]->bead == task->bead)
     {
-      const AnyOrderCycleNode::Ptr& task = tasks[i];
-      if (cds[i] != nullptr && cds[i]->bead == task->bead)
+      if (layer_set.HasBit(layer))
       {
-        if (split.HasBit(i))
-        {
-          Range r2(value, task->valid->to());
-          task->valid->from() = 0.0;
-          task->valid->to() = r2.ComputeLength();
-          if (r2.ComputeLength() - kEpsilon <= coverage.from())
-            task->disabled = true;
-        } else
-        {
-          Range r1(value, task->valid->from());
-          task->valid->from() = r1.ComputeLength();
-          task->valid->to() = M_2xPI;
-          if (r1.ComputeLength() + kEpsilon >= coverage.to())
-            task->disabled = true;
-        }
-      } else
-      {
-        Range r1(value, task->valid->from());
-        Range r2(value, task->valid->to());
-        task->valid->from() = r1.ComputeLength();
-        task->valid->to() = r2.ComputeLength();
-        if (task->valid->to() < kEpsilon)
-          task->valid->to() = M_2xPI;
+        task->valid->from() = 0.0;
+        task->valid->to() -= angle_rad;
+        if (task->valid->to() <= coverage.from() + kEpsilon)
+          task->disabled = true;
       }
+      else
+      {
+        task->valid->from() -= angle_rad;
+        task->valid->to() = M_2xPI;
+        if (coverage.to() <= task->valid->from() + kEpsilon)
+          task->disabled = true;
+      }
+    }
+    else
+    {
+      task->valid->from() -= angle_rad;
+      task->valid->to() -= angle_rad;
+      if (task->valid->to() < kEpsilon)
+        task->valid->to() = M_2xPI;
     }
   }
 }
