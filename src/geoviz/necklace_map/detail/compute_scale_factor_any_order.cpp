@@ -101,11 +101,11 @@ bool CompareTaskEvent::operator()(const TaskEvent& a, const TaskEvent& b) const
 
 
 
-bool BitString::CheckFit(const int bit) { return bit < 32; }
 
-void BitString::SetBit(const int bit) { CHECK(CheckFit(bit)); bits = ToString(bit); }
 
-bool BitString::AddBit(const int bit) { CHECK(CheckFit(bit)); return bits |= ToString(bit); }
+
+
+
 
 
 TaskSlice::TaskSlice() :
@@ -233,8 +233,8 @@ void TaskSlice::AddTask(const AnyOrderCycleNode::Ptr& task)
 void TaskSlice::ConstructSets()
 {
   // The sets are all permutations of used layers described as bit strings.
-  sets.reserve(BitString::ToString(tasks.size()));
-  sets.emplace_back(0);
+  sets.reserve(std::pow(2, tasks.size()));
+  sets.emplace_back();
   for (const AnyOrderCycleNode::Ptr& task : tasks)
   {
     if (!task)
@@ -401,8 +401,7 @@ bool CheckFeasibleExact::operator()()
       for (int j = 0; j < slices_[i].sets.size(); j++)
       {
         const BitString& str2 = slices_[i].sets[j];
-        int q2 = str2.Get();
-        if ((q2&q) != 0) {
+        if (str2.HasBit(slices_[i].event_left.node->layer)) {
 
           // split the circle (ranges, event times, the works)
           SplitCircle(slices_[i], str2);
@@ -439,7 +438,7 @@ bool CheckFeasibleExact::FeasibleLine
   const BitString& split
 )
 {
-  BitString split2 = split.Xor(slices_[slice_index].sets.back());  //TODO(tvl) rename split_inverse?
+  BitString split2 = split ^ (slices_[slice_index].sets.back());  //TODO(tvl) rename split_inverse?
 
   // initialization
   values_[0][0].angle_rad = 0.0;
@@ -454,14 +453,14 @@ bool CheckFeasibleExact::FeasibleLine
     {
       const BitString& str = slice.sets[j];
       int q = str.Get();  // TODO(tvl) remove q.
-      if (i == 0 && q == 0) continue;
+      if (i == 0 && str.Empty()) continue;
 
       values_[i][q].angle_rad = std::numeric_limits<double>::max();
       values_[i][q].layer = -1;
       values_[i][q].task = nullptr;
 
-      if (i == 0 && split2.HasAny(str)) continue;
-      if (i == slices_.size() - 1 && split.HasAny(str)) continue;
+      if (i == 0 && split2.Overlaps(str)) continue;
+      if (i == slices_.size() - 1 && split.Overlaps(str)) continue;
 
       if (i != 0)
       {
@@ -618,7 +617,7 @@ bool CheckFeasibleHeuristic::FeasibleLine()
     for (int j = 0; j < slice.sets.size(); j++)
     {
       int q = slice.sets[j].Get();  // TODO(tvl) remove q.
-      if (i == 0 && q == 0) continue;
+      if (i == 0 && slice.sets[j].Empty()) continue;
 
       values_[i][q].angle_rad = std::numeric_limits<double>::max();
       values_[i][q].angle2_rad = values_[i][q].angle_rad;

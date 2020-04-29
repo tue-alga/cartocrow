@@ -94,37 +94,33 @@ class CompareTaskEvent
 
 
 
-// The bit strings are used to keep track of the layers that are 'active' within a certain angle interval.
 class BitString
 {
  public:
-  static bool CheckFit(const int bit);
-
-  inline static int ToString(const int bit) { return 1 << bit; }
+  inline static bool CheckFit(const int bit) { return bit < 32; }
 
   inline static BitString FromBit(const int bit) { return BitString(ToString(bit)); }
+  inline static BitString FromString(const int bits) { return BitString(bits); }
 
   BitString() : bits(0) {}
 
-  BitString(const int string) : bits(string) {}  // TODO(tvl) make private and construct using static methods..
-
-  inline const int& Get() const { return bits; }
-
-  inline bool IsEmpty() const { return bits == 0; }
+  inline bool Empty() const { return bits == 0; }
 
   inline bool HasBit(const int bit) const { return ToString(bit) & bits != 0; }
 
-  inline bool HasAny(const BitString& string) const { return (string.bits & bits) != 0; }
+  inline bool Overlaps(const BitString& string) const { return (string.bits & bits) != 0; }
 
-  void SetBit(const int bit);
+  inline const int& Get() const { return bits; }  // TODO(tvl) remove?
 
-  inline void SetString(const int string) { bits = string; }
+  inline bool AddBit(const int bit) { return bits |= ToString(bit); }
 
-  bool AddBit(const int bit);
-
-  inline BitString Xor(const BitString& string) const { return BitString(bits ^ string.bits); }
+  inline BitString operator^(const BitString& string) const { return BitString(bits ^ string.bits); }
 
  private:
+  inline static int ToString(const int bit) { return 1 << bit; }
+
+  explicit BitString(const int string) : bits(string) {}
+
   int bits;
 }; // class BitString
 
