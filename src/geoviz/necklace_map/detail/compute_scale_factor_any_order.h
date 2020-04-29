@@ -188,7 +188,6 @@ class CheckFeasible
 
     Number angle_rad;
     Number angle2_rad;
-    int layer;  // TODO(tvl) replace by task->layer?
     AnyOrderCycleNode::Ptr task;
   }; // struct Value
 

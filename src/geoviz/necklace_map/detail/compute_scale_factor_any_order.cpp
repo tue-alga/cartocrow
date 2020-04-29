@@ -294,7 +294,6 @@ void CheckFeasible::Value::Reset()
 {
   angle_rad = std::numeric_limits<Number>::max();
   angle2_rad = std::numeric_limits<Number>::max();
-  layer = -1;
   task.reset();
 }
 
@@ -439,8 +438,7 @@ bool CheckFeasibleExact::FeasibleLine
 
   // initialization
   values_[0][0].angle_rad = 0.0;
-  values_[0][0].layer = -1;
-  values_[0][0].task = std::make_shared<AnyOrderCycleNode>();
+  values_[0][0].task = std::make_shared<AnyOrderCycleNode>();  // TODO(tvl) nullptr?
 
   for (int i = 0; i < slices_.size(); i++)
   {
@@ -453,7 +451,6 @@ bool CheckFeasibleExact::FeasibleLine
       if (i == 0 && str.Empty()) continue;
 
       values_[i][q].angle_rad = std::numeric_limits<double>::max();
-      values_[i][q].layer = -1;
       values_[i][q].task = nullptr;
 
       if (i == 0 && split2.Overlaps(str)) continue;
@@ -466,18 +463,14 @@ bool CheckFeasibleExact::FeasibleLine
         {
           if ((q & (1 << slice.event_left.node->layer)) == 0)
           {
-            values_[i][q].angle_rad = values_[i - 1][q].angle_rad;
-            values_[i][q].layer = values_[i - 1][q].layer;
-            values_[i][q].task = values_[i - 1][q].task;
+            values_[i][q] = values_[i - 1][q];
           }
         } else
         {
           int q2 = q + (1 << slice.event_left.node->layer);
           if (slices_[(s + slices_.size() - 1) % slices_.size()].tasks[slice.event_left.node->layer]->disabled)
             q2 -= (1 << slice.event_left.node->layer); // special case
-          values_[i][q].angle_rad = values_[i - 1][q2].angle_rad;
-          values_[i][q].layer = values_[i - 1][q2].layer;
-          values_[i][q].task = values_[i - 1][q2].task;
+          values_[i][q] = values_[i - 1][q2];
         }
       }
       if (values_[i][q].angle_rad < std::numeric_limits<double>::max()) continue;
@@ -505,7 +498,6 @@ bool CheckFeasibleExact::FeasibleLine
         if (t1 <= task->valid->to() && t1 + task->bead->covering_radius_rad < values_[i][q].angle_rad)
         {
           values_[i][q].angle_rad = t1 + task->bead->covering_radius_rad;
-          values_[i][q].layer = layer;
           values_[i][q].task = task;
         }
       }
@@ -538,12 +530,12 @@ bool CheckFeasibleExact::FeasibleLine
     }
 
 
-    while (s >= 0 && values_[s][q].layer != -1)
+    while (s >= 0 && values_[s][q].task->layer != -1)
     {
       //System.out.println(s + ", " + q);
       AnyOrderCycleNode::Ptr& task = values_[s][q].task;
-      if ((q & (1 << values_[s][q].layer)) == 0) return false;
-      q -= (1 << values_[s][q].layer);
+      if ((q & (1 << values_[s][q].task->layer)) == 0) return false;
+      q -= (1 << values_[s][q].task->layer);
       task->bead->angle_rad = t + slices_[slice_index].event_left.angle_rad;
       t = values_[s][q].angle_rad - (!values_[s][q].task->bead ? 0 : values_[s][q].task->bead->covering_radius_rad);
       while (slices_[s2].coverage.from() > t + kEpsilon)
@@ -605,7 +597,6 @@ bool CheckFeasibleHeuristic::FeasibleLine()
   // initialization
   values_[0][0].angle_rad = 0.0;
   values_[0][0].angle2_rad = 0.0;
-  values_[0][0].layer = -1;
   values_[0][0].task = std::make_shared<AnyOrderCycleNode>();
 
   for (int i = 0; i < slices_.size(); i++)
@@ -616,9 +607,7 @@ bool CheckFeasibleHeuristic::FeasibleLine()
       int q = slice.sets[j].Get();  // TODO(tvl) remove q.
       if (i == 0 && slice.sets[j].Empty()) continue;
 
-      values_[i][q].angle_rad = std::numeric_limits<double>::max();
-      values_[i][q].angle2_rad = values_[i][q].angle_rad;
-      values_[i][q].layer = -1;
+      values_[i][q].angle_rad = values_[i][q].angle2_rad = std::numeric_limits<double>::max();
       values_[i][q].task = nullptr;
 
       if (i != 0)
@@ -628,19 +617,13 @@ bool CheckFeasibleHeuristic::FeasibleLine()
         {
           if ((q & (1 << slice.event_left.node->layer)) == 0)
           {
-            values_[i][q].angle_rad = values_[i - 1][q].angle_rad;
-            values_[i][q].angle2_rad = values_[i - 1][q].angle2_rad;
-            values_[i][q].layer = values_[i - 1][q].layer;
-            values_[i][q].task = values_[i - 1][q].task;
+            values_[i][q] = values_[i - 1][q];
           }
         } else
         {
           int q2 = q + (1 << slice.event_left.node->layer);
           if (slices_[i - 1].tasks[slice.event_left.node->layer] == nullptr) q2 -= (1 << slice.event_left.node->layer); // special case
-          values_[i][q].angle_rad = values_[i - 1][q2].angle_rad;
-          values_[i][q].angle2_rad = values_[i - 1][q2].angle2_rad;
-          values_[i][q].layer = values_[i - 1][q2].layer;
-          values_[i][q].task = values_[i - 1][q2].task;
+          values_[i][q] = values_[i - 1][q2];
         }
       }
 
@@ -669,7 +652,6 @@ bool CheckFeasibleHeuristic::FeasibleLine()
         {
           values_[i][q].angle_rad = t1 + size;
           values_[i][q].angle2_rad = t1;
-          values_[i][q].layer = layer;
           values_[i][q].task = task;
         }
       }
@@ -697,10 +679,10 @@ bool CheckFeasibleHeuristic::FeasibleLine()
     if (s < 0) break;
   }
 
-  while (s >= 0 && values_[s][q].layer != -1)
+  while (s >= 0 && values_[s][q].task->layer != -1)
   {
     AnyOrderCycleNode::Ptr& task = values_[s][q].task;
-    q -= (1 << values_[s][q].layer);
+    q -= (1 << values_[s][q].task->layer);
     if (q < 0 || task == nullptr) return false;
     double size = task->bead ? task->bead->covering_radius_rad : 0;
 
