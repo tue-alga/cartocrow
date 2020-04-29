@@ -102,9 +102,11 @@ class BitString
 
   inline static int ToString(const int bit) { return 1 << bit; }
 
+  inline static BitString FromBit(const int bit) { return BitString(ToString(bit)); }
+
   BitString() : bits(0) {}
 
-  explicit BitString(const int string) : bits(string) {}
+  BitString(const int string) : bits(string) {}  // TODO(tvl) make private and construct using static methods..
 
   inline const int& Get() const { return bits; }
 
@@ -158,8 +160,6 @@ class TaskSlice
   Range coverage;
 
   std::vector<AnyOrderCycleNode::Ptr> tasks;
-  int num_tasks;  // TODO(tvl) necessary?
-
   std::vector<BitString> sets;
 }; // class TaskSlice
 

@@ -113,7 +113,6 @@ TaskSlice::TaskSlice() :
   event_right(),
   coverage(0, 0),
   tasks(),
-  num_tasks(0),
   sets()
 {}
 
@@ -125,16 +124,15 @@ TaskSlice::TaskSlice
 ) :
   event_left(event_left),
   event_right(event_right),
-  num_tasks(0),
   coverage(event_left.angle_rad, event_right.angle_rad)
 {
+  CHECK(BitString::CheckFit(num_layers));
   tasks.resize(num_layers);
 }
 
 TaskSlice::TaskSlice(const TaskSlice& slice, const int cycle) :
   event_left(slice.event_left),
   event_right(slice.event_right),
-  num_tasks(slice.num_tasks),
   coverage(0, 0),
   sets(slice.sets)
 {
@@ -194,19 +192,14 @@ void TaskSlice::Rotate(const TaskSlice& slice, const BitString& layer_set)
   if (coverage.to() < kEpsilon)
     coverage.to() = M_2xPI;
 
-  for (int x = 0; x < tasks.size(); ++x)
+  for (const AnyOrderCycleNode::Ptr& task : tasks)
   {
-    const AnyOrderCycleNode::Ptr& task = tasks[x];
-    const int& layer = x;
     if (!task)
       continue;
 
-
-
-
-    if (slice.tasks[layer] && slice.tasks[layer]->bead == task->bead)
+    if (slice.tasks[task->layer] && slice.tasks[task->layer]->bead == task->bead)
     {
-      if (layer_set.HasBit(layer))
+      if (layer_set.HasBit(task->layer))
       {
         task->valid->from() = 0.0;
         task->valid->to() -= angle_rad;
@@ -235,31 +228,25 @@ void TaskSlice::AddTask(const AnyOrderCycleNode::Ptr& task)
 {
   CHECK_LT(task->layer, tasks.size());
   tasks[task->layer] = task;
-  ++num_tasks;
-  CHECK(BitString::CheckFit(num_tasks));
 }
 
 void TaskSlice::ConstructSets()
 {
-  // The sets are the permutations of used layers.
-
-
-
-
-  sets.resize(1 << num_tasks);  // TODO(tvl) bitset?
-
-  int n = (1 << tasks.size());
-  int k = 0;
-  for (int i = 0; i < n; i++)
+  // The sets are all permutations of used layers described as bit strings.
+  sets.reserve(BitString::ToString(tasks.size()));
+  sets.emplace_back(0);
+  for (const AnyOrderCycleNode::Ptr& task : tasks)
   {
-    bool valid = true;
-    for (int j = 0, q = 1; j < tasks.size(); j++, q = (q << 1))
-    {
-      if ((q & i) != 0 && tasks[j] == nullptr)
-        valid = false;
-    }
-    if (valid)
-      sets[k++].SetString(i);
+    if (!task)
+      continue;
+
+    std::transform
+    (
+      sets.begin(),
+      sets.end(),
+      std::back_inserter(sets),
+      [task](BitString string) -> BitString { string.AddBit(task->layer); return string; }
+    );
   }
 }
 
