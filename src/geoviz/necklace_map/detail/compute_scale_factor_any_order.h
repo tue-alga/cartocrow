@@ -155,11 +155,13 @@ class TaskSlice
   void ConstructSets();  // TODO(tvl) Rename to "?"
 
   TaskEvent event_left, event_right;
+  Range coverage;
+
   std::vector<AnyOrderCycleNode::Ptr> tasks;
   int num_tasks;  // TODO(tvl) necessary?
-  Range coverage;
-  std::vector<BitString> sets;
   std::vector<int> layers;  // TODO(tvl) necessary?
+
+  std::vector<BitString> sets;
 }; // class TaskSlice
 
 
@@ -177,7 +179,9 @@ class CheckFeasible
 
   CheckFeasible(NodeSet& nodes);
 
-  virtual void InitializeSlices();
+  void InitializeSlices();
+
+  void InitializeContainer();
 
   // Note that the covering radius of each node should be set before calling this.
   virtual bool operator()() = 0;
@@ -195,7 +199,9 @@ class CheckFeasible
     AnyOrderCycleNode::Ptr task;
   }; // struct Value
 
-  void InitializeContainer();
+  virtual void InitializeSlices_();
+
+  void ResetContainer();
 
   NodeSet& nodes_;
   std::vector<TaskSlice> slices_;
@@ -230,11 +236,11 @@ class CheckFeasibleHeuristic : public CheckFeasible
  public:
   CheckFeasibleHeuristic(NodeSet& nodes, const int heuristic_cycles);
 
-  void InitializeSlices() override;
-
   bool operator()() override;
 
  private:
+  void InitializeSlices_() override;
+
   bool FeasibleLine();
 
   const int heuristic_cycles_;

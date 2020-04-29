@@ -287,6 +287,42 @@ CheckFeasible::CheckFeasible(NodeSet& nodes): slices_(), nodes_(nodes) {}
 
 void CheckFeasible::InitializeSlices()
 {
+  InitializeSlices_();
+  InitializeContainer();
+}
+
+void CheckFeasible::InitializeContainer()
+{
+
+
+  // setup DP array
+  values_.clear();
+  values_.resize(slices_.size());
+
+  const int num_layers = slices_.front().tasks.size();
+  int nSubSets = (1 << num_layers);
+  for (int i = 0; i < slices_.size(); i++)
+    values_[i].resize(nSubSets);
+
+
+}
+
+
+CheckFeasible::Value::Value()
+{
+  Reset();
+}
+
+void CheckFeasible::Value::Reset()
+{
+  angle_rad = std::numeric_limits<Number>::max();
+  angle2_rad = std::numeric_limits<Number>::max();
+  layer = -1;
+  task.reset();
+}
+
+void CheckFeasible::InitializeSlices_()
+{
 
 
 
@@ -352,34 +388,18 @@ void CheckFeasible::InitializeSlices()
 
 }
 
-void CheckFeasible::InitializeContainer()
+void CheckFeasible::ResetContainer()
 {
+  if (values_[0][0].angle_rad == std::numeric_limits<double>::max())
+    return;
+
+  // reset DP array
+  for (std::vector<Value>& values : values_)
+    for (Value& value : values)
+      value.Reset();
 
 
-  // setup DP array
-  values_.clear();
-  values_.resize(slices_.size());
 
-  const int num_layers = slices_.front().tasks.size();
-  int nSubSets = (1 << num_layers);
-  for (int i = 0; i < slices_.size(); i++)
-    values_[i].resize(nSubSets);
-
-
-}
-
-
-CheckFeasible::Value::Value()
-{
-  Reset();
-}
-
-void CheckFeasible::Value::Reset()
-{
-  angle_rad = std::numeric_limits<Number>::max();
-  angle2_rad = std::numeric_limits<Number>::max();
-  layer = -1;
-  task.reset();
 }
 
 
@@ -390,7 +410,7 @@ bool CheckFeasibleExact::operator()()
   if (slices_.empty())
     return true;
 
-  InitializeContainer();
+  ResetContainer();
 
 
 
@@ -581,14 +601,14 @@ bool CheckFeasibleHeuristic::operator()()
   if (slices_.empty())
     return true;
 
-  InitializeContainer();
+  ResetContainer();
 
   return FeasibleLine();
 }
 
-void CheckFeasibleHeuristic::InitializeSlices()
+void CheckFeasibleHeuristic::InitializeSlices_()
 {
-  CheckFeasible::InitializeSlices();
+  CheckFeasible::InitializeSlices_();
 
   // Clone the slices.
   const size_t num_slices = slices_.size();
