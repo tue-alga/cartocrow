@@ -93,21 +93,6 @@ bool CompareTaskEvent::operator()(const TaskEvent& a, const TaskEvent& b) const
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 TaskSlice::TaskSlice() :
   event_left(),
   event_right(),
@@ -117,11 +102,11 @@ TaskSlice::TaskSlice() :
 {}
 
 TaskSlice::TaskSlice
-(
-  const TaskEvent& event_left,
-  const TaskEvent& event_right,
-  const int num_layers
-) :
+  (
+    const TaskEvent& event_left,
+    const TaskEvent& event_right,
+    const int num_layers
+  ) :
   event_left(event_left),
   event_right(event_right),
   coverage(event_left.angle_rad, event_right.angle_rad)
@@ -149,22 +134,22 @@ TaskSlice::TaskSlice(const TaskSlice& slice, const int cycle) :
   {
     tasks.emplace_back();
     if
-    (
+      (
       task &&
       (
         coverage.to() <= task->valid->to() &&
         task->valid->from() != 0 &&
         task->valid->Contains(0)
       )
-    )
+      )
     {
       // Note that we must clone the task, i.e. construct a separate object, with its valid range offset to fit the slice.
       tasks.back() = std::make_shared<AnyOrderCycleNode>(*task);
       tasks.back()->valid = std::make_shared<Range>
-      (
-        task->valid->from() + offset,
-        task->valid->to() + offset
-      );
+        (
+          task->valid->from() + offset,
+          task->valid->to() + offset
+        );
     }
   }
 }
@@ -183,10 +168,10 @@ void TaskSlice::Reset()
   }
 }
 
-void TaskSlice::Rotate(const TaskSlice& slice, const BitString& layer_set)
+void TaskSlice::Rotate(const TaskSlice& first_slice, const BitString& layer_set)
 {
   // Rotate this slice such that the origin is aligned with the start of the other slice.
-  const Number& angle_rad = slice.event_left.angle_rad;
+  const Number& angle_rad = first_slice.event_left.angle_rad;
   coverage.from() -= angle_rad;
   coverage.to() -= angle_rad;
   if (coverage.to() < kEpsilon)
@@ -197,7 +182,7 @@ void TaskSlice::Rotate(const TaskSlice& slice, const BitString& layer_set)
     if (!task)
       continue;
 
-    if (slice.tasks[task->layer] && slice.tasks[task->layer]->bead == task->bead)
+    if (first_slice.tasks[task->layer] && first_slice.tasks[task->layer]->bead == task->bead)
     {
       if (layer_set.HasBit(task->layer))
       {
@@ -230,7 +215,7 @@ void TaskSlice::AddTask(const AnyOrderCycleNode::Ptr& task)
   tasks[task->layer] = task;
 }
 
-void TaskSlice::ConstructSets()
+void TaskSlice::Finalize()
 {
   // The sets are all permutations of used layers described as bit strings.
   sets.reserve(std::pow(2, tasks.size()));
@@ -241,14 +226,29 @@ void TaskSlice::ConstructSets()
       continue;
 
     std::transform
-    (
-      sets.begin(),
-      sets.end(),
-      std::back_inserter(sets),
-      [task](BitString string) -> BitString { string.AddBit(task->layer); return string; }
-    );
+      (
+        sets.begin(),
+        sets.end(),
+        std::back_inserter(sets),
+        [task](BitString string) -> BitString { string.AddBit(task->layer); return string; }
+      );
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -262,9 +262,9 @@ CheckFeasible::Ptr CheckFeasible::New(NodeSet& nodes, const int heuristic_cycles
 
 CheckFeasible::CheckFeasible(NodeSet& nodes): slices_(), nodes_(nodes) {}
 
-void CheckFeasible::InitializeSlices()
+void CheckFeasible::Initialize()
 {
-  InitializeSlices_();
+  InitializeSlices();
   InitializeContainer();
 }
 
@@ -298,7 +298,7 @@ void CheckFeasible::Value::Reset()
   task.reset();
 }
 
-void CheckFeasible::InitializeSlices_()
+void CheckFeasible::InitializeSlices()
 {
 
 
@@ -350,7 +350,7 @@ void CheckFeasible::InitializeSlices_()
   }
 
   for (TaskSlice& slice : slices_)
-    slice.ConstructSets();
+    slice.Finalize();
 
   // make sure first slice is start of task
   while (slices_[0].event_left.type == TaskEvent::Type::kTo)
@@ -370,13 +370,10 @@ void CheckFeasible::ResetContainer()
   if (values_[0][0].angle_rad == std::numeric_limits<double>::max())
     return;
 
-  // reset DP array
+  // Reset the dynamic programming results container.
   for (std::vector<Value>& values : values_)
     for (Value& value : values)
       value.Reset();
-
-
-
 }
 
 
@@ -584,9 +581,9 @@ bool CheckFeasibleHeuristic::operator()()
   return FeasibleLine();
 }
 
-void CheckFeasibleHeuristic::InitializeSlices_()
+void CheckFeasibleHeuristic::InitializeSlices()
 {
-  CheckFeasible::InitializeSlices_();
+  CheckFeasible::InitializeSlices();
 
   // Clone the slices.
   const size_t num_slices = slices_.size();
@@ -800,7 +797,7 @@ Number ComputeScaleFactorAnyOrder::Optimize()
     return 0;
 
   // Initialize the collection of task slices: collections of fixed tasks that are relevant within some angle range.
-  check_feasible_->InitializeSlices();
+  check_feasible_->Initialize();
 
   // Perform a binary search on the scale factor, determining which are feasible.
   // This binary search requires a decent initial upper bound on the scale factor.

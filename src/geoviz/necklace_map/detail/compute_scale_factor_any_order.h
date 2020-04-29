@@ -86,14 +86,6 @@ class CompareTaskEvent
 }; // class CompareTaskEvent
 
 
-
-
-
-
-
-
-
-
 class BitString
 {
  public:
@@ -125,32 +117,27 @@ class BitString
 }; // class BitString
 
 
-
-
-
-
-
 class TaskSlice
 {
  public:
   TaskSlice();
 
   TaskSlice
-  (
-    const TaskEvent& event_left,
-    const TaskEvent& event_right,
-    const int num_layers
-  );
+    (
+      const TaskEvent& event_left,
+      const TaskEvent& event_right,
+      const int num_layers
+    );
 
   TaskSlice(const TaskSlice& slice, const int cycle);
 
   void Reset();
 
-  void Rotate(const TaskSlice& slice, const BitString& layer_set);
+  void Rotate(const TaskSlice& first_slice, const BitString& layer_set);
 
   void AddTask(const AnyOrderCycleNode::Ptr& task);
 
-  void ConstructSets();  // TODO(tvl) Rename to "?"
+  void Finalize();
 
   TaskEvent event_left, event_right;
   Range coverage;
@@ -158,6 +145,19 @@ class TaskSlice
   std::vector<AnyOrderCycleNode::Ptr> tasks;
   std::vector<BitString> sets;
 }; // class TaskSlice
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -172,16 +172,14 @@ class CheckFeasible
 
   static Ptr New(NodeSet& nodes, const int heuristic_cycles);
 
-  CheckFeasible(NodeSet& nodes);
-
-  void InitializeSlices();
-
-  void InitializeContainer();
+  void Initialize();
 
   // Note that the covering radius of each node should be set before calling this.
   virtual bool operator()() = 0;
 
  protected:
+  CheckFeasible(NodeSet& nodes);
+
   struct Value
   {
     Value();
@@ -194,7 +192,9 @@ class CheckFeasible
     AnyOrderCycleNode::Ptr task;
   }; // struct Value
 
-  virtual void InitializeSlices_();
+  virtual void InitializeSlices();
+
+  void InitializeContainer();
 
   void ResetContainer();
 
@@ -220,7 +220,7 @@ class CheckFeasibleExact : public CheckFeasible
 
   bool FeasibleLine
   (
-    const int slice,
+    const int slice_index,
     const BitString& split
   );
 }; // class CheckFeasibleExact
@@ -234,7 +234,7 @@ class CheckFeasibleHeuristic : public CheckFeasible
   bool operator()() override;
 
  private:
-  void InitializeSlices_() override;
+  void InitializeSlices() override;
 
   bool FeasibleLine();
 
@@ -273,7 +273,7 @@ class ComputeScaleFactorAnyOrder
   NecklaceShape::Ptr necklace_shape_;
 
   // Note that the scaler must be able to access the set by index.
-  NodeSet nodes_;  // TODO(tvl) replace by check_->nodes_;
+  NodeSet nodes_;
 
   Number half_buffer_rad_;
   //Number max_buffer_rad_;  // Based on smallest scaled radius?
