@@ -98,7 +98,7 @@ DEFINE_string
 (
   order_type,
   "any",
-  "The order type enforced by the scale factor algorithm. Must be one of {'fixed', 'any', 'heuristic'}."
+  "The order type enforced by the scale factor algorithm. Must be one of {'fixed', 'any'}."
 );
 
 DEFINE_int32
@@ -110,9 +110,9 @@ DEFINE_int32
 
 DEFINE_int32
 (
-  heuristic_steps,
+  heuristic_cycles,
   5,
-  "The number of heuristic steps used by the any-order algorithm. Must be non-negative; if the number of 0, the exact algorithm is used."
+  "The number of heuristic cycles used by the any-order algorithm. Must be non-negative; if the number of 0, the exact algorithm is used."
 );
 
 DEFINE_double
@@ -254,8 +254,8 @@ void ValidateFlags(geoviz::necklace_map::Parameters& parameters, geoviz::WriterO
     correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(search_depth), validate::MakeStrictLowerBoundCheck(0));
     parameters.binary_search_depth = FLAGS_search_depth;
 
-    correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(heuristic_steps), validate::MakeLowerBoundCheck(0));
-    parameters.heuristic_steps = FLAGS_heuristic_steps;
+    correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(heuristic_cycles), validate::MakeLowerBoundCheck(0));
+    parameters.heuristic_cycles = FLAGS_heuristic_cycles;
   }
 
   // Placement parameters.

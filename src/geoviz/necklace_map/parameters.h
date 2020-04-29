@@ -40,8 +40,7 @@ enum class IntervalType
 enum class OrderType
 {
   kFixed,
-  kAny,
-  kHeuristicAny
+  kAny
 };
 
 
@@ -59,7 +58,7 @@ struct Parameters
   Number buffer_rad;
 
   int binary_search_depth;
-  int heuristic_steps;
+  int heuristic_cycles;
 
   // Placement.
   Number aversion_ratio;

@@ -50,12 +50,12 @@ namespace necklace_map
 ComputeScaleFactorAnyOrder::ComputeScaleFactorAnyOrder(const Parameters& parameters) :
   ComputeScaleFactor(parameters),
   binary_search_depth_(parameters.binary_search_depth),
-  heuristic_steps_(parameters.heuristic_steps)
+  heuristic_cycles_(parameters.heuristic_cycles)
 {}
 
 Number ComputeScaleFactorAnyOrder::operator()(Necklace::Ptr& necklace)
 {
-  detail::ComputeScaleFactorAnyOrder opt(necklace, buffer_rad_, binary_search_depth_, heuristic_steps_);
+  detail::ComputeScaleFactorAnyOrder opt(necklace, buffer_rad_, binary_search_depth_, heuristic_cycles_);
   const Number scale_factor = opt.Optimize();
 
   return scale_factor;

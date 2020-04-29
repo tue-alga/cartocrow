@@ -100,6 +100,8 @@ class BitString
  public:
   static bool CheckFit(const int bit);
 
+  inline static int ToString(const int bit) { return 1 << bit; }
+
   BitString() : bits(0) {}
 
   explicit BitString(const int string) : bits(string) {}
@@ -108,7 +110,7 @@ class BitString
 
   inline bool IsEmpty() const { return bits == 0; }
 
-  inline bool HasBit(const int bit) const { return (1 << bit) & bits != 0; }
+  inline bool HasBit(const int bit) const { return ToString(bit) & bits != 0; }
 
   inline bool HasAny(const BitString& string) const { return (string.bits & bits) != 0; }
 
@@ -142,7 +144,7 @@ class TaskSlice
     const int num_layers
   );
 
-  TaskSlice(const TaskSlice& slice, const int step);
+  TaskSlice(const TaskSlice& slice, const int cycle);
 
   void Reset();
 
@@ -171,7 +173,7 @@ class CheckFeasible
   using NodeSet = std::vector<AnyOrderCycleNode::Ptr>;
   using Ptr = std::shared_ptr<CheckFeasible>;
 
-  static Ptr New(NodeSet& nodes, const int heuristic_steps);
+  static Ptr New(NodeSet& nodes, const int heuristic_cycles);
 
   CheckFeasible(NodeSet& nodes);
 
@@ -224,7 +226,7 @@ class CheckFeasibleExact : public CheckFeasible
 class CheckFeasibleHeuristic : public CheckFeasible
 {
  public:
-  CheckFeasibleHeuristic(NodeSet& nodes, const int heuristic_steps);
+  CheckFeasibleHeuristic(NodeSet& nodes, const int heuristic_cycles);
 
   void InitializeSlices() override;
 
@@ -233,7 +235,7 @@ class CheckFeasibleHeuristic : public CheckFeasible
  private:
   bool FeasibleLine();
 
-  const int heuristic_steps_;
+  const int heuristic_cycles_;
 }; // class CheckFeasibleHeuristic
 
 
@@ -251,7 +253,7 @@ class ComputeScaleFactorAnyOrder
     const Necklace::Ptr& necklace,
     const Number& buffer_rad = 0,
     const int binary_search_depth = 10,
-    const int heuristic_steps = 5
+    const int heuristic_cycles = 5
   );
 
   Number Optimize();
@@ -286,7 +288,7 @@ class ComputeScaleFactorAnyOrderIngot : public ComputeScaleFactorAnyOrder
     const Necklace::Ptr& necklace,
     const Number& buffer_rad = 0,
     const int binary_search_depth = 10,
-    const int heuristic_steps = 5
+    const int heuristic_cycles = 5
   );
 
  protected:

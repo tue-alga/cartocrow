@@ -48,7 +48,7 @@ bool IntervalTypeParser::operator()(const std::string& str) const
     type = IntervalType::kCentroid;
     return true;
   }
-  if (str == kWedge)
+  else if (str == kWedge)
   {
     type = IntervalType::kWedge;
     return true;
@@ -96,14 +96,9 @@ bool OrderTypeParser::operator()(const std::string& str) const
     type = OrderType::kFixed;
     return true;
   }
-  if (str == kAny)
+  else if (str == kAny)
   {
     type = OrderType::kAny;
-    return true;
-  }
-  if (str == kHeuristic)
-  {
-    type = OrderType::kHeuristicAny;
     return true;
   }
   return false;
@@ -120,8 +115,6 @@ std::string OrderTypeParser::Serialize() const
       return kFixed;
     case OrderType::kAny:
       return kAny;
-    case OrderType::kHeuristicAny:
-      return kHeuristic;
   }
 }
 

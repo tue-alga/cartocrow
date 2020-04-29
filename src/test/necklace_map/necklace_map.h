@@ -155,7 +155,7 @@ UNITTEST_TEST_FIXTURE(NecklaceDataWesternEurope, WestEuropeBuffer)
 UNITTEST_TEST_FIXTURE(NecklaceDataWesternEurope, WestEuropeExact)
 {
   DefaultParameters(parameters);
-  parameters.heuristic_steps = 0;
+  parameters.heuristic_cycles = 0;
 
   const geoviz::Number scale_factor = ComputeScaleFactor(parameters, data.elements, data.necklaces);
   UNITTEST_CHECK_CLOSE(1.675, scale_factor, 0.001);
@@ -165,7 +165,7 @@ UNITTEST_TEST_FIXTURE(NecklaceDataWesternEurope, WestEuropeExactBuffer)
 {
   DefaultParameters(parameters);
   parameters.buffer_rad = 0.0349; // Roughly 2 degrees.
-  parameters.heuristic_steps = 0;
+  parameters.heuristic_cycles = 0;
 
   const geoviz::Number scale_factor = ComputeScaleFactor(parameters, data.elements, data.necklaces);
   UNITTEST_CHECK_CLOSE(1.470, scale_factor, 0.001);
@@ -220,7 +220,7 @@ UNITTEST_TEST_FIXTURE(NecklaceDataEastAsia, EastAsiaExactAgriculture)
   UNITTEST_CHECK(ReadValues(in_value_name));
 
   DefaultParameters(parameters);
-  parameters.heuristic_steps = 0;
+  parameters.heuristic_cycles = 0;
 
   const geoviz::Number scale_factor = ComputeScaleFactor(parameters, data.elements, data.necklaces);
   UNITTEST_CHECK_CLOSE(1.006, scale_factor, 0.001);
@@ -243,7 +243,7 @@ UNITTEST_TEST_FIXTURE(NecklaceDataEastAsia, EastAsiaExactPoverty)
   UNITTEST_CHECK(ReadValues(in_value_name));
 
   DefaultParameters(parameters);
-  parameters.heuristic_steps = 0;
+  parameters.heuristic_cycles = 0;
 
   const geoviz::Number scale_factor = ComputeScaleFactor(parameters, data.elements, data.necklaces);
   UNITTEST_CHECK_CLOSE(1.003, scale_factor, 0.001);
@@ -266,7 +266,7 @@ UNITTEST_TEST_FIXTURE(NecklaceDataEastAsia, EastAsiaExactInternet)
   UNITTEST_CHECK(ReadValues(in_value_name));
 
   DefaultParameters(parameters);
-  parameters.heuristic_steps = 0;
+  parameters.heuristic_cycles = 0;
 
   const geoviz::Number scale_factor = ComputeScaleFactor(parameters, data.elements, data.necklaces);
   UNITTEST_CHECK_CLOSE(1.509, scale_factor, 0.001);

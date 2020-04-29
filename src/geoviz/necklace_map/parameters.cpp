@@ -54,7 +54,7 @@ Parameters::Parameters() :
   order_type(OrderType::kFixed),
   buffer_rad(0),
   binary_search_depth(10),
-  heuristic_steps(5),
+  heuristic_cycles(5),
   aversion_ratio(0)
 {}
 
@@ -91,7 +91,7 @@ Parameters::Parameters() :
  * A larger depth will produce higher precision at the cost of processing time.
  */
 
-/**@fn Number Parameters::heuristic_steps;
+/**@fn Number Parameters::heuristic_cycles;
  * @brief The number of steps for the heuristic any-order scale factor computation.
  *
  * If the number of steps is 0, the exact algorithm is used. Otherwise, a larger number of steps results in a higher probability of generating the correct outcome of the any-order scale computation decision problem.

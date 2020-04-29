@@ -42,7 +42,7 @@ class ComputeScaleFactorAnyOrder : public ComputeScaleFactor
 
  private:
   int binary_search_depth_;
-  int heuristic_steps_;
+  int heuristic_cycles_;
 }; // class ComputeScaleFactorAnyOrder
 
 } // namespace necklace_map

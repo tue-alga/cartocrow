@@ -103,17 +103,17 @@ bool CompareTaskEvent::operator()(const TaskEvent& a, const TaskEvent& b) const
 
 bool BitString::CheckFit(const int bit) { return bit < 32; }
 
-void BitString::SetBit(const int bit) { CHECK(CheckFit(bit)); bits = 1 << bit; }
+void BitString::SetBit(const int bit) { CHECK(CheckFit(bit)); bits = ToString(bit); }
 
-bool BitString::AddBit(const int bit) { CHECK(CheckFit(bit)); return bits |= (1 << bit); }
+bool BitString::AddBit(const int bit) { CHECK(CheckFit(bit)); return bits |= ToString(bit); }
 
 
 TaskSlice::TaskSlice() :
   event_left(),
   event_right(),
+  coverage(0, 0),
   tasks(),
   num_tasks(0),
-  coverage(0, 0),
   sets(),
   layers()
 {}
@@ -132,7 +132,7 @@ TaskSlice::TaskSlice
   tasks.resize(num_layers);
 }
 
-TaskSlice::TaskSlice(const TaskSlice& slice, const int step) :
+TaskSlice::TaskSlice(const TaskSlice& slice, const int cycle) :
   event_left(slice.event_left),
   event_right(slice.event_right),
   num_tasks(slice.num_tasks),
@@ -140,13 +140,12 @@ TaskSlice::TaskSlice(const TaskSlice& slice, const int step) :
   sets(slice.sets),
   layers(slice.layers)
 {
+  CHECK_LT(0, cycle);
+
   // Determine the part of the necklace covered by this slice, i.e. after circling the necklace a fixed number of times.
-  const Number offset = step * M_2xPI;
+  const Number offset = cycle * M_2xPI;
   coverage.from() = event_left.angle_rad + offset;
   coverage.to() = Modulo(event_right.angle_rad + offset, coverage.from());
-
-
-
 
   // Copy the tasks.
   tasks.resize(slice.tasks.size());
@@ -162,10 +161,9 @@ TaskSlice::TaskSlice(const TaskSlice& slice, const int step) :
 
     if
     (
-      step == 0 &&
-      coverage.to() <= task->valid->to() &&
-      task->valid->Contains(0) &&
-      task->valid->from() != 0
+      task->valid->to() < coverage.to() ||
+      task->valid->from() == 0 ||
+      !task->valid->Contains(0)
     )
     {
       tasks[i] = nullptr;
@@ -252,7 +250,9 @@ void TaskSlice::AddTask(const AnyOrderCycleNode::Ptr& task)
 
 void TaskSlice::ConstructSets()
 {
-  // Sets should be all the combinations of used layers (tasks).
+  // The sets are the permutations of used layers.
+
+
 
 
   sets.resize(1 << num_tasks);  // TODO(tvl) bitset?
@@ -282,12 +282,12 @@ void TaskSlice::ConstructSets()
 
 
 
-CheckFeasible::Ptr CheckFeasible::New(NodeSet& nodes, const int heuristic_steps)
+CheckFeasible::Ptr CheckFeasible::New(NodeSet& nodes, const int heuristic_cycles)
 {
-  if (heuristic_steps == 0)
+  if (heuristic_cycles == 0)
     return std::make_shared<CheckFeasibleExact>(nodes);
   else
-    return std::make_shared<CheckFeasibleHeuristic>(nodes, heuristic_steps);
+    return std::make_shared<CheckFeasibleHeuristic>(nodes, heuristic_cycles);
 }
 
 CheckFeasible::CheckFeasible(NodeSet& nodes): slices_(), nodes_(nodes) {}
@@ -575,9 +575,9 @@ bool CheckFeasibleExact::FeasibleLine
 }
 
 
-CheckFeasibleHeuristic::CheckFeasibleHeuristic(NodeSet& nodes, const int heuristic_steps) :
+CheckFeasibleHeuristic::CheckFeasibleHeuristic(NodeSet& nodes, const int heuristic_cycles) :
   CheckFeasible(nodes),
-  heuristic_steps_(heuristic_steps)
+  heuristic_cycles_(heuristic_cycles)
 {}
 
 bool CheckFeasibleHeuristic::operator()()
@@ -596,13 +596,13 @@ void CheckFeasibleHeuristic::InitializeSlices()
 
   // Clone the slices.
   const size_t num_slices = slices_.size();
-  slices_.resize(num_slices * heuristic_steps_);
-  for (int i = 1; i < heuristic_steps_; i++)
+  slices_.resize(num_slices * heuristic_cycles_);
+  for (int cycle = 1; cycle < heuristic_cycles_; cycle++)
   {
     for (int j = 0; j < num_slices; j++)
     {
-      int q = i * num_slices + j;
-      slices_[q] = TaskSlice(slices_[j], i);
+      int q = cycle * num_slices + j;
+      slices_[q] = TaskSlice(slices_[j], cycle);
     }
   }
 }
@@ -778,7 +778,7 @@ ComputeScaleFactorAnyOrder::ComputeScaleFactorAnyOrder
   const Necklace::Ptr& necklace,
   const Number& buffer_rad /*= 0*/,
   const int binary_search_depth /*= 10*/,
-  const int heuristic_steps /*= 5*/
+  const int heuristic_cycles /*= 5*/
 ) :
   necklace_shape_(necklace->shape),
   half_buffer_rad_(0.5 * buffer_rad),
@@ -791,7 +791,7 @@ ComputeScaleFactorAnyOrder::ComputeScaleFactorAnyOrder
   std::sort(nodes_.begin(), nodes_.end(), CompareAnyOrderCycleNode());
 
   // Prepare the feasibility check.
-  check_feasible_ = CheckFeasible::New(nodes_, heuristic_steps);
+  check_feasible_ = CheckFeasible::New(nodes_, heuristic_cycles);
 }
 
 Number ComputeScaleFactorAnyOrder::Optimize()
@@ -930,8 +930,8 @@ ComputeScaleFactorAnyOrderIngot::ComputeScaleFactorAnyOrderIngot
   const Necklace::Ptr& necklace,
   const Number& buffer_rad /*= 0*/,
   const int binary_search_depth /*= 10*/,
-  const int heuristic_steps /*= 5*/
-) : ComputeScaleFactorAnyOrder(necklace, buffer_rad, binary_search_depth, heuristic_steps)
+  const int heuristic_cycles /*= 5*/
+) : ComputeScaleFactorAnyOrder(necklace, buffer_rad, binary_search_depth, heuristic_cycles)
 {}
 
 Number ComputeScaleFactorAnyOrderIngot::ComputeScaleUpperBound() const

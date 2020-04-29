@@ -57,7 +57,6 @@ class OrderTypeParser
 
   static constexpr const char* kFixed = "fixed";
   static constexpr const char* kAny = "any";
-  static constexpr const char* kHeuristic = "heuristic";
 
   OrderTypeParser(OrderType& type);
 
