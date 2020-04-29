@@ -159,7 +159,6 @@ class TaskSlice
 
   std::vector<AnyOrderCycleNode::Ptr> tasks;
   int num_tasks;  // TODO(tvl) necessary?
-  std::vector<int> layers;  // TODO(tvl) necessary?
 
   std::vector<BitString> sets;
 }; // class TaskSlice
