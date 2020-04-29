@@ -148,7 +148,7 @@ class TaskSlice
 
   void Reset();
 
-  void Rotate(const Number value, const std::vector<AnyOrderCycleNode::Ptr>& tasks, const BitString& split);
+  void Rotate(const TaskSlice& slice, const BitString& layer_set);
 
   void AddTask(const AnyOrderCycleNode::Ptr& task);
 
@@ -187,6 +187,8 @@ class CheckFeasible
   {
     Value();
 
+    void Reset();
+
     Number angle_rad;
     Number angle2_rad;
     int layer;  // TODO(tvl) replace by task->layer?
@@ -211,8 +213,8 @@ class CheckFeasibleExact : public CheckFeasible
  private:
   void SplitCircle
   (
-    const int slice,
-    const BitString& split
+    const TaskSlice& current_slice,
+    const BitString& layer_set
   );
 
   bool FeasibleLine

@@ -409,7 +409,7 @@ bool CheckFeasibleExact::operator()()
         if ((q2&q) != 0) {
 
           // split the circle (ranges, event times, the works)
-          SplitCircle(i, str2);
+          SplitCircle(slices_[i], str2);
 
           // compute
           bool good = FeasibleLine(i, str2);
@@ -425,18 +425,15 @@ bool CheckFeasibleExact::operator()()
 
 void CheckFeasibleExact::SplitCircle
 (
-  const int slice_index,
-  const BitString& split
+  const TaskSlice& current_slice,
+  const BitString& layer_set
 )
 {
-
-
-
-  // reset everything, then rotate
-  for (int i = 0; i < slices_.size(); i++)
+  // Reset each slice and then align it with the start of the current slice.
+  for (TaskSlice& slice : slices_)
   {
-    slices_[i].Reset();
-    slices_[i].Rotate(slices_[slice_index].event_left.angle_rad, slices_[slice_index].tasks, split);
+    slice.Reset();
+    slice.Rotate(current_slice, layer_set);
   }
 }
 
