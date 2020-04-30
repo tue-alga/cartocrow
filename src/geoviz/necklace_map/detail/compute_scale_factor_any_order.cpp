@@ -76,7 +76,7 @@ bool CompareAnyOrderCycleNode::operator()(const AnyOrderCycleNode::Ptr& a, const
 
 TaskEvent::TaskEvent() {}
 
-TaskEvent::TaskEvent(AnyOrderCycleNode::Ptr& node, const Number& angle_rad, const Type& type) :
+TaskEvent::TaskEvent(const AnyOrderCycleNode::Ptr& node, const Number& angle_rad, const Type& type) :
   node(node),
   angle_rad(angle_rad),
   type(type)
@@ -94,30 +94,30 @@ bool CompareTaskEvent::operator()(const TaskEvent& a, const TaskEvent& b) const
 
 
 TaskSlice::TaskSlice() :
-  event_left(),
-  event_right(),
+  event_from(),
+  event_to(),
   coverage(0, 0),
   tasks(),
   sets()
 {}
 
 TaskSlice::TaskSlice
-  (
-    const TaskEvent& event_left,
-    const TaskEvent& event_right,
-    const int num_layers
-  ) :
-  event_left(event_left),
-  event_right(event_right),
-  coverage(event_left.angle_rad, event_right.angle_rad)
+(
+  const TaskEvent& event_from,
+  const TaskEvent& event_to,
+  const int num_layers
+) :
+  event_from(event_from),
+  event_to(event_to),
+  coverage(event_from.angle_rad, event_to.angle_rad)
 {
   CHECK(BitString::CheckFit(num_layers));
   tasks.resize(num_layers);
 }
 
 TaskSlice::TaskSlice(const TaskSlice& slice, const int cycle) :
-  event_left(slice.event_left),
-  event_right(slice.event_right),
+  event_from(slice.event_from),
+  event_to(slice.event_to),
   coverage(0, 0),
   sets(slice.sets)
 {
@@ -125,8 +125,8 @@ TaskSlice::TaskSlice(const TaskSlice& slice, const int cycle) :
 
   // Determine the part of the necklace covered by this slice, i.e. after circling the necklace a fixed number of times.
   const Number offset = cycle * M_2xPI;
-  coverage.from() = event_left.angle_rad + offset;
-  coverage.to() = Modulo(event_right.angle_rad + offset, coverage.from());
+  coverage.from() = event_from.angle_rad + offset;
+  coverage.to() = Modulo(event_to.angle_rad + offset, coverage.from());
 
   // Copy the tasks.
   tasks.reserve(slice.tasks.size());
@@ -156,8 +156,8 @@ TaskSlice::TaskSlice(const TaskSlice& slice, const int cycle) :
 
 void TaskSlice::Reset()
 {
-  coverage.from() = event_left.angle_rad;
-  coverage.to() = event_right.angle_rad;
+  coverage.from() = event_from.angle_rad;
+  coverage.to() = event_to.angle_rad;
   for (const AnyOrderCycleNode::Ptr& task : tasks)
   {
     if (!task)
@@ -171,7 +171,7 @@ void TaskSlice::Reset()
 void TaskSlice::Rotate(const TaskSlice& first_slice, const BitString& layer_set)
 {
   // Rotate this slice such that the origin is aligned with the start of the other slice.
-  const Number& angle_rad = first_slice.event_left.angle_rad;
+  const Number& angle_rad = first_slice.event_from.angle_rad;
   coverage.from() -= angle_rad;
   coverage.to() -= angle_rad;
   if (coverage.to() < kEpsilon)
@@ -226,30 +226,14 @@ void TaskSlice::Finalize()
       continue;
 
     std::transform
-      (
-        sets.begin(),
-        sets.end(),
-        std::back_inserter(sets),
-        [task](BitString string) -> BitString { string.AddBit(task->layer); return string; }
-      );
+    (
+      sets.begin(),
+      sets.end(),
+      std::back_inserter(sets),
+      [task](BitString string) -> BitString { string.AddBit(task->layer); return string; }
+    );
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 CheckFeasible::Ptr CheckFeasible::New(NodeSet& nodes, const int heuristic_cycles)
@@ -260,30 +244,11 @@ CheckFeasible::Ptr CheckFeasible::New(NodeSet& nodes, const int heuristic_cycles
     return std::make_shared<CheckFeasibleHeuristic>(nodes, heuristic_cycles);
 }
 
-CheckFeasible::CheckFeasible(NodeSet& nodes): slices_(), nodes_(nodes) {}
-
 void CheckFeasible::Initialize()
 {
   InitializeSlices();
   InitializeContainer();
 }
-
-void CheckFeasible::InitializeContainer()
-{
-
-
-  // setup DP array
-  values_.clear();
-  values_.resize(slices_.size());
-
-  const int num_layers = slices_.front().tasks.size();
-  int nSubSets = (1 << num_layers);
-  for (int i = 0; i < slices_.size(); i++)
-    values_[i].resize(nSubSets);
-
-
-}
-
 
 CheckFeasible::Value::Value()
 {
@@ -297,71 +262,69 @@ void CheckFeasible::Value::Reset()
   task.reset();
 }
 
+CheckFeasible::CheckFeasible(NodeSet& nodes): slices_(), nodes_(nodes) {}
+
 void CheckFeasible::InitializeSlices()
 {
-
-
-
-
-  // TODO(tvl) check which vectors can be replaced by simple fixed size arrays.
+  // Construct a sorted list of events signifying where intervals begin and end.
   std::vector<TaskEvent> events;
   events.reserve(2 * nodes_.size());
 
   int max_layer = 0;
-  for (int i = 0; i < nodes_.size(); i++)
-  {
-    AnyOrderCycleNode::Ptr& ca = nodes_[i];
-    max_layer = std::max(max_layer, ca->layer);
-
-    events.emplace_back(ca, ca->valid->from(), TaskEvent::Type::kFrom);
-    events.emplace_back(ca, ca->valid->to(), TaskEvent::Type::kTo);
-  }
-  std::sort(events.begin(), events.end(), CompareTaskEvent());  // TODO(tvl) is this even useful?
-
-  const int num_layers = max_layer + 1;
-
-
-  AnyOrderCycleNode::Ptr curNodes[num_layers];
-  // initialize
   for (const AnyOrderCycleNode::Ptr& node : nodes_)
   {
-    if (node->valid->Contains(0) && node->valid->to() < M_2xPI)
-      curNodes[node->layer] = node;
+    events.emplace_back(node, node->valid->from(), TaskEvent::Type::kFrom);
+    events.emplace_back(node, node->valid->to(), TaskEvent::Type::kTo);
+    max_layer = std::max(max_layer, node->layer);
   }
+  std::sort(events.begin(), events.end(), CompareTaskEvent());
+  const int num_layers = max_layer + 1;
 
+  // Construct the task slices.
+  // Each task slice stores the nodes that are valid between two consecutive events, together with a bit string for each combination of these nodes.
+  // For this purpose, keep track of the nodes that are valid at some angle, starting at 0 radians (because the first event has the smallest positive angle).
+  AnyOrderCycleNode::Ptr active_nodes[num_layers];
+  for (const AnyOrderCycleNode::Ptr& node : nodes_)
+    if (node->valid->Contains(0))  // Note that this purposely excludes nodes that contain 2pi.
+      active_nodes[node->layer] = node;
 
-
-  //find taskslices
-  slices_.resize(events.size());
-  for (int i = 0; i < events.size(); i++)
+  slices_.reserve(events.size());
+  for (int i = 0; i < events.size(); ++i)
   {
-    TaskEvent e = events[i];
-    TaskEvent e2 = events[(i + 1) % events.size()];
-    slices_[i] = TaskSlice(e, e2, num_layers);
-    if (e.type == TaskEvent::Type::kFrom)
-      curNodes[e.node->layer] = e.node;
-    else
-      curNodes[e.node->layer] = nullptr;
+    const TaskEvent& event_from = events[i];
+    const TaskEvent& event_to = events[(i + 1) % events.size()];
 
-    for (int j = 0; j < num_layers; j++)
-      if (curNodes[j] != nullptr)
-        slices_[i].AddTask(std::make_shared<AnyOrderCycleNode>(curNodes[j]));
+    // Update the active nodes.
+    active_nodes[event_from.node->layer] = event_from.type == TaskEvent::Type::kFrom ? event_from.node : nullptr;
+
+    // Construct a new slice.
+    slices_.emplace_back(event_from, event_to, num_layers);
+    for (const AnyOrderCycleNode::Ptr& node : active_nodes)
+      if (node)
+        slices_.back().AddTask(node);
+    slices_.back().Finalize();
   }
 
-  for (TaskSlice& slice : slices_)
-    slice.Finalize();
+  // Note that the first slice must start from a interval begin event.
+  // Due to the valid intervals being Ranges with strictly non-negative angles, this must be true by construction.
+//  std::vector<TaskSlice>::iterator first_iter =
+//    std::find_if
+//    (
+//      slices_.begin(),
+//      slices_.end(),
+//      [](const TaskSlice& slice) -> bool { return slice.event_from.type == TaskEvent::Type::kFrom; }
+//    );
+//  if (first_iter != slices_.begin())
+//    std::rotate(slices_.begin(), first_iter, slices_.end());
+}
 
-  // make sure first slice is start of task
-  while (slices_[0].event_left.type == TaskEvent::Type::kTo)
-  {
-    const TaskSlice& slice = slices_[0];
-    for (int i = 0; i < slices_.size() - 1; i++)
-      slices_[i] = slices_[i + 1];
-    slices_[slices_.size() - 1] = slice;
-  }
-
-
-
+void CheckFeasible::InitializeContainer()
+{
+  // Construct the dynamic programming results container.
+  const int num_subsets = std::pow(2, slices_.front().tasks.size());
+  values_.resize(slices_.size());
+  for (std::vector<Value>& subsets : values_)
+    subsets.resize(num_subsets);
 }
 
 void CheckFeasible::ResetContainer()
@@ -370,10 +333,26 @@ void CheckFeasible::ResetContainer()
     return;
 
   // Reset the dynamic programming results container.
-  for (std::vector<Value>& values : values_)
-    for (Value& value : values)
+  for (std::vector<Value>& subsets : values_)
+    for (Value& value : subsets)
       value.Reset();
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 CheckFeasibleExact::CheckFeasibleExact(NodeSet& nodes) : CheckFeasible(nodes) {}
@@ -390,14 +369,14 @@ bool CheckFeasibleExact::operator()()
   // try all possibilities
   for (int i = 0; i < slices_.size(); i++)
   {
-    if (slices_[i].event_left.type == TaskEvent::Type::kFrom)
+    if (slices_[i].event_from.type == TaskEvent::Type::kFrom)
     {
-      int q = (1 << slices_[i].event_left.node->layer);
-      //int q = slices_[i].event_left.node->layer;
+      int q = (1 << slices_[i].event_from.node->layer);
+      //int q = slices_[i].event_from.node->layer;
       for (int j = 0; j < slices_[i].sets.size(); j++)
       {
         const BitString& str2 = slices_[i].sets[j];
-        if (str2.HasBit(slices_[i].event_left.node->layer)) {
+        if (str2.HasBit(slices_[i].event_from.node->layer)) {
 
           // split the circle (ranges, event times, the works)
           SplitCircle(slices_[i], str2);
@@ -459,17 +438,17 @@ bool CheckFeasibleExact::FeasibleLine
       if (i != 0)
       {
         // check previous slice
-        if (slice.event_left.type == TaskEvent::Type::kFrom)
+        if (slice.event_from.type == TaskEvent::Type::kFrom)
         {
-          if ((q & (1 << slice.event_left.node->layer)) == 0)
+          if ((q & (1 << slice.event_from.node->layer)) == 0)
           {
             values_[i][q] = values_[i - 1][q];
           }
         } else
         {
-          int q2 = q + (1 << slice.event_left.node->layer);
-          if (slices_[(s + slices_.size() - 1) % slices_.size()].tasks[slice.event_left.node->layer]->disabled)
-            q2 -= (1 << slice.event_left.node->layer); // special case
+          int q2 = q + (1 << slice.event_from.node->layer);
+          if (slices_[(s + slices_.size() - 1) % slices_.size()].tasks[slice.event_from.node->layer]->disabled)
+            q2 -= (1 << slice.event_from.node->layer); // special case
           values_[i][q] = values_[i - 1][q2];
         }
       }
@@ -490,7 +469,7 @@ bool CheckFeasibleExact::FeasibleLine
         // special check
         if (!values_[i][q - k2].task->bead || values_[i][q - k2].task->bead->covering_radius_rad == 0.0)
         {
-          if (layer != slices_[slice_index].event_left.node->layer) continue;
+          if (layer != slices_[slice_index].event_from.node->layer) continue;
         }
         else t1 += task->bead->covering_radius_rad;
 
@@ -508,7 +487,7 @@ bool CheckFeasibleExact::FeasibleLine
 
   const TaskSlice& slice = slices_[slice_index];
   if (values_[slices_.size() - 1][split2.Get()].angle_rad == std::numeric_limits<double>::max()) return false;
-  if (values_[slices_.size() - 1][split2.Get()].angle_rad <= M_2xPI - slice.tasks[slice.event_left.node->layer]->bead->covering_radius_rad)
+  if (values_[slices_.size() - 1][split2.Get()].angle_rad <= M_2xPI - slice.tasks[slice.event_from.node->layer]->bead->covering_radius_rad)
   {
     // feasible! construct solution
     int s = slices_.size() - 1;
@@ -518,11 +497,11 @@ bool CheckFeasibleExact::FeasibleLine
 
     while (slices_[s2].coverage.from() > t + kEpsilon)
     {
-      if (slices_[s2].event_left.type == TaskEvent::Type::kTo)
+      if (slices_[s2].event_from.type == TaskEvent::Type::kTo)
       {
-        q += (1 << slices_[s2].event_left.node->layer);
-        if (s > 0 && slices_[(s2 + slices_.size() - 1) % slices_.size()].tasks[slices_[s2].event_left.node->layer]->disabled)
-          q -= (1 << slices_[s2].event_left.node->layer);
+        q += (1 << slices_[s2].event_from.node->layer);
+        if (s > 0 && slices_[(s2 + slices_.size() - 1) % slices_.size()].tasks[slices_[s2].event_from.node->layer]->disabled)
+          q -= (1 << slices_[s2].event_from.node->layer);
       }
       s--;
       s2 = (slice_index + s) % slices_.size();
@@ -536,15 +515,15 @@ bool CheckFeasibleExact::FeasibleLine
       AnyOrderCycleNode::Ptr& task = values_[s][q].task;
       if ((q & (1 << values_[s][q].task->layer)) == 0) return false;
       q -= (1 << values_[s][q].task->layer);
-      task->bead->angle_rad = t + slices_[slice_index].event_left.angle_rad;
+      task->bead->angle_rad = t + slices_[slice_index].event_from.angle_rad;
       t = values_[s][q].angle_rad - (!values_[s][q].task->bead ? 0 : values_[s][q].task->bead->covering_radius_rad);
       while (slices_[s2].coverage.from() > t + kEpsilon)
       {
-        if (slices_[s2].event_left.type == TaskEvent::Type::kTo)
+        if (slices_[s2].event_from.type == TaskEvent::Type::kTo)
         {
-          q += (1 << slices_[s2].event_left.node->layer);
-          if (s > 0 && slices_[(s2 + slices_.size() - 1) % slices_.size()].tasks[slices_[s2].event_left.node->layer]->disabled)
-            q -= (1 << slices_[s2].event_left.node->layer);
+          q += (1 << slices_[s2].event_from.node->layer);
+          if (s > 0 && slices_[(s2 + slices_.size() - 1) % slices_.size()].tasks[slices_[s2].event_from.node->layer]->disabled)
+            q -= (1 << slices_[s2].event_from.node->layer);
         }
         s--;
         s2 = (slice_index + s) % slices_.size();
@@ -613,16 +592,16 @@ bool CheckFeasibleHeuristic::FeasibleLine()
       if (i != 0)
       {
         // check previous slice
-        if (slice.event_left.type == TaskEvent::Type::kFrom)
+        if (slice.event_from.type == TaskEvent::Type::kFrom)
         {
-          if ((q & (1 << slice.event_left.node->layer)) == 0)
+          if ((q & (1 << slice.event_from.node->layer)) == 0)
           {
             values_[i][q] = values_[i - 1][q];
           }
         } else
         {
-          int q2 = q + (1 << slice.event_left.node->layer);
-          if (slices_[i - 1].tasks[slice.event_left.node->layer] == nullptr) q2 -= (1 << slice.event_left.node->layer); // special case
+          int q2 = q + (1 << slice.event_from.node->layer);
+          if (slices_[i - 1].tasks[slice.event_from.node->layer] == nullptr) q2 -= (1 << slice.event_from.node->layer); // special case
           values_[i][q] = values_[i - 1][q2];
         }
       }
@@ -670,10 +649,10 @@ bool CheckFeasibleHeuristic::FeasibleLine()
 
   while (slices_[s].coverage.from() > t + kEpsilon)
   {
-    if (slices_[s].event_left.type == TaskEvent::Type::kTo)
+    if (slices_[s].event_from.type == TaskEvent::Type::kTo)
     {
-      q += (1 << slices_[s].event_left.node->layer);
-      if (s > 0 && slices_[s - 1].tasks[slices_[s].event_left.node->layer] == nullptr) q -= (1 << slices_[s].event_left.node->layer);
+      q += (1 << slices_[s].event_from.node->layer);
+      if (s > 0 && slices_[s - 1].tasks[slices_[s].event_from.node->layer] == nullptr) q -= (1 << slices_[s].event_from.node->layer);
     }
     s--;
     if (s < 0) break;
@@ -686,7 +665,7 @@ bool CheckFeasibleHeuristic::FeasibleLine()
     if (q < 0 || task == nullptr) return false;
     double size = task->bead ? task->bead->covering_radius_rad : 0;
 
-    const Number angle_rad = t + slices_[0].event_left.angle_rad;
+    const Number angle_rad = t + slices_[0].event_from.angle_rad;
     listCA.push_back(std::make_shared<AnyOrderCycleNode>(task->bead));
     listCA.back()->valid = std::make_shared<Range>(angle_rad - size, angle_rad + size);
     listCA.back()->bead->angle_rad = angle_rad;
@@ -694,10 +673,10 @@ bool CheckFeasibleHeuristic::FeasibleLine()
     t = values_[s][q].angle2_rad;
     while (slices_[s].coverage.from() > t + kEpsilon)
     {
-      if (slices_[s].event_left.type == TaskEvent::Type::kTo)
+      if (slices_[s].event_from.type == TaskEvent::Type::kTo)
       {
-        q += (1 << slices_[s].event_left.node->layer);
-        if (s > 0 && slices_[s - 1].tasks[slices_[s].event_left.node->layer] == nullptr) q -= (1 << slices_[s].event_left.node->layer);
+        q += (1 << slices_[s].event_from.node->layer);
+        if (s > 0 && slices_[s - 1].tasks[slices_[s].event_from.node->layer] == nullptr) q -= (1 << slices_[s].event_from.node->layer);
       }
       s--;
       if (s < 0) break;

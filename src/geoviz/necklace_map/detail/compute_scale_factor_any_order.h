@@ -72,9 +72,9 @@ struct TaskEvent
 
   TaskEvent();
 
-  TaskEvent(AnyOrderCycleNode::Ptr& node, const Number& angle_rad, const Type& type);
+  TaskEvent(const AnyOrderCycleNode::Ptr& node, const Number& angle_rad, const Type& type);
 
-  AnyOrderCycleNode::Ptr node;
+  AnyOrderCycleNode::Ptr node;  // TODO(tvl) ConstPtr?
   Number angle_rad;
   Type type;
 }; // class TaskEvent
@@ -124,8 +124,8 @@ class TaskSlice
 
   TaskSlice
     (
-      const TaskEvent& event_left,
-      const TaskEvent& event_right,
+      const TaskEvent& event_from,
+      const TaskEvent& event_to,
       const int num_layers
     );
 
@@ -139,29 +139,12 @@ class TaskSlice
 
   void Finalize();
 
-  TaskEvent event_left, event_right;
+  TaskEvent event_from, event_to;
   Range coverage;
 
   std::vector<AnyOrderCycleNode::Ptr> tasks;
   std::vector<BitString> sets;
 }; // class TaskSlice
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 class CheckFeasible
@@ -178,8 +161,6 @@ class CheckFeasible
   virtual bool operator()() = 0;
 
  protected:
-  CheckFeasible(NodeSet& nodes);
-
   struct Value
   {
     Value();
@@ -191,6 +172,8 @@ class CheckFeasible
     AnyOrderCycleNode::Ptr task;
   }; // struct Value
 
+  CheckFeasible(NodeSet& nodes);
+
   virtual void InitializeSlices();
 
   void InitializeContainer();
@@ -201,6 +184,23 @@ class CheckFeasible
   std::vector<TaskSlice> slices_;
   std::vector<std::vector<Value> > values_;
 }; // class CheckFeasible
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 class CheckFeasibleExact : public CheckFeasible
