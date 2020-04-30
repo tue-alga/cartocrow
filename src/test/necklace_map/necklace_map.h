@@ -82,9 +82,6 @@ struct NecklaceDataWesternEurope
       geoviz::SvgReader svg_reader;
       const filesystem::path in_geometry_path = kTestDir / "wEU.xml";
       UNITTEST_REQUIRE UNITTEST_CHECK(svg_reader.ReadFile(in_geometry_path, data.elements, data.necklaces));
-
-      const std::string in_value_name = "value";
-      UNITTEST_CHECK(ReadValues(in_value_name));
     }
   }
 
@@ -107,6 +104,9 @@ struct NecklaceDataWesternEurope
 
 UNITTEST_TEST_FIXTURE(NecklaceDataWesternEurope, WestEuropeCentroidFixed)
 {
+  const std::string in_value_name = "value";
+  UNITTEST_CHECK(ReadValues(in_value_name));
+
   DefaultParameters(parameters);
   parameters.interval_type = geoviz::necklace_map::IntervalType::kCentroid;
   parameters.order_type = geoviz::necklace_map::OrderType::kFixed;
@@ -117,6 +117,9 @@ UNITTEST_TEST_FIXTURE(NecklaceDataWesternEurope, WestEuropeCentroidFixed)
 
 UNITTEST_TEST_FIXTURE(NecklaceDataWesternEurope, WestEuropeCentroidFixedNopoints)
 {
+  const std::string in_value_name = "value";
+  UNITTEST_CHECK(ReadValues(in_value_name));
+
   DefaultParameters(parameters);
   parameters.interval_type = geoviz::necklace_map::IntervalType::kCentroid;
   parameters.ignore_point_regions = true;
@@ -128,6 +131,9 @@ UNITTEST_TEST_FIXTURE(NecklaceDataWesternEurope, WestEuropeCentroidFixedNopoints
 
 UNITTEST_TEST_FIXTURE(NecklaceDataWesternEurope, WestEurope)
 {
+  const std::string in_value_name = "value";
+  UNITTEST_CHECK(ReadValues(in_value_name));
+
   DefaultParameters(parameters);
 
   const geoviz::Number scale_factor = ComputeScaleFactor(parameters, data.elements, data.necklaces);
@@ -136,6 +142,9 @@ UNITTEST_TEST_FIXTURE(NecklaceDataWesternEurope, WestEurope)
 
 UNITTEST_TEST_FIXTURE(NecklaceDataWesternEurope, WestEuropeNopoints)
 {
+  const std::string in_value_name = "value";
+  UNITTEST_CHECK(ReadValues(in_value_name));
+
   DefaultParameters(parameters);
   parameters.ignore_point_regions = true;
 
@@ -145,6 +154,9 @@ UNITTEST_TEST_FIXTURE(NecklaceDataWesternEurope, WestEuropeNopoints)
 
 UNITTEST_TEST_FIXTURE(NecklaceDataWesternEurope, WestEuropeBuffer)
 {
+  const std::string in_value_name = "value";
+  UNITTEST_CHECK(ReadValues(in_value_name));
+
   DefaultParameters(parameters);
   parameters.buffer_rad = 0.0349; // Roughly 2 degrees.
 
@@ -154,6 +166,9 @@ UNITTEST_TEST_FIXTURE(NecklaceDataWesternEurope, WestEuropeBuffer)
 
 UNITTEST_TEST_FIXTURE(NecklaceDataWesternEurope, WestEuropeExact)
 {
+  const std::string in_value_name = "value";
+  UNITTEST_CHECK(ReadValues(in_value_name));
+
   DefaultParameters(parameters);
   parameters.heuristic_cycles = 0;
 
@@ -163,12 +178,26 @@ UNITTEST_TEST_FIXTURE(NecklaceDataWesternEurope, WestEuropeExact)
 
 UNITTEST_TEST_FIXTURE(NecklaceDataWesternEurope, WestEuropeExactBuffer)
 {
+  const std::string in_value_name = "value";
+  UNITTEST_CHECK(ReadValues(in_value_name));
+
   DefaultParameters(parameters);
   parameters.buffer_rad = 0.0349; // Roughly 2 degrees.
   parameters.heuristic_cycles = 0;
 
   const geoviz::Number scale_factor = ComputeScaleFactor(parameters, data.elements, data.necklaces);
   UNITTEST_CHECK_CLOSE(1.470, scale_factor, 0.001);
+}
+
+UNITTEST_TEST_FIXTURE(NecklaceDataWesternEurope, WestEuropeSmaller)
+{
+  const std::string in_value_name = "test";
+  UNITTEST_CHECK(ReadValues(in_value_name));
+
+  DefaultParameters(parameters);
+
+  const geoviz::Number scale_factor = ComputeScaleFactor(parameters, data.elements, data.necklaces);
+  UNITTEST_CHECK_CLOSE(2.509, scale_factor, 0.001);
 }
 
 

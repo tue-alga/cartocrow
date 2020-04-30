@@ -375,7 +375,7 @@ int main(int argc, char **argv)
   // Read the data and geometry.
   const bool success_read_data = ReadData(elements);
   const bool success_read_svg = ReadGeometry(elements, necklaces);
-  CHECK(success_read_svg) << "Terminating program.";
+  CHECK(success_read_svg && success_read_data) << "Terminating program.";
   const double time_read = time.Stamp();
 
 
