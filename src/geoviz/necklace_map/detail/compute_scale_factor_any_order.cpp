@@ -410,7 +410,7 @@ bool CheckFeasibleExact::FeasibleFromSlice
   const BitString& layer_set
 )
 {
-  BitString split2 = split ^ (slices_[slice_index].sets.back());  //TODO(tvl) rename split_inverse?
+  BitString split2 = layer_set ^ (slices_[slice_index].layer_sets.back());  //TODO(tvl) rename split_inverse?
 
   // initialization
   values_[0][0].angle_rad = 0.0;
@@ -420,9 +420,9 @@ bool CheckFeasibleExact::FeasibleFromSlice
   {
     int s = (slice_index + i) % slices_.size();
     const TaskSlice& slice = slices_[s];
-    for (int j = 0; j < slice.sets.size(); j++)
+    for (int j = 0; j < slice.layer_sets.size(); j++)
     {
-      const BitString& str = slice.sets[j];
+      const BitString& str = slice.layer_sets[j];
       int q = str.Get();  // TODO(tvl) remove q.
       if (i == 0 && str.Empty()) continue;
 
@@ -430,7 +430,7 @@ bool CheckFeasibleExact::FeasibleFromSlice
       values_[i][q].task = nullptr;
 
       if (i == 0 && split2.Overlaps(str)) continue;
-      if (i == slices_.size() - 1 && split.Overlaps(str)) continue;
+      if (i == slices_.size() - 1 && layer_set.Overlaps(str)) continue;
 
       if (i != 0)
       {
@@ -641,7 +641,7 @@ bool CheckFeasibleHeuristic::Feasible()
   NodeSet listCA;
 
   int s = slices_.size() - 1;
-  int q = slices_[s].sets[slices_[s].sets.size() - 1].Get();  // TODO(tvl) remove q.
+  int q = slices_[s].layer_sets[slices_[s].layer_sets.size() - 1].Get();  // TODO(tvl) remove q.
   double t = values_[s][q].angle_rad;
   if (t == std::numeric_limits<double>::max()) return false;
   t = values_[s][q].angle2_rad;
