@@ -67,7 +67,7 @@ configure_file(
     "${SOURCE_CONFIG_DIR}/geoviz_test_config.h.in"
     "${SOURCE_CONFIG_DIR}/geoviz_test_config.h"
 )
-install(FILES "${SOURCE_CONFIG_DIR}/geoviz_geoviz_config.h" DESTINATION "${CMAKE_INSTALL_SOURCE_DIR}/cmake")
+install(FILES "${SOURCE_CONFIG_DIR}/geoviz_test_config.h" DESTINATION "${CMAKE_INSTALL_SOURCE_DIR}/cmake")
 
 
 # Most command-line applications use gflags to parse command-line arguments.
