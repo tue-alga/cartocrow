@@ -123,11 +123,11 @@ class TaskSlice
   TaskSlice();
 
   TaskSlice
-    (
-      const TaskEvent& event_from,
-      const TaskEvent& event_to,
-      const int num_layers
-    );
+  (
+    const TaskEvent& event_from,
+    const TaskEvent& event_to,
+    const int num_layers
+  );
 
   TaskSlice(const TaskSlice& slice, const int cycle);
 
@@ -143,7 +143,7 @@ class TaskSlice
   Range coverage;
 
   std::vector<AnyOrderCycleNode::Ptr> tasks;
-  std::vector<BitString> sets;
+  std::vector<BitString> layer_sets;
 }; // class TaskSlice
 
 
@@ -186,23 +186,6 @@ class CheckFeasible
 }; // class CheckFeasible
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class CheckFeasibleExact : public CheckFeasible
 {
  public:
@@ -213,16 +196,33 @@ class CheckFeasibleExact : public CheckFeasible
  private:
   void SplitCircle
   (
-    const TaskSlice& current_slice,
+    const TaskSlice& first_slice,
     const BitString& layer_set
   );
 
-  bool FeasibleLine
+  bool FeasibleFromSlice
   (
     const int slice_index,
     const BitString& split
   );
 }; // class CheckFeasibleExact
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 class CheckFeasibleHeuristic : public CheckFeasible
@@ -235,7 +235,7 @@ class CheckFeasibleHeuristic : public CheckFeasible
  private:
   void InitializeSlices() override;
 
-  bool FeasibleLine();
+  bool Feasible();
 
   const int heuristic_cycles_;
 }; // class CheckFeasibleHeuristic

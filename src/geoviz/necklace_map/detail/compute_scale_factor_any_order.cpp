@@ -98,7 +98,7 @@ TaskSlice::TaskSlice() :
   event_to(),
   coverage(0, 0),
   tasks(),
-  sets()
+  layer_sets()
 {}
 
 TaskSlice::TaskSlice
@@ -119,7 +119,7 @@ TaskSlice::TaskSlice(const TaskSlice& slice, const int cycle) :
   event_from(slice.event_from),
   event_to(slice.event_to),
   coverage(0, 0),
-  sets(slice.sets)
+  layer_sets(slice.layer_sets)
 {
   CHECK_LT(0, cycle);
 
@@ -217,9 +217,9 @@ void TaskSlice::AddTask(const AnyOrderCycleNode::Ptr& task)
 
 void TaskSlice::Finalize()
 {
-  // The sets are all permutations of used layers described as bit strings.
-  sets.reserve(std::pow(2, tasks.size()));
-  sets.emplace_back();
+  // The layer sets are all permutations of used layers described as bit strings.
+  layer_sets.reserve(std::pow(2, tasks.size()));
+  layer_sets.emplace_back();
   for (const AnyOrderCycleNode::Ptr& task : tasks)
   {
     if (!task)
@@ -227,9 +227,9 @@ void TaskSlice::Finalize()
 
     std::transform
     (
-      sets.begin(),
-      sets.end(),
-      std::back_inserter(sets),
+      layer_sets.begin(),
+      layer_sets.end(),
+      std::back_inserter(layer_sets),
       [task](BitString string) -> BitString { string.AddBit(task->layer); return string; }
     );
   }
@@ -364,29 +364,26 @@ bool CheckFeasibleExact::operator()()
 
   ResetContainer();
 
-
-
-  // try all possibilities
-  for (int i = 0; i < slices_.size(); i++)
+  // Try each possibility that starts with an interval beginning event.
+  for (int slice_index = 0; slice_index < slices_.size(); ++slice_index)
   {
-    if (slices_[i].event_from.type == TaskEvent::Type::kFrom)
+    // The slice must start with an interval beginning event.
+    const TaskSlice& slice = slices_[slice_index];
+    if (slice.event_from.type == TaskEvent::Type::kTo)
+      continue;
+
+    for (const BitString& layer_set : slice.layer_sets)
     {
-      int q = (1 << slices_[i].event_from.node->layer);
-      //int q = slices_[i].event_from.node->layer;
-      for (int j = 0; j < slices_[i].sets.size(); j++)
-      {
-        const BitString& str2 = slices_[i].sets[j];
-        if (str2.HasBit(slices_[i].event_from.node->layer)) {
+      // The layer set must include the beginning event's node.
+      if (!layer_set.HasBit(slice.event_from.node->layer))
+        continue;
 
-          // split the circle (ranges, event times, the works)
-          SplitCircle(slices_[i], str2);
+      // Split the circle at the starting event.
+      SplitCircle(slice, layer_set);
 
-          // compute
-          bool good = FeasibleLine(i, str2);
-
-          if (good) return true;
-        }
-      }
+      // If at least one set is feasible, the scale factor is feasible.
+      if (FeasibleFromSlice(slice_index, layer_set))
+        return true;
     }
   }
 
@@ -395,7 +392,7 @@ bool CheckFeasibleExact::operator()()
 
 void CheckFeasibleExact::SplitCircle
 (
-  const TaskSlice& current_slice,
+  const TaskSlice& first_slice,
   const BitString& layer_set
 )
 {
@@ -403,21 +400,21 @@ void CheckFeasibleExact::SplitCircle
   for (TaskSlice& slice : slices_)
   {
     slice.Reset();
-    slice.Rotate(current_slice, layer_set);
+    slice.Rotate(first_slice, layer_set);
   }
 }
 
-bool CheckFeasibleExact::FeasibleLine
+bool CheckFeasibleExact::FeasibleFromSlice
 (
   const int slice_index,
-  const BitString& split
+  const BitString& layer_set
 )
 {
   BitString split2 = split ^ (slices_[slice_index].sets.back());  //TODO(tvl) rename split_inverse?
 
   // initialization
   values_[0][0].angle_rad = 0.0;
-  values_[0][0].task = std::make_shared<AnyOrderCycleNode>();  // TODO(tvl) nullptr?
+  values_[0][0].task = std::make_shared<AnyOrderCycleNode>();
 
   for (int i = 0; i < slices_.size(); i++)
   {
@@ -549,7 +546,7 @@ bool CheckFeasibleHeuristic::operator()()
 
   ResetContainer();
 
-  return FeasibleLine();
+  return Feasible();
 }
 
 void CheckFeasibleHeuristic::InitializeSlices()
@@ -569,7 +566,7 @@ void CheckFeasibleHeuristic::InitializeSlices()
   }
 }
 
-bool CheckFeasibleHeuristic::FeasibleLine()
+bool CheckFeasibleHeuristic::Feasible()
 {
 
 
@@ -580,14 +577,16 @@ bool CheckFeasibleHeuristic::FeasibleLine()
 
   for (int i = 0; i < slices_.size(); i++)
   {
+    std::vector<Value>& subset = values_[i];
     const TaskSlice& slice = slices_[i];
-    for (int j = 0; j < slice.sets.size(); j++)
-    {
-      int q = slice.sets[j].Get();  // TODO(tvl) remove q.
-      if (i == 0 && slice.sets[j].Empty()) continue;
 
-      values_[i][q].angle_rad = values_[i][q].angle2_rad = std::numeric_limits<double>::max();
-      values_[i][q].task = nullptr;
+    for (int j = 0; j < slice.layer_sets.size(); j++)
+    {
+      int q = slice.layer_sets[j].Get();  // TODO(tvl) remove q.
+      if (i == 0 && slice.layer_sets[j].Empty()) continue;
+
+      subset[q].angle_rad = subset[q].angle2_rad = std::numeric_limits<double>::max();
+      subset[q].task = nullptr;
 
       if (i != 0)
       {
@@ -596,17 +595,17 @@ bool CheckFeasibleHeuristic::FeasibleLine()
         {
           if ((q & (1 << slice.event_from.node->layer)) == 0)
           {
-            values_[i][q] = values_[i - 1][q];
+            subset[q] = values_[i - 1][q];
           }
         } else
         {
           int q2 = q + (1 << slice.event_from.node->layer);
           if (slices_[i - 1].tasks[slice.event_from.node->layer] == nullptr) q2 -= (1 << slice.event_from.node->layer); // special case
-          values_[i][q] = values_[i - 1][q2];
+          subset[q] = values_[i - 1][q2];
         }
       }
 
-      if (values_[i][q].angle_rad < std::numeric_limits<double>::max()) continue;
+      if (subset[q].angle_rad < std::numeric_limits<double>::max()) continue;
 
       for (int layer = 0; layer < slice.tasks.size(); ++layer)
       {
@@ -618,20 +617,20 @@ bool CheckFeasibleHeuristic::FeasibleLine()
         if ((k2 & q) == 0) continue;
         if (task == nullptr) continue;
 
-        double t1 = values_[i][q - k2].angle_rad;
+        double t1 = subset[q - k2].angle_rad;
         if (t1 == std::numeric_limits<double>::max()) continue;
 
         double size = task->bead ? task->bead->covering_radius_rad : 0;
         // special check
-        if (values_[i][q - k2].task->bead && values_[i][q - k2].task->bead->covering_radius_rad != 0.0)
+        if (subset[q - k2].task->bead && subset[q - k2].task->bead->covering_radius_rad != 0.0)
           t1 += size;
 
         t1 = std::max(t1, task->valid->from());
-        if (t1 <= task->valid->to() && t1 + size < values_[i][q].angle_rad)
+        if (t1 <= task->valid->to() && t1 + size < subset[q].angle_rad)
         {
-          values_[i][q].angle_rad = t1 + size;
-          values_[i][q].angle2_rad = t1;
-          values_[i][q].task = task;
+          subset[q].angle_rad = t1 + size;
+          subset[q].angle2_rad = t1;
+          subset[q].task = task;
         }
       }
 
