@@ -98,15 +98,17 @@ class BitString
 
   inline bool Empty() const { return bits == 0; }
 
-  inline bool HasBit(const int bit) const { return ToString(bit) & bits != 0; }
+  inline bool HasBit(const int bit) const { return (ToString(bit) & bits) != 0; }
 
   inline bool Overlaps(const BitString& string) const { return (string.bits & bits) != 0; }
 
-  inline const int& Get() const { return bits; }  // TODO(tvl) remove?
-
-  inline bool AddBit(const int bit) { return bits |= ToString(bit); }
+  inline const int& Get() const { return bits; }
 
   inline BitString operator^(const BitString& string) const { return BitString(bits ^ string.bits); }
+
+  inline BitString PlusBit(const int bit) const { return BitString(bits | ToString(bit)); }
+
+  inline BitString MinusBit(const int bit) const { return BitString(bits & ~ToString(bit)); }
 
  private:
   inline static int ToString(const int bit) { return 1 << bit; }
