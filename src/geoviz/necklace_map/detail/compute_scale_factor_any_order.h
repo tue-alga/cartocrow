@@ -174,7 +174,7 @@ class CheckFeasible
     void Reset();
 
     Number angle_rad;
-    Number angle2_rad;
+    Number angle_2_rad;
     AnyOrderCycleNode::Ptr task;
   }; // struct Value
 
@@ -185,6 +185,13 @@ class CheckFeasible
   void InitializeContainer();
 
   void ResetContainer();
+
+  void ComputeValues
+  (
+    const size_t slice_index_offset,
+    const BitString& first_layer_set,
+    const BitString& first_unused_set
+  );
 
   NodeSet& nodes_;
   std::vector<TaskSlice> slices_;
@@ -208,41 +215,16 @@ class CheckFeasibleExact : public CheckFeasible
 
   bool FeasibleFromSlice
   (
-    const int slice_index,
-    const BitString& split
-  );
-
-  void ComputeValues
-  (
-    const int slice_index,
-    const int slice_event_layer,
-    const BitString& layer_set,
-    const BitString& unused_set
+    const size_t first_slice_index,
+    const BitString& first_layer_set
   );
 
   bool AssignAngles
   (
-    const int slice_index,
+    const size_t slice_index_offset,
     const BitString& unused_set
   );
 }; // class CheckFeasibleExact
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 class CheckFeasibleHeuristic : public CheckFeasible
@@ -259,6 +241,23 @@ class CheckFeasibleHeuristic : public CheckFeasible
 
   const int heuristic_cycles_;
 }; // class CheckFeasibleHeuristic
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
