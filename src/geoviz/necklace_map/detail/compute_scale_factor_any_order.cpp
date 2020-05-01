@@ -410,11 +410,22 @@ bool CheckFeasibleExact::FeasibleFromSlice
   const BitString& layer_set
 )
 {
-  const TaskSlice& slice = slices_[slice_index];
-
   // Determine the layers of the slice that are not used.
+  const TaskSlice& slice = slices_[slice_index];
   const BitString unused_set = layer_set ^ (slice.layer_sets.back());
 
+  ComputeValues(slice_index, slice.event_from.node->layer, layer_set, unused_set);
+  return AssignAngles(slice_index, unused_set);
+}
+
+void CheckFeasibleExact::ComputeValues
+(
+  const int slice_index,
+  const int slice_event_layer,
+  const BitString& layer_set,
+  const BitString& unused_set
+)
+{
   // Initialize the values.
   values_[0][0].angle_rad = 0.0;
   values_[0][0].task = std::make_shared<AnyOrderCycleNode>();
@@ -479,7 +490,7 @@ bool CheckFeasibleExact::FeasibleFromSlice
 
         if (value_2_without_task.task->bead)
           value_2_angle_rad += task->bead->covering_radius_rad;
-        else if (task->layer != slice.event_from.node->layer)
+        else if (task->layer != slice_event_layer)
           continue;
 
         value_2_angle_rad = std::max(value_2_angle_rad, task->valid->from());
@@ -495,65 +506,82 @@ bool CheckFeasibleExact::FeasibleFromSlice
       }
     }
   }
+}
 
+bool CheckFeasibleExact::AssignAngles
+(
+  const int slice_index,
+  const BitString& unused_set
+)
+{
+  // Check whether the last slice was assigned a value.
+  const TaskSlice& slice = slices_[slice_index];
 
-
-
-
-
-
-
-
-  if (values_[num_slices - 1][unused_set.Get()].angle_rad == std::numeric_limits<double>::max())
+  const size_t num_slices = slices_.size();
+  const std::vector<Value>& subset_last = values_[num_slices - 1];
+  const Value& value_last_unused = subset_last[unused_set.Get()];
+  if
+  (
+    value_last_unused.angle_rad == std::numeric_limits<double>::max() ||
+    M_2xPI < value_last_unused.angle_rad + slice.tasks[slice.event_from.node->layer]->bead->covering_radius_rad
+  )
     return false;
 
-  if (values_[num_slices - 1][unused_set.Get()].angle_rad <= M_2xPI - slice.tasks[slice.event_from.node->layer]->bead->covering_radius_rad)
+  // Assign an angle to each node.
+  BitString layer_set = unused_set;
+
+  for
+  (
+    ptrdiff_t value_index = num_slices - 1;
+    0 <= value_index && values_[value_index][layer_set.Get()].task->layer != -1;
+  )
   {
-    // feasible! construct solution
-    int s = num_slices - 1;
-    int s2 = (slice_index + s) % num_slices;
-    int q = unused_set.Get();  // TODO(tvl) remove q.
-    double t = values_[s][q].angle_rad - values_[s][q].task->bead->covering_radius_rad;
+    Value& value = values_[value_index][layer_set.Get()];
+    size_t value_slice_index = (slice_index + value_index) % num_slices;
+    TaskSlice& value_slice = slices_[value_slice_index];
 
-    while (slices_[s2].coverage.from() > t + kEpsilon)
+    const Number angle_rad = value.angle_rad - (value.task->bead ? value.task->bead->covering_radius_rad : 0);
+    if (angle_rad + kEpsilon < value_slice.coverage.from())
     {
-      if (slices_[s2].event_from.type == TaskEvent::Type::kTo)
-      {
-        q += (1 << slices_[s2].event_from.node->layer);
-        if (s > 0 && slices_[(s2 + num_slices - 1) % num_slices].tasks[slices_[s2].event_from.node->layer]->disabled)
-          q -= (1 << slices_[s2].event_from.node->layer);
-      }
-      s--;
-      s2 = (slice_index + s) % num_slices;
-      if (s < 0) break;
+      // Move to the previous slice.
+      const int& value_slice_layer = value_slice.event_from.node->layer;
+      if
+      (
+        value_slice.event_from.type == TaskEvent::Type::kTo &&
+        !slices_[(value_slice_index + num_slices - 1) % num_slices].tasks[value_slice_layer]->disabled
+      )
+        layer_set.AddBit(value_slice_layer);
+
+      --value_index;
     }
-
-
-    while (s >= 0 && values_[s][q].task->layer != -1)
+    else
     {
-      AnyOrderCycleNode::Ptr& task = values_[s][q].task;
-      if ((q & (1 << values_[s][q].task->layer)) == 0) return false;
-      q -= (1 << values_[s][q].task->layer);
-      task->bead->angle_rad = t + slice.event_from.angle_rad;
-      t = values_[s][q].angle_rad - (!values_[s][q].task->bead ? 0 : values_[s][q].task->bead->covering_radius_rad);
-      while (slices_[s2].coverage.from() > t + kEpsilon)
-      {
-        if (slices_[s2].event_from.type == TaskEvent::Type::kTo)
-        {
-          q += (1 << slices_[s2].event_from.node->layer);
-          if (s > 0 && slices_[(s2 + num_slices - 1) % num_slices].tasks[slices_[s2].event_from.node->layer]->disabled)
-            q -= (1 << slices_[s2].event_from.node->layer);
-        }
-        s--;
-        s2 = (slice_index + s) % num_slices;
-        if (s < 0) break;
-      }
+      if (!layer_set.HasBit(value.task->layer))
+        return false;
+
+      // Assign the angle.
+      value.task->bead->angle_rad = angle_rad + slice.event_from.angle_rad;
+
+      layer_set.RemoveBit(value.task->layer);
     }
-    return true;
   }
 
-  return false;
+  return true;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 CheckFeasibleHeuristic::CheckFeasibleHeuristic(NodeSet& nodes, const int heuristic_cycles) :

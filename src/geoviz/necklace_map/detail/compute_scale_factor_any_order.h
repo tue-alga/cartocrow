@@ -104,6 +104,10 @@ class BitString
 
   inline const int& Get() const { return bits; }
 
+  inline void AddBit(const int bit) { bits |= ToString(bit); }
+
+  inline void RemoveBit(const int bit) { bits &= ~ToString(bit); }
+
   inline BitString operator^(const BitString& string) const { return BitString(bits ^ string.bits); }
 
   inline BitString PlusBit(const int bit) const { return BitString(bits | ToString(bit)); }
@@ -206,6 +210,20 @@ class CheckFeasibleExact : public CheckFeasible
   (
     const int slice_index,
     const BitString& split
+  );
+
+  void ComputeValues
+  (
+    const int slice_index,
+    const int slice_event_layer,
+    const BitString& layer_set,
+    const BitString& unused_set
+  );
+
+  bool AssignAngles
+  (
+    const int slice_index,
+    const BitString& unused_set
   );
 }; // class CheckFeasibleExact
 
