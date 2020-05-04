@@ -33,7 +33,6 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 02-04-2020
 #include "geoviz/necklace_map/detail/cycle_node.h"
 
 
-// TODO(tvl) if ever moving to C++17, implement nested namespace definition "namespace geoviz::necklace_map {"
 namespace geoviz
 {
 namespace necklace_map
@@ -75,7 +74,7 @@ struct TaskEvent
 
   TaskEvent(const AnyOrderCycleNode::Ptr& node, const Number& angle_rad, const Type& type);
 
-  AnyOrderCycleNode::Ptr node;  // TODO(tvl) ConstPtr?
+  AnyOrderCycleNode::Ptr node;
   Number angle_rad;
   Type type;
 }; // class TaskEvent
@@ -174,9 +173,10 @@ class CheckFeasible
 
     void Reset();
 
-    Number angle_rad;
-    Number angle_2_rad;
+    Number CoveringRadius() const;
+
     AnyOrderCycleNode::Ptr task;
+    Number angle_rad;
   }; // struct Value
 
   CheckFeasible(NodeSet& nodes);
@@ -199,8 +199,7 @@ class CheckFeasible
   bool AssignAngles
   (
     const size_t slice_index_offset,
-    const BitString& unused_set,
-    Number(*ToAngle)(const Value&)
+    const BitString& unused_set
   );
 
   NodeSet& nodes_;
@@ -251,26 +250,6 @@ class CheckFeasibleHeuristic : public CheckFeasible
 }; // class CheckFeasibleHeuristic
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class ComputeScaleFactorAnyOrder
 {
  protected:
@@ -305,7 +284,7 @@ class ComputeScaleFactorAnyOrder
   //Number max_buffer_rad_;  // Based on smallest scaled radius?
 
   int binary_search_depth_;
-  CheckFeasible::Ptr check_feasible_;  // TODO(tvl) rename "check_"
+  CheckFeasible::Ptr check_;
 }; // class ComputeScaleFactorAnyOrder
 
 

@@ -35,14 +35,9 @@ namespace necklace_map
 namespace detail
 {
 
-// TODO(tvl) Note, directly based on the Java implementation: clean up.
-
 // TODO(tvl) fix prototype code: const where possible
 // TODO(tvl) fix prototype code: collection loops
 // TODO(tvl) fix prototype code: variable names
-// TODO(tvl) fix prototype code: method names (CamelCase)
-// TODO(tvl) fix prototype code: comments.
-// TODO(tvl) fix prototype code: reduce looping behaviour.
 // TODO(tvl) go over code and add "override" or "final" keywords where applicable..
 
 constexpr const Number kEpsilon = 0.0000001;
@@ -247,9 +242,15 @@ CheckFeasible::Value::Value()
 
 void CheckFeasible::Value::Reset()
 {
-  angle_rad = std::numeric_limits<Number>::max();
-  angle_2_rad = std::numeric_limits<Number>::max();
   task.reset();
+  angle_rad = std::numeric_limits<Number>::max();
+}
+
+Number CheckFeasible::Value::CoveringRadius() const
+{
+  if (!task || !task->bead)
+    return 0;
+  return task->bead->covering_radius_rad;
 }
 
 CheckFeasible::CheckFeasible(NodeSet& nodes) : slices_(), nodes_(nodes) {}
@@ -336,8 +337,8 @@ void CheckFeasible::ComputeValues
 )
 {
   // Initialize the values.
-  values_[0][0].angle_rad = values_[0][0].angle_2_rad = 0;
   values_[0][0].task = std::make_shared<AnyOrderCycleNode>();
+  values_[0][0].angle_rad = 0;
 
   const size_t num_slices = slices_.size();
   for (size_t value_index = 0; value_index < num_slices; ++value_index)
@@ -353,8 +354,8 @@ void CheckFeasible::ComputeValues
         continue;
 
       Value& value = subset[layer_set.Get()];
-      value.angle_rad = value.angle_2_rad = std::numeric_limits<double>::max();
       value.task = nullptr;
+      value.angle_rad = std::numeric_limits<double>::max();
 
       if (value_index == 0 && first_unused_set.Overlaps(layer_set))
         continue;
@@ -374,10 +375,10 @@ void CheckFeasible::ComputeValues
           const TaskSlice& slice_prev = slices_[(slice_index + num_slices - 1) % num_slices];
 
           if
-            (
+          (
             !slice_prev.tasks[slice.event_from.node->layer] ||
             slice_prev.tasks[slice.event_from.node->layer]->disabled
-            )  // Special case.
+          )  // Special case.
             value = subset_prev[layer_set.Get()];
           else
             value = subset_prev[layer_set.PlusBit(slice.event_from.node->layer).Get()];
@@ -392,25 +393,29 @@ void CheckFeasible::ComputeValues
           continue;
 
         const Value& value_without_task = subset[layer_set.MinusBit(task->layer).Get()];
-        Number value_new_angle_rad = value_without_task.angle_rad;
 
-        if (value_new_angle_rad == std::numeric_limits<double>::max())
+        Number angle_rad = value_without_task.angle_rad;
+        if (angle_rad == std::numeric_limits<double>::max())
           continue;
 
         if (value_without_task.task->bead)
-          value_new_angle_rad += task->bead->covering_radius_rad;
+          angle_rad += value_without_task.task->bead->covering_radius_rad + task->bead->covering_radius_rad;
 //        else if (task->layer != slice.event_from.node->layer)
 //          continue;
+        angle_rad = std::max(angle_rad, task->valid->from());
 
-        value_new_angle_rad = std::max(value_new_angle_rad, task->valid->from());
+        // Check whether the tasks would still be in the valid interval.
+        if (task->valid->to() < angle_rad)
+          continue;
+
+        // Check whether this task is closer than any others.
         if
-          (
-          value_new_angle_rad <= task->valid->to() &&
-          value_new_angle_rad + task->bead->covering_radius_rad < value.angle_rad
-          )
+        (
+          value.angle_rad == std::numeric_limits<double>::max() ||
+          angle_rad + task->bead->covering_radius_rad < value.angle_rad + value.task->bead->covering_radius_rad
+        )
         {
-          value.angle_rad = value_new_angle_rad + task->bead->covering_radius_rad;
-          value.angle_2_rad = value_new_angle_rad;
+          value.angle_rad = angle_rad;
           value.task = task;
         }
       }
@@ -421,8 +426,7 @@ void CheckFeasible::ComputeValues
 bool CheckFeasible::AssignAngles
 (
   const size_t slice_index_offset,
-  const BitString& first_unused_set,
-  Number(*ToAngle)(const Value&)
+  const BitString& first_unused_set
 )
 {
   // Check whether the last slice was assigned a value.
@@ -446,7 +450,7 @@ bool CheckFeasible::AssignAngles
     const size_t value_slice_index = (value_index + slice_index_offset) % num_slices;
     TaskSlice& value_slice = slices_[value_slice_index];
 
-    const Number value_angle_rad = ToAngle(value);
+    const Number value_angle_rad = value.angle_rad;
     if (value_angle_rad + kEpsilon < value_slice.coverage.from())
     {
       // Move to the previous slice.
@@ -539,16 +543,7 @@ bool CheckFeasibleExact::FeasibleFromSlice
   const BitString first_unused_set = first_layer_set ^(slice.layer_sets.back());
 
   ComputeValues(first_slice_index, first_layer_set, first_unused_set);
-  return
-    AssignAngles
-    (
-      first_slice_index,
-      first_unused_set,
-      [](const Value& value) -> Number
-      {
-        return value.angle_rad - (value.task->bead ? value.task->bead->covering_radius_rad : 0);
-      }
-    );
+  return AssignAngles(first_slice_index, first_unused_set);
 }
 
 
@@ -598,13 +593,7 @@ bool CheckFeasibleHeuristic::Feasible()
   ComputeValues(0, BitString(), BitString());
 
   nodes_check_.clear();
-  const bool correct = AssignAngles
-    (
-      0,
-      slices_.back().layer_sets.back(),
-      [](const Value& value) -> Number { return value.angle_2_rad; }
-    );
-  if (!correct)
+  if (!AssignAngles(0, slices_.back().layer_sets.back()))
     return false;
 
   // Check whether any nodes overlap.
@@ -652,7 +641,7 @@ ComputeScaleFactorAnyOrder::ComputeScaleFactorAnyOrder
   std::sort(nodes_.begin(), nodes_.end(), CompareAnyOrderCycleNode());
 
   // Prepare the feasibility check.
-  check_feasible_ = CheckFeasible::New(nodes_, heuristic_cycles);
+  check_ = CheckFeasible::New(nodes_, heuristic_cycles);
 }
 
 Number ComputeScaleFactorAnyOrder::Optimize()
@@ -665,7 +654,7 @@ Number ComputeScaleFactorAnyOrder::Optimize()
     return 0;
 
   // Initialize the collection of task slices: collections of fixed tasks that are relevant within some angle range.
-  check_feasible_->Initialize();
+  check_->Initialize();
 
   // Perform a binary search on the scale factor, determining which are feasible.
   // This binary search requires a decent initial upper bound on the scale factor.
@@ -677,7 +666,7 @@ Number ComputeScaleFactorAnyOrder::Optimize()
     double scale_factor = 0.5 * (lower_bound + upper_bound);
     ComputeCoveringRadii(scale_factor);
 
-    if ((*check_feasible_)())
+    if ((*check_)())
       lower_bound = scale_factor;
     else
       upper_bound = scale_factor;
