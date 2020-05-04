@@ -55,6 +55,7 @@ struct AnyOrderCycleNode : public CycleNode
 
   int layer;
   bool disabled;
+  int check;
 }; // struct AnyOrderCycleNode
 
 class CompareAnyOrderCycleNode

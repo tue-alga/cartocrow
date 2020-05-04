@@ -50,13 +50,13 @@ constexpr const int kMaxLayers = 15;
 
 
 AnyOrderCycleNode::AnyOrderCycleNode() :
-  CycleNode(), layer(-1), disabled(true) {}
+  CycleNode(), layer(-1), disabled(true), check(0) {}
 
 AnyOrderCycleNode::AnyOrderCycleNode(const Bead::Ptr& bead) :
-  CycleNode(bead), layer(-1), disabled(!bead) {}
+  CycleNode(bead), layer(-1), disabled(!bead), check(0) {}
 
 AnyOrderCycleNode::AnyOrderCycleNode(const AnyOrderCycleNode::Ptr& node) :
-  CycleNode(), layer(-1), disabled(!node)
+  CycleNode(), layer(-1), disabled(!node), check(0)
 {
   if (node)
   {
@@ -607,53 +607,28 @@ bool CheckFeasibleHeuristic::Feasible()
   if (!correct)
     return false;
 
-
-
-
-
-
-
-
-
-
-
-
-
-  // set to not found
+  // Check whether any nodes overlap.
   int count = 0;
-  for (int i = 0; i < nodes_.size(); i++)
-    nodes_[i]->bead->check = 0;
-
-  int li = nodes_check_.size() - 1;
-  int ri = nodes_check_.size() - 1;
-  while (li >= 0 && nodes_check_[li]->valid->to() <= nodes_check_[ri]->valid->from() + M_2xPI)
+  for
+  (
+    NodeSet::iterator left_iter = nodes_check_.begin(), right_iter = nodes_check_.begin();
+    left_iter != nodes_check_.end() && right_iter != nodes_check_.end();
+  )
   {
-    Bead::Ptr c = nodes_check_[li]->bead;
-    c->check++;
-    if (c->check == 1) count++;
-    li--;
-  }
-
-  while (li >= 0)
-  {
-    if (count == nodes_.size()) break;
-    AnyOrderCycleNode::Ptr& ca1 = nodes_check_[li];
-    AnyOrderCycleNode::Ptr& ca2 = nodes_check_[ri];
-    if (ca2->valid->from() + M_2xPI < ca1->valid->to())
+    if ((*right_iter)->valid->from() + M_2xPI < (*left_iter)->valid->to())
     {
-      ca2->bead->check--;
-      if (ca2->bead->check == 0) count--;
-      ri--;
-    } else
+      if (--(*right_iter)->check == 0)
+        --count;
+      ++right_iter;
+    }
+    else
     {
-      ca1->bead->check++;
-      if (ca1->bead->check == 1) count++;
-      li--;
+      if (++(*left_iter)->check == 1)
+        if (++count == nodes_check_.size())
+          return true;
+      ++left_iter;
     }
   }
-
-  if (count == nodes_.size())
-    return true;
 
   return false;
 }

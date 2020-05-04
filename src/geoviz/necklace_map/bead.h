@@ -53,8 +53,6 @@ struct Bead
   // Variables during scaling.
   Number covering_radius_rad; // TODO(tvl) move into CycleNode?
 
-  int check; // TODO(tvl) move into AnyOrderCycleNode?
-
   // Variables after scaling.
   NecklaceInterval::Ptr valid; // TODO(tvl) replace CycleNode::valid by this one and see if this can mean that the positioner needs not compute it (may have to add computing valid in fixed order scaler)?
 
