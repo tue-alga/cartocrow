@@ -193,6 +193,15 @@ class CheckFeasible
     const BitString& first_unused_set
   );
 
+  virtual void ProcessTask(const AnyOrderCycleNode::Ptr&) {}
+
+  bool AssignAngles
+  (
+    const size_t slice_index_offset,
+    const BitString& unused_set,
+    Number(*ToAngle)(const Value&)
+  );
+
   NodeSet& nodes_;
   std::vector<TaskSlice> slices_;
   std::vector<std::vector<Value> > values_;
@@ -218,12 +227,6 @@ class CheckFeasibleExact : public CheckFeasible
     const size_t first_slice_index,
     const BitString& first_layer_set
   );
-
-  bool AssignAngles
-  (
-    const size_t slice_index_offset,
-    const BitString& unused_set
-  );
 }; // class CheckFeasibleExact
 
 
@@ -237,9 +240,13 @@ class CheckFeasibleHeuristic : public CheckFeasible
  private:
   void InitializeSlices() override;
 
+  void ProcessTask(const AnyOrderCycleNode::Ptr& task);
+
   bool Feasible();
 
   const int heuristic_cycles_;
+
+  NodeSet nodes_check_;
 }; // class CheckFeasibleHeuristic
 
 
