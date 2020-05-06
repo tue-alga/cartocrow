@@ -36,8 +36,6 @@ namespace necklace_map
 namespace detail
 {
 
-// TODO(tvl) go over code and add "override" or "final" keywords where applicable..
-
 ComputeScaleFactorAnyOrder::ComputeScaleFactorAnyOrder
 (
   const Necklace::Ptr& necklace,
