@@ -36,40 +36,22 @@ namespace detail
 {
 
 // TODO(tvl) fix prototype code: const where possible
-// TODO(tvl) fix prototype code: collection loops
-// TODO(tvl) fix prototype code: variable names
 // TODO(tvl) go over code and add "override" or "final" keywords where applicable..
 
 constexpr const Number kEpsilon = 0.0000001;
 constexpr const int kMaxLayers = 15;
 
 
-AnyOrderCycleNode::AnyOrderCycleNode() :
-  CycleNode(), layer(-1), disabled(true), check(0) {}
 
-AnyOrderCycleNode::AnyOrderCycleNode(const Bead::Ptr& bead) :
-  CycleNode(bead), layer(-1), disabled(!bead), check(0) {}
+CycleNodeCheck::CycleNodeCheck(const Bead::Ptr& bead, const Range::Ptr& valid) :
+  CycleNode(bead, valid), check(0)
+{}
 
-AnyOrderCycleNode::AnyOrderCycleNode(const AnyOrderCycleNode::Ptr& node) :
-  CycleNode(), layer(-1), disabled(!node), check(0)
-{
-  if (node)
-  {
-    bead = node->bead;
-    valid = node->valid;
-    layer = node->layer;
-  }
-}
-
-bool CompareAnyOrderCycleNode::operator()(const AnyOrderCycleNode::Ptr& a, const AnyOrderCycleNode::Ptr& b) const
-{
-  return a->valid->from() < b->valid->from();
-}
 
 
 TaskEvent::TaskEvent() {}
 
-TaskEvent::TaskEvent(const AnyOrderCycleNode::Ptr& node, const Number& angle_rad, const Type& type) :
+TaskEvent::TaskEvent(const CycleNodeLayered::Ptr& node, const Number& angle_rad, const Type& type) :
   node(node),
   angle_rad(angle_rad),
   type(type) {}
@@ -121,7 +103,7 @@ TaskSlice::TaskSlice(const TaskSlice& slice, const int cycle) :
 
   // Copy the tasks.
   tasks.reserve(slice.tasks.size());
-  for (const AnyOrderCycleNode::Ptr& task : slice.tasks)
+  for (const CycleNodeLayered::Ptr& task : slice.tasks)
   {
     tasks.emplace_back();
     if
@@ -135,7 +117,7 @@ TaskSlice::TaskSlice(const TaskSlice& slice, const int cycle) :
       )
     {
       // Note that we must clone the task, i.e. construct a separate object, with its valid range offset to fit the slice.
-      tasks.back() = std::make_shared<AnyOrderCycleNode>(*task);
+      tasks.back() = std::make_shared<CycleNodeLayered>(*task);
       tasks.back()->valid = std::make_shared<Range>(task->valid->from() + offset, task->valid->to() + offset);
     }
   }
@@ -145,7 +127,7 @@ void TaskSlice::Reset()
 {
   coverage.from() = event_from.angle_rad;
   coverage.to() = event_to.angle_rad;
-  for (const AnyOrderCycleNode::Ptr& task : tasks)
+  for (const CycleNodeLayered::Ptr& task : tasks)
   {
     if (!task)
       continue;
@@ -164,14 +146,14 @@ void TaskSlice::Rotate(const TaskSlice& first_slice, const BitString& layer_set)
   if (coverage.to() < kEpsilon)
     coverage.to() = M_2xPI;
 
-  for (const AnyOrderCycleNode::Ptr& task : tasks)
+  for (const CycleNodeLayered::Ptr& task : tasks)
   {
     if (!task)
       continue;
 
     if (first_slice.tasks[task->layer] && first_slice.tasks[task->layer]->bead == task->bead)
     {
-      if (layer_set.HasBit(task->layer))
+      if (layer_set[task->layer])
       {
         task->valid->from() = 0.0;
         task->valid->to() -= angle_rad;
@@ -194,7 +176,7 @@ void TaskSlice::Rotate(const TaskSlice& first_slice, const BitString& layer_set)
   }
 }
 
-void TaskSlice::AddTask(const AnyOrderCycleNode::Ptr& task)
+void TaskSlice::AddTask(const CycleNodeLayered::Ptr& task)
 {
   CHECK_LT(task->layer, tasks.size());
   tasks[task->layer] = task;
@@ -205,7 +187,7 @@ void TaskSlice::Finalize()
   // The layer sets are all permutations of used layers described as bit strings.
   layer_sets.reserve(std::pow(2, tasks.size()));
   layer_sets.emplace_back();
-  for (const AnyOrderCycleNode::Ptr& task : tasks)
+  for (const CycleNodeLayered::Ptr& task : tasks)
   {
     if (!task)
       continue;
@@ -215,7 +197,7 @@ void TaskSlice::Finalize()
         layer_sets.begin(),
         layer_sets.end(),
         std::back_inserter(layer_sets),
-        [task](const BitString& string) -> BitString { return string.PlusBit(task->layer); }
+        [task](const BitString& string) -> BitString { return string + BitString::FromBit(task->layer); }
       );
   }
 }
@@ -262,7 +244,7 @@ void CheckFeasible::InitializeSlices()
   events.reserve(2 * nodes_.size());
 
   int max_layer = 0;
-  for (const AnyOrderCycleNode::Ptr& node : nodes_)
+  for (const CycleNodeLayered::Ptr& node : nodes_)
   {
     events.emplace_back(node, node->valid->from(), TaskEvent::Type::kFrom);
     events.emplace_back(node, node->valid->to(), TaskEvent::Type::kTo);
@@ -274,8 +256,8 @@ void CheckFeasible::InitializeSlices()
   // Construct the task slices.
   // Each task slice stores the nodes that are valid between two consecutive events, together with a bit string for each combination of these nodes.
   // For this purpose, keep track of the nodes that are valid at some angle, starting at 0 radians (because the first event has the smallest positive angle).
-  AnyOrderCycleNode::Ptr active_nodes[num_layers];
-  for (const AnyOrderCycleNode::Ptr& node : nodes_)
+  CycleNodeLayered::Ptr active_nodes[num_layers];
+  for (const CycleNodeLayered::Ptr& node : nodes_)
     if (node->valid->Contains(0))  // Note that this purposely excludes nodes that contain 2pi.
       active_nodes[node->layer] = node;
 
@@ -290,7 +272,7 @@ void CheckFeasible::InitializeSlices()
 
     // Construct a new slice.
     slices_.emplace_back(event_from, event_to, num_layers);
-    for (const AnyOrderCycleNode::Ptr& node : active_nodes)
+    for (const CycleNodeLayered::Ptr& node : active_nodes)
       if (node)
         slices_.back().AddTask(node);
     slices_.back().Finalize();
@@ -337,7 +319,7 @@ void CheckFeasible::ComputeValues
 )
 {
   // Initialize the values.
-  values_[0][0].task = std::make_shared<AnyOrderCycleNode>();
+  values_[0][0].task = std::make_shared<CycleNodeLayered>();
   values_[0][0].angle_rad = 0;
 
   const size_t num_slices = slices_.size();
@@ -347,10 +329,11 @@ void CheckFeasible::ComputeValues
 
     const size_t slice_index = (value_index + slice_index_offset) % num_slices;
     const TaskSlice& slice = slices_[slice_index];
+    BitString slice_layer_string = BitString::FromBit(slice.event_from.node->layer);
 
     for (const BitString& layer_set : slice.layer_sets)
     {
-      if (value_index == 0 && layer_set.Empty())
+      if (value_index == 0 && layer_set.IsEmpty())
         continue;
 
       Value& value = subset[layer_set.Get()];
@@ -368,7 +351,7 @@ void CheckFeasible::ComputeValues
         const std::vector<Value>& subset_prev = values_[value_index - 1];
         if (slice.event_from.type == TaskEvent::Type::kFrom)
         {
-          if (!layer_set.HasBit(slice.event_from.node->layer))
+          if (!layer_set[slice.event_from.node->layer])
             value = subset_prev[layer_set.Get()];
         } else
         {
@@ -381,18 +364,18 @@ void CheckFeasible::ComputeValues
           )  // Special case.
             value = subset_prev[layer_set.Get()];
           else
-            value = subset_prev[layer_set.PlusBit(slice.event_from.node->layer).Get()];
+            value = subset_prev[(layer_set + slice_layer_string).Get()];
         }
       }
       if (value.angle_rad < std::numeric_limits<double>::max())
         continue;
 
-      for (const AnyOrderCycleNode::Ptr& task : slice.tasks)
+      for (const CycleNodeLayered::Ptr& task : slice.tasks)
       {
-        if (!task || task->disabled || !layer_set.HasBit(task->layer))
+        if (!task || task->disabled || !layer_set[task->layer])
           continue;
 
-        const Value& value_without_task = subset[layer_set.MinusBit(task->layer).Get()];
+        const Value& value_without_task = subset[(layer_set - BitString::FromBit(task->layer)).Get()];
 
         Number angle_rad = value_without_task.angle_rad;
         if (angle_rad == std::numeric_limits<double>::max())
@@ -415,8 +398,8 @@ void CheckFeasible::ComputeValues
           angle_rad + task->bead->covering_radius_rad < value.angle_rad + value.task->bead->covering_radius_rad
         )
         {
-          value.angle_rad = angle_rad;
           value.task = task;
+          value.angle_rad = angle_rad;
         }
       }
     }
@@ -450,8 +433,7 @@ bool CheckFeasible::AssignAngles
     const size_t value_slice_index = (value_index + slice_index_offset) % num_slices;
     TaskSlice& value_slice = slices_[value_slice_index];
 
-    const Number value_angle_rad = value.angle_rad;
-    if (value_angle_rad + kEpsilon < value_slice.coverage.from())
+    if (value.angle_rad + kEpsilon < value_slice.coverage.from())
     {
       // Move to the previous slice.
       const int& value_slice_layer = value_slice.event_from.node->layer;
@@ -461,19 +443,19 @@ bool CheckFeasible::AssignAngles
         slices_[(value_slice_index + num_slices - 1) % num_slices].tasks[value_slice_layer] &&
         !slices_[(value_slice_index + num_slices - 1) % num_slices].tasks[value_slice_layer]->disabled
       )
-        layer_set.AddBit(value_slice_layer);
+        layer_set += value_slice_layer;
 
       --value_index;
     } else
     {
-      const AnyOrderCycleNode::Ptr& task = value.task;
-      if (!task || !layer_set.HasBit(task->layer))
+      const CycleNodeLayered::Ptr& task = value.task;
+      if (!task || !layer_set[task->layer])
         return false;
 
-      layer_set.RemoveBit(task->layer);
+      layer_set -= task->layer;
 
       // Assign the angle.
-      task->bead->angle_rad = value_angle_rad + slice.event_from.angle_rad;
+      task->bead->angle_rad = value.angle_rad + slice.event_from.angle_rad;
 
       ProcessTask(task);
     }
@@ -503,7 +485,7 @@ bool CheckFeasibleExact::operator()()
     for (const BitString& layer_set : slice.layer_sets)
     {
       // The layer set must include the beginning event's node.
-      if (!layer_set.HasBit(slice.event_from.node->layer))
+      if (!layer_set[slice.event_from.node->layer])
         continue;
 
       // Split the circle at the starting event.
@@ -576,16 +558,21 @@ void CheckFeasibleHeuristic::InitializeSlices()
       slices_[cycle * num_slices + j] = TaskSlice(slices_[j], cycle);
 }
 
-void CheckFeasibleHeuristic::ProcessTask(const AnyOrderCycleNode::Ptr& task)
+void CheckFeasibleHeuristic::ProcessTask(const CycleNodeLayered::Ptr& task)
 {
   const Number covering_radius_rad = task->bead ? task->bead->covering_radius_rad : 0;
-  nodes_check_.push_back(std::make_shared<AnyOrderCycleNode>(task->bead));
-  nodes_check_.back()->valid =
-    std::make_shared<Range>
+  nodes_check_.push_back
+  (
+    std::make_shared<CycleNodeCheck>
     (
-      task->bead->angle_rad - covering_radius_rad,
-      task->bead->angle_rad + covering_radius_rad
-    );
+      task->bead,
+      std::make_shared<Range>
+      (
+        task->bead->angle_rad - covering_radius_rad,
+        task->bead->angle_rad + covering_radius_rad
+      )
+    )
+  );
 }
 
 bool CheckFeasibleHeuristic::Feasible()
@@ -600,7 +587,7 @@ bool CheckFeasibleHeuristic::Feasible()
   int count = 0;
   for
   (
-    NodeSet::iterator left_iter = nodes_check_.begin(), right_iter = nodes_check_.begin();
+    CheckSet::iterator left_iter = nodes_check_.begin(), right_iter = nodes_check_.begin();
     left_iter != nodes_check_.end() && right_iter != nodes_check_.end();
   )
   {
@@ -632,13 +619,14 @@ ComputeScaleFactorAnyOrder::ComputeScaleFactorAnyOrder
 ) :
   necklace_shape_(necklace->shape),
   half_buffer_rad_(0.5 * buffer_rad),
+  max_buffer_rad_(0),
   binary_search_depth_(binary_search_depth)
 {
   // Collect and order the beads based on the start of their valid interval (initialized as their feasible interval).
   for (const Bead::Ptr& bead : necklace->beads)
-    nodes_.push_back(std::make_shared<AnyOrderCycleNode>(bead));
+    nodes_.push_back(std::make_shared<CycleNodeLayered>(bead));
 
-  std::sort(nodes_.begin(), nodes_.end(), CompareAnyOrderCycleNode());
+  std::sort(nodes_.begin(), nodes_.end(), CompareCycleNodeLayered());
 
   // Prepare the feasibility check.
   check_ = CheckFeasible::New(nodes_, heuristic_cycles);
@@ -672,18 +660,25 @@ Number ComputeScaleFactorAnyOrder::Optimize()
       upper_bound = scale_factor;
   }
 
+  ComputeBufferUpperBound(lower_bound);
+
   // The lower bound is the largest confirmed scale factor for which all beads could fit.
   return lower_bound;
 }
 
-Number ComputeScaleFactorAnyOrder::ComputeScaleUpperBound() const
+Number ComputeScaleFactorAnyOrder::ComputeScaleUpperBound()
 {
   // The initial upper bound make sure all beads would fit if they were the size of the smallest bead.
   Number upper_bound = 0;
-  for (const AnyOrderCycleNode::Ptr& node : nodes_)
+  max_buffer_rad_ = 0;
+  for (const CycleNodeLayered::Ptr& node : nodes_)
   {
     const Number radius_rad = necklace_shape_->ComputeCoveringRadiusRad(node->valid, node->bead->radius_base);
     upper_bound = std::max(upper_bound, M_PI / (radius_rad + half_buffer_rad_));
+
+    // The maximum buffer will be based on the minimum radius and the final scale factor.
+    if (0 < radius_rad)
+      max_buffer_rad_ = std::min(max_buffer_rad_, radius_rad);
   }
 
   // Perform a binary search to find the largest scale factor for which all beads could fit.
@@ -693,7 +688,7 @@ Number ComputeScaleFactorAnyOrder::ComputeScaleUpperBound() const
     const Number scale_factor = 0.5 * (lower_bound + upper_bound);
 
     Number totalSize = 0.0;
-    for (const AnyOrderCycleNode::Ptr& node : nodes_)
+    for (const CycleNodeLayered::Ptr& node : nodes_)
       totalSize +=
         necklace_shape_->ComputeCoveringRadiusRad(node->valid, scale_factor * node->bead->radius_base) +
         half_buffer_rad_;
@@ -711,7 +706,7 @@ Number ComputeScaleFactorAnyOrder::ComputeScaleUpperBound() const
 
 Number ComputeScaleFactorAnyOrder::ComputeCoveringRadii(const Number& scale_factor)
 {
-  for (AnyOrderCycleNode::Ptr& node : nodes_)
+  for (CycleNodeLayered::Ptr& node : nodes_)
     node->bead->covering_radius_rad =
       necklace_shape_->ComputeCoveringRadiusRad(node->valid, node->bead->radius_base * scale_factor) + half_buffer_rad_;
 }
@@ -721,7 +716,7 @@ int ComputeScaleFactorAnyOrder::AssignLayers()
   // Each node should be assigned a layer such that each layer does not contain any pair of nodes that overlap in their valid interval.
   // Note that this can be done greedily: assign the nodes by minimizing the distance between the last valid interval and the next.
 
-  using NodeList = std::list<AnyOrderCycleNode::Ptr>;
+  using NodeList = std::list<CycleNodeLayered::Ptr>;
   NodeList remaining_nodes(nodes_.begin(), nodes_.end());
 
   int layer = 0;
@@ -765,6 +760,11 @@ int ComputeScaleFactorAnyOrder::AssignLayers()
   return layer + 1;
 }
 
+void ComputeScaleFactorAnyOrder::ComputeBufferUpperBound(const Number& scale_factor)
+{
+  max_buffer_rad_ *= scale_factor;
+}
+
 
 ComputeScaleFactorAnyOrderIngot::ComputeScaleFactorAnyOrderIngot
 (
@@ -776,14 +776,24 @@ ComputeScaleFactorAnyOrderIngot::ComputeScaleFactorAnyOrderIngot
   ComputeScaleFactorAnyOrder(necklace, buffer_rad, binary_search_depth, heuristic_cycles)
 {}
 
-Number ComputeScaleFactorAnyOrderIngot::ComputeScaleUpperBound() const
+Number ComputeScaleFactorAnyOrderIngot::ComputeScaleUpperBound()
 {
+  max_buffer_rad_ = 0;
+  for (const CycleNodeLayered::Ptr& node : nodes_)
+  {
+    const Number radius_rad = necklace_shape_->ComputeCoveringRadiusRad(node->valid, node->bead->radius_base);
+
+    // The maximum buffer will be based on the minimum radius and the final scale factor.
+    if (0 < radius_rad)
+      max_buffer_rad_ = std::min(max_buffer_rad_, radius_rad);
+  }
+
   return M_PI / nodes_.size() - half_buffer_rad_;
 }
 
 Number ComputeScaleFactorAnyOrderIngot::ComputeCoveringRadii(const Number& scale_factor)
 {
-  for (AnyOrderCycleNode::Ptr& node : nodes_)
+  for (CycleNodeLayered::Ptr& node : nodes_)
     node->bead->covering_radius_rad = scale_factor + half_buffer_rad_;
 }
 

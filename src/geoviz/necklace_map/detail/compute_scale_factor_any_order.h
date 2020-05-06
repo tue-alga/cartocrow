@@ -26,11 +26,12 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 02-04-2020
 #include <memory>
 #include <vector>
 
+#include "geoviz/common/bit_string.h"
 #include "geoviz/common/core_types.h"
 #include "geoviz/necklace_map/bead.h"
 #include "geoviz/necklace_map/necklace.h"
 #include "geoviz/necklace_map/range.h"
-#include "geoviz/necklace_map/detail/cycle_node.h"
+#include "geoviz/necklace_map/detail/cycle_node_layered.h"
 
 
 namespace geoviz
@@ -40,41 +41,20 @@ namespace necklace_map
 namespace detail
 {
 
-// A cycle node that can be assigned to a layer.
-// The cycle nodes on a single layer shall never have valid intervals that intersect in their interior.
-struct AnyOrderCycleNode : public CycleNode
-{
-  using Ptr = std::shared_ptr<AnyOrderCycleNode>;
 
-  AnyOrderCycleNode();
-
-  explicit AnyOrderCycleNode(const Bead::Ptr& bead);
-
-  AnyOrderCycleNode(const AnyOrderCycleNode::Ptr& node);
-
-  int layer;
-  bool disabled;
-  int check;
-}; // struct AnyOrderCycleNode
-
-class CompareAnyOrderCycleNode
-{
- public:
-  bool operator()(const AnyOrderCycleNode::Ptr& a, const AnyOrderCycleNode::Ptr& b) const;
-}; // class CompareAnyOrderCycleNode
 
 
 // The cycle nodes will be processed by moving from event to event.
 // Each event indicates that a valid interval starts or stops at the associated angle.
 struct TaskEvent
 {
-  enum class Type { kFrom, kTo };
+  enum class Type {kFrom, kTo};
 
   TaskEvent();
 
-  TaskEvent(const AnyOrderCycleNode::Ptr& node, const Number& angle_rad, const Type& type);
+  TaskEvent(const CycleNodeLayered::Ptr& node, const Number& angle_rad, const Type& type);
 
-  AnyOrderCycleNode::Ptr node;
+  CycleNodeLayered::Ptr node;
   Number angle_rad;
   Type type;
 }; // class TaskEvent
@@ -86,41 +66,6 @@ class CompareTaskEvent
 }; // class CompareTaskEvent
 
 
-class BitString
-{
- public:
-  inline static bool CheckFit(const int bit) { return bit < 32; }
-
-  inline static BitString FromBit(const int bit) { return BitString(ToString(bit)); }
-  inline static BitString FromString(const int bits) { return BitString(bits); }
-
-  BitString() : bits(0) {}
-
-  inline bool Empty() const { return bits == 0; }
-
-  inline bool HasBit(const int bit) const { return (ToString(bit) & bits) != 0; }
-
-  inline bool Overlaps(const BitString& string) const { return (string.bits & bits) != 0; }
-
-  inline const int& Get() const { return bits; }
-
-  inline void AddBit(const int bit) { bits |= ToString(bit); }
-
-  inline void RemoveBit(const int bit) { bits &= ~ToString(bit); }
-
-  inline BitString operator^(const BitString& string) const { return BitString(bits ^ string.bits); }
-
-  inline BitString PlusBit(const int bit) const { return BitString(bits | ToString(bit)); }
-
-  inline BitString MinusBit(const int bit) const { return BitString(bits & ~ToString(bit)); }
-
- private:
-  inline static int ToString(const int bit) { return 1 << bit; }
-
-  explicit BitString(const int string) : bits(string) {}
-
-  int bits;
-}; // class BitString
 
 
 class TaskSlice
@@ -141,14 +86,14 @@ class TaskSlice
 
   void Rotate(const TaskSlice& first_slice, const BitString& layer_set);
 
-  void AddTask(const AnyOrderCycleNode::Ptr& task);
+  void AddTask(const CycleNodeLayered::Ptr& task);
 
   void Finalize();
 
   TaskEvent event_from, event_to;
   Range coverage;
 
-  std::vector<AnyOrderCycleNode::Ptr> tasks;
+  std::vector<CycleNodeLayered::Ptr> tasks;
   std::vector<BitString> layer_sets;
 }; // class TaskSlice
 
@@ -156,7 +101,7 @@ class TaskSlice
 class CheckFeasible
 {
  public:
-  using NodeSet = std::vector<AnyOrderCycleNode::Ptr>;
+  using NodeSet = std::vector<CycleNodeLayered::Ptr>;
   using Ptr = std::shared_ptr<CheckFeasible>;
 
   static Ptr New(NodeSet& nodes, const int heuristic_cycles);
@@ -175,7 +120,7 @@ class CheckFeasible
 
     Number CoveringRadius() const;
 
-    AnyOrderCycleNode::Ptr task;
+    CycleNodeLayered::Ptr task;
     Number angle_rad;
   }; // struct Value
 
@@ -194,7 +139,7 @@ class CheckFeasible
     const BitString& first_unused_set
   );
 
-  virtual void ProcessTask(const AnyOrderCycleNode::Ptr&) {}
+  virtual void ProcessTask(const CycleNodeLayered::Ptr&) {}
 
   bool AssignAngles
   (
@@ -230,6 +175,23 @@ class CheckFeasibleExact : public CheckFeasible
 }; // class CheckFeasibleExact
 
 
+
+
+
+
+
+
+// A cycle node that can be assigned a layer.
+struct CycleNodeCheck : public CycleNode
+{
+  using Ptr = std::shared_ptr<CycleNodeCheck>;
+
+  CycleNodeCheck(const Bead::Ptr& bead, const Range::Ptr& valid);
+
+  int check;
+}; // struct CycleNodeCheck
+
+
 class CheckFeasibleHeuristic : public CheckFeasible
 {
  public:
@@ -240,20 +202,22 @@ class CheckFeasibleHeuristic : public CheckFeasible
  private:
   void InitializeSlices() override;
 
-  void ProcessTask(const AnyOrderCycleNode::Ptr& task);
+  void ProcessTask(const CycleNodeLayered::Ptr& task);
 
   bool Feasible();
 
   const int heuristic_cycles_;
 
-  NodeSet nodes_check_;
+  using CheckSet = std::vector<CycleNodeCheck::Ptr>;
+  CheckSet nodes_check_;
 }; // class CheckFeasibleHeuristic
 
 
 class ComputeScaleFactorAnyOrder
 {
  protected:
-  using NodeSet = std::vector<AnyOrderCycleNode::Ptr>;
+  // Note that the scaler must be able to access the set by index.
+  using NodeSet = std::vector<CycleNodeLayered::Ptr>;
 
  public:
   ComputeScaleFactorAnyOrder
@@ -267,21 +231,22 @@ class ComputeScaleFactorAnyOrder
   Number Optimize();
 
  protected:
-  virtual Number ComputeScaleUpperBound() const;
+  virtual Number ComputeScaleUpperBound();
 
   virtual Number ComputeCoveringRadii(const Number& scale_factor);
 
  private:
   int AssignLayers();
 
+  void ComputeBufferUpperBound(const Number& scale_factor);
+
  protected:
   NecklaceShape::Ptr necklace_shape_;
 
-  // Note that the scaler must be able to access the set by index.
   NodeSet nodes_;
 
   Number half_buffer_rad_;
-  //Number max_buffer_rad_;  // Based on smallest scaled radius?
+  Number max_buffer_rad_;
 
   int binary_search_depth_;
   CheckFeasible::Ptr check_;
@@ -300,7 +265,7 @@ class ComputeScaleFactorAnyOrderIngot : public ComputeScaleFactorAnyOrder
   );
 
  protected:
-  Number ComputeScaleUpperBound() const override;
+  Number ComputeScaleUpperBound() override;
 
   Number ComputeCoveringRadii(const Number& scale_factor) override;
 }; // class ComputeScaleFactorAnyOrderIngot
