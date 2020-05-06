@@ -41,8 +41,8 @@ namespace necklace_map
 /**@brief Construct a necklace bead.
  * @param radius_base the unscaled radius of the bead.
  */
-Bead::Bead(const Number& radius_base, const std::string& style, const std::string& id/*tmp debug*/)
-  : radius_base(radius_base), feasible(), covering_radius_rad(-1), valid(), angle_rad(0), region_style(style), id(id) {}
+Bead::Bead(const Number& radius_base, const std::string& style)
+  : radius_base(radius_base), feasible(), covering_radius_rad(-1), valid(), angle_rad(0), region_style(style) {}
 
 /**@brief Check whether the bead is valid.
  *

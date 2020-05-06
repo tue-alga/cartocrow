@@ -25,7 +25,6 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 03-03-2020
 #include "geoviz/necklace_map/detail/compute_scale_factor_any_order.h"
 
 
-// TODO(tvl) if ever moving to C++17, implement nested namespace definition "namespace geoviz::necklace_map {"
 namespace geoviz
 {
 namespace necklace_map

@@ -134,9 +134,9 @@ void ComputeValidPlacement::operator()(const Number& scale_factor, Necklace::Ptr
       Bead::Ptr& prev = necklace->beads[index_prev];
       const Bead::Ptr& next = necklace->beads[index_next];
 
-      const Number offset_from_prev_rad = NecklaceInterval(prev->angle_rad, bead->angle_rad).ComputeLength();
-      const Number distance_neighbors_rad = NecklaceInterval(prev->angle_rad, next->angle_rad).ComputeLength();
-      const Number offset_from_centroid_rad = NecklaceInterval
+      const Number offset_from_prev_rad = CircularRange(prev->angle_rad, bead->angle_rad).ComputeLength();
+      const Number distance_neighbors_rad = CircularRange(prev->angle_rad, next->angle_rad).ComputeLength();
+      const Number offset_from_centroid_rad = CircularRange
       (
         bead->feasible->ComputeCentroid(),
         bead->angle_rad

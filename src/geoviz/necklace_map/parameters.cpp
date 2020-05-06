@@ -78,7 +78,6 @@ Parameters::Parameters() :
  * This order is used when computing the optimal scale factor and when computing a valid placement.
  */
 
-// TODO(tvl) fix this: the buffer is in radians only for circle necklaces...
 /**@fn Number Parameters::buffer_rad;
  * @brief The minimum angle in radians of the empty wedge between neighboring necklace beads that has the necklace kernel as apex.
  *

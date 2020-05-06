@@ -24,6 +24,8 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 03-03-2020
 
 #include <glog/logging.h>
 
+#include "geoviz/necklace_map/necklace_interval.h"
+
 
 namespace geoviz
 {
@@ -38,7 +40,7 @@ namespace necklace_map
  * If the centroid of the region is the necklace kernel, the wedge bisector is undefined. In this case the wedge is chosen such that the inner bisector has the same direction as the positive x axis.
  */
 
-NecklaceInterval::Ptr
+CircularRange::Ptr
 ComputeFeasibleCentroidInterval::operator()(const Polygon& extent, const Necklace::Ptr& necklace) const
 {
   const Point centroid = ComputeCentroid()(extent);

@@ -76,6 +76,20 @@ namespace necklace_map
  * @return the minimum bounding box.
  */
 
+/**@fn virtual Number NecklaceShape::ComputeCoveringRadiusRad(const Range::Ptr& range, const Number& radius) const = 0
+ * @brief Compute the covering radius based on a bead of a given radius that is centered in a given range.
+ *
+ * For circle necklaces, this covering radius is the part of the circle covered by the smallest wedge with the necklace kernel as apex and containing the bead. This covering radius does not actually depend on the range, because of the regularity of the circle.
+ *
+ * For bezier curves, this covering radius is based on the points at which the curve intersects the bead boundary. The largest covering radius is taken over the range of bead centers.
+ * @param range the range on which the bead can be centered.
+ * @param radius the radius of the bead.
+ * @return @parblock the covering radius in radians.
+ *
+ * Note that this covering radius is always an arc measurement.
+ * @endparblock
+ */
+
 /**@brief Compute the angle of a point on the shape.
  *
  * This angle is relative to the positive x-asis.
@@ -92,6 +106,15 @@ Number NecklaceShape::ComputeAngleRad(const Point& point) const
     ? 0
     : Modulo(std::atan2(offset.y(), offset.x()));
 }
+
+/**@fn virtual Number NecklaceShape::ComputeAngleAtDistanceRad(const Number& angle_rad, const Number& distance) const = 0
+ * @brief Compute the angle difference between a point on the necklace at a given angle and another point on the necklace that is a given geodetic distance away from the point.
+ *
+ * This distance is always traveled in counterclockwise direction.
+ * @param angle_rad the angle relative to the positive x-axis of the ray originating from the necklace kernel that intersects the necklace in the original point.
+ * @param distance the distance from the original point to travel (along the necklace) before determining the final angle.
+ * @return the angle relative to the positive x-axis of the ray originating from the necklace kernel that intersects the necklace in the final point.
+ */
 
 /**@fn virtual void NecklaceShape::Accept(NecklaceShapeVisitor& visitor) = 0;
  * @brief Part of the visitor pattern to apply a visitor to the shape.

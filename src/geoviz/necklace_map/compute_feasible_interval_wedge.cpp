@@ -24,6 +24,8 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 03-03-2020
 
 #include <glog/logging.h>
 
+#include "geoviz/necklace_map/necklace_interval.h"
+
 
 namespace geoviz
 {
@@ -38,7 +40,7 @@ namespace necklace_map
  * If the region contains the necklace kernel, the wedge interval would cover the complete plane. In this case, a centroid interval in generated instead.
  */
 
-NecklaceInterval::Ptr
+CircularRange::Ptr
 ComputeFeasibleWedgeInterval::operator()(const Polygon& extent, const Necklace::Ptr& necklace) const
 {
   CHECK_GT(extent.size(), 0);
@@ -46,7 +48,7 @@ ComputeFeasibleWedgeInterval::operator()(const Polygon& extent, const Necklace::
     return (*fallback_)(extent, necklace);
 
   const Number angle = necklace->shape->ComputeAngleRad(*extent.vertices_begin());
-  NecklaceInterval obscured(angle, angle);
+  CircularRange obscured(angle, angle);
 
   const Point& kernel = necklace->shape->kernel();
   for (Polygon::Edge_const_iterator edge_iter = extent.edges_begin(); edge_iter != extent.edges_end(); ++edge_iter)

@@ -149,7 +149,7 @@ int ComputeScaleFactorAnyOrder::AssignLayers()
 
   int layer = 0;
   remaining_nodes.front()->layer = layer;
-  NecklaceInterval layer_interval(*remaining_nodes.front()->valid);
+  CircularRange layer_interval(*remaining_nodes.front()->valid);
 
   remaining_nodes.pop_front();
   NodeList::iterator node_iter = remaining_nodes.begin();
@@ -170,7 +170,7 @@ int ComputeScaleFactorAnyOrder::AssignLayers()
       // All nodes were checked: start a new layer.
       ++layer;
       (*node_iter)->layer = layer;
-      layer_interval = NecklaceInterval(*(*node_iter)->valid);
+      layer_interval = CircularRange(*(*node_iter)->valid);
 
       node_iter = remaining_nodes.erase(node_iter);
       unused_iter = remaining_nodes.end();

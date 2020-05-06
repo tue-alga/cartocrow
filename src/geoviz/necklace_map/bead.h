@@ -26,7 +26,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 15-01-2020
 #include <memory>
 
 #include "geoviz/common/core_types.h"
-#include "geoviz/necklace_map/necklace_interval.h"
+#include "geoviz/necklace_map/circular_range.h"
 
 
 namespace geoviz
@@ -38,23 +38,22 @@ struct Bead
 {
   using Ptr = std::shared_ptr<Bead>;
 
-  Bead(const Number& radius_base, const std::string& style, const std::string& id/*tmp debug*/);
+  Bead(const Number& radius_base, const std::string& style);
 
   bool IsValid() const;
 
   // Variables before scaling.
   Number radius_base;  // TODO(tvl) express the radius in radians.
 
-  NecklaceInterval::Ptr feasible;
+  CircularRange::Ptr feasible;
 
   std::string region_style;
-  std::string id; // TODO(tvl) tmp for debugging.
 
   // Variables during scaling.
   Number covering_radius_rad; // TODO(tvl) move into CycleNode?
 
   // Variables after scaling.
-  NecklaceInterval::Ptr valid; // TODO(tvl) replace CycleNode::valid by this one and see if this can mean that the positioner needs not compute it (may have to add computing valid in fixed order scaler)?
+  CircularRange::Ptr valid; // TODO(tvl) replace CycleNode::valid by this one and see if this can mean that the positioner needs not compute it (may have to add computing valid in fixed order scaler)?
 
   Number angle_rad;
 }; // struct Bead

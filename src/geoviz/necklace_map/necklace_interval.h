@@ -23,10 +23,8 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 01-04-2020
 #ifndef GEOVIZ_NECKLACE_MAP_NECKLACE_INTERVAL_H
 #define GEOVIZ_NECKLACE_MAP_NECKLACE_INTERVAL_H
 
-#include <memory>
-
 #include "geoviz/common/core_types.h"
-#include "geoviz/necklace_map/range.h"
+#include "geoviz/necklace_map/circular_range.h"
 
 
 namespace geoviz
@@ -34,44 +32,14 @@ namespace geoviz
 namespace necklace_map
 {
 
-// TODO(tvl) rename "CircularRange"
-class NecklaceInterval : public Range
-{
- public:
-  using Ptr = std::shared_ptr<NecklaceInterval>;
-
-  NecklaceInterval(const Number& from_rad, const Number& to_rad);
-
-  explicit NecklaceInterval(const Range& range); // TODO(tvl) document
-
-  inline const Number& from_rad() const { return from(); }
-  inline Number& from_rad() { return from(); }
-  inline const Number& to_rad() const { return to(); }
-  inline Number& to_rad() { return to(); }
-
-  bool IsValid() const override;
-
-  bool IsFull() const;
-
-  virtual bool Contains(const Number& value) const override;
-
-  virtual bool ContainsOpen(const Number& value) const override;
-
-  virtual bool Intersects(const Range::Ptr& range) const override;
-
-  virtual bool IntersectsOpen(const Range::Ptr& range) const override;
-
-  Number ComputeCentroid() const;
-}; // class NecklaceInterval
-
-class IntervalCentroid : public NecklaceInterval
+class IntervalCentroid : public CircularRange
 {
  public:
   IntervalCentroid(const Number& from_rad, const Number& to_rad);
 }; // class IntervalCentroid
 
 
-class IntervalWedge : public NecklaceInterval
+class IntervalWedge : public CircularRange
 {
  public:
   IntervalWedge(const Number& from_rad, const Number& to_rad);

@@ -28,135 +28,6 @@ namespace geoviz
 namespace necklace_map
 {
 
-/**@class NecklaceInterval
- * @brief The interface for a necklace interval.
- *
- * A necklace interval is a continuous interval on a circle.
- */
-
-/**@brief Construct an interval.
- *
- * The interval covers the intersection of the necklace and a wedge with its apex at the necklace kernel. This wedge is bounded by two rays from the center, which are described by their angle relative to the positive x axis in counterclockwise direction.
- *
- * The order of these rays is important: the interval is used that lies counterclockwise relative to the first angle.
- *
- * If the rays are identical, the interval covers a single point. If to_rad is at least 2*pi larger than from_rad, the interval covers the full circle.
- * @param from_rad the clockwise endpoint of the interval.
- * @param to_rad the counterclockwise endpoint of the interval.
- */
-NecklaceInterval::NecklaceInterval(const Number& from_rad, const Number& to_rad) :
-  Range(from_rad, to_rad)
-{
-  if (M_2xPI <= to_rad - from_rad)
-  {
-    from() = 0;
-    to() = M_2xPI;
-  }
-  else
-  {
-    from() = Modulo(from_rad);
-    to() = Modulo(to_rad, from());
-  }
-}
-
-NecklaceInterval::NecklaceInterval(const Range& range) : NecklaceInterval(range.from(), range.to()) {}
-
-/**@fn const Number& NecklaceInterval::from_rad() const;
- * @brief The angle where the interval starts.
- *
- * This is the clockwise extreme of the interval.
- * @return the clockwise extreme.
- */
-
-/**@fn Number& NecklaceInterval::from_rad();
- * @brief The angle where the interval starts.
- *
- * This is the clockwise extreme of the interval.
- * @return the clockwise extreme.
- * @endparblock
- */
-
-/**@fn const Number& NecklaceInterval::to_rad() const;
- * @brief The angle where the interval ends.
- *
- * This is the counterclockwise extreme of the interval.
- * @return the counterclockwise extreme.
- */
-
-/**@fn Number& NecklaceInterval::to_rad();
- * @brief The angle where the interval ends.
- *
- * This is the counterclockwise extreme of the interval.
- * @return the counterclockwise extreme.
- */
-
-/**@brief Check whether the interval is in a valid state.
- *
- * The interval is in a valid state if @f from() is in the range [0, 2*pi) and @f to() is in the range [@f from(), @f from() + 2*pi).
- * @return whether the interval is valid.
- */
-bool NecklaceInterval::IsValid() const
-{
-  return
-    0 <= from_rad() && from_rad() < M_2xPI &&
-    from_rad() <= to_rad() && to_rad() < from_rad() + M_2xPI;
-}
-
-/**@brief Check whether the interval covers the full circle.
- * @return true if and only if the interval covers the full circle.
- */
-bool NecklaceInterval::IsFull() const
-{
-  return from_rad() == 0 && to_rad() == M_2xPI;
-}
-
-bool NecklaceInterval::Contains(const Number& value) const
-{
-  const Number value_mod = Modulo(value, from_rad());
-  return from_rad() <= value_mod && value_mod <= to_rad();
-}
-
-bool NecklaceInterval::ContainsOpen(const Number& value) const
-{
-  const Number value_mod = Modulo(value, from_rad());
-  return from_rad() < value_mod && value_mod < to_rad();
-}
-
-bool NecklaceInterval::Intersects(const Range::Ptr& range) const
-{
-  NecklaceInterval interval(*range);
-  return
-    Contains(interval.from_rad()) ||
-    interval.Contains(from_rad());
-}
-
-bool NecklaceInterval::IntersectsOpen(const Range::Ptr& range) const
-{
-  NecklaceInterval interval(*range);
-  return
-    (Contains(interval.from_rad()) && Modulo(interval.from_rad(), from_rad()) != to_rad()) ||
-    (interval.Contains(from_rad()) && Modulo(from_rad(), interval.from_rad()) != interval.to());
-}
-
-/**@brief Compute a metric to order intervals on a necklace.
- *
- * This value can be compared to the ordering value of other intervals on the same necklace to imply a weak strict ordering of the ranges.
- * @return the ordering metric.
- */
-//Number NecklaceInterval::ComputeOrder() const
-//{
-//  return 0;
-//}
-
-/**@brief Compute the angle of the centroid of the interval.
- * @return the centroid angle in radians.
- */
-Number NecklaceInterval::ComputeCentroid() const
-{
-  return Modulo(.5 * (from() + to()));
-}
-
-
 /**@class IntervalCentroid
  * @brief A centroid-based necklace interval.
  */
@@ -174,7 +45,7 @@ Number NecklaceInterval::ComputeCentroid() const
  * @param to_rad the counterclockwise endpoint of the interval.
  */
 IntervalCentroid::IntervalCentroid(const Number& from_rad, const Number& to_rad) :
-  NecklaceInterval(from_rad, to_rad)
+  CircularRange(from_rad, to_rad)
 {}
 
 //Number IntervalCentroid::ComputeOrder() const
@@ -204,7 +75,7 @@ IntervalCentroid::IntervalCentroid(const Number& from_rad, const Number& to_rad)
  * @param to_rad the counterclockwise endpoint of the interval.
  */
 IntervalWedge::IntervalWedge(const Number& from_rad, const Number& to_rad) :
-  NecklaceInterval(from_rad, to_rad)
+  CircularRange(from_rad, to_rad)
 {}
 
 //Number IntervalWedge::ComputeOrder() const

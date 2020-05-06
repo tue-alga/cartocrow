@@ -26,7 +26,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 15-01-2020
 #include <memory>
 
 #include "geoviz/common/core_types.h"
-#include "geoviz/necklace_map/necklace_interval.h"
+#include "geoviz/necklace_map/circular_range.h"
 
 
 namespace geoviz
@@ -59,11 +59,11 @@ class NecklaceShape
 
   virtual Box ComputeBoundingBox() const = 0;
 
-  virtual Number ComputeCoveringRadiusRad(const Range::Ptr& range, const Number& radius) const = 0; // TODO(tvl) document.
+  virtual Number ComputeCoveringRadiusRad(const Range::Ptr& range, const Number& radius) const = 0;
 
   Number ComputeAngleRad(const Point& point) const;
 
-  virtual Number ComputeAngleAtDistanceRad(const Number& angle_rad, const Number& distance) const = 0; // TODO(tvl) document.
+  virtual Number ComputeAngleAtDistanceRad(const Number& angle_rad, const Number& distance) const = 0;
 
   virtual void Accept(NecklaceShapeVisitor& visitor) = 0;
   // TODO(tvl) should the necklace contain methods for adapting the 1D solution to the 2D solution?

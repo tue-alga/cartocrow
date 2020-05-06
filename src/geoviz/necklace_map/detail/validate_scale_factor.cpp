@@ -59,7 +59,7 @@ bool ValidateScaleFactor::operator()(Necklace::Ptr& necklace) const
     // Place the elements in a valid position.
     for (Bead::Ptr& bead : necklace->beads)
     {
-      bead->valid = std::make_shared<NecklaceInterval>(*bead->feasible);
+      bead->valid = std::make_shared<CircularRange>(*bead->feasible);
       bead->angle_rad = bead->valid->from_rad();
     }
 
@@ -151,7 +151,7 @@ bool ValidateScaleFactor::operator()(Necklace::Ptr& necklace) const
     // The first half of the nodes have the correct counterclockwise extreme.
     const Number& to_rad = nodes[n].valid->to();
 
-    bead->valid = std::make_shared<NecklaceInterval>(from_rad, to_rad);
+    bead->valid = std::make_shared<CircularRange>(from_rad, to_rad);
     bead->angle_rad = bead->valid->from_rad();
   }
 

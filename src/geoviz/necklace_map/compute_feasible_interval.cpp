@@ -64,7 +64,7 @@ ComputeFeasibleInterval::Ptr ComputeFeasibleInterval::New(const Parameters& para
   }
 }
 
-/**@fn virtual NecklaceInterval::Ptr ComputeFeasibleInterval::operator()(const Polygon& extent, const Necklace::Ptr& necklace) const = 0;
+/**@fn virtual CircularRange::Ptr ComputeFeasibleInterval::operator()(const Polygon& extent, const Necklace::Ptr& necklace) const = 0;
  * @brief Apply the functor to a region and necklace.
  * @param extent the spatial extent of the region.
  * @param necklace the necklace.

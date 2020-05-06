@@ -17,21 +17,16 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-Created by tvl (t.vanlankveld@esciencecenter.nl) on 05-12-2019
+Created by tvl (t.vanlankveld@esciencecenter.nl) on 06-05-2020
 */
 
-#ifndef GEOVIZ_NECKLACE_MAP_COMPUTE_FEASIBLE_INTERVAL_H
-#define GEOVIZ_NECKLACE_MAP_COMPUTE_FEASIBLE_INTERVAL_H
+#ifndef GEOVIZ_NECKLACE_MAP_CIRCULAR_RANGE_H
+#define GEOVIZ_NECKLACE_MAP_CIRCULAR_RANGE_H
 
 #include <memory>
-#include <set>
-#include <vector>
 
 #include "geoviz/common/core_types.h"
-#include "geoviz/necklace_map/map_element.h"
-#include "geoviz/necklace_map/necklace.h"
-#include "geoviz/necklace_map/circular_range.h"
-#include "geoviz/necklace_map/parameters.h"
+#include "geoviz/necklace_map/range.h"
 
 
 namespace geoviz
@@ -39,26 +34,36 @@ namespace geoviz
 namespace necklace_map
 {
 
-class ComputeFeasibleInterval
+class CircularRange : public Range
 {
  public:
-  using Ptr = std::unique_ptr<ComputeFeasibleInterval>;
+  using Ptr = std::shared_ptr<CircularRange>;
 
-  static Ptr New(const Parameters& parameters);
+  CircularRange(const Number& from_rad, const Number& to_rad);
 
-  virtual CircularRange::Ptr operator()(const Polygon& extent, const Necklace::Ptr& necklace) const = 0;
+  explicit CircularRange(const Range& range);
 
-  void operator()(MapElement::Ptr& element) const;
+  inline const Number& from_rad() const { return from(); }
+  inline Number& from_rad() { return from(); }
+  inline const Number& to_rad() const { return to(); }
+  inline Number& to_rad() { return to(); }
 
-  void operator()(std::vector<MapElement::Ptr>& elements) const;
+  bool IsValid() const override;
 
- protected:
-  ComputeFeasibleInterval(const Parameters& parameters);
+  bool IsFull() const;
 
-  std::set<Necklace::Ptr> to_clean_;
-}; // class ComputeFeasibleInterval
+  virtual bool Contains(const Number& value) const override;
+
+  virtual bool ContainsOpen(const Number& value) const override;
+
+  virtual bool Intersects(const Range::Ptr& range) const override;
+
+  virtual bool IntersectsOpen(const Range::Ptr& range) const override;
+
+  Number ComputeCentroid() const;
+}; // class CircularRange
 
 } // namespace necklace_map
 } // namespace geoviz
 
-#endif //GEOVIZ_NECKLACE_MAP_COMPUTE_FEASIBLE_INTERVAL_H
+#endif //GEOVIZ_NECKLACE_MAP_CIRCULAR_RANGE_H
