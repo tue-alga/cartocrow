@@ -33,7 +33,7 @@ template<typename bits_t, typename bit_size_t = int>
 class BitStr
 {
  public:
-  inline static bool CheckFit(const bit_size_t& bit) { return bit < std::numeric_limits<bits_t>::digits; }
+  static bool CheckFit(const bit_size_t& bit) { return bit < std::numeric_limits<bits_t>::digits; }
 
   inline static BitStr FromBit(const bit_size_t& bit) { return BitStr(ToString(bit)); }
 

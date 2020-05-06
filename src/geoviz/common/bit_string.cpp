@@ -35,13 +35,13 @@ namespace geoviz
  * @endparblock
  */
 
-/**@f static bool BitStr::CheckFit(const bit_size_t& bit)
+/**@fn static bool BitStr::CheckFit(const bit_size_t& bit);
  * @brief Check whether the bit string is large enough to fit a specific bit.
  * @param bit the bit to check.
  * @return Whether the bit string type would fit the specific bit.
  */
 
-/**@f static BitStr BitStr::FromBit(const bit_size_t& bit)
+/**@fn static BitStr BitStr::FromBit(const bit_size_t& bit)
  * @brief Construct a new bit string from a single bit.
  * @param bit @parblock the only bit of the string that is set to true.
  *
@@ -50,35 +50,35 @@ namespace geoviz
  * @return the new bit string.
  */
 
-/**@f static BitStr BitStr::FromString(const bits_t& string)
+/**@fn static BitStr BitStr::FromString(const bits_t& string)
  * @brief Construct a new bit string from a collection of bits expressed as an integer.
  * @param string the collection of bits that are to be set to true in the bit string.
  * @return the new bit string.
  */
 
-/**@f BitStr::BitStr()
+/**@fn BitStr::BitStr()
  * @brief Construct a new empty bit string.
  */
 
-/**@f bool BitStr::IsEmpty() const
+/**@fn bool BitStr::IsEmpty() const
  * @brief Check whether the bit string is empty.
  *
  * The bit string is empty if all bits are false.
  * @return whether the bit string is empty.
  */
 
-/**@f bool BitStr::Overlaps(const BitStr& string) const
+/**@fn bool BitStr::Overlaps(const BitStr& string) const
  * @brief Check whether this bit string shares any true bits with another bit string.
  * @param string the other bit string.
  * @return whether there is a bit that is true in both strings.
  */
 
-/**@f const bits_t& BitStr::Get() const
+/**@fn const bits_t& BitStr::Get() const
  * @brief Get the collection of true bits expressed as an integer.
  * @return the bits as an integer.
  */
 
-/**@f bool BitStr::operator[](const bit_size_t& bit) const
+/**@fn bool BitStr::operator[](const bit_size_t& bit) const
  * @brief Get the value of a single bit.
  * @param bit @parblock the bit to access.
  *
@@ -87,7 +87,7 @@ namespace geoviz
  * @return the value of the bit at the specific index.
  */
 
-/**@f BitStr BitStr::operator+(const bit_size_t& bit) const
+/**@fn BitStr BitStr::operator+(const bit_size_t& bit) const
  * @brief Clone the bit string and set a single bit to true.
  * @param bit @parblock the bit to set.
  *
@@ -95,7 +95,7 @@ namespace geoviz
  * @return the new bit string after the operation.
  */
 
-/**@f BitStr BitStr::operator-(const bit_size_t& bit) const
+/**@fn BitStr BitStr::operator-(const bit_size_t& bit) const
  * @brief Clone the bit string and set a single bit to false.
  * @param bit @parblock the bit to set.
  *
@@ -103,7 +103,7 @@ namespace geoviz
  * @return the new bit string after the operation.
  */
 
-/**@f BitStr& BitStr::operator+=(const bit_size_t& bit)
+/**@fn BitStr& BitStr::operator+=(const bit_size_t& bit)
  * @brief Set a single bit to true and return the result.
  * @param bit @parblock the bit to set.
  *
@@ -112,7 +112,7 @@ namespace geoviz
  * @return the bit string after the operation.
  */
 
-/**@f BitStr& BitStr::operator-=(const bit_size_t& bit)
+/**@fn BitStr& BitStr::operator-=(const bit_size_t& bit)
  * @brief Set a single bit to false and return the result.
  * @param bit @parblock the bit to set.
  *
@@ -121,49 +121,49 @@ namespace geoviz
  * @return the bit string after the operation.
  */
 
-/**@f BitStr BitStr::operator+(const BitStr& string)
+/**@fn BitStr BitStr::operator+(const BitStr& string)
  * @brief Clone the bit string and set a collection of bits to true.
  * @param string the bits to set.
  * @return the new bit string after the operation.
  */
 
-/**@f BitStr BitStr::operator-(const BitStr& string)
+/**@fn BitStr BitStr::operator-(const BitStr& string)
  * @brief Clone the bit string and set a collection of bits to false.
  * @param string the bits to set.
  * @return the new bit string after the operation.
  */
 
-/**@f BitStr BitStr::operator&(const BitStr& string)
+/**@fn BitStr BitStr::operator&(const BitStr& string)
  * @brief Clone the bit string and restrict the true bits to another bit string.
  * @param string the bits to restrict to.
  * @return the new bit string after the operation.
  */
 
-/**@f BitStr BitStr::operator^(const BitStr& string)
+/**@fn BitStr BitStr::operator^(const BitStr& string)
  * @brief Construct the exclusive-or combination of this bit string and another.
  * @param string the other bit string.
  * @return the new bit string after the operation.
  */
 
-/**@f BitStr& BitStr::operator+=(const BitStr& string)
+/**@fn BitStr& BitStr::operator+=(const BitStr& string)
  * @brief Set a collection of bits to true and return the result.
  * @param string the bits to set.
  * @return the bit string after the operation.
  */
 
-/**@f BitStr& BitStr::operator-=(const BitStr& string)
+/**@fn BitStr& BitStr::operator-=(const BitStr& string)
  * @brief Set a collection of bits to false and return the result.
  * @param string the bits to set.
  * @return the bit string after the operation.
  */
 
-/**@f BitStr& BitStr::operator&=(const BitStr& string)
+/**@fn BitStr& BitStr::operator&=(const BitStr& string)
  * @brief Restrict the true bits to a collection of bits and return the result.
  * @param string the bits to restrict to.
  * @return the bit string after the operation.
  */
 
-/**@f BitStr& BitStr::operator^=(const BitStr& string)
+/**@fn BitStr& BitStr::operator^=(const BitStr& string)
  * @brief Apply the exclusive-or combination of this bit string and another and return the result.
  * @param string the other bit string.
  * @return the bit string after the operation.
