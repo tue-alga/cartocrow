@@ -44,7 +44,6 @@ endmacro(add_cla_exe_properties)
 
 macro(geoviz_add_cla NAME)
     set(TARGET "${NAME}_cla")
-    set(PHP "run_${NAME}.php")
     set(INSTALL_DIR ${INSTALL_CONSOLE_DIR}/${NAME})
 
     # - While CMake will try various file extensions when adding files,
@@ -56,7 +55,7 @@ macro(geoviz_add_cla NAME)
     add_cla_exe_properties(${TARGET})
 
     # Install rules.
-    install(TARGETS ${TARGET} DESTINATION ${CMAKE_INSTALL_BINARY_DIR})
+    install(TARGETS ${TARGET} DESTINATION ${INSTALL_BINARY_DIR})
     install_files_and_directories("${HDRS}" ${INSTALL_DIR})
     install_files_and_directories("${SRCS}" ${INSTALL_DIR})
 
@@ -67,7 +66,7 @@ macro(geoviz_add_cla NAME)
     #    "${SOURCE_CONFIG_DIR}/run_cla.php.in"
     #    "${CMAKE_CURRENT_BINARY_DIR}/${PHP}"
     #)
-    #install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${PHP}" DESTINATION "${CMAKE_INSTALL_SCRIPT_DIR}")
+    #install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${PHP}" DESTINATION "${INSTALL_SCRIPT_DIR}")
 endmacro(geoviz_add_cla)
 
 

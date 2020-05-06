@@ -34,7 +34,7 @@ macro(geoviz_add_test NAME)
     add_test_exe_properties(${TARGET})
 
     # Install rules (note that we do not install the executable).
-    # install(TARGETS ${TARGET} DESTINATION ${CMAKE_INSTALL_BINARY_DIR})
+    # install(TARGETS ${TARGET} DESTINATION ${INSTALL_BINARY_DIR})
     install_files_and_directories("${HDRS}" ${INSTALL_DIR})
     install_files_and_directories("${SRCS}" ${INSTALL_DIR})
 

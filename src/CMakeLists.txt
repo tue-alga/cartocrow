@@ -13,6 +13,8 @@ set(CMAKE_INSTALL_SCRIPT_DIR script CACHE STRING "Installation subdirectory for 
 option(GEOVIZ_CREATE_ARCHIVE "Create an archive GeoViz library, collecting all Geo-visualization methods." ON)
 
 set(INSTALL_CONFIG_DIR ${CMAKE_INSTALL_LIBRARY_DIR}/cmake)
+set(INSTALL_BINARY_DIR ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINARY_DIR})
+set(INSTALL_SCRIPT_DIR ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_SCRIPT_DIR})
 
 # Macros.
 macro(install_files_and_directories FILE_LIST ROOT_DIR)

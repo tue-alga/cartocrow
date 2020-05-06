@@ -35,7 +35,7 @@
   fwrite($handle, base64_decode($data->data_base64));
   fclose($handle);
 
-  $exec = "../bin/necklace_map_cla";
+  $exec = "../@CMAKE_INSTALL_BINARY_DIR@/@CURRENT_CLA@";
   $args =
     " --in_geometry_filename $geometry_tmp".
     " --in_data_filename $data_tmp".
