@@ -17,19 +17,16 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-Created by tvl (t.vanlankveld@esciencecenter.nl) on 02-04-2020
+Created by tvl (t.vanlankveld@esciencecenter.nl) on 06-05-2020
 */
 
-#ifndef GEOVIZ_NECKLACE_MAP_DETAIL_COMPUTE_SCALE_FACTOR_ANY_ORDER_H
-#define GEOVIZ_NECKLACE_MAP_DETAIL_COMPUTE_SCALE_FACTOR_ANY_ORDER_H
+#ifndef GEOVIZ_NECKLACE_MAP_DETAIL_COMPUTE_SCALE_FACTOR_ANY_ORDER_INGOT_H
+#define GEOVIZ_NECKLACE_MAP_DETAIL_COMPUTE_SCALE_FACTOR_ANY_ORDER_INGOT_H
 
-#include <vector>
+#include "geoviz/necklace_map/detail/compute_scale_factor_any_order.h"
 
 #include "geoviz/common/core_types.h"
 #include "geoviz/necklace_map/necklace.h"
-#include "geoviz/necklace_map/necklace_shape.h"
-#include "geoviz/necklace_map/detail/check_feasible.h"
-#include "geoviz/necklace_map/detail/cycle_node_layered.h"
 
 
 namespace geoviz
@@ -39,16 +36,12 @@ namespace necklace_map
 namespace detail
 {
 
-class ComputeScaleFactorAnyOrder
+// Compute the scale factor where beads can be placed in any order and the beads have ingot shapes.
+// All ingots will use the same (maximal) covering interval, and instead represent the data value by their length.
+class ComputeScaleFactorAnyOrderIngot : public ComputeScaleFactorAnyOrder
 {
- protected:
-  // Note that the scaler must be able to access the set by index.
-  using NodeSet = std::vector<CycleNodeLayered::Ptr>;
-
  public:
-  constexpr static const int kMaxLayers = 15;
-
-  ComputeScaleFactorAnyOrder
+  ComputeScaleFactorAnyOrderIngot
   (
     const Necklace::Ptr& necklace,
     const Number& buffer_rad = 0,
@@ -56,32 +49,14 @@ class ComputeScaleFactorAnyOrder
     const int heuristic_cycles = 5
   );
 
-  Number Optimize();
-
  protected:
-  virtual Number ComputeScaleUpperBound();
+  Number ComputeScaleUpperBound() override;
 
-  virtual Number ComputeCoveringRadii(const Number& scale_factor);
-
- private:
-  int AssignLayers();
-
-  void ComputeBufferUpperBound(const Number& scale_factor);
-
- protected:
-  NecklaceShape::Ptr necklace_shape_;
-
-  NodeSet nodes_;
-
-  Number half_buffer_rad_;
-  Number max_buffer_rad_;
-
-  int binary_search_depth_;
-  CheckFeasible::Ptr check_;
-}; // class ComputeScaleFactorAnyOrder
+  Number ComputeCoveringRadii(const Number& scale_factor) override;
+}; // class ComputeScaleFactorAnyOrderIngot
 
 } // namespace detail
 } // namespace necklace_map
 } // namespace geoviz
 
-#endif //GEOVIZ_NECKLACE_MAP_DETAIL_COMPUTE_SCALE_FACTOR_ANY_ORDER_H
+#endif //GEOVIZ_NECKLACE_MAP_DETAIL_COMPUTE_SCALE_FACTOR_ANY_ORDER_INGOT_H

@@ -23,9 +23,10 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 02-04-2020
 #include "compute_scale_factor_any_order.h"
 
 #include <algorithm>
-#include <limits.h>
+#include <list>
+#include <memory>
 
-#include <glog/logging.h>
+#include "geoviz/necklace_map/bead.h"
 
 
 namespace geoviz
@@ -35,19 +36,7 @@ namespace necklace_map
 namespace detail
 {
 
-// TODO(tvl) fix prototype code: const where possible
 // TODO(tvl) go over code and add "override" or "final" keywords where applicable..
-
-constexpr const int kMaxLayers = 15;
-
-
-
-
-
-
-
-
-
 
 ComputeScaleFactorAnyOrder::ComputeScaleFactorAnyOrder
 (
@@ -90,7 +79,7 @@ Number ComputeScaleFactorAnyOrder::Optimize()
 
   for (int step = 0; step < binary_search_depth_; ++step)
   {
-    double scale_factor = 0.5 * (lower_bound + upper_bound);
+    const Number scale_factor = 0.5 * (lower_bound + upper_bound);
     ComputeCoveringRadii(scale_factor);
 
     if ((*check_)())
@@ -175,7 +164,8 @@ int ComputeScaleFactorAnyOrder::AssignLayers()
       (*node_iter)->layer = layer;
       layer_interval.to_rad() = ModuloNonZero((*node_iter)->valid->to(), layer_interval.from_rad());
       node_iter = remaining_nodes.erase(node_iter);
-    } else if (node_iter == unused_iter)
+    }
+    else if (node_iter == unused_iter)
     {
       // All nodes were checked: start a new layer.
       ++layer;
@@ -184,7 +174,8 @@ int ComputeScaleFactorAnyOrder::AssignLayers()
 
       node_iter = remaining_nodes.erase(node_iter);
       unused_iter = remaining_nodes.end();
-    } else
+    }
+    else
     {
       if (unused_iter == remaining_nodes.end())
         // Mark the node as the first one of the next layer.
@@ -202,38 +193,6 @@ int ComputeScaleFactorAnyOrder::AssignLayers()
 void ComputeScaleFactorAnyOrder::ComputeBufferUpperBound(const Number& scale_factor)
 {
   max_buffer_rad_ *= scale_factor;
-}
-
-
-ComputeScaleFactorAnyOrderIngot::ComputeScaleFactorAnyOrderIngot
-(
-  const Necklace::Ptr& necklace,
-  const Number& buffer_rad /*= 0*/,
-  const int binary_search_depth /*= 10*/,
-  const int heuristic_cycles /*= 5*/
-) :
-  ComputeScaleFactorAnyOrder(necklace, buffer_rad, binary_search_depth, heuristic_cycles)
-{}
-
-Number ComputeScaleFactorAnyOrderIngot::ComputeScaleUpperBound()
-{
-  max_buffer_rad_ = 0;
-  for (const CycleNodeLayered::Ptr& node : nodes_)
-  {
-    const Number radius_rad = necklace_shape_->ComputeCoveringRadiusRad(node->valid, node->bead->radius_base);
-
-    // The maximum buffer will be based on the minimum radius and the final scale factor.
-    if (0 < radius_rad)
-      max_buffer_rad_ = std::min(max_buffer_rad_, radius_rad);
-  }
-
-  return M_PI / nodes_.size() - half_buffer_rad_;
-}
-
-Number ComputeScaleFactorAnyOrderIngot::ComputeCoveringRadii(const Number& scale_factor)
-{
-  for (CycleNodeLayered::Ptr& node : nodes_)
-    node->bead->covering_radius_rad = scale_factor + half_buffer_rad_;
 }
 
 } // namespace detail
