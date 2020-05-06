@@ -39,6 +39,9 @@ using Circle = CGAL::Circle_2<Kernel>;
 using Line = CGAL::Line_2<Kernel>;
 using Segment = CGAL::Segment_2<Kernel>;
 
+
+constexpr const Number kEpsilon = 0.0000001;
+
 } // namespace geoviz
 
 #endif //GEOVIZ_COMMON_CGAL_TYPES_H

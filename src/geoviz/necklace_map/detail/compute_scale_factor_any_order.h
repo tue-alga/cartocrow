@@ -32,6 +32,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 02-04-2020
 #include "geoviz/necklace_map/necklace.h"
 #include "geoviz/necklace_map/range.h"
 #include "geoviz/necklace_map/detail/cycle_node_layered.h"
+#include "geoviz/necklace_map/detail/task.h"
 
 
 namespace geoviz
@@ -44,58 +45,11 @@ namespace detail
 
 
 
-// The cycle nodes will be processed by moving from event to event.
-// Each event indicates that a valid interval starts or stops at the associated angle.
-struct TaskEvent
-{
-  enum class Type {kFrom, kTo};
-
-  TaskEvent();
-
-  TaskEvent(const CycleNodeLayered::Ptr& node, const Number& angle_rad, const Type& type);
-
-  CycleNodeLayered::Ptr node;
-  Number angle_rad;
-  Type type;
-}; // class TaskEvent
-
-class CompareTaskEvent
-{
- public:
-  bool operator()(const TaskEvent& a, const TaskEvent& b) const;
-}; // class CompareTaskEvent
 
 
 
 
-class TaskSlice
-{
- public:
-  TaskSlice();
 
-  TaskSlice
-  (
-    const TaskEvent& event_from,
-    const TaskEvent& event_to,
-    const int num_layers
-  );
-
-  TaskSlice(const TaskSlice& slice, const int cycle);
-
-  void Reset();
-
-  void Rotate(const TaskSlice& first_slice, const BitString& layer_set);
-
-  void AddTask(const CycleNodeLayered::Ptr& task);
-
-  void Finalize();
-
-  TaskEvent event_from, event_to;
-  Range coverage;
-
-  std::vector<CycleNodeLayered::Ptr> tasks;
-  std::vector<BitString> layer_sets;
-}; // class TaskSlice
 
 
 class CheckFeasible
