@@ -38,7 +38,7 @@ namespace necklace_map
 class ComputeFeasibleWedgeInterval : public ComputeFeasibleInterval
 {
  public:
-  NecklaceInterval::Ptr operator()(const Polygon& extent, const Necklace::Ptr& necklace) const;
+  NecklaceInterval::Ptr operator()(const Polygon& extent, const Necklace::Ptr& necklace) const override;
 
  protected:
   ComputeFeasibleWedgeInterval(const Parameters& parameters);

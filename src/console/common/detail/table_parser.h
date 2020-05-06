@@ -43,7 +43,7 @@ template<typename T_>
 struct ValueColumn : public DataColumn
 {
   ValueColumn(const std::string& name, const size_t size);
-  void push_back(const std::string& value);
+  void push_back(const std::string& value) override;
   std::vector<T_> values;
 }; // struct ValueColumn
 

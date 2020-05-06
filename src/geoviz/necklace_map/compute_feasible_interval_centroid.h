@@ -38,7 +38,7 @@ namespace necklace_map
 class ComputeFeasibleCentroidInterval : public ComputeFeasibleInterval
 {
  public:
-  NecklaceInterval::Ptr operator()(const Polygon& extent, const Necklace::Ptr& necklace) const;
+  NecklaceInterval::Ptr operator()(const Polygon& extent, const Necklace::Ptr& necklace) const override;
 
  protected:
   ComputeFeasibleCentroidInterval(const Parameters& parameters);

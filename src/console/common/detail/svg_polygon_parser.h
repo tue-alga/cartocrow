@@ -41,9 +41,9 @@ class SvgPolygonConverter : public SvgPathConverter
   explicit SvgPolygonConverter(PolygonSet& shape);
 
  private:
-  void MoveTo_(const Point& to);
-  void LineTo_(const Point& to);
-  void Close_();
+  void MoveTo_(const Point& to) override;
+  void LineTo_(const Point& to) override;
+  void Close_() override;
 
   PolygonSet& shape_;
   Polygon current_;

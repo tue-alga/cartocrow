@@ -61,8 +61,6 @@ class NecklaceInterval : public Range
 
   virtual bool IntersectsOpen(const Range::Ptr& range) const override;
 
-  //virtual Number ComputeOrder() const;
-
   Number ComputeCentroid() const;
 }; // class NecklaceInterval
 
@@ -70,8 +68,6 @@ class IntervalCentroid : public NecklaceInterval
 {
  public:
   IntervalCentroid(const Number& from_rad, const Number& to_rad);
-
-  //Number ComputeOrder() const override;  // Order based on centroid.
 }; // class IntervalCentroid
 
 
@@ -79,8 +75,6 @@ class IntervalWedge : public NecklaceInterval
 {
  public:
   IntervalWedge(const Number& from_rad, const Number& to_rad);
-
-  //Number ComputeOrder() const override;  // Order based on begin.
 }; // class IntervalWedge
 
 } // namespace necklace_map

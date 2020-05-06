@@ -64,7 +64,7 @@ class CheckFeasibleHeuristic : public CheckFeasible
  private:
   void InitializeSlices() override;
 
-  void ProcessTask(const CycleNodeLayered::Ptr& task);
+  void ProcessTask(const CycleNodeLayered::Ptr& task) override;
 
   bool Feasible();
 

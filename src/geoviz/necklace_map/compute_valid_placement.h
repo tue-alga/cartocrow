@@ -64,7 +64,7 @@ class ComputeValidPlacementFixedOrder : public ComputeValidPlacement
   ComputeValidPlacementFixedOrder(const Number& aversion_ratio, const Number& min_separation = 0);
 
  protected:
-  void SwapBeads(Necklace::Ptr& necklace) const {}
+  void SwapBeads(Necklace::Ptr& necklace) const override {}
 }; // class ComputeValidPlacementFixedOrder
 
 
@@ -74,7 +74,7 @@ class ComputeValidPlacementAnyOrder : public ComputeValidPlacement
   ComputeValidPlacementAnyOrder(const Number& aversion_ratio, const Number& min_separation = 0);
 
  protected:
-  void SwapBeads(Necklace::Ptr& necklace) const;
+  void SwapBeads(Necklace::Ptr& necklace) const override;
 }; // class ComputeValidPlacementAnyOrder
 
 } // namespace necklace_map

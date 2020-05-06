@@ -38,7 +38,7 @@ class ComputeScaleFactorAnyOrder : public ComputeScaleFactor
  public:
   explicit ComputeScaleFactorAnyOrder(const Parameters& parameters);
 
-  Number operator()(Necklace::Ptr& necklace);
+  Number operator()(Necklace::Ptr& necklace) override;
 
  private:
   int binary_search_depth_;
