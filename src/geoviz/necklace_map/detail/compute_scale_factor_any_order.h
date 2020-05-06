@@ -31,6 +31,8 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 02-04-2020
 #include "geoviz/necklace_map/bead.h"
 #include "geoviz/necklace_map/necklace.h"
 #include "geoviz/necklace_map/range.h"
+#include "geoviz/necklace_map/detail/check_feasible_exact.h"
+#include "geoviz/necklace_map/detail/check_feasible_heuristic.h"
 #include "geoviz/necklace_map/detail/cycle_node_layered.h"
 #include "geoviz/necklace_map/detail/task.h"
 
@@ -41,131 +43,6 @@ namespace necklace_map
 {
 namespace detail
 {
-
-
-
-
-
-
-
-
-
-
-
-class CheckFeasible
-{
- public:
-  using NodeSet = std::vector<CycleNodeLayered::Ptr>;
-  using Ptr = std::shared_ptr<CheckFeasible>;
-
-  static Ptr New(NodeSet& nodes, const int heuristic_cycles);
-
-  void Initialize();
-
-  // Note that the covering radius of each node should be set before calling this.
-  virtual bool operator()() = 0;
-
- protected:
-  struct Value
-  {
-    Value();
-
-    void Reset();
-
-    Number CoveringRadius() const;
-
-    CycleNodeLayered::Ptr task;
-    Number angle_rad;
-  }; // struct Value
-
-  CheckFeasible(NodeSet& nodes);
-
-  virtual void InitializeSlices();
-
-  void InitializeContainer();
-
-  void ResetContainer();
-
-  void ComputeValues
-  (
-    const size_t slice_index_offset,
-    const BitString& first_layer_set,
-    const BitString& first_unused_set
-  );
-
-  virtual void ProcessTask(const CycleNodeLayered::Ptr&) {}
-
-  bool AssignAngles
-  (
-    const size_t slice_index_offset,
-    const BitString& unused_set
-  );
-
-  NodeSet& nodes_;
-  std::vector<TaskSlice> slices_;
-  std::vector<std::vector<Value> > values_;
-}; // class CheckFeasible
-
-
-class CheckFeasibleExact : public CheckFeasible
-{
- public:
-  CheckFeasibleExact(NodeSet& nodes);
-
-  bool operator()() override;
-
- private:
-  void SplitCircle
-  (
-    const TaskSlice& first_slice,
-    const BitString& layer_set
-  );
-
-  bool FeasibleFromSlice
-  (
-    const size_t first_slice_index,
-    const BitString& first_layer_set
-  );
-}; // class CheckFeasibleExact
-
-
-
-
-
-
-
-
-// A cycle node that can be assigned a layer.
-struct CycleNodeCheck : public CycleNode
-{
-  using Ptr = std::shared_ptr<CycleNodeCheck>;
-
-  CycleNodeCheck(const Bead::Ptr& bead, const Range::Ptr& valid);
-
-  int check;
-}; // struct CycleNodeCheck
-
-
-class CheckFeasibleHeuristic : public CheckFeasible
-{
- public:
-  CheckFeasibleHeuristic(NodeSet& nodes, const int heuristic_cycles);
-
-  bool operator()() override;
-
- private:
-  void InitializeSlices() override;
-
-  void ProcessTask(const CycleNodeLayered::Ptr& task);
-
-  bool Feasible();
-
-  const int heuristic_cycles_;
-
-  using CheckSet = std::vector<CycleNodeCheck::Ptr>;
-  CheckSet nodes_check_;
-}; // class CheckFeasibleHeuristic
-
 
 class ComputeScaleFactorAnyOrder
 {
