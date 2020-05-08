@@ -112,7 +112,7 @@ UNITTEST_TEST_FIXTURE(NecklaceDataWesternEurope, WestEuropeCentroidFixed)
   parameters.order_type = geoviz::necklace_map::OrderType::kFixed;
 
   const geoviz::Number scale_factor = ComputeScaleFactor(parameters, data.elements, data.necklaces);
-  UNITTEST_CHECK_CLOSE(1.687, scale_factor, 0.001);
+  UNITTEST_CHECK_CLOSE(1.580, scale_factor, 0.001);
 }
 
 UNITTEST_TEST_FIXTURE(NecklaceDataWesternEurope, WestEuropeCentroidFixedNopoints)
@@ -126,7 +126,21 @@ UNITTEST_TEST_FIXTURE(NecklaceDataWesternEurope, WestEuropeCentroidFixedNopoints
   parameters.order_type = geoviz::necklace_map::OrderType::kFixed;
 
   const geoviz::Number scale_factor = ComputeScaleFactor(parameters, data.elements, data.necklaces);
-  UNITTEST_CHECK_CLOSE(1.822, scale_factor, 0.001);
+  UNITTEST_CHECK_CLOSE(1.813, scale_factor, 0.001);
+}
+
+UNITTEST_TEST_FIXTURE(NecklaceDataWesternEurope, WestEuropeCentroidFixedBuffer)
+{
+  const std::string in_value_name = "value";
+  UNITTEST_CHECK(ReadValues(in_value_name));
+
+  DefaultParameters(parameters);
+  parameters.interval_type = geoviz::necklace_map::IntervalType::kCentroid;
+  parameters.order_type = geoviz::necklace_map::OrderType::kFixed;
+  parameters.buffer_rad = 0.22;
+    
+  const geoviz::Number scale_factor = ComputeScaleFactor(parameters, data.elements, data.necklaces);
+  UNITTEST_CHECK_CLOSE(0.629, scale_factor, 0.001);
 }
 
 UNITTEST_TEST_FIXTURE(NecklaceDataWesternEurope, WestEurope)
