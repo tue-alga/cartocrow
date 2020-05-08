@@ -247,6 +247,9 @@ Number ComputeScaleFactorFixedOrder::OptimizeSubProblem(const size_t I, const si
           rho = edge_iter->right()->point().y();
           max_buffer_rad = std::min(max_buffer_rad, (b(j) - a(i)) / (j - i));
 
+          if (b(j) - a(i) < buffer(i, j))
+            return 0;
+
           // Note that there is always exactly one vertex of the envelope incident to lines on either side of k.
           break;
         }
