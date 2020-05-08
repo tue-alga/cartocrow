@@ -41,9 +41,10 @@ unittest-cpp requires manually cloning, building, and installation (see https://
 ```sh
 git clone -b v2.0.0 https://github.com/unittest-cpp/unittest-cpp
 cd unittest-cpp/builds/
-cmake ../
+cmake -DUTPP_INCLUDE_TESTS_IN_BUILD=OFF ../
 make && sudo make install
 ```
+Note that unittest-cpp defines several macros that overlap with google logging macros. This mainly comes into play when also compiling the unit tests of unittest-cpp.
 
 To run unit tests (from the current directory):
 
