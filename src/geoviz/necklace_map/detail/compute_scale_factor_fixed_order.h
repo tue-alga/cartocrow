@@ -66,12 +66,6 @@ class ComputeScaleFactorFixedOrder
   // Aggregate covering radius r_ij.
   Number r(const size_t i, const size_t j) const;
 
-  // Dual point l* to the line l describing the right extreme - scale factor relation of a bead i to the left of the split index k.
-  Point l_(const size_t i, const size_t k) const;
-
-  // Dual point r* to the line r describing the left extreme - scale factor relation of a bead j to the right of the split index k.
-  Point r_(const size_t j, const size_t k) const;
-
   Number CorrectScaleFactor(const Number& rho) const;
 
   // Optimize the scale factor for the beads in the range [I, J].

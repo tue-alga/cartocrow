@@ -22,6 +22,10 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 06-01-2020
 
 #include "compute_scale_factor_fixed_order.h"
 
+#include <CGAL/Arr_linear_traits_2.h>
+#include <CGAL/Arr_curve_data_traits_2.h>
+#include <CGAL/Envelope_diagram_1.h>
+#include <CGAL/envelope_2.h>
 #include <glog/logging.h>
 
 
@@ -148,20 +152,6 @@ Number ComputeScaleFactorFixedOrder::r(const size_t i, const size_t j) const
   return aggregate_radius;
 }
 
-inline Point ComputeScaleFactorFixedOrder::l_(const size_t i, const size_t k) const
-{
-  Number x = 1 / (2 * r(i, k) - r(i));
-  CHECK_GE(x, 0);
-  return Point(x, (a(i) + buffer(i, k)) * x);
-}
-
-inline Point ComputeScaleFactorFixedOrder::r_(const size_t j, const size_t k) const
-{
-  Number x = -1 / (2 * r(k + 1, j) - r(j));
-  CHECK_LE(x, 0);
-  return Point(x, (b(j) - buffer(k, j)) * x);
-}
-
 Number ComputeScaleFactorFixedOrder::CorrectScaleFactor(const Number& rho) const
 {
   // Determine a lower bound on the scale factor by reverse engineering based on the dilated covering radius.
@@ -211,63 +201,72 @@ Number ComputeScaleFactorFixedOrder::OptimizeSubProblem(const size_t I, const si
       // For the conquer part, we also need the smallest rho_ij where I <= i <= k < j <= J.
       // This smallest rho_ij is the lowest intersection (over all i,j | i <= k < j) of l_i, r_j,
       // where l_i = (X - a_i) / (2*r_ik - r_i) and r_j = (b_j - X) / (2*r_mj - r_j)
-      // [so rho_ij = (b_j - a_i) / (2*r_ik - r_i + 2*r_mj - r_j)] = (b_j - a_i) / (2*r_ij - r_i - r_j).
-      // This lowest intersection is the the line of the upper envelope of {L' union R'} that intersects the y axis,
-      // where L* is the set of points l*_i = <1 / (2*r_ik - r_i), a_i / (2*r_ik - r_i)>,
-      // and R* is the set of points r*_i = <-1 / (2*r_mj - r_j), -b_j / (2*r_mj - r_j)>.
+      // [so rho_ij = (b_j - a_i) / (2*r_ik - r_i + 2*r_mj - r_j) = (b_j - a_i) / (2*r_ij - r_i - r_j)].
+      using Linear_traits = CGAL::Arr_linear_traits_2<Kernel>;
+      using Curve_traits = CGAL::Arr_curve_data_traits_2<Linear_traits, size_t>;
+      using Monotone_line = Curve_traits::X_monotone_curve_2;
+      using Envelope_diagram = CGAL::Envelope_diagram_1<Curve_traits>;
 
-      // Determine the line on the upper envelope that intersects the y axis.
-      size_t ii = I, jj = k+1;
-      Point l_star = l_(ii, k);
-      Point r_star = r_(jj, k);
-
-      for (size_t i = ii+1; i <= k; ++i)
+      std::vector<Monotone_line> lines;
+      lines.reserve(nodes_.size());
+      for (size_t i = I; i <= k; ++i)
       {
-        const Point n_star = l_(i, k);
-        if (CGAL::left_turn(r_star, l_star, n_star))
-        {
-          l_star = n_star;
-          ii = i;
-        }
+        const Number x = 1 / (2 * r(i, k) - r(i));
+        const Number y = (a(i) + buffer(i, k)) * x;
+        CHECK_GE(x, 0);
+
+        const Line line(x, -1, -y);
+        lines.push_back(Monotone_line(line, i));
+      }
+      for (size_t j = k + 1; j <= J; ++j)
+      {
+        const Number x = -1 / (2 * r(k + 1, j) - r(j));
+        const Number y = (b(j) - buffer(k, j)) * x;
+        CHECK_LE(x, 0);
+
+        const Line line(x, -1, -y);
+        lines.push_back(Monotone_line(line, j));
       }
 
-      for (size_t j = jj+1; j <= J; ++j)
+      // Compute the lower envelope.
+      Envelope_diagram diagram;
+      CGAL::lower_envelope_x_monotone_2(lines.begin(), lines.end(), diagram);
+
+      Number rho = -1;
+      for
+      (
+        Envelope_diagram::Edge_const_handle edge_iter = diagram.leftmost();
+        edge_iter != diagram.rightmost();
+        edge_iter = edge_iter->right()->right()
+      )
       {
-        const Point n_star = r_(j, k);
-        if (CGAL::left_turn(r_star, l_star, n_star))
+        const size_t& i = edge_iter->curve().data();
+        const size_t& j = edge_iter->right()->right()->curve().data();
+        if (i <= k && k < j)
         {
-          r_star = n_star;
-          jj = j;
+          rho = edge_iter->right()->point().y();
+          max_buffer_rad = std::min(max_buffer_rad, (b(j) - a(i)) / (j - i));
+
+          // Note that there is always exactly one vertex of the envelope incident to lines on either side of k.
+          break;
         }
       }
-
-      const Number interval_length = b(jj) - a(ii);
-
-      const Number length_per_bead = interval_length / (jj - ii);
-      max_buffer_rad = std::min(max_buffer_rad, length_per_bead);
-
-      if (interval_length <= buffer(ii, jj))
-        return 0;
-
-      const Number rho = (interval_length - buffer(ii, jj)) / (2 * r(ii, jj) - r(ii) - r(jj));
       CHECK_GE(rho, 0);
 
-      // Alternatively, we could compute all O(n^2) combinations of i and j.
-//      Number rho = -1;
+//      // Alternatively, we could compute all O(n^2) combinations of i and j.
+//      Number rho__ = -1;
 //      for (size_t i = I; i <= k; ++i)
 //      {
-//        for (size_t j = m; j <= J; ++j)
+//        for (size_t j = k + 1; j <= J; ++j)
 //        {
 //          const Number interval_length = b(j) - a(i) - buffer(i, j);
-//          if (interval_length <= 0)
-//            return 0;
-//
 //          const Number rho_ij = interval_length / (2 * r(i, j) - r(i) - r(j));
-//          if (rho == -1 || rho_ij < rho)
-//            rho = rho_ij;
-//          CHECK_GE(rho, 0);
+//          if (rho__ == -1 || rho_ij < rho__)
+//            rho__ = rho_ij;
 //        }
 //      }
+//      CHECK_GE(rho__, 0);
+//      CHECK_NEAR(rho, rho__, 0.005);
 
       // The scaling factor is the minimum or rho_1, rho_2, and rho (ignoring negative values).
       Number scale_factor = rho;
