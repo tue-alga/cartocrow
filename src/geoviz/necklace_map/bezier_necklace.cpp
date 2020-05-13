@@ -83,6 +83,25 @@ BezierCurve::BezierCurve(const Point& source, const Point& source_control, const
   })
 {}
 
+/**@brief Check whether the curve is valid in relation to the necklace.
+ *
+ * For the curve to be valid it must not be degenerate, i.e. its points must not all be the same.
+ *
+ * The curve must also be fully visible from the kernel, i.e. no ray originating from the kernel intersects the curve in more than one point.
+ *
+ * Finally, the curve must describe a counterclockwise sweep around the kernel, i.e. the curve must start to the left of the vector from the kernel to the curve source.
+ * @param kernel the necklace kernel.
+ * @return Whether the curve is valid.
+ */
+bool BezierCurve::IsValid(const Point& kernel) const
+{
+  return
+    source() != source_control() &&
+    target() != target_control() &&
+    !CGAL::right_turn(source(), source_control(), kernel) &&
+    !CGAL::left_turn(target(), target_control(), kernel);
+}
+
 /**@brief Give the starting point of the curve.
  * @return the starting point of the curve.
  */
@@ -254,7 +273,7 @@ bool BezierCurve::IntersectRay(const Point& source, const Point& target, std::ve
  * Note that for this necklace, the kernel must be set explicitly.
  */
 
-BezierNecklace::BezierNecklace(const Point& kernel) : kernel_(kernel) {}
+BezierNecklace::BezierNecklace(const Point& kernel) : kernel_(kernel), checked_(false), winding_(CGAL::COLLINEAR) {}
 
 const Point& BezierNecklace::kernel() const
 {
@@ -268,11 +287,35 @@ bool BezierNecklace::IsValid() const
   // * unobstructed vision of the full length of each curve,
   // * traversing each curve is a counterclockwise sweep around the kernel,
   // * the set of curves makes a closed curve (this implies there are curves).
-  LOG(FATAL) << "Not implemented yet!";
+  if (IsEmpty() || winding_ != CGAL::COUNTERCLOCKWISE)
+    return false;
+
+  bool valid = true;
+  Point current = curves_.back().target();
+  for (const BezierCurve& curve : curves_)
+  {
+    valid &=
+      curve.IsValid(kernel()) &
+      curve.source() == current;
+    current = curve.target();
+  }
+
+  return valid;
+}
+
+bool BezierNecklace::IsEmpty() const
+{
+  return curves_.empty();
+}
+
+bool BezierNecklace::IsClosed() const
+{
+  return curves_.front().source() == curves_.back().target();
 }
 
 bool BezierNecklace::IntersectRay(const Number& angle_rad, Point& intersection) const
 {
+  CHECK(checked_);
   // Find the curve that contains the angle.
   CurveSet::const_iterator curve_iter = std::lower_bound
     (
@@ -305,23 +348,36 @@ void BezierNecklace::AppendCurve
   const Point& target
 )
 {
-  curves_.emplace_back(source, source_control, target_control, target);
+  // Check the winding of the curve.
+  if (winding_ == CGAL::COLLINEAR)
+    winding_ = CGAL::orientation(source, source_control, kernel());
+  else
+    CHECK_EQ(winding_, CGAL::orientation(source, source_control, kernel()));
+
+  // Clockwise curves are reversed.
+  // Note that the order of the curves will be reversed when finalizing the spline.
+  if (winding_ == CGAL::CLOCKWISE)
+    curves_.emplace_back(target, target_control, source_control, source);
+  else
+    curves_.emplace_back(source, source_control, target_control, target);
 }
 
 // Note, cannot be the first curve.
 void BezierNecklace::AppendCurve(const Point& source_control, const Point& target_control, const Point& target)
 {
   CHECK(!curves_.empty());
-  const Point source = curves_.back().target();
-  curves_.emplace_back(source, source_control, target_control, target);
+  const Point& source = curves_.back().target();
+  AppendCurve(source, source_control, target_control, target);
 }
 
 void BezierNecklace::Finalize()
 {
-  //CHECK(IsValid());
-
   // Reorder the curves to start with the curve directly to the right of the kernel.
+  // Note that this automatically corrects the winding of the spline to counterclockwise.
   std::sort(curves_.begin(), curves_.end(), CompareBezierCurves(*this));
+  winding_ = CGAL::COUNTERCLOCKWISE;
+
+  checked_ = true;
 }
 
 Box BezierNecklace::ComputeBoundingBox() const
@@ -342,16 +398,19 @@ Box BezierNecklace::ComputeBoundingBox() const
 
 Number BezierNecklace::ComputeCoveringRadiusRad(const Range::Ptr& range, const Number& radius) const
 {
+  CHECK(checked_);
   LOG(FATAL) << "Not implemented yet!";
 }
 
 Number BezierNecklace::ComputeAngleAtDistanceRad(const Number& angle_rad, const Number& distance) const
 {
+  CHECK(checked_);
   LOG(FATAL) << "Not implemented yet!";
 }
 
 void BezierNecklace::Accept(NecklaceShapeVisitor& visitor)
 {
+  CHECK(checked_);
   visitor.Visit(*this);
 }
 

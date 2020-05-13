@@ -55,6 +55,10 @@ class NecklaceShape
 
   virtual bool IsValid() const = 0;
 
+  virtual bool IsEmpty() const = 0;
+
+  virtual bool IsClosed() const = 0;
+
   virtual bool IntersectRay(const Number& angle_rad, Point& intersection) const = 0;
 
   virtual Box ComputeBoundingBox() const = 0;

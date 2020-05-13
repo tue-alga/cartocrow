@@ -120,8 +120,8 @@ bool SvgReader::Parse
   // Note(tvl) we should allow the SVG to not contain the necklace: then create the necklace as smallest enclosing circle.
   LOG(INFO) <<
     "Successfully parsed necklace map geometry for " <<
-    elements.size() << " regions and " <<
-    necklaces.size() << " necklaces.";
+    elements.size() << " region(s) and " <<
+    necklaces.size() << " necklace(s).";
 
   return true;
 }

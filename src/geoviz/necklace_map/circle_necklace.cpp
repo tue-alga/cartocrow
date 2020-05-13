@@ -55,6 +55,16 @@ bool CircleNecklace::IsValid() const
   return 0 < radius_;
 }
 
+bool CircleNecklace::IsEmpty() const
+{
+  return 0 < radius_;
+}
+
+bool CircleNecklace::IsClosed() const
+{
+  return true;
+}
+
 bool CircleNecklace::IntersectRay(const Number& angle_rad, Point& intersection) const
 {
   const Vector relative = CGAL::sqrt(shape_.squared_radius()) * Vector( std::cos(angle_rad), std::sin(angle_rad) );

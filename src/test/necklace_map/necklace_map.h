@@ -80,7 +80,7 @@ struct NecklaceDataWesternEurope
     {
       // Read the geometry.
       geoviz::SvgReader svg_reader;
-      const filesystem::path in_geometry_path = kTestDir / "wEU.xml";
+      const filesystem::path in_geometry_path = kTestDir / "wEU.svg";
       UNITTEST_REQUIRE UNITTEST_CHECK(svg_reader.ReadFile(in_geometry_path, data.elements, data.necklaces));
     }
   }
@@ -224,7 +224,7 @@ struct NecklaceDataEastAsia
     {
       // Read the geometry.
       geoviz::SvgReader svg_reader;
-      const filesystem::path in_geometry_path = kTestDir / "eAsia.xml";
+      const filesystem::path in_geometry_path = kTestDir / "eAsia.svg";
       UNITTEST_REQUIRE UNITTEST_CHECK(svg_reader.ReadFile(in_geometry_path, data.elements, data.necklaces));
     }
   }

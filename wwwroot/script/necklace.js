@@ -53,7 +53,7 @@ function onChangedGeometryFile(file) {
   if (file === undefined) return;
 
   // Check mime type and file size.
-  if (file.type != 'text/xml') {
+  if (file.type != 'text/xml' && file.type != 'image/svg+xml') {
     alert('XML file type required.');
     return;
   }
@@ -68,7 +68,7 @@ function onChangedGeometryFile(file) {
 
   // Read the file contents.
   var reader = new FileReader();
-  reader.onload = function(e) {
+  reader.onload = function (e) {
     necklace_geometry_base64 = btoa(
       String.fromCharCode(...new Uint8Array(e.target.result))
     );
@@ -93,7 +93,7 @@ function onChangedDataFile(file) {
 
   // Read the file contents.
   var reader = new FileReader();
-  reader.onload = function(e) {
+  reader.onload = function (e) {
     let result = String.fromCharCode(...new Uint8Array(e.target.result));
     necklace_data_base64 = btoa(result);
     setColumnList(result);
@@ -113,7 +113,7 @@ function getNecklaceAversion() {
 }
 
 function processNecklaceMapResponse() {
-  return function(response) {
+  return function (response) {
     replaceMapBySvgResponse(!region_focused)(response);
     region_focused = true;
     geometry_out.value = response;
@@ -149,7 +149,7 @@ function onChangedNecklaceSettings() {
     ignore_point_regions: ignore_point_regions_in.checked,
     order: order_in.value,
     buffer_rad: parseFloat(getNecklaceBuffer()),
-    aversion_ratio: parseFloat(getNecklaceAversion())
+    aversion_ratio: parseFloat(getNecklaceAversion()),
   });
 
   geometry_out.value = '';

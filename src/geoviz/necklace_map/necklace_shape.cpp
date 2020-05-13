@@ -57,8 +57,18 @@ namespace necklace_map
  */
 
 /**@fn bool NecklaceShape::IsValid() const = 0
- * @brief Check whether the necklace is valid.
- * @return whether the necklace is valid.
+ * @brief Check whether the shape is valid.
+ * @return whether the shape is valid.
+ */
+
+/**@fn bool NecklaceShape::IsEmpty() const = 0
+ * @brief Check whether the shape is empty.
+ * @return whether the shape is valid, i.e. it covers an empty region.
+ */
+
+/**@fn bool NecklaceShape::IsClosed() const = 0
+ * @brief Check whether the shape is closed.
+ * @return whether the shape is closed.
  */
 
 /**@fn virtual bool NecklaceShape::IntersectRay(const Number& angle_rad, Point& intersection) const

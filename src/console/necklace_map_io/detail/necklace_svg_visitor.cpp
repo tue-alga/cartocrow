@@ -27,6 +27,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 26-11-2019
 
 #include "console/common/detail/svg_path_parser.h"
 #include "console/common/detail/svg_point_parser.h"
+#include "console/common/detail/svg_bezier_parser.h"
 #include "console/common/detail/svg_polygon_parser.h"
 
 
@@ -127,28 +128,24 @@ bool NecklaceMapSvgVisitor::VisitPath(const std::string& commands, const tinyxml
     // All dashed elements are necklaces.
     // Note that this may have to change into some identifying attribute.
 
-    // Necklaces must have an ID.
+    // Necklaces must have an ID and may not contain circular arcs.
     CHECK(has_necklace_id);
+    CHECK(commands.find_first_of(kCommandsRestrictionArcNecklace) != std::string::npos);
 
-    if (commands.find_first_of(kCommandsRestrictionArcNecklace) == std::string::npos)
-      return AddArcNecklace(necklace_id, commands);
-    else
+    const std::string kernel_names[] =
     {
-      const std::string names[] =
-      {
-        kAttributeKernelX,
-        kAttributeKernelY
-      };
-      std::string values[2];
-      CHECK(FindAttributes(attributes, 2, names, values));
+      kAttributeKernelX,
+      kAttributeKernelY
+    };
+    std::string kernel_position[2];
+    CHECK(FindAttributes(attributes, 2, kernel_names, kernel_position));
 
-      try
-      {
-        SvgPointParser pp;
-        return AddGenericNecklace(necklace_id, commands, pp.Pt(values[0], values[1]));
-      }
-      catch (...) { return false; }
+    try
+    {
+      SvgPointParser pp;
+      return AddGenericNecklace(necklace_id, commands, pp.Pt(kernel_position[0], kernel_position[1]));
     }
+    catch (...) { return false; }
   }
   else if (FindAttribute(attributes, kAttributeRegionId, id))
   {
@@ -205,17 +202,6 @@ bool NecklaceMapSvgVisitor::AddCircleNecklace(const std::string& id, const Point
   return true;
 }
 
-/**@brief Add a circular arc necklace.
- * @param id the necklace ID.
- * @param commands the SVG path commands (including point coordinates).
- * @return whether the necklace was constructed correctly.
- */
-bool NecklaceMapSvgVisitor::AddArcNecklace(const std::string& id, const std::string& commands)
-{
-  LOG(FATAL) << "Not implemented yet.";
-  return false;
-}
-
 /**@brief Add a generic necklace.
  * @param id the necklace ID.
  * @param commands the SVG path commands (including point coordinates).
@@ -224,8 +210,19 @@ bool NecklaceMapSvgVisitor::AddArcNecklace(const std::string& id, const std::str
  */
 bool NecklaceMapSvgVisitor::AddGenericNecklace(const std::string& id, const std::string& commands, const Point& kernel)
 {
-  LOG(FATAL) << "Not implemented yet.";
-  return false;
+  // Necklace IDs must be unique.
+  const size_t next_index = necklaces_.size();
+  const size_t n = id_to_necklace_index_.insert({id, next_index}).first->second;
+  CHECK_EQ(next_index, n);
+
+  necklace_map::BezierNecklace::Ptr shape = std::make_shared<necklace_map::BezierNecklace>(kernel);
+
+  // Interpret the commands as a bezier spline.
+  SvgBezierConverter converter(*shape);
+  SvgPathParser()(commands, converter);
+
+  necklaces_.push_back(std::make_shared<necklace_map::Necklace>(shape));
+  return true;
 }
 
 /**@brief Add a necklace element based on an SVG path.

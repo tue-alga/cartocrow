@@ -32,7 +32,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 25-02-2020
 
 namespace geoviz
 {
-namespace necklace_map
+namespace necklace_map  // TODO(tvl) move into geoviz/common and rename BezierNecklace to "BezierSpline" (separate bezier construction and bbox / covering radius / angle computations).
 {
 
 class BezierCurve
@@ -40,6 +40,8 @@ class BezierCurve
  public:
   BezierCurve(const Point& source, const Point& control, const Point& target);
   BezierCurve(const Point& source, const Point& source_control, const Point& target_control, const Point& target);
+
+  bool IsValid(const Point& kernel) const;
 
   Point source() const;
   Point source_control() const;
@@ -68,6 +70,10 @@ class BezierNecklace : public NecklaceShape
 
   bool IsValid() const override;
 
+  bool IsEmpty() const override;
+
+  bool IsClosed() const override;
+
   bool IntersectRay(const Number& angle_rad, Point& intersection) const override;
 
   void AppendCurve(const Point& source, const Point& source_control, const Point& target_control, const Point& target);
@@ -89,7 +95,11 @@ class BezierNecklace : public NecklaceShape
 
   Point kernel_;
 
+  bool checked_;  // TODO(tvl) tmp DEBUG!
+
   CurveSet curves_;
+
+  CGAL::Orientation winding_;
 }; // class BezierNecklace
 
 } // namespace necklace_map
