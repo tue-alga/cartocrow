@@ -92,7 +92,7 @@ ComputeValidPlacement::ComputeValidPlacement
  * @param scale_factor the factor by which to multiply the radius of the beads.
  * @param necklace the necklace to which to apply the functor.
  */
-void ComputeValidPlacement::operator()(const Number& scale_factor, Necklace::Ptr& necklace) const
+void ComputeValidPlacement::operator()(const Number& scale_factor, Necklace::Ptr& necklace) const  // TODO(tvl) factorize.
 {
   for (const Bead::Ptr& bead : necklace->beads)
   {
