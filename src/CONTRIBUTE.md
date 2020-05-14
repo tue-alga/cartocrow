@@ -41,6 +41,8 @@ For the c++ code, we follow the Google style guide (https://google.github.io/sty
 - When declaring pointer or reference variables, always place the * adjacent to the type (e.g. const char* my_variable).
 - Whenever spreading function parameters/arguments over multiple lines, always put the first one on a new line. Prefer to use exactly 1 parameter/argument per line.
 - When using abbreviations in camel case, only capitalize the first letter of the abbreviation.
+- Use the "const" qualifier wherever possible. This clearly indicates the intent of not changing the variable. This also applies to simple typed method parameters that are copy constructed (e.g. function(const int arg)). This clearly separates input parameters from output and input/output parameters, because the fact that the parameter is copy-constructed is implicit. It also forces the variable to stay the same for the scope fo the method.
+- Generally, initialize the default values of data structs in the default constructor or set them using initialization methods, such as in a factory class. These default values are often disconnected from the concept of the struct and should not show up in the documentation. Additionally, a data struct may have different default values for different use cases. Setting the defaults for one case in the struct declaration may incorrectly imply preference for that use case.
 
 Unfortunately, I have been unable to find a code formatter that can be customized to enforce this code style. The "code_style_clion.xml" file is the closest approximation so far, with the exception of not placing opening parentheses on a new line and adding an extra level of indentation for lists in parentheses manually placed on a new line (e.g. argument lists). 
 
