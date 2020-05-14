@@ -18,3 +18,30 @@
 .geoviz-map-control {
   padding: 1px 8px;
 }
+
+#settings_necklace-inner h3 {
+  padding-bottom: 10px;
+}
+
+#settings_necklace-inner .form-field {
+  padding-bottom: 20px;
+}
+
+#settings_necklace-inner .inline-label {
+  display: inline-block;
+  width: 100px;
+  padding-right: 10px;
+  font-weight: bold;
+  text-align: right;
+}
+
+#settings_necklace-inner .explanation {
+  padding-left: 100px;
+  color: #999;
+}
+
+#settings_necklace-inner .output-textarea {
+  width: 100%;
+  resize: vertical;
+}
+

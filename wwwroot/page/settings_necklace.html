@@ -1,9 +1,10 @@
 <!-- To be loaded as support card. -->
 <div class="aga-padded">
   <!-- Note that we'er not using forms to disable submitting data on pressing the "Enter" key. -->
-  <div style="display: block;">
-    <p>Input</p>
-    <div>
+  <div>
+    <h3>Input data</h3>
+    <div class="form-field">
+      <label class="inline-label" for="geometry_file_in">Map</label>
       <input
         type="file"
         id="geometry_file_in"
@@ -11,8 +12,12 @@
         accept="text/xml"
         onchange="onChangedGeometryFile(this.files[0]);"
       />
+      <div class="explanation">
+        Select a map in SVG format, containing the regions and the necklace shape.
+      </div>
     </div>
-    <div>
+    <div class="form-field">
+      <label class="inline-label" for="data_file_in">Data</label>
       <input
         type="file"
         id="data_file_in"
@@ -20,8 +25,12 @@
         accept="text/plain"
         onchange="onChangedDataFile(this.files[0]);"
       />
+      <div class="explanation">
+        Select a plain text file with data values for each region.
+      </div>
     </div>
-    <div>
+    <div class="form-field">
+      <label class="inline-label" for="data_value_in">Attribute</label>
       <select
         id="data_value_in"
         name="data_value"
@@ -29,35 +38,38 @@
       >
         <option value=""></option>
       </select>
+      <div class="explanation">
+        Select which attribute in the data file should be used.
+      </div>
     </div>
   </div>
   <div
     oninput="onInputNecklaceSettings();"
     onchange="onChangedNecklaceSettings();"
-    style="display: block;"
   >
-    <p>Parameters</p>
-    <div>
-      <div>
-        <input
-          type="checkbox"
-          id="ignore_point_regions_in"
-          name="point_regions"
-        />
-        <label for="point_regions">Ignore Point Regions</label>
-      </div>
+    <h3>Options</h3>
+    <div class="form-field">
+      <div class="inline-label">Interval</div>
       <select id="interval_in" name="interval">
         <option value="centroid">Centroid</option>
         <option value="wedge">Wedge</option>
       </select>
+      <div class="explanation">
+        This determines the intervals used on the necklace (...?)
+      </div>
     </div>
-    <div>
+    <div class="form-field">
+      <div class="inline-label">Order</div>
       <select id="order_in" name="order">
-        <option value="fixed">Fixed Order</option>
-        <option value="any">Any Order</option>
+        <option value="fixed">Fixed</option>
+        <option value="any">Any</option>
       </select>
+      <div class="explanation">
+        This determines the order (...?)
+      </div>
     </div>
-    <div>
+    <div class="form-field">
+      <label class="inline-label" for="buffer_rad_in">Buffer</label>
       <input
         id="buffer_rad_in"
         type="range"
@@ -67,10 +79,13 @@
         step="0.01"
         value="0.0"
       />
-      <label for="buffer_rad" style="margin-left: 8px;">Buffer</label>
       <output id="buffer_rad_out" name="buffer_rad" for="buffer_rad"></output>
+      <div class="explanation">
+        Size of the buffer region maintained around beads.
+      </div>
     </div>
-    <div>
+    <div class="form-field">
+      <label class="inline-label" for="aversion_in">Aversion</label>
       <input
         id="aversion_in"
         type="range"
@@ -80,20 +95,33 @@
         step="0.01"
         value="0.0"
       />
-      <label for="aversion" style="margin-left: 8px;">Aversion</label>
       <output id="aversion_out" name="aversion" for="aversion"></output>
+      <div class="explanation">
+        Aversion force between beads (...?)
+      </div>
+    </div>
+    <div class="form-field">
+      <div>
+        <input
+          type="checkbox"
+          id="ignore_point_regions_in"
+          name="point_regions"
+        />
+        <label for="ignore_point_regions_in">Ignore Point Regions</label>
+      </div>
     </div>
   </div>
-  <div style="display: block;">
+  <h3>Output</h3>
+  <div>
     <div>
       <input
         id="geometry_out"
+        class="output-textarea"
         type="text"
         name="geometry_out"
         value=""
         readonly="true"
       />
-      <label for="geometry_out" style="margin-left: 8px;">Output</label>
     </div>
     <div>
       <button onclick="navigator.clipboard.writeText(geometry_out.value);">
