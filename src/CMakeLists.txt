@@ -66,8 +66,9 @@ find_package(CGAL)
 # All source files should use include paths relative to the source root.
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
-# By default, we use the C++11 dialect.
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
+# By default, we use the C++14 dialect (required by CGAL).
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # The GeoViz library.
 add_subdirectory(geoviz)
