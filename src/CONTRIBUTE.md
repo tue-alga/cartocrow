@@ -21,7 +21,7 @@ For the c++ code, we follow the Google style guide (https://google.github.io/sty
 - Source files use the .cpp extension. Template implementations may be separated from their declaration in a file with the same name and the .inc extension.
 - The order of #include directives is not strictly alphabetical: within each block, all files in a specific directory precede the files in sub-directories.
 - Whenever a code block is spread over multiple lines, the opening character (e.g. brace) will be placed on the next line and the opening and closing characters have the same indentation.
-  Why? This greatly increases ease of matching opening and closing characters.
+  Why? This greatly increases ease of matching opening and closing characters. It also enforces similar formatting between the different bracket types (i.e. (), {}, []).
 - As a rule of thumb, closing braces of a large block are followed by a comment repeating the statement that opened them (e.g. "} // namespace geoviz").
   Why? This makes program flow more obvious.
 - Whenever possible, define complex and composite types early (whether using typedef or using). This especially applies to template types.
