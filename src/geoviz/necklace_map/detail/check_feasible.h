@@ -75,7 +75,7 @@ class CheckFeasible
 
   void ResetContainer();
 
-  void ComputeValues
+  void ComputeValues // TODO(tvl) rename to something more descriptive and factorize.
   (
     const size_t slice_index_offset,
     const BitString& first_layer_set,
