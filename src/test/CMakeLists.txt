@@ -64,10 +64,10 @@ endmacro(test_link_libraries)
 # Configure a header file to pass CMake settings to the source code.
 set(TEST_DIR ${CMAKE_SOURCE_DIR}/data)
 configure_file(
-    "${SOURCE_CONFIG_DIR}/geoviz_test_config.h.in"
-    "${SOURCE_CONFIG_DIR}/geoviz_test_config.h"
+    "${CMAKE_MODULE_PATH}/geoviz_test_config.h.in"
+    "${CMAKE_MODULE_PATH}/geoviz_test_config.h"
 )
-install(FILES "${SOURCE_CONFIG_DIR}/geoviz_test_config.h" DESTINATION "${CMAKE_INSTALL_SOURCE_DIR}/cmake")
+install(FILES "${CMAKE_MODULE_PATH}/geoviz_test_config.h" DESTINATION "${CMAKE_INSTALL_SOURCE_DIR}/cmake")
 
 
 # Most command-line applications use gflags to parse command-line arguments.
