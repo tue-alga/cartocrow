@@ -43,6 +43,8 @@ constexpr const char* kNecklaceStyle = "fill:none;"
                                        "stroke-width:0.4;"
                                        "stroke-linecap:butt;"
                                        "stroke-linejoin:round;";
+constexpr const char* kRegionContextColor = "white";
+constexpr const char* kRegionUnusedColor = "lightgray";
 constexpr const char* kBeadIdFontFamily = "Verdana";
 
 constexpr const char* kFeasibleIntervalStyle = "fill:none;"
@@ -322,11 +324,14 @@ void NecklaceWriter::DrawPolygonRegions()
       if (region.IsPoint())
         continue;
 
-      // Draw the region with the region as a piecewise linear polygon with same style as the input, except the opacity may be adjusted.
-      const std::string style =
-        options_->region_opacity < 0
-        ? region.style
-        : ForceStyle(region.style, "fill-opacity:", options_->region_opacity);
+      // Draw the region with the region as a piecewise linear polygon with same style as the input, except the opacity may be adjusted and the color may be changed.
+      std::string style = region.style;
+      if (0 <= options_->region_opacity)
+        style = ForceStyle(style, "fill-opacity:", options_->region_opacity);
+      if (element->beads.empty())
+        style = ForceStyle(style, "fill:", kRegionContextColor);
+      else if (element->value <= 0)
+        style = ForceStyle(style, "fill:", kRegionUnusedColor);
 
       printer_.OpenElement("path");
       printer_.PushAttribute("style", style.c_str());
@@ -356,12 +361,15 @@ void NecklaceWriter::DrawPointRegions()
       if (!region.IsPoint())
         continue;
 
-      // Draw the region with the region as a circle with same style as the input, except the opacity may be adjusted.
+      // Draw the region with the region as a circle with same style as the input, except the opacity may be adjusted and the color may be changed.
       const Point& position = region.shape[0].outer_boundary()[0];
-      const std::string style =
-        options_->region_opacity < 0
-        ? region.style
-        : ForceStyle(region.style, "fill-opacity:", options_->region_opacity);
+      std::string style = region.style;
+      if (0 <= options_->region_opacity)
+        style = ForceStyle(style, "fill-opacity:", options_->region_opacity);
+      if (element->beads.empty())
+        style = ForceStyle(style, "fill:", kRegionContextColor);
+      else if (element->value <= 0)
+        style = ForceStyle(style, "fill:", kRegionUnusedColor);
 
       printer_.OpenElement("circle");
       printer_.PushAttribute("style", style.c_str());
