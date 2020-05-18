@@ -226,20 +226,21 @@ void ValidateFlags(geoviz::necklace_map::Parameters& parameters, geoviz::WriterO
   // Note that we mainly print flags to enable reproducibility.
   // Other flags are validated, but only printed if not valid.
   // Note that we may skip some low-level flags that almost never change.
+  using namespace validate;
 
   // There must be input geometry and input numeric data.
-  correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(in_geometry_filename), validate::ExistsFile);
-  correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(in_data_filename), validate::ExistsFile);
-  correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(in_value_name), validate::NotEmpty);
+  correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(in_geometry_filename), ExistsFile);
+  correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(in_data_filename), ExistsFile);
+  correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(in_value_name), Not<Empty>);
 
   // Note that we allow overwriting existing output.
-  correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(out_filename), validate::EmptyOr<validate::IsFile>);
+  correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(out_filename), Or<Empty, MakeAvailableFile>);
 
   // Interval parameters.
   {
     correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(interval_type), geoviz::IntervalTypeParser(parameters.interval_type));
 
-    validate::MakeRangeCheck(0.0, M_PI)(FLAGS_centroid_interval_length_rad);
+    MakeRangeCheck(0.0, M_PI)(FLAGS_centroid_interval_length_rad);
     parameters.centroid_interval_length_rad = FLAGS_centroid_interval_length_rad;
     parameters.ignore_point_regions = FLAGS_ignore_point_regions;
   }
@@ -248,23 +249,23 @@ void ValidateFlags(geoviz::necklace_map::Parameters& parameters, geoviz::WriterO
   {
     correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(order_type), geoviz::OrderTypeParser(parameters.order_type));
 
-    correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(buffer_rad), validate::MakeRangeCheck(0.0, M_PI));
+    correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(buffer_rad), MakeRangeCheck(0.0, M_PI));
     parameters.buffer_rad = FLAGS_buffer_rad;
 
-    correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(search_depth), validate::MakeStrictLowerBoundCheck(0));
+    correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(search_depth), MakeStrictLowerBoundCheck(0));
     parameters.binary_search_depth = FLAGS_search_depth;
 
-    correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(heuristic_cycles), validate::MakeLowerBoundCheck(0));
+    correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(heuristic_cycles), MakeLowerBoundCheck(0));
     parameters.heuristic_cycles = FLAGS_heuristic_cycles;
   }
 
   // Placement parameters.
   {
-    using Closure = validate::Closure;
+    using Closure = Closure;
     correct &= CheckAndPrintFlag
     (
       FLAGS_NAME_AND_VALUE(aversion_ratio),
-      validate::MakeRangeCheck<Closure::kOpen, Closure::kClosed>(0.0, 1.0)
+      MakeRangeCheck<Closure::kOpen, Closure::kClosed>(0.0, 1.0)
     );
     parameters.aversion_ratio = FLAGS_aversion_ratio;
   }
@@ -273,16 +274,16 @@ void ValidateFlags(geoviz::necklace_map::Parameters& parameters, geoviz::WriterO
   using Options = geoviz::WriterOptions;
   write_options = Options::Default();
   {
-    correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(pixel_width), validate::IsStrictlyPositive<int32_t>());
+    correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(pixel_width), IsStrictlyPositive<int32_t>());
     write_options->pixel_width = FLAGS_pixel_width;
 
-    correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(region_coordinate_precision), validate::IsStrictlyPositive<int32_t>());
+    correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(region_coordinate_precision), IsStrictlyPositive<int32_t>());
     write_options->region_precision = FLAGS_region_coordinate_precision;
 
-    correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(region_opacity), validate::MakeUpperBoundCheck(1.0));
+    correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(region_opacity), MakeUpperBoundCheck(1.0));
     write_options->region_opacity = FLAGS_region_opacity;
 
-    correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(bead_opacity), validate::MakeRangeCheck(0.0, 1.0));
+    correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(bead_opacity), MakeRangeCheck(0.0, 1.0));
     write_options->bead_opacity = FLAGS_bead_opacity;
 
     PrintFlag(FLAGS_NAME_AND_VALUE(draw_necklace_curve));
@@ -303,7 +304,7 @@ void ValidateFlags(geoviz::necklace_map::Parameters& parameters, geoviz::WriterO
     write_options->draw_bead_angles = FLAGS_draw_bead_angles;
   }
 
-  correct &= CheckAndPrintFlag( FLAGS_NAME_AND_VALUE( log_dir ), validate::EmptyOr<validate::IsDirectory> );
+  correct &= CheckAndPrintFlag( FLAGS_NAME_AND_VALUE( log_dir ), Or<Empty, IsDirectory> );
   PrintFlag( FLAGS_NAME_AND_VALUE( stderrthreshold ) );
   PrintFlag( FLAGS_NAME_AND_VALUE( v ) );
 

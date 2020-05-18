@@ -41,11 +41,17 @@ bool ExistsDirectory(const std::string& value);
 bool ExistsPath(const std::string& value);
 
 bool AvailableFile(const std::string& value);  // Does not exist, but parent directory does.
+bool MakeAvailableFile(const std::string& value);  // Make sure parent directory exists.
 
-bool NotEmpty(const std::string& value);
+bool Empty(const std::string& value);
 
+template<bool (*F1_)(const std::string&), bool (*F2_)(const std::string&)>
+bool Or(const std::string& value);
+template<bool (*F1_)(const std::string&), bool (*F2_)(const std::string&)>
+bool And(const std::string& value);
 template<bool (*F_)(const std::string&)>
-bool EmptyOr(const std::string& value);
+bool Not(const std::string& value);
+
 
 
 enum BoundSide { kLower, kUpper };
