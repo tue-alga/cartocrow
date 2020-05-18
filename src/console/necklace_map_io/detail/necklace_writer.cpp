@@ -44,7 +44,7 @@ constexpr const char* kNecklaceStyle = "fill:none;"
                                        "stroke-linecap:butt;"
                                        "stroke-linejoin:round;";
 constexpr const char* kRegionContextColor = "white";
-constexpr const char* kRegionUnusedColor = "lightgray";
+constexpr const char* kRegionUnusedColor = "rgb(90%,90%,90%)";
 constexpr const char* kBeadIdFontFamily = "Verdana";
 
 constexpr const char* kFeasibleIntervalStyle = "fill:none;"
