@@ -170,6 +170,9 @@ bool NecklaceMapSvgVisitor::FinalizeSvg()
     CHECK_NOTNULL(element);
 
     const std::string& necklace_id = necklace_ids_[n];
+    if (necklace_id.empty())
+      continue;
+
     LookupTable::const_iterator index_iter = id_to_necklace_index_.find(necklace_id);
     CHECK(index_iter != id_to_necklace_index_.end());
 
