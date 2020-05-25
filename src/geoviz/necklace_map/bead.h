@@ -38,12 +38,14 @@ struct Bead
 {
   using Ptr = std::shared_ptr<Bead>;
 
-  Bead(const Number& radius_base, const std::string& style);
+  Bead(const Number& radius_base, const std::string& style, const std::string& id);
 
   bool IsValid() const;
 
   // Variables before scaling.
   Number radius_base;
+
+  std::string id;  // Reference for debugging.
 
   CircularRange::Ptr feasible;
 

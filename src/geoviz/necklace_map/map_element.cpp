@@ -106,7 +106,7 @@ void MapElement::InitializeBeads(const Parameters& parameters)
   for (BeadMap::iterator bead_iter = beads.begin(); bead_iter != beads.end(); ++bead_iter)
   {
     const Necklace::Ptr& necklace = bead_iter->first;
-    bead_iter->second = std::make_shared<necklace_map::Bead>(CGAL::sqrt(value), region.style);
+    bead_iter->second = std::make_shared<necklace_map::Bead>(CGAL::sqrt(value), region.style, region.id);
     necklace->beads.push_back(bead_iter->second);
   }
 }
