@@ -8,7 +8,7 @@
   $data = json_decode($json);
 
   // Check the input.
-  if (!ctype_alnum($data->value) || !is_numeric($data->buffer_rad) || !is_numeric($data->aversion_ratio))
+  if (!preg_match('/^[A-Za-z0-9_]+$/',$data->value) || !is_numeric($data->buffer_rad) || !is_numeric($data->aversion_ratio))
     throw new RuntimeException('Corrupt input.');
 
   if ($data->interval != "centroid" && $data->interval != "wedge")
