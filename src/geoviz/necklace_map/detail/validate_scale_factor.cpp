@@ -60,16 +60,14 @@ bool ValidateScaleFactor::operator()(Necklace::Ptr& necklace) const
     for (Bead::Ptr& bead : necklace->beads)
     {
       bead->valid = std::make_shared<CircularRange>(*bead->feasible);
-      bead->angle_rad = bead->valid->from_rad();
+      if (bead->angle_rad == 0)
+        bead->angle_rad = bead->valid->from_rad();
     }
 
     return true;
   }
 
   bool valid = true;
-
-  // The validator expects the necklace sorted by the feasible intervals of its beads.
-  //necklace->SortBeads();
 
   using NodeSet = std::vector<detail::CycleNode>;
   NodeSet nodes;
@@ -105,7 +103,7 @@ bool ValidateScaleFactor::operator()(Necklace::Ptr& necklace) const
     // The bead must not overlap the previous one.
     const Number min_distance = scale_factor * (current.bead->radius_base + previous.bead->radius_base);
     const Number min_angle_rad =
-      necklace->shape->ComputeAngleAtDistanceRad(previous.valid->from(), min_distance) + buffer_rad;
+      Modulo(necklace->shape->ComputeAngleAtDistanceRad(previous.valid->from(), min_distance) + buffer_rad, previous.valid->from());
 
     if (current.valid->from() < min_angle_rad)
     {
@@ -130,7 +128,7 @@ bool ValidateScaleFactor::operator()(Necklace::Ptr& necklace) const
     // The bead must not overlap the next one.
     const Number min_distance = scale_factor * (next.bead->radius_base + current.bead->radius_base);
     const Number min_angle_rad =
-      necklace->shape->ComputeAngleAtDistanceRad(current.valid->to(), min_distance) + buffer_rad;
+      Modulo(necklace->shape->ComputeAngleAtDistanceRad(current.valid->to(), min_distance) + buffer_rad, current.valid->to());
 
     if (next.valid->to() < min_angle_rad)
     {

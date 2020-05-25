@@ -510,7 +510,6 @@ void NecklaceWriter::DrawBeads()
         if (!bead->valid)
           continue;
 
-
         printer_.OpenElement("circle");
         {
           const std::string base_style = ForceStyle(bead->region_style, "fill-opacity:", options_->bead_opacity);
@@ -761,11 +760,8 @@ void NecklaceWriter::DrawBeadAngles()
         printer_.OpenElement("path");
         printer_.PushAttribute("style", kBeadAngleStyle);
         {
-          CircleNecklace::Ptr interval_shape = bead_interval_map_[bead];
-          CHECK_NOTNULL(interval_shape);
-
           Point endpoint;
-          CHECK(interval_shape->IntersectRay(bead->angle_rad, endpoint));
+          CHECK(necklace->shape->IntersectRay(bead->angle_rad, endpoint));
 
           std::stringstream stream;
           stream << std::setprecision(kIntervalNumericPrecision);

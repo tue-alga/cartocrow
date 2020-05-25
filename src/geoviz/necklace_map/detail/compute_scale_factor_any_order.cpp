@@ -94,17 +94,18 @@ Number ComputeScaleFactorAnyOrder::Optimize()
 
 Number ComputeScaleFactorAnyOrder::ComputeScaleUpperBound()
 {
-  // The initial upper bound make sure all beads would fit if they were the size of the smallest bead.
+  // The initial upper bound makes sure none of the beads would become too large (i.e. contain the kernel).
   Number upper_bound = 0;
   max_buffer_rad_ = 0;
   for (const CycleNodeLayered::Ptr& node : nodes_)
   {
-    const Number radius_rad = necklace_shape_->ComputeCoveringRadiusRad(node->valid, node->bead->radius_base);
-    upper_bound = std::max(upper_bound, M_PI / (radius_rad + half_buffer_rad_));
+    const Number covering_radius_rad = necklace_shape_->ComputeCoveringRadiusRad(node->valid, node->bead->radius_base);
+    const Number scale_factor = (M_PI_2 - half_buffer_rad_) / covering_radius_rad;
+    upper_bound = 0 < upper_bound ? std::min(upper_bound, scale_factor) : scale_factor;
 
     // The maximum buffer will be based on the minimum radius and the final scale factor.
-    if (0 < radius_rad)
-      max_buffer_rad_ = std::min(max_buffer_rad_, radius_rad);
+    if (0 < covering_radius_rad)
+      max_buffer_rad_ = 0 < max_buffer_rad_ ? std::min(max_buffer_rad_, covering_radius_rad) : covering_radius_rad;
   }
 
   // Perform a binary search to find the largest scale factor for which all beads could fit.

@@ -500,13 +500,14 @@ void BezierNecklace::IterateCurves(BezierNecklaceVisitor& visitor)
 
 BezierNecklace::CurveSet::const_iterator BezierNecklace::FindCurveContainingAngle(const Number& angle_rad) const
 {
-  return std::lower_bound
+  CurveSet::const_iterator curve_iter = std::lower_bound
   (
     curves_.begin(),
     curves_.end(),
     Modulo(angle_rad),
     CompareBezierCurves(*this)
   );
+  return curve_iter == curves_.end() ? curves_.begin() : curve_iter;
 }
 
 bool BezierNecklace::IntersectRay(const Number& angle_rad, const CurveSet::const_iterator& curve_iter, Point& intersection, Number& t) const
