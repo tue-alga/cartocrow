@@ -51,18 +51,28 @@ class BezierCurve
   Point Evaluate(const Number& t) const;
 
   // There can be up to three intersections.
-  bool IntersectRay(const Point& source, const Point& target, std::vector<Point>& intersections) const;
+  size_t IntersectRay(const Point& source, const Point& target, Point* intersections, Number* intersection_t) const;
 
  protected:
   // Note that the control points are stored as vectors, because this simplifies most operations.
   std::array<Vector, 4> control_points_;
+  std::array<Vector, 4> coefficients_;
 }; // class BezierCurve
+
+
+class BezierNecklaceVisitor : public NecklaceShapeVisitor
+{
+ public:
+  virtual void Visit(BezierCurve& curve) {}
+}; // class BezierNecklaceVisitor
 
 
 class BezierNecklace : public NecklaceShape
 {
  public:
   using Ptr = std::shared_ptr<BezierNecklace>;
+
+  static constexpr const Number kDistanceRatioEpsilon = 1.01;
 
   BezierNecklace(const Point& kernel);
 
@@ -90,8 +100,32 @@ class BezierNecklace : public NecklaceShape
 
   void Accept(NecklaceShapeVisitor& visitor) override;
 
+  void IterateCurves(BezierNecklaceVisitor& visitor);
+
  private:
   using CurveSet = std::vector<BezierCurve>;
+
+  CurveSet::const_iterator FindCurveContainingAngle(const Number& angle_rad) const;
+
+  bool IntersectRay(const Number& angle_rad, const CurveSet::const_iterator& curve_iter, Point& intersection, Number& t) const;
+
+  bool ComputeAngleAtDistanceRad
+  (
+    const Point& point,
+    const Number& distance,
+    const CurveSet::const_iterator& curve_point,
+    const Number& t_point,
+    Number& angle_rad
+  ) const;
+
+  Number SearchCurveForAngleAtDistanceRad
+  (
+    const Point& point,
+    const BezierCurve& curve,
+    const Number& squared_distance,
+    const CGAL::Orientation& orientation,
+    const Number& t_start
+  ) const;
 
   Point kernel_;
 
@@ -100,6 +134,8 @@ class BezierNecklace : public NecklaceShape
   CurveSet curves_;
 
   CGAL::Orientation winding_;
+
+  mutable Box bounding_box_;
 }; // class BezierNecklace
 
 } // namespace necklace_map

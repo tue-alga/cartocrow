@@ -23,6 +23,8 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 29-01-2020
 
 #include "necklace_writer.h"
 
+#include <sstream>
+
 #include <glog/logging.h>
 
 #include "geoviz/common/bounding_box.h"
@@ -43,6 +45,11 @@ constexpr const char* kNecklaceStyle = "fill:none;"
                                        "stroke-width:0.4;"
                                        "stroke-linecap:butt;"
                                        "stroke-linejoin:round;";
+constexpr const char* kNecklaceKernelStyle = "fill:rgba(0%,0%,0%,100%);"
+                                             "stroke:rgba(0%,0%,0%,100%);"
+                                             "stroke-width:0.4;"
+                                             "stroke-linecap:butt;"
+                                             "stroke-linejoin:round;";
 constexpr const char* kRegionContextColor = "white";
 constexpr const char* kRegionUnusedColor = "rgb(90%,90%,90%)";
 constexpr const char* kBeadIdFontFamily = "Verdana";
@@ -62,6 +69,11 @@ constexpr const char* kBeadAngleStyle = "fill:none;"
                                         "stroke:rgba(0%,0%,0%,100%);"
                                         "stroke-width:0.2;"
                                         "stroke-linecap:butt;";
+
+constexpr char kAbsoluteMove = 'M';
+constexpr char kAbsoluteCubicBezier = 'C';
+constexpr char kAbsoluteClose = 'Z';
+
 
 // Note that this source file contains string literals in various other places.
 // However, it is likely that whenever these have to change, detailed knowledge of the SVG file structure is required.
@@ -180,7 +192,21 @@ class NecklaceIntervalVisitor : public necklace_map::NecklaceShapeVisitor
 
   void Visit(necklace_map::BezierNecklace& shape)
   {
-    LOG(FATAL) << "Not implemented yet.";
+    // The interval shape is constructed as the circle centered on the necklace kernel and fully inside the bounding box (by some margin).
+    const Point& kernel = shape.kernel();
+    const Box bounding_box = shape.ComputeBoundingBox();
+    CHECK_LE(bounding_box.xmin(), kernel.x());
+    CHECK_LE(kernel.x(), bounding_box.xmax());
+    CHECK_LE(bounding_box.ymin(), kernel.y());
+    CHECK_LE(kernel.y(), bounding_box.ymax());
+
+    const Number radius = 0.9 * std::min
+    (
+      std::min(kernel.x() - bounding_box.xmin(), bounding_box.xmax() - kernel.x()),
+      std::min(kernel.y() - bounding_box.ymin(), bounding_box.ymax() - kernel.y())
+    );
+
+    interval_shape_ = std::make_shared<necklace_map::CircleNecklace>(Circle(kernel, radius * radius));
   }
 
  private:
@@ -188,14 +214,14 @@ class NecklaceIntervalVisitor : public necklace_map::NecklaceShapeVisitor
 }; // class NecklaceIntervalVisitor
 
 
-class DrawNecklaceShapeVisitor : public necklace_map::NecklaceShapeVisitor
+class DrawNecklaceShapeVisitor : public necklace_map::BezierNecklaceVisitor
 {
  public:
   DrawNecklaceShapeVisitor(const std::string& transform_matrix, tinyxml2::XMLPrinter& printer) :
     transform_matrix_(transform_matrix), printer_(printer)
   {}
 
-  void Visit(necklace_map::CircleNecklace& shape)
+  void Visit(necklace_map::CircleNecklace& shape) override
   {
     const Point& kernel = shape.kernel();
     const Number radius = shape.ComputeRadius();
@@ -209,12 +235,41 @@ class DrawNecklaceShapeVisitor : public necklace_map::NecklaceShapeVisitor
     printer_.CloseElement();  // circle
   }
 
-  void Visit(necklace_map::BezierNecklace& shape)
+  void Visit(necklace_map::BezierNecklace& shape) override
   {
-    LOG(FATAL) << "Not implemented yet.";
+    printer_.OpenElement("path");
+    printer_.PushAttribute("style", kNecklaceStyle);
+
+    path_.clear();
+    shape.IterateCurves(*this);
+    path_ <<
+      " " << kAbsoluteClose <<
+      " " << kAbsoluteMove << start_point_;
+    printer_.PushAttribute("d", path_.str().c_str());
+
+    printer_.PushAttribute("transform", transform_matrix_.c_str());
+    printer_.CloseElement();  // path
+  }
+
+  void Visit(necklace_map::BezierCurve& curve) override
+  {
+    if (path_.str().empty())
+    {
+      start_point_ = curve.source();
+      path_ << kAbsoluteMove << " " << start_point_;
+    }
+
+    path_ <<
+      " " << kAbsoluteCubicBezier <<
+      " " << curve.source_control() <<
+      " " << curve.target_control() <<
+      " " << curve.target();
   }
 
  private:
+  std::stringstream path_;
+  Point start_point_;
+
   const std::string& transform_matrix_;
 
   tinyxml2::XMLPrinter& printer_;
@@ -234,6 +289,7 @@ WriterOptions::Ptr WriterOptions::Default()
   options->bead_opacity = 1;
 
   options->draw_necklace_curve = true;
+  options->draw_necklace_kernel = false;
   options->draw_bead_ids = true;
 
   options->draw_feasible_intervals = false;
@@ -255,6 +311,7 @@ WriterOptions::Ptr WriterOptions::Debug()
   options->bead_opacity = 0.5;
 
   options->draw_necklace_curve = true;
+  options->draw_necklace_kernel = true;
   options->draw_bead_ids = true;
 
   options->draw_feasible_intervals = true;
@@ -648,7 +705,7 @@ void NecklaceWriter::DrawRegionAngles()
       {
         const Necklace::Ptr& necklace = map_value.first;
         const Bead::Ptr& bead = map_value.second;
-        if (!bead->valid)
+        if (!bead || !bead->valid)
           continue;
 
         printer_.OpenElement("path");
@@ -849,6 +906,10 @@ void NecklaceWriter::CreateBeadIntervalShapes()
 {
   for (const Necklace::Ptr& necklace : necklaces_)
   {
+    NecklaceIntervalVisitor visitor;
+    necklace->shape->Accept(visitor);
+    CircleNecklace::Ptr interval_shape = visitor.interval_shape();
+
     size_t count = 0;
     for (const Bead::Ptr& bead : necklace->beads)
     {
@@ -858,18 +919,16 @@ void NecklaceWriter::CreateBeadIntervalShapes()
       if (bead_interval_map_.find(bead) != bead_interval_map_.end())
         continue;
 
-      NecklaceIntervalVisitor visitor;
-      necklace->shape->Accept(visitor);
-      CircleNecklace::Ptr interval_shape = visitor.interval_shape();
-
       if (options_->draw_feasible_intervals)
       {
         // Create a new circle shape to use for this bead.
         const Number radius = interval_shape->ComputeRadius() + kIntervalWidth * ++count;
-        interval_shape = std::make_shared<CircleNecklace>(Circle(necklace->shape->kernel(), radius * radius));
+        bead_interval_map_[bead] = std::make_shared<CircleNecklace>(Circle(necklace->shape->kernel(), radius * radius));
       }
-
-      bead_interval_map_[bead] = interval_shape;
+      else
+      {
+        bead_interval_map_[bead] = interval_shape;
+      }
     }
   }
 }
@@ -971,7 +1030,7 @@ void NecklaceWriter::DrawKernel(const Point& kernel)
 
   // Draw the necklace kernel as dot.
   printer_.OpenElement("circle");
-  printer_.PushAttribute("style", kNecklaceStyle);
+  printer_.PushAttribute("style", kNecklaceKernelStyle);
 
   {
     std::stringstream stream;

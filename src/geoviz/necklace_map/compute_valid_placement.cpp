@@ -99,7 +99,7 @@ void ComputeValidPlacement::operator()(const Number& scale_factor, Necklace::Ptr
     // Compute the scaled covering radius.
     CHECK_NOTNULL(bead);
     const Number radius_scaled = scale_factor * bead->radius_base;
-    bead->covering_radius_rad = necklace->shape->ComputeCoveringRadiusRad(nullptr, radius_scaled);
+    bead->covering_radius_rad = necklace->shape->ComputeCoveringRadiusRad(bead->feasible, radius_scaled);
   }
 
   // Sort the necklace beads by their current angle.
