@@ -116,9 +116,6 @@ bool ValidateScaleFactor::operator()(Necklace::Ptr& necklace) const
     }
   }
 
-  if (!valid)
-    return false;
-
   // Adjust the counterclockwise extremes.
   for (ptrdiff_t n = nodes.size() - 2; 0 <= n; --n)
   {

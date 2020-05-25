@@ -72,7 +72,7 @@ class BezierNecklace : public NecklaceShape
  public:
   using Ptr = std::shared_ptr<BezierNecklace>;
 
-  static constexpr const Number kDistanceRatioEpsilon = 1.01;
+  static constexpr const Number kDistanceRatioEpsilon = 1.001;
 
   BezierNecklace(const Point& kernel);
 
