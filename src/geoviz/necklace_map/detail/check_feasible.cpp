@@ -80,8 +80,8 @@ void CheckFeasible::InitializeSlices()
   int max_layer = 0;
   for (const CycleNodeLayered::Ptr& node : nodes_)
   {
-    events.emplace_back(node, node->valid->from(), TaskEvent::Type::kFrom);
-    events.emplace_back(node, node->valid->to(), TaskEvent::Type::kTo);
+    events.emplace_back(node, Modulo(node->valid->from()), TaskEvent::Type::kFrom);
+    events.emplace_back(node, Modulo(node->valid->to()), TaskEvent::Type::kTo);
     max_layer = std::max(max_layer, node->layer);
   }
   std::sort(events.begin(), events.end(), CompareTaskEvent());
@@ -92,7 +92,7 @@ void CheckFeasible::InitializeSlices()
   // For this purpose, keep track of the nodes that are valid at some angle, starting at 0 radians (because the first event has the smallest positive angle).
   CycleNodeLayered::Ptr active_nodes[num_layers];
   for (const CycleNodeLayered::Ptr& node : nodes_)
-    if (node->valid->Contains(0))  // Note that this purposely excludes nodes that contain 2pi.
+    if (0 < node->valid->from() && M_2xPI <= node->valid->to())
       active_nodes[node->layer] = node;
 
   slices_.reserve(events.size());
@@ -112,17 +112,16 @@ void CheckFeasible::InitializeSlices()
     slices_.back().Finalize();
   }
 
-  // Note that the first slice must start from a interval begin event.
-  // Due to the valid intervals being Ranges with strictly non-negative angles, this must be true by construction.
-//  std::vector<TaskSlice>::iterator first_iter =
-//    std::find_if
-//    (
-//      slices_.begin(),
-//      slices_.end(),
-//      [](const TaskSlice& slice) -> bool { return slice.event_from.type == TaskEvent::Type::kFrom; }
-//    );
-//  if (first_iter != slices_.begin())
-//    std::rotate(slices_.begin(), first_iter, slices_.end());
+  // Make sure that the first slice starts from a interval begin event.
+  std::vector<TaskSlice>::iterator first_iter =
+    std::find_if
+    (
+      slices_.begin(),
+      slices_.end(),
+      [](const TaskSlice& slice) -> bool { return slice.event_from.type == TaskEvent::Type::kFrom; }
+    );
+  if (first_iter != slices_.begin())
+    std::rotate(slices_.begin(), first_iter, slices_.end());
 }
 
 void CheckFeasible::InitializeContainer()
@@ -147,9 +146,9 @@ void CheckFeasible::ResetContainer()
 
 void CheckFeasible::ComputeValues
 (
-  const size_t slice_index_offset,
+  const size_t first_slice_index,
   const BitString& first_layer_set,
-  const BitString& first_unused_set
+  const BitString& first_slice_others_index
 )
 {
   // Initialize the values.
@@ -159,9 +158,9 @@ void CheckFeasible::ComputeValues
   const size_t num_slices = slices_.size();
   for (size_t value_index = 0; value_index < num_slices; ++value_index)
   {
-    std::vector<Value>& subset = values_[value_index];
+    std::vector<Value>& slice_values = values_[value_index];
 
-    const size_t slice_index = (value_index + slice_index_offset) % num_slices;
+    const size_t slice_index = (value_index + first_slice_index) % num_slices;
     const TaskSlice& slice = slices_[slice_index];
     BitString slice_layer_string = BitString::FromBit(slice.event_from.node->layer);
 
@@ -170,13 +169,13 @@ void CheckFeasible::ComputeValues
       if (value_index == 0 && layer_set.IsEmpty())
         continue;
 
-      Value& value = subset[layer_set.Get()];
+      Value& value = slice_values[layer_set.Get()];
       value.task = nullptr;
       value.angle_rad = std::numeric_limits<double>::max();
 
-      if (value_index == 0 && first_unused_set.Overlaps(layer_set))
+      if (value_index == 0 && layer_set.Overlaps(first_slice_others_index))
         continue;
-      if (value_index == num_slices - 1 && first_layer_set.Overlaps(layer_set))
+      if (value_index == num_slices - 1 && layer_set.Overlaps(first_layer_set))
         continue;
 
       if (0 < value_index)
@@ -210,7 +209,7 @@ void CheckFeasible::ComputeValues
         if (!task || task->disabled || !layer_set[task->layer])
           continue;
 
-        const Value& value_without_task = subset[(layer_set - BitString::FromBit(task->layer)).Get()];
+        const Value& value_without_task = slice_values[(layer_set - BitString::FromBit(task->layer)).Get()];
 
         Number angle_rad = value_without_task.angle_rad;
         if (angle_rad == std::numeric_limits<double>::max())
@@ -218,8 +217,8 @@ void CheckFeasible::ComputeValues
 
         if (value_without_task.task->bead)
           angle_rad += value_without_task.task->bead->covering_radius_rad + task->bead->covering_radius_rad;
-//        else if (task->layer != slice.event_from.node->layer)
-//          continue;
+        else if (task->layer != slice.event_from.node->layer)
+          continue;
         angle_rad = std::max(angle_rad, task->valid->from());
 
         // Check whether the tasks would still be in the valid interval.
@@ -243,29 +242,40 @@ void CheckFeasible::ComputeValues
 
 bool CheckFeasible::AssignAngles
 (
-  const size_t slice_index_offset,
-  const BitString& first_unused_set
+  const size_t first_slice_index,
+  const BitString& first_slice_others_index
 )
 {
   // Check whether the last slice was assigned a value.
-  const TaskSlice& slice = slices_[slice_index_offset];
+  const TaskSlice& slice = slices_[first_slice_index];
 
   const size_t num_slices = slices_.size();
-  const Value& value_last_unused = values_[num_slices - 1][first_unused_set.Get()];
+  const Value& value_last_unused = values_[num_slices - 1][first_slice_others_index.Get()];
   if (value_last_unused.angle_rad == std::numeric_limits<double>::max())
     return false;
 
+  // Check whether the first and last beads overlap.
+  if
+  (
+    M_2xPI <
+    value_last_unused.angle_rad +
+    value_last_unused.task->bead->covering_radius_rad +
+    slice.event_from.node->bead->covering_radius_rad
+  )
+    return false;
+
   // Assign an angle to each node.
-  BitString layer_set = first_unused_set;
+  BitString layer_set = first_slice_others_index;
 
   for
   (
     ptrdiff_t value_index = num_slices - 1;
-    0 <= value_index && values_[value_index][layer_set.Get()].task->layer != -1;
+    0 <= value_index &&
+    values_[value_index][layer_set.Get()].task->layer != -1;
   )
   {
     Value& value = values_[value_index][layer_set.Get()];
-    const size_t value_slice_index = (value_index + slice_index_offset) % num_slices;
+    const size_t value_slice_index = (value_index + first_slice_index) % num_slices;
     TaskSlice& value_slice = slices_[value_slice_index];
 
     if (value.angle_rad + kEpsilon < value_slice.coverage.from())

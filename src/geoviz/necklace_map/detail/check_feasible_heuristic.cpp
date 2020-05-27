@@ -58,11 +58,14 @@ void CheckFeasibleHeuristic::InitializeSlices()
   // The solution is then decided in intervals of length 2pi on these slices.
 
   // Clone the slices.
-  const size_t num_slices = slices_.size();
+  std::vector<TaskSlice> slices_clone;
+  slices_clone.swap(slices_);
+
+  const size_t num_slices = slices_clone.size();
   slices_.resize(num_slices * heuristic_cycles_);
-  for (int cycle = 1; cycle < heuristic_cycles_; ++cycle)
+  for (int cycle = 0; cycle < heuristic_cycles_; ++cycle)
     for (size_t j = 0; j < num_slices; ++j)
-      slices_[cycle * num_slices + j] = TaskSlice(slices_[j], cycle);
+      slices_[cycle * num_slices + j] = TaskSlice(slices_clone[j], cycle);
 }
 
 void CheckFeasibleHeuristic::ProcessTask(const CycleNodeLayered::Ptr& task)

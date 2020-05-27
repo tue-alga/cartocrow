@@ -73,10 +73,9 @@ void CheckFeasibleExact::SplitCircle
 {
   // Reset each slice and then align it with the start of the current slice.
   for (TaskSlice& slice : slices_)
-  {
     slice.Reset();
+  for (TaskSlice& slice : slices_)
     slice.Rotate(first_slice, layer_set);
-  }
 }
 
 bool CheckFeasibleExact::FeasibleFromSlice

@@ -77,17 +77,17 @@ class CheckFeasible
 
   void ComputeValues // TODO(tvl) rename to something more descriptive and factorize.
   (
-    const size_t slice_index_offset,
+    const size_t first_slice_index,
     const BitString& first_layer_set,
-    const BitString& first_unused_set
+    const BitString& first_slice_others_index
   );
 
   virtual void ProcessTask(const CycleNodeLayered::Ptr&) {}
 
   bool AssignAngles
   (
-    const size_t slice_index_offset,
-    const BitString& unused_set
+    const size_t first_slice_index,
+    const BitString& first_slice_others_index
   );
 
   NodeSet& nodes_;
