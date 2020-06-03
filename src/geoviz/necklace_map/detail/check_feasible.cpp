@@ -261,6 +261,7 @@ bool CheckFeasible::AssignAngles
   (
     ptrdiff_t value_index = num_slices - 1;
     0 <= value_index &&
+    values_[value_index][layer_set.Get()].task &&
     values_[value_index][layer_set.Get()].task->layer != -1;
   )
   {
