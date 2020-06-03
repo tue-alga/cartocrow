@@ -144,7 +144,7 @@ void CheckFeasible::ResetContainer()
       value.Reset();
 }
 
-void CheckFeasible::ComputeValues
+void CheckFeasible::FillContainer
 (
   const size_t first_slice_index,
   const BitString& first_layer_set,
@@ -252,16 +252,6 @@ bool CheckFeasible::AssignAngles
   const size_t num_slices = slices_.size();
   const Value& value_last_unused = values_[num_slices - 1][first_slice_others_index.Get()];
   if (value_last_unused.angle_rad == std::numeric_limits<double>::max())
-    return false;
-
-  // Check whether the first and last beads overlap.
-  if
-  (
-    M_2xPI <
-    value_last_unused.angle_rad +
-    value_last_unused.task->bead->covering_radius_rad +
-    slice.event_from.node->bead->covering_radius_rad
-  )
     return false;
 
   // Assign an angle to each node.

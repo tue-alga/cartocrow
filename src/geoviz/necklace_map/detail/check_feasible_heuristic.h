@@ -49,6 +49,7 @@ struct CycleNodeCheck : public CycleNode
   CycleNodeCheck(const Bead::Ptr& bead, const Range::Ptr& valid);
 
   int check;
+  Number angle_rad;
 }; // struct CycleNodeCheck
 
 

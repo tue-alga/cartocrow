@@ -31,7 +31,7 @@ namespace detail
 {
 
 CycleNodeCheck::CycleNodeCheck(const Bead::Ptr& bead, const Range::Ptr& valid) :
-  CycleNode(bead, valid), check(0)
+  CycleNode(bead, valid), check(0), angle_rad(bead->angle_rad)
 {}
 
 
@@ -87,7 +87,7 @@ void CheckFeasibleHeuristic::ProcessTask(const CycleNodeLayered::Ptr& task)
 
 bool CheckFeasibleHeuristic::Feasible()
 {
-  ComputeValues(0, BitString(), BitString());
+  FillContainer(0, BitString(), BitString());
 
   nodes_check_.clear();
   if (!AssignAngles(0, slices_.back().layer_sets.back()))
@@ -111,7 +111,15 @@ bool CheckFeasibleHeuristic::Feasible()
     {
       if (++(*left_iter)->check == 1)
         if (++count == nodes_check_.size())
+        {
+          // Feasible interval found; adjust the angles to use this interval.
+          for (CheckSet::iterator node_iter = left_iter; node_iter != right_iter; --node_iter)
+          {
+            Bead::Ptr& bead = (*node_iter)->bead;
+            bead->angle_rad = (*node_iter)->angle_rad;
+          }
           return true;
+        }
       ++left_iter;
     }
   }
