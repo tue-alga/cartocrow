@@ -373,9 +373,11 @@ int main(int argc, char **argv)
   std::vector<Necklace::Ptr> necklaces;
 
 
-  // Read the data and geometry.
-  const bool success_read_data = ReadData(elements);
+  // Read the geometry and data.
+  // Note that the regions should be written in the same order as in the input,
+  // which forces the geometry to be read first.
   const bool success_read_svg = ReadGeometry(elements, necklaces);
+  const bool success_read_data = ReadData(elements);
   CHECK(success_read_svg && success_read_data) << "Terminating program.";
   const double time_read = time.Stamp();
 
