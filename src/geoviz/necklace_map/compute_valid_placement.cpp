@@ -112,10 +112,11 @@ void ComputeValidPlacement::operator()(const Number& scale_factor, Necklace::Ptr
   );
 
   // Compute the valid intervals.
-  detail::ValidateScaleFactor validate(scale_factor, buffer_rad);
+  const bool adjust_angle = 0 < aversion_ratio;
+  detail::ValidateScaleFactor validate(scale_factor, buffer_rad, adjust_angle);
   const bool valid = validate(necklace);
 
-  if (!valid)
+  if (!valid || !adjust_angle)
     return;
 
   const double precision = 1e-7;

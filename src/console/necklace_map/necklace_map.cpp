@@ -265,7 +265,7 @@ void ValidateFlags(geoviz::necklace_map::Parameters& parameters, geoviz::WriterO
     correct &= CheckAndPrintFlag
     (
       FLAGS_NAME_AND_VALUE(aversion_ratio),
-      MakeRangeCheck<Closure::kOpen, Closure::kClosed>(0.0, 1.0)
+      MakeRangeCheck<Closure::kClosed, Closure::kClosed>(0.0, 1.0)
     );
     parameters.aversion_ratio = FLAGS_aversion_ratio;
   }

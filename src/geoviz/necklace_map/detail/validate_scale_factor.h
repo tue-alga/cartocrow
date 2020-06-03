@@ -39,7 +39,7 @@ namespace detail
 class ValidateScaleFactor
 {
  public:
-  ValidateScaleFactor(const Number& scale_factor, const Number& buffer_rad = 0);
+  ValidateScaleFactor(const Number& scale_factor, const Number& buffer_rad = 0, const bool adjust_angle = true);
 
   bool operator()(Necklace::Ptr& necklace) const;
 
@@ -47,6 +47,7 @@ class ValidateScaleFactor
 
   Number scale_factor;
   Number buffer_rad;
+  bool adjust_angle;
 }; // class ValidateScaleFactor
 
 } // namespace detail

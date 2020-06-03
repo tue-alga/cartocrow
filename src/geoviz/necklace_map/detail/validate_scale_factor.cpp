@@ -44,8 +44,13 @@ namespace detail
  * @param scale_factor the scale factor for which to validate the necklace map.
  * @param buffer_rad the buffer angle in radians for which to validate the necklace map.
  */
-ValidateScaleFactor::ValidateScaleFactor(const Number& scale_factor, const Number& buffer_rad /*= 0*/)
-  : scale_factor(scale_factor), buffer_rad(buffer_rad) {}
+ValidateScaleFactor::ValidateScaleFactor
+(
+  const Number& scale_factor,
+  const Number& buffer_rad /*= 0*/,
+  const bool adjust_angle /*= true*/
+)
+  : scale_factor(scale_factor), buffer_rad(buffer_rad), adjust_angle(adjust_angle) {}
 
 /**@brief Validate a necklace.
  * @param necklace the necklace to validate.
@@ -147,7 +152,8 @@ bool ValidateScaleFactor::operator()(Necklace::Ptr& necklace) const
     const Number& to_rad = nodes[n].valid->to();
 
     bead->valid = std::make_shared<CircularRange>(from_rad, to_rad);
-    bead->angle_rad = bead->valid->from_rad();
+    if (adjust_angle)
+      bead->angle_rad = bead->valid->from_rad();
   }
 
   return valid;
