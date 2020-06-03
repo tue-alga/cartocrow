@@ -75,7 +75,7 @@ class TaskSlice
     const int num_layers
   );
 
-  TaskSlice(const TaskSlice& slice, const int cycle);
+  TaskSlice(const TaskSlice& slice, const Number& angle_start, const int cycle);
 
   void Reset();
 

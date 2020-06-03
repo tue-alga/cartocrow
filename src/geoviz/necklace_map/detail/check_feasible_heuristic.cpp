@@ -65,7 +65,7 @@ void CheckFeasibleHeuristic::InitializeSlices()
   slices_.reserve(num_slices * heuristic_cycles_);
   for (int cycle = 0; cycle < heuristic_cycles_; ++cycle)
     for (size_t j = 0; j < num_slices; ++j)
-      slices_.emplace_back(slices_clone[j], cycle);
+      slices_.emplace_back(slices_clone[j], slices_clone[0].coverage.from(), cycle);
 }
 
 void CheckFeasibleHeuristic::ProcessTask(const CycleNodeLayered::Ptr& task)

@@ -77,7 +77,7 @@ TaskSlice::TaskSlice
   tasks.resize(num_layers);
 }
 
-TaskSlice::TaskSlice(const TaskSlice& slice, const int cycle) :
+TaskSlice::TaskSlice(const TaskSlice& slice, const Number& angle_start, const int cycle) :
   event_from(slice.event_from),
   event_to(slice.event_to),
   coverage(0, 0),
@@ -87,7 +87,7 @@ TaskSlice::TaskSlice(const TaskSlice& slice, const int cycle) :
 
   // Determine the part of the necklace covered by this slice.
   const Number cycle_start = cycle * M_2xPI;
-  const Number offset = cycle_start;
+  const Number offset = cycle_start - angle_start;
   coverage.from() = Modulo(event_from.angle_rad + offset, cycle_start);
   coverage.to() = Modulo(event_to.angle_rad + offset, coverage.from());
 
