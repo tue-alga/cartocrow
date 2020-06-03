@@ -53,6 +53,7 @@ bool CheckFeasibleHeuristic::operator()()
 void CheckFeasibleHeuristic::InitializeSlices()
 {
   CheckFeasible::InitializeSlices();
+  const size_t num_slices = slices_.size();
 
   // The main method in which the heuristic algorithm tries to save time is by stacking a number of duplicate slice collections back-to-back.
   // The solution is then decided in intervals of length 2pi on these slices.
@@ -61,11 +62,10 @@ void CheckFeasibleHeuristic::InitializeSlices()
   std::vector<TaskSlice> slices_clone;
   slices_clone.swap(slices_);
 
-  const size_t num_slices = slices_clone.size();
-  slices_.resize(num_slices * heuristic_cycles_);
+  slices_.reserve(num_slices * heuristic_cycles_);
   for (int cycle = 0; cycle < heuristic_cycles_; ++cycle)
     for (size_t j = 0; j < num_slices; ++j)
-      slices_[cycle * num_slices + j] = TaskSlice(slices_clone[j], cycle);
+      slices_.emplace_back(slices_clone[j], cycle);
 }
 
 void CheckFeasibleHeuristic::ProcessTask(const CycleNodeLayered::Ptr& task)

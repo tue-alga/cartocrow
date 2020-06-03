@@ -85,9 +85,10 @@ TaskSlice::TaskSlice(const TaskSlice& slice, const int cycle) :
 {
   CHECK_LE(0, cycle);
 
-  // Determine the part of the necklace covered by this slice, i.e. after circling the necklace a fixed number of times.
-  const Number offset = cycle * M_2xPI;
-  coverage.from() = event_from.angle_rad + offset;
+  // Determine the part of the necklace covered by this slice.
+  const Number cycle_start = cycle * M_2xPI;
+  const Number offset = cycle_start;
+  coverage.from() = Modulo(event_from.angle_rad + offset, cycle_start);
   coverage.to() = Modulo(event_to.angle_rad + offset, coverage.from());
 
   // Copy the tasks.
@@ -98,12 +99,12 @@ TaskSlice::TaskSlice(const TaskSlice& slice, const int cycle) :
     if (!task)
       continue;
 
+    // Skip tasks that have started before the first cycle.
     if
     (
       cycle == 0 &&
-      coverage.to() <= task->valid->to() - offset &&
-      task->valid->Contains(Modulo(offset, task->valid->from())) &&
-      task->valid->from() != offset
+      coverage.to() <= task->valid->from() - offset &&
+      task->valid->Contains(M_2xPI)
     )
       continue;
 
