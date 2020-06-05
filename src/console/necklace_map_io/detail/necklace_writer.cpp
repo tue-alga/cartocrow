@@ -42,12 +42,10 @@ constexpr const char* kFilterDropShadowId = "filterDropShadow";
 
 constexpr const char* kNecklaceStyle = "fill:none;"
                                        "stroke:rgba(0%,0%,0%,100%);"
-                                       "stroke-width:0.4;"
                                        "stroke-linecap:butt;"
                                        "stroke-linejoin:round;";
 constexpr const char* kNecklaceKernelStyle = "fill:rgba(0%,0%,0%,100%);"
                                              "stroke:rgba(0%,0%,0%,100%);"
-                                             "stroke-width:0.4;"
                                              "stroke-linecap:butt;"
                                              "stroke-linejoin:round;";
 constexpr const char* kRegionContextColor = "white";
@@ -58,16 +56,13 @@ constexpr const char* kFeasibleIntervalStyle = "fill:none;"
                                                "stroke-linecap:butt;"
                                                "stroke-opacity:1;";
 constexpr const char* kValidIntervalStyle = "fill:none;"
-                                            "stroke-width:0.2;"
                                             "stroke-linecap:butt;"
                                             "stroke-linejoin:round;";
 constexpr const char* kRegionAngleStyle = "fill:none;"
                                           "stroke:rgba(20%,20%,20%,70%);"
-                                          "stroke-width:0.2;"
                                           "stroke-linecap:butt;";
 constexpr const char* kBeadAngleStyle = "fill:none;"
                                         "stroke:rgba(0%,0%,0%,100%);"
-                                        "stroke-width:0.2;"
                                         "stroke-linecap:butt;";
 
 constexpr char kAbsoluteMove = 'M';
@@ -83,14 +78,14 @@ constexpr const double kTransformScale = 1;
 
 constexpr const double kBoundingBoxBufferPx = 5;
 
-constexpr const double kNecklaceKernelRadiusPx = 0.8;
+constexpr const double kLineWidthPx = 0.7;
 
 constexpr const double kPointRegionRadiusPx = 3;
 constexpr const double kBeadIdFontSizePx = 16;
 
-constexpr const double kIntervalWidth = 0.4;
 constexpr const int kIntervalNumericPrecision = 5;
 constexpr const double kValidIntervalOpacity = 0.7;
+constexpr const double kDebugLineWidthRatio = 0.5;
 
 constexpr const double kDropShadowShade = 0.9;
 constexpr const int kDropShadowExtentPx = 2;
@@ -217,8 +212,8 @@ class NecklaceIntervalVisitor : public necklace_map::NecklaceShapeVisitor
 class DrawNecklaceShapeVisitor : public necklace_map::BezierNecklaceVisitor
 {
  public:
-  DrawNecklaceShapeVisitor(const std::string& transform_matrix, tinyxml2::XMLPrinter& printer) :
-    transform_matrix_(transform_matrix), printer_(printer)
+  DrawNecklaceShapeVisitor(const std::string& necklace_style, const std::string& transform_matrix, tinyxml2::XMLPrinter& printer) :
+    necklace_style_(necklace_style), transform_matrix_(transform_matrix), printer_(printer)
   {}
 
   void Visit(necklace_map::CircleNecklace& shape) override
@@ -227,7 +222,7 @@ class DrawNecklaceShapeVisitor : public necklace_map::BezierNecklaceVisitor
     const Number radius = shape.ComputeRadius();
 
     printer_.OpenElement("circle");
-    printer_.PushAttribute("style", kNecklaceStyle);
+    printer_.PushAttribute("style", necklace_style_.c_str());
     printer_.PushAttribute("cx", kernel.x());
     printer_.PushAttribute("cy", kernel.y());
     printer_.PushAttribute("r", radius);
@@ -238,7 +233,7 @@ class DrawNecklaceShapeVisitor : public necklace_map::BezierNecklaceVisitor
   void Visit(necklace_map::BezierNecklace& shape) override
   {
     printer_.OpenElement("path");
-    printer_.PushAttribute("style", kNecklaceStyle);
+    printer_.PushAttribute("style", necklace_style_.c_str());
 
     path_.clear();
     shape.IterateCurves(*this);
@@ -270,6 +265,7 @@ class DrawNecklaceShapeVisitor : public necklace_map::BezierNecklaceVisitor
   std::stringstream path_;
   Point start_point_;
 
+  const std::string& necklace_style_;
   const std::string& transform_matrix_;
 
   tinyxml2::XMLPrinter& printer_;
@@ -353,8 +349,8 @@ NecklaceWriter::NecklaceWriter
   out_(out),
   options_(options)
 {
+  ComputeBoundingBox();
   CreateBeadIntervalShapes();
-
   OpenSvg();
 }
 
@@ -472,9 +468,12 @@ void NecklaceWriter::DrawNecklaces()
   printer_.OpenElement("g");
   printer_.PushComment("Necklaces");
 
+  std::string style = kNecklaceStyle;
+  style = ForceStyle(style, "stroke-width:", kLineWidthPx * unit_px_);
+
   // How to draw each necklace depends on the necklace shape type.
   // We use a visitor pattern to overcome this ambiguity.
-  DrawNecklaceShapeVisitor draw_visitor(transform_matrix_, printer_);
+  DrawNecklaceShapeVisitor draw_visitor(style, transform_matrix_, printer_);
   for (const Necklace::Ptr& necklace : necklaces_)
   {
     printer_.OpenElement("g");
@@ -568,13 +567,14 @@ void NecklaceWriter::DrawFeasibleIntervals()
         printer_.OpenElement("path");
         {
           // The color of the interval is based on the region color.
-          const std::string& style = bead->region_style;
+          const std::string& style_region = bead->region_style;
           std::string color;
-          GetStyle(style, "fill:", color);
+          GetStyle(style_region, "fill:", color);
 
-          std::stringstream stream;
-          stream << kFeasibleIntervalStyle << "stroke-width:" << kIntervalWidth << ";" << "stroke:" + color + ";";
-          printer_.PushAttribute("style", stream.str().c_str());
+          std::string style_interval = kFeasibleIntervalStyle;
+          style_interval = ForceStyle(style_interval, "stroke-width:", kLineWidthPx * unit_px_);
+          style_interval = ForceStyle(style_interval, "stroke:", color);
+          printer_.PushAttribute("style", style_interval.c_str());
         }
         {
           // Draw the feasible interval as a circular path.
@@ -634,17 +634,15 @@ void NecklaceWriter::DrawValidIntervals()
         printer_.OpenElement("path");
         {
           // The color of the interval is based on the region color.
-          const std::string& style = bead->region_style;
+          const std::string& style_region = bead->region_style;
           std::string color;
-          GetStyle(style, "fill:", color);
+          GetStyle(style_region, "fill:", color);
 
-          std::stringstream stream;
-          stream <<
-            kValidIntervalStyle <<
-            "stroke:" << color << ";" <<
-            "stroke-opacity:" << kValidIntervalOpacity << ";";
-
-          printer_.PushAttribute("style", stream.str().c_str());
+          std::string style_interval = kValidIntervalStyle;
+          style_interval = ForceStyle(style_interval, "stroke-width:", kDebugLineWidthRatio * kLineWidthPx * unit_px_);
+          style_interval = ForceStyle(style_interval, "stroke:", color);
+          style_interval = ForceStyle(style_interval, "stroke-opacity:", kValidIntervalOpacity);
+          printer_.PushAttribute("style", style_interval.c_str());
         }
         {
           // Draw the valid interval as a wedge from the necklace kernel to either the necklace, or the feasible interval if it is also drawn.
@@ -708,7 +706,11 @@ void NecklaceWriter::DrawRegionAngles()
           continue;
 
         printer_.OpenElement("path");
-        printer_.PushAttribute("style", kRegionAngleStyle);
+
+        std::string style = kRegionAngleStyle;
+        style = ForceStyle(style, "stroke-width:", kDebugLineWidthRatio * kLineWidthPx * unit_px_);
+        printer_.PushAttribute("style", style.c_str());
+
         {
           CircleNecklace::Ptr interval_shape = bead_interval_map_[bead];
           CHECK_NOTNULL(interval_shape);
@@ -758,7 +760,11 @@ void NecklaceWriter::DrawBeadAngles()
           continue;
 
         printer_.OpenElement("path");
-        printer_.PushAttribute("style", kBeadAngleStyle);
+
+        std::string style = kBeadAngleStyle;
+        style = ForceStyle(style, "stroke-width:", kDebugLineWidthRatio * kLineWidthPx * unit_px_);
+        printer_.PushAttribute("style", style.c_str());
+
         {
           Point endpoint;
           CHECK(necklace->shape->IntersectRay(bead->angle_rad, endpoint));
@@ -782,12 +788,8 @@ void NecklaceWriter::OpenSvg()
 {
   // TODO(tvl) add note to documentation that we explicitly do not claim any copyright over the output of the system, with the intention that the user is able to reserve any rights for themselves.
 
-  // Compute the bounding box and determine the conversion units (world -> pixel).
-  ComputeBoundingBox();
-
   const double width = bounding_box_.xmax() - bounding_box_.xmin();
   const double height = bounding_box_.ymax() - bounding_box_.ymin();
-  unit_px_ = width / options_->pixel_width;
   const int pixel_height(std::ceil(height / unit_px_));
 
   // Open the SVG element and set its attributes.
@@ -870,7 +872,7 @@ void NecklaceWriter::ComputeBoundingBox()
             std::max(kernel.y() - necklace_box.ymin(), necklace_box.ymax() - kernel.y())
           );
 
-        const double buffer = kIntervalWidth * (necklace->beads.size() + 1);
+        const double buffer = kLineWidthPx * (necklace->beads.size() + 1);
         const Box feasible_box = GrowBoundingBox(kernel, max_side_distance + buffer);
 
         bounding_box_ += feasible_box;
@@ -896,6 +898,7 @@ void NecklaceWriter::ComputeBoundingBox()
   // Add a small buffer around the bounding box.
   const Number buffer = kBoundingBoxBufferPx * (bounding_box_.xmax() - bounding_box_.xmin()) / options_->pixel_width;
   bounding_box_ = GrowBoundingBox(bounding_box_, buffer);
+  unit_px_ = (bounding_box_.xmax() - bounding_box_.xmin()) / options_->pixel_width;
 }
 
 void NecklaceWriter::CreateBeadIntervalShapes()
@@ -918,7 +921,7 @@ void NecklaceWriter::CreateBeadIntervalShapes()
       if (options_->draw_feasible_intervals)
       {
         // Create a new circle shape to use for this bead.
-        const Number radius = interval_shape->ComputeRadius() + kIntervalWidth * ++count;
+        const Number radius = interval_shape->ComputeRadius() + kLineWidthPx * unit_px_ * ++count;
         bead_interval_map_[bead] = std::make_shared<CircleNecklace>(Circle(necklace->shape->kernel(), radius * radius));
       }
       else
@@ -1026,7 +1029,10 @@ void NecklaceWriter::DrawKernel(const Point& kernel)
 
   // Draw the necklace kernel as dot.
   printer_.OpenElement("circle");
-  printer_.PushAttribute("style", kNecklaceKernelStyle);
+
+  std::string style = kNecklaceKernelStyle;
+  style = ForceStyle(style, "stroke-width:", kLineWidthPx * unit_px_);
+  printer_.PushAttribute("style", style.c_str());
 
   {
     std::stringstream stream;
@@ -1040,14 +1046,8 @@ void NecklaceWriter::DrawKernel(const Point& kernel)
     stream << kernel.y();
     printer_.PushAttribute("cy", stream.str().c_str());
   }
-  {
-    std::stringstream stream;
-    stream << std::setprecision(kIntervalNumericPrecision);
-    const Number radius = kNecklaceKernelRadiusPx * unit_px_;
-    stream << radius;
-    printer_.PushAttribute("r", stream.str().c_str());
-  }
 
+  printer_.PushAttribute("r", "0");
   printer_.PushAttribute("transform", transform_matrix_.c_str());
   printer_.CloseElement(); // circle
 }
