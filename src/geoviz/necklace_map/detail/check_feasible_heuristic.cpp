@@ -32,8 +32,16 @@ namespace necklace_map
 namespace detail
 {
 
-CycleNodeCheck::CycleNodeCheck(const Bead::Ptr& bead, const Range::Ptr& valid) :
-  CycleNode(bead, valid), check(0), angle_rad(bead->angle_rad)
+CycleNodeCheck::CycleNodeCheck(const Bead::Ptr& bead, const Number& angle_rad) :
+  CycleNode
+  (
+    bead,
+    std::make_shared<Range>
+    (
+      angle_rad - bead->covering_radius_rad,
+      angle_rad + bead->covering_radius_rad
+    )
+  ), check(0), angle_rad(angle_rad)
 {}
 
 
@@ -73,18 +81,7 @@ void CheckFeasibleHeuristic::InitializeSlices()
 void CheckFeasibleHeuristic::AssignAngle(const Number& angle_rad, Bead::Ptr& bead)
 {
   CHECK_NOTNULL(bead);
-  nodes_check_.push_back
-  (
-    std::make_shared<CycleNodeCheck>
-    (
-      bead,
-      std::make_shared<Range>
-      (
-        angle_rad - bead->covering_radius_rad,
-        angle_rad + bead->covering_radius_rad
-      )
-    )
-  );
+  nodes_check_.push_back(std::make_shared<CycleNodeCheck>(bead, angle_rad));
 }
 
 bool CheckFeasibleHeuristic::Feasible()

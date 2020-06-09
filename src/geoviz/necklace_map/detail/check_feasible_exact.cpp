@@ -113,7 +113,7 @@ bool CheckFeasibleExact::FeasibleFromSlice
     return false;
 
   for (BeadAngleMap::iterator iter = bead_angles_.begin(); iter != bead_angles_.end(); ++iter)
-    iter->second->angle_rad = iter->first;
+    iter->second->angle_rad = Modulo(iter->first);
   return true;
 }
 

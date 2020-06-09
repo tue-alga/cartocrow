@@ -46,7 +46,7 @@ struct CycleNodeCheck : public CycleNode
 {
   using Ptr = std::shared_ptr<CycleNodeCheck>;
 
-  CycleNodeCheck(const Bead::Ptr& bead, const Range::Ptr& valid);
+  CycleNodeCheck(const Bead::Ptr& bead, const Number& angle_rad);
 
   int check;
   Number angle_rad;
