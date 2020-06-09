@@ -94,6 +94,7 @@ bool CheckFeasibleHeuristic::Feasible()
     return false;
 
   // Check whether any nodes overlap.
+  // Note that the nodes to check are in clockwise order.
   int count = 0;
   for
   (
@@ -116,7 +117,7 @@ bool CheckFeasibleHeuristic::Feasible()
           for (CheckSet::iterator node_iter = left_iter; node_iter != right_iter; --node_iter)
           {
             Bead::Ptr& bead = (*node_iter)->bead;
-            bead->angle_rad = (*node_iter)->angle_rad;
+            bead->angle_rad = Modulo((*node_iter)->angle_rad);
           }
           return true;
         }

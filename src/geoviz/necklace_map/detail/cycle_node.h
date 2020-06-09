@@ -42,7 +42,9 @@ struct CycleNode
 {
   using Ptr = std::shared_ptr<CycleNode>;
 
-  CycleNode(const Bead::Ptr& bead);
+  CycleNode(const CycleNode& node);
+
+  explicit CycleNode(const Bead::Ptr& bead);
 
   CycleNode(const Bead::Ptr& bead, const Range::Ptr& valid);
 

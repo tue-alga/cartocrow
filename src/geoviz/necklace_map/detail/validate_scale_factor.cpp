@@ -81,17 +81,16 @@ bool ValidateScaleFactor::operator()(Necklace::Ptr& necklace) const
   // Create a sorted cycle based on the feasible intervals of the necklace beads and compute the scaled covering radii.
   for (const Bead::Ptr& bead : necklace->beads)
   {
-    // Compute the scaled covering radius.
+    // In case of the any-order algorithm, the current angle limits the valid interval.
     CHECK_NOTNULL(bead);
-    nodes.emplace_back(bead);
+    nodes.emplace_back(bead, std::make_shared<Range>(bead->angle_rad, Modulo(bead->feasible->to(), bead->angle_rad)));
   }
 
   // Each node is duplicated with an offset to its interval to force cyclic validity.
   const NodeSet::iterator end = nodes.end();
   for (NodeSet::iterator node_iter = nodes.begin(); node_iter != end; ++node_iter)
   {
-    CHECK_NOTNULL(node_iter->bead);
-    nodes.emplace_back(node_iter->bead);
+    nodes.emplace_back(*node_iter);
 
     nodes.back().valid->from() += M_2xPI;
     nodes.back().valid->to() += M_2xPI;

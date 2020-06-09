@@ -78,7 +78,7 @@ constexpr const double kTransformScale = 1;
 
 constexpr const double kBoundingBoxBufferPx = 5;
 
-constexpr const double kLineWidthPx = 0.7;
+constexpr const double kLineWidthPx = 1.7;
 
 constexpr const double kPointRegionRadiusPx = 3;
 constexpr const double kBeadIdFontSizePx = 16;

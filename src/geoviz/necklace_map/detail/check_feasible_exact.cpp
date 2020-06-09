@@ -93,14 +93,14 @@ bool CheckFeasibleExact::FeasibleFromSlice
   // Check whether the last slice was assigned a value.
   const size_t num_slices = slices_.size();
   const Value& value_last_unused = values_[num_slices - 1][first_unused_set.Get()];
-  if (value_last_unused.angle_rad == std::numeric_limits<double>::max())
+  if (value_last_unused.angle_center_rad == std::numeric_limits<double>::max())
     return false;
 
   // Check whether the first and last beads overlap.
   if
   (
     M_2xPI <
-    value_last_unused.angle_rad +
+    value_last_unused.angle_center_rad +
     value_last_unused.task->bead->covering_radius_rad +
     slice.event_from.node->bead->covering_radius_rad
   )
