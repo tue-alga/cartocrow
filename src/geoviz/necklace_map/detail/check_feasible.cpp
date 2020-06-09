@@ -147,8 +147,8 @@ void CheckFeasible::ResetContainer()
 void CheckFeasible::FillContainer
 (
   const size_t first_slice_index,
-  const BitString& first_layer_set,
-  const BitString& first_slice_others_index
+  const BitString& first_slice_layer_set,
+  const BitString& first_slice_remaining_set
 )
 {
   // Initialize the values.
@@ -173,9 +173,9 @@ void CheckFeasible::FillContainer
       value.task = nullptr;
       value.angle_center_rad = std::numeric_limits<double>::max();
 
-      if (value_index == 0 && layer_set.Overlaps(first_slice_others_index))
+      if (value_index == 0 && layer_set.Overlaps(first_slice_remaining_set))
         continue;
-      if (value_index == num_slices - 1 && layer_set.Overlaps(first_layer_set))
+      if (value_index == num_slices - 1 && layer_set.Overlaps(first_slice_layer_set))
         continue;
 
       if (0 < value_index)
@@ -243,19 +243,19 @@ void CheckFeasible::FillContainer
 bool CheckFeasible::AssignAngles
 (
   const size_t first_slice_index,
-  const BitString& first_slice_others_index
+  const BitString& first_slice_remaining_set
 )
 {
   // Check whether the last slice was assigned a value.
   const TaskSlice& slice = slices_[first_slice_index];
 
   const size_t num_slices = slices_.size();
-  const Value& value_last_unused = values_[num_slices - 1][first_slice_others_index.Get()];
+  const Value& value_last_unused = values_[num_slices - 1][first_slice_remaining_set.Get()];
   if (value_last_unused.angle_center_rad == std::numeric_limits<double>::max())
     return false;
 
   // Assign an angle to each node.
-  BitString layer_set = first_slice_others_index;
+  BitString layer_set = first_slice_remaining_set;
 
   for
   (

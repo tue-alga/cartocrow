@@ -52,7 +52,7 @@ class CheckFeasibleExact : public CheckFeasible
   bool FeasibleFromSlice
   (
     const size_t first_slice_index,
-    const BitString& first_layer_set
+    const BitString& first_slice_layer_set
   );
 }; // class CheckFeasibleExact
 

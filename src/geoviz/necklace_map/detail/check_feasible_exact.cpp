@@ -81,18 +81,18 @@ void CheckFeasibleExact::SplitCircle
 bool CheckFeasibleExact::FeasibleFromSlice
 (
   const size_t first_slice_index,
-  const BitString& first_layer_set
+  const BitString& first_slice_layer_set
 )
 {
   // Determine the layers of the slice that are not used.
   const TaskSlice& slice = slices_[first_slice_index];
-  const BitString first_unused_set = first_layer_set ^(slice.layer_sets.back());
+  const BitString first_slice_others_set = first_slice_layer_set ^(slice.layer_sets.back());
 
-  FillContainer(first_slice_index, first_layer_set, first_unused_set);
+  FillContainer(first_slice_index, first_slice_layer_set, first_slice_others_set);
 
   // Check whether the last slice was assigned a value.
   const size_t num_slices = slices_.size();
-  const Value& value_last_unused = values_[num_slices - 1][first_unused_set.Get()];
+  const Value& value_last_unused = values_[num_slices - 1][first_slice_others_set.Get()];
   if (value_last_unused.angle_center_rad == std::numeric_limits<double>::max())
     return false;
 
@@ -106,7 +106,7 @@ bool CheckFeasibleExact::FeasibleFromSlice
   )
     return false;
 
-  return AssignAngles(first_slice_index, first_unused_set);
+  return AssignAngles(first_slice_index, first_slice_others_set);
 }
 
 } // namespace detail

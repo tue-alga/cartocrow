@@ -78,8 +78,8 @@ class CheckFeasible
   void FillContainer
   (
     const size_t first_slice_index,
-    const BitString& first_layer_set,
-    const BitString& first_slice_others_index
+    const BitString& first_slice_layer_set,
+    const BitString& first_slice_remaining_set
   );
 
   virtual void ProcessTask(const CycleNodeLayered::Ptr&) {}
@@ -87,7 +87,7 @@ class CheckFeasible
   bool AssignAngles
   (
     const size_t first_slice_index,
-    const BitString& first_slice_others_index
+    const BitString& first_slice_remaining_set
   );
 
   NodeSet& nodes_;
