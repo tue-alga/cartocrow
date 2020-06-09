@@ -64,7 +64,7 @@ class CheckFeasible
     Number CoveringRadius() const;
 
     CycleNodeLayered::Ptr task;
-    Number angle_center_rad;
+    Number angle_rad;  // The angle of the bead center.
   }; // struct Value
 
   CheckFeasible(NodeSet& nodes);
