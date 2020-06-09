@@ -82,9 +82,9 @@ class CheckFeasible
     const BitString& first_slice_remaining_set
   );
 
-  virtual void ProcessTask(const CycleNodeLayered::Ptr&) {}
+  virtual void AssignAngle(const Number& angle_rad, Bead::Ptr& bead) = 0;
 
-  bool AssignAngles
+  bool ProcessContainer
   (
     const size_t first_slice_index,
     const BitString& first_slice_remaining_set

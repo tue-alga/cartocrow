@@ -26,6 +26,8 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 06-05-2020
 #include <cmath>
 #include <limits>
 
+#include <glog/logging.h>
+
 #include "geoviz/necklace_map/detail/check_feasible_exact.h"
 #include "geoviz/necklace_map/detail/check_feasible_heuristic.h"
 
@@ -135,7 +137,7 @@ void CheckFeasible::InitializeContainer()
 
 void CheckFeasible::ResetContainer()
 {
-  if (values_[0][0].angle_center_rad == std::numeric_limits<double>::max())
+  if (values_[0][0].angle_center_rad == std::numeric_limits<Number>::max())
     return;
 
   // Reset the dynamic programming results container.
@@ -171,7 +173,7 @@ void CheckFeasible::FillContainer
 
       Value& value = slice_values[layer_set.Get()];
       value.task = nullptr;
-      value.angle_center_rad = std::numeric_limits<double>::max();
+      value.angle_center_rad = std::numeric_limits<Number>::max();
 
       if (value_index == 0 && layer_set.Overlaps(first_slice_remaining_set))
         continue;
@@ -201,7 +203,7 @@ void CheckFeasible::FillContainer
             value = subset_prev[(layer_set + slice_layer_string).Get()];
         }
       }
-      if (value.angle_center_rad < std::numeric_limits<double>::max())
+      if (value.angle_center_rad < std::numeric_limits<Number>::max())
         continue;
 
       for (const CycleNodeLayered::Ptr& task : slice.tasks)
@@ -209,10 +211,11 @@ void CheckFeasible::FillContainer
         if (!task || task->disabled || !layer_set[task->layer])
           continue;
 
-        const Value& value_without_task = slice_values[(layer_set - BitString::FromBit(task->layer)).Get()];
+        const BitString layer_set_without_task = layer_set - BitString::FromBit(task->layer);
+        const Value& value_without_task = slice_values[layer_set_without_task.Get()];
 
         Number angle_rad = value_without_task.angle_center_rad;
-        if (angle_rad == std::numeric_limits<double>::max())
+        if (angle_rad == std::numeric_limits<Number>::max())
           continue;
 
         if (value_without_task.task->bead)
@@ -221,14 +224,14 @@ void CheckFeasible::FillContainer
           continue;
         angle_rad = std::max(angle_rad, task->valid->from());
 
-        // Check whether the tasks would still be in the valid interval.
+        // Check whether the task would still be in its valid interval.
         if (task->valid->to() < angle_rad)
           continue;
 
-        // Check whether this task is closer than any others.
+        // Check whether the counterclockwise extreme of the bead of this task is closer to the start than any others.
         if
         (
-          value.angle_center_rad == std::numeric_limits<double>::max() ||
+          value.angle_center_rad == std::numeric_limits<Number>::max() ||
           angle_rad + task->bead->covering_radius_rad < value.angle_center_rad + value.task->bead->covering_radius_rad
         )
         {
@@ -240,22 +243,24 @@ void CheckFeasible::FillContainer
   }
 }
 
-bool CheckFeasible::AssignAngles
+bool CheckFeasible::ProcessContainer
 (
   const size_t first_slice_index,
   const BitString& first_slice_remaining_set
 )
 {
-  // Check whether the last slice was assigned a value.
   const TaskSlice& slice = slices_[first_slice_index];
 
+  // Check whether the last slice was assigned a value.
   const size_t num_slices = slices_.size();
   const Value& value_last_unused = values_[num_slices - 1][first_slice_remaining_set.Get()];
-  if (value_last_unused.angle_center_rad == std::numeric_limits<double>::max())
+  if (value_last_unused.angle_center_rad == std::numeric_limits<Number>::max())
     return false;
 
   // Assign an angle to each node.
   BitString layer_set = first_slice_remaining_set;
+
+  Number check_angle_rad = std::numeric_limits<Number>::max();
 
   for
   (
@@ -272,28 +277,31 @@ bool CheckFeasible::AssignAngles
     if (value.angle_center_rad + kEpsilon < value_slice.coverage.from())
     {
       // Move to the previous slice.
+      const size_t prev_slice_index = (value_slice_index + num_slices - 1) % num_slices;
       const int& value_slice_layer = value_slice.event_from.node->layer;
       if
       (
         value_slice.event_from.type == TaskEvent::Type::kTo &&
-        slices_[(value_slice_index + num_slices - 1) % num_slices].tasks[value_slice_layer] &&
-        !slices_[(value_slice_index + num_slices - 1) % num_slices].tasks[value_slice_layer]->disabled
+        slices_[prev_slice_index].tasks[value_slice_layer] &&
+        !slices_[prev_slice_index].tasks[value_slice_layer]->disabled
       )
         layer_set += value_slice_layer;
 
       --value_index;
-    } else
+    }
+    else
     {
       const CycleNodeLayered::Ptr& task = value.task;
       if (!task || !layer_set[task->layer])
         return false;
 
-      layer_set -= task->layer;
+      CHECK_LE(value.angle_center_rad, check_angle_rad);
+      check_angle_rad = value.angle_center_rad;
 
       // Assign the angle.
-      task->bead->angle_rad = value.angle_center_rad + slice.event_from.angle_rad;
+      AssignAngle(value.angle_center_rad + slice.event_from.angle_rad, task->bead);
 
-      ProcessTask(task);
+      layer_set -= task->layer;
     }
   }
 

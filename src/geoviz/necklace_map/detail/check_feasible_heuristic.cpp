@@ -22,6 +22,8 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 06-05-2020
 
 #include "check_feasible_heuristic.h"
 
+#include <glog/logging.h>
+
 
 namespace geoviz
 {
@@ -68,18 +70,18 @@ void CheckFeasibleHeuristic::InitializeSlices()
       slices_.emplace_back(slices_clone[j], slices_clone[0].coverage.from(), cycle);
 }
 
-void CheckFeasibleHeuristic::ProcessTask(const CycleNodeLayered::Ptr& task)
+void CheckFeasibleHeuristic::AssignAngle(const Number& angle_rad, Bead::Ptr& bead)
 {
-  const Number covering_radius_rad = task->bead ? task->bead->covering_radius_rad : 0;
+  CHECK_NOTNULL(bead);
   nodes_check_.push_back
   (
     std::make_shared<CycleNodeCheck>
     (
-      task->bead,
+      bead,
       std::make_shared<Range>
       (
-        task->bead->angle_rad - covering_radius_rad,
-        task->bead->angle_rad + covering_radius_rad
+        angle_rad - bead->covering_radius_rad,
+        angle_rad + bead->covering_radius_rad
       )
     )
   );
@@ -90,7 +92,7 @@ bool CheckFeasibleHeuristic::Feasible()
   FillContainer(0, BitString(), BitString());
 
   nodes_check_.clear();
-  if (!AssignAngles(0, slices_.back().layer_sets.back()))
+  if (!ProcessContainer(0, slices_.back().layer_sets.back()))
     return false;
 
   // Check whether any nodes overlap.

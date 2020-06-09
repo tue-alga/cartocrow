@@ -22,6 +22,8 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 06-05-2020
 
 #include "check_feasible_exact.h"
 
+#include <glog/logging.h>
+
 
 namespace geoviz
 {
@@ -93,7 +95,7 @@ bool CheckFeasibleExact::FeasibleFromSlice
   // Check whether the last slice was assigned a value.
   const size_t num_slices = slices_.size();
   const Value& value_last_unused = values_[num_slices - 1][first_slice_others_set.Get()];
-  if (value_last_unused.angle_center_rad == std::numeric_limits<double>::max())
+  if (value_last_unused.angle_center_rad == std::numeric_limits<Number>::max())
     return false;
 
   // Check whether the first and last beads overlap.
@@ -106,7 +108,19 @@ bool CheckFeasibleExact::FeasibleFromSlice
   )
     return false;
 
-  return AssignAngles(first_slice_index, first_slice_others_set);
+  bead_angles_.clear();
+  if (!ProcessContainer(first_slice_index, first_slice_others_set))
+    return false;
+
+  for (BeadAngleMap::iterator iter = bead_angles_.begin(); iter != bead_angles_.end(); ++iter)
+    iter->second->angle_rad = iter->first;
+  return true;
+}
+
+void CheckFeasibleExact::AssignAngle(const Number& angle_rad, Bead::Ptr& bead)
+{
+  CHECK_NOTNULL(bead);
+  bead_angles_[angle_rad] = bead;
 }
 
 } // namespace detail
