@@ -62,15 +62,16 @@ ComputeValidPlacement::Ptr ComputeValidPlacement::New(const Parameters& paramete
   switch (parameters.order_type)
   {
     case OrderType::kFixed:
-      return Ptr(new ComputeValidPlacementFixedOrder(parameters.aversion_ratio, parameters.buffer_rad));
+      return Ptr(new ComputeValidPlacementFixedOrder(parameters.placement_cycles, parameters.aversion_ratio, parameters.buffer_rad));
     case OrderType::kAny:
-      return Ptr(new ComputeValidPlacementAnyOrder(parameters.aversion_ratio, parameters.buffer_rad));
+      return Ptr(new ComputeValidPlacementAnyOrder(parameters.placement_cycles, parameters.aversion_ratio, parameters.buffer_rad));
     default:
       return nullptr;
   }
 }
 
 /**@brief Construct a valid placement computation functor.
+ * @param cycles the number of positioning cycles.
  * @param aversion_ratio @parblock the ratio between attraction to the interval center (0) and repulsion from the neighboring beads (1).
  *
  * This ratio must be in the range (0, 1].
@@ -79,11 +80,13 @@ ComputeValidPlacement::Ptr ComputeValidPlacement::New(const Parameters& paramete
  */
 ComputeValidPlacement::ComputeValidPlacement
 (
+  const int cycles,
   const Number& aversion_ratio,
   const Number& buffer_rad /*= 0*/
 ) :
-  buffer_rad(buffer_rad),
-  aversion_ratio(aversion_ratio)
+  cycles(cycles),
+  aversion_ratio(aversion_ratio),
+  buffer_rad(buffer_rad)
 {}
 
 /**@brief Apply the functor place the beads on a necklace.
@@ -123,7 +126,7 @@ void ComputeValidPlacement::operator()(const Number& scale_factor, Necklace::Ptr
   const Number centroid_ratio = 1;
 
   const size_t num_beads = necklace->beads.size();
-  for (int epoch = 0; epoch < 30; ++epoch)
+  for (int cycle = 0; cycle < cycles; ++cycle)
   {
     for (size_t index_bead = 0; index_bead < num_beads; ++index_bead)
     {
@@ -221,18 +224,23 @@ void ComputeValidPlacement::operator()(const Number& scale_factor, Necklace::Ptr
         else
           bead->angle_rad = x;
       }
+      bead->angle_rad = Modulo(bead->angle_rad);
     }
 
     SwapBeads(necklace);
   }
 }
 
-/**@fn Number ComputeValidPlacement::buffer_rad;
- * @brief The minimum distance (in radians on the necklace) between the beads.
+/**@fn Number ComputeValidPlacement::cycles;
+ * @brief The number of cycles to apply the positioning forces.
  */
 
 /**@fn Number ComputeValidPlacement::aversion_ratio;
  * @brief The ratio between attraction to the interval center (0) and repulsion from the neighboring beads (1).
+ */
+
+/**@fn Number ComputeValidPlacement::buffer_rad;
+ * @brief The minimum distance (in radians on the necklace) between the beads.
  */
 
 
@@ -259,6 +267,7 @@ void ComputeValidPlacement::operator()(const Number& scale_factor, std::vector<N
  */
 
 /**@brief Construct a valid placement computation functor.
+ * @param cycles the number of positioning cycles.
  * @param aversion_ratio @parblock the ratio between attraction to the interval center (0) and repulsion from the neighboring beads (1).
  *
  * This ratio must be in the range (0, 1].
@@ -267,10 +276,11 @@ void ComputeValidPlacement::operator()(const Number& scale_factor, std::vector<N
  */
 ComputeValidPlacementFixedOrder::ComputeValidPlacementFixedOrder
 (
+  const int cycles,
   const Number& aversion_ratio,
   const Number& buffer_rad /*= 0*/
 ) :
-  ComputeValidPlacement(aversion_ratio, buffer_rad)
+  ComputeValidPlacement(cycles, aversion_ratio, buffer_rad)
 {}
 
 
@@ -287,6 +297,7 @@ ComputeValidPlacementFixedOrder::ComputeValidPlacementFixedOrder
  */
 
 /**@brief Construct a valid placement computation functor.
+ * @param cycles the number of positioning cycles.
  * @param aversion_ratio @parblock the ratio between attraction to the interval center (0) and repulsion from the neighboring beads (1).
  *
  * This ratio must be in the range (0, 1].
@@ -295,10 +306,11 @@ ComputeValidPlacementFixedOrder::ComputeValidPlacementFixedOrder
  */
 ComputeValidPlacementAnyOrder::ComputeValidPlacementAnyOrder
 (
+  const int cycles,
   const Number& aversion_ratio,
   const Number& min_separation /*= 0*/
 ) :
-  ComputeValidPlacement(aversion_ratio, min_separation) {}
+  ComputeValidPlacement(cycles, aversion_ratio, min_separation) {}
 
 void ComputeValidPlacementAnyOrder::SwapBeads(Necklace::Ptr& necklace) const
 {

@@ -55,6 +55,7 @@ Parameters::Parameters() :
   buffer_rad(0),
   binary_search_depth(10),
   heuristic_cycles(5),
+  placement_cycles(30),
   aversion_ratio(0)
 {}
 
@@ -94,6 +95,12 @@ Parameters::Parameters() :
  * @brief The number of steps for the heuristic any-order scale factor computation.
  *
  * If the number of steps is 0, the exact algorithm is used. Otherwise, a larger number of steps results in a higher probability of generating the correct outcome of the any-order scale computation decision problem.
+ */
+
+/**@fn Number Parameters::heuristic_cycles;
+ * @brief The number of steps for applying the placement forces.
+ *
+ * A larger number of steps results in a more accurate placement.
  */
 
 /**@fn Number Parameters::aversion_ratio;

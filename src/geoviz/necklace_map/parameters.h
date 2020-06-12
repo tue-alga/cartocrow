@@ -61,6 +61,7 @@ struct Parameters
   int heuristic_cycles;
 
   // Placement.
+  int placement_cycles;
   Number aversion_ratio;
 }; // struct Parameters
 

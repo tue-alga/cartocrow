@@ -125,6 +125,13 @@ DEFINE_double
   " Scaling scrollbar values using a 4th degree function is recommended."
 );
 
+DEFINE_int32
+(
+  placement_cycles,
+  30,
+  "The number of cycles used by the placement heuristic. Must be non-negative; if the number of 0, all beads are placed in the most clockwise valid position."
+);
+
 DEFINE_double
 (
   aversion_ratio,
@@ -261,6 +268,9 @@ void ValidateFlags(geoviz::necklace_map::Parameters& parameters, geoviz::WriterO
 
   // Placement parameters.
   {
+    correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(placement_cycles), MakeLowerBoundCheck(0));
+    parameters.placement_cycles = FLAGS_placement_cycles;
+
     using Closure = Closure;
     correct &= CheckAndPrintFlag
     (
