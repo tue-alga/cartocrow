@@ -34,15 +34,15 @@ namespace necklace_map
  * This follows the visitor pattern to handle different necklace shape types in a different manner.
  */
 
-/**@fn virtual void NecklaceShapeVisitor::Visit(CircleNecklace& shape);
- * @brief Visit a circle necklace shape.
+/**@brief Visit a circle necklace shape.
  * @param shape the shape to visit.
  */
+void NecklaceShapeVisitor::Visit(CircleNecklace& shape) {}
 
-/**@fn virtual void NecklaceShapeVisitor::Visit(BezierNecklace& shape);
- * @brief Visit a generic necklace shape.
+/**@brief Visit a generic necklace shape.
  * @param shape the shape to visit.
  */
+void NecklaceShapeVisitor::Visit(BezierNecklace& shape) {}
 
 
 /**@class NecklaceShape

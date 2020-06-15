@@ -41,8 +41,8 @@ class BezierNecklace;
 class NecklaceShapeVisitor
 {
  public:
-  virtual void Visit(CircleNecklace& shape) {}
-  virtual void Visit(BezierNecklace& shape) {}
+  virtual void Visit(CircleNecklace& shape);
+  virtual void Visit(BezierNecklace& shape);
 }; // class NecklaceShapeVisitor
 
 

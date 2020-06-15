@@ -497,6 +497,14 @@ void BezierNecklace::Accept(NecklaceShapeVisitor& visitor)
   visitor.Visit(*this);
 }
 
+void BezierNecklace::Accept(BezierNecklaceVisitor& visitor)
+{
+  CHECK(checked_);
+  visitor.Visit(*this);
+  for (BezierCurve& curve : curves_)
+    visitor.Visit(curve);
+}
+
 void BezierNecklace::IterateCurves(BezierNecklaceVisitor& visitor)
 {
   CHECK(checked_);

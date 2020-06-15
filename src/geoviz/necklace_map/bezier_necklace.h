@@ -63,6 +63,7 @@ class BezierCurve
 class BezierNecklaceVisitor : public NecklaceShapeVisitor
 {
  public:
+  virtual void Visit(BezierNecklace& shape) override {}
   virtual void Visit(BezierCurve& curve) {}
 }; // class BezierNecklaceVisitor
 
@@ -99,6 +100,8 @@ class BezierNecklace : public NecklaceShape
   Number ComputeAngleAtDistanceRad(const Number& angle_rad, const Number& distance) const override;
 
   void Accept(NecklaceShapeVisitor& visitor) override;
+
+  void Accept(BezierNecklaceVisitor& visitor);
 
   void IterateCurves(BezierNecklaceVisitor& visitor);
 
