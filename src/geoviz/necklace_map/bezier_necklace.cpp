@@ -415,6 +415,9 @@ Box BezierNecklace::ComputeBoundingBox() const
 
 Number BezierNecklace::ComputeCoveringRadiusRad(const Range::Ptr& range, const Number& radius) const
 {
+  if (radius == 0)
+    return 0;
+
   // Sample the range and determine the largest covering radius, i.e. the largest angle difference towards the point on the spline at a fixed distance.
   // There are several viable sampling strategies (with evaluation):
   // - fixed angle difference (sensitive to spline curvature, i.e. low curvature means oversampling)
@@ -470,6 +473,9 @@ Number BezierNecklace::ComputeCoveringRadiusRad(const Range::Ptr& range, const N
 
 Number BezierNecklace::ComputeAngleAtDistanceRad(const Number& angle_rad, const Number& distance) const
 {
+  if (distance == 0)
+    return angle_rad;
+
   // Find the curve that contains the angle.
   CHECK(checked_);
   const CurveSet::const_iterator curve_iter = FindCurveContainingAngle(angle_rad);

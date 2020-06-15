@@ -492,6 +492,9 @@ void NecklaceWriter::DrawNecklaces()
  */
 void NecklaceWriter::DrawBeads()
 {
+  if (scale_factor_ == 0)
+    return;
+
   printer_.OpenElement("g");
   {
     std::stringstream stream;
