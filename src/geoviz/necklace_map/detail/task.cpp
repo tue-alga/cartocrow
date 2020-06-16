@@ -103,8 +103,8 @@ TaskSlice::TaskSlice(const TaskSlice& slice, const Number& angle_start, const in
     if
     (
       cycle == 0 &&
-      coverage.to() <= task->valid->from() - offset &&
-      task->valid->Contains(M_2xPI)
+      coverage.to() <= task->valid->from() + offset &&
+      task->valid->Contains(M_2xPI + angle_start)
     )
       continue;
 
