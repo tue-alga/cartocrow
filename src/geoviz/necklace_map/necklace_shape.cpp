@@ -100,6 +100,12 @@ void NecklaceShapeVisitor::Visit(BezierNecklace& shape) {}
  * @endparblock
  */
 
+/**@fn virtual Number NecklaceShape::ComputeDistanceToKernel(const Range::Ptr& range) const = 0
+ * @brief Compute the shortest distance to the necklace kernel from a bead that is centered in a given range.
+ * @param range the range on which the bead can be centered.
+ * @return the distance to the necklace kernel.
+ */
+
 /**@brief Compute the angle of a point on the shape.
  *
  * This angle is relative to the positive x-asis.

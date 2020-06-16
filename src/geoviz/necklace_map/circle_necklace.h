@@ -55,6 +55,8 @@ class CircleNecklace : public NecklaceShape
 
   Number ComputeCoveringRadiusRad(const Range::Ptr& range, const Number& radius) const override;
 
+  Number ComputeDistanceToKernel(const Range::Ptr& range) const override;
+
   Number ComputeAngleAtDistanceRad(const Number& angle_rad, const Number& distance) const override;
 
   virtual void Accept(NecklaceShapeVisitor& visitor) override;

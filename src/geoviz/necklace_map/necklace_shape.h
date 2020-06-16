@@ -65,6 +65,8 @@ class NecklaceShape
 
   virtual Number ComputeCoveringRadiusRad(const Range::Ptr& range, const Number& radius) const = 0;
 
+  virtual Number ComputeDistanceToKernel(const Range::Ptr& range) const = 0;
+
   Number ComputeAngleRad(const Point& point) const;
 
   virtual Number ComputeAngleAtDistanceRad(const Number& angle_rad, const Number& distance) const = 0;

@@ -471,6 +471,51 @@ Number BezierNecklace::ComputeCoveringRadiusRad(const Range::Ptr& range, const N
   return covering_radius_rad;
 }
 
+Number BezierNecklace::ComputeDistanceToKernel(const Range::Ptr& range) const
+{
+  // Sample the range and determine the shortest distance to the kernel.
+  // There are several viable sampling strategies (with evaluation):
+  // - fixed angle difference (sensitive to spline curvature, i.e. low curvature means oversampling)
+  // - fixed distance (sensitive to spline curvature, i.e. low curvature means oversampling)
+  // - fixed sample size per curve (sensitive to curve length, i.e. short curves means oversampling)
+  // - fixed sample size per range (sensitive to range length, i.e. short range means oversampling)
+  // - binary search on range (as previous and loses benefits of moving curve-at-distance together with sample)
+  // We chose for the fixed sample size per curve because the trade-off between accuracy and sampling size seemed reasonable.
+  // Taking five samples per curve (t = {0, 1/4, 1/2, 3/4, 1}) captures the extreme curvature parts of each Cubic spline.
+
+  CHECK(checked_);
+  const CurveSet::const_iterator curve_iter_from = FindCurveContainingAngle(range->from());
+  const CurveSet::const_iterator curve_iter_to = FindCurveContainingAngle(range->to());
+  CHECK(curve_iter_from != curves_.end());
+  CHECK(curve_iter_to != curves_.end());
+
+  Number t_from, t_to;
+  Point point;
+  CHECK(IntersectRay(range->from(), curve_iter_from, point, t_from));
+  CHECK(IntersectRay(range->to(), curve_iter_to, point, t_to));
+
+  const Number t_step = 0.25;
+  Number t = t_from;
+  Number squared_distance = std::numeric_limits<Number>::max();
+  for (CurveSet::const_iterator curve_iter = curve_iter_from; curve_iter != curve_iter_to || t <= t_to;)
+  {
+    point = curve_iter->Evaluate(t);
+    squared_distance = std::min(squared_distance, CGAL::squared_distance(point, kernel()));
+
+    t += t_step;
+    if (curve_iter == curve_iter_to && t_to < t && t < t_to + t_step)
+      t = t_to;  // Final step at the exact range endpoint.
+    if (curve_iter != curve_iter_to && 1 <= t)
+    {
+      t = 0;
+      if (++curve_iter == curves_.end())
+        curve_iter = curves_.begin();
+    }
+  }
+
+  return CGAL::sqrt(squared_distance);
+}
+
 Number BezierNecklace::ComputeAngleAtDistanceRad(const Number& angle_rad, const Number& distance) const
 {
   if (distance == 0)

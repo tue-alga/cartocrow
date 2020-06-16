@@ -87,6 +87,11 @@ Number CircleNecklace::ComputeCoveringRadiusRad(const Range::Ptr& range, const N
   return std::asin(radius / ComputeRadius());
 }
 
+Number CircleNecklace::ComputeDistanceToKernel(const Range::Ptr& range) const
+{
+  return ComputeRadius();
+}
+
 Number CircleNecklace::ComputeAngleAtDistanceRad(const Number& angle_rad, const Number& distance) const
 {
   CHECK_LE(distance, 2 * ComputeRadius());
