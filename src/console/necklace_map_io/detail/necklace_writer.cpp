@@ -583,6 +583,7 @@ void NecklaceWriter::DrawFeasibleIntervals()
           // Draw the feasible interval as a circular path.
           const Number& from_rad = bead->feasible->from_rad();
           const Number& to_rad = bead->feasible->to_rad();
+          const int large_arc_flag = M_PI < (to_rad - from_rad) ? 1 : 0;
 
           Point endpoint_cw, endpoint_ccw;
           CHECK(interval_shape->IntersectRay(from_rad, endpoint_cw));
@@ -593,7 +594,7 @@ void NecklaceWriter::DrawFeasibleIntervals()
           stream << std::setprecision(kIntervalNumericPrecision);
           stream <<
             "M " << endpoint_cw.x() << " " << endpoint_cw.y() <<
-            " A " << radius << " " << radius << " 0 0 1 " <<
+            " A " << radius << " " << radius << " 0 " << large_arc_flag << " 1 " <<
             endpoint_ccw.x() << " " << endpoint_ccw.y();
 
           printer_.PushAttribute("d", stream.str().c_str());
