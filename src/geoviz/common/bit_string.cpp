@@ -121,25 +121,27 @@ namespace geoviz
  * @return the bit string after the operation.
  */
 
-/**@fn BitStr BitStr::operator+(const BitStr& string)
+/**@fn BitStr BitStr::operator+(const BitStr& string) const
  * @brief Clone the bit string and set a collection of bits to true.
  * @param string the bits to set.
  * @return the new bit string after the operation.
  */
 
-/**@fn BitStr BitStr::operator-(const BitStr& string)
+/**@fn BitStr BitStr::operator-(const BitStr& string) const
  * @brief Clone the bit string and set a collection of bits to false.
  * @param string the bits to set.
  * @return the new bit string after the operation.
  */
 
-/**@fn BitStr BitStr::operator&(const BitStr& string)
+// Note that Doxygen (incorrectly) adds a space when copying this documentation (e.g. it changes the method to "operator &").
+// This should be fixed by Doxygen 1.8.15, which is not known to ubuntu's package manager.
+/**@fn BitStr BitStr::operator&(const BitStr& string) const
  * @brief Clone the bit string and restrict the true bits to another bit string.
  * @param string the bits to restrict to.
  * @return the new bit string after the operation.
  */
 
-/**@fn BitStr BitStr::operator^(const BitStr& string)
+/**@fn BitStr BitStr::operator^(const BitStr& string) const
  * @brief Construct the exclusive-or combination of this bit string and another.
  * @param string the other bit string.
  * @return the new bit string after the operation.
@@ -157,6 +159,8 @@ namespace geoviz
  * @return the bit string after the operation.
  */
 
+// Note that Doxygen (incorrectly) adds a space when copying this documentation (e.g. it changes the method to "operator &=").
+// This should be fixed by Doxygen 1.8.15, which is not known to ubuntu's package manager.
 /**@fn BitStr& BitStr::operator&=(const BitStr& string)
  * @brief Restrict the true bits to a collection of bits and return the result.
  * @param string the bits to restrict to.

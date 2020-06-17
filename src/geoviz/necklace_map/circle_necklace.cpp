@@ -37,7 +37,6 @@ namespace necklace_map
 /**@brief Construct a circle necklace.
  *
  * The necklace kernel is the circle center.
- *
  * @param shape the circle covered by the necklace.
  */
 CircleNecklace::CircleNecklace(const Circle& shape) : NecklaceShape(), shape_(shape)
@@ -77,6 +76,9 @@ Box CircleNecklace::ComputeBoundingBox() const
   return shape_.bbox();
 }
 
+/**@brief Compute the radius of the circle covered by this necklace.
+ * @return the radius.
+ */
 Number CircleNecklace::ComputeRadius() const
 {
   return radius_;
@@ -84,17 +86,17 @@ Number CircleNecklace::ComputeRadius() const
 
 Number CircleNecklace::ComputeCoveringRadiusRad(const Range::Ptr& range, const Number& radius) const
 {
-  return std::asin(radius / ComputeRadius());
+  return std::asin(radius / radius_);
 }
 
 Number CircleNecklace::ComputeDistanceToKernel(const Range::Ptr& range) const
 {
-  return ComputeRadius();
+  return radius_;
 }
 
 Number CircleNecklace::ComputeAngleAtDistanceRad(const Number& angle_rad, const Number& distance) const
 {
-  CHECK_LE(distance, 2 * ComputeRadius());
+  CHECK_LE(distance, 2 * radius_);
   if (distance == 2 * radius_)
     return angle_rad + M_PI;
 

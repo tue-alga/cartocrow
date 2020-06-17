@@ -60,11 +60,17 @@ bool Bead::IsValid() const
  * @brief The radius before scaling.
  */
 
+/**@fn Range::Ptr Bead::id;
+ * @brief The region id.
+ *
+ * This is never used and only stored for ease of debugging.
+ */
+
 /**@fn Range::Ptr Bead::feasible;
  * @brief The feasible interval.
  */
 
-/**@fn Number Bead::covering_radius_scaled_rad;
+/**@fn Number Bead::covering_radius_rad;
  * @brief The covering radius of the scaled bead in radians.
  *
  * This covering radius is the inner angle of the wedge that has the necklace kernel as apex and for which one leg intersects the bead center and the other leg is tangent to the boundary of the bead.

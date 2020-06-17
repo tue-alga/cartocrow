@@ -298,17 +298,22 @@ size_t BezierCurve::IntersectRay(const Point& source, const Point& target, Point
  * Note that for this necklace, the kernel must be set explicitly.
  */
 
+const Point& BezierNecklace::kernel() const
+{
+  return kernel_;
+}
+
+/**@brief Construct a new empty Bezier spline necklace.
+ *
+ * The necklace must be a star-shaped curve with its kernel as star point.
+ * @param kernel the kernel (and star-point) of the necklace.
+ */
 BezierNecklace::BezierNecklace(const Point& kernel) :
   kernel_(kernel),
   checked_(false),
   winding_(CGAL::COLLINEAR),
   bounding_box_()
 {}
-
-const Point& BezierNecklace::kernel() const
-{
-  return kernel_;
-}
 
 bool BezierNecklace::IsValid() const
 {
@@ -355,6 +360,18 @@ bool BezierNecklace::IntersectRay(const Number& angle_rad, Point& intersection) 
   return IntersectRay(angle_rad, curve_iter, intersection, t);
 }
 
+/**@brief Add a Bezier curve to the end of the spline.
+ *
+ * This curve must either be the first curve of the necklace, or its source must overlap with the target of the previous curve.
+ *
+ * The whole curve must be visible from the necklace kernel. This means that no ray originating in the kernel may intersect the curve in more than a single point.
+ *
+ * Note that the transition from one Bezier curve to the next is not required to be smooth, but a smooth necklace usually looks better than a jagged one.
+ * @param source the source point of the curve.
+ * @param source_control the first control point of the curve.
+ * @param target_control the second control point of the curve.
+ * @param target the target point of the curve.
+ */
 void BezierNecklace::AppendCurve
 (
   const Point& source,
@@ -377,7 +394,18 @@ void BezierNecklace::AppendCurve
     curves_.emplace_back(source, source_control, target_control, target);
 }
 
-// Note, cannot be the first curve.
+
+/**@brief Add a Bezier curve to the end of the spline.
+ *
+ * The source of this curve is the target of the previous curve. For this reason, it cannot be the first curve of the spline.
+ *
+ * The whole curve must be visible from the necklace kernel. This means that no ray originating in the kernel may intersect the curve in more than a single point.
+ *
+ * Note that the transition from one Bezier curve to the next is not required to be smooth, but a smooth necklace usually looks better than a jagged one.
+ * @param source_control the first control point of the curve.
+ * @param target_control the second control point of the curve.
+ * @param target the target point of the curve.
+ */
 void BezierNecklace::AppendCurve(const Point& source_control, const Point& target_control, const Point& target)
 {
   CHECK(!curves_.empty());
@@ -385,14 +413,21 @@ void BezierNecklace::AppendCurve(const Point& source_control, const Point& targe
   AppendCurve(source, source_control, target_control, target);
 }
 
+/**@brief Process to Bezier spline to be ready for use in the necklace.
+ *
+ * This checks whether the spline forms a closed curve around the kernel.
+ *
+ * The collection of curves is rotated to start with the curve directly to the right of the necklace kernel.
+ */
 void BezierNecklace::Finalize()
 {
+  CHECK_EQ(curves_.front().source(), curves_.back().target());
+  checked_ = true;
+
   // Reorder the curves to start with the curve directly to the right of the kernel.
   // Note that this automatically corrects the winding of the spline to counterclockwise.
   std::sort(curves_.begin(), curves_.end(), CompareBezierCurves(*this));
   winding_ = CGAL::COUNTERCLOCKWISE;
-
-  checked_ = true;
 }
 
 Box BezierNecklace::ComputeBoundingBox() const
@@ -542,6 +577,9 @@ void BezierNecklace::Accept(NecklaceShapeVisitor& visitor)
   visitor.Visit(*this);
 }
 
+/**@brief Part of the visitor pattern to apply a visitor to the shape.
+ * @param visitor the visitor to apply to the shape.
+ */
 void BezierNecklace::Accept(BezierNecklaceVisitor& visitor)
 {
   CHECK(checked_);
@@ -550,6 +588,9 @@ void BezierNecklace::Accept(BezierNecklaceVisitor& visitor)
     visitor.Visit(curve);
 }
 
+/**@brief Part of the visitor pattern to apply a visitor to each curve of the shape.
+ * @param visitor the visitor to apply to the curves.
+ */
 void BezierNecklace::IterateCurves(BezierNecklaceVisitor& visitor)
 {
   CHECK(checked_);

@@ -103,6 +103,12 @@ Parameters::Parameters() :
  * A larger number of steps results in a more accurate placement.
  */
 
+/**@fn Number Parameters::placement_cycles;
+ * @brief The number of steps for the placement heuristic.
+ *
+ * Must be non-negative. If the number of cycles is 0, all beads are placed in the most clockwise valid position.
+ */
+
 /**@fn Number Parameters::aversion_ratio;
  * @brief The ratio between attraction to the interval center (0) and repulsion from the neighboring beads (1).
  *
