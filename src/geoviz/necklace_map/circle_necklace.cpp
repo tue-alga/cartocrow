@@ -34,6 +34,10 @@ namespace necklace_map
  * @brief A full circle necklace.
  */
 
+/**@fn CircleNecklace::Ptr
+ * @brief The preferred pointer type for storing or sharing a circle necklace.
+ */
+
 /**@brief Construct a circle necklace.
  *
  * The necklace kernel is the circle center.

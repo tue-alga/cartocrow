@@ -298,10 +298,13 @@ size_t BezierCurve::IntersectRay(const Point& source, const Point& target, Point
  * Note that for this necklace, the kernel must be set explicitly.
  */
 
-const Point& BezierNecklace::kernel() const
-{
-  return kernel_;
-}
+/**@fn BezierNecklace::Ptr
+ * @brief The preferred pointer type for storing or sharing a Bezier necklace.
+ */
+
+/**@fn const Number BezierNecklace::kDistanceRatioEpsilon
+ * @brief The maximum ratio within distances from the kernel to classify as a circle necklace.
+ */
 
 /**@brief Construct a new empty Bezier spline necklace.
  *
@@ -314,6 +317,11 @@ BezierNecklace::BezierNecklace(const Point& kernel) :
   winding_(CGAL::COLLINEAR),
   bounding_box_()
 {}
+
+const Point& BezierNecklace::kernel() const
+{
+  return kernel_;
+}
 
 bool BezierNecklace::IsValid() const
 {

@@ -49,6 +49,10 @@ void NecklaceShapeVisitor::Visit(BezierNecklace& shape) {}
  * @brief A star-shaped curve that guides the placement of data visualization symbols.
  */
 
+/**@fn NecklaceShape::Ptr
+ * @brief The preferred pointer type for storing or sharing a necklace shape.
+ */
+
 /**@fn virtual const Point& NecklaceShape::kernel() const
  * @brief Give the kernel of the necklace.
  *

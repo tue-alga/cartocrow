@@ -34,6 +34,10 @@ namespace necklace_map
  * A necklace interval is a continuous interval on a circle.
  */
 
+/**@fn CircularRange::Ptr
+ * @brief The preferred pointer type for storing or sharing a circular range.
+ */
+
 /**@brief Construct an interval.
  *
  * The interval covers the intersection of the necklace and a wedge with its apex at the necklace kernel. This wedge is bounded by two rays from the center, which are described by their angle relative to the positive x axis in counterclockwise direction.
@@ -78,7 +82,6 @@ CircularRange::CircularRange(const Range& range) : CircularRange(range.from(), r
  *
  * This is the clockwise extreme of the interval.
  * @return the clockwise extreme.
- * @endparblock
  */
 
 /**@fn const Number& CircularRange::to_rad() const;
@@ -97,7 +100,7 @@ CircularRange::CircularRange(const Range& range) : CircularRange(range.from(), r
 
 /**@brief Check whether the interval is in a valid state.
  *
- * The interval is in a valid state if @f from() is in the range [0, 2*pi) and @f to() is in the range [@f from(), @f from() + 2*pi).
+ * The interval is in a valid state if from() is in the range [0, 2*pi) and to() is in the range [from(), from() + 2*pi).
  * @return whether the interval is valid.
  */
 bool CircularRange::IsValid() const

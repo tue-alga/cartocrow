@@ -40,6 +40,9 @@ namespace necklace_map
  * In some cases, a multi-polygon region is simplified to its convex hull, but when determining the centroid, the centroid of the polygon set is used.
  */
 
+/**@fn MapElement::Ptr
+ * @brief The preferred pointer type for storing or sharing a map element.
+ */
 
 /**@brief Construct a necklace region and data element with an empty region.
  * @param id @parblock the ID of the region.

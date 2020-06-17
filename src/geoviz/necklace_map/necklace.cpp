@@ -34,6 +34,10 @@ namespace necklace_map
  * @brief A collection of visualization symbols that are organized on a curve.
  */
 
+/**@fn Necklace::Ptr
+ * @brief The preferred pointer type for storing or sharing a necklace.
+ */
+
 /**@brief Construct a necklace from a shape.
  * @param shape the shape of the necklace.
  */

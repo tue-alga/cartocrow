@@ -40,6 +40,10 @@ namespace necklace_map
  * @brief An interface for a functor to generate feasible intervals for necklace bead placement.
  */
 
+/**@fn ComputeFeasibleInterval::Ptr
+ * @brief The preferred pointer type for storing or sharing a computation functor.
+ */
+
 /**@brief Construct a new feasible interval computation functor.
  * @param parameters the parameters describing the desired type of functor.
  * @return a unique pointer containing a new functor or a nullptr if the functor could not be constructed.

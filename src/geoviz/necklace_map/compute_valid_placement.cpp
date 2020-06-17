@@ -53,6 +53,10 @@ inline Number DistanceOnCircle(const Number& from_rad, const Number& to_rad)
  * Note that the placements are computed independently per necklace. This means that if a map contains multiple necklaces, no guarantees can be given about overlap of beads on different necklaces. However, such overlap can often be prevented manually by tuning the attraction-replusion force and the buffer distance.
  */
 
+/**@fn ComputeValidPlacement::Ptr
+ * @brief The preferred pointer type for storing or sharing a computation functor.
+ */
+
 /**@brief Construct a new valid placement computation functor.
  * @param parameters the parameters describing the desired type of functor.
  * @return a unique pointer containing a new functor or a nullptr if the functor could not be constructed.
