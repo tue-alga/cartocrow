@@ -44,10 +44,16 @@ namespace necklace_map
  * @brief The preferred pointer type for storing or sharing a map element.
  */
 
+/**@fn MapElement::BeadMap
+ * @brief The type for a collection of beads associated with this element, accessed by their necklace.
+ *
+ * Note that an element can have a single bead per necklace.
+ */
+
 /**@brief Construct a necklace region and data element with an empty region.
  * @param id @parblock the ID of the region.
  *
- * See @f Region::Region(const std::string& id) for details on this ID.
+ * See Region::id for details on this ID.
  *
  * Note that necklace elements without an ID are ignored when constructing the necklace
  * map.

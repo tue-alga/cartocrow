@@ -43,7 +43,10 @@ namespace geoviz
  */
 
 /**@brief Construct a region.
- * @param id the ID of the region.
+ * @param id @parblock the ID of the region.
+ *
+ * See Region::id for more details on this ID.
+ * @endparblock
  */
 Region::Region(const std::string& id)
   : id(id), shape(), style("") {}

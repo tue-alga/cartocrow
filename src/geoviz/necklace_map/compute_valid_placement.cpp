@@ -250,7 +250,7 @@ void ComputeValidPlacement::operator()(const Number& scale_factor, Necklace::Ptr
 
 /**@brief Apply the functor place the beads on a collection of necklaces.
  * @param scale_factor the factor by which to multiply the radius of the beads.
- * @param necklace the necklaces to which to apply the functor.
+ * @param necklaces the necklaces to which to apply the functor.
  */
 void ComputeValidPlacement::operator()(const Number& scale_factor, std::vector<Necklace::Ptr>& necklaces) const
 {
@@ -306,7 +306,7 @@ ComputeValidPlacementFixedOrder::ComputeValidPlacementFixedOrder
  *
  * This ratio must be in the range (0, 1].
  * @endparblock
- * @param buffer_rad the minimum distance (in radians on the necklace) between the beads.
+ * @param min_separation the minimum distance (in radians as seen fron the necklace kernel) between the beads.
  */
 ComputeValidPlacementAnyOrder::ComputeValidPlacementAnyOrder
 (
