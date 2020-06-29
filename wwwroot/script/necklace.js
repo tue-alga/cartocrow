@@ -112,6 +112,11 @@ function getNecklaceAversion() {
   return Math.max(Math.pow(aversion, 4).toPrecision(4), 0.001);
 }
 
+function getNecklaceCentroidIntervalLength() {
+  let length = parseFloat(centroid_interval_length_in.value);
+  return (length * Math.PI).toPrecision(4);
+}
+
 function processNecklaceMapResponse() {
   return function (response) {
     replaceMapBySvgResponse(!region_focused)(response);
@@ -148,6 +153,7 @@ function onChangedNecklaceSettings() {
     interval: interval_in.value,
     ignore_point_regions: ignore_point_regions_in.checked,
     order: order_in.value,
+    centroid_interval_length: parseFloat(getNecklaceCentroidIntervalLength()),
     buffer_rad: parseFloat(getNecklaceBuffer()),
     aversion_ratio: parseFloat(getNecklaceAversion()),
   });
@@ -162,7 +168,9 @@ function onChangedNecklaceSettings() {
 function onInputNecklaceSettings() {
   let buffer_rad = getNecklaceBuffer();
   let glyph_aversion = getNecklaceAversion();
+  let centroid_interval_length = getNecklaceCentroidIntervalLength();
   buffer_rad_out.value = '= ' + buffer_rad;
   aversion_out.value = '= ' + glyph_aversion;
+  centroid_interval_length_out.value = '= ' + centroid_interval_length;
   onChangedNecklaceSettings();
 }

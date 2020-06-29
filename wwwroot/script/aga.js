@@ -13,7 +13,7 @@ const SETTINGS_CARD_INNER_CLASS = 'aga-panel-left-inner';
 
 const SUPPORT_CONTAINER_ID = 'support_cards';
 const SUPPORT_CARD_CLASS = 'aga-panel-top';
-const SUPPORT_CARD_INNER_CLASS = 'aga-panel-top-inner aga-support';
+const SUPPORT_CARD_INNER_CLASS = 'aga-panel-top-inner';
 
 const UPDATE_MILLISECONDS = 50;
 
