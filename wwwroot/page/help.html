@@ -1,6 +1,254 @@
 <!-- To be loaded as support card. -->
-<h1>Help</h1>
+<h1>Necklace Map</h1>
 <p>
-  This website can be used to apply various methods developed at TU Eindhoven to
-  map data.
+  The Necklace Map library implements the algorithmic geo-visualization method
+  by the same name, developed by Bettina Speckmann and Kevin Verbeek at TU
+  Eindhoven (DOI: 10.1109/TVCG.2010.180 & 10.1142/S021819591550003X).
+</p>
+<p>
+  This algorithm places a circular 'bead' on a curve around the map for each
+  region of interest. The relative area of the beads is related to the relative
+  size of a data value associated with each bead. The placement of the beads on
+  the curve tries to keep each bead close to their region and thereby make the
+  association between bead and region clear.
+</p>
+<p>
+  There remains a large space for variation in bead size and placement within
+  these limitations. This website provides several parameters that can be
+  adjusted to tune the Necklace Map. The open source code library underlying
+  this website provides even more such parameters. A description of each
+  parameter on the website and their effect is descibed after a description on
+  the format in which to provide input to the algorithm.
+</p>
+
+<h2>Input Format</h2>
+<p>
+  The Necklace Map requires two separate files to provide the input. The first
+  file defines the geometry of the map. The second file defines one or more
+  collections of data values per region. Several sets of example files are
+  provided [insert link].
+</p>
+<h3>Input Geometry</h3>
+<p>
+  The geometry file must be an SVG file (mime type text/xml or image/svg+xml).
+  In addition to the normal attributes, the svg element must define a 'bounds'
+  attribute that defines the geographic position of the view box. For example, a
+  svg could define viewBox="0 0 952 696" and
+  bounds="[[482.4,259.3],[533.6,325.8]]". The viewbox specifies the part of the
+  geometry image to show, the bounds specify where in the world to show the
+  geometry.
+</p>
+<p>
+  The inner elements define the map regions and the necklace curve. Each region
+  must be defined in one or more path elements. All path elements of a single
+  region on the map must share the same 'id' attribute and this attribute will
+  be written in the output bead associated with that region. Note that it is not
+  strictly required for the different paths associated with the same region to
+  be defined near each other.
+</p>
+<p>
+  Each region can be assigned a bead on a necklace in the output. The necklace
+  map can have multiple necklaces and the necklace to use is determined by the
+  'necklace_id' attribute of the path elements. Elements without an
+  'necklace_id' are allowed, but these will not be given a bead on a necklace.
+  They will also be colored light gray in the necklace map.
+</p>
+<p>
+  The region may have any style normally allowed for an svg element, except the
+  'stroke-dasharray' style is reserved to identify nacklaces. The output regions
+  and their associated bead are given the same style as the input. In case of a
+  region spread over several paths, the output is assigned the last style
+  encountered.
+</p>
+<p>
+  Each region path must be a polygon that starts from an absolute position. In
+  other words, the first path command must be 'M'. These polygons are required
+  to adhere to three rules. Firstly, the polygon must be closed using the 'Z' or
+  'z' command. Polygons that are not closed will be ignored by the algorithm. It
+  is not allowed to use a move command while the polygon is not closed.
+  Secondly, degenerate lines (length 0) are not allowed. This includes the
+  closing segment, i.e. the last point before closing cannot be the same as the
+  starting point. Finally, the polygon is not allowed to self-intersect.
+</p>
+<p>
+  A region that covers exactly one point is called a 'point region'. Such a
+  region may be ignored by the necklace map, depending on the parameter
+  settings.
+</p>
+<p>
+  An inner elements can also define a necklace. A necklace element must either
+  be a circle element or a Bezier spline defined in a path element. In either
+  case, the element must define a unique 'necklace_id' attribute to detemine
+  which regions should get a bead on the necklace.
+</p>
+<p>
+  In case of a Bezier spline necklace, the path element must start with an
+  absolute move command ('M') and it must be closed ('Z' or 'z'). The spline may
+  contain lines, quadratic Bezier curves, and cubic Bezier curves. These curves
+  must describe a closed curve, meaning that each next curve must start where
+  the previous ended. The spline is not required to be smooth (e.g. there may be
+  sharp corners between consecutive curves). However, smooth splines generally
+  produce a better looking necklace map.
+</p>
+<p>
+  Similar to region elements, the necklace can have any style normally allowed
+  for an svg element, except it must define a 'stroke-dasharray' size. Unlike
+  the region elements, the necklace style used in the output does not mimic the
+  input. Instead the output necklace will always be a black curve.
+</p>
+<p>
+  The necklace map algorithm requires a 'kernel' per necklace that has clear
+  vision to the complete necklace curve. In case of a circle element, the center
+  is used as kernel. In case of a Bezier spline element, the kernel must be
+  defined explicitly in the 'kx' and 'ky' attributes. This kernel must be
+  positioned such that it has 'clear vision' on the complete necklace, meaning
+  that any ray originating from the kernel intersects the necklace in exactly
+  one point.
+</p>
+<p>
+  In theory, the necklace map algorithm works for any Bezier spline necklace
+  that is completely visible from its kernel. However, in practice, splines that
+  deviate far from a circular shape or kernels that are positioned near the
+  necklace may result in a 'bad' necklace map. Normally, the necklace map
+  algorithm tries to make the beads as large as possible to fill as much of the
+  necklace as possible. Extreme spline shapes or kernel positions may leave
+  large parts of the necklace empty. In the ideal case, the shape of the
+  necklace approximates the arrangement of the regions of interest around the
+  kernel. You may be able to adjust the input necklace to improve the output.
+</p>
+<h3>Input Values</h3>
+<p>
+  The data value file must be a plain text file (mime type text/plain)
+  containing a 'header', the data element names, and a 'body' of small blocks of
+  data per region of interest. All values should be separated by whitespace,
+  e.g. spaces, tabs, or newlines. In case of character string variables such as
+  names, double quotation marks ("") can be used to indicate a multi-word
+  string.
+</p>
+<p>
+  The header starts with a number defining the number of regions described in
+  the file. This number must match the number of data blocks in the body. The
+  next word in the header defines the type of data per region of interest. Each
+  character in this word must be either 's' (character string type), 'd' (exact
+  number type), or 'i' (natural number type). For example, the word 'ssddis'
+  indicates that per region, we will give two string values, followed by two
+  exact numbers, followed by a natural number, and finally another string value.
+  The data value to visualize in the necklace map must be an exact number type
+  (e.g. percentage of literate citizens) or a natural number type (e.g. number
+  of immigrants).
+</p>
+<p>
+  The data element names defines the data value names associated with the data
+  types. Each of these must be a single word or it must be flanked by double
+  quotation marks (""). There must be the same number of names as there are data
+  types defined (see the header above). Exactly one of the names must be "ID"
+  (note the capitalization). This ID value is used to cross reference the data
+  values with the region geometry.
+</p>
+<p>
+  The body has a block of data per region. Each such block must have a number of
+  values of the types defined in the header. Note that string values may have
+  multi-word values framed by double quotes (""). The data file may contain ID's
+  that do not have a region in the geometry. This data has no effect on the
+  necklace map. Similarly, the data file may contain 0 values for some regions
+  defined in the geometry file, or some region defined in the geometry file may
+  not even have a block of data in the body. Regions without a value or with a
+  value of 0 will be colored light gray in the necklace map.
+</p>
+<p>
+  A common mistake is to forget one value in some block in the body. In this
+  case, the file parser will not be able to read the data correctly and no
+  necklace map is shown. In this case, it may be helpful to tabulate the data
+  file and check that the number of data blocks and the number of data values
+  per block is correct.
+</p>
+
+<h2>Parameters</h2>
+<h3>Data Value</h3>
+<p>
+  After loading the input files, the data value selecter should list the value
+  names encountered in the data file. The 'ID' and 'name' value names are not
+  listed, because they are assumed never to indicate data values. This selection
+  determines which values are visualized in the necklace map. Note that regions
+  in the input geometry without a value or with a 0 value will be colored light
+  gray in the necklace map.
+</p>
+<h3>Ignore Point Regions</h3>
+<p>
+  This box may be checked ignore point regions. If the geometry does not contain
+  point regions, this checkbox has no effect.
+</p>
+<h3>Interval Type</h3>
+<p>
+  The interval type determines the feasible intervals, i.e. where each bead can
+  be placed on the necklace. Centroid intervals are fixed width and their center
+  is on the line through the necklace kernel and the centroid of the bead's
+  regions. Wedge intervals are the part of the necklace inside the smallest
+  wedge with the necklace kernel as apex that contains the bead's regions.
+</p>
+<h3>Order Type</h3>
+<p>
+  The order type determines whether the ordering of the beads on the necklace
+  may be changed to increase the scale factor. This determines which scale
+  factor computation algorithm will be used. For the fixed order type, the beads
+  will be ordered on the necklace based on the clockwise extreme of their
+  feasible interval. This reduces the complexity of the scale factor
+  computations, which may reduce the computation time. For the variable order
+  type, the beads can be arbitrarily reordered if this increases the scale
+  factor. Note that the bead placement is still restricted by their feasible
+  intervals. While this may greatly increase the scale factor, this generally
+  also increases computation time.
+</p>
+<h3>Buffer</h3>
+<p>
+  The buffer is the angle (in radians) that must be empty between two
+  neighboring beads. A larger scale factor generally makes it easier to see the
+  differences in data value expressed by the necklace beads. However, larger
+  beads may also severly clutter the map. The buffer parameter may be used to
+  reduce this clutter by making the beads more distinct. Note that the buffer
+  slider translates to the buffer value using a fourth degree function. this
+  improves resolution for small values while allowing a wide range of values.
+</p>
+<p>
+  For maps with multiple necklaces, the scale factor computation does not
+  restrict overlap of beads on different necklaces. The buffer slider may be
+  used to manually reduce this overlap.
+</p>
+<h3>Aversion</h3>
+<p>
+  The optimal scale factor is often limited by a small subset of the necklace
+  beads that cannot be increased in size. These beads must be placed at very
+  specific locations to stain inside their feasible intervals. The other beads
+  have a subset of their feasible interval where they can be placed without
+  overlap. The aversion value determines the final placement of these less
+  restricted beads.
+</p>
+<p>
+  The aversion slider ranges from close to 0 to 1. Lower aversion pulls the
+  beads towards the center of their feasible interval. Higher aversion pushes
+  the beads away from their neighbors. Similar to the buffer slider, the
+  aversion slider translates to the aversion value using a fourth degree
+  function. The lower aversion values generally have a larger impact on the
+  final placement, so the slider has more resolution in this range.
+</p>
+<p>
+  For maps with multiple necklaces, the scale factor computation does not
+  restrict overlap of beads on different necklaces. The aversion slider may be
+  used to manually reduce this overlap.
+</p>
+
+<h1>Copyrights</h1>
+<p>
+  The source of this website is copyright 2019 Netherlands eScience Center and
+  TU Eindhoven, licensed under the Apache License, Version 2.0.
+</p>
+<p>
+  We do not claim any copyright on the data processed by this website. The input
+  will remain property of its respective owner. The output SVG elements
+  generated by this website, as displayed in the website and as stored as plain
+  text in the output field, can be copied and reused without notification and
+  without additional limitations. <br />
+  However, we would appreciate attribution for this website and for the paper
+  describing the algorithm used to generate the data when sharing or publishing
+  the data.
 </p>
