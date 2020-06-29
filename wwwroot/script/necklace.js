@@ -122,6 +122,11 @@ function getNecklaceWedgeIntervalLengthMin() {
   return (length * Math.PI).toPrecision(4);
 }
 
+function getNecklaceBeadIdSize() {
+  let size = parseFloat(bead_id_font_size_in.value);
+  return size.toPrecision(4);
+}
+
 function processNecklaceMapResponse() {
   return function (response) {
     replaceMapBySvgResponse(!region_focused)(response);
@@ -162,6 +167,7 @@ function onChangedNecklaceSettings() {
     wedge_interval_length_min: parseFloat(getNecklaceWedgeIntervalLengthMin()),
     buffer_rad: parseFloat(getNecklaceBuffer()),
     aversion_ratio: parseFloat(getNecklaceAversion()),
+    bead_id_font_size: parseFloat(getNecklaceBeadIdSize()),
   });
 
   geometry_out.value = '';
@@ -176,9 +182,11 @@ function onInputNecklaceSettings() {
   let glyph_aversion = getNecklaceAversion();
   let centroid_interval_length = getNecklaceCentroidIntervalLength();
   let wedge_interval_length_min = getNecklaceWedgeIntervalLengthMin();
+  let bead_id_font_size = getNecklaceBeadIdSize();
   buffer_rad_out.value = '= ' + buffer_rad;
   aversion_out.value = '= ' + glyph_aversion;
   centroid_interval_length_out.value = '= ' + centroid_interval_length;
   wedge_interval_length_min_out.value = '= ' + wedge_interval_length_min;
+  bead_id_font_size_out.value = '= ' + parseInt(bead_id_font_size);
   onChangedNecklaceSettings();
 }

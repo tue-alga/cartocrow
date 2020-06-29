@@ -50,6 +50,7 @@ struct WriterOptions
   int region_precision;
   double region_opacity;
   double bead_opacity;
+  double bead_id_font_size_px;
 
   bool draw_necklace_curve;
   bool draw_necklace_kernel;

@@ -182,6 +182,13 @@ DEFINE_double
   // The reason for hiding the boundary is that it has undesirable interaction with the drop shadow filter applied to the beads.
 );
 
+DEFINE_double
+(
+  bead_id_font_size_px,
+  16,
+  "Font size (in pixels) of the bead IDs in the output. Must be larger than 0."
+);
+
 DEFINE_bool
 (
   draw_necklace_curve,
@@ -306,6 +313,9 @@ void ValidateFlags(geoviz::necklace_map::Parameters& parameters, geoviz::WriterO
 
     correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(bead_opacity), MakeRangeCheck(0.0, 1.0));
     write_options->bead_opacity = FLAGS_bead_opacity;
+
+    correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(bead_id_font_size_px), IsStrictlyPositive<double>());
+    write_options->bead_id_font_size_px = FLAGS_bead_id_font_size_px;
 
     PrintFlag(FLAGS_NAME_AND_VALUE(draw_necklace_curve));
     write_options->draw_necklace_curve = FLAGS_draw_necklace_curve;

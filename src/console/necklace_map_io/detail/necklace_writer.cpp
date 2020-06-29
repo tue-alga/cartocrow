@@ -81,7 +81,6 @@ constexpr const double kBoundingBoxBufferPx = 5;
 constexpr const double kLineWidthPx = 1.7;
 
 constexpr const double kPointRegionRadiusPx = 3;
-constexpr const double kBeadIdFontSizePx = 16;
 
 constexpr const int kIntervalNumericPrecision = 5;
 constexpr const double kValidIntervalOpacity = 0.7;
@@ -283,6 +282,7 @@ WriterOptions::Ptr WriterOptions::Default()
   options->region_precision = 9;
   options->region_opacity = -1;
   options->bead_opacity = 1;
+  options->bead_id_font_size_px = 16;
 
   options->draw_necklace_curve = true;
   options->draw_necklace_kernel = false;
@@ -305,6 +305,7 @@ WriterOptions::Ptr WriterOptions::Debug()
   options->region_precision = 9;
   options->region_opacity = -1;
   options->bead_opacity = 0.5;
+  options->bead_id_font_size_px = 16;
 
   options->draw_necklace_curve = true;
   options->draw_necklace_kernel = true;
@@ -1064,7 +1065,7 @@ void NecklaceWriter::DrawBeadIds()
   printer_.OpenElement("g");
   printer_.PushAttribute("font-family", kBeadIdFontFamily);
   {
-    const Number font_size = kBeadIdFontSizePx * unit_px_;
+    const Number font_size = options_->bead_id_font_size_px * unit_px_;
     std::stringstream stream;
     stream << font_size;
     printer_.PushAttribute("font-size", stream.str().c_str());
