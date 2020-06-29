@@ -183,8 +183,12 @@
   The interval type determines the feasible intervals, i.e. where each bead can
   be placed on the necklace. Centroid intervals are fixed width and their center
   is on the line through the necklace kernel and the centroid of the bead's
-  regions. Wedge intervals are the part of the necklace inside the smallest
-  wedge with the necklace kernel as apex that contains the bead's regions.
+  regions.
+</p>
+<p>
+  Wedge intervals are the part of the necklace inside the smallest wedge with
+  the necklace kernel as apex that contains the bead's regions. Point regions
+  and regions containing the necklace kernel get a centroid interval instead.
 </p>
 <h3>Order Type</h3>
 <p>
@@ -235,6 +239,18 @@
   For maps with multiple necklaces, the scale factor computation does not
   restrict overlap of beads on different necklaces. The aversion slider may be
   used to manually reduce this overlap.
+</p>
+<h3>Centroid Interval Length</h3>
+<p>
+  The length (in radians) of the centroid intervals. This also applies to
+  regions that are assigned a centroid interval when otherwise using wedge
+  intervals, e.g. point regions and regions containing the necklace kernel.
+</p>
+<h3>Wedge Interval Minimum</h3>
+<p>
+  The minimum length (in radians) of the wedge intervals. This does not apply to
+  regions that are assigned a centroid interval when otherwise using wedge
+  intervals, e.g. point regions and regions containing the necklace kernel.
 </p>
 
 <h1>Copyrights</h1>

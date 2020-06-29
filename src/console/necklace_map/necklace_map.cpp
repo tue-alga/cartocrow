@@ -87,6 +87,13 @@ DEFINE_double
   " Note that small intervals greatly restrict the available scale factors."
 );
 
+DEFINE_double
+(
+  wedge_interval_length_min_rad,
+  0,
+  "The minimum arc length of wedge intervals (in radians). Must be in the range [0, pi]."
+);
+
 DEFINE_bool
 (
   ignore_point_regions,
@@ -249,6 +256,10 @@ void ValidateFlags(geoviz::necklace_map::Parameters& parameters, geoviz::WriterO
 
     MakeRangeCheck(0.0, M_PI)(FLAGS_centroid_interval_length_rad);
     parameters.centroid_interval_length_rad = FLAGS_centroid_interval_length_rad;
+
+    MakeRangeCheck(0.0, M_PI)(FLAGS_wedge_interval_length_min_rad);
+    parameters.wedge_interval_length_min_rad = FLAGS_wedge_interval_length_min_rad;
+
     parameters.ignore_point_regions = FLAGS_ignore_point_regions;
   }
 

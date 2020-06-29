@@ -45,7 +45,12 @@ class ComputeFeasibleWedgeInterval : public ComputeFeasibleInterval
 
  private:
   friend ComputeFeasibleInterval;
-  ComputeFeasibleInterval::Ptr fallback_;
+
+  Number interval_length_min_rad_;
+
+  ComputeFeasibleInterval::Ptr fallback_point_regions_;
+  ComputeFeasibleInterval::Ptr fallback_kernel_region_;
+  ComputeFeasibleInterval::Ptr fallback_small_regions_;
 }; // class ComputeFeasibleWedgeInterval
 
 } // namespace necklace_map

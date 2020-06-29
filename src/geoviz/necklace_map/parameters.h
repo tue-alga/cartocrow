@@ -51,6 +51,7 @@ struct Parameters
   // Feasible interval.
   IntervalType interval_type;
   Number centroid_interval_length_rad;
+  Number wedge_interval_length_min_rad;
   bool ignore_point_regions;
 
   // Scale factor.

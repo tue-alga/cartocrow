@@ -41,6 +41,8 @@
     " --in_data_filename $data_tmp".
     " --in_value_name $data->value".
     " --interval_type=$data->interval".
+    " --centroid_interval_length_rad=$data->centroid_interval_length".
+    " --wedge_interval_length_min_rad=$data->wedge_interval_length_min".
     ($data->ignore_point_regions ? " --ignore_point_regions" : "").
     " --order_type=$data->order".
     " --buffer_rad=$data->buffer_rad".
