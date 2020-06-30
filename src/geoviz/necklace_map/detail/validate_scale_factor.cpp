@@ -144,11 +144,11 @@ bool ValidateScaleFactor::operator()(Necklace::Ptr& necklace) const
   {
     Bead::Ptr& bead = necklace->beads[n];
 
-    // The second half of the nodes have the correct clockwise extreme (offset by 2pi).
-    const Number& from_rad = nodes[num_beads + n].valid->from() - M_2xPI;
+    // The second half of the nodes have the correct clockwise extreme.
+    const Number& from_rad = Modulo(nodes[num_beads + n].valid->from());
 
     // The first half of the nodes have the correct counterclockwise extreme.
-    const Number& to_rad = nodes[n].valid->to();
+    const Number& to_rad = Modulo(nodes[n].valid->to(), from_rad);
 
     bead->valid = std::make_shared<CircularRange>(from_rad, to_rad);
     if (adjust_angle)

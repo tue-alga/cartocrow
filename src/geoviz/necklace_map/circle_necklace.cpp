@@ -100,11 +100,13 @@ Number CircleNecklace::ComputeDistanceToKernel(const Range::Ptr& range) const
 
 Number CircleNecklace::ComputeAngleAtDistanceRad(const Number& angle_rad, const Number& distance) const
 {
-  CHECK_LE(distance, 2 * radius_);
-  if (distance == 2 * radius_)
+  const Number distance_abs = std::abs(distance);
+  CHECK_LE(distance_abs, 2 * radius_);
+  if (distance_abs == 2 * radius_)
     return angle_rad + M_PI;
 
-  return angle_rad + 2 * std::asin(distance / (2 * radius_));
+  const Number angle_diff = 2 * std::asin(distance_abs / (2 * radius_));
+  return 0 < distance ? angle_rad + angle_diff : angle_rad - angle_diff;
 }
 
 void CircleNecklace::Accept(NecklaceShapeVisitor& visitor)

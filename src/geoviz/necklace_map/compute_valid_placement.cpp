@@ -101,12 +101,11 @@ ComputeValidPlacement::ComputeValidPlacement
  */
 void ComputeValidPlacement::operator()(const Number& scale_factor, Necklace::Ptr& necklace) const  // TODO(tvl) factorize.
 {
+  const NecklaceShape::Ptr& necklace_shape = necklace->shape;
   for (const Bead::Ptr& bead : necklace->beads)
   {
     // Compute the scaled covering radius.
     CHECK_NOTNULL(bead);
-    const Number radius_scaled = scale_factor * bead->radius_base;
-    bead->covering_radius_rad = necklace->shape->ComputeCoveringRadiusRad(bead->feasible, radius_scaled);
     bead->angle_rad = scale_factor == 0 ? bead->feasible->from_rad() : Modulo(bead->angle_rad);
   }
 
@@ -140,44 +139,52 @@ void ComputeValidPlacement::operator()(const Number& scale_factor, Necklace::Ptr
       const size_t index_prev = (index_bead + num_beads - 1) % num_beads;
       const size_t index_next = (index_bead + 1) % num_beads;
 
-      Bead::Ptr& prev = necklace->beads[index_prev];
+      const Bead::Ptr& prev = necklace->beads[index_prev];
       const Bead::Ptr& next = necklace->beads[index_next];
 
       const Number offset_from_prev_rad = CircularRange(prev->angle_rad, bead->angle_rad).ComputeLength();
-      const Number distance_neighbors_rad = CircularRange(prev->angle_rad, next->angle_rad).ComputeLength();
       const Number offset_from_centroid_rad = CircularRange
-      (
-        bead->feasible->ComputeCentroid(),
-        bead->angle_rad
-      ).ComputeLength();
+        (
+          bead->feasible->ComputeCentroid(),
+          bead->angle_rad
+        ).ComputeLength();
 
-      const Number& radius_bead = bead->covering_radius_rad;
-      const Number& radius_prev = prev->covering_radius_rad;
-      const Number& radius_next = next->covering_radius_rad;
+      const Number& radius_bead = scale_factor * bead->radius_base;
+      const Number& radius_prev = scale_factor * prev->radius_base;
+      const Number& radius_next = scale_factor * next->radius_base;
 
-      // Note that we cannot guarantee better than double precision because of the trigonometric functions.
-
-      const double distance_to_prev_min = radius_prev + radius_bead + buffer_rad;
-      const double distance_to_prev_max =
-        (index_prev == index_next ? M_2xPI : distance_neighbors_rad) - radius_next - radius_bead - buffer_rad;
+      const Number distance_from_prev_min =
+        CircularRange
+        (
+          prev->angle_rad,
+          necklace_shape->ComputeAngleAtDistanceRad(prev->angle_rad, radius_prev + radius_bead)
+        ).ComputeLength() +
+        buffer_rad;
+      const Number distance_from_prev_max =
+        CircularRange
+        (
+          prev->angle_rad,
+          necklace_shape->ComputeAngleAtDistanceRad(next->angle_rad, -(radius_bead + radius_next))
+        ).ComputeLength() -
+        buffer_rad;
 
       // The 'bubble' is the largest range centered on the bead that does not contain the centroid.
-      const double offset_prev_to_bubble =
+      const Number offset_prev_to_bubble =
         offset_from_centroid_rad < M_PI
         ? (offset_from_prev_rad - offset_from_centroid_rad)
         : (offset_from_prev_rad + (M_2xPI - offset_from_centroid_rad));
 
       const double w_0 =
-        centroid_ratio * offset_prev_to_bubble * distance_to_prev_min * distance_to_prev_max -
-        aversion_ratio * (distance_to_prev_min + distance_to_prev_max);
+        centroid_ratio * offset_prev_to_bubble * distance_from_prev_min * distance_from_prev_max -
+        aversion_ratio * (distance_from_prev_min + distance_from_prev_max);
       const double w_1 =
         aversion_ratio * 2 -
         centroid_ratio *
         (
-          (distance_to_prev_min + offset_prev_to_bubble) * (distance_to_prev_max + offset_prev_to_bubble) -
+          (distance_from_prev_min + offset_prev_to_bubble) * (distance_from_prev_max + offset_prev_to_bubble) -
           offset_prev_to_bubble * offset_prev_to_bubble
         );
-      const double w_2 = centroid_ratio * (distance_to_prev_min + distance_to_prev_max + offset_prev_to_bubble);
+      const double w_2 = centroid_ratio * (distance_from_prev_min + distance_from_prev_max + offset_prev_to_bubble);
       const double w_3 = -centroid_ratio;
 
       // Solve w_3 * x^3 + w_2 * x^2 + w_1 * x + w_0 = 0 up to the specified precision.
@@ -187,7 +194,7 @@ void ComputeValidPlacement::operator()(const Number& scale_factor, Necklace::Ptr
 
         if (!bead->feasible->Contains(x))
         {
-          if (0 < 2 * offset_from_prev_rad - distance_to_prev_min + distance_to_prev_max)
+          if (0 < 2 * offset_from_prev_rad - distance_from_prev_min + distance_from_prev_max)
             bead->angle_rad = bead->feasible->from_rad();
           else
             bead->angle_rad = bead->feasible->to_rad();
@@ -212,21 +219,18 @@ void ComputeValidPlacement::operator()(const Number& scale_factor, Necklace::Ptr
           rho_3 * std::sqrt(3.0) * std::sin(theta_3)
         );
 
-        if (!bead->feasible->Contains(x))
-        {
-          if
-          (
-            0 <
-            aversion_ratio * (2 * offset_from_prev_rad - (distance_to_prev_min + distance_to_prev_max)) +
-            centroid_ratio * (offset_prev_to_bubble - offset_from_prev_rad) *
-            (offset_from_prev_rad - distance_to_prev_min) * (offset_from_prev_rad - distance_to_prev_max)
-          )
-            bead->angle_rad = bead->feasible->from_rad();
-          else
-            bead->angle_rad = bead->feasible->to_rad();
-        }
-        else
+        if (bead->feasible->Contains(x))
           bead->angle_rad = x;
+        else if
+        (
+          0 <
+          aversion_ratio * (2 * offset_from_prev_rad - (distance_from_prev_min + distance_from_prev_max)) +
+          centroid_ratio * (offset_prev_to_bubble - offset_from_prev_rad) *
+          (offset_from_prev_rad - distance_from_prev_min) * (offset_from_prev_rad - distance_from_prev_max)
+        )
+          bead->angle_rad = bead->feasible->from_rad();
+        else
+          bead->angle_rad = bead->feasible->to_rad();
       }
       bead->angle_rad = Modulo(bead->angle_rad);
     }
