@@ -48,7 +48,7 @@
     " --buffer_rad=$data->buffer_rad".
     " --aversion_ratio=$data->aversion_ratio".
     //" --bead_opacity=0.5".
-    " --bead_id_font_size_px=$data->bead_id_font_size_px".
+    " --bead_id_font_size_px=$data->bead_id_font_size".
     //" --draw_feasible_intervals".
     " --out_website".
     " --log_dir $tmpdir".
