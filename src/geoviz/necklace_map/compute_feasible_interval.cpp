@@ -89,17 +89,11 @@ void ComputeFeasibleInterval::operator()(MapElement::Ptr& element) const
   Polygon extent;
   element->region.MakeSimple(extent);
 
-  for (MapElement::BeadMap::value_type& map_value : element->beads)
-  {
-    const Necklace::Ptr& necklace = map_value.first;
-    Bead::Ptr& bead = map_value.second;
+  if (!element->bead)
+    return;
 
-    CHECK_NOTNULL(necklace);
-    if(!bead)
-      continue;
-
-    bead->feasible = (*this)(extent, necklace);
-  }
+  CHECK_NOTNULL(element->necklace);
+  element->bead->feasible = (*this)(extent, element->necklace);
 }
 
 /**@brief Apply the functor to a collection of map elements.

@@ -41,7 +41,6 @@ namespace necklace_map
 struct MapElement
 {
   using Ptr = std::shared_ptr<MapElement>;
-  using BeadMap = std::unordered_map<Necklace::Ptr, Bead::Ptr>;
 
   explicit MapElement(const std::string& id);
   explicit MapElement(const Region& region);
@@ -49,12 +48,13 @@ struct MapElement
   //@param strict whether the value associated with each region must be strictly larger than 0.
   bool IsValid(const bool strict = true) const;
 
-  void InitializeBeads(const Parameters& parameters);
+  void InitializeBead(const Parameters& parameters);
 
   Region region;
   Number value;  // Note that the value is correlated with the area of the bead, i.e. its squared radius.
 
-  BeadMap beads;
+  Necklace::Ptr necklace;
+  Bead::Ptr bead;
 }; // struct MapElement
 
 } // namespace necklace_map

@@ -215,8 +215,13 @@ class DrawNecklaceShapeVisitor : public necklace_map::BezierNecklaceVisitor
     necklace_style_(necklace_style), transform_matrix_(transform_matrix), printer_(printer)
   {}
 
+  const necklace_map::Necklace::Ptr& necklace() const { return necklace_; }
+  necklace_map::Necklace::Ptr& necklace() { return necklace_; }
+
   void Visit(necklace_map::CircleNecklace& shape) override
   {
+    CHECK_NOTNULL(necklace_);
+
     const Point& kernel = shape.kernel();
     const Number radius = shape.ComputeRadius();
 
@@ -226,11 +231,14 @@ class DrawNecklaceShapeVisitor : public necklace_map::BezierNecklaceVisitor
     printer_.PushAttribute("cy", kernel.y());
     printer_.PushAttribute("r", radius);
     printer_.PushAttribute("transform", transform_matrix_.c_str());
+    printer_.PushAttribute("necklace_id", necklace_->id.c_str());
     printer_.CloseElement();  // circle
   }
 
   void Visit(necklace_map::BezierNecklace& shape) override
   {
+    CHECK_NOTNULL(necklace_);
+
     printer_.OpenElement("path");
     printer_.PushAttribute("style", necklace_style_.c_str());
 
@@ -241,7 +249,11 @@ class DrawNecklaceShapeVisitor : public necklace_map::BezierNecklaceVisitor
       " " << kAbsoluteMove << start_point_;
     printer_.PushAttribute("d", path_.str().c_str());
 
+    printer_.PushAttribute("kx", necklace_->shape->kernel().x());
+    printer_.PushAttribute("ky", necklace_->shape->kernel().y());
+
     printer_.PushAttribute("transform", transform_matrix_.c_str());
+    printer_.PushAttribute("necklace_id", necklace_->id.c_str());
     printer_.CloseElement();  // path
   }
 
@@ -263,6 +275,8 @@ class DrawNecklaceShapeVisitor : public necklace_map::BezierNecklaceVisitor
  private:
   std::stringstream path_;
   Point start_point_;
+
+  necklace_map::Necklace::Ptr necklace_;
 
   const std::string& necklace_style_;
   const std::string& transform_matrix_;
@@ -382,16 +396,19 @@ void NecklaceWriter::DrawPolygonRegions()
       std::string style = region.style;
       if (0 <= options_->region_opacity)
         style = ForceStyle(style, "fill-opacity:", options_->region_opacity);
-      if (element->beads.empty())
+      if (!element->necklace)
         style = ForceStyle(style, "fill:", kRegionContextColor);
       else if (element->value <= 0)
         style = ForceStyle(style, "fill:", kRegionUnusedColor);
 
+      const std::string necklace_id = element->necklace ? element->necklace->id : "";
+
       printer_.OpenElement("path");
       printer_.PushAttribute("style", style.c_str());
       printer_.PushAttribute("d", RegionToPath(region, options_->region_precision).c_str());
-      printer_.PushAttribute("id", region.id.c_str());
       printer_.PushAttribute("transform", transform_matrix_.c_str());
+      printer_.PushAttribute("region_id", region.id.c_str());
+      printer_.PushAttribute("necklace_id", necklace_id.c_str());
       printer_.CloseElement(); // path
     }
   }
@@ -406,7 +423,7 @@ void NecklaceWriter::DrawPolygonRegions()
 void NecklaceWriter::DrawPointRegions()
 {
   printer_.OpenElement("g");
-  printer_.PushComment("Regions");
+  printer_.PushComment("Point Regions");
 
   {
     for (const MapElement::Ptr& element : elements_)
@@ -420,7 +437,7 @@ void NecklaceWriter::DrawPointRegions()
       std::string style = region.style;
       if (0 <= options_->region_opacity)
         style = ForceStyle(style, "fill-opacity:", options_->region_opacity);
-      if (element->beads.empty())
+      if (!element->necklace)
         style = ForceStyle(style, "fill:", kRegionContextColor);
       else if (element->value <= 0)
         style = ForceStyle(style, "fill:", kRegionUnusedColor);
@@ -448,8 +465,11 @@ void NecklaceWriter::DrawPointRegions()
         printer_.PushAttribute("r", stream.str().c_str());
       }
 
-      printer_.PushAttribute("id", region.id.c_str());
+      const std::string necklace_id = element->necklace ? element->necklace->id : "";
+
       printer_.PushAttribute("transform", transform_matrix_.c_str());
+      printer_.PushAttribute("region_id", region.id.c_str());
+      printer_.PushAttribute("necklace_id", necklace_id.c_str());
       printer_.CloseElement(); // circle
     }
   }
@@ -477,6 +497,8 @@ void NecklaceWriter::DrawNecklaces()
   DrawNecklaceShapeVisitor draw_visitor(style, transform_matrix_, printer_);
   for (const Necklace::Ptr& necklace : necklaces_)
   {
+    draw_visitor.necklace() = necklace;
+
     printer_.OpenElement("g");
     necklace->shape->Accept(draw_visitor);
     DrawKernel(necklace->shape->kernel());
@@ -696,44 +718,40 @@ void NecklaceWriter::DrawRegionAngles()
     ComputeCentroid compute_centroid;
     for (const MapElement::Ptr& element : elements_)
     {
-      if (element->beads.empty())
+      if (!element->necklace)
         continue;
 
       Polygon simple;
       element->region.MakeSimple(simple);
       const Point centroid = compute_centroid(simple);
 
-      for (const MapElement::BeadMap::value_type& map_value : element->beads)
+      if (!element->necklace || !element->bead || !element->bead->valid)
+        continue;
+
+      printer_.OpenElement("path");
+
+      std::string style = kRegionAngleStyle;
+      style = ForceStyle(style, "stroke-width:", kDebugLineWidthRatio * kLineWidthPx * unit_px_);
+      printer_.PushAttribute("style", style.c_str());
+
       {
-        const Necklace::Ptr& necklace = map_value.first;
-        const Bead::Ptr& bead = map_value.second;
-        if (!bead || !bead->valid)
-          continue;
+        CircleNecklace::Ptr interval_shape = bead_interval_map_[element->bead];
+        CHECK_NOTNULL(interval_shape);
 
-        printer_.OpenElement("path");
+        const Point& kernel = interval_shape->kernel();
+        const Number angle_centroid_rad = interval_shape->ComputeAngleRad(centroid);
+        Point endpoint;
+        CHECK(interval_shape->IntersectRay(angle_centroid_rad, endpoint));
 
-        std::string style = kRegionAngleStyle;
-        style = ForceStyle(style, "stroke-width:", kDebugLineWidthRatio * kLineWidthPx * unit_px_);
-        printer_.PushAttribute("style", style.c_str());
+        std::stringstream stream;
+        stream << std::setprecision(kIntervalNumericPrecision);
+        stream << "M " << kernel.x() << " " << kernel.y() << " L " << endpoint.x() << " " << endpoint.y();
 
-        {
-          CircleNecklace::Ptr interval_shape = bead_interval_map_[bead];
-          CHECK_NOTNULL(interval_shape);
-
-          const Point& kernel = interval_shape->kernel();
-          const Number angle_centroid_rad = interval_shape->ComputeAngleRad(centroid);
-          Point endpoint;
-          CHECK(interval_shape->IntersectRay(angle_centroid_rad, endpoint));
-
-          std::stringstream stream;
-          stream << std::setprecision(kIntervalNumericPrecision);
-          stream << "M " << kernel.x() << " " << kernel.y() << " L " << endpoint.x() << " " << endpoint.y();
-
-          printer_.PushAttribute("d", stream.str().c_str());
-        }
-        printer_.PushAttribute("transform", transform_matrix_.c_str());
-        printer_.CloseElement(); // path
+        printer_.PushAttribute("d", stream.str().c_str());
       }
+      printer_.PushAttribute("transform", transform_matrix_.c_str());
+      printer_.CloseElement(); // path
+
     }
   }
 
@@ -1077,41 +1095,38 @@ void NecklaceWriter::DrawBeadIds()
     for (const MapElement::Ptr& element : elements_)
     {
       const std::string id = element->region.id;
-      for (const MapElement::BeadMap::value_type& map_value : element->beads)
+
+      if (!element->necklace || !element->bead || !element->bead->valid)
+        continue;
+
+      printer_.OpenElement("text");
+      printer_.PushAttribute("text-anchor", "middle");
+      printer_.PushAttribute("alignment-baseline", "central");
       {
-        const Necklace::Ptr& necklace = map_value.first;
-        const Bead::Ptr& bead = map_value.second;
-        if (!bead || !bead->valid)
-          continue;
+        Point position;
+        CHECK(element->necklace->shape->IntersectRay(element->bead->angle_rad, position));
 
-        printer_.OpenElement("text");
-        printer_.PushAttribute("text-anchor", "middle");
-        printer_.PushAttribute("alignment-baseline", "central");
+        // Note that the 'transform' argument does not apply to text coordinates.
+        const Point transformed
+        (
+          kTransformScale * (position.x() - bounding_box_.xmin()),
+          kTransformScale * (bounding_box_.ymax() - position.y())
+        );
+
         {
-          Point position;
-          CHECK(necklace->shape->IntersectRay(bead->angle_rad, position));
-
-          // Note that the 'transform' argument does not apply to text coordinates.
-          const Point transformed
-          (
-            kTransformScale * (position.x() - bounding_box_.xmin()),
-            kTransformScale * (bounding_box_.ymax() - position.y())
-          );
-
-          {
-            std::stringstream stream;
-            stream << transformed.x();
-            printer_.PushAttribute("x", stream.str().c_str());
-          }
-          {
-            std::stringstream stream;
-            stream << transformed.y();
-            printer_.PushAttribute("y", stream.str().c_str());
-          }
+          std::stringstream stream;
+          stream << transformed.x();
+          printer_.PushAttribute("x", stream.str().c_str());
         }
-        printer_.PushText(id.c_str());
-        printer_.CloseElement(); // text
+        {
+          std::stringstream stream;
+          stream << transformed.y();
+          printer_.PushAttribute("y", stream.str().c_str());
+        }
       }
+      printer_.PushText(id.c_str());
+      printer_.CloseElement(); // text
+
     }
   }
 

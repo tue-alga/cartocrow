@@ -42,9 +42,11 @@ struct Necklace
 {
   using Ptr = std::shared_ptr<Necklace>;
 
-  Necklace(const NecklaceShape::Ptr& shape);
+  Necklace(const std::string& id, const NecklaceShape::Ptr& shape);
 
   void SortBeads();
+
+  std::string id;
 
   NecklaceShape::Ptr shape;
   std::vector<Bead::Ptr> beads;

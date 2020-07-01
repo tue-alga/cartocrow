@@ -260,7 +260,7 @@ bool NecklaceMapSvgVisitor::FinalizeSvg()
     CHECK(index_iter != id_to_necklace_index_.end());
 
     Necklace::Ptr& necklace = necklaces_[index_iter->second];
-    element->beads[necklace] = nullptr;
+    element->necklace = necklace;
   }
   return true;
 }
@@ -282,7 +282,8 @@ bool NecklaceMapSvgVisitor::AddCircleNecklace(const std::string& necklace_id, co
   (
     std::make_shared<necklace_map::Necklace>
     (
-    std::make_shared<necklace_map::CircleNecklace>(Circle(center, radius * radius))
+      necklace_id,
+      std::make_shared<necklace_map::CircleNecklace>(Circle(center, radius * radius))
     )
   );
   return true;
@@ -311,9 +312,16 @@ bool NecklaceMapSvgVisitor::AddGenericNecklace(const std::string& necklace_id, c
   CheckCircleVisitor check;
   shape->Accept(check);
   if (check.IsValid(kCircleRatioEpsilon))
-    necklaces_.push_back(std::make_shared<necklace_map::Necklace>(std::make_shared<necklace_map::CircleNecklace>(check.ComputeCircle())));
+    necklaces_.push_back
+    (
+      std::make_shared<necklace_map::Necklace>
+      (
+        necklace_id,
+        std::make_shared<necklace_map::CircleNecklace>(check.ComputeCircle())
+      )
+    );
   else
-    necklaces_.push_back(std::make_shared<necklace_map::Necklace>(shape));
+    necklaces_.push_back(std::make_shared<necklace_map::Necklace>(necklace_id, shape));
   return true;
 }
 

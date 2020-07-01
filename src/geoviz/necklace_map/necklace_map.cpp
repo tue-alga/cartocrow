@@ -56,7 +56,7 @@ Number ComputeScaleFactor
   for (Necklace::Ptr& necklace : necklaces)
     necklace->beads.clear();
   for(MapElement::Ptr& element : elements)
-    element->InitializeBeads(parameters);
+    element->InitializeBead(parameters);
 
   // Generate intervals based on the regions and necklaces.
   (*ComputeFeasibleInterval::New(parameters))(elements);
