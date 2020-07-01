@@ -40,7 +40,7 @@ function setColumnList(result) {
 
 function initNecklaceMap() {
   focusSupportCard();
-  tryAddSettingsCard('/page/settings_necklace.html', 'settings_necklace');
+  tryAddSettingsCard('page/settings_necklace.html', 'settings_necklace');
 
   necklace_geometry_base64 = null;
   necklace_data_base64 = null;
