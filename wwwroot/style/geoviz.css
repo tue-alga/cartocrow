@@ -15,6 +15,10 @@
   will-change: auto !important;
 }
 
+.aga-panel-left {
+    min-width: 500px;
+}
+
 .geoviz-map-control {
   padding: 1px 8px;
 }

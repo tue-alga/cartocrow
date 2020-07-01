@@ -21,8 +21,8 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 07-11-2019
 
 #include "cgal_types.h"
 
-/**@file core_types.h
- * @brief Definitions of the basic types used throughout the library.
+/**@file
+ * Definitions of the basic types used throughout the library.
  *
  * This mostly concerns 2-dimensional geometric element types.
  *

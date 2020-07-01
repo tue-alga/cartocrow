@@ -43,6 +43,10 @@ class CircleNecklace : public NecklaceShape
 
   bool IsValid() const override;
 
+  bool IsEmpty() const override;
+
+  bool IsClosed() const override;
+
   bool IntersectRay(const Number& angle_rad, Point& intersection) const override;
 
   Box ComputeBoundingBox() const override;
@@ -50,6 +54,8 @@ class CircleNecklace : public NecklaceShape
   Number ComputeRadius() const;
 
   Number ComputeCoveringRadiusRad(const Range::Ptr& range, const Number& radius) const override;
+
+  Number ComputeDistanceToKernel(const Range::Ptr& range) const override;
 
   Number ComputeAngleAtDistanceRad(const Number& angle_rad, const Number& distance) const override;
 

@@ -310,6 +310,8 @@ void SvgPathConverter::Close_()
  */
 bool SvgPathParser::operator()(const std::string& path, SvgPathConverter& converter)
 {
+  bool started = false;
+
   // Interpret the path.
   std::stringstream ss(path);
   SvgPointParser pp;
@@ -322,12 +324,15 @@ bool SvgPathParser::operator()(const std::string& path, SvgPathConverter& conver
       if (ss.eof())
         break;
 
+      CHECK(command == kAbsoluteMove || started) << "Path not started by absolute move command.";
+
       // Note that SVG uses a y-down coordinate system, while Leaflet expects north-up coordinates.
       // Also note that the order of parsing the stream is important, so it cannot be done as part of the converter method parameters (C++ has undefined parameter evaluation order).
       switch (command)
       {
         case kAbsoluteMove:
           converter.MoveTo(pp.Pt(ss));
+          started = true;
           break;
         case kAbsoluteLine:
           converter.LineTo(pp.Pt(ss));

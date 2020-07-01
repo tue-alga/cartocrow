@@ -22,6 +22,8 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 06-05-2020
 
 #include "check_feasible_heuristic.h"
 
+#include <glog/logging.h>
+
 
 namespace geoviz
 {
@@ -30,8 +32,16 @@ namespace necklace_map
 namespace detail
 {
 
-CycleNodeCheck::CycleNodeCheck(const Bead::Ptr& bead, const Range::Ptr& valid) :
-  CycleNode(bead, valid), check(0)
+CycleNodeCheck::CycleNodeCheck(const Bead::Ptr& bead, const Number& angle_rad) :
+  CycleNode
+  (
+    bead,
+    std::make_shared<Range>
+    (
+      angle_rad - bead->covering_radius_rad,
+      angle_rad + bead->covering_radius_rad
+    )
+  ), check(0), angle_rad(angle_rad)
 {}
 
 
@@ -53,44 +63,37 @@ bool CheckFeasibleHeuristic::operator()()
 void CheckFeasibleHeuristic::InitializeSlices()
 {
   CheckFeasible::InitializeSlices();
+  const size_t num_slices = slices_.size();
 
   // The main method in which the heuristic algorithm tries to save time is by stacking a number of duplicate slice collections back-to-back.
   // The solution is then decided in intervals of length 2pi on these slices.
 
   // Clone the slices.
-  const size_t num_slices = slices_.size();
-  slices_.resize(num_slices * heuristic_cycles_);
-  for (int cycle = 1; cycle < heuristic_cycles_; ++cycle)
+  std::vector<TaskSlice> slices_clone;
+  slices_clone.swap(slices_);
+
+  slices_.reserve(num_slices * heuristic_cycles_);
+  for (int cycle = 0; cycle < heuristic_cycles_; ++cycle)
     for (size_t j = 0; j < num_slices; ++j)
-      slices_[cycle * num_slices + j] = TaskSlice(slices_[j], cycle);
+      slices_.emplace_back(slices_clone[j], slices_clone[0].coverage.from(), cycle);
 }
 
-void CheckFeasibleHeuristic::ProcessTask(const CycleNodeLayered::Ptr& task)
+void CheckFeasibleHeuristic::AssignAngle(const Number& angle_rad, Bead::Ptr& bead)
 {
-  const Number covering_radius_rad = task->bead ? task->bead->covering_radius_rad : 0;
-  nodes_check_.push_back
-  (
-    std::make_shared<CycleNodeCheck>
-    (
-      task->bead,
-      std::make_shared<Range>
-      (
-        task->bead->angle_rad - covering_radius_rad,
-        task->bead->angle_rad + covering_radius_rad
-      )
-    )
-  );
+  CHECK_NOTNULL(bead);
+  nodes_check_.push_back(std::make_shared<CycleNodeCheck>(bead, angle_rad));
 }
 
 bool CheckFeasibleHeuristic::Feasible()
 {
-  ComputeValues(0, BitString(), BitString());
+  FillContainer(0, BitString(), BitString());
 
   nodes_check_.clear();
-  if (!AssignAngles(0, slices_.back().layer_sets.back()))
+  if (!ProcessContainer(0, slices_.back().layer_sets.back()))
     return false;
 
   // Check whether any nodes overlap.
+  // Note that the nodes to check are in clockwise order.
   int count = 0;
   for
   (
@@ -108,7 +111,15 @@ bool CheckFeasibleHeuristic::Feasible()
     {
       if (++(*left_iter)->check == 1)
         if (++count == nodes_check_.size())
+        {
+          // Feasible interval found; adjust the angles to use this interval.
+          for (CheckSet::iterator node_iter = left_iter; node_iter != right_iter; --node_iter)
+          {
+            Bead::Ptr& bead = (*node_iter)->bead;
+            bead->angle_rad = Modulo((*node_iter)->angle_rad);
+          }
           return true;
+        }
       ++left_iter;
     }
   }

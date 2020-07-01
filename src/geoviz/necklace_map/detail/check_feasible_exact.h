@@ -23,6 +23,8 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 06-05-2020
 #ifndef GEOVIZ_NECKLACE_MAP_DETAIL_CHECK_FEASIBLE_EXACT_H
 #define GEOVIZ_NECKLACE_MAP_DETAIL_CHECK_FEASIBLE_EXACT_H
 
+#include <map>
+
 #include "check_feasible.h"
 
 
@@ -52,8 +54,13 @@ class CheckFeasibleExact : public CheckFeasible
   bool FeasibleFromSlice
   (
     const size_t first_slice_index,
-    const BitString& first_layer_set
+    const BitString& first_slice_layer_set
   );
+
+  void AssignAngle(const Number& angle_rad, Bead::Ptr& bead) override;
+
+  using BeadAngleMap = std::map<Number, Bead::Ptr>;
+  BeadAngleMap bead_angles_;
 }; // class CheckFeasibleExact
 
 } // namespace detail

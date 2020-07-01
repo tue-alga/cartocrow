@@ -890,7 +890,11 @@ EXCLUDE_SYMLINKS       = NO
 # exclude all test directories for example use the pattern */test/*
 
 EXCLUDE_PATTERNS       = */detail/*
+EXCLUDE_PATTERNS      += */cmake-build-*/*
 EXCLUDE_PATTERNS      += */console/*
+EXCLUDE_PATTERNS      += */test/*
+EXCLUDE_PATTERNS      += README.md
+EXCLUDE_PATTERNS      += CONTRIBUTE.md
 
 # The EXCLUDE_SYMBOLS tag can be used to specify one or more symbol names
 # (namespaces, classes, functions, etc.) that should be excluded from the

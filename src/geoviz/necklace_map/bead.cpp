@@ -38,11 +38,20 @@ namespace necklace_map
  * While beads could have various shapes, we currently only support disks.
  */
 
+/**@fn Bead::Ptr
+ * @brief The preferred pointer type for storing or sharing a necklace bead.
+ */
+
 /**@brief Construct a necklace bead.
  * @param radius_base the unscaled radius of the bead.
+ * @param style @parblock the visualization style of the bead's region.
+ *
+ * This style will be mostly reused when generating the output map.
+ * @endparblock
+ * @param id the ID of the region associated with this bead.
  */
-Bead::Bead(const Number& radius_base, const std::string& style)
-  : radius_base(radius_base), feasible(), covering_radius_rad(-1), valid(), angle_rad(0), region_style(style) {}
+Bead::Bead(const Number& radius_base, const std::string& style, const std::string& id)
+  : radius_base(radius_base), id(id), feasible(), covering_radius_rad(-1), valid(), angle_rad(0), region_style(style) {}
 
 /**@brief Check whether the bead is valid.
  *
@@ -60,11 +69,17 @@ bool Bead::IsValid() const
  * @brief The radius before scaling.
  */
 
+/**@fn Range::Ptr Bead::id;
+ * @brief The region id.
+ *
+ * This is never used and only stored for ease of debugging.
+ */
+
 /**@fn Range::Ptr Bead::feasible;
  * @brief The feasible interval.
  */
 
-/**@fn Number Bead::covering_radius_scaled_rad;
+/**@fn Number Bead::covering_radius_rad;
  * @brief The covering radius of the scaled bead in radians.
  *
  * This covering radius is the inner angle of the wedge that has the necklace kernel as apex and for which one leg intersects the bead center and the other leg is tangent to the boundary of the bead.

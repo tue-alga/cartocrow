@@ -40,18 +40,27 @@ namespace necklace_map
  * In some cases, a multi-polygon region is simplified to its convex hull, but when determining the centroid, the centroid of the polygon set is used.
  */
 
+/**@fn MapElement::Ptr
+ * @brief The preferred pointer type for storing or sharing a map element.
+ */
+
+/**@fn MapElement::BeadMap
+ * @brief The type for a collection of beads associated with this element, accessed by their necklace.
+ *
+ * Note that an element can have a single bead per necklace.
+ */
 
 /**@brief Construct a necklace region and data element with an empty region.
  * @param id @parblock the ID of the region.
  *
- * See @f Region::Region(const std::string& id) for details on this ID.
+ * See Region::id for details on this ID.
  *
  * Note that necklace elements without an ID are ignored when constructing the necklace
  * map.
  * @endparblock
  */
 MapElement::MapElement(const std::string& id)
-  : region(id), value(0), beads() {}
+  : region(id), value(0), necklace(nullptr), bead(nullptr) {}
 
 /**@brief Construct a necklace region and data element from a region.
  * @param region @parblock the region of the element.
@@ -60,7 +69,7 @@ MapElement::MapElement(const std::string& id)
  * @endparblock
  */
 MapElement::MapElement(const Region& region)
-  : region(region), value(0), beads() {}
+  : region(region), value(0), necklace(nullptr), bead(nullptr) {}
 
 /**@brief Check whether the necklace element is valid.
  *
@@ -78,22 +87,23 @@ bool MapElement::IsValid(const bool strict /*= true*/) const
   if (strict && value == 0)
     return false;
 
-  for (const BeadMap::value_type& bead_value : beads)
-    if (!bead_value.second->IsValid())
-      return false;
+  if (bead && (!necklace || !bead->IsValid()))
+    return false;
 
   return true;
 }
 
-/**@brief Create a bead per necklace.
+/**@brief Create a bead on the necklace.
  *
- * This is skipped if this element has a positive value.
+ * This is skipped if this element does not have a positive value.
  * @param parameters the parameters describing the desired type of beads.
  */
-void MapElement::InitializeBeads(const Parameters& parameters)
+void MapElement::InitializeBead(const Parameters& parameters)
 {
   // Elements on a necklace must have strictly positive value.
-  if (value <= 0) return;
+  if (!necklace || value <= 0)
+    return;
+
   if (parameters.ignore_point_regions)
   {
     Polygon extent;
@@ -103,12 +113,8 @@ void MapElement::InitializeBeads(const Parameters& parameters)
       return;
   }
 
-  for (BeadMap::iterator bead_iter = beads.begin(); bead_iter != beads.end(); ++bead_iter)
-  {
-    const Necklace::Ptr& necklace = bead_iter->first;
-    bead_iter->second = std::make_shared<necklace_map::Bead>(CGAL::sqrt(value), region.style);
-    necklace->beads.push_back(bead_iter->second);
-  }
+  bead = std::make_shared<necklace_map::Bead>(CGAL::sqrt(value), region.style, region.id);
+  necklace->beads.push_back(bead);
 }
 
 /**@fn Region MapElement::region;
@@ -119,10 +125,14 @@ void MapElement::InitializeBeads(const Parameters& parameters)
  * @brief The data value associated with this element.
  */
 
-/**@fn BeadMap MapElement::beads;
- * @brief The necklace beads associated with this element.
+/**@fn BeadMap MapElement::necklace;
+ * @brief The necklace to contain a bead associated with this element.
+ */
+
+/**@fn BeadMap MapElement::bead;
+ * @brief The necklace bead associated with this element.
  *
- * Note that one element may have beads on multiple necklaces.
+ * If MapElement::necklace is null, then this must also be null.
  */
 
 } // namespace necklace_map

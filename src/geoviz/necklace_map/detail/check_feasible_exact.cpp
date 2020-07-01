@@ -22,6 +22,8 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 06-05-2020
 
 #include "check_feasible_exact.h"
 
+#include <glog/logging.h>
+
 
 namespace geoviz
 {
@@ -73,24 +75,52 @@ void CheckFeasibleExact::SplitCircle
 {
   // Reset each slice and then align it with the start of the current slice.
   for (TaskSlice& slice : slices_)
-  {
     slice.Reset();
+  for (TaskSlice& slice : slices_)
     slice.Rotate(first_slice, layer_set);
-  }
 }
 
 bool CheckFeasibleExact::FeasibleFromSlice
 (
   const size_t first_slice_index,
-  const BitString& first_layer_set
+  const BitString& first_slice_layer_set
 )
 {
   // Determine the layers of the slice that are not used.
   const TaskSlice& slice = slices_[first_slice_index];
-  const BitString first_unused_set = first_layer_set ^(slice.layer_sets.back());
+  const BitString first_slice_others_set = first_slice_layer_set ^(slice.layer_sets.back());
 
-  ComputeValues(first_slice_index, first_layer_set, first_unused_set);
-  return AssignAngles(first_slice_index, first_unused_set);
+  FillContainer(first_slice_index, first_slice_layer_set, first_slice_others_set);
+
+  // Check whether the last slice was assigned a value.
+  const size_t num_slices = slices_.size();
+  const Value& value_last_unused = values_[num_slices - 1][first_slice_others_set.Get()];
+  if (value_last_unused.angle_rad == std::numeric_limits<Number>::max())
+    return false;
+
+  // Check whether the first and last beads overlap.
+  if
+  (
+    M_2xPI <
+    value_last_unused.angle_rad +
+    value_last_unused.task->bead->covering_radius_rad +
+    slice.event_from.node->bead->covering_radius_rad
+  )
+    return false;
+
+  bead_angles_.clear();
+  if (!ProcessContainer(first_slice_index, first_slice_others_set))
+    return false;
+
+  for (BeadAngleMap::iterator iter = bead_angles_.begin(); iter != bead_angles_.end(); ++iter)
+    iter->second->angle_rad = Modulo(iter->first);
+  return true;
+}
+
+void CheckFeasibleExact::AssignAngle(const Number& angle_rad, Bead::Ptr& bead)
+{
+  CHECK_NOTNULL(bead);
+  bead_angles_[angle_rad] = bead;
 }
 
 } // namespace detail

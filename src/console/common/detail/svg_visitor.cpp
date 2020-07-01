@@ -33,6 +33,7 @@ namespace detail
 namespace
 {
 
+constexpr const char* kElementSvg = "svg";
 constexpr const char* kElementPath = "path";
 constexpr const char* kElementCircle = "circle";
 constexpr const char* kElementLine = "line";
@@ -79,6 +80,11 @@ bool SvgVisitor::VisitEnter(const tinyxml2::XMLElement& element, const tinyxml2:
   std::string name = element.Name();
   std::transform(name.begin(), name.end(), name.begin(), [](unsigned char c) { return std::tolower(c); });
 
+  if (name == kElementSvg)
+  {
+    VisitSvg(attributes);
+    return true;
+  }
   if (name == kElementPath)
   {
     std::string commands;
@@ -179,6 +185,15 @@ bool SvgVisitor::VisitEnter(const tinyxml2::XMLElement& element, const tinyxml2:
   // Traverse other elements.
   return true;
 }
+
+/**@brief Visit an svg element.
+ *
+ * Note that svg elements should always be traversed further.
+ * @param attributes the first attribute and a pointer to the next.
+ * Note that these attributes include the other parameters.
+ */
+void SvgVisitor::VisitSvg(const tinyxml2::XMLAttribute* attributes)
+{}
 
 /**@brief Visit a line element.
  * @param point_1 one endpoint.

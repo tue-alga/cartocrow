@@ -40,6 +40,10 @@ namespace necklace_map
  * @brief An interface for a functor to generate feasible intervals for necklace bead placement.
  */
 
+/**@fn ComputeFeasibleInterval::Ptr
+ * @brief The preferred pointer type for storing or sharing a computation functor.
+ */
+
 /**@brief Construct a new feasible interval computation functor.
  * @param parameters the parameters describing the desired type of functor.
  * @return a unique pointer containing a new functor or a nullptr if the functor could not be constructed.
@@ -47,16 +51,22 @@ namespace necklace_map
 ComputeFeasibleInterval::Ptr ComputeFeasibleInterval::New(const Parameters& parameters)
 {
   // The wedge interval functor also needs a centroid interval functor as fallback.
-  Ptr compute_centroid(new ComputeFeasibleCentroidInterval(parameters));
-
   switch (parameters.interval_type)
   {
     case IntervalType::kCentroid:
-      return compute_centroid;
+      return Ptr(new ComputeFeasibleCentroidInterval(parameters));
     case IntervalType::kWedge:
     {
       Ptr compute_wedge(new ComputeFeasibleWedgeInterval(parameters));
-      static_cast<ComputeFeasibleWedgeInterval*>(compute_wedge.get())->fallback_.swap( compute_centroid );
+
+      ComputeFeasibleWedgeInterval* functor = static_cast<ComputeFeasibleWedgeInterval*>(compute_wedge.get());
+      functor->fallback_point_regions_.reset(new ComputeFeasibleCentroidInterval(parameters));
+      functor->fallback_kernel_region_.reset(new ComputeFeasibleCentroidInterval(parameters));
+
+      Parameters small_regions_parameters = parameters;
+      small_regions_parameters.centroid_interval_length_rad = parameters.wedge_interval_length_min_rad;
+      functor->fallback_small_regions_.reset(new ComputeFeasibleCentroidInterval(small_regions_parameters));
+
       return compute_wedge;
     }
     default:
@@ -79,17 +89,11 @@ void ComputeFeasibleInterval::operator()(MapElement::Ptr& element) const
   Polygon extent;
   element->region.MakeSimple(extent);
 
-  for (MapElement::BeadMap::value_type& map_value : element->beads)
-  {
-    const Necklace::Ptr& necklace = map_value.first;
-    Bead::Ptr& bead = map_value.second;
+  if (!element->bead)
+    return;
 
-    CHECK_NOTNULL(necklace);
-    if(!bead)
-      continue;
-
-    bead->feasible = (*this)(extent, necklace);
-  }
+  CHECK_NOTNULL(element->necklace);
+  element->bead->feasible = (*this)(extent, element->necklace);
 }
 
 /**@brief Apply the functor to a collection of map elements.

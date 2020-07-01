@@ -72,6 +72,14 @@ DEFINE_bool
   "Whether to write the output to the standard output stream for the website. This also forces logging to the standard error stream."
 );
 
+DEFINE_bool
+(
+  force_recompute_scale_factor,
+  false,
+  "Whether to force recomputing the scale factor. If set to false, the scale factor in not recomputed if it is supplied in the input file."
+  " In this case, each region must contain valid attributes 'angle_rad' and 'feasible'."
+);
+
 DEFINE_string
 (
   interval_type,
@@ -85,6 +93,13 @@ DEFINE_double
   0.2 * M_PI,
   "The arc length of centroid intervals (in radians). Must be in the range [0, pi]."
   " Note that small intervals greatly restrict the available scale factors."
+);
+
+DEFINE_double
+(
+  wedge_interval_length_min_rad,
+  0,
+  "The minimum arc length of wedge intervals (in radians). Must be in the range [0, pi]."
 );
 
 DEFINE_bool
@@ -123,6 +138,13 @@ DEFINE_double
   "Note that large values are likely to force the necklace bead area to 0."
   " Also note that values close to 0 are a lot more influential."
   " Scaling scrollbar values using a 4th degree function is recommended."
+);
+
+DEFINE_int32
+(
+  placement_cycles,
+  30,
+  "The number of cycles used by the placement heuristic. Must be non-negative; if the number of 0, all beads are placed in the most clockwise valid position."
 );
 
 DEFINE_double
@@ -166,6 +188,13 @@ DEFINE_double
   " The necklace beads are drawn with roughly the same style as the input regions."
   " However, the boundaries will be hidden for transparant beads."
   // The reason for hiding the boundary is that it has undesirable interaction with the drop shadow filter applied to the beads.
+);
+
+DEFINE_double
+(
+  bead_id_font_size_px,
+  16,
+  "Font size (in pixels) of the bead IDs in the output. Must be larger than 0."
 );
 
 DEFINE_bool
@@ -226,21 +255,26 @@ void ValidateFlags(geoviz::necklace_map::Parameters& parameters, geoviz::WriterO
   // Note that we mainly print flags to enable reproducibility.
   // Other flags are validated, but only printed if not valid.
   // Note that we may skip some low-level flags that almost never change.
+  using namespace validate;
 
   // There must be input geometry and input numeric data.
-  correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(in_geometry_filename), validate::ExistsFile);
-  correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(in_data_filename), validate::ExistsFile);
-  correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(in_value_name), validate::NotEmpty);
+  correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(in_geometry_filename), ExistsFile);
+  correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(in_data_filename), ExistsFile);
+  correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(in_value_name), Not<Empty>);
 
   // Note that we allow overwriting existing output.
-  correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(out_filename), validate::EmptyOr<validate::IsFile>);
+  correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(out_filename), Or<Empty, MakeAvailableFile>);
 
   // Interval parameters.
   {
     correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(interval_type), geoviz::IntervalTypeParser(parameters.interval_type));
 
-    validate::MakeRangeCheck(0.0, M_PI)(FLAGS_centroid_interval_length_rad);
+    MakeRangeCheck(0.0, M_PI)(FLAGS_centroid_interval_length_rad);
     parameters.centroid_interval_length_rad = FLAGS_centroid_interval_length_rad;
+
+    MakeRangeCheck(0.0, M_PI)(FLAGS_wedge_interval_length_min_rad);
+    parameters.wedge_interval_length_min_rad = FLAGS_wedge_interval_length_min_rad;
+
     parameters.ignore_point_regions = FLAGS_ignore_point_regions;
   }
 
@@ -248,23 +282,26 @@ void ValidateFlags(geoviz::necklace_map::Parameters& parameters, geoviz::WriterO
   {
     correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(order_type), geoviz::OrderTypeParser(parameters.order_type));
 
-    correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(buffer_rad), validate::MakeRangeCheck(0.0, M_PI));
+    correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(buffer_rad), MakeRangeCheck(0.0, M_PI));
     parameters.buffer_rad = FLAGS_buffer_rad;
 
-    correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(search_depth), validate::MakeStrictLowerBoundCheck(0));
+    correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(search_depth), MakeStrictLowerBoundCheck(0));
     parameters.binary_search_depth = FLAGS_search_depth;
 
-    correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(heuristic_cycles), validate::MakeLowerBoundCheck(0));
+    correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(heuristic_cycles), MakeLowerBoundCheck(0));
     parameters.heuristic_cycles = FLAGS_heuristic_cycles;
   }
 
   // Placement parameters.
   {
-    using Closure = validate::Closure;
+    correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(placement_cycles), MakeLowerBoundCheck(0));
+    parameters.placement_cycles = FLAGS_placement_cycles;
+
+    using Closure = Closure;
     correct &= CheckAndPrintFlag
     (
       FLAGS_NAME_AND_VALUE(aversion_ratio),
-      validate::MakeRangeCheck<Closure::kOpen, Closure::kClosed>(0.0, 1.0)
+      MakeRangeCheck<Closure::kClosed, Closure::kClosed>(0.0, 1.0)
     );
     parameters.aversion_ratio = FLAGS_aversion_ratio;
   }
@@ -273,17 +310,20 @@ void ValidateFlags(geoviz::necklace_map::Parameters& parameters, geoviz::WriterO
   using Options = geoviz::WriterOptions;
   write_options = Options::Default();
   {
-    correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(pixel_width), validate::IsStrictlyPositive<int32_t>());
+    correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(pixel_width), IsStrictlyPositive<int32_t>());
     write_options->pixel_width = FLAGS_pixel_width;
 
-    correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(region_coordinate_precision), validate::IsStrictlyPositive<int32_t>());
+    correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(region_coordinate_precision), IsStrictlyPositive<int32_t>());
     write_options->region_precision = FLAGS_region_coordinate_precision;
 
-    correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(region_opacity), validate::MakeUpperBoundCheck(1.0));
+    correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(region_opacity), MakeUpperBoundCheck(1.0));
     write_options->region_opacity = FLAGS_region_opacity;
 
-    correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(bead_opacity), validate::MakeRangeCheck(0.0, 1.0));
+    correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(bead_opacity), MakeRangeCheck(0.0, 1.0));
     write_options->bead_opacity = FLAGS_bead_opacity;
+
+    correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(bead_id_font_size_px), IsStrictlyPositive<double>());
+    write_options->bead_id_font_size_px = FLAGS_bead_id_font_size_px;
 
     PrintFlag(FLAGS_NAME_AND_VALUE(draw_necklace_curve));
     write_options->draw_necklace_curve = FLAGS_draw_necklace_curve;
@@ -303,7 +343,7 @@ void ValidateFlags(geoviz::necklace_map::Parameters& parameters, geoviz::WriterO
     write_options->draw_bead_angles = FLAGS_draw_bead_angles;
   }
 
-  correct &= CheckAndPrintFlag( FLAGS_NAME_AND_VALUE( log_dir ), validate::EmptyOr<validate::IsDirectory> );
+  correct &= CheckAndPrintFlag( FLAGS_NAME_AND_VALUE( log_dir ), Or<Empty, IsDirectory> );
   PrintFlag( FLAGS_NAME_AND_VALUE( stderrthreshold ) );
   PrintFlag( FLAGS_NAME_AND_VALUE( v ) );
 
@@ -319,11 +359,12 @@ bool ReadData(std::vector<geoviz::necklace_map::MapElement::Ptr>& elements)
 bool ReadGeometry
 (
   std::vector<geoviz::necklace_map::MapElement::Ptr>& elements,
-  std::vector<geoviz::necklace_map::Necklace::Ptr>& necklaces
+  std::vector<geoviz::necklace_map::Necklace::Ptr>& necklaces,
+  geoviz::Number& scale_factor
 )
 {
   geoviz::SvgReader svg_reader;
-  return svg_reader.ReadFile(FLAGS_in_geometry_filename, elements, necklaces);
+  return svg_reader.ReadFile(FLAGS_in_geometry_filename, elements, necklaces, scale_factor);
 }
 
 void WriteOutput
@@ -372,16 +413,28 @@ int main(int argc, char **argv)
   std::vector<Necklace::Ptr> necklaces;
 
 
-  // Read the data and geometry.
+  // Read the geometry and data.
+  // Note that the regions should be written in the same order as in the input,
+  // which forces the geometry to be read first.
+  geoviz::Number scale_factor;
+  const bool success_read_svg = ReadGeometry(elements, necklaces, scale_factor);
   const bool success_read_data = ReadData(elements);
-  const bool success_read_svg = ReadGeometry(elements, necklaces);
   CHECK(success_read_svg && success_read_data) << "Terminating program.";
   const double time_read = time.Stamp();
 
 
-  // Compute the optimal scale factor and placement.
-  const geoviz::Number scale_factor = success_read_data ? ComputeScaleFactor(parameters, elements, necklaces) : 0;
-  LOG(INFO) << "Computed scale factor: " << scale_factor;
+  if (FLAGS_force_recompute_scale_factor || scale_factor < 0)
+  {
+    // Compute the optimal scale factor and placement.
+    scale_factor = ComputeScaleFactor(parameters, elements, necklaces);
+    LOG(INFO) << "Computed scale factor: " << scale_factor;
+  }
+  else
+  {
+    // Compute just the placement.
+    ComputePlacement(parameters, scale_factor, elements, necklaces);
+    LOG(INFO) << "Computed placement";
+  }
   const double time_compute = time.Stamp();
 
 

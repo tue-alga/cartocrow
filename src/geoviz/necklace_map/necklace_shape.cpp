@@ -34,19 +34,23 @@ namespace necklace_map
  * This follows the visitor pattern to handle different necklace shape types in a different manner.
  */
 
-/**@fn virtual void NecklaceShapeVisitor::Visit(CircleNecklace& shape);
- * @brief Visit a circle necklace shape.
+/**@brief Visit a circle necklace shape.
  * @param shape the shape to visit.
  */
+void NecklaceShapeVisitor::Visit(CircleNecklace& shape) {}
 
-/**@fn virtual void NecklaceShapeVisitor::Visit(BezierNecklace& shape);
- * @brief Visit a generic necklace shape.
+/**@brief Visit a generic necklace shape.
  * @param shape the shape to visit.
  */
+void NecklaceShapeVisitor::Visit(BezierNecklace& shape) {}
 
 
 /**@class NecklaceShape
  * @brief A star-shaped curve that guides the placement of data visualization symbols.
+ */
+
+/**@fn NecklaceShape::Ptr
+ * @brief The preferred pointer type for storing or sharing a necklace shape.
  */
 
 /**@fn virtual const Point& NecklaceShape::kernel() const
@@ -57,8 +61,18 @@ namespace necklace_map
  */
 
 /**@fn bool NecklaceShape::IsValid() const = 0
- * @brief Check whether the necklace is valid.
- * @return whether the necklace is valid.
+ * @brief Check whether the shape is valid.
+ * @return whether the shape is valid.
+ */
+
+/**@fn bool NecklaceShape::IsEmpty() const = 0
+ * @brief Check whether the shape is empty.
+ * @return whether the shape is valid, i.e. it covers an empty region.
+ */
+
+/**@fn bool NecklaceShape::IsClosed() const = 0
+ * @brief Check whether the shape is closed.
+ * @return whether the shape is closed.
  */
 
 /**@fn virtual bool NecklaceShape::IntersectRay(const Number& angle_rad, Point& intersection) const
@@ -88,6 +102,12 @@ namespace necklace_map
  *
  * Note that this covering radius is always an arc measurement.
  * @endparblock
+ */
+
+/**@fn virtual Number NecklaceShape::ComputeDistanceToKernel(const Range::Ptr& range) const = 0
+ * @brief Compute the shortest distance to the necklace kernel from a bead that is centered in a given range.
+ * @param range the range on which the bead can be centered.
+ * @return the distance to the necklace kernel.
  */
 
 /**@brief Compute the angle of a point on the shape.

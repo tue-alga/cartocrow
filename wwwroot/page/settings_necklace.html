@@ -9,7 +9,7 @@
         type="file"
         id="geometry_file_in"
         name="geometry_file"
-        accept="text/xml"
+        accept="text/xml, image/svg+xml"
         onchange="onChangedGeometryFile(this.files[0]);"
       />
       <div class="explanation">
@@ -49,23 +49,63 @@
   >
     <h3>Options</h3>
     <div class="form-field">
-      <div class="inline-label">Interval</div>
+      <label class="inline-label" for="interval_in">Interval</label>
       <select id="interval_in" name="interval">
         <option value="centroid">Centroid</option>
         <option value="wedge">Wedge</option>
       </select>
       <div class="explanation">
-        This determines the intervals used on the necklace (...?)
+        This determines the positioning and size of the intervals used on the necklace.
       </div>
     </div>
     <div class="form-field">
-      <div class="inline-label">Order</div>
+      <label class="inline-label" for="order_in">Order type</label>
       <select id="order_in" name="order">
         <option value="fixed">Fixed</option>
-        <option value="any">Any</option>
+        <option value="any">Variable</option>
       </select>
       <div class="explanation">
-        This determines the order (...?)
+        This determines the order in which beads are added to the necklace.
+      </div>
+    </div>
+    <div class="form-field">
+      <label class="inline-label" for="centroid_interval_length_in">Centroid interval length</label>
+      <input
+        id="centroid_interval_length_in"
+        type="range"
+        name="centroid_interval_length"
+        min="0.0"
+        max="1.0"
+        step="0.01"
+        value="0.2"
+      />
+      <output
+        id="centroid_interval_length_out"
+        name="centroid_interval_length"
+        for="centroid_interval_length"
+      ></output>
+      <div class="explanation">
+        (...?)
+      </div>
+    </div>
+    <div class="form-field">
+      <label class="inline-label" for="wedge_interval_length_min_in">Wedge interval minimum</label>
+      <input
+        id="wedge_interval_length_min_in"
+        type="range"
+        name="wedge_interval_length_min"
+        min="0.0"
+        max="1.0"
+        step="0.01"
+        value="0.0"
+      />
+      <output
+        id="wedge_interval_length_min_out"
+        name="wedge_interval_length_min"
+        for="wedge_interval_length_min"
+      ></output>
+      <div class="explanation">
+        (...?)
       </div>
     </div>
     <div class="form-field">
@@ -99,6 +139,23 @@
       <div class="explanation">
         Aversion force between beads (...?)
       </div>
+    </div>
+    <div class="form-field">
+      <label class="inline-label" for="bead_id_font_size_in">Bead ID size</label>
+      <input
+        id="bead_id_font_size_in"
+        type="range"
+        name="bead_id_font_size"
+        min="1"
+        max="32"
+        step="1"
+        value="16"
+      />
+      <output
+        id="bead_id_font_size_out"
+        name="bead_id_font_size"
+        for="bead_id_font_size"
+      ></output>
     </div>
     <div class="form-field">
       <div>

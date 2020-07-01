@@ -51,6 +51,7 @@ struct Parameters
   // Feasible interval.
   IntervalType interval_type;
   Number centroid_interval_length_rad;
+  Number wedge_interval_length_min_rad;
   bool ignore_point_regions;
 
   // Scale factor.
@@ -61,6 +62,7 @@ struct Parameters
   int heuristic_cycles;
 
   // Placement.
+  int placement_cycles;
   Number aversion_ratio;
 }; // struct Parameters
 

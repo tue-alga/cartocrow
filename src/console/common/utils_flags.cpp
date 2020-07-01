@@ -100,9 +100,29 @@ bool AvailableFile(const std::string& value)
   }
 }
 
-bool NotEmpty(const std::string& value)
+bool MakeAvailableFile(const std::string& value)
 {
-  return !value.empty();
+  try
+  {
+    filesystem::path path(value);
+    if (path.has_parent_path())
+    {
+      if (!ExistsDirectory(path.parent_path()))
+        filesystem::create_directories(path.parent_path());
+      return ExistsDirectory(path.parent_path());
+    }
+    return true;
+  }
+  catch (const std::exception& e)
+  {
+    LOG(INFO) << e.what();
+    return false;
+  }
+}
+
+bool Empty(const std::string& value)
+{
+  return value.empty();
 }
 
 } // namespace validate

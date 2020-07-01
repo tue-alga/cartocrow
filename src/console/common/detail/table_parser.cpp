@@ -114,6 +114,18 @@ bool TableParser::Parse(std::istream& in)
     in >> name;
     if (!in)
       return false;
+
+    if (name[0] == '\"')
+    {
+      std::string part;
+      do
+      {
+        in >> part;
+        name += " " + part;
+      } while (part.back() != '\"');
+      name = name.substr(1, name.length() - 2);
+    }
+
     switch (type)
     {
       case kCharInteger:

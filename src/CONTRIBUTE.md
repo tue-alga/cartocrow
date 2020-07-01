@@ -21,7 +21,7 @@ For the c++ code, we follow the Google style guide (https://google.github.io/sty
 - Source files use the .cpp extension. Template implementations may be separated from their declaration in a file with the same name and the .inc extension.
 - The order of #include directives is not strictly alphabetical: within each block, all files in a specific directory precede the files in sub-directories.
 - Whenever a code block is spread over multiple lines, the opening character (e.g. brace) will be placed on the next line and the opening and closing characters have the same indentation.
-  Why? This greatly increases ease of matching opening and closing characters.
+  Why? This greatly increases ease of matching opening and closing characters. It also enforces similar formatting between the different bracket types (i.e. (), {}, []).
 - As a rule of thumb, closing braces of a large block are followed by a comment repeating the statement that opened them (e.g. "} // namespace geoviz").
   Why? This makes program flow more obvious.
 - Whenever possible, define complex and composite types early (whether using typedef or using). This especially applies to template types.
@@ -30,10 +30,10 @@ For the c++ code, we follow the Google style guide (https://google.github.io/sty
   Why? While the "auto" keyword may increase coding speed, it comes at the cost of readability: it is not immediately apparant what the type actually is. While decent IDE's will provide the underlying type when hovering over the variable, this depends on the IDE maintaining a correct lookup table and in many cases this is very unstable/error-prone. Even when the type is given on the same line as the variable is declared, this will often no longer be the case when the variable is used. Generally, an "auto" type can be replaced by an explicit typedef or using statement that gives an informative name to the type.
 - When defining a method with default parameters that was declared elsewhere, repeat the default value as a comment.
   Why? This will provide a good reminder of the value, as the declaration is often invisible (e.g. when using "go to declaration" to view the workings of the method).
-- The line length restriction is never applied to comments.
+- The line length restriction does not apply to comments.
   Why? Comments can change a lot over the development of the code and maintaining the line limit becomes cumbersome. We assume that the developers can make these comments readable by enabling line wrapping in their editor.
 - Outside of comments, we maintain a line length restriction of 120 characters instead of 80.
-  Why? This fits better with modern screen sizes and improves redability through conciseness.
+  Why? This fits better with modern screen sizes and improves readability through conciseness.
 - Prefer single line comments over short multi-line comments.
   Why? This support easily disabling code blocks temporarily, e.g. while debugging.
 - When deciding on a name, prefer to start with more general parts before more specific parts (e.g. my_point_x as opposed to my_x_point).
@@ -41,6 +41,10 @@ For the c++ code, we follow the Google style guide (https://google.github.io/sty
 - When declaring pointer or reference variables, always place the * adjacent to the type (e.g. const char* my_variable).
 - Whenever spreading function parameters/arguments over multiple lines, always put the first one on a new line. Prefer to use exactly 1 parameter/argument per line.
 - When using abbreviations in camel case, only capitalize the first letter of the abbreviation.
+- Use the "const" qualifier wherever possible. This clearly indicates the intent of not changing the variable. This also applies to simple typed method parameters that are copy constructed (e.g. function(const int arg)). This clearly separates input parameters from output and input/output parameters, because the fact that the parameter is copy-constructed is implicit. It also forces the variable to stay the same for the scope fo the method.
+- Generally, initialize the default values of data structs in the default constructor or set them using initialization methods, such as in a factory class. These default values are often disconnected from the concept of the struct and should not show up in the documentation. Additionally, a data struct may have different default values for different use cases. Setting the defaults for one case in the struct declaration may incorrectly imply preference for that use case.
+
+Unfortunately, I have been unable to find a code formatter that can be customized to enforce this code style. The "code_style_clion.xml" file is the closest approximation so far, with the exception of not placing opening parentheses on a new line and adding an extra level of indentation for lists in parentheses manually placed on a new line (e.g. argument lists). 
 
 ## Logging
 

@@ -127,10 +127,10 @@ bool DataReader::Parse
     return false;
 
   // Find the ID and value columns and check that they are the correct types.
-  using ColumnDouble = detail::ValueColumn<double>;
   using ColumnString = detail::ValueColumn<std::string>;
+  using DataColumn = detail::DataColumn;
   const ColumnString* column_id = nullptr;
-  const ColumnDouble* column_value = nullptr;
+  const DataColumn* column_value = nullptr;
 
   for (const detail::TableParser::ColumnPtr& column : table_)
   {
@@ -146,14 +146,17 @@ bool DataReader::Parse
     if (lower_name == kNameId)
       column_id = dynamic_cast<const ColumnString*>(column.get());
     else if (lower_name == value_name)
-      column_value = dynamic_cast<const ColumnDouble*>(column.get());
+      column_value = column.get();
   }
-  if
-  (
-    column_id == nullptr ||
-    column_value == nullptr ||
-    column_id->values.size() != column_value->values.size()
-  )
+  if (column_id == nullptr || column_value == nullptr || column_id->values.size() != column_value->size())
+    return false;
+
+
+  using ColumnDouble = detail::ValueColumn<double>;
+  using ColumnInteger = detail::ValueColumn<int>;
+  const ColumnDouble* column_double = dynamic_cast<const ColumnDouble*>(column_value);
+  const ColumnInteger* column_int = dynamic_cast<const ColumnInteger*>(column_value);
+  if (column_double == nullptr && column_int == nullptr)
     return false;
 
   // Create a lookup table for the elements.
@@ -184,7 +187,10 @@ bool DataReader::Parse
     CHECK_NOTNULL(element);
     CHECK_EQ(id, element->region.id);
 
-    element->value = column_value->values[v];
+    if (column_double == nullptr)
+      element->value = column_int->values[v];
+    else
+      element->value = column_double->values[v];
   }
 
   LOG(INFO) << "Successfully parsed necklace map data for " << elements.size() << " elements.";

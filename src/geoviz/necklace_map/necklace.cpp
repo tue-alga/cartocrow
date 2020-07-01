@@ -34,10 +34,15 @@ namespace necklace_map
  * @brief A collection of visualization symbols that are organized on a curve.
  */
 
+/**@fn Necklace::Ptr
+ * @brief The preferred pointer type for storing or sharing a necklace.
+ */
+
 /**@brief Construct a necklace from a shape.
+ * @param id the necklace ID.
  * @param shape the shape of the necklace.
  */
-Necklace::Necklace(const NecklaceShape::Ptr& shape) : shape(shape), beads() {}
+Necklace::Necklace(const std::string& id, const NecklaceShape::Ptr& shape) : id(id), shape(shape), beads() {}
 
 /**@brief Sort the beads of the necklace by the clockwise extremes of their feasible interval.
  */

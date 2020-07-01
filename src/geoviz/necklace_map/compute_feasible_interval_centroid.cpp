@@ -59,7 +59,7 @@ ComputeFeasibleCentroidInterval::ComputeFeasibleCentroidInterval(const Parameter
   ComputeFeasibleInterval(parameters),
   half_length_rad_(0.5 * parameters.centroid_interval_length_rad)
 {
-  CHECK_GT(half_length_rad_, 0);
+  CHECK_GE(half_length_rad_, 0);
   CHECK_LT(half_length_rad_, M_PI);
 }
 

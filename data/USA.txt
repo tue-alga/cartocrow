@@ -1,0 +1,51 @@
+49 ssidd
+ID  name    area    firearms_school illegal_immigrants
+AL  Alabama 135765  8.4 0.527
+AK  Alaska  171785  0   0.753
+AZ  Arizona 295253 7.4  4.765
+AR  Arkansas    137733  10.5    0.972
+CA  California  423971  0   6.114
+CO  Colorado    269602  5.4 3.087
+CT  Connecticut 0   6.4 1.111
+DE  Delaware    0   5.7 1.186
+FL  Florida 170305  0   1.894
+GA  Georgia 153910  7.5 2.513
+ID  Idaho   216445  0   1.33
+IL  Illinois    149997  0   3.385
+IN  Indiana 94322   5.8 0.717
+IA  Iowa    145744  0   0.809
+KS  Kansas  213096  0   1.712
+KY  Kentucky    104659  6.8 0
+LA  Louisiana   134265  0   0
+MA  Massachusetts   0   5.8 1.36
+MD  Maryland    0   6.9 1
+ME  Maine   91647   5.9 0
+MI  Michigan    250493  0   0.692
+MN  Minnesota   225171  0   1.169
+MS  Mississippi 125433  0   0
+MO  Missouri    180533  7.3 0
+MT  Montana 380837  10.2    0
+NE  Nebraska    200346  0   1.365
+NH  "New Hampshire" 0   6.5 0
+NJ  "New Jersey"    0   0   2.535
+NV  Nevada  286352  6.8 4.183
+NM  "New Mexico"    314914  8.0 2.022
+NY  "New York"  141299  5.2 2.54
+NC  "North Carolina"    139391  6.4 2.372
+ND  "North Dakota"  183112  6   0
+OH  Ohio    116096  0   0
+OK  Oklahoma    181035  7.0 1.297
+OR  Oregon  254806  0   2.472
+PA  Pennsylvania    119282  0   0
+RI  "Rhode Island"  0   0   1.487
+SC  "South Carolina"    82931   6.7 0.846
+SD  "South Dakota"  199730  8.3 0
+TN  Tennessee   109150  8.1 0.771
+TX  Texas   695622  7.9 4.554
+UT  Utah    219887  7.0 2.632
+VA  Virginia    110784  0   1.361
+VT  Vermont 0   9.1 0
+WA  Washington  184666  0   2.163
+WI  Wisconsin   169639  0   0.741
+WV  "West Virginia" 0   8.5 0
+WY  Wyoming 253337  10.0    0

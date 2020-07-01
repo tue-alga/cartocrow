@@ -77,6 +77,8 @@ ComputeScaleFactorFixedOrder::ComputeScaleFactorFixedOrder(const Necklace::Ptr& 
     // This can be solved by performing a bisection search on the scale factors using a feasibility check to see if the scaled beads fit.
     // Note that this correction is performed after estimating the scale factor, in CorrectScaleFactor().
 
+    bead->angle_rad = bead->feasible->from_rad();
+
     nodes_.emplace_back(bead);
   }
 

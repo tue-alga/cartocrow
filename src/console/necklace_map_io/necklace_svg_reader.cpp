@@ -54,7 +54,7 @@ SvgReader::SvgReader() {}
 /**@brief Read necklace map SVG input from a file.
  * @param filename the file to read.
  * @param elements the collection in which to collect the regions in the input.
- * @param necklace where to place the necklace.
+ * @param necklaces where to place the necklaces.
  * @return whether the read operation could be completed successfully.
  */
 bool SvgReader::ReadFile
@@ -62,6 +62,26 @@ bool SvgReader::ReadFile
   const std::string& filename,
   std::vector<necklace_map::MapElement::Ptr>& elements,
   std::vector<necklace_map::Necklace::Ptr>& necklaces,
+  int max_retries /*= 2*/
+)
+{
+  Number scale_factor;
+  return ReadFile(filename, elements, necklaces, scale_factor, max_retries);
+}
+
+/**@brief Read necklace map SVG input from a file.
+ * @param filename the file to read.
+ * @param elements the collection in which to collect the regions in the input.
+ * @param necklaces where to place the necklaces.
+ * @param scale_factor where to place the scale factor, if defined.
+ * @return whether the read operation could be completed successfully.
+ */
+bool SvgReader::ReadFile
+(
+  const std::string& filename,
+  std::vector<necklace_map::MapElement::Ptr>& elements,
+  std::vector<necklace_map::Necklace::Ptr>& necklaces,
+  Number& scale_factor,
   int max_retries /*= 2*/
 )
 {
@@ -91,21 +111,23 @@ bool SvgReader::ReadFile
     }
   } while (true);
 
-  return Parse(input, elements, necklaces);
+  return Parse(input, elements, necklaces, scale_factor);
 }
 
 
 /**@brief Parse necklace map SVG input from a string.
  * @param input the string to parse.
  * @param elements the collection in which to collect the regions in the input.
- * @param necklace where to place the necklace.
+ * @param necklaces where to place the necklaces.
+ * @param scale_factor where to place the scale factor, if defined.
  * @return whether the string could be parsed successfully.
  */
 bool SvgReader::Parse
 (
   const std::string& input,
   std::vector<necklace_map::MapElement::Ptr>& elements,
-  std::vector<necklace_map::Necklace::Ptr>& necklaces
+  std::vector<necklace_map::Necklace::Ptr>& necklaces,
+  Number& scale_factor
 )
 {
   tinyxml2::XMLDocument doc;
@@ -114,14 +136,14 @@ bool SvgReader::Parse
   if (result != tinyxml2::XML_SUCCESS) return false;
 
   using Visitor = detail::NecklaceMapSvgVisitor;
-  Visitor visitor(elements, necklaces, FLAGS_strict_validity);
+  Visitor visitor(elements, necklaces, scale_factor, FLAGS_strict_validity);
   doc.Accept(&visitor);
 
   // Note(tvl) we should allow the SVG to not contain the necklace: then create the necklace as smallest enclosing circle.
   LOG(INFO) <<
     "Successfully parsed necklace map geometry for " <<
-    elements.size() << " regions and " <<
-    necklaces.size() << " necklaces.";
+    elements.size() << " region(s) and " <<
+    necklaces.size() << " necklace(s).";
 
   return true;
 }

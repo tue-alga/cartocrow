@@ -45,7 +45,7 @@ ComputeFeasibleWedgeInterval::operator()(const Polygon& extent, const Necklace::
 {
   CHECK_GT(extent.size(), 0);
   if (extent.size() == 1)
-    return (*fallback_)(extent, necklace);
+    return (*fallback_point_regions_)(extent, necklace);
 
   const Number angle = necklace->shape->ComputeAngleRad(*extent.vertices_begin());
   CircularRange obscured(angle, angle);
@@ -55,34 +55,37 @@ ComputeFeasibleWedgeInterval::operator()(const Polygon& extent, const Necklace::
   {
     const Segment& segment = *edge_iter;
     const Number angle_target = necklace->shape->ComputeAngleRad(segment[1]);
-    if
-    (
-      angle_target == obscured.to_rad() ||
-      angle_target == obscured.from_rad() ||
-      !obscured.Contains(Modulo(angle_target, obscured.from_rad()))
-    )
+
+    if (CGAL::left_turn( segment[0], segment[1], kernel ))
     {
-      if (CGAL::left_turn( segment[0], segment[1], kernel ))
-      {
-        obscured.to_rad() = ModuloNonZero(angle_target, obscured.from_rad());
-      }
-      else
-      {
-        obscured.from_rad() = Modulo(angle_target);
-        obscured.to_rad() = ModuloNonZero(obscured.to_rad(), obscured.from_rad());
-      }
+      // Counterclockwise segment.
+      obscured.to_rad() = std::max(obscured.to_rad(), ModuloNonZero(angle_target, obscured.from_rad()));
+    }
+    else
+    {
+      // Clockwise segment.
+      Number angle_target_adj = angle_target;
+      while (obscured.to_rad() < angle_target_adj)
+        angle_target_adj -= M_2xPI;
+      obscured.from_rad() = std::min(obscured.from_rad(), angle_target_adj);
     }
   }
 
-  if (obscured.IsDegenerate() || M_2xPI <= obscured.ComputeLength())
-    return (*fallback_)(extent, necklace);
+  const Number interval_length = obscured.ComputeLength();
+  if (interval_length == 0)
+    return (*fallback_point_regions_)(extent, necklace);
+  else if (M_2xPI <= interval_length)
+    return (*fallback_kernel_region_)(extent, necklace);
+  else if (interval_length < interval_length_min_rad_)
+    return (*fallback_small_regions_)(extent, necklace);
 
   // Force the angles into the correct interval.
-  return std::make_shared<IntervalWedge>(obscured.from_rad(), obscured.to_rad());
+  return std::make_shared<IntervalWedge>(Modulo(obscured.from_rad()), ModuloNonZero(obscured.to_rad(), obscured.from_rad()));
 }
 
 ComputeFeasibleWedgeInterval::ComputeFeasibleWedgeInterval(const Parameters& parameters) :
-  ComputeFeasibleInterval(parameters)
+  ComputeFeasibleInterval(parameters),
+  interval_length_min_rad_(parameters.wedge_interval_length_min_rad)
 {}
 
 } // namespace necklace_map

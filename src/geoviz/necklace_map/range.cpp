@@ -32,6 +32,10 @@ namespace necklace_map
  * @brief A continuous interval on a circle.
  */
 
+/**@fn Range::Ptr
+ * @brief The preferred pointer type for storing or sharing a range.
+ */
+
 /**@brief Construct a range.
  * @param from the start of the range.
  * @param to the end of the range.
@@ -69,7 +73,7 @@ Number& Range::to() { return to_; }
 
 /**@brief Check whether the range is in a valid state.
  *
- * The range is in a valid state if @f from() <= @f to().
+ * The range is in a valid state if from() <= to().
  * @return whether the interval is valid.
  */
 bool Range::IsValid() const

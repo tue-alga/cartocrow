@@ -120,6 +120,10 @@ body,
   position: absolute;
 }
 
+.aga-panel-top-inner > p {
+  margin: 0.5em auto;
+}
+
 /* Other panels are generally placed on top of the main content while they are displayed. */
 .aga-panel-container {
   position: relative;
@@ -136,6 +140,9 @@ body,
 }
 .aga-panel-top > * {
   transition: all 200ms;
+}
+.aga-panel-top-inner {
+  overflow-y: auto;
 }
 
 .aga-panel-left {
@@ -209,6 +216,9 @@ body,
   .aga-nav.aga-card {
     box-shadow: unset;
     z-index: unset;
+  }
+  .aga-panel-top-inner {
+    padding: 0 12.5%;
   }
   .aga-hide-small {
     display: unset !important;

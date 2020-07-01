@@ -43,15 +43,17 @@ class ComputeValidPlacement
 
   static Ptr New(const Parameters& parameters);
 
-  ComputeValidPlacement(const Number& aversion_ratio, const Number& buffer_rad = 0);
+  ComputeValidPlacement(const int cycles, const Number& aversion_ratio, const Number& buffer_rad = 0);
 
   void operator()(const Number& scale_factor, Necklace::Ptr& necklace) const;
 
   void operator()(const Number& scale_factor, std::vector<Necklace::Ptr>& necklaces) const;
 
-  Number buffer_rad;
+  int cycles;
 
   Number aversion_ratio;
+
+  Number buffer_rad;
 
  protected:
   virtual void SwapBeads(Necklace::Ptr& necklace) const = 0;
@@ -61,7 +63,7 @@ class ComputeValidPlacement
 class ComputeValidPlacementFixedOrder : public ComputeValidPlacement
 {
  public:
-  ComputeValidPlacementFixedOrder(const Number& aversion_ratio, const Number& min_separation = 0);
+  ComputeValidPlacementFixedOrder(const int cycles, const Number& aversion_ratio, const Number& min_separation = 0);
 
  protected:
   void SwapBeads(Necklace::Ptr& necklace) const override {}
@@ -71,7 +73,7 @@ class ComputeValidPlacementFixedOrder : public ComputeValidPlacement
 class ComputeValidPlacementAnyOrder : public ComputeValidPlacement
 {
  public:
-  ComputeValidPlacementAnyOrder(const Number& aversion_ratio, const Number& min_separation = 0);
+  ComputeValidPlacementAnyOrder(const int cycles, const Number& aversion_ratio, const Number& min_separation = 0);
 
  protected:
   void SwapBeads(Necklace::Ptr& necklace) const override;

@@ -64,7 +64,7 @@ class CheckFeasible
     Number CoveringRadius() const;
 
     CycleNodeLayered::Ptr task;
-    Number angle_rad;
+    Number angle_rad;  // The angle of the bead center.
   }; // struct Value
 
   CheckFeasible(NodeSet& nodes);
@@ -75,19 +75,19 @@ class CheckFeasible
 
   void ResetContainer();
 
-  void ComputeValues
+  void FillContainer
   (
-    const size_t slice_index_offset,
-    const BitString& first_layer_set,
-    const BitString& first_unused_set
+    const size_t first_slice_index,
+    const BitString& first_slice_layer_set,
+    const BitString& first_slice_remaining_set
   );
 
-  virtual void ProcessTask(const CycleNodeLayered::Ptr&) {}
+  virtual void AssignAngle(const Number& angle_rad, Bead::Ptr& bead) = 0;
 
-  bool AssignAngles
+  bool ProcessContainer
   (
-    const size_t slice_index_offset,
-    const BitString& unused_set
+    const size_t first_slice_index,
+    const BitString& first_slice_remaining_set
   );
 
   NodeSet& nodes_;

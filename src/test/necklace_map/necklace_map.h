@@ -80,7 +80,7 @@ struct NecklaceDataWesternEurope
     {
       // Read the geometry.
       geoviz::SvgReader svg_reader;
-      const filesystem::path in_geometry_path = kTestDir / "wEU.xml";
+      const filesystem::path in_geometry_path = kTestDir / "wEU.svg";
       UNITTEST_REQUIRE UNITTEST_CHECK(svg_reader.ReadFile(in_geometry_path, data.elements, data.necklaces));
     }
   }
@@ -163,7 +163,7 @@ UNITTEST_TEST_FIXTURE(NecklaceDataWesternEurope, WestEuropeNopoints)
   parameters.ignore_point_regions = true;
 
   const geoviz::Number scale_factor = ComputeScaleFactor(parameters, data.elements, data.necklaces);
-  UNITTEST_CHECK_CLOSE(1.675, scale_factor, 0.001);
+  UNITTEST_CHECK_CLOSE(1.673, scale_factor, 0.001);
 }
 
 UNITTEST_TEST_FIXTURE(NecklaceDataWesternEurope, WestEuropeBuffer)
@@ -211,7 +211,7 @@ UNITTEST_TEST_FIXTURE(NecklaceDataWesternEurope, WestEuropeSmaller)
   DefaultParameters(parameters);
 
   const geoviz::Number scale_factor = ComputeScaleFactor(parameters, data.elements, data.necklaces);
-  UNITTEST_CHECK_CLOSE(2.509, scale_factor, 0.001);
+  UNITTEST_CHECK_CLOSE(2.507, scale_factor, 0.001);
 }
 
 
@@ -224,7 +224,7 @@ struct NecklaceDataEastAsia
     {
       // Read the geometry.
       geoviz::SvgReader svg_reader;
-      const filesystem::path in_geometry_path = kTestDir / "eAsia.xml";
+      const filesystem::path in_geometry_path = kTestDir / "eAsia.svg";
       UNITTEST_REQUIRE UNITTEST_CHECK(svg_reader.ReadFile(in_geometry_path, data.elements, data.necklaces));
     }
   }
@@ -254,7 +254,7 @@ UNITTEST_TEST_FIXTURE(NecklaceDataEastAsia, EastAsiaAgriculture)
   DefaultParameters(parameters);
 
   const geoviz::Number scale_factor = ComputeScaleFactor(parameters, data.elements, data.necklaces);
-  UNITTEST_CHECK_CLOSE(1.006, scale_factor, 0.001);
+  UNITTEST_CHECK_CLOSE(1.005, scale_factor, 0.001);
 }
 
 UNITTEST_TEST_FIXTURE(NecklaceDataEastAsia, EastAsiaExactAgriculture)
@@ -266,7 +266,7 @@ UNITTEST_TEST_FIXTURE(NecklaceDataEastAsia, EastAsiaExactAgriculture)
   parameters.heuristic_cycles = 0;
 
   const geoviz::Number scale_factor = ComputeScaleFactor(parameters, data.elements, data.necklaces);
-  UNITTEST_CHECK_CLOSE(1.006, scale_factor, 0.001);
+  UNITTEST_CHECK_CLOSE(1.005, scale_factor, 0.001);
 }
 
 UNITTEST_TEST_FIXTURE(NecklaceDataEastAsia, EastAsiaPoverty)
@@ -300,7 +300,7 @@ UNITTEST_TEST_FIXTURE(NecklaceDataEastAsia, EastAsiaInternet)
   DefaultParameters(parameters);
 
   const geoviz::Number scale_factor = ComputeScaleFactor(parameters, data.elements, data.necklaces);
-  UNITTEST_CHECK_CLOSE(1.509, scale_factor, 0.001);
+  UNITTEST_CHECK_CLOSE(1.511, scale_factor, 0.001);
 }
 
 UNITTEST_TEST_FIXTURE(NecklaceDataEastAsia, EastAsiaExactInternet)
@@ -312,7 +312,7 @@ UNITTEST_TEST_FIXTURE(NecklaceDataEastAsia, EastAsiaExactInternet)
   parameters.heuristic_cycles = 0;
 
   const geoviz::Number scale_factor = ComputeScaleFactor(parameters, data.elements, data.necklaces);
-  UNITTEST_CHECK_CLOSE(1.509, scale_factor, 0.001);
+  UNITTEST_CHECK_CLOSE(1.511, scale_factor, 0.001);
 }
 
 } // UNITTEST_SUITE(NecklaceMap)

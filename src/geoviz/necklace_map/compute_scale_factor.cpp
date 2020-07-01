@@ -40,7 +40,11 @@ namespace necklace_map
  *
  * Note that this scale factor is the minimum over the scale factors per necklace. These scale factors per necklace can be determined independently.
  *
- * Note that we do not restrict the beads of different necklaces to overlap. In case of overlap between different necklaces, the user can manually adjust the buffer thickness or the positioning forces (see @f ComputeValidPlacement) to prevent overlapping beads.
+ * Note that we do not restrict the beads of different necklaces to overlap. In case of overlap between different necklaces, the user can manually adjust the buffer thickness or the positioning forces (see ComputeValidPlacement) to prevent overlapping beads.
+ */
+
+/**@fn ComputeScaleFactor::Ptr
+ * @brief The preferred pointer type for storing or sharing a computation functor.
  */
 
 /**@brief Construct a new scale factor computation functor.
@@ -61,7 +65,9 @@ ComputeScaleFactor::Ptr ComputeScaleFactor::New(const Parameters& parameters)
 }
 
 /**@brief Construct a bead scale factor computation functor.
- * @param buffer_rad @parblock the minimum distance in radians between necklace beads.
+ * @param parameters @parblock the parameter settings to apply to the computations.
+ *
+ * Specifically parameters.buffer_rad is used to set the minimum distance in radians between necklace beads.
  *
  * This distance must be in the range [0, pi]. Note that values beyond some threshold based on the input regions, the scale factor is forced to 0.
  * @endparblock
@@ -100,14 +106,29 @@ Number ComputeScaleFactor::operator()(std::vector<Necklace::Ptr>& necklaces)
     necklace->beads.swap(keep_beads);
 
     if (necklace->beads.empty())
-      return 0;
+      continue;
 
-    const Number necklace_scale_factor = (*this)(necklace);
+    // Limit the initial bead radii.
+    Number rescale = 1;
+    for (const Bead::Ptr& bead : necklace->beads)
+    {
+      CHECK_GT(bead->radius_base, 0);
+      const Number distance = necklace->shape->ComputeDistanceToKernel(bead->feasible);
+      const Number bead_rescale = bead->radius_base / distance;
+      rescale = std::max(rescale, bead_rescale);
+    }
+    for (const Bead::Ptr& bead : necklace->beads)
+      bead->radius_base /= rescale;
+
+    const Number necklace_scale_factor = (*this)(necklace) / rescale;
+
+    for (const Bead::Ptr& bead : necklace->beads)
+      bead->radius_base *= rescale;
 
     if (scale_factor < 0 || necklace_scale_factor < scale_factor)
       scale_factor = necklace_scale_factor;
   }
-  return scale_factor;
+  return std::max(scale_factor, Number(0));
 }
 
 /**@fn const Number& ComputeScaleFactor::max_buffer_rad() const;

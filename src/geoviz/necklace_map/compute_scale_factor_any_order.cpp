@@ -37,13 +37,15 @@ namespace necklace_map
  *
  * Note that this scale factor is the minimum over the scale factors per necklace. These scale factors per necklace can be determined independently.
  *
- * Note that we do not restrict the beads of different necklaces to overlap. In case of overlap between different necklaces, the user can manually adjust the buffer thickness or the positioning forces (see @f ComputeValidPlacement) to prevent overlapping beads.
+ * Note that we do not restrict the beads of different necklaces to overlap. In case of overlap between different necklaces, the user can manually adjust the buffer thickness or the positioning forces (see ComputeValidPlacement) to prevent overlapping beads.
  */
 
 /**@brief Construct a bead scale factor computation functor that is allowed to the order of the beads.
- * @param buffer_rad @parblock the minimum distance between necklace beads.
+ * @param parameters @parblock the parameter settings to apply to the computations.
  *
- * This distance must be in the range [0, @f$T@f$], where @f$T@f$ is half the length of the necklace divided by the number of beads on the necklace. While the lower bound is validated immediately, the upper bound can only be validated when applying the functor to a collection of necklace beads.
+ * Specifically parameters.buffer_rad is used to set the minimum distance in radians between necklace beads.
+ *
+ * This distance must be in the range [0, pi]. Note that values beyond some threshold based on the input regions, the scale factor is forced to 0.
  * @endparblock
  */
 ComputeScaleFactorAnyOrder::ComputeScaleFactorAnyOrder(const Parameters& parameters) :

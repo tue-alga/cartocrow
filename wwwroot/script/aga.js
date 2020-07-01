@@ -33,7 +33,7 @@ function toggleNavigation(force_hide = true) {
 function ajaxMethod(url, init, callback) {
   let request = new Request(url);
   fetch(request, init)
-    .then(response => {
+    .then((response) => {
       if (response.status == 200) {
         return response.text();
       }
@@ -49,8 +49,8 @@ function ajaxGet(url, callback) {
   const init = {
     method: 'GET',
     headers: {
-      'Content-Type': 'text/html'
-    }
+      'Content-Type': 'text/html',
+    },
   };
   ajaxMethod(url, init, callback);
 }
@@ -60,9 +60,9 @@ function ajaxPost(url, body, callback) {
   const init = {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
     },
-    body: body
+    body: body,
   };
   ajaxMethod(url, init, callback);
 }
@@ -134,7 +134,7 @@ function toggleSettings(cardId) {
 
 // Callback function to add the response text as card.
 function setResponseAsCard(cardId, child = 0) {
-  return function(response) {
+  return function (response) {
     // Add the response content into the content item.
     document.getElementById(cardId).children[child].innerHTML = response;
   };

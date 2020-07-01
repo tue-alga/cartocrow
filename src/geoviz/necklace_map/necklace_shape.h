@@ -41,8 +41,8 @@ class BezierNecklace;
 class NecklaceShapeVisitor
 {
  public:
-  virtual void Visit(CircleNecklace& shape) {}
-  virtual void Visit(BezierNecklace& shape) {}
+  virtual void Visit(CircleNecklace& shape);
+  virtual void Visit(BezierNecklace& shape);
 }; // class NecklaceShapeVisitor
 
 
@@ -55,11 +55,17 @@ class NecklaceShape
 
   virtual bool IsValid() const = 0;
 
+  virtual bool IsEmpty() const = 0;
+
+  virtual bool IsClosed() const = 0;
+
   virtual bool IntersectRay(const Number& angle_rad, Point& intersection) const = 0;
 
   virtual Box ComputeBoundingBox() const = 0;
 
   virtual Number ComputeCoveringRadiusRad(const Range::Ptr& range, const Number& radius) const = 0;
+
+  virtual Number ComputeDistanceToKernel(const Range::Ptr& range) const = 0;
 
   Number ComputeAngleRad(const Point& point) const;
 

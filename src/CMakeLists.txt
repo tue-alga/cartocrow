@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.13.4)
+cmake_minimum_required(VERSION 3.13.0)
 
 # GeoViz project.
 set(PROJECT_NAME GeoViz)
@@ -12,6 +12,7 @@ set(CMAKE_INSTALL_SCRIPT_DIR script CACHE STRING "Installation subdirectory for 
 
 option(GEOVIZ_CREATE_ARCHIVE "Create an archive GeoViz library, collecting all Geo-visualization methods." ON)
 
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 set(INSTALL_CONFIG_DIR ${CMAKE_INSTALL_LIBRARY_DIR}/cmake)
 set(INSTALL_BINARY_DIR ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINARY_DIR})
 set(INSTALL_SCRIPT_DIR ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_SCRIPT_DIR})
@@ -42,16 +43,15 @@ write_basic_package_version_file(
 )
 
 # Configure a header file to pass CMake settings to the source code.
-set(SOURCE_CONFIG_DIR ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 configure_file(
-    "${SOURCE_CONFIG_DIR}/geoviz_config.h.in"
-    "${SOURCE_CONFIG_DIR}/geoviz_config.h"
+    "${CMAKE_MODULE_PATH}/geoviz_config.h.in"
+    "${CMAKE_MODULE_PATH}/geoviz_config.h"
 )
-install(FILES "${SOURCE_CONFIG_DIR}/geoviz_config.h" DESTINATION "${CMAKE_INSTALL_SOURCE_DIR}/cmake")
+install(FILES "${CMAKE_MODULE_PATH}/geoviz_config.h" DESTINATION "${CMAKE_INSTALL_SOURCE_DIR}/cmake")
 
 # Configure the doxygen configuration file to pass CMake settings to the doxygen.
 configure_file(
-    "${SOURCE_CONFIG_DIR}/Doxyfile.in"
+    "${CMAKE_MODULE_PATH}/Doxyfile.in"
     "Doxyfile"
 )
 
@@ -66,8 +66,9 @@ find_package(CGAL)
 # All source files should use include paths relative to the source root.
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
-# By default, we use the C++11 dialect.
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
+# By default, we use the C++14 dialect (required by CGAL).
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # The GeoViz library.
 add_subdirectory(geoviz)
@@ -82,7 +83,7 @@ add_subdirectory(test)
 # Install rules.
 install(
     FILES
-    "${SOURCE_CONFIG_DIR}/GeoVizConfig.cmake"
+    "${CMAKE_MODULE_PATH}/GeoVizConfig.cmake"
     "${CMAKE_CURRENT_BINARY_DIR}/GeoVizConfigVersion.cmake"
     DESTINATION ${INSTALL_CONFIG_DIR}/GeoViz
 )

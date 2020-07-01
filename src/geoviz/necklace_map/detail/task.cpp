@@ -71,23 +71,24 @@ TaskSlice::TaskSlice
 ) :
   event_from(event_from),
   event_to(event_to),
-  coverage(event_from.angle_rad, event_to.angle_rad)
+  coverage(event_from.angle_rad, Modulo(event_to.angle_rad, event_from.angle_rad))
 {
   CHECK(BitString::CheckFit(num_layers));
   tasks.resize(num_layers);
 }
 
-TaskSlice::TaskSlice(const TaskSlice& slice, const int cycle) :
+TaskSlice::TaskSlice(const TaskSlice& slice, const Number& angle_start, const int cycle) :
   event_from(slice.event_from),
   event_to(slice.event_to),
   coverage(0, 0),
   layer_sets(slice.layer_sets)
 {
-  CHECK_LT(0, cycle);
+  CHECK_LE(0, cycle);
 
-  // Determine the part of the necklace covered by this slice, i.e. after circling the necklace a fixed number of times.
-  const Number offset = cycle * M_2xPI;
-  coverage.from() = event_from.angle_rad + offset;
+  // Determine the part of the necklace covered by this slice.
+  const Number cycle_start = cycle * M_2xPI;
+  const Number offset = cycle_start - angle_start;
+  coverage.from() = Modulo(event_from.angle_rad + offset, cycle_start);
   coverage.to() = Modulo(event_to.angle_rad + offset, coverage.from());
 
   // Copy the tasks.
@@ -95,33 +96,35 @@ TaskSlice::TaskSlice(const TaskSlice& slice, const int cycle) :
   for (const CycleNodeLayered::Ptr& task : slice.tasks)
   {
     tasks.emplace_back();
+    if (!task)
+      continue;
+
+    // Skip tasks that have started before the first cycle.
     if
     (
-      task &&
-      (
-        coverage.to() <= task->valid->to() &&
-        task->valid->from() != 0 &&
-        task->valid->Contains(0)
-      )
+      cycle == 0 &&
+      coverage.to() <= task->valid->from() + offset &&
+      task->valid->Contains(M_2xPI + angle_start)
     )
-    {
-      // Note that we must clone the task, i.e. construct a separate object, with its valid range offset to fit the slice.
-      tasks.back() = std::make_shared<CycleNodeLayered>(*task);
-      tasks.back()->valid = std::make_shared<Range>(task->valid->from() + offset, task->valid->to() + offset);
-    }
+      continue;
+
+    // Note that we must clone the task, i.e. construct a separate object, with its valid range offset to fit the slice.
+    tasks.back() = std::make_shared<CycleNodeLayered>(*task);
+    tasks.back()->valid = std::make_shared<Range>(task->valid->from() + offset, task->valid->to() + offset);
   }
+
+  Finalize();
 }
 
 void TaskSlice::Reset()
 {
-  coverage.from() = event_from.angle_rad;
-  coverage.to() = event_to.angle_rad;
+  coverage = CircularRange(event_from.angle_rad, event_to.angle_rad);
   for (const CycleNodeLayered::Ptr& task : tasks)
   {
     if (!task)
       continue;
 
-    task->valid = std::make_shared<Range>(*task->bead->feasible);
+    task->valid = std::make_shared<CircularRange>(*task->bead->feasible);
     task->disabled = false;
   }
 }
@@ -130,8 +133,7 @@ void TaskSlice::Rotate(const TaskSlice& first_slice, const BitString& layer_set)
 {
   // Rotate this slice such that the origin is aligned with the start of the other slice.
   const Number& angle_rad = first_slice.event_from.angle_rad;
-  coverage.from() -= angle_rad;
-  coverage.to() -= angle_rad;
+  coverage = CircularRange(coverage.from() - angle_rad, coverage.to() - angle_rad);
   if (coverage.to() < kEpsilon)
     coverage.to() = M_2xPI;
 
@@ -140,27 +142,25 @@ void TaskSlice::Rotate(const TaskSlice& first_slice, const BitString& layer_set)
     if (!task)
       continue;
 
+    task->valid = std::make_shared<CircularRange>(task->valid->from() - angle_rad, task->valid->to() - angle_rad);
+
     if (first_slice.tasks[task->layer] && first_slice.tasks[task->layer]->bead == task->bead)
     {
       if (layer_set[task->layer])
       {
-        task->valid->from() = 0.0;
-        task->valid->to() -= angle_rad;
         if (task->valid->to() <= coverage.from() + kEpsilon)
           task->disabled = true;
+        task->valid->from() = 0;
       }
       else
       {
-        task->valid->from() -= angle_rad;
-        task->valid->to() = M_2xPI;
-        if (coverage.to() <= task->valid->from() + kEpsilon)
+        if (coverage.to() - kEpsilon <= task->valid->from())
           task->disabled = true;
+        task->valid->to() = M_2xPI;
       }
     }
     else
     {
-      task->valid->from() -= angle_rad;
-      task->valid->to() -= angle_rad;
       if (task->valid->to() < kEpsilon)
         task->valid->to() = M_2xPI;
     }
@@ -170,12 +170,13 @@ void TaskSlice::Rotate(const TaskSlice& first_slice, const BitString& layer_set)
 void TaskSlice::AddTask(const CycleNodeLayered::Ptr& task)
 {
   CHECK_LT(task->layer, tasks.size());
-  tasks[task->layer] = task;
+  tasks[task->layer] = std::make_shared<CycleNodeLayered>(task);
 }
 
 void TaskSlice::Finalize()
 {
   // The layer sets are all permutations of used layers described as bit strings.
+  layer_sets.clear();
   layer_sets.reserve(std::pow(2, tasks.size()));
   layer_sets.emplace_back();
   for (const CycleNodeLayered::Ptr& task : tasks)

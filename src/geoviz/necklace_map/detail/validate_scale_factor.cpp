@@ -44,8 +44,13 @@ namespace detail
  * @param scale_factor the scale factor for which to validate the necklace map.
  * @param buffer_rad the buffer angle in radians for which to validate the necklace map.
  */
-ValidateScaleFactor::ValidateScaleFactor(const Number& scale_factor, const Number& buffer_rad /*= 0*/)
-  : scale_factor(scale_factor), buffer_rad(buffer_rad) {}
+ValidateScaleFactor::ValidateScaleFactor
+(
+  const Number& scale_factor,
+  const Number& buffer_rad /*= 0*/,
+  const bool adjust_angle /*= true*/
+)
+  : scale_factor(scale_factor), buffer_rad(buffer_rad), adjust_angle(adjust_angle) {}
 
 /**@brief Validate a necklace.
  * @param necklace the necklace to validate.
@@ -60,16 +65,14 @@ bool ValidateScaleFactor::operator()(Necklace::Ptr& necklace) const
     for (Bead::Ptr& bead : necklace->beads)
     {
       bead->valid = std::make_shared<CircularRange>(*bead->feasible);
-      bead->angle_rad = bead->valid->from_rad();
+      if (bead->angle_rad == 0)
+        bead->angle_rad = bead->valid->from_rad();
     }
 
     return true;
   }
 
   bool valid = true;
-
-  // The validator expects the necklace sorted by the feasible intervals of its beads.
-  //necklace->SortBeads();
 
   using NodeSet = std::vector<detail::CycleNode>;
   NodeSet nodes;
@@ -78,17 +81,16 @@ bool ValidateScaleFactor::operator()(Necklace::Ptr& necklace) const
   // Create a sorted cycle based on the feasible intervals of the necklace beads and compute the scaled covering radii.
   for (const Bead::Ptr& bead : necklace->beads)
   {
-    // Compute the scaled covering radius.
+    // In case of the any-order algorithm, the current angle limits the valid interval.
     CHECK_NOTNULL(bead);
-    nodes.emplace_back(bead);
+    nodes.emplace_back(bead, std::make_shared<Range>(bead->angle_rad, Modulo(bead->feasible->to(), bead->angle_rad)));
   }
 
   // Each node is duplicated with an offset to its interval to force cyclic validity.
   const NodeSet::iterator end = nodes.end();
   for (NodeSet::iterator node_iter = nodes.begin(); node_iter != end; ++node_iter)
   {
-    CHECK_NOTNULL(node_iter->bead);
-    nodes.emplace_back(node_iter->bead);
+    nodes.emplace_back(*node_iter);
 
     nodes.back().valid->from() += M_2xPI;
     nodes.back().valid->to() += M_2xPI;
@@ -105,7 +107,7 @@ bool ValidateScaleFactor::operator()(Necklace::Ptr& necklace) const
     // The bead must not overlap the previous one.
     const Number min_distance = scale_factor * (current.bead->radius_base + previous.bead->radius_base);
     const Number min_angle_rad =
-      necklace->shape->ComputeAngleAtDistanceRad(previous.valid->from(), min_distance) + buffer_rad;
+      Modulo(necklace->shape->ComputeAngleAtDistanceRad(previous.valid->from(), min_distance) + buffer_rad, previous.valid->from());
 
     if (current.valid->from() < min_angle_rad)
     {
@@ -118,9 +120,6 @@ bool ValidateScaleFactor::operator()(Necklace::Ptr& necklace) const
     }
   }
 
-  if (!valid)
-    return false;
-
   // Adjust the counterclockwise extremes.
   for (ptrdiff_t n = nodes.size() - 2; 0 <= n; --n)
   {
@@ -130,7 +129,7 @@ bool ValidateScaleFactor::operator()(Necklace::Ptr& necklace) const
     // The bead must not overlap the next one.
     const Number min_distance = scale_factor * (next.bead->radius_base + current.bead->radius_base);
     const Number min_angle_rad =
-      necklace->shape->ComputeAngleAtDistanceRad(current.valid->to(), min_distance) + buffer_rad;
+      Modulo(necklace->shape->ComputeAngleAtDistanceRad(current.valid->to(), min_distance) + buffer_rad, current.valid->to());
 
     if (next.valid->to() < min_angle_rad)
     {
@@ -145,14 +144,15 @@ bool ValidateScaleFactor::operator()(Necklace::Ptr& necklace) const
   {
     Bead::Ptr& bead = necklace->beads[n];
 
-    // The second half of the nodes have the correct clockwise extreme (offset by 2pi).
-    const Number& from_rad = nodes[num_beads + n].valid->from() - M_2xPI;
+    // The second half of the nodes have the correct clockwise extreme.
+    const Number& from_rad = Modulo(nodes[num_beads + n].valid->from());
 
     // The first half of the nodes have the correct counterclockwise extreme.
-    const Number& to_rad = nodes[n].valid->to();
+    const Number& to_rad = Modulo(nodes[n].valid->to(), from_rad);
 
     bead->valid = std::make_shared<CircularRange>(from_rad, to_rad);
-    bead->angle_rad = bead->valid->from_rad();
+    if (adjust_angle)
+      bead->angle_rad = bead->valid->from_rad();
   }
 
   return valid;

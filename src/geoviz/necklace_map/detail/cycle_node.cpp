@@ -37,6 +37,13 @@ namespace detail
  * This means that they can be used to cycle through the nodes multiple times in order.
  */
 
+/**@brief Clone a node.
+ * @param node the cycle node to clone.
+ */
+CycleNode::CycleNode(const CycleNode& node) :
+  bead(node.bead), valid(std::make_shared<Range>(*node.valid))
+{}
+
 /**@brief Construct a node for a particular bead.
  *
  * The valid interval is set to a copy of the feasible interval of the bead.

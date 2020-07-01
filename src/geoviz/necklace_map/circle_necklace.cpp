@@ -34,10 +34,13 @@ namespace necklace_map
  * @brief A full circle necklace.
  */
 
+/**@fn CircleNecklace::Ptr
+ * @brief The preferred pointer type for storing or sharing a circle necklace.
+ */
+
 /**@brief Construct a circle necklace.
  *
  * The necklace kernel is the circle center.
- *
  * @param shape the circle covered by the necklace.
  */
 CircleNecklace::CircleNecklace(const Circle& shape) : NecklaceShape(), shape_(shape)
@@ -55,6 +58,16 @@ bool CircleNecklace::IsValid() const
   return 0 < radius_;
 }
 
+bool CircleNecklace::IsEmpty() const
+{
+  return 0 < radius_;
+}
+
+bool CircleNecklace::IsClosed() const
+{
+  return true;
+}
+
 bool CircleNecklace::IntersectRay(const Number& angle_rad, Point& intersection) const
 {
   const Vector relative = CGAL::sqrt(shape_.squared_radius()) * Vector( std::cos(angle_rad), std::sin(angle_rad) );
@@ -67,6 +80,9 @@ Box CircleNecklace::ComputeBoundingBox() const
   return shape_.bbox();
 }
 
+/**@brief Compute the radius of the circle covered by this necklace.
+ * @return the radius.
+ */
 Number CircleNecklace::ComputeRadius() const
 {
   return radius_;
@@ -74,16 +90,23 @@ Number CircleNecklace::ComputeRadius() const
 
 Number CircleNecklace::ComputeCoveringRadiusRad(const Range::Ptr& range, const Number& radius) const
 {
-  return std::asin(radius / ComputeRadius());
+  return std::asin(radius / radius_);
+}
+
+Number CircleNecklace::ComputeDistanceToKernel(const Range::Ptr& range) const
+{
+  return radius_;
 }
 
 Number CircleNecklace::ComputeAngleAtDistanceRad(const Number& angle_rad, const Number& distance) const
 {
-  CHECK_LE(distance, 2 * ComputeRadius());
-  if (distance == 2 * radius_)
+  const Number distance_abs = std::abs(distance);
+  CHECK_LE(distance_abs, 2 * radius_);
+  if (distance_abs == 2 * radius_)
     return angle_rad + M_PI;
 
-  return angle_rad + 2 * std::asin(distance / (2 * radius_));
+  const Number angle_diff = 2 * std::asin(distance_abs / (2 * radius_));
+  return 0 < distance ? angle_rad + angle_diff : angle_rad - angle_diff;
 }
 
 void CircleNecklace::Accept(NecklaceShapeVisitor& visitor)
