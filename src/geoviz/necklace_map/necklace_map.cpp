@@ -22,6 +22,8 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-2019
 
 #include "necklace_map.h"
 
+#include <glog/logging.h>
+
 /**@file
  * Global functions for computing necklace maps.
  */
@@ -64,7 +66,8 @@ Number ComputeScaleFactor
   // Compute the scaling factor.
   const Number scale_factor = (*ComputeScaleFactor::New(parameters))(necklaces);
 
-  ComputePlacement(parameters, scale_factor, necklaces);
+  // Compute valid placement.
+  (*ComputeValidPlacement::New(parameters))(scale_factor, necklaces);
 
   return scale_factor;
 }
@@ -77,15 +80,33 @@ Number ComputeScaleFactor
  * Note that this placement will be stored in Bead::angle_rad for each bead involved.
  * @param parameters the parameter settings to apply to the computations.
  * @param scale_factor the factor by which to scale the beads.
+ * @param elements the map elements involved.
  * @param necklaces the necklaces involved.
  */
 void ComputePlacement
 (
   const Parameters& parameters,
   const Number& scale_factor,
+  std::vector<MapElement::Ptr>& elements,
   std::vector<Necklace::Ptr>& necklaces
 )
 {
+  // Create a bead per necklace that an element is part of.
+  for (Necklace::Ptr& necklace : necklaces)
+    necklace->beads.clear();
+  for(MapElement::Ptr& element : elements)
+  {
+    element->InitializeBead(parameters);
+
+    if (element->bead)
+    {
+      CHECK_NOTNULL(element->input_feasible);
+
+      element->bead->angle_rad = element->input_angle_rad;
+      element->bead->feasible = element->input_feasible;
+    }
+  }
+
   // Compute valid placement.
   (*ComputeValidPlacement::New(parameters))(scale_factor, necklaces);
 }

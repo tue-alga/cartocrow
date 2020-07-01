@@ -55,6 +55,10 @@ struct MapElement
 
   Necklace::Ptr necklace;
   Bead::Ptr bead;
+
+  // Computed values extracted from the input.
+  Number input_angle_rad;
+  CircularRange::Ptr input_feasible;
 }; // struct MapElement
 
 } // namespace necklace_map

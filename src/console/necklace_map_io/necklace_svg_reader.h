@@ -52,11 +52,21 @@ class SvgReader
     int max_retries = 2
   );
 
+  bool ReadFile
+  (
+    const std::string& filename,
+    std::vector<necklace_map::MapElement::Ptr>& elements,
+    std::vector<necklace_map::Necklace::Ptr>& necklaces,
+    Number& scale_factor,
+    int max_retries = 2
+  );
+
   bool Parse
   (
     const std::string& input,
     std::vector<necklace_map::MapElement::Ptr>& elements,
-    std::vector<necklace_map::Necklace::Ptr>& necklaces
+    std::vector<necklace_map::Necklace::Ptr>& necklaces,
+    Number& scale_factor
   );
 }; // class SvgReader
 

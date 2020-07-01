@@ -72,6 +72,14 @@ DEFINE_bool
   "Whether to write the output to the standard output stream for the website. This also forces logging to the standard error stream."
 );
 
+DEFINE_bool
+(
+  force_recompute_scale_factor,
+  false,
+  "Whether to force recomputing the scale factor. If set to false, the scale factor in not recomputed if it is supplied in the input file."
+  " In this case, each region must contain valid attributes 'angle_rad' and 'feasible'."
+);
+
 DEFINE_string
 (
   interval_type,
@@ -351,11 +359,12 @@ bool ReadData(std::vector<geoviz::necklace_map::MapElement::Ptr>& elements)
 bool ReadGeometry
 (
   std::vector<geoviz::necklace_map::MapElement::Ptr>& elements,
-  std::vector<geoviz::necklace_map::Necklace::Ptr>& necklaces
+  std::vector<geoviz::necklace_map::Necklace::Ptr>& necklaces,
+  geoviz::Number& scale_factor
 )
 {
   geoviz::SvgReader svg_reader;
-  return svg_reader.ReadFile(FLAGS_in_geometry_filename, elements, necklaces);
+  return svg_reader.ReadFile(FLAGS_in_geometry_filename, elements, necklaces, scale_factor);
 }
 
 void WriteOutput
@@ -407,15 +416,25 @@ int main(int argc, char **argv)
   // Read the geometry and data.
   // Note that the regions should be written in the same order as in the input,
   // which forces the geometry to be read first.
-  const bool success_read_svg = ReadGeometry(elements, necklaces);
+  geoviz::Number scale_factor;
+  const bool success_read_svg = ReadGeometry(elements, necklaces, scale_factor);
   const bool success_read_data = ReadData(elements);
   CHECK(success_read_svg && success_read_data) << "Terminating program.";
   const double time_read = time.Stamp();
 
 
-  // Compute the optimal scale factor and placement.
-  const geoviz::Number scale_factor = success_read_data ? ComputeScaleFactor(parameters, elements, necklaces) : 0;
-  LOG(INFO) << "Computed scale factor: " << scale_factor;
+  if (FLAGS_force_recompute_scale_factor || scale_factor < 0)
+  {
+    // Compute the optimal scale factor and placement.
+    scale_factor = ComputeScaleFactor(parameters, elements, necklaces);
+    LOG(INFO) << "Computed scale factor: " << scale_factor;
+  }
+  else
+  {
+    // Compute just the placement.
+    ComputePlacement(parameters, scale_factor, elements, necklaces);
+    LOG(INFO) << "Computed placement";
+  }
   const double time_compute = time.Stamp();
 
 

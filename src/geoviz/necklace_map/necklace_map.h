@@ -53,6 +53,7 @@ void ComputePlacement
 (
   const Parameters& parameters,
   const Number& scale_factor,
+  std::vector<MapElement::Ptr>& elements,
   std::vector<Necklace::Ptr>& necklaces
 );
 

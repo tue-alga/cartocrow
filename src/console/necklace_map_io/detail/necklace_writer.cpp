@@ -407,6 +407,19 @@ void NecklaceWriter::DrawPolygonRegions()
       printer_.PushAttribute("style", style.c_str());
       printer_.PushAttribute("d", RegionToPath(region, options_->region_precision).c_str());
       printer_.PushAttribute("transform", transform_matrix_.c_str());
+
+      if (element->bead)
+      {
+        printer_.PushAttribute("angle_rad", element->bead->angle_rad);
+
+        if (element->bead->feasible)
+        {
+          std::stringstream stream;
+          stream << element->bead->feasible->from_rad() << " " << element->bead->feasible->to_rad();
+          printer_.PushAttribute("feasible", stream.str().c_str());
+        }
+      }
+
       printer_.PushAttribute("region_id", region.id.c_str());
       printer_.PushAttribute("necklace_id", necklace_id.c_str());
       printer_.CloseElement(); // path
@@ -468,6 +481,19 @@ void NecklaceWriter::DrawPointRegions()
       const std::string necklace_id = element->necklace ? element->necklace->id : "";
 
       printer_.PushAttribute("transform", transform_matrix_.c_str());
+
+      if (element->bead)
+      {
+        printer_.PushAttribute("angle_rad", element->bead->angle_rad);
+
+        if (element->bead->feasible)
+        {
+          std::stringstream stream;
+          stream << element->bead->feasible->from_rad() << " " << element->bead->feasible->to_rad();
+          printer_.PushAttribute("feasible", stream.str().c_str());
+        }
+      }
+
       printer_.PushAttribute("region_id", region.id.c_str());
       printer_.PushAttribute("necklace_id", necklace_id.c_str());
       printer_.CloseElement(); // circle
@@ -829,6 +855,9 @@ void NecklaceWriter::OpenSvg()
     stream << "0 0 " << width << " " << height;
     printer_.PushAttribute("viewBox", stream.str().c_str());
   }
+
+  // Store the scale factor.
+  printer_.PushAttribute("scale_factor", scale_factor_);
 
   {
     // Set the (custom) bounds attribute to indicate to the website in which region in the world to place the geometry.

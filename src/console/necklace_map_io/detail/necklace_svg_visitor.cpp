@@ -29,6 +29,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 26-11-2019
 #include "console/common/detail/svg_point_parser.h"
 #include "console/common/detail/svg_bezier_parser.h"
 #include "console/common/detail/svg_polygon_parser.h"
+#include "geoviz/necklace_map/circular_range.h"
 
 
 namespace geoviz
@@ -42,6 +43,9 @@ constexpr const Number kCircleRatioEpsilon = 0.01;
 
 constexpr const char* kElementSvg = "svg";
 
+constexpr const char* kAttributeSvgScaleFactor = "scale_factor";
+constexpr const char* kAttributeRegionAngle = "angle_rad";
+constexpr const char* kAttributeRegionFeasible = "feasible";
 constexpr const char* kAttributeRegionId = "region_id";
 constexpr const char* kAttributeNecklaceId = "necklace_id";
 constexpr const char* kAttributeStyle = "style";
@@ -134,13 +138,19 @@ class CheckCircleVisitor : public necklace_map::BezierNecklaceVisitor
 /**@brief Construct an XML visitor for handling SVG necklace map input geometry.
  * @param regions the collection in which to collect the regions in the input.
  * @param necklaces the collection in which to collect the necklaces in the input.
+ * @param scale_factor the scale factor (if defined) or -1 otherwise.
+ * @param strict_validity @parblock whether the regions must be strictly valid.
+ *
+ * Otherwise some regions may be corrected if this will make them valid.
+ * @endparblock
  */
 NecklaceMapSvgVisitor::NecklaceMapSvgVisitor
 (
   std::vector<necklace_map::MapElement::Ptr>& elements,
   std::vector<necklace_map::Necklace::Ptr>& necklaces,
+  Number& scale_factor,
   const bool strict_validity /*= true*/
-) : SvgVisitor(), elements_(elements), necklaces_(necklaces), strict_validity_(strict_validity)
+) : SvgVisitor(), elements_(elements), necklaces_(necklaces), scale_factor_(scale_factor), strict_validity_(strict_validity)
 {
   // Add the regions to the lookup table, while checking for duplicates.
   for (const MapElement::Ptr& element : elements_)
@@ -151,8 +161,9 @@ NecklaceMapSvgVisitor::NecklaceMapSvgVisitor
     CHECK_EQ(next_index, n);
   }
 
-  // Note that the necklace IDs only apply while in the same SVG, so their ID to index table does not have to be rebuilt.
   necklace_ids_.resize(elements_.size());
+
+  scale_factor_ = -1;
 }
 
 bool NecklaceMapSvgVisitor::VisitExit(const tinyxml2::XMLElement& element)
@@ -165,6 +176,23 @@ bool NecklaceMapSvgVisitor::VisitExit(const tinyxml2::XMLElement& element)
     return FinalizeSvg();
   }
   return true;
+}
+
+
+void NecklaceMapSvgVisitor::VisitSvg(const tinyxml2::XMLAttribute* attributes)
+{
+  std::string scale_factor;
+  if (!FindAttribute(attributes, kAttributeSvgScaleFactor, scale_factor))
+    return;
+
+  try
+  {
+    scale_factor_ = std::stod(scale_factor);
+  }
+  catch (...)
+  {
+    scale_factor_ = -1;
+  }
 }
 
 bool
@@ -185,10 +213,12 @@ NecklaceMapSvgVisitor::VisitCircle(const Point& center, const Number& radius, co
     stream << "M " << center.x() << " " << center.y() << " Z";
     const std::string commands = stream.str();
 
-    std::string style;
+    std::string style, angle_rad, feasible;
     FindAttribute(attributes, kAttributeStyle, style);
+    FindAttribute(attributes, kAttributeRegionAngle, angle_rad);
+    FindAttribute(attributes, kAttributeRegionFeasible, feasible);
 
-    return AddMapElement(commands, region_id, necklace_id, style);
+    return AddMapElement(commands, angle_rad, feasible, region_id, necklace_id, style);
   }
   else
   {
@@ -213,10 +243,12 @@ bool NecklaceMapSvgVisitor::VisitPath(const std::string& commands, const tinyxml
     CHECK(!region_id.empty());
 
     // Add a region.
-    std::string style;
+    std::string style, angle_rad, feasible;
     FindAttribute(attributes, kAttributeStyle, style);
+    FindAttribute(attributes, kAttributeRegionAngle, angle_rad);
+    FindAttribute(attributes, kAttributeRegionFeasible, feasible);
 
-    return AddMapElement(commands, region_id, necklace_id, style);
+    return AddMapElement(commands, angle_rad, feasible, region_id, necklace_id, style);
   }
   else
   {
@@ -327,6 +359,8 @@ bool NecklaceMapSvgVisitor::AddGenericNecklace(const std::string& necklace_id, c
 
 /**@brief Add a necklace element based on an SVG path.
  * @param commands the SVG path commands (including point coordinates).
+ * @param angle_rad the angle of the element's bead, if defined.
+ * @param feasible the feasible interval of the element, if defined.
  * @param region_id the ID of the region.
  *
  * See @f Region::Region(const std::string& id) for details on this ID.
@@ -341,6 +375,8 @@ bool NecklaceMapSvgVisitor::AddGenericNecklace(const std::string& necklace_id, c
 bool NecklaceMapSvgVisitor::AddMapElement
 (
   const std::string& commands,
+  const std::string& angle_rad,
+  const std::string& feasible,
   const std::string& region_id,
   const std::string& necklace_id,
   const std::string& style
@@ -353,8 +389,9 @@ bool NecklaceMapSvgVisitor::AddMapElement
     elements_.push_back(std::make_shared<necklace_map::MapElement>(region_id));
     necklace_ids_.resize(elements_.size());
   }
-  CHECK_NOTNULL(elements_[n]);
-  Region& region = elements_[n]->region;
+  MapElement::Ptr element = elements_[n];
+  CHECK_NOTNULL(element);
+  Region& region = element->region;
   CHECK_EQ(region_id, region.id);
 
   // Interpret the commands as a region.
@@ -368,6 +405,24 @@ bool NecklaceMapSvgVisitor::AddMapElement
     CHECK(region.IsValid()) << "Invalid region: " << region.id;
   else
     region.MakeValid();
+
+  if (0 <= scale_factor_ && !angle_rad.empty() && !feasible.empty())
+  {
+    try
+    {
+      element->input_angle_rad = std::stod(angle_rad);
+
+      std::stringstream stream(feasible);
+      Number from_rad, to_rad;
+      stream >> from_rad >> to_rad;
+      element->input_feasible = std::make_shared<necklace_map::CircularRange>(from_rad, to_rad);
+    }
+    catch(...)
+    {
+      scale_factor_ = -1;
+    }
+  }
+
   return true;
 }
 

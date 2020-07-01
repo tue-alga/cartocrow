@@ -55,11 +55,14 @@ class NecklaceMapSvgVisitor : public SvgVisitor
   (
     std::vector<necklace_map::MapElement::Ptr>& elements,
     std::vector<necklace_map::Necklace::Ptr>& necklaces,
+    Number& scale_factor,
     const bool strict_validity = true
   );
 
  private:
   bool VisitExit(const tinyxml2::XMLElement& element);
+
+  void VisitSvg(const tinyxml2::XMLAttribute* attributes);
 
   bool VisitCircle(const Point& center, const Number& radius, const tinyxml2::XMLAttribute* attributes);
 
@@ -73,6 +76,8 @@ class NecklaceMapSvgVisitor : public SvgVisitor
   bool AddMapElement
   (
     const std::string& commands,
+    const std::string& angle_rad,
+    const std::string& feasible,
     const std::string& region_id,
     const std::string& necklace_id,
     const std::string& style
@@ -84,6 +89,8 @@ class NecklaceMapSvgVisitor : public SvgVisitor
 
   LookupTable id_to_region_index_;
   LookupTable id_to_necklace_index_;
+
+  Number& scale_factor_;
 
   bool strict_validity_;
 }; // class NecklaceMapSvgVisitor

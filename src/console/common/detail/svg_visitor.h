@@ -43,6 +43,8 @@ class SvgVisitor : public tinyxml2::XMLVisitor
   bool VisitEnter(const tinyxml2::XMLElement& element, const tinyxml2::XMLAttribute* attributes);
 
  protected:
+  virtual void VisitSvg(const tinyxml2::XMLAttribute* attributes);
+
   virtual bool VisitLine(const Point& point_1, const Point& point_2, const tinyxml2::XMLAttribute* attributes);
 
   virtual bool VisitRectangle
