@@ -67,13 +67,13 @@ class NecklaceMapSvgVisitor : public SvgVisitor
 
   bool FinalizeSvg();
 
-  bool AddCircleNecklace(const std::string& id, const Point& center, const Number& radius);
-  bool AddGenericNecklace(const std::string& id, const std::string& commands, const Point& kernel);
+  bool AddCircleNecklace(const std::string& necklace_id, const Point& center, const Number& radius);
+  bool AddGenericNecklace(const std::string& necklace_id, const std::string& commands, const Point& kernel);
 
   bool AddMapElement
   (
-    const std::string& id,
     const std::string& commands,
+    const std::string& region_id,
     const std::string& necklace_id,
     const std::string& style
   );

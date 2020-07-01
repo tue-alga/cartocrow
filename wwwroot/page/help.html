@@ -35,30 +35,37 @@
   attribute that defines the geographic position of the view box. For example, a
   svg could define viewBox="0 0 952 696" and
   bounds="[[482.4,259.3],[533.6,325.8]]". The viewbox specifies the part of the
-  geometry image to show, the bounds specify where in the world to show the
-  geometry.
+  geometry to show (in pixel coordinates), the bounds specify the part of the
+  world that this viewbox covers.
 </p>
 <p>
-  The inner elements define the map regions and the necklace curve. Each region
-  must be defined in one or more path elements. All path elements of a single
-  region on the map must share the same 'id' attribute and this attribute will
-  be written in the output bead associated with that region. Note that it is not
+  The inner elements define the map regions and the necklace curve. These map
+  region and necklace curve elements are identified by having a 'necklace_id'
+  attribute. Any elements in the file that do not have a 'necklace_id' attribute
+  are ignored, e.g. these elements will not be represented in the necklace map.
+</p>
+<p>
+  Each region must be defined in one or more path elements. All path elements of
+  a single region on the map must share the same 'region_id' attribute and this
+  attribute will be written in the output bead associated with that region. The
+  'region_id' is not allowed to be an empty strng (""). Note that it is not
   strictly required for the different paths associated with the same region to
   be defined near each other.
 </p>
 <p>
   Each region can be assigned a bead on a necklace in the output. The necklace
   map can have multiple necklaces and the necklace to use is determined by the
-  'necklace_id' attribute of the path elements. Elements without an
+  'necklace_id' attribute of the path elements. Region elements with empty
   'necklace_id' are allowed, but these will not be given a bead on a necklace.
-  They will also be colored light gray in the necklace map.
+  They will be colored white in the necklace map output to indicate that they
+  provide context to the map.
 </p>
 <p>
-  The region may have any style normally allowed for an svg element, except the
-  'stroke-dasharray' style is reserved to identify nacklaces. The output regions
-  and their associated bead are given the same style as the input. In case of a
-  region spread over several paths, the output is assigned the last style
-  encountered.
+  The region may have any style normally allowed for an svg element. The output
+  regions and their associated bead are given the same style as the input. In
+  case of a region spread over several paths, the output is assigned the style
+  encountered last. Note that for clarity it is best to give all these paths the
+  same style regardless.
 </p>
 <p>
   Each region path must be a polygon that starts from an absolute position. In
@@ -79,7 +86,8 @@
   An inner elements can also define a necklace. A necklace element must either
   be a circle element or a Bezier spline defined in a path element. In either
   case, the element must define a unique 'necklace_id' attribute to detemine
-  which regions should get a bead on the necklace.
+  which regions should get a bead on the necklace. To distinguish necklaces from
+  regions, a necklace cannot define a 'region_id' attribute.
 </p>
 <p>
   In case of a Bezier spline necklace, the path element must start with an
@@ -92,18 +100,17 @@
 </p>
 <p>
   Similar to region elements, the necklace can have any style normally allowed
-  for an svg element, except it must define a 'stroke-dasharray' size. Unlike
-  the region elements, the necklace style used in the output does not mimic the
-  input. Instead the output necklace will always be a black curve.
+  for an svg element. Unlike the region elements, the necklace style used in the
+  output does not mimic the input. Instead the output necklace will always be a
+  black curve.
 </p>
 <p>
   The necklace map algorithm requires a 'kernel' per necklace that has clear
   vision to the complete necklace curve. In case of a circle element, the center
   is used as kernel. In case of a Bezier spline element, the kernel must be
-  defined explicitly in the 'kx' and 'ky' attributes. This kernel must be
-  positioned such that it has 'clear vision' on the complete necklace, meaning
-  that any ray originating from the kernel intersects the necklace in exactly
-  one point.
+  defined explicitly by 'kx' and 'ky' attributes. This kernel must be positioned
+  such that it has 'clear vision' on the complete necklace, meaning that any ray
+  originating from the kernel intersects the necklace in exactly one point.
 </p>
 <p>
   In theory, the necklace map algorithm works for any Bezier spline necklace

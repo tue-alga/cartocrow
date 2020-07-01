@@ -42,13 +42,11 @@ constexpr const Number kCircleRatioEpsilon = 0.01;
 
 constexpr const char* kElementSvg = "svg";
 
-constexpr const char* kAttributeRegionId = "id";
+constexpr const char* kAttributeRegionId = "region_id";
 constexpr const char* kAttributeNecklaceId = "necklace_id";
 constexpr const char* kAttributeStyle = "style";
 constexpr const char* kAttributeKernelX = "kx";
 constexpr const char* kAttributeKernelY = "ky";
-
-constexpr const char* kStyleMarkerNecklace = "stroke-dasharray";
 
 constexpr const char* kCommandsRestrictionArcNecklace = "LlZzCcQqSsTt";
 
@@ -172,44 +170,65 @@ bool NecklaceMapSvgVisitor::VisitExit(const tinyxml2::XMLElement& element)
 bool
 NecklaceMapSvgVisitor::VisitCircle(const Point& center, const Number& radius, const tinyxml2::XMLAttribute* attributes)
 {
-  // Circles must be necklaces and necklaces must be dashed.
-  std::string style;
-  CHECK(FindAttribute(attributes, kAttributeStyle, style));
-  CHECK(style.find(kStyleMarkerNecklace) != std::string::npos);
-
-  // Necklaces must have an ID.
+  // Circles without necklace_id are ignored.
   std::string necklace_id;
-  CHECK(FindAttribute(attributes, kAttributeNecklaceId, necklace_id));
+  if (!FindAttribute(attributes, kAttributeNecklaceId, necklace_id))
+    return false;
 
-  AddCircleNecklace(necklace_id, center, radius);
-  return false;
+  std::string region_id;
+  if (FindAttribute(attributes, kAttributeRegionId, region_id))
+  {
+    CHECK(!region_id.empty());
+
+    // Add a point region.
+    std::stringstream stream;
+    stream << "M " << center.x() << " " << center.y() << " Z";
+    const std::string commands = stream.str();
+
+    std::string style;
+    FindAttribute(attributes, kAttributeStyle, style);
+
+    return AddMapElement(commands, region_id, necklace_id, style);
+  }
+  else
+  {
+    // Add a necklace.
+    AddCircleNecklace(necklace_id, center, radius);
+    return false;
+  }
 }
 
 bool NecklaceMapSvgVisitor::VisitPath(const std::string& commands, const tinyxml2::XMLAttribute* attributes)
 {
   CHECK(!commands.empty());
 
-  std::string id, necklace_id, style;
-  const bool has_necklace_id = FindAttribute(attributes, kAttributeNecklaceId, necklace_id);
+  // Paths without necklace_id are ignored.
+  std::string necklace_id;
+  if (!FindAttribute(attributes, kAttributeNecklaceId, necklace_id))
+    return false;
 
-  if
-  (
-    FindAttribute(attributes, kAttributeStyle, style) &&
-    style.find(kStyleMarkerNecklace) != std::string::npos
-  )
+  std::string region_id;
+  if (FindAttribute(attributes, kAttributeRegionId, region_id))
   {
-    // All dashed elements are necklaces.
-    // Note that this may have to change into some identifying attribute.
+    CHECK(!region_id.empty());
 
-    // Necklaces must have an ID and may not contain circular arcs.
-    CHECK(has_necklace_id);
+    // Add a region.
+    std::string style;
+    FindAttribute(attributes, kAttributeStyle, style);
+
+    return AddMapElement(commands, region_id, necklace_id, style);
+  }
+  else
+  {
+    // Add a necklace.
+    // Necklaces may not contain circular arcs.
     CHECK(commands.find_first_of(kCommandsRestrictionArcNecklace) != std::string::npos);
 
     const std::string kernel_names[] =
-    {
-      kAttributeKernelX,
-      kAttributeKernelY
-    };
+      {
+        kAttributeKernelX,
+        kAttributeKernelY
+      };
     std::string kernel_position[2];
     CHECK(FindAttributes(attributes, 2, kernel_names, kernel_position));
 
@@ -220,15 +239,6 @@ bool NecklaceMapSvgVisitor::VisitPath(const std::string& commands, const tinyxml
     }
     catch (...) { return false; }
   }
-  else if (FindAttribute(attributes, kAttributeRegionId, id))
-  {
-    // Path elements with an ID are regions.
-    CHECK(!id.empty());
-    return AddMapElement(id, commands, necklace_id, style);;
-  }
-
-  // Traverse other elements.
-  return true;
 }
 
 /**@brief Connect the regions to their respective necklace.
@@ -256,16 +266,16 @@ bool NecklaceMapSvgVisitor::FinalizeSvg()
 }
 
 /**@brief Add a circle necklace.
- * @param id the necklace ID.
+ * @param necklace_id the necklace ID.
  * @param center the center of the circle.
  * @param radius the radius of the circle.
  * @return whether the necklace was constructed correctly.
  */
-bool NecklaceMapSvgVisitor::AddCircleNecklace(const std::string& id, const Point& center, const Number& radius)
+bool NecklaceMapSvgVisitor::AddCircleNecklace(const std::string& necklace_id, const Point& center, const Number& radius)
 {
   // Necklace IDs must be unique.
   const size_t next_index = necklaces_.size();
-  const size_t n = id_to_necklace_index_.insert({id, next_index}).first->second;
+  const size_t n = id_to_necklace_index_.insert({necklace_id, next_index}).first->second;
   CHECK_EQ(next_index, n);
 
   necklaces_.push_back
@@ -279,16 +289,16 @@ bool NecklaceMapSvgVisitor::AddCircleNecklace(const std::string& id, const Point
 }
 
 /**@brief Add a generic necklace.
- * @param id the necklace ID.
+ * @param necklace_id the necklace ID.
  * @param commands the SVG path commands (including point coordinates).
  * @param kernel the kernel of the star-shaped necklace polygon.
  * @return whether the necklace was constructed correctly.
  */
-bool NecklaceMapSvgVisitor::AddGenericNecklace(const std::string& id, const std::string& commands, const Point& kernel)
+bool NecklaceMapSvgVisitor::AddGenericNecklace(const std::string& necklace_id, const std::string& commands, const Point& kernel)
 {
   // Necklace IDs must be unique.
   const size_t next_index = necklaces_.size();
-  const size_t n = id_to_necklace_index_.insert({id, next_index}).first->second;
+  const size_t n = id_to_necklace_index_.insert({necklace_id, next_index}).first->second;
   CHECK_EQ(next_index, n);
 
   necklace_map::BezierNecklace::Ptr shape = std::make_shared<necklace_map::BezierNecklace>(kernel);
@@ -309,34 +319,35 @@ bool NecklaceMapSvgVisitor::AddGenericNecklace(const std::string& id, const std:
 
 /**@brief Add a necklace element based on an SVG path.
  * @param commands the SVG path commands (including point coordinates).
- * @param id the ID of the region.
+ * @param region_id the ID of the region.
  *
  * See @f Region::Region(const std::string& id) for details on this ID.
  *
  * Note that the ID does not have to unique. If a duplicate ID is encountered, the
  * polygon is added to the region with the same ID.
+ * @param necklace_id the ID of the necklace on which to place a bead for this region.
  * @param style the CSS style of the region polygon. Note that this style will be reused
  * for the output regions.
  * @return whether the region could be parsed correctly.
  */
 bool NecklaceMapSvgVisitor::AddMapElement
 (
-  const std::string& id,
   const std::string& commands,
+  const std::string& region_id,
   const std::string& necklace_id,
   const std::string& style
 )
 {
   // Get the region with the given ID, or create a new one if it does not yet exist.
-  const size_t n = id_to_region_index_.insert({id, elements_.size()}).first->second;
+  const size_t n = id_to_region_index_.insert({region_id, elements_.size()}).first->second;
   if (n == elements_.size())
   {
-    elements_.push_back(std::make_shared<necklace_map::MapElement>(id));
+    elements_.push_back(std::make_shared<necklace_map::MapElement>(region_id));
     necklace_ids_.resize(elements_.size());
   }
   CHECK_NOTNULL(elements_[n]);
   Region& region = elements_[n]->region;
-  CHECK_EQ(id, region.id);
+  CHECK_EQ(region_id, region.id);
 
   // Interpret the commands as a region.
   SvgPolygonConverter converter(region.shape);
