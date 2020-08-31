@@ -1,5 +1,5 @@
 /*
-The Flow Diagram library implements the algorithmic geo-visualization
+The Flow Map library implements the algorithmic geo-visualization
 method by the same name, developed by [name] at TU Eindhoven (DOI).
 Copyright (C) 2019  Netherlands eScience Center and TU Eindhoven
 
@@ -19,8 +19,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-2019
 */
 
-#ifndef GEOVIZ_FLOW_DIAGRAM_FLOW_DIAGRAM_H
-#define GEOVIZ_FLOW_DIAGRAM_FLOW_DIAGRAM_H
+#ifndef GEOVIZ_FLOW_MAP_FLOW_MAP_H
+#define GEOVIZ_FLOW_MAP_FLOW_MAP_H
 
 #include <string>
 
@@ -28,11 +28,11 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-2019
 namespace geoviz
 {
 
-/**@brief Dummy method for running the flow diagram algorithm.
+/**@brief Dummy method for running the flow map algorithm.
  * @return a dummy return string.
  */
-std::string proc_flow_diagram();
+std::string proc_flow_map();
 
 } // namespace geoviz
 
-#endif //GEOVIZ_FLOW_DIAGRAM_FLOW_DIAGRAM_H
+#endif //GEOVIZ_FLOW_MAP_FLOW_MAP_H

@@ -1,5 +1,5 @@
 /*
-The Necklace Map console application implements the algorithmic
+The Flow Map console application implements the algorithmic
 geo-visualization method by the same name, developed by
 Bettina Speckmann and Kevin Verbeek at TU Eindhoven
 (DOI: 10.1109/TVCG.2010.180 & 10.1142/S021819591550003X).
@@ -21,21 +21,21 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-04-2020
 */
 
-#ifndef GEOVIZ_TEST_FLOW_DIAGRAM_FLOW_DIAGRAM_H
-#define GEOVIZ_TEST_FLOW_DIAGRAM_FLOW_DIAGRAM_H
+#ifndef GEOVIZ_TEST_FLOW_MAP_FLOW_MAP_H
+#define GEOVIZ_TEST_FLOW_MAP_FLOW_MAP_H
 
 #include "test/test.h"
 
 
-void TestFlowDiagram() {}  // Linking hack, each new test cpp file has it.
+void TestFlowMap() {}  // Linking hack, each new test cpp file has it.
 
-UNITTEST_SUITE(suite_FlowDiagram) {
+UNITTEST_SUITE(suite_FlowMap) {
 
-UNITTEST_TEST(SanityFlowDiagram)
+UNITTEST_TEST(SanityFlowMAp)
 {
   UNITTEST_CHECK_EQUAL(2, 2);
 }
 
-} // suite_FlowDiagram
+} // suite_FlowMap
 
-#endif //GEOVIZ_TEST_FLOW_DIAGRAM_FLOW_DIAGRAM_H
+#endif //GEOVIZ_TEST_FLOW_MAP_FLOW_MAP_H

@@ -1,5 +1,8 @@
 /*
-Generic methods for command-line applications.
+The Flow Map console application implements the algorithmic
+geo-visualization method by the same name, developed by
+Bettina Speckmann and Kevin Verbeek at TU Eindhoven
+(DOI: 10.1109/TVCG.2010.180 & 10.1142/S021819591550003X).
 Copyright (C) 2019  Netherlands eScience Center and TU Eindhoven
 
 This program is free software: you can redistribute it and/or modify
@@ -15,21 +18,9 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-Created by tvl (t.vanlankveld@esciencecenter.nl) on 11-09-2019
+Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-04-2020
 */
 
-#ifndef GEOVIZ_NECKLACE_MAP_INTERNAL_TEST_INTERNAL_H
-#define GEOVIZ_NECKLACE_MAP_INTERNAL_TEST_INTERNAL_H
+#include "flow_map.h"
 
-namespace geoviz
-{
-namespace internal
-{
-
-/// This temporary test function is only meant to test whether the source directory structure is maintained on install.
-inline std::string test() { return "-2"; }
-
-} // namespace internal
-} // namespace geoviz
-
-#endif //GEOVIZ_NECKLACE_MAP_INTERNAL_TEST_INTERNAL_H
+GEOVIZ_RUN_TESTS(TestFlowMap)
