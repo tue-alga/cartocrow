@@ -9,6 +9,6 @@
 
 // The configured options and settings for GeoViz unit tests from CMake.
 
-#define GEOVIZ_TEST_DIR "@TEST_DIR@"
+#define GEOVIZ_TEST_DATA_DIR "@TEST_DATA_DIR@"
 
 #endif //CMAKE_GEOVIZ_TEST_CONFIG_H
