@@ -21,7 +21,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Created by tvl (t.vanlankveld@esciencecenter.nl) on 03-12-2019
 */
 
-#include "necklace_data_reader.h"
+#include "data_reader.h"
 
 #include <exception>
 #include <fstream>
@@ -38,6 +38,9 @@ constexpr const char* kNameId = "id";
 
 } // anonymous namespace
 
+namespace necklace_map
+{
+
 /**@class DataReader
  * @brief A reader for necklace map values.
  */
@@ -45,8 +48,7 @@ constexpr const char* kNameId = "id";
 /**@brief Construct a reader for necklace map values.
  */
 DataReader::DataReader()
-  : detail::TableParser()
-{}
+  : detail::TableParser() {}
 
 /**@brief Read a necklace map data file.
  *
@@ -60,12 +62,12 @@ DataReader::DataReader()
  * @return whether the element values could be read successfully.
  */
 bool DataReader::ReadFile
-(
-  const std::string& filename,
-  const std::string& value_name,
-  std::vector<necklace_map::MapElement::Ptr>& elements,
-  int max_retries /*= 2*/
-)
+  (
+    const std::string& filename,
+    const std::string& value_name,
+    std::vector<necklace_map::MapElement::Ptr>& elements,
+    int max_retries /*= 2*/
+  )
 {
   std::fstream fin;
   int retry = 0;
@@ -117,11 +119,11 @@ bool DataReader::ReadFile
  * @return whether the element values could be read successfully.
  */
 bool DataReader::Parse
-(
-  std::istream& in,
-  const std::string& value_name,
-  std::vector<necklace_map::MapElement::Ptr>& elements
-)
+  (
+    std::istream& in,
+    const std::string& value_name,
+    std::vector<necklace_map::MapElement::Ptr>& elements
+  )
 {
   if (!detail::TableParser::Parse(in))
     return false;
@@ -136,12 +138,12 @@ bool DataReader::Parse
   {
     std::string lower_name = column->name;
     std::transform
-    (
-      lower_name.begin(),
-      lower_name.end(),
-      lower_name.begin(),
-      [](unsigned char c) { return std::tolower(c); }
-    );
+      (
+        lower_name.begin(),
+        lower_name.end(),
+        lower_name.begin(),
+        [](unsigned char c) { return std::tolower(c); }
+      );
 
     if (lower_name == kNameId)
       column_id = dynamic_cast<const ColumnString*>(column.get());
@@ -197,4 +199,5 @@ bool DataReader::Parse
   return true;
 }
 
+} // namespace necklace_map
 } // namespace geoviz

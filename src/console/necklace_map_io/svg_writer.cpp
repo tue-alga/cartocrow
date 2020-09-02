@@ -21,22 +21,23 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Created by tvl (t.vanlankveld@esciencecenter.nl) on 29-01-2020
 */
 
-#include "necklace_writer.h"
+#include "svg_writer.h"
 
 #include <glog/logging.h>
 
 
 namespace geoviz
 {
+namespace necklace_map
+{
 
-/**@class NecklaceWriter
+/**@class SvgWriter
  * @brief A writer for necklace map output geometry.
  */
 
 /**@brief Construct a necklace map geometry writer.
  */
-NecklaceWriter::NecklaceWriter()
-{}
+SvgWriter::SvgWriter() {}
 
 /**@brief Write a necklace map to a stream.
  * @param elements the elements of the necklace map.
@@ -46,16 +47,16 @@ NecklaceWriter::NecklaceWriter()
  * @param out the stream to which to write.
  * @return whether the necklace map could be successfully written to the stream.
  */
-bool NecklaceWriter::Write
-(
-  const std::vector<MapElement::Ptr>& elements,
-  const std::vector<Necklace::Ptr>& necklaces,
-  const Number& scale_factor,
-  const WriterOptions::Ptr& options,
-  std::ostream& out
-) const
+bool SvgWriter::Write
+  (
+    const std::vector<MapElement::Ptr>& elements,
+    const std::vector<Necklace::Ptr>& necklaces,
+    const Number& scale_factor,
+    const WriterOptions::Ptr& options,
+    std::ostream& out
+  ) const
 {
-  detail::NecklaceWriter writer(elements, necklaces, scale_factor, options, out);
+  detail::SvgWriter writer(elements, necklaces, scale_factor, options, out);
 
   // The order of drawing the features determines their stacking order, i.e. the last one will be on top.
   writer.DrawPolygonRegions();
@@ -68,4 +69,5 @@ bool NecklaceWriter::Write
   writer.DrawBeads();
 }
 
+} // namespace necklace_map
 } // namespace geoviz

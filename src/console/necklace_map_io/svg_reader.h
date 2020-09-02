@@ -18,45 +18,61 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-Created by tvl (t.vanlankveld@esciencecenter.nl) on 03-12-2019
+Created by tvl (t.vanlankveld@esciencecenter.nl) on 26-11-2019
 */
 
-#ifndef CONSOLE_NECKLACE_MAP_IO_NECKLACE_DATA_READER_H
-#define CONSOLE_NECKLACE_MAP_IO_NECKLACE_DATA_READER_H
+#ifndef CONSOLE_NECKLACE_MAP_IO_SVG_READER_H
+#define CONSOLE_NECKLACE_MAP_IO_SVG_READER_H
 
 #include <iostream>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
-#include "console/common/detail/table_parser.h"
+#include <gflags/gflags.h>
+
 #include "geoviz/necklace_map/map_element.h"
+#include "geoviz/necklace_map/necklace.h"
+
+DECLARE_bool(strict_validity);
 
 
 namespace geoviz
 {
+namespace necklace_map
+{
 
-class DataReader : public detail::TableParser
+class SvgReader
 {
  public:
-  DataReader();
+  SvgReader();
 
   bool ReadFile
-  (
-    const std::string& filename,
-    const std::string& value_name,
-    std::vector<necklace_map::MapElement::Ptr>& elements,
-    int max_retries = 2
-  );
+    (
+      const std::string& filename,
+      std::vector<necklace_map::MapElement::Ptr>& elements,
+      std::vector<necklace_map::Necklace::Ptr>& necklaces,
+      int max_retries = 2
+    );
+
+  bool ReadFile
+    (
+      const std::string& filename,
+      std::vector<necklace_map::MapElement::Ptr>& elements,
+      std::vector<necklace_map::Necklace::Ptr>& necklaces,
+      Number& scale_factor,
+      int max_retries = 2
+    );
 
   bool Parse
-  (
-    std::istream& in,
-    const std::string& value_name,
-    std::vector<necklace_map::MapElement::Ptr>& elements
-  );
-}; // class DataReader
+    (
+      const std::string& input,
+      std::vector<necklace_map::MapElement::Ptr>& elements,
+      std::vector<necklace_map::Necklace::Ptr>& necklaces,
+      Number& scale_factor
+    );
+}; // class SvgReader
 
+} // namespace necklace_map
 } // namespace geoviz
 
-#endif //CONSOLE_NECKLACE_MAP_IO_NECKLACE_DATA_READER_H
+#endif //CONSOLE_NECKLACE_MAP_IO_SVG_READER_H

@@ -21,13 +21,13 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Created by tvl (t.vanlankveld@esciencecenter.nl) on 26-11-2019
 */
 
-#include "necklace_svg_reader.h"
+#include "svg_reader.h"
 
 #include <fstream>
 
 #include <glog/logging.h>
 
-#include "console/necklace_map_io/detail/necklace_svg_visitor.h"
+#include "console/necklace_map_io/detail/svg_visitor.h"
 
 DEFINE_bool
 (
@@ -41,6 +41,8 @@ DEFINE_bool
 
 
 namespace geoviz
+{
+namespace necklace_map
 {
 
 /**@class SvgReader
@@ -58,12 +60,12 @@ SvgReader::SvgReader() {}
  * @return whether the read operation could be completed successfully.
  */
 bool SvgReader::ReadFile
-(
-  const std::string& filename,
-  std::vector<necklace_map::MapElement::Ptr>& elements,
-  std::vector<necklace_map::Necklace::Ptr>& necklaces,
-  int max_retries /*= 2*/
-)
+  (
+    const std::string& filename,
+    std::vector<necklace_map::MapElement::Ptr>& elements,
+    std::vector<necklace_map::Necklace::Ptr>& necklaces,
+    int max_retries /*= 2*/
+  )
 {
   Number scale_factor;
   return ReadFile(filename, elements, necklaces, scale_factor, max_retries);
@@ -77,13 +79,13 @@ bool SvgReader::ReadFile
  * @return whether the read operation could be completed successfully.
  */
 bool SvgReader::ReadFile
-(
-  const std::string& filename,
-  std::vector<necklace_map::MapElement::Ptr>& elements,
-  std::vector<necklace_map::Necklace::Ptr>& necklaces,
-  Number& scale_factor,
-  int max_retries /*= 2*/
-)
+  (
+    const std::string& filename,
+    std::vector<necklace_map::MapElement::Ptr>& elements,
+    std::vector<necklace_map::Necklace::Ptr>& necklaces,
+    Number& scale_factor,
+    int max_retries /*= 2*/
+  )
 {
   std::string input;
   int retry = 0;
@@ -123,29 +125,30 @@ bool SvgReader::ReadFile
  * @return whether the string could be parsed successfully.
  */
 bool SvgReader::Parse
-(
-  const std::string& input,
-  std::vector<necklace_map::MapElement::Ptr>& elements,
-  std::vector<necklace_map::Necklace::Ptr>& necklaces,
-  Number& scale_factor
-)
+  (
+    const std::string& input,
+    std::vector<necklace_map::MapElement::Ptr>& elements,
+    std::vector<necklace_map::Necklace::Ptr>& necklaces,
+    Number& scale_factor
+  )
 {
   tinyxml2::XMLDocument doc;
   tinyxml2::XMLError result = doc.Parse(input.data());
   //tinyxml2::XMLError result = doc.Parse(content_str); // This would be how to parse a string instead of a file using tinyxml2
   if (result != tinyxml2::XML_SUCCESS) return false;
 
-  using Visitor = detail::NecklaceMapSvgVisitor;
+  using Visitor = detail::SvgVisitor;
   Visitor visitor(elements, necklaces, scale_factor, FLAGS_strict_validity);
   doc.Accept(&visitor);
 
   // Note(tvl) we should allow the SVG to not contain the necklace: then create the necklace as smallest enclosing circle.
   LOG(INFO) <<
-    "Successfully parsed necklace map geometry for " <<
-    elements.size() << " region(s) and " <<
-    necklaces.size() << " necklace(s).";
+            "Successfully parsed necklace map geometry for " <<
+            elements.size() << " region(s) and " <<
+            necklaces.size() << " necklace(s).";
 
   return true;
 }
 
+} // namespace necklace_map
 } // namespace geoviz

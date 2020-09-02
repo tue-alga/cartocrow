@@ -21,10 +21,12 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Created by tvl (t.vanlankveld@esciencecenter.nl) on 13-02-2020
 */
 
-#include "necklace_parsers.h"
+#include "type_parsers.h"
 
 
 namespace geoviz
+{
+namespace necklace_map
 {
 
 /**@class IntervalTypeParser
@@ -47,8 +49,7 @@ bool IntervalTypeParser::operator()(const std::string& str) const
   {
     type = IntervalType::kCentroid;
     return true;
-  }
-  else if (str == kWedge)
+  } else if (str == kWedge)
   {
     type = IntervalType::kWedge;
     return true;
@@ -95,8 +96,7 @@ bool OrderTypeParser::operator()(const std::string& str) const
   {
     type = OrderType::kFixed;
     return true;
-  }
-  else if (str == kAny)
+  } else if (str == kAny)
   {
     type = OrderType::kAny;
     return true;
@@ -122,4 +122,5 @@ std::string OrderTypeParser::Serialize() const
  * @brief The last order type parsed.
  */
 
+} // namespace necklace_map
 } // namespace geoviz

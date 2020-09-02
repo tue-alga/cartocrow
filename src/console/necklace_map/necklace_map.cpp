@@ -187,7 +187,7 @@ DEFINE_double
   "Opacity of the necklace beads in the output. Must be in the range [0, 1]."
   " The necklace beads are drawn with roughly the same style as the input regions."
   " However, the boundaries will be hidden for transparant beads."
-  // The reason for hiding the boundary is that it has undesirable interaction with the drop shadow filter applied to the beads.
+// The reason for hiding the boundary is that it has undesirable interaction with the drop shadow filter applied to the beads.
 );
 
 DEFINE_double
@@ -247,7 +247,8 @@ DEFINE_bool
 );
 
 
-void ValidateFlags(geoviz::necklace_map::Parameters& parameters, geoviz::WriterOptions::Ptr& write_options)
+void
+ValidateFlags(geoviz::necklace_map::Parameters& parameters, geoviz::necklace_map::WriterOptions::Ptr& write_options)
 {
   bool correct = true;
   LOG(INFO) << "necklace_map_cla flags:";
@@ -267,7 +268,11 @@ void ValidateFlags(geoviz::necklace_map::Parameters& parameters, geoviz::WriterO
 
   // Interval parameters.
   {
-    correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(interval_type), geoviz::IntervalTypeParser(parameters.interval_type));
+    correct &= CheckAndPrintFlag
+    (
+      FLAGS_NAME_AND_VALUE(interval_type),
+      geoviz::necklace_map::IntervalTypeParser(parameters.interval_type)
+    );
 
     MakeRangeCheck(0.0, M_PI)(FLAGS_centroid_interval_length_rad);
     parameters.centroid_interval_length_rad = FLAGS_centroid_interval_length_rad;
@@ -280,7 +285,11 @@ void ValidateFlags(geoviz::necklace_map::Parameters& parameters, geoviz::WriterO
 
   // Scale factor optimization parameters.
   {
-    correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(order_type), geoviz::OrderTypeParser(parameters.order_type));
+    correct &= CheckAndPrintFlag
+      (
+        FLAGS_NAME_AND_VALUE(order_type),
+        geoviz::necklace_map::OrderTypeParser(parameters.order_type)
+      );
 
     correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(buffer_rad), MakeRangeCheck(0.0, M_PI));
     parameters.buffer_rad = FLAGS_buffer_rad;
@@ -299,15 +308,15 @@ void ValidateFlags(geoviz::necklace_map::Parameters& parameters, geoviz::WriterO
 
     using Closure = Closure;
     correct &= CheckAndPrintFlag
-    (
-      FLAGS_NAME_AND_VALUE(aversion_ratio),
-      MakeRangeCheck<Closure::kClosed, Closure::kClosed>(0.0, 1.0)
-    );
+      (
+        FLAGS_NAME_AND_VALUE(aversion_ratio),
+        MakeRangeCheck<Closure::kClosed, Closure::kClosed>(0.0, 1.0)
+      );
     parameters.aversion_ratio = FLAGS_aversion_ratio;
   }
 
   // Output parameters.
-  using Options = geoviz::WriterOptions;
+  using Options = geoviz::necklace_map::WriterOptions;
   write_options = Options::Default();
   {
     correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(pixel_width), IsStrictlyPositive<int32_t>());
@@ -343,16 +352,16 @@ void ValidateFlags(geoviz::necklace_map::Parameters& parameters, geoviz::WriterO
     write_options->draw_bead_angles = FLAGS_draw_bead_angles;
   }
 
-  correct &= CheckAndPrintFlag( FLAGS_NAME_AND_VALUE( log_dir ), Or<Empty, IsDirectory> );
-  PrintFlag( FLAGS_NAME_AND_VALUE( stderrthreshold ) );
-  PrintFlag( FLAGS_NAME_AND_VALUE( v ) );
+  correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(log_dir), Or<Empty, IsDirectory>);
+  PrintFlag(FLAGS_NAME_AND_VALUE(stderrthreshold));
+  PrintFlag(FLAGS_NAME_AND_VALUE(v));
 
-  if( !correct ) LOG(FATAL) << "Errors in flags; Terminating.";
+  if (!correct) LOG(FATAL) << "Errors in flags; Terminating.";
 }
 
 bool ReadData(std::vector<geoviz::necklace_map::MapElement::Ptr>& elements)
 {
-  geoviz::DataReader data_reader;
+  geoviz::necklace_map::DataReader data_reader;
   return data_reader.ReadFile(FLAGS_in_data_filename, FLAGS_in_value_name, elements);
 }
 
@@ -363,7 +372,7 @@ bool ReadGeometry
   geoviz::Number& scale_factor
 )
 {
-  geoviz::SvgReader svg_reader;
+  geoviz::necklace_map::SvgReader svg_reader;
   return svg_reader.ReadFile(FLAGS_in_geometry_filename, elements, necklaces, scale_factor);
 }
 
@@ -372,10 +381,10 @@ void WriteOutput
   const std::vector<geoviz::necklace_map::MapElement::Ptr>& elements,
   const std::vector<geoviz::necklace_map::Necklace::Ptr>& necklaces,
   const geoviz::Number& scale_factor,
-  const geoviz::WriterOptions::Ptr& write_options
+  const geoviz::necklace_map::WriterOptions::Ptr& write_options
 )
 {
-  geoviz::NecklaceWriter writer;
+  geoviz::necklace_map::SvgWriter writer;
   if (FLAGS_out_website)
     writer.Write(elements, necklaces, scale_factor, write_options, std::cout);
 
@@ -388,20 +397,20 @@ void WriteOutput
 }
 
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
   InitApplication
-  (
-    argc,
-    argv,
-    "Command line application that exposes the functionality of the GeoViz necklace map.",
-    {"--in_geometry_filename=<file>", "--in_data_filename=<file>", "--in_value_name=<column>"}
-  );
+    (
+      argc,
+      argv,
+      "Command line application that exposes the functionality of the GeoViz necklace map.",
+      {"--in_geometry_filename=<file>", "--in_data_filename=<file>", "--in_value_name=<column>"}
+    );
 
 
   // Validate the settings.
   geoviz::necklace_map::Parameters parameters;
-  geoviz::WriterOptions::Ptr write_options;
+  geoviz::necklace_map::WriterOptions::Ptr write_options;
   ValidateFlags(parameters, write_options);
 
 
@@ -428,8 +437,7 @@ int main(int argc, char **argv)
     // Compute the optimal scale factor and placement.
     scale_factor = ComputeScaleFactor(parameters, elements, necklaces);
     LOG(INFO) << "Computed scale factor: " << scale_factor;
-  }
-  else
+  } else
   {
     // Compute just the placement.
     ComputePlacement(parameters, scale_factor, elements, necklaces);

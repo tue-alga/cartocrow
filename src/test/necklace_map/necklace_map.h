@@ -79,7 +79,7 @@ struct NecklaceDataWesternEurope
     if (data.elements.empty())
     {
       // Read the geometry.
-      geoviz::SvgReader svg_reader;
+      geoviz::necklace_map::SvgReader svg_reader;
       const filesystem::path in_geometry_path = kDataDir / "wEU.svg";
       UNITTEST_REQUIRE UNITTEST_CHECK(svg_reader.ReadFile(in_geometry_path, data.elements, data.necklaces));
     }
@@ -91,7 +91,7 @@ struct NecklaceDataWesternEurope
       return true;
     value_name = in_value_name;
 
-    geoviz::DataReader data_reader;
+    geoviz::necklace_map::DataReader data_reader;
     const filesystem::path in_data_path = kDataDir / "wEU.txt";
     return data_reader.ReadFile(in_data_path, in_value_name, data.elements);
   }
@@ -223,7 +223,7 @@ struct NecklaceDataEastAsia
     if (data.elements.empty())
     {
       // Read the geometry.
-      geoviz::SvgReader svg_reader;
+      geoviz::necklace_map::SvgReader svg_reader;
       const filesystem::path in_geometry_path = kDataDir / "eAsia.svg";
       UNITTEST_REQUIRE UNITTEST_CHECK(svg_reader.ReadFile(in_geometry_path, data.elements, data.necklaces));
     }
@@ -235,7 +235,7 @@ struct NecklaceDataEastAsia
       return true;
     value_name = in_value_name;
 
-    geoviz::DataReader data_reader;
+    geoviz::necklace_map::DataReader data_reader;
     const filesystem::path in_data_path = kDataDir / "eAsia.txt";
     return data_reader.ReadFile(in_data_path, in_value_name, data.elements);
   }

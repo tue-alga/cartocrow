@@ -21,8 +21,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Created by tvl (t.vanlankveld@esciencecenter.nl) on 13-02-2020
 */
 
-#ifndef CONSOLE_NECKLACE_MAP_IO_NECKLACE_PARSERS_H
-#define CONSOLE_NECKLACE_MAP_IO_NECKLACE_PARSERS_H
+#ifndef CONSOLE_NECKLACE_MAP_IO_TYPE_PARSERS_H
+#define CONSOLE_NECKLACE_MAP_IO_TYPE_PARSERS_H
 
 #include <string>
 
@@ -30,6 +30,8 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 13-02-2020
 
 
 namespace geoviz
+{
+namespace necklace_map
 {
 
 class IntervalTypeParser
@@ -67,6 +69,7 @@ class OrderTypeParser
   OrderType& type;
 }; // class OrderTypeParser
 
+} // namespace necklace_map
 } // namespace geoviz
 
-#endif //CONSOLE_NECKLACE_MAP_IO_NECKLACE_PARSERS_H
+#endif //CONSOLE_NECKLACE_MAP_IO_TYPE_PARSERS_H

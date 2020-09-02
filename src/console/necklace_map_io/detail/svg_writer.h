@@ -21,8 +21,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Created by tvl (t.vanlankveld@esciencecenter.nl) on 29-01-2020
 */
 
-#ifndef CONSOLE_NECKLACE_MAP_IO_DETAIL_NECKLACE_WRITER_H
-#define CONSOLE_NECKLACE_MAP_IO_DETAIL_NECKLACE_WRITER_H
+#ifndef CONSOLE_NECKLACE_MAP_IO_DETAIL_SVG_WRITER_H
+#define CONSOLE_NECKLACE_MAP_IO_DETAIL_SVG_WRITER_H
 
 #include <string>
 #include <unordered_map>
@@ -37,12 +37,15 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 29-01-2020
 
 namespace geoviz
 {
+namespace necklace_map
+{
 
 struct WriterOptions
 {
   using Ptr = std::shared_ptr<WriterOptions>;
 
   static Ptr Default();
+
   static Ptr Debug();
 
   int pixel_width;
@@ -66,22 +69,22 @@ struct WriterOptions
 namespace detail
 {
 
-class NecklaceWriter
+class SvgWriter
 {
  public:
   using MapElement = necklace_map::MapElement;
   using Necklace = necklace_map::Necklace;
 
-  NecklaceWriter
-  (
-    const std::vector<MapElement::Ptr>& elements,
-    const std::vector<Necklace::Ptr>& necklaces,
-    const Number& scale_factor,
-    const WriterOptions::Ptr& options,
-    std::ostream& out
-  );
+  SvgWriter
+    (
+      const std::vector<MapElement::Ptr>& elements,
+      const std::vector<Necklace::Ptr>& necklaces,
+      const Number& scale_factor,
+      const WriterOptions::Ptr& options,
+      std::ostream& out
+    );
 
-  ~NecklaceWriter();
+  ~SvgWriter();
 
   void DrawPolygonRegions();
 
@@ -135,9 +138,10 @@ class NecklaceWriter
   BeadIntervalMap bead_interval_map_;
 
   tinyxml2::XMLPrinter printer_;
-}; // class NecklaceWriter
+}; // class SvgWriter
 
 } // namespace detail
+} // namespace necklace_map
 } // namespace geoviz
 
-#endif //CONSOLE_NECKLACE_MAP_IO_DETAIL_NECKLACE_WRITER_H
+#endif //CONSOLE_NECKLACE_MAP_IO_DETAIL_SVG_WRITER_H

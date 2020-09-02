@@ -23,9 +23,9 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 14-04-2020
 #ifndef CONSOLE_NECKLACE_MAP_IO_NECKLACE_MAP_IO_H
 #define CONSOLE_NECKLACE_MAP_IO_NECKLACE_MAP_IO_H
 
-#include "console/necklace_map_io/necklace_data_reader.h"
-#include "console/necklace_map_io/necklace_writer.h"
-#include "console/necklace_map_io/necklace_parsers.h"
-#include "console/necklace_map_io/necklace_svg_reader.h"
+#include "console/necklace_map_io/data_reader.h"
+#include "console/necklace_map_io/svg_reader.h"
+#include "console/necklace_map_io/svg_writer.h"
+#include "console/necklace_map_io/type_parsers.h"
 
 #endif //CONSOLE_NECKLACE_MAP_IO_NECKLACE_MAP_IO_H

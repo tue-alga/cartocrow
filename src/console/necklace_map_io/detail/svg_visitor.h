@@ -21,8 +21,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Created by tvl (t.vanlankveld@esciencecenter.nl) on 26-11-2019
 */
 
-#ifndef CONSOLE_NECKLACE_MAP_IO_DETAIL_NECKLACE_SVG_VISITOR_H
-#define CONSOLE_NECKLACE_MAP_IO_DETAIL_NECKLACE_SVG_VISITOR_H
+#ifndef CONSOLE_NECKLACE_MAP_IO_DETAIL_SVG_VISITOR_H
+#define CONSOLE_NECKLACE_MAP_IO_DETAIL_SVG_VISITOR_H
 
 #include <memory>
 #include <unordered_map>
@@ -39,10 +39,12 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 26-11-2019
 
 namespace geoviz
 {
+namespace necklace_map
+{
 namespace detail
 {
 
-class NecklaceMapSvgVisitor : public SvgVisitor
+class SvgVisitor : public geoviz::detail::SvgVisitor
 {
  private:
   using MapElement = necklace_map::MapElement;
@@ -51,13 +53,13 @@ class NecklaceMapSvgVisitor : public SvgVisitor
   using LookupTable = std::unordered_map<std::string, size_t>;
 
  public:
-  NecklaceMapSvgVisitor
-  (
-    std::vector<necklace_map::MapElement::Ptr>& elements,
-    std::vector<necklace_map::Necklace::Ptr>& necklaces,
-    Number& scale_factor,
-    const bool strict_validity = true
-  );
+  SvgVisitor
+    (
+      std::vector<necklace_map::MapElement::Ptr>& elements,
+      std::vector<necklace_map::Necklace::Ptr>& necklaces,
+      Number& scale_factor,
+      const bool strict_validity = true
+    );
 
  private:
   bool VisitExit(const tinyxml2::XMLElement& element);
@@ -71,17 +73,18 @@ class NecklaceMapSvgVisitor : public SvgVisitor
   bool FinalizeSvg();
 
   bool AddCircleNecklace(const std::string& necklace_id, const Point& center, const Number& radius);
+
   bool AddGenericNecklace(const std::string& necklace_id, const std::string& commands, const Point& kernel);
 
   bool AddMapElement
-  (
-    const std::string& commands,
-    const std::string& angle_rad,
-    const std::string& feasible,
-    const std::string& region_id,
-    const std::string& necklace_id,
-    const std::string& style
-  );
+    (
+      const std::string& commands,
+      const std::string& angle_rad,
+      const std::string& feasible,
+      const std::string& region_id,
+      const std::string& necklace_id,
+      const std::string& style
+    );
 
   std::vector<MapElement::Ptr>& elements_;
   std::vector<std::string> necklace_ids_;
@@ -93,9 +96,10 @@ class NecklaceMapSvgVisitor : public SvgVisitor
   Number& scale_factor_;
 
   bool strict_validity_;
-}; // class NecklaceMapSvgVisitor
+}; // class SvgVisitor
 
 } // namespace detail
+} // namespace necklace_map
 } // namespace geoviz
 
-#endif //CONSOLE_NECKLACE_MAP_IO_DETAIL_NECKLACE_SVG_VISITOR_H
+#endif //CONSOLE_NECKLACE_MAP_IO_DETAIL_SVG_VISITOR_H

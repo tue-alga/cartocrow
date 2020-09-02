@@ -21,8 +21,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Created by tvl (t.vanlankveld@esciencecenter.nl) on 29-01-2020
 */
 
-#ifndef CONSOLE_NECKLACE_MAP_IO_NECKLACE_WRITER_H
-#define CONSOLE_NECKLACE_MAP_IO_NECKLACE_WRITER_H
+#ifndef CONSOLE_NECKLACE_MAP_IO_SVG_WRITER_H
+#define CONSOLE_NECKLACE_MAP_IO_SVG_WRITER_H
 
 #include <memory>
 #include <ostream>
@@ -31,30 +31,33 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 29-01-2020
 #include "geoviz/common/core_types.h"
 #include "geoviz/necklace_map/map_element.h"
 #include "geoviz/necklace_map/necklace.h"
-#include "console/necklace_map_io/detail/necklace_writer.h"
+#include "console/necklace_map_io/detail/svg_writer.h"
 
 
 namespace geoviz
 {
+namespace necklace_map
+{
 
-class NecklaceWriter
+class SvgWriter
 {
  public:
   using MapElement = necklace_map::MapElement;
   using Necklace = necklace_map::Necklace;
 
-  NecklaceWriter();
+  SvgWriter();
 
   bool Write
-  (
-    const std::vector<MapElement::Ptr>& elements,
-    const std::vector<Necklace::Ptr>& necklaces,
-    const Number& scale_factor,
-    const WriterOptions::Ptr& options,
-    std::ostream& out
-  ) const;
-}; // class NecklaceWriter
+    (
+      const std::vector<MapElement::Ptr>& elements,
+      const std::vector<Necklace::Ptr>& necklaces,
+      const Number& scale_factor,
+      const WriterOptions::Ptr& options,
+      std::ostream& out
+    ) const;
+}; // class SvgWriter
 
+} // namespace necklace_map
 } // namespace geoviz
 
-#endif //CONSOLE_NECKLACE_MAP_IO_NECKLACE_WRITER_H
+#endif //CONSOLE_NECKLACE_MAP_IO_SVG_WRITER_H

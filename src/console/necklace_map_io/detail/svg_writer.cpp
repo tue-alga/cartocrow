@@ -21,7 +21,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Created by tvl (t.vanlankveld@esciencecenter.nl) on 29-01-2020
 */
 
-#include "necklace_writer.h"
+#include "svg_writer.h"
 
 #include <sstream>
 
@@ -286,6 +286,8 @@ class DrawNecklaceShapeVisitor : public necklace_map::BezierNecklaceVisitor
 
 } // anonymous namespace
 
+namespace necklace_map
+{
 
 WriterOptions::Ptr WriterOptions::Default()
 {
@@ -337,7 +339,7 @@ WriterOptions::Ptr WriterOptions::Debug()
 namespace detail
 {
 
-/**@class NecklaceWriter
+/**@class SvgWriter
  * @brief Implementation for writing the necklace map to a stream.
  *
  * Note that the actual writing is performed when this object is destroyed. While the object lives, various features can be added to the output.
@@ -350,14 +352,14 @@ namespace detail
  * @param options the options that influence how and what to write.
  * @param out the destination to write to.
  */
-NecklaceWriter::NecklaceWriter
-(
-  const std::vector<MapElement::Ptr>& elements,
-  const std::vector<Necklace::Ptr>& necklaces,
-  const Number& scale_factor,
-  const WriterOptions::Ptr& options,
-  std::ostream& out
-) :
+SvgWriter::SvgWriter
+  (
+    const std::vector<MapElement::Ptr>& elements,
+    const std::vector<Necklace::Ptr>& necklaces,
+    const Number& scale_factor,
+    const WriterOptions::Ptr& options,
+    std::ostream& out
+  ) :
   elements_(elements),
   necklaces_(necklaces),
   scale_factor_(scale_factor),
@@ -369,7 +371,7 @@ NecklaceWriter::NecklaceWriter
   OpenSvg();
 }
 
-NecklaceWriter::~NecklaceWriter()
+SvgWriter::~SvgWriter()
 {
   CloseSvg();
 
@@ -380,7 +382,7 @@ NecklaceWriter::~NecklaceWriter()
  *
  * These are drawn with the same style as the input, with the exception of the opacity. The opacity can either be set to the input opacity, or to some fixed value.
  */
-void NecklaceWriter::DrawPolygonRegions()
+void SvgWriter::DrawPolygonRegions()
 {
   printer_.OpenElement("g");
   printer_.PushComment("Regions");
@@ -433,7 +435,7 @@ void NecklaceWriter::DrawPolygonRegions()
  *
  * These are drawn with the same style as the input, with the exception of the opacity. The opacity can either be set to the input opacity, or to some fixed value.
  */
-void NecklaceWriter::DrawPointRegions()
+void SvgWriter::DrawPointRegions()
 {
   printer_.OpenElement("g");
   printer_.PushComment("Point Regions");
@@ -507,7 +509,7 @@ void NecklaceWriter::DrawPointRegions()
  *
  * The necklace curves are always drawn as a solid black curve.
  */
-void NecklaceWriter::DrawNecklaces()
+void SvgWriter::DrawNecklaces()
 {
   if (!options_->draw_necklace_curve)
     return;
@@ -539,7 +541,7 @@ void NecklaceWriter::DrawNecklaces()
  * The necklace beads use mostly the same style as the regions, with drop-shadows to differentiate them for the underlying geography.
  * However, they can be forced to be semi-transparant. This also influences how their drop shadows and their borders are drawn.
  */
-void NecklaceWriter::DrawBeads()
+void SvgWriter::DrawBeads()
 {
   if (scale_factor_ == 0)
     return;
@@ -596,7 +598,7 @@ void NecklaceWriter::DrawBeads()
  *
  * The feasible intervals are drawn as non-overlapping circular arcs with their color matching the interior color of the regions.
  */
-void NecklaceWriter::DrawFeasibleIntervals()
+void SvgWriter::DrawFeasibleIntervals()
 {
   if (!options_->draw_feasible_intervals)
     return;
@@ -642,9 +644,9 @@ void NecklaceWriter::DrawFeasibleIntervals()
           std::stringstream stream;
           stream << std::setprecision(kIntervalNumericPrecision);
           stream <<
-            "M " << endpoint_cw.x() << " " << endpoint_cw.y() <<
-            " A " << radius << " " << radius << " 0 " << large_arc_flag << " 1 " <<
-            endpoint_ccw.x() << " " << endpoint_ccw.y();
+                 "M " << endpoint_cw.x() << " " << endpoint_cw.y() <<
+                 " A " << radius << " " << radius << " 0 " << large_arc_flag << " 1 " <<
+                 endpoint_ccw.x() << " " << endpoint_ccw.y();
 
           printer_.PushAttribute("d", stream.str().c_str());
         }
@@ -664,7 +666,7 @@ void NecklaceWriter::DrawFeasibleIntervals()
  *
  * If the feasible regions are also drawn, the valid intervals extend to their corresponding feasible interval. Otherwise, they extend to the necklace curve.
  */
-void NecklaceWriter::DrawValidIntervals()
+void SvgWriter::DrawValidIntervals()
 {
   if (!options_->draw_valid_intervals)
     return;
@@ -709,9 +711,9 @@ void NecklaceWriter::DrawValidIntervals()
           std::stringstream stream;
           stream << std::setprecision(kIntervalNumericPrecision);
           stream <<
-               "M " << endpoint_cw.x() << " " << endpoint_cw.y() <<
-               " L " << interval_shape->kernel().x() << " " << interval_shape->kernel().y() <<
-               " L " << endpoint_ccw.x() << " " << endpoint_ccw.y();
+                 "M " << endpoint_cw.x() << " " << endpoint_cw.y() <<
+                 " L " << interval_shape->kernel().x() << " " << interval_shape->kernel().y() <<
+                 " L " << endpoint_ccw.x() << " " << endpoint_ccw.y();
 
           printer_.PushAttribute("d", stream.str().c_str());
         }
@@ -731,7 +733,7 @@ void NecklaceWriter::DrawValidIntervals()
  *
  * If the feasible regions are also drawn, the region angles extend to their corresponding feasible interval. Otherwise, they extend to the necklace curve.
  */
-void NecklaceWriter::DrawRegionAngles()
+void SvgWriter::DrawRegionAngles()
 {
   if (!options_->draw_region_angles)
     return;
@@ -788,7 +790,7 @@ void NecklaceWriter::DrawRegionAngles()
  *
  * These line segments are always colored black.
  */
-void NecklaceWriter::DrawBeadAngles()
+void SvgWriter::DrawBeadAngles()
 {
   if (!options_->draw_bead_angles)
     return;
@@ -833,7 +835,7 @@ void NecklaceWriter::DrawBeadAngles()
   printer_.CloseElement(); // g
 }
 
-void NecklaceWriter::OpenSvg()
+void SvgWriter::OpenSvg()
 {
   // TODO(tvl) add note to documentation that we explicitly do not claim any copyright over the output of the system, with the intention that the user is able to reserve any rights for themselves.
 
@@ -886,14 +888,14 @@ void NecklaceWriter::OpenSvg()
   AddDropShadowFilter();
 }
 
-void NecklaceWriter::CloseSvg()
+void SvgWriter::CloseSvg()
 {
   // Add hint to display when the geometry could not be drawn.
   printer_.PushText("Sorry, your browser does not support the svg tag.");
   printer_.CloseElement(); // svg
 }
 
-void NecklaceWriter::ComputeBoundingBox()
+void SvgWriter::ComputeBoundingBox()
 {
   // Add the regions to the bounding box.
   for (const MapElement::Ptr& element : elements_)
@@ -901,12 +903,12 @@ void NecklaceWriter::ComputeBoundingBox()
       bounding_box_ += polygon.bbox();
 
   if
-  (
+    (
     options_->draw_necklace_curve ||
     options_->draw_feasible_intervals ||
     options_->draw_valid_intervals ||
     options_->draw_region_angles
-  )
+    )
   {
     // Add the necklace curves to the bounding box.
     for (const Necklace::Ptr& necklace : necklaces_)
@@ -953,7 +955,7 @@ void NecklaceWriter::ComputeBoundingBox()
   unit_px_ = (bounding_box_.xmax() - bounding_box_.xmin()) / options_->pixel_width;
 }
 
-void NecklaceWriter::CreateBeadIntervalShapes()
+void SvgWriter::CreateBeadIntervalShapes()
 {
   for (const Necklace::Ptr& necklace : necklaces_)
   {
@@ -975,8 +977,7 @@ void NecklaceWriter::CreateBeadIntervalShapes()
         // Create a new circle shape to use for this bead.
         const Number radius = interval_shape->ComputeRadius() + kLineWidthPx * unit_px_ * ++count;
         bead_interval_map_[bead] = std::make_shared<CircleNecklace>(Circle(necklace->shape->kernel(), radius * radius));
-      }
-      else
+      } else
       {
         bead_interval_map_[bead] = interval_shape;
       }
@@ -984,7 +985,7 @@ void NecklaceWriter::CreateBeadIntervalShapes()
   }
 }
 
-void NecklaceWriter::AddDropShadowFilter()
+void SvgWriter::AddDropShadowFilter()
 {
   printer_.OpenElement("defs");
   printer_.OpenElement("filter");
@@ -1074,7 +1075,7 @@ void NecklaceWriter::AddDropShadowFilter()
   printer_.CloseElement(); // defs
 }
 
-void NecklaceWriter::DrawKernel(const Point& kernel)
+void SvgWriter::DrawKernel(const Point& kernel)
 {
   if (!options_->draw_necklace_kernel)
     return;
@@ -1104,7 +1105,7 @@ void NecklaceWriter::DrawKernel(const Point& kernel)
   printer_.CloseElement(); // circle
 }
 
-void NecklaceWriter::DrawBeadIds()
+void SvgWriter::DrawBeadIds()
 {
   if (!options_->draw_bead_ids)
     return;
@@ -1137,10 +1138,10 @@ void NecklaceWriter::DrawBeadIds()
 
         // Note that the 'transform' argument does not apply to text coordinates.
         const Point transformed
-        (
-          kTransformScale * (position.x() - bounding_box_.xmin()),
-          kTransformScale * (bounding_box_.ymax() - position.y())
-        );
+          (
+            kTransformScale * (position.x() - bounding_box_.xmin()),
+            kTransformScale * (bounding_box_.ymax() - position.y())
+          );
 
         {
           std::stringstream stream;
@@ -1163,4 +1164,5 @@ void NecklaceWriter::DrawBeadIds()
 }
 
 } // namespace detail
+} // namespace necklace_map
 } // namespace geoviz
