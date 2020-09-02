@@ -35,6 +35,10 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-2019
 #include "geoviz/necklace_map/map_element.h"
 #include "geoviz/necklace_map/necklace.h"
 #include "geoviz/necklace_map/parameters.h"
+#include "geoviz/necklace_map/io/data_reader.h"
+#include "geoviz/necklace_map/io/svg_reader.h"
+#include "geoviz/necklace_map/io/svg_writer.h"
+#include "geoviz/necklace_map/io/type_parsers.h"
 
 
 namespace geoviz

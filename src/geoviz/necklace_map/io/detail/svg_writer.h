@@ -21,8 +21,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Created by tvl (t.vanlankveld@esciencecenter.nl) on 29-01-2020
 */
 
-#ifndef CONSOLE_NECKLACE_MAP_IO_DETAIL_SVG_WRITER_H
-#define CONSOLE_NECKLACE_MAP_IO_DETAIL_SVG_WRITER_H
+#ifndef GEOVIZ_NECKLACE_MAP_IO_DETAIL_SVG_WRITER_H
+#define GEOVIZ_NECKLACE_MAP_IO_DETAIL_SVG_WRITER_H
 
 #include <string>
 #include <unordered_map>
@@ -144,4 +144,4 @@ class SvgWriter
 } // namespace necklace_map
 } // namespace geoviz
 
-#endif //CONSOLE_NECKLACE_MAP_IO_DETAIL_SVG_WRITER_H
+#endif //GEOVIZ_NECKLACE_MAP_IO_DETAIL_SVG_WRITER_H

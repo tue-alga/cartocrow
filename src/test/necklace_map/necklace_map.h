@@ -30,7 +30,6 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-04-2020
 
 #include <cmake/geoviz_test_config.h>
 #include <console/common/utils_filesystem.h>
-#include <console/necklace_map_io/necklace_map_io.h>
 #include <geoviz/necklace_map/necklace_map.h>
 
 #include "test/test.h"

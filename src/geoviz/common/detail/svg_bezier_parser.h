@@ -19,12 +19,12 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Created by tvl (t.vanlankveld@esciencecenter.nl) on 13-05-2020
 */
 
-#ifndef CONSOLE_COMMON_DETAIL_SVG_BEZIER_PARSER_H
-#define CONSOLE_COMMON_DETAIL_SVG_BEZIER_PARSER_H
+#ifndef GEOVIZ_COMMON_DETAIL_SVG_BEZIER_PARSER_H
+#define GEOVIZ_COMMON_DETAIL_SVG_BEZIER_PARSER_H
 
 #include "geoviz/common/core_types.h"
 
-#include "console/common/detail/svg_path_parser.h"
+#include "geoviz/common/detail/svg_path_parser.h"
 #include "geoviz/necklace_map/bezier_necklace.h"
 
 
@@ -56,4 +56,4 @@ class SvgBezierConverter : public SvgPathConverter
 } // namespace detail
 } // namespace geoviz
 
-#endif //CONSOLE_COMMON_DETAIL_SVG_BEZIER_PARSER_H
+#endif //GEOVIZ_COMMON_DETAIL_SVG_BEZIER_PARSER_H

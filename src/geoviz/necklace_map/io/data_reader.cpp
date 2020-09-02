@@ -62,12 +62,12 @@ DataReader::DataReader()
  * @return whether the element values could be read successfully.
  */
 bool DataReader::ReadFile
-  (
-    const std::string& filename,
-    const std::string& value_name,
-    std::vector<necklace_map::MapElement::Ptr>& elements,
-    int max_retries /*= 2*/
-  )
+(
+  const std::string& filename,
+  const std::string& value_name,
+  std::vector<necklace_map::MapElement::Ptr>& elements,
+  int max_retries /*= 2*/
+)
 {
   std::fstream fin;
   int retry = 0;
@@ -119,11 +119,11 @@ bool DataReader::ReadFile
  * @return whether the element values could be read successfully.
  */
 bool DataReader::Parse
-  (
-    std::istream& in,
-    const std::string& value_name,
-    std::vector<necklace_map::MapElement::Ptr>& elements
-  )
+(
+  std::istream& in,
+  const std::string& value_name,
+  std::vector<necklace_map::MapElement::Ptr>& elements
+)
 {
   if (!detail::TableParser::Parse(in))
     return false;

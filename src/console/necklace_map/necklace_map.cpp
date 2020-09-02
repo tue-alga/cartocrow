@@ -30,9 +30,8 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-2019
 #include <geoviz/common/timer.h>
 #include <geoviz/necklace_map/necklace_map.h>
 
-#include "console/common/utils_cla.h"
-#include "console/common/utils_flags.h"
-#include "console/necklace_map_io/necklace_map_io.h"
+#include <console/common/utils_cla.h>
+#include <console/common/utils_flags.h>
 
 
 // the input flags are mutually exclusive per type to prevent accidentally setting both and 'the wrong one' being used.

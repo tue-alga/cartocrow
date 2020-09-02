@@ -76,11 +76,9 @@ find_package(gflags REQUIRED)
 ### LIBRARIES ###
 
 add_subdirectory(common)
-add_subdirectory(necklace_map_io)
 
 # Propagate variables up.
 set(COMMON_CLA_TARGET ${COMMON_CLA_TARGET} PARENT_SCOPE)
-set(NECKLACE_MAP_IO_TARGET ${NECKLACE_MAP_IO_TARGET} PARENT_SCOPE)
 
 ### EXECUTABLES ###
 # A few notes:

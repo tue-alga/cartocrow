@@ -18,19 +18,15 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-Created by tvl (t.vanlankveld@esciencecenter.nl) on 03-12-2019
+Created by tvl (t.vanlankveld@esciencecenter.nl) on 13-02-2020
 */
 
-#ifndef CONSOLE_NECKLACE_MAP_IO_DATA_READER_H
-#define CONSOLE_NECKLACE_MAP_IO_DATA_READER_H
+#ifndef GEOVIZ_NECKLACE_MAP_IO_TYPE_PARSERS_H
+#define GEOVIZ_NECKLACE_MAP_IO_TYPE_PARSERS_H
 
-#include <iostream>
 #include <string>
-#include <unordered_map>
-#include <vector>
 
-#include "console/common/detail/table_parser.h"
-#include "geoviz/necklace_map/map_element.h"
+#include <geoviz/necklace_map/parameters.h>
 
 
 namespace geoviz
@@ -38,28 +34,42 @@ namespace geoviz
 namespace necklace_map
 {
 
-class DataReader : public geoviz::detail::TableParser
+class IntervalTypeParser
 {
  public:
-  DataReader();
+  using IntervalType = geoviz::necklace_map::IntervalType;
 
-  bool ReadFile
-    (
-      const std::string& filename,
-      const std::string& value_name,
-      std::vector<necklace_map::MapElement::Ptr>& elements,
-      int max_retries = 2
-    );
+  static constexpr const char* kCentroid = "centroid";
+  static constexpr const char* kWedge = "wedge";
 
-  bool Parse
-    (
-      std::istream& in,
-      const std::string& value_name,
-      std::vector<necklace_map::MapElement::Ptr>& elements
-    );
-}; // class DataReader
+  IntervalTypeParser(IntervalType& type);
+
+  bool operator()(const std::string& str) const;
+
+  std::string Serialize() const;
+
+  IntervalType& type;
+}; // class IntervalTypeParser
+
+
+class OrderTypeParser
+{
+ public:
+  using OrderType = geoviz::necklace_map::OrderType;
+
+  static constexpr const char* kFixed = "fixed";
+  static constexpr const char* kAny = "any";
+
+  OrderTypeParser(OrderType& type);
+
+  bool operator()(const std::string& str) const;
+
+  std::string Serialize() const;
+
+  OrderType& type;
+}; // class OrderTypeParser
 
 } // namespace necklace_map
 } // namespace geoviz
 
-#endif //CONSOLE_NECKLACE_MAP_IO_DATA_READER_H
+#endif //GEOVIZ_NECKLACE_MAP_IO_TYPE_PARSERS_H

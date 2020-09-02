@@ -25,10 +25,10 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 26-11-2019
 
 #include <glog/logging.h>
 
-#include "console/common/detail/svg_path_parser.h"
-#include "console/common/detail/svg_point_parser.h"
-#include "console/common/detail/svg_bezier_parser.h"
-#include "console/common/detail/svg_polygon_parser.h"
+#include "geoviz/common/detail/svg_path_parser.h"
+#include "geoviz/common/detail/svg_point_parser.h"
+#include "geoviz/common/detail/svg_bezier_parser.h"
+#include "geoviz/common/detail/svg_polygon_parser.h"
 #include "geoviz/necklace_map/circular_range.h"
 
 

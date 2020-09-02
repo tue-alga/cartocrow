@@ -27,7 +27,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 26-11-2019
 
 #include <glog/logging.h>
 
-#include "console/necklace_map_io/detail/svg_visitor.h"
+#include "geoviz/necklace_map/io/detail/svg_visitor.h"
 
 DEFINE_bool
 (
