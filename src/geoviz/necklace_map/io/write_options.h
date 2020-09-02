@@ -18,21 +18,13 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-Created by tvl (t.vanlankveld@esciencecenter.nl) on 29-01-2020
+Created by tvl (t.vanlankveld@esciencecenter.nl) on 02-09-2020
 */
 
-#ifndef GEOVIZ_NECKLACE_MAP_IO_SVG_WRITER_H
-#define GEOVIZ_NECKLACE_MAP_IO_SVG_WRITER_H
+#ifndef GEOVIZ_NECKLACE_MAP_IO_WRITE_OPTIONS_H
+#define GEOVIZ_NECKLACE_MAP_IO_WRITE_OPTIONS_H
 
 #include <memory>
-#include <ostream>
-#include <vector>
-
-#include "geoviz/common/core_types.h"
-#include "geoviz/necklace_map/map_element.h"
-#include "geoviz/necklace_map/necklace.h"
-#include "geoviz/necklace_map/io/write_options.h"
-#include "geoviz/necklace_map/io/detail/svg_writer.h"
 
 
 namespace geoviz
@@ -40,25 +32,32 @@ namespace geoviz
 namespace necklace_map
 {
 
-class SvgWriter
+struct WriteOptions
 {
- public:
-  using MapElement = necklace_map::MapElement;
-  using Necklace = necklace_map::Necklace;
+  using Ptr = std::shared_ptr<WriteOptions>;
 
-  SvgWriter();
+  static Ptr Default();
 
-  bool Write
-  (
-    const std::vector<MapElement::Ptr>& elements,
-    const std::vector<Necklace::Ptr>& necklaces,
-    const Number& scale_factor,
-    const WriteOptions::Ptr& options,
-    std::ostream& out
-  ) const;
-}; // class SvgWriter
+  static Ptr Debug();
+
+  int pixel_width;
+
+  int region_precision;
+  double region_opacity;
+  double bead_opacity;
+  double bead_id_font_size_px;
+
+  bool draw_necklace_curve;
+  bool draw_necklace_kernel;
+  bool draw_bead_ids;
+
+  bool draw_feasible_intervals;
+  bool draw_valid_intervals;
+  bool draw_region_angles;
+  bool draw_bead_angles;
+}; // struct WriteOptions
 
 } // namespace necklace_map
 } // namespace geoviz
 
-#endif //GEOVIZ_NECKLACE_MAP_IO_SVG_WRITER_H
+#endif //GEOVIZ_NECKLACE_MAP_IO_WRITE_OPTIONS_H

@@ -48,13 +48,13 @@ SvgWriter::SvgWriter() {}
  * @return whether the necklace map could be successfully written to the stream.
  */
 bool SvgWriter::Write
-  (
-    const std::vector<MapElement::Ptr>& elements,
-    const std::vector<Necklace::Ptr>& necklaces,
-    const Number& scale_factor,
-    const WriterOptions::Ptr& options,
-    std::ostream& out
-  ) const
+(
+  const std::vector<MapElement::Ptr>& elements,
+  const std::vector<Necklace::Ptr>& necklaces,
+  const Number& scale_factor,
+  const WriteOptions::Ptr& options,
+  std::ostream& out
+) const
 {
   detail::SvgWriter writer(elements, necklaces, scale_factor, options, out);
 

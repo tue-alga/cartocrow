@@ -247,7 +247,7 @@ DEFINE_bool
 
 
 void
-ValidateFlags(geoviz::necklace_map::Parameters& parameters, geoviz::necklace_map::WriterOptions::Ptr& write_options)
+ValidateFlags(geoviz::necklace_map::Parameters& parameters, geoviz::necklace_map::WriteOptions::Ptr& write_options)
 {
   bool correct = true;
   LOG(INFO) << "necklace_map_cla flags:";
@@ -315,7 +315,7 @@ ValidateFlags(geoviz::necklace_map::Parameters& parameters, geoviz::necklace_map
   }
 
   // Output parameters.
-  using Options = geoviz::necklace_map::WriterOptions;
+  using Options = geoviz::necklace_map::WriteOptions;
   write_options = Options::Default();
   {
     correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(pixel_width), IsStrictlyPositive<int32_t>());
@@ -380,7 +380,7 @@ void WriteOutput
   const std::vector<geoviz::necklace_map::MapElement::Ptr>& elements,
   const std::vector<geoviz::necklace_map::Necklace::Ptr>& necklaces,
   const geoviz::Number& scale_factor,
-  const geoviz::necklace_map::WriterOptions::Ptr& write_options
+  const geoviz::necklace_map::WriteOptions::Ptr& write_options
 )
 {
   geoviz::necklace_map::SvgWriter writer;
@@ -409,7 +409,7 @@ int main(int argc, char** argv)
 
   // Validate the settings.
   geoviz::necklace_map::Parameters parameters;
-  geoviz::necklace_map::WriterOptions::Ptr write_options;
+  geoviz::necklace_map::WriteOptions::Ptr write_options;
   ValidateFlags(parameters, write_options);
 
 

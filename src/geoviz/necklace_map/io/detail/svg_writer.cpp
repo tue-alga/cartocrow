@@ -288,54 +288,6 @@ class DrawNecklaceShapeVisitor : public necklace_map::BezierNecklaceVisitor
 
 namespace necklace_map
 {
-
-WriterOptions::Ptr WriterOptions::Default()
-{
-  WriterOptions::Ptr options = std::make_shared<WriterOptions>();
-
-  options->pixel_width = 500;
-
-  options->region_precision = 9;
-  options->region_opacity = -1;
-  options->bead_opacity = 1;
-  options->bead_id_font_size_px = 16;
-
-  options->draw_necklace_curve = true;
-  options->draw_necklace_kernel = false;
-  options->draw_bead_ids = true;
-
-  options->draw_feasible_intervals = false;
-  options->draw_valid_intervals = false;
-  options->draw_region_angles = false;
-  options->draw_bead_angles = false;
-
-  return options;
-}
-
-WriterOptions::Ptr WriterOptions::Debug()
-{
-  WriterOptions::Ptr options = std::make_shared<WriterOptions>();
-
-  options->pixel_width = 500;
-
-  options->region_precision = 9;
-  options->region_opacity = -1;
-  options->bead_opacity = 0.5;
-  options->bead_id_font_size_px = 16;
-
-  options->draw_necklace_curve = true;
-  options->draw_necklace_kernel = true;
-  options->draw_bead_ids = true;
-
-  options->draw_feasible_intervals = true;
-  options->draw_valid_intervals = true;
-  options->draw_region_angles = false;
-  options->draw_bead_angles = true;
-
-  return options;
-}
-
-
 namespace detail
 {
 
@@ -353,13 +305,13 @@ namespace detail
  * @param out the destination to write to.
  */
 SvgWriter::SvgWriter
-  (
-    const std::vector<MapElement::Ptr>& elements,
-    const std::vector<Necklace::Ptr>& necklaces,
-    const Number& scale_factor,
-    const WriterOptions::Ptr& options,
-    std::ostream& out
-  ) :
+(
+  const std::vector<MapElement::Ptr>& elements,
+  const std::vector<Necklace::Ptr>& necklaces,
+  const Number& scale_factor,
+  const WriteOptions::Ptr& options,
+  std::ostream& out
+) :
   elements_(elements),
   necklaces_(necklaces),
   scale_factor_(scale_factor),

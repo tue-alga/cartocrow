@@ -33,39 +33,13 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 29-01-2020
 #include "geoviz/common/core_types.h"
 #include "geoviz/necklace_map/map_element.h"
 #include "geoviz/necklace_map/necklace.h"
+#include "geoviz/necklace_map/io/write_options.h"
 
 
 namespace geoviz
 {
 namespace necklace_map
 {
-
-struct WriterOptions
-{
-  using Ptr = std::shared_ptr<WriterOptions>;
-
-  static Ptr Default();
-
-  static Ptr Debug();
-
-  int pixel_width;
-
-  int region_precision;
-  double region_opacity;
-  double bead_opacity;
-  double bead_id_font_size_px;
-
-  bool draw_necklace_curve;
-  bool draw_necklace_kernel;
-  bool draw_bead_ids;
-
-  bool draw_feasible_intervals;
-  bool draw_valid_intervals;
-  bool draw_region_angles;
-  bool draw_bead_angles;
-}; // struct WriterOptions
-
-
 namespace detail
 {
 
@@ -76,13 +50,13 @@ class SvgWriter
   using Necklace = necklace_map::Necklace;
 
   SvgWriter
-    (
-      const std::vector<MapElement::Ptr>& elements,
-      const std::vector<Necklace::Ptr>& necklaces,
-      const Number& scale_factor,
-      const WriterOptions::Ptr& options,
-      std::ostream& out
-    );
+  (
+    const std::vector<MapElement::Ptr>& elements,
+    const std::vector<Necklace::Ptr>& necklaces,
+    const Number& scale_factor,
+    const WriteOptions::Ptr& options,
+    std::ostream& out
+  );
 
   ~SvgWriter();
 
@@ -129,7 +103,7 @@ class SvgWriter
   const Number scale_factor_;
   std::ostream& out_;
 
-  WriterOptions::Ptr options_;
+  WriteOptions::Ptr options_;
 
   Box bounding_box_;
   double unit_px_;
