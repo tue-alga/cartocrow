@@ -1,5 +1,5 @@
 /*
-The Necklace Map console application implements the algorithmic
+The Necklace Map library implements the algorithmic
 geo-visualization method by the same name, developed by
 Bettina Speckmann and Kevin Verbeek at TU Eindhoven
 (DOI: 10.1109/TVCG.2010.180 & 10.1142/S021819591550003X).
