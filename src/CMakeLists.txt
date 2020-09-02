@@ -89,10 +89,14 @@ install(
 )
 
 # Custom install target for IDE.
-set(CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_SOURCE_DIR}")
-add_custom_target(
-    install_${PROJECT_NAME}
-    "${CMAKE_COMMAND}" --build "${CMAKE_BINARY_DIR}" --target install
-    DEPENDS ${GEOVIZ_TARGET}
-    COMMENT "Installing ${PROJECT_NAME}"
-)
+# Removed, because the install prefix is not propagated to the dependencies,
+# meaning that they will always try to install to the system directory.
+# So far, I have not found a way to check whether the project was created by an IDE or from the console or the CMake GUI,
+# which could then be used to manually set the install prefix.
+#set(CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_SOURCE_DIR}")
+#add_custom_target(
+#    install_${PROJECT_NAME}
+#    "${CMAKE_COMMAND}" --build "${CMAKE_BINARY_DIR}" --target install
+#    DEPENDS ${GEOVIZ_TARGET}
+#    COMMENT "Installing ${PROJECT_NAME}"
+#)
