@@ -16,45 +16,48 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-Created by tvl (t.vanlankveld@esciencecenter.nl) on 07-11-2019
+Created by tvl (t.vanlankveld@esciencecenter.nl) on 04-09-2020
 */
 
-#ifndef GEOVIZ_COMMON_REGION_H
-#define GEOVIZ_COMMON_REGION_H
+#ifndef GEOVIZ_COMMON_POLAR_POINT_H
+#define GEOVIZ_COMMON_POLAR_POINT_H
 
-#include <string>
-#include <vector>
+#include <cmath>
 
-#include "geoviz/common/core_types.h"
+#include "geoviz/common/cgal_types.h"
 
 
 namespace geoviz
 {
 
-///@brief A geographically significant shape.
-class Region
+class PolarPoint
 {
  public:
-  //using PolygonSet = CGAL::Polygon_set_2<Kernel>; // Polygon_set_2 fails to initialize with the EPIC kernel: using simple list instead.
-  using PolygonSet = std::vector<Polygon_with_holes>;
+  PolarPoint();
 
- public:
-  explicit Region(const std::string& id);
+  PolarPoint(const CGAL::Origin& o);
 
-  bool IsPoint() const;
+  PolarPoint(const PolarPoint& p);
 
-  bool IsValid() const;
+  template<typename T1, typename T2>
+  PolarPoint(const T1& R, const T2& phi) : R_(R), phi_(phi) {}
 
-  bool MakeValid();
+  explicit PolarPoint(const Point& p);
 
-  void MakeSimple(Polygon& simple);
+  PolarPoint(const PolarPoint& p, const Vector& t);
 
-  std::string id;
-  PolygonSet shape;
+  const Number& R() const;
+  const Number& phi() const;
 
-  std::string style;
-}; // class Region
+  Point to_cartesian() const;
+
+ private:
+  static PolarPoint to_polar(const Point& p);
+  static PolarPoint translate_pole(const PolarPoint& p, const Vector& t);
+
+  Number R_, phi_;
+}; // class PolarPoint
 
 } // namespace geoviz
 
-#endif //GEOVIZ_COMMON_REGION_H
+#endif //GEOVIZ_COMMON_POLAR_POINT_H

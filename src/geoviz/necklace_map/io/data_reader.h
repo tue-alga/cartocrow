@@ -44,19 +44,19 @@ class DataReader : public geoviz::detail::TableParser
   DataReader();
 
   bool ReadFile
-    (
-      const std::string& filename,
-      const std::string& value_name,
-      std::vector<necklace_map::MapElement::Ptr>& elements,
-      int max_retries = 2
-    );
+  (
+    const std::string& filename,
+    const std::string& value_name,
+    std::vector<necklace_map::MapElement::Ptr>& elements,
+    int max_retries = 2
+  );
 
   bool Parse
-    (
-      std::istream& in,
-      const std::string& value_name,
-      std::vector<necklace_map::MapElement::Ptr>& elements
-    );
+  (
+    std::istream& in,
+    const std::string& value_name,
+    std::vector<necklace_map::MapElement::Ptr>& elements
+  );
 }; // class DataReader
 
 } // namespace necklace_map

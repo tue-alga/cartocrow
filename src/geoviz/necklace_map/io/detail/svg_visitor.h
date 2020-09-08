@@ -54,12 +54,12 @@ class SvgVisitor : public geoviz::detail::SvgVisitor
 
  public:
   SvgVisitor
-    (
-      std::vector<necklace_map::MapElement::Ptr>& elements,
-      std::vector<necklace_map::Necklace::Ptr>& necklaces,
-      Number& scale_factor,
-      const bool strict_validity = true
-    );
+  (
+    std::vector<necklace_map::MapElement::Ptr>& elements,
+    std::vector<necklace_map::Necklace::Ptr>& necklaces,
+    Number& scale_factor,
+    const bool strict_validity = true
+  );
 
  private:
   bool VisitExit(const tinyxml2::XMLElement& element);
@@ -77,14 +77,14 @@ class SvgVisitor : public geoviz::detail::SvgVisitor
   bool AddGenericNecklace(const std::string& necklace_id, const std::string& commands, const Point& kernel);
 
   bool AddMapElement
-    (
-      const std::string& commands,
-      const std::string& angle_rad,
-      const std::string& feasible,
-      const std::string& region_id,
-      const std::string& necklace_id,
-      const std::string& style
-    );
+  (
+    const std::string& commands,
+    const std::string& angle_rad,
+    const std::string& feasible,
+    const std::string& region_id,
+    const std::string& necklace_id,
+    const std::string& style
+  );
 
   std::vector<MapElement::Ptr>& elements_;
   std::vector<std::string> necklace_ids_;

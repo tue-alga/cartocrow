@@ -23,12 +23,11 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-2019
 #ifndef GEOVIZ_NECKLACE_MAP_NECKLACE_MAP_H
 #define GEOVIZ_NECKLACE_MAP_NECKLACE_MAP_H
 
-#include <string>
-#include <tuple>
 #include <vector>
 
-#include "geoviz/common/core_types.h"
-#include "geoviz/common/region.h"
+#include <geoviz/common/core_types.h>
+#include <geoviz/common/region.h>
+
 #include "geoviz/necklace_map/compute_feasible_interval.h"
 #include "geoviz/necklace_map/compute_scale_factor.h"
 #include "geoviz/necklace_map/compute_valid_placement.h"

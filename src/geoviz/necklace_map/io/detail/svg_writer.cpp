@@ -208,7 +208,7 @@ class NecklaceIntervalVisitor : public necklace_map::NecklaceShapeVisitor
 }; // class NecklaceIntervalVisitor
 
 
-class DrawNecklaceShapeVisitor : public necklace_map::BezierNecklaceVisitor
+class DrawNecklaceShapeVisitor : public necklace_map::NecklaceShapeVisitor
 {
  public:
   DrawNecklaceShapeVisitor(const std::string& necklace_style, const std::string& transform_matrix, tinyxml2::XMLPrinter& printer) :
@@ -242,12 +242,23 @@ class DrawNecklaceShapeVisitor : public necklace_map::BezierNecklaceVisitor
     printer_.OpenElement("path");
     printer_.PushAttribute("style", necklace_style_.c_str());
 
-    path_.clear();
-    shape.IterateCurves(*this);
-    path_ <<
-      " " << kAbsoluteClose <<
-      " " << kAbsoluteMove << start_point_;
-    printer_.PushAttribute("d", path_.str().c_str());
+    {
+      std::stringstream path;
+      const Point start_point = shape.spline().curves().front().source();
+      path << kAbsoluteMove << " " << start_point;
+
+      for (const BezierCurve& curve : shape.spline().curves())
+        path <<
+          " " << kAbsoluteCubicBezier <<
+          " " << curve.source_control() <<
+          " " << curve.target_control() <<
+          " " << curve.target();
+
+      path <<
+            " " << kAbsoluteClose <<
+            " " << kAbsoluteMove << start_point;
+      printer_.PushAttribute("d", path.str().c_str());
+    }
 
     printer_.PushAttribute("kx", necklace_->shape->kernel().x());
     printer_.PushAttribute("ky", necklace_->shape->kernel().y());
@@ -257,25 +268,7 @@ class DrawNecklaceShapeVisitor : public necklace_map::BezierNecklaceVisitor
     printer_.CloseElement();  // path
   }
 
-  void Visit(necklace_map::BezierCurve& curve) override
-  {
-    if (path_.str().empty())
-    {
-      start_point_ = curve.source();
-      path_ << kAbsoluteMove << " " << start_point_;
-    }
-
-    path_ <<
-      " " << kAbsoluteCubicBezier <<
-      " " << curve.source_control() <<
-      " " << curve.target_control() <<
-      " " << curve.target();
-  }
-
  private:
-  std::stringstream path_;
-  Point start_point_;
-
   necklace_map::Necklace::Ptr necklace_;
 
   const std::string& necklace_style_;

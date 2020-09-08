@@ -42,7 +42,7 @@ namespace detail
 /**@brief Construct an object for converting SVG path elements to a Bezier spline.
  * @param shape the output Bezier spline.
  */
-SvgBezierConverter::SvgBezierConverter(BezierNecklace& shape)
+SvgBezierConverter::SvgBezierConverter(BezierSpline& shape)
   : SvgPathConverter(), shape_(shape) {}
 
 void SvgBezierConverter::MoveTo_(const Point& to)
@@ -72,7 +72,6 @@ void SvgBezierConverter::CubeBezierTo_(const Point& control_1, const Point& cont
 
 void SvgBezierConverter::Close_()
 {
-  shape_.Finalize();
   CHECK(shape_.IsValid());
 }
 

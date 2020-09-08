@@ -58,7 +58,7 @@ bool CircleNecklace::IsValid() const
   return 0 < radius_;
 }
 
-bool CircleNecklace::IsEmpty() const
+/*bool CircleNecklace::IsEmpty() const
 {
   return 0 < radius_;
 }
@@ -66,7 +66,7 @@ bool CircleNecklace::IsEmpty() const
 bool CircleNecklace::IsClosed() const
 {
   return true;
-}
+}*/
 
 bool CircleNecklace::IntersectRay(const Number& angle_rad, Point& intersection) const
 {

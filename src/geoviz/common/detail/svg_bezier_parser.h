@@ -22,10 +22,9 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 13-05-2020
 #ifndef GEOVIZ_COMMON_DETAIL_SVG_BEZIER_PARSER_H
 #define GEOVIZ_COMMON_DETAIL_SVG_BEZIER_PARSER_H
 
+#include "geoviz/common/bezier_spline.h"
 #include "geoviz/common/core_types.h"
-
 #include "geoviz/common/detail/svg_path_parser.h"
-#include "geoviz/necklace_map/bezier_necklace.h"
 
 
 namespace geoviz
@@ -36,10 +35,7 @@ namespace detail
 class SvgBezierConverter : public SvgPathConverter
 {
  public:
-  using BezierNecklace = necklace_map::BezierNecklace;
-
- public:
-  explicit SvgBezierConverter(BezierNecklace& shape);
+  explicit SvgBezierConverter(BezierSpline& shape);
 
  private:
   void MoveTo_(const Point& to) override;
@@ -48,7 +44,7 @@ class SvgBezierConverter : public SvgPathConverter
   void CubeBezierTo_(const Point& control_1, const Point& control_2, const Point& to) override;
   void Close_() override;
 
-  BezierNecklace& shape_;
+  BezierSpline& shape_;
 
   Point source_;
 }; // class SvgBezierConverter

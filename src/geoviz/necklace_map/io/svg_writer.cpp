@@ -67,6 +67,8 @@ bool SvgWriter::Write
   writer.DrawBeadAngles();
   writer.DrawFeasibleIntervals();
   writer.DrawBeads();
+
+  return true;
 }
 
 } // namespace necklace_map

@@ -29,7 +29,6 @@ namespace geoviz
 namespace necklace_map
 {
 
-
 WriteOptions::Ptr WriteOptions::Default()
 {
   WriteOptions::Ptr options = std::make_shared<WriteOptions>();

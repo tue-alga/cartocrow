@@ -41,8 +41,6 @@ namespace detail
 namespace
 {
 
-constexpr const Number kCircleRatioEpsilon = 0.01;
-
 constexpr const char* kElementSvg = "svg";
 
 constexpr const char* kAttributeSvgScaleFactor = "scale_factor";
@@ -55,77 +53,6 @@ constexpr const char* kAttributeKernelX = "kx";
 constexpr const char* kAttributeKernelY = "ky";
 
 constexpr const char* kCommandsRestrictionArcNecklace = "LlZzCcQqSsTt";
-
-
-class CircumcenterVisitor : public necklace_map::BezierNecklaceVisitor
-{
- public:
-  void Visit(necklace_map::BezierCurve& curve) override
-  {
-    circumcenters_.push_back(CGAL::circumcenter(curve.source(), curve.Evaluate(0.5), curve.target()));
-  }
-
-  Point ComputeCenter() const
-  {
-    Vector sum(0, 0);
-    for (const Point& point : circumcenters_)
-      sum += point - Point(CGAL::ORIGIN);
-    return Point(CGAL::ORIGIN) + (sum / circumcenters_.size());
-  }
-
- private:
-  std::vector<Point> circumcenters_;
-};
-
-
-class CheckCircleVisitor : public necklace_map::BezierNecklaceVisitor
-{
- public:
-  CheckCircleVisitor() : squared_distance_min_(-1) {}
-
-  void Visit(necklace_map::BezierNecklace& shape) override
-  {
-    CircumcenterVisitor visitor;
-    shape.Accept(visitor);
-    kernel_ = visitor.ComputeCenter();
-  }
-
-  void Visit(necklace_map::BezierCurve& curve) override
-  {
-    if (squared_distance_min_ <= 0)
-      squared_distance_min_ = squared_distance_max_ = CGAL::squared_distance(kernel_, curve.source());
-
-    // Note that we do not check the source: this will be checked as the target of the previous curve.
-    const Number denom = 4;
-    for (int e = 1; e < denom; ++e)
-      SquaredDistance(curve.Evaluate(e / denom));
-
-    SquaredDistance(curve.target());
-  }
-
-  bool IsValid(const Number& epsilon) const
-  {
-    const Number ratio = squared_distance_max_ / squared_distance_min_;
-    return ratio <= (1 + epsilon);
-  }
-
-  Circle ComputeCircle() const
-  {
-    return Circle(kernel_, (squared_distance_min_ + squared_distance_max_) / 2.0);
-  }
-
- private:
-  void SquaredDistance(const Point& point)
-  {
-    const Number squared_distance = CGAL::squared_distance(kernel_, point);
-    squared_distance_min_ = std::min(squared_distance_min_, squared_distance);
-    squared_distance_max_ = std::max(squared_distance_max_, squared_distance);
-  }
-
-  Point kernel_;
-  Number squared_distance_min_;
-  Number squared_distance_max_;
-}; // class CheckCircleVisitor
 
 } // anonymous namespace
 
@@ -147,12 +74,12 @@ class CheckCircleVisitor : public necklace_map::BezierNecklaceVisitor
  * @endparblock
  */
 SvgVisitor::SvgVisitor
-  (
-    std::vector<necklace_map::MapElement::Ptr>& elements,
-    std::vector<necklace_map::Necklace::Ptr>& necklaces,
-    Number& scale_factor,
-    const bool strict_validity /*= true*/
-  ) :
+(
+  std::vector<necklace_map::MapElement::Ptr>& elements,
+  std::vector<necklace_map::Necklace::Ptr>& necklaces,
+  Number& scale_factor,
+  const bool strict_validity /*= true*/
+) :
   geoviz::detail::SvgVisitor(),
   elements_(elements),
   necklaces_(necklaces),
@@ -262,10 +189,10 @@ bool SvgVisitor::VisitPath(const std::string& commands, const tinyxml2::XMLAttri
     CHECK(commands.find_first_of(kCommandsRestrictionArcNecklace) != std::string::npos);
 
     const std::string kernel_names[] =
-      {
-        kAttributeKernelX,
-        kAttributeKernelY
-      };
+    {
+      kAttributeKernelX,
+      kAttributeKernelY
+    };
     std::string kernel_position[2];
     CHECK(FindAttributes(attributes, 2, kernel_names, kernel_position));
 
@@ -332,7 +259,8 @@ bool SvgVisitor::AddCircleNecklace(const std::string& necklace_id, const Point& 
  * @param kernel the kernel of the star-shaped necklace polygon.
  * @return whether the necklace was constructed correctly.
  */
-bool SvgVisitor::AddGenericNecklace(
+bool SvgVisitor::AddGenericNecklace
+(
   const std::string& necklace_id,
   const std::string& commands,
   const Point& kernel
@@ -343,24 +271,22 @@ bool SvgVisitor::AddGenericNecklace(
   const size_t n = id_to_necklace_index_.insert({necklace_id, next_index}).first->second;
   CHECK_EQ(next_index, n);
 
-  necklace_map::BezierNecklace::Ptr shape = std::make_shared<necklace_map::BezierNecklace>(kernel);
-
   // Interpret the commands as a bezier spline.
-  geoviz::detail::SvgBezierConverter converter(*shape);
+  BezierSpline spline;
+  geoviz::detail::SvgBezierConverter converter(spline);
   geoviz::detail::SvgPathParser()(commands, converter);
 
+  necklace_map::BezierNecklace::Ptr shape = std::make_shared<necklace_map::BezierNecklace>(spline, kernel);
+  CHECK(shape->IsValid());
+
   // Check whether the spline approximates a circle.
-  CheckCircleVisitor check;
-  shape->Accept(check);
-  if (check.IsValid(kCircleRatioEpsilon))
+  Circle circle;
+  const bool is_circle = spline.ToCircle(circle);
+  if (is_circle)
     necklaces_.push_back
-      (
-        std::make_shared<necklace_map::Necklace>
-          (
-            necklace_id,
-            std::make_shared<necklace_map::CircleNecklace>(check.ComputeCircle())
-          )
-      );
+    (
+      std::make_shared<necklace_map::Necklace>(necklace_id, std::make_shared<necklace_map::CircleNecklace>(circle))
+    );
   else
     necklaces_.push_back(std::make_shared<necklace_map::Necklace>(necklace_id, shape));
   return true;
@@ -382,14 +308,14 @@ bool SvgVisitor::AddGenericNecklace(
  * @return whether the region could be parsed correctly.
  */
 bool SvgVisitor::AddMapElement
-  (
-    const std::string& commands,
-    const std::string& angle_rad,
-    const std::string& feasible,
-    const std::string& region_id,
-    const std::string& necklace_id,
-    const std::string& style
-  )
+(
+  const std::string& commands,
+  const std::string& angle_rad,
+  const std::string& feasible,
+  const std::string& region_id,
+  const std::string& necklace_id,
+  const std::string& style
+)
 {
   // Get the region with the given ID, or create a new one if it does not yet exist.
   const size_t n = id_to_region_index_.insert({region_id, elements_.size()}).first->second;
