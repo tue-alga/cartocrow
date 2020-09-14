@@ -6,7 +6,7 @@ geoviz_add_cla(draw_logo)
 set(PHP "run_draw_logo.php")
 set(CURRENT_CLA ${TARGET})
 configure_file(
-    "${CMAKE_MODULE_PATH}/run_cla.php.in"
+    "${CMAKE_SOURCE_DIR}/cmake/run_cla.php.in"
     "${CMAKE_CURRENT_BINARY_DIR}/${PHP}"
 )
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${PHP}" DESTINATION "${INSTALL_SCRIPT_DIR}")
