@@ -49,12 +49,22 @@ function initNecklaceMap() {
   if (document.getElementById('data_file_in') !== null) data_file_in.value = '';
 }
 
+function onChangedGeometryChoice(value) {
+  const field = document.getElementById('geometry_choice');
+  const selected = field.options[field.selectedIndex].value;
+  if (selected === "custom") {
+    document.getElementById('geometry_file_in').style.display = 'inline-block';
+  } else {
+    document.getElementById('geometry_file_in').style.display = 'none';
+  }
+}
+
 function onChangedGeometryFile(file) {
   if (file === undefined) return;
 
   // Check mime type and file size.
   if (file.type != 'text/xml' && file.type != 'image/svg+xml') {
-    alert('XML file type required.');
+    alert('The map needs to be in SVG format.');
     return;
   }
   if (MAX_FILE_SIZE_BYTES < file.size) {
@@ -66,6 +76,8 @@ function onChangedGeometryFile(file) {
   necklace_data_base64 = null;
   data_file_in.value = '';
 
+  document.getElementById('data_panel').style.display = 'block';
+
   // Read the file contents.
   var reader = new FileReader();
   reader.onload = function (e) {
@@ -74,12 +86,18 @@ function onChangedGeometryFile(file) {
     );
     region_focused = false;
     onChangedNecklaceSettings();
+
+    let params = JSON.stringify({
+      geometry_base64: necklace_geometry_base64,
+    });
+    ajaxPost('/script/run_map_regions.php', params, populateEditor);
   };
   reader.readAsArrayBuffer(file);
 }
 
 function onChangedDataFile(file) {
   if (file === undefined) return;
+  document.getElementById('options_panel').style.display = 'block';
 
   // Check mime type and file size.
   if (file.type != 'text/plain') {
@@ -131,19 +149,35 @@ function processNecklaceMapResponse() {
   return function (response) {
     replaceMapBySvgResponse(!region_focused)(response);
     region_focused = true;
-    geometry_out.value = response;
+    //geometry_out.value = response;
+    document.getElementById('output_panel').style.display = 'block';
   };
+}
+
+function populateEditor(response) {
+  const regions = response.split('\n');
 }
 
 function onChangedNecklaceSettings() {
   if (necklace_geometry_base64 === null) return;
+
+  if (document.getElementById('interval_in').value === "centroid") {
+    document.getElementById('interval-explanation-image').src = 'res/bead-placement-centroid.svg';
+    document.getElementById('interval-explanation-centroid').style.display = 'block';
+    document.getElementById('interval-explanation-wedge').style.display = 'none';
+  } else {  // wedge
+    document.getElementById('interval-explanation-image').src = 'res/bead-placement-wedge.svg';
+    document.getElementById('interval-explanation-centroid').style.display = 'none';
+    document.getElementById('interval-explanation-wedge').style.display = 'block';
+  }
 
   if (necklace_data_base64 === null) {
     let necklace_geometry = atob(necklace_geometry_base64);
     processNecklaceMapResponse()(necklace_geometry);
 
     // The geometry has not been processed yet.
-    geometry_out.value = '';
+    //geometry_out.value = '';
+    document.getElementById('output_panel').style.display = 'none';
     setColumnList('');
 
     return;
@@ -160,7 +194,7 @@ function onChangedNecklaceSettings() {
     geometry_base64: necklace_geometry_base64,
     data_base64: necklace_data_base64,
     value: escape(data_value_in.value),
-    interval: interval_in.value,
+    interval: document.getElementById('interval_in').value,
     ignore_point_regions: ignore_point_regions_in.checked,
     order: order_in.value,
     centroid_interval_length: parseFloat(getNecklaceCentroidIntervalLength()),
@@ -170,10 +204,10 @@ function onChangedNecklaceSettings() {
     bead_id_font_size: parseFloat(getNecklaceBeadIdSize()),
   });
 
-  geometry_out.value = '';
+  //geometry_out.value = '';
+  document.getElementById('output_panel').style.display = 'none';
 
   // Run the necklace map PHP script on the server.
-  //ajaxPost('/script/run_necklace_map.php', body, replaceMapBySvgResponse());
   ajaxPost('/script/run_necklace_map.php', body, processNecklaceMapResponse());
 }
 

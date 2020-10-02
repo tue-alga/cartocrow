@@ -26,18 +26,18 @@ body {
   justify-content: center;
 }
 .aga-padded {
-  padding: 4px 8px;
+  padding: 20px 20px;
 }
 
 /* Look and feel. */
 body,
 .aga-theme-main {
   background: #ffffff;
-  color: #333333;
+  color: #111111;
   font: 0.875em 'Bitter', serif;
   line-height: 1.42857143;
 }
-/* The brand is the main name of the specific wegsite. */
+/* The brand is the main name of the specific website. */
 .aga-theme-brand {
   font-size: 1.285em;
 }
