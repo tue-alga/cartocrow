@@ -18,22 +18,10 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-2019
+Created by tvl (t.vanlankveld@esciencecenter.nl) on 02-09-2020
 */
 
-#ifndef GEOVIZ_FLOW_MAP_FLOW_MAP_H
-#define GEOVIZ_FLOW_MAP_FLOW_MAP_H
-
-#include <string>
-
-#include <geoviz/common/core_types.h>
-#include <geoviz/common/region.h>
-
-#include "geoviz/flow_map/parameters.h"
-#include "geoviz/flow_map/io/data_reader.h"
-#include "geoviz/flow_map/io/svg_reader.h"
-#include "geoviz/flow_map/io/svg_writer.h"
-//#include "geoviz/flow_map/io/type_parsers.h"
+#include "write_options.h"
 
 
 namespace geoviz
@@ -41,12 +29,29 @@ namespace geoviz
 namespace flow_map
 {
 
-/**@brief Dummy method for running the flow map algorithm.
- * @return a dummy return string.
- */
-std::string proc_flow_map();
+WriteOptions::Ptr WriteOptions::Default()
+{
+  WriteOptions::Ptr options = std::make_shared<WriteOptions>();
+
+  options->pixel_width = 500;
+
+  options->region_precision = 9;
+  options->region_opacity = -1;
+
+  return options;
+}
+
+WriteOptions::Ptr WriteOptions::Debug()
+{
+  WriteOptions::Ptr options = std::make_shared<WriteOptions>();
+
+  options->pixel_width = 500;
+
+  options->region_precision = 9;
+  options->region_opacity = -1;
+
+  return options;
+}
 
 } // namespace flow_map
 } // namespace geoviz
-
-#endif //GEOVIZ_FLOW_MAP_FLOW_MAP_H

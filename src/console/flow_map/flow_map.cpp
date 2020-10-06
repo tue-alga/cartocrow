@@ -18,7 +18,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-2019
+Created by tvl (t.vanlankveld@esciencecenter.nl) on 31-08-2020
 */
 
 #include <fstream>
@@ -27,11 +27,10 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-2019
 #include <gflags/gflags.h>
 #include <glog/logging.h>
 
+#include <console/common/utils_cla.h>
+#include <console/common/utils_flags.h>
 #include <geoviz/common/timer.h>
 #include <geoviz/flow_map/flow_map.h>
-
-#include "console/common/utils_cla.h"
-#include "console/common/utils_flags.h"
 
 
 // the input flags are mutually exclusive per type to prevent accidentally setting both and 'the wrong one' being used.
@@ -64,98 +63,6 @@ DEFINE_string
   "The file to which to write the output, or empty if no file should be written."
 );
 
-DEFINE_bool
-(
-  out_website,
-  false,
-  "Whether to write the output to the standard output stream for the website. This also forces logging to the standard error stream."
-);
-
-DEFINE_bool
-(
-  force_recompute_scale_factor,
-  false,
-  "Whether to force recomputing the scale factor. If set to false, the scale factor in not recomputed if it is supplied in the input file."
-  " In this case, each region must contain valid attributes 'angle_rad' and 'feasible'."
-);
-
-DEFINE_string
-(
-  interval_type,
-  "wedge",
-  "The interval type used to map regions onto feasible intervals. Must be one of {'centroid', 'wedge'}."
-);
-
-DEFINE_double
-(
-  centroid_interval_length_rad,
-  0.2/* * M_PI*/,
-  "The arc length of centroid intervals (in radians). Must be in the range [0, pi]."
-  " Note that small intervals greatly restrict the available scale factors."
-);
-
-DEFINE_double
-(
-  wedge_interval_length_min_rad,
-  0,
-  "The minimum arc length of wedge intervals (in radians). Must be in the range [0, pi]."
-);
-
-DEFINE_bool
-(
-  ignore_point_regions,
-  false,
-  "Whether to ignore regions covering a single point on the map. If these are not ignored, their feasible interval type is set to centroid."
-);
-
-DEFINE_string
-(
-  order_type,
-  "any",
-  "The order type enforced by the scale factor algorithm. Must be one of {'fixed', 'any'}."
-);
-
-DEFINE_int32
-(
-  search_depth,
-  10,
-  "The search depth used during binary searches on the decision space. Must be strictly positive."
-);
-
-DEFINE_int32
-(
-  heuristic_cycles,
-  5,
-  "The number of heuristic cycles used by the any-order algorithm. Must be non-negative; if the number of 0, the exact algorithm is used."
-);
-
-DEFINE_double
-(
-  buffer_rad,
-  0,
-  "Minimum distance between the necklace beads (in radians). Must be in range [0, pi].\n"
-  "Note that large values are likely to force the necklace bead area to 0."
-  " Also note that values close to 0 are a lot more influential."
-  " Scaling scrollbar values using a 4th degree function is recommended."
-);
-
-DEFINE_int32
-(
-  placement_cycles,
-  30,
-  "The number of cycles used by the placement heuristic. Must be non-negative; if the number of 0, all beads are placed in the most clockwise valid position."
-);
-
-DEFINE_double
-(
-  aversion_ratio,
-  0.001,
-  "Measure for repulsion between necklace beads as opposed by the attraction to the feasible interval center."
-  " Must be in the range (0, 1].\n"
-  "Note that values close to 0 are a lot more influential."
-  " Scaling scrollbar values using a 4th degree function is recommended."
-);
-
 DEFINE_int32
 (
   pixel_width,
@@ -179,74 +86,8 @@ DEFINE_double
   " The regions are otherwise drawn with the same style as the input regions."
 );
 
-DEFINE_double
-(
-  bead_opacity,
-  1,
-  "Opacity of the necklace beads in the output. Must be in the range [0, 1]."
-  " The necklace beads are drawn with roughly the same style as the input regions."
-  " However, the boundaries will be hidden for transparant beads."
-  // The reason for hiding the boundary is that it has undesirable interaction with the drop shadow filter applied to the beads.
-);
 
-DEFINE_double
-(
-  bead_id_font_size_px,
-  16,
-  "Font size (in pixels) of the bead IDs in the output. Must be larger than 0."
-);
-
-DEFINE_bool
-(
-  draw_necklace_curve,
-  true,
-  "Whether to draw the necklace shape in the output."
-);
-
-DEFINE_bool
-(
-  draw_necklace_kernel,
-  false,
-  "Whether to draw the necklace kernel in the output."
-);
-
-DEFINE_bool
-(
-  draw_bead_ids,
-  true,
-  "Whether to draw the region ID in each bead in the output."
-);
-
-DEFINE_bool
-(
-  draw_feasible_intervals,
-  false,
-  "Whether to draw the feasible intervals in the output."
-);
-
-DEFINE_bool
-(
-  draw_valid_intervals,
-  false,
-  "Whether to draw the valid intervals in the output."
-);
-
-DEFINE_bool
-(
-  draw_region_angles,
-  false,
-  "Whether to draw a line through the region centroids in the output."
-);
-
-DEFINE_bool
-(
-  draw_bead_angles,
-  false,
-  "Whether to draw a line to the bead centers in the output."
-);
-
-
-void ValidateFlags(/*geoviz::necklace_map::Parameters& parameters, geoviz::WriterOptions::Ptr& write_options*/)
+void ValidateFlags(geoviz::flow_map::Parameters& parameters, geoviz::flow_map::WriteOptions::Ptr& write_options)
 {
   bool correct = true;
   LOG(INFO) << "flow_map_cla flags:";
@@ -264,49 +105,8 @@ void ValidateFlags(/*geoviz::necklace_map::Parameters& parameters, geoviz::Write
   // Note that we allow overwriting existing output.
   correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(out_filename), Or<Empty, MakeAvailableFile>);
 
-  // Interval parameters.
-/*  {
-    correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(interval_type), geoviz::IntervalTypeParser(parameters.interval_type));
-
-    MakeRangeCheck(0.0, M_PI)(FLAGS_centroid_interval_length_rad);
-    parameters.centroid_interval_length_rad = FLAGS_centroid_interval_length_rad;
-
-    MakeRangeCheck(0.0, M_PI)(FLAGS_wedge_interval_length_min_rad);
-    parameters.wedge_interval_length_min_rad = FLAGS_wedge_interval_length_min_rad;
-
-    parameters.ignore_point_regions = FLAGS_ignore_point_regions;
-  }
-
-  // Scale factor optimization parameters.
-  {
-    correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(order_type), geoviz::OrderTypeParser(parameters.order_type));
-
-    correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(buffer_rad), MakeRangeCheck(0.0, M_PI));
-    parameters.buffer_rad = FLAGS_buffer_rad;
-
-    correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(search_depth), MakeStrictLowerBoundCheck(0));
-    parameters.binary_search_depth = FLAGS_search_depth;
-
-    correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(heuristic_cycles), MakeLowerBoundCheck(0));
-    parameters.heuristic_cycles = FLAGS_heuristic_cycles;
-  }
-
-  // Placement parameters.
-  {
-    correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(placement_cycles), MakeLowerBoundCheck(0));
-    parameters.placement_cycles = FLAGS_placement_cycles;
-
-    using Closure = Closure;
-    correct &= CheckAndPrintFlag
-    (
-      FLAGS_NAME_AND_VALUE(aversion_ratio),
-      MakeRangeCheck<Closure::kClosed, Closure::kClosed>(0.0, 1.0)
-    );
-    parameters.aversion_ratio = FLAGS_aversion_ratio;
-  }*/
-
   // Output parameters.
-  /*using Options = geoviz::WriterOptions;
+  using Options = geoviz::flow_map::WriteOptions;
   write_options = Options::Default();
   {
     correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(pixel_width), IsStrictlyPositive<int32_t>());
@@ -317,30 +117,7 @@ void ValidateFlags(/*geoviz::necklace_map::Parameters& parameters, geoviz::Write
 
     correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(region_opacity), MakeUpperBoundCheck(1.0));
     write_options->region_opacity = FLAGS_region_opacity;
-
-    correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(bead_opacity), MakeRangeCheck(0.0, 1.0));
-    write_options->bead_opacity = FLAGS_bead_opacity;
-
-    correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(bead_id_font_size_px), IsStrictlyPositive<double>());
-    write_options->bead_id_font_size_px = FLAGS_bead_id_font_size_px;
-
-    PrintFlag(FLAGS_NAME_AND_VALUE(draw_necklace_curve));
-    write_options->draw_necklace_curve = FLAGS_draw_necklace_curve;
-
-    PrintFlag(FLAGS_NAME_AND_VALUE(draw_necklace_kernel));
-    write_options->draw_necklace_kernel = FLAGS_draw_necklace_kernel;
-
-    PrintFlag(FLAGS_NAME_AND_VALUE(draw_bead_ids));
-    write_options->draw_bead_ids = FLAGS_draw_bead_ids;
   }
-
-  // Debug parameters.
-  {
-    write_options->draw_feasible_intervals = FLAGS_draw_feasible_intervals;
-    write_options->draw_valid_intervals = FLAGS_draw_valid_intervals;
-    write_options->draw_region_angles = FLAGS_draw_region_angles;
-    write_options->draw_bead_angles = FLAGS_draw_bead_angles;
-  }*/
 
   correct &= CheckAndPrintFlag( FLAGS_NAME_AND_VALUE( log_dir ), Or<Empty, IsDirectory> );
   PrintFlag( FLAGS_NAME_AND_VALUE( stderrthreshold ) );
@@ -349,24 +126,23 @@ void ValidateFlags(/*geoviz::necklace_map::Parameters& parameters, geoviz::Write
   if( !correct ) LOG(FATAL) << "Errors in flags; Terminating.";
 }
 
-/*bool ReadData(std::vector<geoviz::necklace_map::MapElement::Ptr>& elements)
-{
-  geoviz::DataReader data_reader;
-  return data_reader.ReadFile(FLAGS_in_data_filename, FLAGS_in_value_name, elements);
-}
-
 bool ReadGeometry
 (
-  std::vector<geoviz::necklace_map::MapElement::Ptr>& elements,
-  std::vector<geoviz::necklace_map::Necklace::Ptr>& necklaces,
-  geoviz::Number& scale_factor
+  std::vector<geoviz::Region>& context,
+  std::vector<geoviz::flow_map::Node>& nodes
 )
 {
-  geoviz::SvgReader svg_reader;
-  return svg_reader.ReadFile(FLAGS_in_geometry_filename, elements, necklaces, scale_factor);
+  geoviz::flow_map::SvgReader svg_reader;
+  return svg_reader.ReadFile(FLAGS_in_geometry_filename, context, nodes);
 }
 
-void WriteOutput
+bool ReadData(std::vector<geoviz::flow_map::Node>& nodes)
+{
+  geoviz::flow_map::DataReader data_reader;
+  return data_reader.ReadFile(FLAGS_in_data_filename, FLAGS_in_value_name, nodes);
+}
+
+/*void WriteOutput
 (
   const std::vector<geoviz::necklace_map::MapElement::Ptr>& elements,
   const std::vector<geoviz::necklace_map::Necklace::Ptr>& necklaces,
@@ -399,30 +175,28 @@ int main(int argc, char **argv)
 
 
   // Validate the settings.
-//  geoviz::necklace_map::Parameters parameters;
-//  geoviz::WriterOptions::Ptr write_options;
-  ValidateFlags(/*parameters, write_options*/);
+  geoviz::flow_map::Parameters parameters;
+  geoviz::flow_map::WriteOptions::Ptr write_options;
+  ValidateFlags(parameters, write_options);
 
 
   geoviz::Timer time;
 
-  /*using MapElement = geoviz::necklace_map::MapElement;
-  using Necklace = geoviz::necklace_map::Necklace;
-  std::vector<MapElement::Ptr> elements;
-  std::vector<Necklace::Ptr> necklaces;
-
+  using Region = geoviz::Region;
+  using Node = geoviz::flow_map::Node;
+  std::vector<Region> context;
+  std::vector<Node> nodes;
 
   // Read the geometry and data.
   // Note that the regions should be written in the same order as in the input,
   // which forces the geometry to be read first.
-  geoviz::Number scale_factor;
-  const bool success_read_svg = ReadGeometry(elements, necklaces, scale_factor);
-  const bool success_read_data = ReadData(elements);
+  const bool success_read_svg = ReadGeometry(context, nodes);
+  const bool success_read_data = ReadData(nodes);
   CHECK(success_read_svg && success_read_data) << "Terminating program.";
   const double time_read = time.Stamp();
 
 
-  if (FLAGS_force_recompute_scale_factor || scale_factor < 0)
+  /*if (FLAGS_force_recompute_scale_factor || scale_factor < 0)
   {
     // Compute the optimal scale factor and placement.
     scale_factor = ComputeScaleFactor(parameters, elements, necklaces);
@@ -443,7 +217,7 @@ int main(int argc, char **argv)
 
   const double time_total = time.Span();
 
-//  LOG(INFO) << "Time cost (read files): " << time_read;
+  LOG(INFO) << "Time cost (read files): " << time_read;
 //  LOG(INFO) << "Time cost (compute NM): " << time_compute;
 //  LOG(INFO) << "Time cost (serialize):  " << time_write;
   LOG(INFO) << "Time cost (total):      " << time_total;

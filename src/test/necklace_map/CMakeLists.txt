@@ -11,10 +11,3 @@ test_link_libraries(
     glog
     stdc++fs
 )
-
-#test_link_libraries(
-#    ${COMMON_CLA_TARGET}
-#    ${NECKLACE_MAP_TARGET}
-#    CGAL::CGAL
-#    tinyxml2
-#)

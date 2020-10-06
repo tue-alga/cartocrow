@@ -18,22 +18,22 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-2019
+Created by tvl (t.vanlankveld@esciencecenter.nl) on 04-09-2020
 */
 
-#ifndef GEOVIZ_FLOW_MAP_FLOW_MAP_H
-#define GEOVIZ_FLOW_MAP_FLOW_MAP_H
+#ifndef GEOVIZ_FLOW_MAP_IO_SVG_READER_H
+#define GEOVIZ_FLOW_MAP_IO_SVG_READER_H
 
+#include <iostream>
 #include <string>
+#include <vector>
 
-#include <geoviz/common/core_types.h>
-#include <geoviz/common/region.h>
+#include <gflags/gflags.h>
 
-#include "geoviz/flow_map/parameters.h"
-#include "geoviz/flow_map/io/data_reader.h"
-#include "geoviz/flow_map/io/svg_reader.h"
-#include "geoviz/flow_map/io/svg_writer.h"
-//#include "geoviz/flow_map/io/type_parsers.h"
+#include "geoviz/flow_map/node.h"
+#include "geoviz/common/region.h"
+
+DECLARE_bool(strict_validity);
 
 
 namespace geoviz
@@ -41,12 +41,28 @@ namespace geoviz
 namespace flow_map
 {
 
-/**@brief Dummy method for running the flow map algorithm.
- * @return a dummy return string.
- */
-std::string proc_flow_map();
+class SvgReader
+{
+ public:
+  SvgReader();
+
+  bool ReadFile
+  (
+    const std::string& filename,
+    std::vector<geoviz::Region>& context,
+    std::vector<geoviz::flow_map::Node>& nodes,
+    int max_retries = 2
+  );
+
+  bool Parse
+  (
+    const std::string& input,
+    std::vector<geoviz::Region>& context,
+    std::vector<geoviz::flow_map::Node>& nodes
+  );
+}; // class SvgReader
 
 } // namespace flow_map
 } // namespace geoviz
 
-#endif //GEOVIZ_FLOW_MAP_FLOW_MAP_H
+#endif //GEOVIZ_FLOW_MAP_IO_SVG_READER_H

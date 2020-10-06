@@ -18,22 +18,12 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-2019
+Created by tvl (t.vanlankveld@esciencecenter.nl) on 04-09-2020
 */
 
-#ifndef GEOVIZ_FLOW_MAP_FLOW_MAP_H
-#define GEOVIZ_FLOW_MAP_FLOW_MAP_H
+#include "node.h"
 
-#include <string>
-
-#include <geoviz/common/core_types.h>
-#include <geoviz/common/region.h>
-
-#include "geoviz/flow_map/parameters.h"
-#include "geoviz/flow_map/io/data_reader.h"
-#include "geoviz/flow_map/io/svg_reader.h"
-#include "geoviz/flow_map/io/svg_writer.h"
-//#include "geoviz/flow_map/io/type_parsers.h"
+#include <glog/logging.h>
 
 
 namespace geoviz
@@ -41,12 +31,36 @@ namespace geoviz
 namespace flow_map
 {
 
-/**@brief Dummy method for running the flow map algorithm.
- * @return a dummy return string.
+/**@struct Node
+ * @brief A node in the flow map spiral tree.
+ *
+ * This node has a position and a numeric value indicating flow that enters the node.
  */
-std::string proc_flow_map();
+
+/**@fn Node::Ptr
+ * @brief The preferred pointer type for storing or sharing a node.
+ */
+
+/**@brief Construct a new spiral tree node.
+ * @param id @parblock the ID of the node.
+ *
+ * See Region::id for details on this ID.
+ * @endparblock
+ */
+Node::Node(const std::string& id, const PolarPoint& position)
+  : id(id), position(position), flow_in(0) {}
+
+/**@fn Region Node::id;
+ * @brief The ID of this node.
+ */
+
+/**@fn Region Node::position;
+ * @brief The position of this node in polar coordinates.
+ */
+
+/**@fn Number Node::flow_in;
+ * @brief The amount of flow that enters this node.
+ */
 
 } // namespace flow_map
-} // namespace geoviz
-
-#endif //GEOVIZ_FLOW_MAP_FLOW_MAP_H
+} // namespace geoviz"
