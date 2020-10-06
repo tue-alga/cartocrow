@@ -1,6 +1,6 @@
 NcMp 1.0
 49 ssidd
-ID  name    area    firearms_school illegal_immigrants
+id  name    area    firearms_school illegal_immigrants
 AL  Alabama 135765  8.4 0.527
 AK  Alaska  171785  0   0.753
 AZ  Arizona 295253 7.4  4.765

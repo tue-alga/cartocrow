@@ -55,11 +55,11 @@ DataReader::DataReader()
 
 /**@brief Read a necklace map data file.
  *
- * The table in the file must contain a string column called "ID" and a double column containing the necklace element values.
+ * The table in the file must contain a string column called "id" (case sensitive) and a double column containing the necklace element values.
  *
  * See @f detail::TableParser::Parse(std::istream& in) for more info on the file format.
  * @param filename the name of the file.
- * @param value_name the name of the data column.
+ * @param value_name the name of the data column (case sensitive).
  * @param elements the necklace map elements associated with the values.
  * @param max_retries the maximum number of times to retry reading after an error.
  * @return whether the element values could be read successfully.
@@ -68,7 +68,7 @@ bool DataReader::ReadFile
 (
   const std::string& filename,
   const std::string& value_name,
-  std::vector<necklace_map::MapElement::Ptr>& elements,
+  std::vector<MapElement::Ptr>& elements,
   int max_retries /*= 2*/
 )
 {
@@ -121,7 +121,7 @@ bool DataReader::ReadFile
  *
  * The following tokens give the name per value.
  *
- * The columns must include a string column called "ID" and a double column containing the necklace element values.
+ * The columns must include a string column called "id" (case sensitive) and a double column containing the necklace element values.
  *
  * The remainder of the tokens are the element values, grouped per element and ordered as described in the format token.
  *
@@ -129,7 +129,7 @@ bool DataReader::ReadFile
  *
  * Tokens for string values may contain whitespace if the string starts and end with quotation marks (").
  * @param in the string to parse.
- * @param value_name the name of the data column.
+ * @param value_name the name of the data column (case sensitive).
  * @param elements the necklace map elements associated with the values.
  * @param version the data format version.
  * @return whether the element values could be read successfully.
@@ -138,7 +138,7 @@ bool DataReader::Parse
 (
   std::istream& in,
   const std::string& value_name,
-  std::vector<necklace_map::MapElement::Ptr>& elements,
+  std::vector<MapElement::Ptr>& elements,
   const std::string& version /*= "1.0"*/
 )
 {
@@ -154,18 +154,9 @@ bool DataReader::Parse
 
   for (const detail::TableParser::ColumnPtr& column : table_)
   {
-    std::string lower_name = column->name;
-    std::transform
-      (
-        lower_name.begin(),
-        lower_name.end(),
-        lower_name.begin(),
-        [](unsigned char c) { return std::tolower(c); }
-      );
-
-    if (lower_name == kNameId)
+    if (column->name == kNameId)
       column_id = dynamic_cast<const ColumnString*>(column.get());
-    else if (lower_name == value_name)
+    else if (column->name == value_name)
       column_value = column.get();
   }
   if (column_id == nullptr || column_value == nullptr || column_id->values.size() != column_value->size())
@@ -182,7 +173,7 @@ bool DataReader::Parse
   // Create a lookup table for the elements.
   using LookupTable = std::unordered_map<std::string, size_t>;
   LookupTable id_to_element_index;
-  for (const necklace_map::MapElement::Ptr& element : elements)
+  for (necklace_map::MapElement::Ptr& element : elements)
   {
     CHECK_NOTNULL(element);
     const size_t next_index = id_to_element_index.size();
@@ -213,7 +204,7 @@ bool DataReader::Parse
       element->value = column_double->values[v];
   }
 
-  LOG(INFO) << "Successfully parsed necklace map data for " << elements.size() << " elements.";
+  LOG(INFO) << "Successfully parsed necklace map data for " << elements.size() << " element(s).";
   return true;
 }
 

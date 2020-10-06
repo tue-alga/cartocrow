@@ -1,6 +1,6 @@
 NcMp 1.0
 16 ssddd
-ID name agriculture poverty internet
+id name agriculture poverty internet
 BRN Brunei  0   0   47.9
 CHN China   11.6    2.8 22.3
 IDN Indonesia   13.3    16.7    11.0
