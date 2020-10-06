@@ -273,10 +273,10 @@ ValidateFlags(geoviz::necklace_map::Parameters& parameters, geoviz::necklace_map
       geoviz::necklace_map::IntervalTypeParser(parameters.interval_type)
     );
 
-    MakeRangeCheck(0.0, M_PI)(FLAGS_centroid_interval_length_rad);
+    correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(centroid_interval_length_rad), MakeRangeCheck(0.0, M_PI));
     parameters.centroid_interval_length_rad = FLAGS_centroid_interval_length_rad;
 
-    MakeRangeCheck(0.0, M_PI)(FLAGS_wedge_interval_length_min_rad);
+    correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(wedge_interval_length_min_rad), MakeRangeCheck(0.0, M_PI));
     parameters.wedge_interval_length_min_rad = FLAGS_wedge_interval_length_min_rad;
 
     parameters.ignore_point_regions = FLAGS_ignore_point_regions;

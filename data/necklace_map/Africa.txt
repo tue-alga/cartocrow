@@ -1,3 +1,4 @@
+NcMp 1.0
 45 ssiiddid
 ID  name    emigration hiv female_genital_mutilation female_genital_mutilation_filter internet internet_percent
 BF  "Burkina Faso"      10  0   75.8    75.8    0   0

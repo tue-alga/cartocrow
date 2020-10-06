@@ -1083,10 +1083,10 @@ void SvgWriter::DrawBeadIds()
 
         // Note that the 'transform' argument does not apply to text coordinates.
         const Point transformed
-          (
-            kTransformScale * (position.x() - bounding_box_.xmin()),
-            kTransformScale * (bounding_box_.ymax() - position.y())
-          );
+        (
+          kTransformScale * (position.x() - bounding_box_.xmin()),
+          kTransformScale * (bounding_box_.ymax() - position.y())
+        );
 
         {
           std::stringstream stream;

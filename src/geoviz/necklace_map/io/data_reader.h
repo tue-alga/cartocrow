@@ -55,7 +55,8 @@ class DataReader : public geoviz::detail::TableParser
   (
     std::istream& in,
     const std::string& value_name,
-    std::vector<necklace_map::MapElement::Ptr>& elements
+    std::vector<necklace_map::MapElement::Ptr>& elements,
+    const std::string& version = "1.0"
   );
 }; // class DataReader
 

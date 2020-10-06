@@ -23,6 +23,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 03-12-2019
 
 #include "data_reader.h"
 
+#include <cstring>
 #include <exception>
 #include <fstream>
 
@@ -33,6 +34,8 @@ namespace geoviz
 {
 namespace
 {
+
+constexpr const char* kMagicCharacters = "NcMp";
 
 constexpr const char* kNameId = "id";
 
@@ -91,7 +94,19 @@ bool DataReader::ReadFile
     }
   } while (true);
 
-  return Parse(fin, value_name, elements);
+  // Data files must start with four magic characters and the data file version.
+  char magic[4] = {'\0', '\0', '\0', '\0'};
+  fin.read(magic, 4);
+  if (!fin || std::strcmp(magic, kMagicCharacters) != 0)
+    return false;
+
+  // Read the version.
+  std::string version;
+  fin >> version;
+  if (!fin)
+    return false;
+
+  return Parse(fin, value_name, elements, version);
 }
 
 /**@brief Parse a necklace map data string.
@@ -116,15 +131,18 @@ bool DataReader::ReadFile
  * @param in the string to parse.
  * @param value_name the name of the data column.
  * @param elements the necklace map elements associated with the values.
+ * @param version the data format version.
  * @return whether the element values could be read successfully.
  */
 bool DataReader::Parse
 (
   std::istream& in,
   const std::string& value_name,
-  std::vector<necklace_map::MapElement::Ptr>& elements
+  std::vector<necklace_map::MapElement::Ptr>& elements,
+  const std::string& version /*= "1.0"*/
 )
 {
+  // Parse the data.
   if (!detail::TableParser::Parse(in))
     return false;
 
