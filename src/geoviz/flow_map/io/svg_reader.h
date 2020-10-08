@@ -33,8 +33,6 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 04-09-2020
 #include "geoviz/flow_map/node.h"
 #include "geoviz/common/region.h"
 
-DECLARE_bool(strict_validity);
-
 
 namespace geoviz
 {

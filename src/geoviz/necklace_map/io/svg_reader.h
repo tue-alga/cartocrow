@@ -33,8 +33,6 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 26-11-2019
 #include "geoviz/necklace_map/map_element.h"
 #include "geoviz/necklace_map/necklace.h"
 
-DECLARE_bool(strict_validity);
-
 
 namespace geoviz
 {

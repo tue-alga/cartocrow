@@ -29,16 +29,6 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 26-11-2019
 
 #include "geoviz/necklace_map/io/detail/svg_visitor.h"
 
-DEFINE_bool
-(
-  strict_validity,
-  true,
-  "Whether failures in validity should generate a breaking error. Otherwise, some faults"
-  " may be corrected silently. Note that this may break some assumptions on input-output"
-  " data similarity. For example, some regions may be reversed in the output compared to"
-  " the input."
-);
-
 
 namespace geoviz
 {
@@ -140,7 +130,7 @@ bool SvgReader::Parse
   if (result != tinyxml2::XML_SUCCESS) return false;
 
   using Visitor = detail::SvgVisitor;
-  Visitor visitor(elements, necklaces, scale_factor, FLAGS_strict_validity);
+  Visitor visitor(elements, necklaces, scale_factor);
   doc.Accept(&visitor);
 
   // Note(tvl) we should allow the SVG to not contain the necklace: then create the necklace as smallest enclosing circle.

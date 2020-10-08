@@ -29,16 +29,6 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 04-09-2020
 
 #include "geoviz/flow_map/io/detail/svg_visitor.h"
 
-DEFINE_bool
-(
-  strict_validity,
-  true,
-  "Whether failures in validity should generate a breaking error. Otherwise, some faults"
-  " may be corrected silently. Note that this may break some assumptions on input-output"
-  " data similarity. For example, some regions may be reversed in the output compared to"
-  " the input."
-);
-
 
 namespace geoviz
 {
@@ -117,7 +107,7 @@ bool SvgReader::Parse
   if (result != tinyxml2::XML_SUCCESS) return false;
 
   using Visitor = detail::SvgVisitor;
-  Visitor visitor(context, nodes, FLAGS_strict_validity);
+  Visitor visitor(context, nodes);
   doc.Accept(&visitor);
 
   LOG(INFO) << "Successfully parsed flow map geometry for " << nodes.size() << " node(s).";

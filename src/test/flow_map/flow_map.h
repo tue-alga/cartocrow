@@ -24,16 +24,48 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-04-2020
 #ifndef GEOVIZ_TEST_FLOW_MAP_FLOW_MAP_H
 #define GEOVIZ_TEST_FLOW_MAP_FLOW_MAP_H
 
+#include <iostream>
+
 #include <glog/logging.h>
 
 #include <cmake/geoviz_test_config.h>
 #include <console/common/utils_filesystem.h>
+#include <geoviz/common/timer.h>
 #include <geoviz/flow_map/flow_map.h>
 
 #include "test/test.h"
+#include "test/test_registry.h"
 
 
 void TestFlowMap() {}  // Linking hack, each new test cpp file has it.
+
+constexpr const size_t kP = 2;
+constexpr const size_t kV = 2;
+struct PrintTimes;
+using Reg = Registry<double, kP, kV, PrintTimes>;
+
+
+struct PrintTimes
+{
+  using Memory = typename Reg::Memory;
+  using Block = typename Reg::Block;
+
+  void operator()(const Memory& memory) const
+  {
+    double geom = 0, data = 0;
+    for (const Block& block : memory)
+    {
+      std::cout << "Read time [" << block.first << "] geom: " << block.second[0] << " seconds; data: " << block.second[1] << " seconds" << std::endl;
+      geom += block.second[0];
+      data += block.second[1];
+    }
+
+    std::cout << "Read time [TOTAL] geom: " << geom << " seconds; data: " << data << " seconds" << std::endl;
+  }
+}; // struct PrintTimes
+
+static Reg kRegistry;
+
 
 struct FlowData
 {
@@ -75,10 +107,15 @@ struct FlowDataUsa
   {
     if (data.nodes.empty())
     {
+      kRegistry.Register(&data, "FlowDataUsa");
+
       // Read the geometry.
       geoviz::flow_map::SvgReader svg_reader;
       const filesystem::path in_geometry_path = kDataDir / "USA.svg";
+
+      geoviz::Timer time;
       UNITTEST_REQUIRE UNITTEST_CHECK(svg_reader.ReadFile(in_geometry_path, data.context, data.nodes));
+      kRegistry(&data, 0) = time.Stamp();
     }
   }
 
@@ -90,7 +127,12 @@ struct FlowDataUsa
 
     geoviz::flow_map::DataReader data_reader;
     const filesystem::path in_data_path = kDataDir / "USA.csv";
-    return data_reader.ReadFile(in_data_path, in_value_name, data.nodes);
+
+    geoviz::Timer time;
+    const bool result = data_reader.ReadFile(in_data_path, in_value_name, data.nodes);
+    kRegistry(&data, 1) = time.Stamp();
+
+    return result;
   }
 
   FlowData& data;
@@ -120,10 +162,15 @@ struct FlowDataWorld
   {
     if (data.nodes.empty())
     {
+      kRegistry.Register(&data, "FlowDataWorld");
+
       // Read the geometry.
       geoviz::flow_map::SvgReader svg_reader;
       const filesystem::path in_geometry_path = kDataDir / "World.svg";
+
+      geoviz::Timer time;
       UNITTEST_REQUIRE UNITTEST_CHECK(svg_reader.ReadFile(in_geometry_path, data.context, data.nodes));
+      kRegistry(&data, 0) = time.Stamp();
     }
   }
 
@@ -135,7 +182,12 @@ struct FlowDataWorld
 
     geoviz::flow_map::DataReader data_reader;
     const filesystem::path in_data_path = kDataDir / "World.csv";
-    return data_reader.ReadFile(in_data_path, in_value_name, data.nodes);
+
+    geoviz::Timer time;
+    const bool result = data_reader.ReadFile(in_data_path, in_value_name, data.nodes);
+    kRegistry(&data, 1) = time.Stamp();
+
+    return result;
   }
 
   FlowData& data;
