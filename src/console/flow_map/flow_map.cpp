@@ -189,7 +189,8 @@ int main(int argc, char **argv)
 
   // Read the geometry and data.
   // Note that the regions should be written in the same order as in the input,
-  // which forces the geometry to be read first.
+  // because some smaller regions may be used to simulate enclaves inside larger regions.
+  // This forces the geometry to be read first.
   const bool success_read_svg = ReadGeometry(context, nodes);
   const bool success_read_data = ReadData(nodes);
   CHECK(success_read_svg && success_read_data) << "Terminating program.";
@@ -218,7 +219,7 @@ int main(int argc, char **argv)
   const double time_total = time.Span();
 
   LOG(INFO) << "Time cost (read files): " << time_read;
-//  LOG(INFO) << "Time cost (compute NM): " << time_compute;
+  LOG(INFO) << "Time cost (compute FM): " << time_compute;
 //  LOG(INFO) << "Time cost (serialize):  " << time_write;
   LOG(INFO) << "Time cost (total):      " << time_total;
 

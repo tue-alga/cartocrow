@@ -423,7 +423,8 @@ int main(int argc, char** argv)
 
   // Read the geometry and data.
   // Note that the regions should be written in the same order as in the input,
-  // which forces the geometry to be read first.
+  // because some smaller regions may be used to simulate enclaves inside larger regions.
+  // This forces the geometry to be read first.
   geoviz::Number scale_factor;
   const bool success_read_svg = ReadGeometry(elements, necklaces, scale_factor);
   const bool success_read_data = ReadData(elements);
