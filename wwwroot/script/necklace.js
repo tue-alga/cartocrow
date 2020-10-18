@@ -76,9 +76,6 @@ function onChangedGeometryFile(file) {
       String.fromCharCode(...new Uint8Array(e.target.result))
     );
 
-    console.log("HOI");
-
-    // to do: refactor the following
     let params = JSON.stringify({
       geometry_base64: necklace_geometry_base64,
     });
@@ -90,18 +87,21 @@ function onChangedGeometryFile(file) {
 }
 
 function populateDataEditor(response) {
-  const regions = response.split('\n');
+  const regions = response.trim().split('\n');
 
-  const editor = document.getElementById('data-editor').children[1];  // tbody
+  const editor = document.getElementById('data-editor');
+  editor.textContent = '';
   for (let i = 0; i < regions.length; i++) {
     const name = regions[i];
-    const row = document.createElement('tr');
-    const nameCell = document.createElement('td');
+    const row = document.createElement('li');
+    const nameCell = document.createElement('span');
+    nameCell.classList.add('region-label');
     const nameText = document.createTextNode(name);
     nameCell.appendChild(nameText);
     row.appendChild(nameCell);
-    const inputCell = document.createElement('td');
+    const inputCell = document.createElement('span');
     const input = document.createElement('input');
+    input.classList.add('region-field');
     input.id = 'data-editor-editor-' + name;
     inputCell.appendChild(input);
     row.appendChild(inputCell);

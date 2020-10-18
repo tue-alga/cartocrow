@@ -101,6 +101,35 @@
   padding-left: 120px;
 }
 
+#settings_necklace-inner #data-editor {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+
+  list-style-type: none;
+  max-height: 250px;
+  overflow-x: auto;
+}
+
+#settings_necklace-inner #data-editor li {
+  margin-right: 50px;
+  margin-top: 5px;
+}
+
+#settings_necklace-inner #data-editor .region-label {
+  margin-right: 10px;
+  position: relative;
+  top: 5px;
+  display: inline-block;
+  min-width: 40px;
+}
+
+#settings_necklace-inner #data-editor .region-field {
+  width: 80px;
+  text-align: right;
+  float: right;
+}
+
 #settings_necklace-inner .output-textarea {
   width: 100%;
   resize: vertical;
