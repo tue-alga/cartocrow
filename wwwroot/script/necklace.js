@@ -46,10 +46,72 @@ function initNecklaceMap() {
   necklace_data_base64 = null;
   if (document.getElementById('geometry_file_in') !== null)
     geometry_file_in.value = '';
-  if (document.getElementById('data_file_in') !== null) data_file_in.value = '';
+  if (document.getElementById('data_file_in') !== null)
+    data_file_in.value = '';
 }
 
-function onChangedGeometryChoice(value) {
+function onChangedGeometryFile(file) {
+  if (!file) {
+    return;
+  }
+
+  // check mime type and file size
+  if (file.type !== 'text/xml' && file.type !== 'image/svg+xml') {
+    alert('The map needs to be in SVG format');
+    return;
+  }
+  if (MAX_FILE_SIZE_BYTES < file.size) {
+    alert('The map needs to be at most ' + MAX_FILE_SIZE_BYTES + 'bytes');
+    return;
+  }
+
+  // when uploading a new map, reset the data file
+  necklace_data_base64 = null;
+  data_file_in.value = '';
+
+  // read the map
+  var reader = new FileReader();
+  reader.onload = function (e) {
+    necklace_geometry_base64 = btoa(
+      String.fromCharCode(...new Uint8Array(e.target.result))
+    );
+
+    console.log("HOI");
+
+    // to do: refactor the following
+    let params = JSON.stringify({
+      geometry_base64: necklace_geometry_base64,
+    });
+    ajaxPost('/script/run_map_regions.php', params, populateDataEditor);
+
+    updateFormState();
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function populateDataEditor(response) {
+  const regions = response.split('\n');
+
+  const editor = document.getElementById('data-editor').children[1];  // tbody
+  for (let i = 0; i < regions.length; i++) {
+    const name = regions[i];
+    const row = document.createElement('tr');
+    const nameCell = document.createElement('td');
+    const nameText = document.createTextNode(name);
+    nameCell.appendChild(nameText);
+    row.appendChild(nameCell);
+    const inputCell = document.createElement('td');
+    const input = document.createElement('input');
+    input.id = 'data-editor-editor-' + name;
+    inputCell.appendChild(input);
+    row.appendChild(inputCell);
+    editor.appendChild(row);
+  }
+}
+
+function updateFormState() {
+
+  // if the custom map option has been set, show the file picker
   const field = document.getElementById('geometry_choice');
   const selected = field.options[field.selectedIndex].value;
   if (selected === "custom") {
@@ -57,65 +119,38 @@ function onChangedGeometryChoice(value) {
   } else {
     document.getElementById('geometry_file_in').style.display = 'none';
   }
-}
 
-function onChangedGeometryFile(file) {
-  if (file === undefined) return;
-
-  // Check mime type and file size.
-  if (file.type != 'text/xml' && file.type != 'image/svg+xml') {
-    alert('The map needs to be in SVG format.');
+  // if we have no map yet, hide the next parts of the form
+  if (!necklace_geometry_base64) {
+    document.getElementById('data_panel').style.display = 'none';
+    document.getElementById('options_panel').style.display = 'none';
     return;
   }
-  if (MAX_FILE_SIZE_BYTES < file.size) {
-    alert('File size restricted to ' + MAX_FILE_SIZE_BYTES + 'bytes');
-    return;
-  }
-
-  // Reset the data file.
-  necklace_data_base64 = null;
-  data_file_in.value = '';
-
   document.getElementById('data_panel').style.display = 'block';
-
-  // Read the file contents.
-  var reader = new FileReader();
-  reader.onload = function (e) {
-    necklace_geometry_base64 = btoa(
-      String.fromCharCode(...new Uint8Array(e.target.result))
-    );
-    region_focused = false;
-    onChangedNecklaceSettings();
-
-    let params = JSON.stringify({
-      geometry_base64: necklace_geometry_base64,
-    });
-    ajaxPost('/script/run_map_regions.php', params, populateEditor);
-  };
-  reader.readAsArrayBuffer(file);
 }
 
 function onChangedDataFile(file) {
-  if (file === undefined) return;
-  document.getElementById('options_panel').style.display = 'block';
+  if (!file) {
+    return;
+  }
 
-  // Check mime type and file size.
+  // check mime type and file size
   if (file.type != 'text/plain') {
-    alert('Plain text file type required.');
+    alert('Data files need to be plain text files');
     return;
   }
   if (MAX_FILE_SIZE_BYTES < file.size) {
-    alert('File size restricted to ' + MAX_FILE_SIZE_BYTES + 'bytes');
+    alert('Data file needs to be at most ' + MAX_FILE_SIZE_BYTES + 'bytes');
     return;
   }
 
-  // Read the file contents.
+  // read the file
   var reader = new FileReader();
   reader.onload = function (e) {
     let result = String.fromCharCode(...new Uint8Array(e.target.result));
     necklace_data_base64 = btoa(result);
     setColumnList(result);
-    onChangedNecklaceSettings();
+    updateFormState();
   };
   reader.readAsArrayBuffer(file);
 }
@@ -152,10 +187,6 @@ function processNecklaceMapResponse() {
     //geometry_out.value = response;
     document.getElementById('output_panel').style.display = 'block';
   };
-}
-
-function populateEditor(response) {
-  const regions = response.split('\n');
 }
 
 function onChangedNecklaceSettings() {

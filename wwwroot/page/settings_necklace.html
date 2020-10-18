@@ -7,7 +7,7 @@
       Select the base map. Either pick one of the premade maps from the list, or select "Custom map..." to upload your own map. In that case, your map needs to be in SVG format and contain both the regions and the necklace shape (see Help above for more information).
     </div>
     <select id="geometry_choice"
-      onchange="onChangedGeometryChoice();">
+      onchange="updateFormState();">
       <option value=""></option>
       <option value="africa">Africa</option>
       <option value="east-asia">East Asia</option>
@@ -26,10 +26,19 @@
   </div>
   <div class="sidebar-panel" id="data_panel" style="display: none;">
     <h3>Input data values</h3>
-      <div class="explanation">
-        Enter the data values to be used for each region.
-      </div>
-    <div class="form-field" id="data_field">
+    <div class="explanation">
+      Enter the data values to be used for each region.
+    </div>
+    <table id="data-editor">
+      <thead>
+        <tr>
+          <th>Region
+          <th>Value
+      </thead>
+      <tbody>
+      </tbody>
+    </table>
+    <div class="form-field" id="data_field" style="display: none;">
       <label class="inline-label" for="data_file_in">Data</label>
       <input
         type="file"
@@ -37,16 +46,17 @@
         name="data_file"
         accept="text/plain"
         onchange="onChangedDataFile(this.files[0]);"
-      />
+        />
       <label class="inline-label" for="data_value_in">Attribute</label>
       <select
         id="data_value_in"
         name="data_value"
         onchange="onChangedNecklaceSettings();"
-      >
+        >
         <option value=""></option>
       </select>
     </div>
+    <button id="save-data-button">Save data values</button>
   </div>
   <div
     class="sidebar-panel"
