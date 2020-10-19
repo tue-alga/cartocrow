@@ -51,6 +51,11 @@ bool CompareTaskEvent::operator()(const TaskEvent& a, const TaskEvent& b) const
 
   // Note that we should return false whenever a is not 'smaller' than b.
   // Practically, 'end' events should be handled before 'start' events.
+  // There is a specific exception: when the events have the same node,
+  // the 'start' event must be handled before the 'end' event (this is a degenerate interval).
+  if (a.node == b.node)
+    return a.type == TaskEvent::Type::kFrom;
+
   return a.type == TaskEvent::Type::kTo && b.type == TaskEvent::Type::kFrom;
 }
 
@@ -146,9 +151,10 @@ void TaskSlice::Rotate(const TaskSlice& first_slice, const BitString& layer_set)
 
     if (first_slice.tasks[task->layer] && first_slice.tasks[task->layer]->bead == task->bead)
     {
+      // Disable tasks that start before the first slice, except when that task's bead caused the event to start the first slice.
       if (layer_set[task->layer])
       {
-        if (task->valid->to() <= coverage.from() + kEpsilon)
+        if (task->bead != first_slice.event_from.node->bead && task->valid->to() <= coverage.from() + kEpsilon)
           task->disabled = true;
         task->valid->from() = 0;
       }
