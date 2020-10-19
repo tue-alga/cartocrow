@@ -259,9 +259,7 @@ bool CheckFeasible::ProcessContainer
 
   // Assign an angle to each node.
   BitString layer_set = first_slice_remaining_set;
-
   Number check_angle_rad = std::numeric_limits<Number>::max();
-
   for
   (
     ptrdiff_t value_index = num_slices - 1;
@@ -274,7 +272,12 @@ bool CheckFeasible::ProcessContainer
     const size_t value_slice_index = (value_index + first_slice_index) % num_slices;
     TaskSlice& value_slice = slices_[value_slice_index];
 
-    if (value.angle_rad + kEpsilon < value_slice.coverage.from())
+    const CycleNodeLayered::Ptr& task = value.task;
+    if
+    (
+      value.angle_rad + kEpsilon < value_slice.coverage.from() ||
+      (value.angle_rad < value_slice.coverage.from() + kEpsilon && !(task && layer_set[task->layer]))
+    )
     {
       // Move to the previous slice.
       const size_t prev_slice_index = (value_slice_index + num_slices - 1) % num_slices;
@@ -291,7 +294,6 @@ bool CheckFeasible::ProcessContainer
     }
     else
     {
-      const CycleNodeLayered::Ptr& task = value.task;
       if (!task || !layer_set[task->layer])
         return false;
 
