@@ -127,6 +127,15 @@ function updateFormState() {
     return;
   }
   document.getElementById('data_panel').style.display = 'block';
+
+  runNecklaceAlgorithm();
+
+  // if we have no data yet, hide the next parts of the form
+  if (!necklace_data_base64) {
+    document.getElementById('options_panel').style.display = 'none';
+    return;
+  }
+  document.getElementById('options_panel').style.display = 'block';
 }
 
 function onChangedDataFile(file) {
@@ -153,6 +162,23 @@ function onChangedDataFile(file) {
     updateFormState();
   };
   reader.readAsArrayBuffer(file);
+}
+
+function onSaveButtonClicked() {
+  const editor = document.getElementById('data-editor');
+  let data = editor.childNodes.length + " sd\nID value\n";
+  for (let i = 0; i < editor.childNodes.length; i++) {
+    const child = editor.childNodes[i];
+    const id = child.childNodes[0].textContent;
+    let value = child.childNodes[1].childNodes[0].value;
+    if (!value) {
+      value = 0;
+    }
+    data += id + " " + value + "\n";
+  }
+  necklace_data_base64 = btoa(data);
+
+  updateFormState();
 }
 
 function getNecklaceBuffer() {
@@ -202,7 +228,12 @@ function onChangedNecklaceSettings() {
     document.getElementById('interval-explanation-wedge').style.display = 'block';
   }
 
-  if (necklace_data_base64 === null) {
+  runNecklaceAlgorithm();
+}
+
+function runNecklaceAlgorithm() {
+
+  if (!necklace_data_base64) {
     let necklace_geometry = atob(necklace_geometry_base64);
     processNecklaceMapResponse()(necklace_geometry);
 
@@ -217,14 +248,11 @@ function onChangedNecklaceSettings() {
   if (Date.now() - last_update < UPDATE_MILLISECONDS) return;
   last_update = Date.now();
 
-  let value_str = escape(data_value_in.value);
-  if (value_str == '') return;
-
   // Collect the necklace map parameters.
   let body = JSON.stringify({
     geometry_base64: necklace_geometry_base64,
     data_base64: necklace_data_base64,
-    value: escape(data_value_in.value),
+    value: "value",
     interval: document.getElementById('interval_in').value,
     ignore_point_regions: ignore_point_regions_in.checked,
     order: order_in.value,
@@ -243,6 +271,7 @@ function onChangedNecklaceSettings() {
 }
 
 function onInputNecklaceSettings() {
+  // TODO refactor this into the methods above
   let buffer_rad = getNecklaceBuffer();
   let glyph_aversion = getNecklaceAversion();
   let centroid_interval_length = getNecklaceCentroidIntervalLength();
@@ -255,3 +284,4 @@ function onInputNecklaceSettings() {
   bead_id_font_size_out.value = '= ' + parseInt(bead_id_font_size);
   onChangedNecklaceSettings();
 }
+
