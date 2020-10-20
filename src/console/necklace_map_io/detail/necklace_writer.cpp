@@ -50,7 +50,7 @@ constexpr const char* kNecklaceKernelStyle = "fill:rgba(0%,0%,0%,100%);"
                                              "stroke-linejoin:round;";
 constexpr const char* kRegionContextColor = "white";
 constexpr const char* kRegionUnusedColor = "rgb(90%,90%,90%)";
-constexpr const char* kBeadIdFontFamily = "Verdana";
+constexpr const char* kBeadIdFontFamily = "Bitter";
 
 constexpr const char* kFeasibleIntervalStyle = "fill:none;"
                                                "stroke-linecap:butt;"
@@ -1130,7 +1130,7 @@ void NecklaceWriter::DrawBeadIds()
 
       printer_.OpenElement("text");
       printer_.PushAttribute("text-anchor", "middle");
-      printer_.PushAttribute("alignment-baseline", "central");
+      printer_.PushAttribute("dominant-baseline", "central");
       {
         Point position;
         CHECK(element->necklace->shape->IntersectRay(element->bead->angle_rad, position));
