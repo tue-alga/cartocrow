@@ -30,7 +30,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 06-10-2020
 #include <vector>
 
 #include "geoviz/common/detail/table_parser.h"
-#include "geoviz/flow_map/node.h"
+#include "geoviz/flow_map/place.h"
 
 
 namespace geoviz
@@ -47,7 +47,8 @@ class DataReader : public geoviz::detail::TableParser
   (
     const std::string& filename,
     const std::string& value_name,
-    std::vector<flow_map::Node>& nodes,
+    std::vector<Place::Ptr>& places,
+    size_t& index_root,
     int max_retries = 2
   );
 
@@ -55,7 +56,8 @@ class DataReader : public geoviz::detail::TableParser
   (
     std::istream& in,
     const std::string& value_name,
-    std::vector<flow_map::Node>& nodes,
+    std::vector<Place::Ptr>& places,
+    size_t& index_root,
     const std::string& version = "1.0"
   );
 }; // class DataReader

@@ -51,6 +51,13 @@ DEFINE_string
 
 DEFINE_string
 (
+  in_structure_filename,
+  "",
+  "The input tree structure filename."
+);
+
+DEFINE_string
+(
   in_value_name,
   "",
   "The name of the data column to visualize using the necklace map."
@@ -63,6 +70,20 @@ DEFINE_string
   "The file to which to write the output, or empty if no file should be written."
 );
 
+DEFINE_bool
+(
+  out_website,
+  false,
+  "Whether to write the output to the standard output stream for the website."
+);
+
+DEFINE_double
+(
+  restricting_angle_rad,
+  0.61,
+  "Maximum angle between the line connecting the root and any point on a tree arc and arc's tangent line at that point. Must be in the range (0, pi/2)."
+);
+
 DEFINE_int32
 (
   pixel_width,
@@ -72,9 +93,9 @@ DEFINE_int32
 
 DEFINE_int32
 (
-  region_coordinate_precision,
+  coordinate_precision,
   5,
-  "Numeric precision of the region coordinates in the output. Must be strictly positive."
+  "Numeric precision of the coordinates in the output. Must be strictly positive."
 );
 
 DEFINE_double
@@ -84,6 +105,20 @@ DEFINE_double
   "Opacity of the regions in the output. Must be no larger than 1."
   " For negative values, the input opacity is maintained."
   " The regions are otherwise drawn with the same style as the input regions."
+);
+
+DEFINE_double
+(
+  flow_opacity,
+  1,
+  "Opacity of the flow tree in the output. Must be in the range [0, 1]."
+);
+
+DEFINE_double
+(
+  node_opacity,
+  1,
+  "Opacity of the nodes in the output. Must be in the range [0, 1]."
 );
 
 
@@ -100,10 +135,17 @@ void ValidateFlags(geoviz::flow_map::Parameters& parameters, geoviz::flow_map::W
   // There must be input geometry and input numeric data.
   correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(in_geometry_filename), ExistsFile);
   correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(in_data_filename), ExistsFile);
+  correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(in_structure_filename), Or<Empty,ExistsFile>);
   correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(in_value_name), Not<Empty>);
 
   // Note that we allow overwriting existing output.
   correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(out_filename), Or<Empty, MakeAvailableFile>);
+
+  // Flow map parameters.
+  {
+    correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(restricting_angle_rad), MakeRangeCheck<Closure::kOpen>(0.0, M_PI_2));
+    parameters.restricting_angle_rad = FLAGS_restricting_angle_rad;
+  }
 
   // Output parameters.
   using Options = geoviz::flow_map::WriteOptions;
@@ -112,11 +154,17 @@ void ValidateFlags(geoviz::flow_map::Parameters& parameters, geoviz::flow_map::W
     correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(pixel_width), IsStrictlyPositive<int32_t>());
     write_options->pixel_width = FLAGS_pixel_width;
 
-    correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(region_coordinate_precision), IsStrictlyPositive<int32_t>());
-    write_options->region_precision = FLAGS_region_coordinate_precision;
+    correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(coordinate_precision), IsStrictlyPositive<int32_t>());
+    write_options->numeric_precision = FLAGS_coordinate_precision;
 
     correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(region_opacity), MakeUpperBoundCheck(1.0));
     write_options->region_opacity = FLAGS_region_opacity;
+
+    correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(flow_opacity), MakeUpperBoundCheck(1.0));
+    write_options->flow_opacity = FLAGS_flow_opacity;
+
+    correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(node_opacity), MakeUpperBoundCheck(1.0));
+    write_options->node_opacity = FLAGS_node_opacity;
   }
 
   correct &= CheckAndPrintFlag( FLAGS_NAME_AND_VALUE( log_dir ), Or<Empty, IsDirectory> );
@@ -126,41 +174,36 @@ void ValidateFlags(geoviz::flow_map::Parameters& parameters, geoviz::flow_map::W
   if( !correct ) LOG(FATAL) << "Errors in flags; Terminating.";
 }
 
-bool ReadGeometry
-(
-  std::vector<geoviz::Region>& context,
-  std::vector<geoviz::flow_map::Node>& nodes
-)
+bool ReadGeometry(std::vector<geoviz::Region>& context, std::vector<geoviz::flow_map::Place::Ptr>& places)
 {
   geoviz::flow_map::SvgReader svg_reader;
-  return svg_reader.ReadFile(FLAGS_in_geometry_filename, context, nodes);
+  return svg_reader.ReadFile(FLAGS_in_geometry_filename, context, places);
 }
 
-bool ReadData(std::vector<geoviz::flow_map::Node>& nodes)
+bool ReadData(std::vector<geoviz::flow_map::Place::Ptr>& places, size_t& root_index)
 {
   geoviz::flow_map::DataReader data_reader;
-  return data_reader.ReadFile(FLAGS_in_data_filename, FLAGS_in_value_name, nodes);
+  return data_reader.ReadFile(FLAGS_in_data_filename, FLAGS_in_value_name, places, root_index);
 }
 
-/*void WriteOutput
+void WriteOutput
 (
-  const std::vector<geoviz::necklace_map::MapElement::Ptr>& elements,
-  const std::vector<geoviz::necklace_map::Necklace::Ptr>& necklaces,
-  const geoviz::Number& scale_factor,
-  const geoviz::WriterOptions::Ptr& write_options
+  const std::vector<geoviz::Region>& context,
+  const geoviz::flow_map::FlowTree::Ptr& tree,
+  const geoviz::flow_map::WriteOptions::Ptr& write_options
 )
 {
-  geoviz::NecklaceWriter writer;
+  geoviz::flow_map::SvgWriter writer;
   if (FLAGS_out_website)
-    writer.Write(elements, necklaces, scale_factor, write_options, std::cout);
+    writer.Write(context, tree, write_options, std::cout);
 
   if (!FLAGS_out_filename.empty())
   {
     std::ofstream out(FLAGS_out_filename);
-    writer.Write(elements, necklaces, scale_factor, write_options, out);
+    writer.Write(context, tree, write_options, out);
     out.close();
   }
-}*/
+}
 
 
 int main(int argc, char **argv)
@@ -183,38 +226,29 @@ int main(int argc, char **argv)
   geoviz::Timer time;
 
   using Region = geoviz::Region;
-  using Node = geoviz::flow_map::Node;
+  using Place = geoviz::flow_map::Place;
   std::vector<Region> context;
-  std::vector<Node> nodes;
+  std::vector<Place::Ptr> places;
+  size_t index_root;
 
   // Read the geometry and data.
   // Note that the regions should be written in the same order as in the input,
   // because some smaller regions may be used to simulate enclaves inside larger regions.
   // This forces the geometry to be read first.
-  const bool success_read_svg = ReadGeometry(context, nodes);
-  const bool success_read_data = ReadData(nodes);
+  const bool success_read_svg = ReadGeometry(context, places);
+  const bool success_read_data = ReadData(places, index_root);
   CHECK(success_read_svg && success_read_data) << "Terminating program.";
   const double time_read = time.Stamp();
 
-
-  /*if (FLAGS_force_recompute_scale_factor || scale_factor < 0)
-  {
-    // Compute the optimal scale factor and placement.
-    scale_factor = ComputeScaleFactor(parameters, elements, necklaces);
-    LOG(INFO) << "Computed scale factor: " << scale_factor;
-  }
-  else
-  {
-    // Compute just the placement.
-    ComputePlacement(parameters, scale_factor, elements, necklaces);
-    LOG(INFO) << "Computed placement";
-  }
+  // Compute flow map.
+  geoviz::flow_map::FlowTree::Ptr tree;
+  ComputeFlowMap(parameters, places, index_root, tree);
+  LOG(INFO) << "Computed flow map";
   const double time_compute = time.Stamp();
 
-
   // Write the output.
-  WriteOutput(elements, necklaces, scale_factor, write_options);
-  const double time_write = time.Stamp();*/
+  WriteOutput(context, tree, write_options);
+  const double time_write = time.Stamp();
 
   const double time_total = time.Span();
 

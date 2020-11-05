@@ -18,17 +18,22 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-Created by tvl (t.vanlankveld@esciencecenter.nl) on 02-09-2020
+Created by tvl (t.vanlankveld@esciencecenter.nl) on 16-10-2020
 */
 
-#ifndef GEOVIZ_FLOW_MAP_IO_SVG_WRITER_H
-#define GEOVIZ_FLOW_MAP_IO_SVG_WRITER_H
+#ifndef GEOVIZ_FLOW_MAP_IO_DETAIL_SVG_WRITER_H
+#define GEOVIZ_FLOW_MAP_IO_DETAIL_SVG_WRITER_H
 
-#include <ostream>
+#include <string>
+#include <unordered_map>
+#include <vector>
+
+#include <tinyxml2.h>
 
 #include "geoviz/common/core_types.h"
 #include "geoviz/common/region.h"
 #include "geoviz/flow_map/flow_tree.h"
+#include "geoviz/flow_map/spiral.h"
 #include "geoviz/flow_map/io/write_options.h"
 
 
@@ -36,22 +41,55 @@ namespace geoviz
 {
 namespace flow_map
 {
+namespace detail
+{
 
 class SvgWriter
 {
  public:
-  SvgWriter();
-
-  bool Write
+  SvgWriter
   (
     const std::vector<Region>& context,
     const FlowTree::Ptr& tree,
     const WriteOptions::Ptr& options,
     std::ostream& out
-  ) const;
+  );
+
+  ~SvgWriter();
+
+  void DrawContext();
+
+  void DrawFlow();
+
+  void DrawNodes();
+
+ private:
+  void OpenSvg();
+
+  void CloseSvg();
+
+  void ComputeBoundingBox();
+
+  void AddDropShadowFilter();
+
+  void DrawSpiral(const Spiral& spiral, const Vector& offset, const PolarPoint& parent);
+
+  const std::vector<Region>& context_;
+  const FlowTree::Ptr& tree_;
+  std::ostream& out_;
+
+  WriteOptions::Ptr options_;
+
+  Box bounding_box_;
+  Box bounding_box_spirals_;
+  double unit_px_;
+  std::string transform_matrix_;
+
+  tinyxml2::XMLPrinter printer_;
 }; // class SvgWriter
 
+} // namespace detail
 } // namespace flow_map
 } // namespace geoviz
 
-#endif //GEOVIZ_FLOW_MAP_IO_SVG_WRITER_H
+#endif //GEOVIZ_FLOW_MAP_IO_DETAIL_SVG_WRITER_H

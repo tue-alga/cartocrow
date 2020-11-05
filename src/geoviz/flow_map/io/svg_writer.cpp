@@ -25,6 +25,8 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 02-09-2020
 
 #include <glog/logging.h>
 
+#include "geoviz/flow_map/io/detail/svg_writer.h"
+
 
 namespace geoviz
 {
@@ -40,21 +42,26 @@ namespace flow_map
 SvgWriter::SvgWriter() {}
 
 /**@brief Write a flow map to a stream.
+ * @param context the context regions of the flow map.
+ * @param tree the flow tree.
  * @param options the options for how to write the flow map.
  * @param out the stream to which to write.
  * @return whether the flow map could be successfully written to the stream.
  */
 bool SvgWriter::Write
 (
+  const std::vector<Region>& context,
+  const FlowTree::Ptr& tree,
   const WriteOptions::Ptr& options,
   std::ostream& out
 ) const
 {
-  //detail::SvgWriter writer(elements, necklaces, scale_factor, options, out);
+  detail::SvgWriter writer(context, tree, options, out);
 
   // The order of drawing the features determines their stacking order, i.e. the last one will be on top.
-  //writer.DrawPolygonRegions();
-  //writer.DrawPointRegions();
+  writer.DrawContext();
+  writer.DrawFlow();
+  writer.DrawNodes();
 
   return true;
 }

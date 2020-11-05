@@ -68,7 +68,7 @@ DEFINE_bool
 (
   out_website,
   false,
-  "Whether to write the output to the standard output stream for the website. This also forces logging to the standard error stream."
+  "Whether to write the output to the standard output stream for the website."
 );
 
 DEFINE_bool
@@ -305,12 +305,11 @@ ValidateFlags(geoviz::necklace_map::Parameters& parameters, geoviz::necklace_map
     correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(placement_cycles), MakeLowerBoundCheck(0));
     parameters.placement_cycles = FLAGS_placement_cycles;
 
-    using Closure = Closure;
     correct &= CheckAndPrintFlag
-      (
-        FLAGS_NAME_AND_VALUE(aversion_ratio),
-        MakeRangeCheck<Closure::kClosed, Closure::kClosed>(0.0, 1.0)
-      );
+    (
+      FLAGS_NAME_AND_VALUE(aversion_ratio),
+      MakeRangeCheck<Closure::kClosed, Closure::kClosed>(0.0, 1.0)
+    );
     parameters.aversion_ratio = FLAGS_aversion_ratio;
   }
 

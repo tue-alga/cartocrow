@@ -32,7 +32,6 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 29-01-2020
 #include "geoviz/necklace_map/map_element.h"
 #include "geoviz/necklace_map/necklace.h"
 #include "geoviz/necklace_map/io/write_options.h"
-#include "geoviz/necklace_map/io/detail/svg_writer.h"
 
 
 namespace geoviz

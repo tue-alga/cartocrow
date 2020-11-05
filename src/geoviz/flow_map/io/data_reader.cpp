@@ -55,12 +55,13 @@ DataReader::DataReader()
 
 /**@brief Read a flow map data file.
  *
- * The table in the file must contain a string column called "id" (case sensitive) and a numeric column containing the flow node values.
+ * The table in the file must contain a string column called "id" (case sensitive) and a numeric column describing the incoming flows.
  *
  * See @f detail::TableParser::Parse(std::istream& in) for more info on the file format.
  * @param filename the name of the file.
  * @param value_name the name of the data column (case sensitive).
- * @param nodes the flow map nodes associated with the values.
+ * @param places the places on the flow map (e.g. root and leaf nodes) associated with the values.
+ * @param index_root the index of the root node of the flow map.
  * @param max_retries the maximum number of times to retry reading after an error.
  * @return whether the element values could be read successfully.
  */
@@ -68,7 +69,8 @@ bool DataReader::ReadFile
 (
   const std::string& filename,
   const std::string& value_name,
-  std::vector<Node>& nodes,
+  std::vector<Place::Ptr>& places,
+  size_t& index_root,
   int max_retries /*= 2*/
 )
 {
@@ -106,7 +108,7 @@ bool DataReader::ReadFile
   if (!fin)
     return false;
 
-  return Parse(fin, value_name, nodes, version);
+  return Parse(fin, value_name, places, index_root, version);
 }
 
 /**@brief Parse a flow map data string.
@@ -121,16 +123,17 @@ bool DataReader::ReadFile
  *
  * The following tokens give the name per value.
  *
- * The columns must include a string column called "id" (case sensitive) and a double column containing the flow map node values.
+ * The columns must include a string column called "id" (case sensitive) and a double column containing the incoming flows.
  *
- * The remainder of the tokens are the node values, grouped per node and ordered as described in the format token.
+ * The remainder of the tokens are the flow values, grouped per place and ordered as described in the format token.
  *
- * For example, a stream starting with "5 ssd ID name value " should be followed by five nodes with each two string values and one double value. The string columns are called "ID" and "name"; the double column is called "value".
+ * For example, a stream starting with "5 ssd ID name value " should be followed by five places with each two string values and one double value. The string columns are called "ID" and "name"; the double column is called "value".
  *
  * Tokens for string values may contain whitespace if the string starts and end with quotation marks (").
  * @param in the string to parse.
  * @param value_name the name of the data column (case sensitive).
- * @param nodes the flow map nodes associated with the values.
+ * @param places the places on the flow map (e.g. root and nodes) associated with the values.
+ * @param index_root the index of the root node of the flow map.
  * @param version the data format version.
  * @return whether the element values could be read successfully.
  */
@@ -138,7 +141,8 @@ bool DataReader::Parse
 (
   std::istream& in,
   const std::string& value_name,
-  std::vector<flow_map::Node>& nodes,
+  std::vector<Place::Ptr>& places,
+  size_t& index_root,
   const std::string& version /*= "1.0"*/
 )
 {
@@ -171,17 +175,25 @@ bool DataReader::Parse
     return false;
 
   // Create a lookup table for the elements.
+  // Additionally, determine the root node.
   using LookupTable = std::unordered_map<std::string, size_t>;
   LookupTable id_to_element_index;
-  for (flow_map::Node& node : nodes)
+  index_root = places.size();
+  for (size_t index_place = 0; index_place < places.size(); ++index_place)
   {
+    Place::Ptr& place = places[index_place];
+
     const size_t next_index = id_to_element_index.size();
-    const size_t n = id_to_element_index.insert({node.id, next_index}).first->second;
+    const size_t n = id_to_element_index.insert({place->id, next_index}).first->second;
     CHECK_EQ(next_index, n);
 
     // Set the value to 0 in case the elements are reused.
-    node.flow_in = 0;
+    place->flow_in = 0;
+
+    if (place->id == value_name)
+      index_root = index_place;
   }
+  CHECK(index_root != places.size());
 
   // Add the values to their associated element.
   for (size_t v = 0; v < column_id->values.size(); ++v)
@@ -189,20 +201,20 @@ bool DataReader::Parse
     const std::string& id = column_id->values[v];
 
     // Get the region with the given ID, or create a new one if it does not yet exist.
-    std::pair<LookupTable::iterator, bool> result = id_to_element_index.emplace(id, nodes.size());
+    std::pair<LookupTable::iterator, bool> result = id_to_element_index.emplace(id, places.size());
     const size_t n = result.first->second;
-    if (n == nodes.size())
-      nodes.emplace_back(id, PolarPoint());
-    flow_map::Node& node = nodes[n];
-    CHECK_EQ(id, node.id);
+    if (n == places.size())
+      places.push_back(std::make_shared<Place>(id, PolarPoint()));
+    Place::Ptr& place = places[n];
+    CHECK_EQ(id, place->id);
 
     if (column_double == nullptr)
-      node.flow_in = column_int->values[v];
+      place->flow_in = column_int->values[v];
     else
-      node.flow_in = column_double->values[v];
+      place->flow_in = column_double->values[v];
   }
 
-  LOG(INFO) << "Successfully parsed flow map data for " << nodes.size() << " node(s).";
+  LOG(INFO) << "Successfully parsed flow map data for " << places.size() << " place(s).";
   return true;
 }
 

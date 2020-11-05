@@ -29,7 +29,7 @@ endmacro(install_files_and_directories)
 # Project version.
 set(VERSION_MAJOR 0)
 set(VERSION_MINOR 1)
-set(VERSION_FEATURE 2)
+set(VERSION_FEATURE 5)
 set(VERSION_PATCH 0)
 set(VERSION_PROJECT "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_FEATURE}.${VERSION_PATCH}")
 message(STATUS "${PROJECT_NAME} version: ${VERSION_PROJECT}")

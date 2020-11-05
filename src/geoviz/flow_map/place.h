@@ -18,13 +18,16 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-Created by tvl (t.vanlankveld@esciencecenter.nl) on 02-09-2020
+Created by tvl (t.vanlankveld@esciencecenter.nl) on 04-09-2020
 */
 
-#ifndef GEOVIZ_FLOW_MAP_IO_WRITE_OPTIONS_H
-#define GEOVIZ_FLOW_MAP_IO_WRITE_OPTIONS_H
+#ifndef GEOVIZ_FLOW_MAP_PLACE_H
+#define GEOVIZ_FLOW_MAP_PLACE_H
 
 #include <memory>
+
+#include "geoviz/common/core_types.h"
+#include "geoviz/common/polar_point.h"
 
 
 namespace geoviz
@@ -32,23 +35,20 @@ namespace geoviz
 namespace flow_map
 {
 
-struct WriteOptions
+struct Place
 {
-  using Ptr = std::shared_ptr<WriteOptions>;
+  using Ptr = std::shared_ptr<Place>;
 
-  static Ptr Default();
+  Place(const std::string& id, const PolarPoint& position);
 
-  static Ptr Debug();
+  std::string id;
 
-  int pixel_width;
-  int numeric_precision;
+  PolarPoint position;
 
-  double region_opacity;
-  double flow_opacity;
-  double node_opacity;
-}; // struct WriteOptions
+  Number flow_in;
+}; // struct Place
 
 } // namespace flow_map
 } // namespace geoviz
 
-#endif //GEOVIZ_FLOW_MAP_IO_WRITE_OPTIONS_H
+#endif //GEOVIZ_FLOW_MAP_PLACE_H

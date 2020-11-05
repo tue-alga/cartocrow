@@ -29,11 +29,12 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-2019
 #include <geoviz/common/core_types.h>
 #include <geoviz/common/region.h>
 
+#include "geoviz/flow_map/flow_tree.h"
 #include "geoviz/flow_map/parameters.h"
+#include "geoviz/flow_map/place.h"
 #include "geoviz/flow_map/io/data_reader.h"
 #include "geoviz/flow_map/io/svg_reader.h"
 #include "geoviz/flow_map/io/svg_writer.h"
-//#include "geoviz/flow_map/io/type_parsers.h"
 
 
 namespace geoviz
@@ -41,10 +42,13 @@ namespace geoviz
 namespace flow_map
 {
 
-/**@brief Dummy method for running the flow map algorithm.
- * @return a dummy return string.
- */
-std::string proc_flow_map();
+void ComputeFlowMap
+(
+  const Parameters& parameters,
+  const std::vector<Place::Ptr>& places,
+  const size_t index_root,
+  FlowTree::Ptr& tree
+);
 
 } // namespace flow_map
 } // namespace geoviz

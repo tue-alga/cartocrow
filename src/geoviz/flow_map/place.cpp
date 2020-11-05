@@ -21,7 +21,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Created by tvl (t.vanlankveld@esciencecenter.nl) on 04-09-2020
 */
 
-#include "node.h"
+#include "place.h"
 
 #include <glog/logging.h>
 
@@ -31,35 +31,35 @@ namespace geoviz
 namespace flow_map
 {
 
-/**@struct Node
- * @brief A node in the flow map spiral tree.
+/**@struct Place
+ * @brief A place on the flow map.
  *
- * This node has a position and a numeric value indicating flow that enters the node.
+ * This named place has a position and a numeric value indicating flow that enters this place.
  */
 
-/**@fn Node::Ptr
- * @brief The preferred pointer type for storing or sharing a node.
+/**@fn Place::Ptr
+ * @brief The preferred pointer type for storing or sharing a place.
  */
 
-/**@brief Construct a new spiral tree node.
- * @param id @parblock the ID of the node.
+/**@brief Construct a new flow map place.
+ * @param id @parblock the ID of the place.
  *
  * See Region::id for details on this ID.
  * @endparblock
  */
-Node::Node(const std::string& id, const PolarPoint& position)
+Place::Place(const std::string& id, const PolarPoint& position)
   : id(id), position(position), flow_in(0) {}
 
-/**@fn Region Node::id;
- * @brief The ID of this node.
+/**@fn Region Place::id;
+ * @brief The ID of this place.
  */
 
-/**@fn Region Node::position;
- * @brief The position of this node in polar coordinates.
+/**@fn Region Place::position;
+ * @brief The position of this place in polar coordinates.
  */
 
-/**@fn Number Node::flow_in;
- * @brief The amount of flow that enters this node.
+/**@fn Number Place::flow_in;
+ * @brief The amount of flow that enters this place.
  */
 
 } // namespace flow_map

@@ -37,8 +37,21 @@ namespace flow_map
  *
  * All parameters are initialized as valid values.
  */
-Parameters::Parameters()
+Parameters::Parameters() :
+  restricting_angle_rad(0.61)
 {}
+
+/**@fn Number Parameters::restricting_angle_rad;
+ * @brief The maximum angle between the line connecting the root and any point on a tree arc and arc's tangent line at that point.
+ *
+ * This angle must be in the range (0, pi/2).
+ *
+ * In practice, all arcs of a spiral tree are either straight lines or alpha-spirals, where alpha is this restriction angle.
+ *
+ * These spirals can be expressed as polar coordinates around the root node p(t) = (R(t), phi(t)), where R = R(0)*e^{-t} and phi(t) = phi(0) + tan(alpha)*t.
+ *
+ * Note that generally p(0) is the polar coordinates of a node of a spiral arc, positive t values are closer to the root, and negative t values are farther from the root.
+ */
 
 } // namespace flow_map
 } // namespace geoviz

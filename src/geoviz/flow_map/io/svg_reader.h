@@ -30,7 +30,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 04-09-2020
 
 #include <gflags/gflags.h>
 
-#include "geoviz/flow_map/node.h"
+#include "geoviz/flow_map/place.h"
 #include "geoviz/common/region.h"
 
 
@@ -48,7 +48,7 @@ class SvgReader
   (
     const std::string& filename,
     std::vector<geoviz::Region>& context,
-    std::vector<geoviz::flow_map::Node>& nodes,
+    std::vector<Place::Ptr>& places,
     int max_retries = 2
   );
 
@@ -56,7 +56,7 @@ class SvgReader
   (
     const std::string& input,
     std::vector<geoviz::Region>& context,
-    std::vector<geoviz::flow_map::Node>& nodes
+    std::vector<Place::Ptr>& places
   );
 }; // class SvgReader
 

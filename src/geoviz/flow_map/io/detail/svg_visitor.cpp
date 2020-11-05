@@ -42,7 +42,7 @@ namespace
 
 constexpr const char* kElementSvg = "svg";
 
-constexpr const char* kAttributeNodeId = "node_id";
+constexpr const char* kAttributePlaceId = "node_id";
 constexpr const char* kAttributeStyle = "style";
 
 constexpr const char* kCommandsRestrictionContextRegion = "CcQqSsTt";
@@ -55,7 +55,7 @@ constexpr const char* kCommandsRestrictionContextRegion = "CcQqSsTt";
 
 /**@brief Construct an XML visitor for handling SVG necklace map input geometry.
  * @param context the collection in which to collect the context regions in the input.
- * @param nodes the collection in which to collect the (root and leaf) nodes of the flow map.
+ * @param places the collection in which to collect the places on the flow map (e.g. root and leaf nodes).
  * @param strict_validity @parblock whether the context regions must be strictly valid.
  *
  * Otherwise some regions may be corrected if this will make them valid.
@@ -63,20 +63,20 @@ constexpr const char* kCommandsRestrictionContextRegion = "CcQqSsTt";
  */
 SvgVisitor::SvgVisitor
 (
-  std::vector<geoviz::Region>& context,
-  std::vector<geoviz::flow_map::Node>& nodes,
+  std::vector<Region>& context,
+  std::vector<Place::Ptr>& places,
   const bool strict_validity /*= true*/
 ) :
   geoviz::detail::SvgVisitor(),
   context_(context),
-  nodes_(nodes),
+  places_(places),
   strict_validity_(strict_validity)
 {
   // Add the regions to the lookup table, while checking for duplicates.
-  for (const Node& node : nodes_)
+  for (const Place::Ptr& place : places_)
   {
-    const size_t next_index = id_to_node_index_.size();
-    const size_t n = id_to_node_index_.insert({node.id, next_index}).first->second;
+    const size_t next_index = id_to_place_index_.size();
+    const size_t n = id_to_place_index_.insert({place->id, next_index}).first->second;
     CHECK_EQ(next_index, n);
   }
 }
@@ -101,12 +101,12 @@ bool
 SvgVisitor::VisitCircle(const Point& center, const Number& radius, const tinyxml2::XMLAttribute* attributes)
 {
   // Circles without id are ignored.
-  std::string node_id;
-  if (!FindAttribute(attributes, kAttributeNodeId, node_id))
+  std::string id;
+  if (!FindAttribute(attributes, kAttributePlaceId, id))
     return false;
 
-  // Add a node.
-  AddNode(node_id, center);
+  // Add a place.
+  AddPlace(id, center);
   return false;
 }
 
@@ -126,11 +126,11 @@ bool SvgVisitor::VisitPath(const std::string& commands, const tinyxml2::XMLAttri
   else
   {
     // This path must be circular and represent a node.
-    std::string node_id;
-    CHECK(FindAttribute(attributes, kAttributeNodeId, node_id));
+    std::string id;
+    CHECK(FindAttribute(attributes, kAttributePlaceId, id));
 
-    // Add a node.
-    AddNode(node_id, commands);
+    // Add a place.
+    AddPlace(id, commands);
   }
 }
 
@@ -139,37 +139,33 @@ bool SvgVisitor::FinalizeSvg()
   return true;
 }
 
-/**@brief Add a node for the flow map spiral tree.
- * @param node_id the node ID.
- * @param point the position of the node in Cartesian coordinates.
- * @return whether the node was constructed correctly.
+/**@brief Add a place to the flow map.
+ * @param id the place ID.
+ * @param point the position of the place in Cartesian coordinates.
+ * @return whether the place was constructed correctly.
  */
-bool SvgVisitor::AddNode(const std::string& node_id, const geoviz::Point& point)
+bool SvgVisitor::AddPlace(const std::string& id, const geoviz::Point& point)
 {
   PolarPoint position(point);
 
-  // Node IDs must be unique.
-  const size_t next_index = nodes_.size();
-  const size_t n = id_to_node_index_.insert({node_id, next_index}).first->second;
+  // IDs must be unique.
+  const size_t next_index = places_.size();
+  const size_t n = id_to_place_index_.insert({id, next_index}).first->second;
 
   if (next_index == n)
-    nodes_.emplace_back
-    (
-      node_id,
-      position
-    );
+    places_.push_back(std::make_shared<Place>(id, position));
   else
-    nodes_[n].position = position;
+    places_[n]->position = position;
 
   return true;
 }
 
 /**@brief Add a node from a Bezier spline.
- * @param node_id the node ID.
+ * @param id the place ID.
  * @param commands the SVG path commands (including point coordinates).
- * @return whether the node was constructed correctly.
+ * @return whether the place was constructed correctly.
  */
-bool SvgVisitor::AddNode(const std::string& node_id, const std::string& commands)
+bool SvgVisitor::AddPlace(const std::string& id, const std::string& commands)
 {
   // Interpret the commands as a bezier spline.
   BezierSpline spline;
@@ -183,17 +179,13 @@ bool SvgVisitor::AddNode(const std::string& node_id, const std::string& commands
   PolarPoint position(circle.center());
 
   // Node IDs must be unique.
-  const size_t next_index = nodes_.size();
-  const size_t n = id_to_node_index_.insert({node_id, next_index}).first->second;
+  const size_t next_index = places_.size();
+  const size_t n = id_to_place_index_.insert({id, next_index}).first->second;
 
   if (next_index == n)
-    nodes_.emplace_back
-    (
-      node_id,
-      position
-    );
+    places_.push_back(std::make_shared<Place>(id, position));
   else
-    nodes_[n].position = position;
+    places_[n]->position = position;
 
   return true;
 }

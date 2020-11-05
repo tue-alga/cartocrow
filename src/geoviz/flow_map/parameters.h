@@ -35,6 +35,8 @@ namespace flow_map
 struct Parameters
 {
   Parameters();
+
+  Number restricting_angle_rad;
 }; // struct Parameters
 
 } // namespace flow_map

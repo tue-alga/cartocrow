@@ -1,8 +1,6 @@
 /*
-The Flow Map library implements the algorithmic geo-visualization
-method by the same name, developed by Kevin Verbeek, Kevin Buchin,
-and Bettina Speckmann at TU Eindhoven
-(DOI: 10.1007/s00453-013-9867-z & 10.1109/TVCG.2011.202).
+The GeoViz library implements algorithmic geo-visualization methods,
+developed at TU Eindhoven.
 Copyright (C) 2019  Netherlands eScience Center and TU Eindhoven
 
 This program is free software: you can redistribute it and/or modify
@@ -21,34 +19,29 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Created by tvl (t.vanlankveld@esciencecenter.nl) on 04-09-2020
 */
 
-#ifndef GEOVIZ_FLOW_MAP_NODE_H
-#define GEOVIZ_FLOW_MAP_NODE_H
-
-#include <memory>
+#ifndef GEOVIZ_COMMON_POLAR_POINT_INC
+#define GEOVIZ_COMMON_POLAR_POINT_INC
 
 #include "geoviz/common/core_types.h"
-#include "geoviz/common/polar_point.h"
-
 
 namespace geoviz
 {
-namespace flow_map
+
+/**@brief Construct a polar point.
+ * @tparam T1 the number type for the distance to the pole.
+ * @tparam T2 the number type for the angle relative to the positive x-axis.
+ * @param R the distance to the pole.
+ * @param phi the angle from the pole.
+ */
+template<typename T1, typename T2>
+PolarPoint::PolarPoint(const T1& R, const T2& phi) : R_(R), phi_(phi)
 {
+  while (phi_ < -M_PI)
+    phi_ += M_2xPI;
+  while (M_PI < phi_)
+    phi_ -= M_2xPI;
+}
 
-struct Node
-{
-  using Ptr = std::shared_ptr<Node>;
-
-  Node(const std::string& id, const PolarPoint& position);
-
-  std::string id;
-
-  PolarPoint position;
-
-  Number flow_in;
-}; // struct Node
-
-} // namespace flow_map
 } // namespace geoviz
 
-#endif //GEOVIZ_FLOW_MAP_NODE_H
+#endif //GEOVIZ_COMMON_POLAR_POINT_INC

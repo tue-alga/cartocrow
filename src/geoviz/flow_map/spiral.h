@@ -18,13 +18,16 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-Created by tvl (t.vanlankveld@esciencecenter.nl) on 02-09-2020
+Created by tvl (t.vanlankveld@esciencecenter.nl) on 16-10-2020
 */
 
-#ifndef GEOVIZ_FLOW_MAP_IO_WRITE_OPTIONS_H
-#define GEOVIZ_FLOW_MAP_IO_WRITE_OPTIONS_H
+#ifndef GEOVIZ_FLOW_MAP_SPIRAL_ARC_H
+#define GEOVIZ_FLOW_MAP_SPIRAL_ARC_H
 
 #include <memory>
+
+#include "geoviz/common/core_types.h"
+#include "geoviz/common/polar_point.h"
 
 
 namespace geoviz
@@ -32,23 +35,38 @@ namespace geoviz
 namespace flow_map
 {
 
-struct WriteOptions
+class Spiral
 {
-  using Ptr = std::shared_ptr<WriteOptions>;
+ public:
+  using Ptr = std::shared_ptr<Spiral>;
 
-  static Ptr Default();
+  Spiral(const Number& angle_rad, const PolarPoint& anchor);
 
-  static Ptr Debug();
+  Spiral(const PolarPoint& source, const PolarPoint& target);
 
-  int pixel_width;
-  int numeric_precision;
+  const Number& angle_rad() const;
 
-  double region_opacity;
-  double flow_opacity;
-  double node_opacity;
-}; // struct WriteOptions
+  const PolarPoint& anchor() const;
+
+  bool IsLeft() const;
+  bool IsRight() const;
+  bool IsStraight() const;
+
+  PolarPoint Evaluate(const Number& t) const;
+
+  Number ComputeOrder() const;
+
+  PolarPoint Intersect(const Spiral& s) const;
+
+  Box ComputeBoundingBox() const;
+
+ private:
+  Number angle_rad_;
+
+  PolarPoint anchor_;
+}; // class Spiral
 
 } // namespace flow_map
 } // namespace geoviz
 
-#endif //GEOVIZ_FLOW_MAP_IO_WRITE_OPTIONS_H
+#endif //GEOVIZ_FLOW_MAP_SPIRAL_ARC_H

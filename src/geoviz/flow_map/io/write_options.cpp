@@ -35,8 +35,10 @@ WriteOptions::Ptr WriteOptions::Default()
 
   options->pixel_width = 500;
 
-  options->region_precision = 9;
+  options->numeric_precision = 9;
   options->region_opacity = -1;
+  options->flow_opacity = 1;
+  options->node_opacity = 1;
 
   return options;
 }
@@ -47,8 +49,10 @@ WriteOptions::Ptr WriteOptions::Debug()
 
   options->pixel_width = 500;
 
-  options->region_precision = 9;
+  options->numeric_precision = 9;
   options->region_opacity = -1;
+  options->flow_opacity = 0.5;
+  options->node_opacity = 1;
 
   return options;
 }

@@ -92,4 +92,15 @@ PolarPoint PolarPoint::translate_pole(const PolarPoint& p, const Vector& t)
   return to_polar(p.to_cartesian() + t);
 }
 
+
+bool operator==(const PolarPoint& p, const PolarPoint& q)
+{
+  return p.R() == q.R() && p.phi() == q.phi();
+}
+
+bool operator!=(const PolarPoint& p, const PolarPoint& q)
+{
+  return !(p == q);
+}
+
 } // namespace geoviz

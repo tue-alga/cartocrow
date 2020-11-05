@@ -40,7 +40,7 @@ class PolarPoint
   PolarPoint(const PolarPoint& p);
 
   template<typename T1, typename T2>
-  PolarPoint(const T1& R, const T2& phi) : R_(R), phi_(phi) {}
+  PolarPoint(const T1& R, const T2& phi);
 
   explicit PolarPoint(const Point& p);
 
@@ -58,6 +58,11 @@ class PolarPoint
   Number R_, phi_;
 }; // class PolarPoint
 
+bool operator==(const PolarPoint& p, const PolarPoint& q);
+bool operator!=(const PolarPoint& p, const PolarPoint& q);
+
 } // namespace geoviz
+
+#include "polar_point.inc"
 
 #endif //GEOVIZ_COMMON_POLAR_POINT_H

@@ -46,7 +46,7 @@ SvgReader::SvgReader() {}
 /**@brief Read flow map SVG input from a file.
  * @param filename the file to read.
  * @param context the collection in which to collect the context regions in the input.
- * @param nodes the collection in which to collect the (root and leaf) nodes of the flow map.
+ * @param places the collection in which to collect the places on the flow map (e.g. root and leaf nodes).
  * @param max_retries the maximum number of times to retry reading the file.
  * @return whether the read operation could be completed successfully.
  */
@@ -54,7 +54,7 @@ bool SvgReader::ReadFile
 (
   const std::string& filename,
   std::vector<geoviz::Region>& context,
-  std::vector<geoviz::flow_map::Node>& nodes,
+  std::vector<Place::Ptr>& places,
   int max_retries /*= 2*/
 )
 {
@@ -84,21 +84,21 @@ bool SvgReader::ReadFile
     }
   } while (true);
 
-  return Parse(input, context, nodes);
+  return Parse(input, context, places);
 }
 
 
 /**@brief Parse flow map SVG input from a string.
  * @param input the string to parse.
  * @param context the collection in which to collect the context regions in the input.
- * @param nodes the collection in which to collect the (root and leaf) nodes of the flow map.
+ * @param places the collection in which to collect the places on the flow map (e.g. root and leaf nodes).
  * @return whether the string could be parsed successfully.
  */
 bool SvgReader::Parse
 (
   const std::string& input,
   std::vector<geoviz::Region>& context,
-  std::vector<geoviz::flow_map::Node>& nodes
+  std::vector<Place::Ptr>& places
 )
 {
   tinyxml2::XMLDocument doc;
@@ -107,10 +107,10 @@ bool SvgReader::Parse
   if (result != tinyxml2::XML_SUCCESS) return false;
 
   using Visitor = detail::SvgVisitor;
-  Visitor visitor(context, nodes);
+  Visitor visitor(context, places);
   doc.Accept(&visitor);
 
-  LOG(INFO) << "Successfully parsed flow map geometry for " << nodes.size() << " node(s).";
+  LOG(INFO) << "Successfully parsed flow map geometry for " << places.size() << " place(s).";
 
   return true;
 }

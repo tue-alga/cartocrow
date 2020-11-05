@@ -18,13 +18,17 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-Created by tvl (t.vanlankveld@esciencecenter.nl) on 02-09-2020
+Created by tvl (t.vanlankveld@esciencecenter.nl) on 16-10-2020
 */
 
-#ifndef GEOVIZ_FLOW_MAP_IO_WRITE_OPTIONS_H
-#define GEOVIZ_FLOW_MAP_IO_WRITE_OPTIONS_H
+#ifndef GEOVIZ_FLOW_MAP_FLOW_TREE_H
+#define GEOVIZ_FLOW_MAP_FLOW_TREE_H
 
 #include <memory>
+#include <vector>
+
+#include "geoviz/flow_map/place.h"
+#include "geoviz/flow_map/spiral_tree.h"
 
 
 namespace geoviz
@@ -32,23 +36,36 @@ namespace geoviz
 namespace flow_map
 {
 
-struct WriteOptions
+class FlowTree
 {
-  using Ptr = std::shared_ptr<WriteOptions>;
+ public:
+  using Ptr = std::shared_ptr<FlowTree>;
 
-  static Ptr Default();
+  struct Node
+  {
+    using Type = SpiralTree::Node::Type;
 
-  static Ptr Debug();
+    Node(const Type type, Place::Ptr place, const PolarPoint& relative_position);
 
-  int pixel_width;
-  int numeric_precision;
+    Type type;
 
-  double region_opacity;
-  double flow_opacity;
-  double node_opacity;
-}; // struct WriteOptions
+    Place::Ptr place;
+    PolarPoint relative_position;
+  }; // struct Node
+
+  using Arc = std::pair<Spiral, PolarPoint>;
+
+  FlowTree(const SpiralTree& spiral_tree);
+
+ //private:
+  Point root_;
+
+  std::vector<Node> nodes_;  // Note that the positions of these nodes are offset by the position of the root.
+
+  std::vector<Arc> arcs_;
+}; // class FlowTree
 
 } // namespace flow_map
 } // namespace geoviz
 
-#endif //GEOVIZ_FLOW_MAP_IO_WRITE_OPTIONS_H
+#endif //GEOVIZ_FLOW_MAP_FLOW_TREE_H

@@ -33,7 +33,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 04-09-2020
 #include "geoviz/common/core_types.h"
 #include "geoviz/common/region.h"
 #include "geoviz/common/detail/svg_visitor.h"
-#include "geoviz/flow_map/node.h"
+#include "geoviz/flow_map/place.h"
 
 
 namespace geoviz
@@ -47,14 +47,13 @@ class SvgVisitor : public geoviz::detail::SvgVisitor
 {
  private:
   using Region = geoviz::Region;
-  using Node = flow_map::Node;
   using LookupTable = std::unordered_map<std::string, size_t>;
 
  public:
   SvgVisitor
   (
-    std::vector<geoviz::Region>& context,
-    std::vector<geoviz::flow_map::Node>& nodes,
+    std::vector<Region>& context,
+    std::vector<Place::Ptr>& places,
     const bool strict_validity = true
   );
 
@@ -69,16 +68,16 @@ class SvgVisitor : public geoviz::detail::SvgVisitor
 
   bool FinalizeSvg();
 
-  bool AddNode(const std::string& node_id, const Point& point);
+  bool AddPlace(const std::string& id, const Point& point);
 
-  bool AddNode(const std::string& node_id, const std::string& commands);
+  bool AddPlace(const std::string& id, const std::string& commands);
 
   bool AddRegion(const std::string& commands, const std::string& style);
 
-  std::vector<geoviz::Region>& context_;
-  std::vector<geoviz::flow_map::Node>& nodes_;
+  std::vector<Region>& context_;
+  std::vector<Place::Ptr>& places_;
 
-  LookupTable id_to_node_index_;
+  LookupTable id_to_place_index_;
 
   bool strict_validity_;
 }; // class SvgVisitor
