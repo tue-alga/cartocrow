@@ -1,0 +1,18 @@
+16 ssddd
+ID name agriculture poverty internet
+BRN Brunei  0   0   47.9
+CHN China   11.6    2.8 22.3
+IDN Indonesia   13.3    16.7    11.0
+JPN Japan   0   0   69.2
+KHM Cambodia    32.0    30.1    0
+KOR "South Korea" 3.1 0 77.8
+LAO "Lao People's Dem Republic" 34.1    33.5    0
+MMR Myanmar 50.4    32.0    0
+MNG Mongolia    22.3    36.1    12.1
+MYS Malaysia    10.1    15.5    62.6
+PHL Philippines 14.7    25.1    5.9
+PNG "Papua New Guinea"  33.3    37.5    0
+PRK "North Korea"   21.6    0   0
+THA Thailand    9.2 13.6    19.9
+TLS Timor-Leste 30.8    39.7    0
+VNM "Viet Nam"  22.1    28.9    20.5

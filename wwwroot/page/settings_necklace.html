@@ -1,103 +1,86 @@
 <!-- To be loaded as support card. -->
 <div class="aga-padded">
-  <!-- Note that we'er not using forms to disable submitting data on pressing the "Enter" key. -->
-  <div style="display: block;">
-    <p>Input</p>
-    <div>
-      <input
-        type="file"
-        id="geometry_file_in"
-        name="geometry_file"
-        accept="text/xml, image/svg+xml"
-        onchange="onChangedGeometryFile(this.files[0]);"
-      />
+  <!-- Note that we're not using forms to disable submitting data on pressing the "Enter" key. -->
+  <div class="sidebar-panel" id="map_panel">
+    <h3>Choose a map</h3>
+    <div class="explanation">
+      Select the base map. Either pick one of the premade maps from the list, or select "Custom map..." to upload your own map. In that case, your map needs to be in SVG format and contain both the regions and the necklace shape (see Help above for more information).
     </div>
-    <div>
-      <input
-        type="file"
-        id="data_file_in"
-        name="data_file"
-        accept="text/plain"
-        onchange="onChangedDataFile(this.files[0]);"
-      />
+    <select id="map_choice"
+      onchange="onChangedMap();">
+      <option value=""></option>
+      <option value="Africa">Africa</option>
+      <option value="eAsia">East Asia</option>
+      <option value="wEU">Northwest Europe</option>
+      <option value="USA">USA</option>
+      <option value="custom">Custom map...</option>
+    </select>
+    <input
+      type="file"
+      id="geometry_file_in"
+      name="geometry_file"
+      accept="text/xml, image/svg+xml"
+      style="display: none;"
+      onchange="onChangedGeometryFile(this.files[0]);"
+    />
+  </div>
+  <div class="sidebar-panel" id="data_panel" style="display: none;">
+    <h3>Input data values</h3>
+    <div class="explanation">
+      Enter the data values to be used for each region.
     </div>
-    <div>
-      <select
-        id="data_value_in"
-        name="data_value"
-        onchange="onChangedNecklaceSettings();"
-      >
-        <option value=""></option>
-      </select>
-    </div>
+    <ul id="data-editor">
+    </ul>
+    <button id="save-data-button" onclick="onSaveButtonClicked();">Save data values</button>
+    <details>
+      <summary>Import from data file</summary>
+      <div class="explanation">
+        You can import the data values from a file.
+      </div>
+      <div class="form-field" id="data_field">
+        <label class="inline-label" for="data_file_in">Data</label>
+        <input
+          type="file"
+          id="data_file_in"
+          name="data_file"
+          accept="text/plain"
+          onchange="onChangedDataFile(this.files[0]);"
+          />
+        <br>
+        <label class="inline-label" for="data_value_in">Attribute</label>
+        <select
+          id="data_value_in"
+          name="data_value"
+          >
+          <option value=""></option>
+        </select>
+      </div>
+      <button id="import-data-button" onclick="onImportButtonClicked();">Import</button>
+    </details>
   </div>
   <div
-    oninput="onInputNecklaceSettings();"
-    onchange="onChangedNecklaceSettings();"
-    style="display: block;"
+    class="sidebar-panel"
+    id="options_panel"
+    style="display: none"
+    oninput="onChangedNecklaceSettings();"
   >
-    <p>Parameters</p>
-    <div>
-      <div>
-        <input
-          type="checkbox"
-          id="ignore_point_regions_in"
-          name="point_regions"
-        />
-        <label for="point_regions">Ignore Point Regions</label>
-      </div>
+    <h3>Options</h3>
+    <div class="explanation">
+      If desired, you can further customize the necklace map to your liking with the following options.
+    </div>
+    <div class="form-field">
+      <label class="inline-label" for="interval_in">Bead placement</label>
       <select id="interval_in" name="interval">
-        <option value="centroid">Centroid</option>
-        <option value="wedge">Wedge</option>
+        <option value="centroid">Centroid intervals</option>
+        <option value="wedge">Wedge intervals</option>
       </select>
-      <label for="interval_in" style="margin-left: 8px;">Interval Type</label>
+      <div class="field-explanation">
+        <img id="interval-explanation-image" src="res/bead-placement-centroid.svg" class="mini-explanation-figure">
+        Determines where each region's bead can be placed on the necklace.<p id="interval-explanation-centroid"><b>Centroid intervals:</b> Draw ray through the region's centroid; bead may be placed around the intersection of that ray with the necklace.</p><p id="interval-explanation-wedge" style="display: none;"><b>Wedge intervals:</b> Draw rays surrounding the region; bead may be placed between the intersections of these rays with the necklace.</p>
+      </div>
     </div>
-    <div>
-      <select id="order_in" name="order">
-        <option value="fixed">Fixed Order</option>
-        <option value="any">Variable Order</option>
-      </select>
-      <label for="order_in" style="margin-left: 8px;">Order Type</label>
-    </div>
-    <div>
-      <input
-        id="centroid_interval_length_in"
-        type="range"
-        name="centroid_interval_length"
-        min="0.0"
-        max="1.0"
-        step="0.01"
-        value="0.2"
-      />
-      <label for="centroid_interval_length" style="margin-left: 8px;"
-        >Centroid Interval Length</label
-      >
-      <output
-        id="centroid_interval_length_out"
-        name="centroid_interval_length"
-        for="centroid_interval_length"
-      ></output>
-    </div>
-    <div>
-      <input
-        id="wedge_interval_length_min_in"
-        type="range"
-        name="wedge_interval_length_min"
-        min="0.0"
-        max="1.0"
-        step="0.01"
-        value="0.0"
-      />
-      <label for="wedge_interval_length_min" style="margin-left: 8px;"
-        >Wedge Interval Minimum</label
-      >
-      <output
-        id="wedge_interval_length_min_out"
-        name="wedge_interval_length_min"
-        for="wedge_interval_length_min"
-      ></output>
-    </div>
-    <div>
+    <div class="form-field">
+      <label class="inline-label" for="buffer_rad_in">Buffer</label>
       <input
         id="buffer_rad_in"
         type="range"
@@ -107,57 +90,118 @@
         step="0.01"
         value="0.0"
       />
-      <label for="buffer_rad" style="margin-left: 8px;">Buffer</label>
       <output id="buffer_rad_out" name="buffer_rad" for="buffer_rad"></output>
+      <div class="field-explanation">
+        Size of the buffer region maintained around beads.
+      </div>
     </div>
-    <div>
-      <input
-        id="aversion_in"
-        type="range"
-        name="aversion"
-        min="0.0"
-        max="1.0"
-        step="0.01"
-        value="0.0"
-      />
-      <label for="aversion" style="margin-left: 8px;">Aversion</label>
-      <output id="aversion_out" name="aversion" for="aversion"></output>
-    </div>
-    <div>
-      <input
-        id="bead_id_font_size_in"
-        type="range"
-        name="bead_id_font_size"
-        min="1"
-        max="32"
-        step="1"
-        value="16"
-      />
-      <label for="bead_id_font_size" style="margin-left: 8px;"
-        >Bead ID Size</label
-      >
-      <output
-        id="bead_id_font_size_out"
-        name="bead_id_font_size"
-        for="bead_id_font_size"
-      ></output>
-    </div>
+    <details>
+      <summary>Advanced options</summary>
+      <div class="form-field">
+        <label class="inline-label" for="wedge_interval_length_min_in">Wedge interval minimum</label>
+        <input
+          id="wedge_interval_length_min_in"
+          type="range"
+          name="wedge_interval_length_min"
+          min="0.0"
+          max="1.0"
+          step="0.01"
+          value="0.0"
+        />
+        <output
+          id="wedge_interval_length_min_out"
+          name="wedge_interval_length_min"
+          for="wedge_interval_length_min"
+        ></output>
+        <div class="field-explanation">
+          Minimum length (in radians) of wedge intervals. Wedge intervals smaller than this value are enlarged.
+        </div>
+      </div>
+      <div class="form-field">
+        <label class="inline-label" for="centroid_interval_length_in">Centroid interval length</label>
+        <input
+          id="centroid_interval_length_in"
+          type="range"
+          name="centroid_interval_length"
+          min="0.0"
+          max="1.0"
+          step="0.01"
+          value="0.2"
+        />
+        <output
+          id="centroid_interval_length_out"
+          name="centroid_interval_length"
+          for="centroid_interval_length"
+        ></output>
+        <div class="field-explanation">
+          Length (in radians) of centroid intervals.
+        </div>
+      </div>
+      <div class="form-field">
+        <label class="inline-label" for="order_in">Bead order</label>
+        <select id="order_in" name="order">
+          <option value="any">Variable</option>
+          <option value="fixed">Fixed</option>
+        </select>
+        <div class="field-explanation">
+          Determines if beads may be swapped if that allows increasing the bead sizes.
+        </div>
+      </div>
+      <div class="form-field">
+        <label class="inline-label" for="aversion_in">Aversion</label>
+        <input
+          id="aversion_in"
+          type="range"
+          name="aversion"
+          min="0.0"
+          max="1.0"
+          step="0.01"
+          value="0.0"
+        />
+        <output id="aversion_out" name="aversion" for="aversion"></output>
+        <div class="field-explanation">
+          Controls the aversion force between beads. Lower values pull beads towards the center of their interval, while higher values push the beads away from their neighbors.
+        </div>
+      </div>
+      <div class="form-field">
+        <label class="inline-label" for="bead_id_font_size_in">Font size</label>
+        <input
+          id="bead_id_font_size_in"
+          type="range"
+          name="bead_id_font_size"
+          min="1"
+          max="32"
+          step="1"
+          value="16"
+        />
+        <output
+          id="bead_id_font_size_out"
+          name="bead_id_font_size"
+          for="bead_id_font_size"
+        ></output>
+        <div class="field-explanation">
+          Sets the font size of the bead labels.
+        </div>
+      </div>
+      <div class="form-field">
+        <div>
+          <input
+            type="checkbox"
+            id="ignore_point_regions_in"
+            name="point_regions"
+            />
+          <label for="ignore_point_regions_in">Ignore Point Regions</label>
+        </div>
+      </div>
+    </details>
   </div>
-  <div style="display: block;">
-    <div>
-      <input
-        id="geometry_out"
-        type="text"
-        name="geometry_out"
-        value=""
-        readonly="true"
-      />
-      <label for="geometry_out" style="margin-left: 8px;">Output</label>
-    </div>
-    <div>
-      <button onclick="navigator.clipboard.writeText(geometry_out.value);">
-        Copy to Clipboard
-      </button>
-    </div>
+  <div
+    class="sidebar-panel"
+    id="output_panel"
+    style="display: none;"
+    >
+    <h3>Download the necklace map</h3>
+    <button id="download_output_button">Download as SVG</button>
   </div>
 </div>
+

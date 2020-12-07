@@ -91,6 +91,7 @@ add_subdirectory(print_arguments)
 add_subdirectory(draw_logo)
 add_subdirectory(multi_library_app)
 add_subdirectory(necklace_map)
+add_subdirectory(map_regions)
 
 # Set the default executable to run in Visual Studio.
 if(MSVC)

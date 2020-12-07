@@ -3,6 +3,22 @@
     Licensed under the Apache License, version 2.0. See LICENSE for details.
 */
 
+.logo {
+  height: 30px;
+}
+
+.large-logo-container {
+  text-align: center;
+  padding: 25px 0;
+  border-bottom: 1px solid #ddd;
+  margin-bottom: 25px;
+}
+
+.large-logo {
+  width: 100%;
+  max-width: 500px;
+}
+
 #map {
   height: 100%;
   width: 100%;
@@ -15,6 +31,126 @@
   will-change: auto !important;
 }
 
+.aga-panel-left {
+  resize: horizontal;
+  counter-reset: steps;
+}
+
+.sidebar-panel:not(:first-child) {
+  padding-top: 25px;
+  margin-top: 25px;
+  border-top: 1px solid #ddd;
+}
+
+.aga-panel-left h3::before {
+  display: inline-block;
+  counter-increment: steps;
+  content: counter(steps);
+  color: white;
+  background-color: #00a2de;
+  width: 1.5em;
+  height: 1.5em;
+  border-radius: 0.75em;
+  text-align: center;
+  margin-right: .5em;
+}
+
+.aga-panel-left details {
+  margin: 10px 0px;
+  padding: 10px 10px 0;
+  border: 1px solid #ddd;
+}
+
+.aga-panel-left details[open] {
+  padding: 10px;
+  padding-bottom: 10px;
+}
+
+.aga-panel-left details summary {
+  margin: -10px -10px 0;
+  padding: 10px;
+  font-weight: bold;
+  cursor: default;
+}
+
+.aga-panel-left details[open] summary {
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+}
+
+.mini-explanation-figure {
+  float: right;
+  padding-left: 20px;
+}
+
 .geoviz-map-control {
   padding: 1px 8px;
 }
+
+#settings_necklace-inner h3 {
+  padding-bottom: 10px;
+}
+
+#settings_necklace-inner .form-field {
+  padding-bottom: 20px;
+}
+
+#settings_necklace-inner .inline-label {
+  display: inline-block;
+  width: 120px;
+  padding-right: 10px;
+  font-weight: bold;
+  text-align: right;
+  vertical-align: middle;
+}
+
+#settings_necklace-inner input {
+  vertical-align: middle;
+}
+
+#settings_necklace-inner .explanation {
+  padding-bottom: 10px;
+}
+#settings_necklace-inner .field-explanation {
+  padding-top: 4px;
+  color: #666666;
+  padding-left: 120px;
+}
+
+#settings_necklace-inner #data-editor {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+
+  list-style-type: none;
+  max-height: 250px;
+  overflow-x: auto;
+
+  margin-bottom: 5px;
+}
+
+#settings_necklace-inner #data-editor li {
+  margin-right: 50px;
+  margin-top: 5px;
+}
+
+#settings_necklace-inner #data-editor .region-label {
+  margin-right: 10px;
+  position: relative;
+  top: 5px;
+  display: inline-block;
+  min-width: 40px;
+}
+
+#settings_necklace-inner #data-editor .region-field {
+  width: 80px;
+  text-align: right;
+  float: right;
+}
+
+#settings_necklace-inner .output-textarea {
+  width: 100%;
+  resize: vertical;
+}
+
