@@ -142,6 +142,7 @@ body,
   transition: all 200ms;
 }
 .aga-panel-top-inner {
+  padding: 0 20px;
   overflow-y: auto;
 }
 
@@ -156,6 +157,10 @@ body,
 .aga-panel-left-inner {
   width: '100%';
   overflow-x: auto;
+  background-image: url("../res/crow-mark.svg");
+  background-position: bottom 20px right 20px;
+  background-repeat: no-repeat;
+  background-size: 80px;
 }
 .aga-panel-left-minimize {
   width: 30px;

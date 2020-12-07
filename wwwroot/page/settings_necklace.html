@@ -6,13 +6,13 @@
     <div class="explanation">
       Select the base map. Either pick one of the premade maps from the list, or select "Custom map..." to upload your own map. In that case, your map needs to be in SVG format and contain both the regions and the necklace shape (see Help above for more information).
     </div>
-    <select id="geometry_choice"
-      onchange="updateFormState();">
+    <select id="map_choice"
+      onchange="onChangedMap();">
       <option value=""></option>
-      <option value="africa">Africa</option>
-      <option value="east-asia">East Asia</option>
-      <option value="europe">Northwest Europe</option>
-      <option value="usa">USA</option>
+      <option value="Africa">Africa</option>
+      <option value="eAsia">East Asia</option>
+      <option value="wEU">Northwest Europe</option>
+      <option value="USA">USA</option>
       <option value="custom">Custom map...</option>
     </select>
     <input
@@ -31,32 +31,38 @@
     </div>
     <ul id="data-editor">
     </ul>
-    <div class="form-field" id="data_field" style="display: none;">
-      <label class="inline-label" for="data_file_in">Data</label>
-      <input
-        type="file"
-        id="data_file_in"
-        name="data_file"
-        accept="text/plain"
-        onchange="onChangedDataFile(this.files[0]);"
-        />
-      <label class="inline-label" for="data_value_in">Attribute</label>
-      <select
-        id="data_value_in"
-        name="data_value"
-        onchange="onChangedNecklaceSettings();"
-        >
-        <option value=""></option>
-      </select>
-    </div>
     <button id="save-data-button" onclick="onSaveButtonClicked();">Save data values</button>
+    <details>
+      <summary>Import from data file</summary>
+      <div class="explanation">
+        You can import the data values from a file.
+      </div>
+      <div class="form-field" id="data_field">
+        <label class="inline-label" for="data_file_in">Data</label>
+        <input
+          type="file"
+          id="data_file_in"
+          name="data_file"
+          accept="text/plain"
+          onchange="onChangedDataFile(this.files[0]);"
+          />
+        <br>
+        <label class="inline-label" for="data_value_in">Attribute</label>
+        <select
+          id="data_value_in"
+          name="data_value"
+          >
+          <option value=""></option>
+        </select>
+      </div>
+      <button id="import-data-button" onclick="onImportButtonClicked();">Import</button>
+    </details>
   </div>
   <div
     class="sidebar-panel"
     id="options_panel"
     style="display: none"
-    oninput="onInputNecklaceSettings();"
-    onchange="onChangedNecklaceSettings();"
+    oninput="onChangedNecklaceSettings();"
   >
     <h3>Options</h3>
     <div class="explanation">

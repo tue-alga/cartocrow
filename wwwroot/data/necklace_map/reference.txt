@@ -1,0 +1,15 @@
+Note: no tiny coutries (e.g. city-states)
+
+World5: world countries, 1 circle necklace
+World4: world countries, necklace per subcontinent (Bezier Af/SA)
+World6: some european countries (all used), 1 circle necklace
+World2: as World4, but soccer ball symbols
+West Europe: western european countries (no Scandinavia or east of Czechia), 1 circle necklace
+East Asia: countries of south-east asia, china-mongolia, koreas, japan, 1 circle necklace
+United States: USA states, multiple (aestetic?) circle necklaces
+Africa: african countries, 1 Bezier curve
+World: world countries, multiple circle necklaces
+The Netherlands: dutch provinces, 1 circle necklace
+West Europe Plus: european countries excl. ex-USSR, 1 circle necklace
+World3: world countries, 1 Bezier necklace
+
