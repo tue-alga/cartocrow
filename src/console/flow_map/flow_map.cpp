@@ -80,7 +80,7 @@ DEFINE_bool
 DEFINE_double
 (
   restricting_angle_rad,
-  0.61,
+  0.43633,
   "Maximum angle between the line connecting the root and any point on a tree arc and arc's tangent line at that point. Must be in the range (0, pi/2)."
 );
 
@@ -221,7 +221,6 @@ int main(int argc, char **argv)
   geoviz::flow_map::Parameters parameters;
   geoviz::flow_map::WriteOptions::Ptr write_options;
   ValidateFlags(parameters, write_options);
-
 
   geoviz::Timer time;
 

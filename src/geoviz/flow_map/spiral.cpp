@@ -80,12 +80,23 @@ Spiral::Spiral(const PolarPoint& source, const PolarPoint& target) :
   //
   //    =>  alpha = tan^-1((phi_q - phi_p) / -ln(R_q / R_p))
 
-  CHECK_NE(source.R(), 0);
-  CHECK_NE(source.R(), target.R());
+  CHECK_LT(0, source.R());
+  CHECK_LT(target.R(), source.R());
+
   if (target.R() == 0)
+  {
+    // The target is the root.
     angle_rad_ = 0;
-  else
-    angle_rad_ = std::atan((target.phi() - source.phi()) / -std::log(target.R() / source.R()));
+    return;
+  }
+
+  Number diff_phi = target.phi() - source.phi();
+  if (diff_phi < -M_PI)
+    diff_phi += M_2xPI;
+  else if (M_PI < diff_phi)
+    diff_phi -= M_2xPI;
+
+  angle_rad_ = std::atan(diff_phi / -std::log(target.R() / source.R()));
 }
 
 /**@brief Get the polar angle of the spiral's tangents (in radians).

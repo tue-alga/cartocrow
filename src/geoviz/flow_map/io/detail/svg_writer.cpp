@@ -44,14 +44,22 @@ constexpr const char* kFlowStyle = "fill:none;"//rgba(100%,10%,10%,100%);"
                                    "stroke-linecap:butt;"
                                    "stroke-linejoin:round;";
 
-constexpr const char* kLeafStyle = "fill:rgba(100%,30%,0%,100%);"
-                                   "stroke:rgba(0%,0%,0%,100%);"
-                                   "stroke-linecap:butt;"
-                                   "stroke-linejoin:round;";
 constexpr const char* kRootStyle = "fill:rgba(100%,30%,0%,100%);"
                                    "stroke:rgba(0%,0%,0%,100%);"
                                    "stroke-linecap:butt;"
                                    "stroke-linejoin:miter;";
+constexpr const char* kLeafStyle = "fill:rgba(100%,30%,0%,100%);"
+                                   "stroke:rgba(0%,0%,0%,100%);"
+                                   "stroke-linecap:butt;"
+                                   "stroke-linejoin:round;";
+constexpr const char* kJoinStyle = "fill:rgba(0%,0%,0%,100%);"
+                                   "stroke:rgba(0%,0%,0%,100%);"
+                                   "stroke-linecap:butt;"
+                                   "stroke-linejoin:round;";
+constexpr const char* kSubdivisionStyle = "fill:rgba(0%,30%,100%,100%);"
+                                          "stroke:rgba(0%,0%,0%,100%);"
+                                          "stroke-linecap:butt;"
+                                          "stroke-linejoin:round;";
 
 constexpr char kAbsoluteMove = 'M';
 constexpr char kAbsoluteCubicBezier = 'C';
@@ -66,7 +74,10 @@ constexpr const double kTransformScale = 1;
 
 constexpr const double kLineWidthPx = 0.2;//1.7;
 constexpr const double kPointRegionRadiusPx = 3;
-constexpr const double kNodeRadiusPx = 3;
+constexpr const double kRootWidthPx = 6;
+constexpr const double kLeafRadiusPx = 3;
+constexpr const double kJoinRadiusPx = 2;
+constexpr const double kSubdivisionRadiusPx = 3;
 constexpr const double kBoundingBoxBufferPx = 5;
 
 constexpr const double kSpiralStep = 0.1;
@@ -281,7 +292,7 @@ void SvgWriter::DrawFlow()
   printer_.PushComment("Flow");
 
   {
-    const Vector offset = tree_->root_ - Point(CGAL::ORIGIN);
+    const Vector offset = -tree_->root_translation_;
     //const FlowTree::Node* prev = &tree_->nodes_.back();
     /*for (const FlowTree::Node& node : tree_->nodes_)
     {
@@ -302,7 +313,7 @@ void SvgWriter::DrawFlow()
 //      prev = &node;
     }*/
 
-    for (const FlowTree::Arc& arc : tree_->arcs_)
+    for (const FlowTree::FlowArc& arc : tree_->arcs_)
     {
       const Spiral& spiral = arc.first;
       const PolarPoint& parent = arc.second;
@@ -330,81 +341,10 @@ void SvgWriter::DrawNodes()
   }
   printer_.PushComment("Nodes");
 
-  {
-    // Leaf nodes.
-    for (const FlowTree::Node& node : tree_->nodes_)
-    {
-      if (node.type != FlowTree::Node::Type::kLeaf)
-        continue;
-
-      printer_.OpenElement("circle");
-
-      {
-        std::string style = kLeafStyle;
-        style = ForceStyle(style, "fill-opacity:", options_->node_opacity);
-        if (0 <= options_->node_opacity && options_->node_opacity < 1)
-          style = ForceStyle(style, "stroke-width:", 0);
-        else
-          style = ForceStyle(style, "stroke-width:", kLineWidthPx * unit_px_);
-
-        printer_.PushAttribute("style", style.c_str());
-      }
-
-      {
-        const Point position = node.place->position.to_cartesian();
-        printer_.PushAttribute("cx", position.x());
-        printer_.PushAttribute("cy", position.y());
-      }
-
-      {
-        std::stringstream stream;
-        const Number radius = kNodeRadiusPx * unit_px_;
-        stream << radius;
-        printer_.PushAttribute("r", stream.str().c_str());
-      }
-
-      printer_.PushAttribute("transform", transform_matrix_.c_str());
-      printer_.CloseElement(); // circle
-    }
-  }
-
-  {
-    // Root node.
-    printer_.OpenElement("path");
-
-    {
-      std::string style = kRootStyle;
-      style = ForceStyle(style, "fill-opacity:", options_->node_opacity);
-      if (0 <= options_->node_opacity && options_->node_opacity < 1)
-        style = ForceStyle(style, "stroke-width:", 0);
-      else
-        style = ForceStyle(style, "stroke-width:", kLineWidthPx * unit_px_);
-
-      printer_.PushAttribute("style", style.c_str());
-    }
-
-    {
-      Kernel::Construct_bbox_2 bbox = Kernel().construct_bbox_2_object();
-      Box bounding_box = bbox(tree_->root_);
-
-      const Number radius = kNodeRadiusPx * unit_px_;
-      bounding_box = GrowBoundingBox(bounding_box, radius);
-
-      Polygon box;
-      box.push_back(Point(bounding_box.xmin(), bounding_box.ymin()));
-      box.push_back(Point(bounding_box.xmax(), bounding_box.ymin()));
-      box.push_back(Point(bounding_box.xmax(), bounding_box.ymax()));
-      box.push_back(Point(bounding_box.xmin(), bounding_box.ymax()));
-
-      Region region("root");
-      region.shape.emplace_back(box);
-
-      printer_.PushAttribute("d", RegionToPath(region, options_->numeric_precision).c_str());
-    }
-
-    printer_.PushAttribute("transform", transform_matrix_.c_str());
-    printer_.CloseElement(); // path
-  }
+  DrawSubdivisionNodes();
+  DrawJoinNodes();
+  DrawLeaves();
+  DrawRoots();
 
   printer_.CloseElement(); // g
 }
@@ -471,7 +411,7 @@ void SvgWriter::ComputeBoundingBox()
     for (const Polygon_with_holes& polygon : region.shape)
       bounding_box_ += polygon.bbox();
 
-  const Vector offset = tree_->root_ - Point(CGAL::ORIGIN);
+  const Vector offset = -tree_->root_translation_;
 
   // Add the flow tree to the bounding box.
 //  for (const Spiral& spiral : tree_->spirals_)
@@ -479,9 +419,9 @@ void SvgWriter::ComputeBoundingBox()
 //  bounding_box_ += bounding_box_spirals_;
 
   // Add the nodes to the bounding box.
-  for (const FlowTree::Node& node : tree_->nodes_)
+  for (const Node::Ptr& node : tree_->nodes_)
   {
-    Point center = node.place->position.to_cartesian();
+    Point center = node->place->position.to_cartesian();
     const Number& radius = 5;
 
     const Box bead_box = GrowBoundingBox(center, radius);
@@ -609,6 +549,164 @@ void SvgWriter::DrawSpiral(const Spiral& spiral, const Vector& offset, const Pol
   printer_.PushAttribute("d", SpiralToPath(spiral, offset, options_->numeric_precision, parent).c_str());
   printer_.PushAttribute("transform", transform_matrix_.c_str());
   printer_.CloseElement(); // path
+}
+
+void SvgWriter::DrawRoots()
+{
+  for (const Node::Ptr& node : tree_->nodes_)
+  {
+    if (node->parent != nullptr)
+      continue;
+
+    printer_.OpenElement("path");
+
+    {
+      std::string style = kRootStyle;
+      style = ForceStyle(style, "fill-opacity:", options_->node_opacity);
+      if (0 <= options_->node_opacity && options_->node_opacity < 1)
+        style = ForceStyle(style, "stroke-width:", 0);
+      else
+        style = ForceStyle(style, "stroke-width:", kLineWidthPx * unit_px_);
+
+      printer_.PushAttribute("style", style.c_str());
+    }
+
+    {
+      Kernel::Construct_bbox_2 bbox = Kernel().construct_bbox_2_object();
+      Box bounding_box = bbox(Point(CGAL::ORIGIN) - tree_->root_translation_);
+
+      const Number extend = kRootWidthPx * 0.5 * unit_px_;
+      bounding_box = GrowBoundingBox(bounding_box, extend);
+
+      Polygon box;
+      box.push_back(Point(bounding_box.xmin(), bounding_box.ymin()));
+      box.push_back(Point(bounding_box.xmax(), bounding_box.ymin()));
+      box.push_back(Point(bounding_box.xmax(), bounding_box.ymax()));
+      box.push_back(Point(bounding_box.xmin(), bounding_box.ymax()));
+
+      Region region("root");
+      region.shape.emplace_back(box);
+
+      printer_.PushAttribute("d", RegionToPath(region, options_->numeric_precision).c_str());
+    }
+
+    printer_.PushAttribute("transform", transform_matrix_.c_str());
+    printer_.CloseElement(); // path
+  }
+}
+
+void SvgWriter::DrawLeaves()
+{
+  for (const Node::Ptr& node : tree_->nodes_)
+  {
+    if (node->place == nullptr)
+      continue;
+
+    printer_.OpenElement("circle");
+
+    {
+      std::string style = kLeafStyle;
+      style = ForceStyle(style, "fill-opacity:", options_->node_opacity);
+      if (0 <= options_->node_opacity && options_->node_opacity < 1)
+        style = ForceStyle(style, "stroke-width:", 0);
+      else
+        style = ForceStyle(style, "stroke-width:", kLineWidthPx * unit_px_);
+
+      printer_.PushAttribute("style", style.c_str());
+    }
+
+    {
+      const Point position = node->place->position.to_cartesian();
+      printer_.PushAttribute("cx", position.x());
+      printer_.PushAttribute("cy", position.y());
+    }
+
+    {
+      std::stringstream stream;
+      const Number radius = kLeafRadiusPx * unit_px_;
+      stream << radius;
+      printer_.PushAttribute("r", stream.str().c_str());
+    }
+
+    printer_.PushAttribute("transform", transform_matrix_.c_str());
+    printer_.CloseElement(); // circle
+  }
+}
+
+void SvgWriter::DrawJoinNodes()
+{
+  for (const Node::Ptr& node : tree_->nodes_)
+  {
+    if (1 < node->children.size())
+      continue;
+
+    printer_.OpenElement("circle");
+
+    {
+      std::string style = kJoinStyle;
+      style = ForceStyle(style, "fill-opacity:", options_->node_opacity);
+      if (0 <= options_->node_opacity && options_->node_opacity < 1)
+        style = ForceStyle(style, "stroke-width:", 0);
+      else
+        style = ForceStyle(style, "stroke-width:", kLineWidthPx * unit_px_);
+
+      printer_.PushAttribute("style", style.c_str());
+    }
+
+    {
+      const Point position = node->place->position.to_cartesian();
+      printer_.PushAttribute("cx", position.x());
+      printer_.PushAttribute("cy", position.y());
+    }
+
+    {
+      std::stringstream stream;
+      const Number radius = kJoinRadiusPx * unit_px_;
+      stream << radius;
+      printer_.PushAttribute("r", stream.str().c_str());
+    }
+
+    printer_.PushAttribute("transform", transform_matrix_.c_str());
+    printer_.CloseElement(); // circle
+  }
+}
+
+void SvgWriter::DrawSubdivisionNodes()
+{
+  for (const Node::Ptr& node : tree_->nodes_)
+  {
+    if (node->children.size() == 1 && node->place == nullptr)
+      continue;
+
+    printer_.OpenElement("circle");
+
+    {
+      std::string style = kSubdivisionStyle;
+      style = ForceStyle(style, "fill-opacity:", options_->node_opacity);
+      if (0 <= options_->node_opacity && options_->node_opacity < 1)
+        style = ForceStyle(style, "stroke-width:", 0);
+      else
+        style = ForceStyle(style, "stroke-width:", kLineWidthPx * unit_px_);
+
+      printer_.PushAttribute("style", style.c_str());
+    }
+
+    {
+      const Point position = node->place->position.to_cartesian();
+      printer_.PushAttribute("cx", position.x());
+      printer_.PushAttribute("cy", position.y());
+    }
+
+    {
+      std::stringstream stream;
+      const Number radius = kSubdivisionRadiusPx * unit_px_;
+      stream << radius;
+      printer_.PushAttribute("r", stream.str().c_str());
+    }
+
+    printer_.PushAttribute("transform", transform_matrix_.c_str());
+    printer_.CloseElement(); // circle
+  }
 }
 
 } // namespace detail

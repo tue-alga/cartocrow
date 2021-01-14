@@ -74,6 +74,14 @@ class SvgWriter
 
   void DrawSpiral(const Spiral& spiral, const Vector& offset, const PolarPoint& parent);
 
+  void DrawRoots();
+
+  void DrawLeaves();
+
+  void DrawJoinNodes();
+
+  void DrawSubdivisionNodes();
+
   const std::vector<Region>& context_;
   const FlowTree::Ptr& tree_;
   std::ostream& out_;

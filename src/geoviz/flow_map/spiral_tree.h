@@ -39,66 +39,58 @@ namespace geoviz
 namespace flow_map
 {
 
+struct Node
+{
+  using Ptr = std::shared_ptr<Node>;
+
+  explicit Node(const Place::Ptr& place = nullptr);
+
+  Place::Ptr place;
+  Ptr parent;
+  std::vector<Ptr> children;
+}; // struct Node
+
+
 class SpiralTree
 {
+ private:
+  using NodeSet = std::vector<Node::Ptr>;
+
  public:
   using Ptr = std::shared_ptr<SpiralTree>;
 
-  struct Node;
-  struct Arc;
-
-  using NodePtr = std::shared_ptr<Node>;
-  using ArcPtr = std::shared_ptr<Arc>;
-
-  struct Node
-  {
-    enum class Type { kRoot, kJoin, kLeaf, kSubdivision };  // TODO(tvl) move out of this specific node struct to share with the flow tree node struct.
-
-    Node(const Type type, const PolarPoint& relative_position, const Place::Ptr& place = nullptr);
-
-    Number ComputeOrder(const Number& restricting_angle_rad) const;
-
-    Type type;
-
-    Place::Ptr place;
-    PolarPoint relative_position;
-
-    ArcPtr arc_parent;
-    NodePtr child_left, child_right;  // Note that either or both of these may be null.
-  }; // struct Node
-
-  struct Arc
-  {
-    enum class Side { kLeft, kStraight, kRight };
-
-    // The parent is closer to the root, the child closer to a leaf.
-    Arc(const NodePtr& parent, const NodePtr& child, const Side side = Side::kStraight);
-
-    NodePtr parent, child;
-    Side side;
-  }; // struct Arc
+  using NodeIterator = NodeSet::iterator;
+  using NodeConstIterator = NodeSet::const_iterator;
 
   SpiralTree(const Point& root, const Number& restricting_angle_rad);
+
+  inline Point GetRoot() const { return Point(CGAL::ORIGIN) - root_translation_; }
+
+  inline Number GetRestrictingAngle() const { return restricting_angle_rad_; }
+
+  NodeConstIterator nodes_begin() const { return nodes_.begin(); }
+  NodeConstIterator nodes_end() const { return nodes_.end(); }
+
+  NodeIterator nodes_begin() { return nodes_.begin(); }
+  NodeIterator nodes_end() { return nodes_.end(); }
 
   void AddPlaces(const std::vector<Place::Ptr>& places);
 
   void Compute();
 
-  //private:
-  Number restricting_angle_rad_;
-  Point root_;
+  void SetRoot(const Point& root);
 
-  std::vector<NodePtr> nodes_;  // Note that the positions of these nodes are offset by the position of the root.
+  void SetRestrictingAngle(const Number& restricting_angle_rad);
 
  private:
-  struct CompareEvents { bool operator()(const NodePtr& a, const NodePtr& b) const; }; // struct CompareEvents
+  void Clean();
 
-  using EventQueue = std::priority_queue<NodePtr, std::deque<NodePtr>, CompareEvents>;
-  using Wavefront = std::map<Number, NodePtr>;
+  bool IsReachable(const PolarPoint& parent_point, const PolarPoint& child_point) const;
 
-  Wavefront::iterator neighbor_cw(Wavefront& wavefront, const Wavefront::iterator& node_iter);
+  Number restricting_angle_rad_;
+  Vector root_translation_;
 
-  Wavefront::iterator neighbor_ccw(Wavefront& wavefront, const Wavefront::iterator& node_iter);
+  std::vector<Node::Ptr> nodes_;  // Note that the positions of these nodes are offset by the position of the root.
 }; // class SpiralTree
 
 } // namespace flow_map

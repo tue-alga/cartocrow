@@ -41,28 +41,16 @@ class FlowTree
  public:
   using Ptr = std::shared_ptr<FlowTree>;
 
-  struct Node
-  {
-    using Type = SpiralTree::Node::Type;
-
-    Node(const Type type, Place::Ptr place, const PolarPoint& relative_position);
-
-    Type type;
-
-    Place::Ptr place;
-    PolarPoint relative_position;
-  }; // struct Node
-
-  using Arc = std::pair<Spiral, PolarPoint>;
+  using FlowArc = std::pair<Spiral, PolarPoint>;
 
   FlowTree(const SpiralTree& spiral_tree);
 
  //private:
-  Point root_;
+  Vector root_translation_;
 
-  std::vector<Node> nodes_;  // Note that the positions of these nodes are offset by the position of the root.
+  std::vector<Node::Ptr> nodes_;  // Note that the positions of these nodes are offset by the position of the root.
 
-  std::vector<Arc> arcs_;
+  std::vector<FlowArc> arcs_;
 }; // class FlowTree
 
 } // namespace flow_map

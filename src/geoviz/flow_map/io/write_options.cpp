@@ -29,6 +29,9 @@ namespace geoviz
 namespace flow_map
 {
 
+/**@brief Initialize write options with default values.
+ * @return Default write options.
+ */
 WriteOptions::Ptr WriteOptions::Default()
 {
   WriteOptions::Ptr options = std::make_shared<WriteOptions>();
@@ -43,6 +46,9 @@ WriteOptions::Ptr WriteOptions::Default()
   return options;
 }
 
+/**@brief Initialize write options with debug values.
+ * @return Debug write options.
+ */
 WriteOptions::Ptr WriteOptions::Debug()
 {
   WriteOptions::Ptr options = std::make_shared<WriteOptions>();
@@ -56,6 +62,42 @@ WriteOptions::Ptr WriteOptions::Debug()
 
   return options;
 }
+
+/**@fn WriteOptions::Ptr
+ * @brief The preferred pointer type for storing or sharing write options.
+ */
+
+/**@fn int WriteOptions::pixel_width
+ * @brief The width in pixels of the output svg figure.
+ */
+
+/**@fn int WriteOptions::numeric_precision
+ * @brief The numeric precision with which to store the point coordinates.
+ */
+
+/**@fn double WriteOptions::region_opacity
+ * @brief The opacity with which to draw the regions.
+ *
+ * This must be at most 1.
+ *
+ * For negative values, the opacity of the input regions is used instead.
+ */
+
+/**@fn double WriteOptions::flow_opacity
+ * @brief The opacity with which to draw the flow tree.
+ *
+ * This must be at most 1.
+ *
+ * For negative values, the opacity of the input regions is used instead.
+ */
+
+/**@fn double WriteOptions::node_opacity
+ * @brief The opacity with which to draw the nodes.
+ *
+ * This must be at most 1.
+ *
+ * For negative values, the opacity of the input regions is used instead.
+ */
 
 } // namespace flow_map
 } // namespace geoviz

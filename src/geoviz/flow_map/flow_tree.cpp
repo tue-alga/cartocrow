@@ -31,40 +31,23 @@ namespace geoviz
 namespace flow_map
 {
 
-FlowTree::Node::Node(const Type type, Place::Ptr place, const PolarPoint& relative_position) :
-  type(type),
-  place(place),
-  relative_position(relative_position)
-{}
-
 // Flow tree is the thickened tree, as opposed to the 'thin' spiral tree.
 // Note that while the spiral tree is a binary tree, the flow tree is not necessarily a binary tree.
 
 FlowTree::FlowTree(const SpiralTree& spiral_tree) :
-  root_(spiral_tree.root_)
+  root_translation_(Point(CGAL::ORIGIN) - spiral_tree.GetRoot()),
+  nodes_(spiral_tree.nodes_begin(), spiral_tree.nodes_end())
 {
-  for (const SpiralTree::NodePtr& node : spiral_tree.nodes_)
+  for (const Node::Ptr& node : nodes_)
   {
-    nodes_.emplace_back(node->type, node->place, node->relative_position);
+    if (node->parent == nullptr)
+      continue;
 
-    if (node->arc_parent != nullptr)
-    {
-      const SpiralTree::ArcPtr& arc = node->arc_parent;
+    const PolarPoint node_relative_position(node->place->position, root_translation_);
+    const PolarPoint parent_relative_position(node->parent->place->position, root_translation_);
 
-      Number angle_rad = 0;
-      switch (arc->side)
-      {
-        case SpiralTree::Arc::Side::kLeft:
-          angle_rad = -spiral_tree.restricting_angle_rad_;
-          break;
-        case SpiralTree::Arc::Side::kRight:
-          angle_rad = spiral_tree.restricting_angle_rad_;
-          break;
-      }
-      const Spiral spiral(angle_rad, arc->child->relative_position);
-
-      arcs_.emplace_back(spiral, arc->parent->relative_position);
-    }
+    const Spiral spiral(node_relative_position, parent_relative_position);
+    arcs_.emplace_back(spiral, parent_relative_position);
   }
 }
 
