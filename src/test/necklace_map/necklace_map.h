@@ -1,8 +1,7 @@
 /*
-The Necklace Map console application implements the algorithmic
-geo-visualization method by the same name, developed by
-Bettina Speckmann and Kevin Verbeek at TU Eindhoven
-(DOI: 10.1109/TVCG.2010.180 & 10.1142/S021819591550003X).
+The Necklace Map library implements the algorithmic geo-visualization
+method by the same name, developed by Bettina Speckmann and Kevin Verbeek
+at TU Eindhoven (DOI: 10.1109/TVCG.2010.180 & 10.1142/S021819591550003X).
 Copyright (C) 2019  Netherlands eScience Center and TU Eindhoven
 
 This program is free software: you can redistribute it and/or modify
@@ -34,35 +33,16 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-04-2020
 #include <geoviz/necklace_map/necklace_map.h>
 
 #include "test/test.h"
-#include "test/test_registry.h"
+#include "test/test_registry_timer.h"
 
 
 void TestNecklaceMap() {}  // Linking hack, each new test cpp file has it.
 
 constexpr const size_t kP = 2;
 constexpr const size_t kV = 2;
-struct PrintTimes;
-using Reg = Registry<double, kP, kV, PrintTimes>;
 
-
-struct PrintTimes
-{
-  using Memory = typename Reg::Memory;
-  using Block = typename Reg::Block;
-
-  void operator()(const Memory& memory) const
-  {
-    double geom = 0, data = 0;
-    for (const Block& block : memory)
-    {
-      std::cout << "Read time [" << block.first << "] geom: " << block.second[0] << " seconds; data: " << block.second[1] << " seconds" << std::endl;
-      geom += block.second[0];
-      data += block.second[1];
-    }
-
-    std::cout << "Read time [TOTAL] geom: " << geom << " seconds; data: " << data << " seconds" << std::endl;
-  }
-}; // struct PrintTimes
+using PT = PrintTimes<double, kP, kV>;
+using Reg = PT::R_;
 
 static Reg kRegistry;
 

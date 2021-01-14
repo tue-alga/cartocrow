@@ -1,7 +1,6 @@
 /*
-The Necklace Map library implements the algorithmic geo-visualization
-method by the same name, developed by Bettina Speckmann and Kevin Verbeek
-at TU Eindhoven (DOI: 10.1109/TVCG.2010.180 & 10.1142/S021819591550003X).
+The GeoViz library implements algorithmic geo-visualization methods,
+developed at TU Eindhoven.
 Copyright (C) 2019  Netherlands eScience Center and TU Eindhoven
 
 This program is free software: you can redistribute it and/or modify
@@ -17,9 +16,9 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-04-2020
+Created by tvl (t.vanlankveld@esciencecenter.nl) on 16-11-2020
 */
 
-#include "necklace_map.h"
+#include "common.h"
 
-GEOVIZ_RUN_TESTS(TestNecklaceMap)
+GEOVIZ_RUN_TESTS(TestCommon)

@@ -29,6 +29,9 @@ namespace geoviz
 namespace necklace_map
 {
 
+/**@brief Initialize write options with default values.
+ * @return Default write options.
+ */
 WriteOptions::Ptr WriteOptions::Default()
 {
   WriteOptions::Ptr options = std::make_shared<WriteOptions>();
@@ -52,6 +55,9 @@ WriteOptions::Ptr WriteOptions::Default()
   return options;
 }
 
+/**@brief Initialize write options with debug values.
+ * @return Debug write options.
+ */
 WriteOptions::Ptr WriteOptions::Debug()
 {
   WriteOptions::Ptr options = std::make_shared<WriteOptions>();
@@ -74,6 +80,68 @@ WriteOptions::Ptr WriteOptions::Debug()
 
   return options;
 }
+
+/**@fn WriteOptions::Ptr
+ * @brief The preferred pointer type for storing or sharing write options.
+ */
+
+/**@fn int WriteOptions::pixel_width
+ * @brief The width in pixels of the output svg figure.
+ */
+
+/**@fn int WriteOptions::region_precision
+ * @brief The numeric precision with which to store the region point coordinates.
+ */
+
+/**@fn double WriteOptions::region_opacity
+ * @brief The opacity with which to draw the regions.
+ *
+ * This must be at most 1.
+ *
+ * For negative values, the opacity of the input regions is used instead.
+ */
+
+/**@fn double WriteOptions::bead_opacity
+ * @brief The opacity with which to draw the beads.
+ *
+ * This must be at most 1.
+ *
+ * For negative values, the opacity of the input regions is used instead.
+ */
+
+/**@fn double WriteOptions::bead_id_font_size_px
+ * @brief The font size in pixels of the bead IDs.
+ *
+ * This font size must be strictly positive.
+ */
+
+/**@fn bool WriteOptions::draw_necklace_curve
+ * @brief Whether to draw the necklace curve.
+ */
+
+/**@fn bool WriteOptions::draw_necklace_kernel
+ * @brief Whether to draw the necklace kernel.
+ */
+
+/**@fn bool WriteOptions::draw_bead_ids
+ * @brief Whether to draw the bead IDs in the beads.
+ */
+
+/**@fn bool WriteOptions::draw_feasible_intervals
+ * @brief Whether to draw the feasible intervals.
+ */
+
+/**@fn bool WriteOptions::draw_valid_intervals
+ * @brief Whether to draw the valid intervals.
+ */
+
+/**@fn bool WriteOptions::draw_region_angles
+ * @brief Whether to draw lines from the necklace kernel through the region centroids.
+ */
+
+/**@fn bool WriteOptions::draw_bead_angles
+ * @brief Whether to draw lines from the necklace kernel to the beads.
+ */
 
 } // namespace necklace_map
 } // namespace geoviz

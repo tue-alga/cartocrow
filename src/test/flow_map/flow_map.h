@@ -1,8 +1,8 @@
 /*
-The Flow Map console application implements the algorithmic
-geo-visualization method by the same name, developed by
-Bettina Speckmann and Kevin Verbeek at TU Eindhoven
-(DOI: 10.1109/TVCG.2010.180 & 10.1142/S021819591550003X).
+The Flow Map library implements the algorithmic geo-visualization
+method by the same name, developed by Kevin Verbeek, Kevin Buchin,
+and Bettina Speckmann at TU Eindhoven
+(DOI: 10.1007/s00453-013-9867-z & 10.1109/TVCG.2011.202).
 Copyright (C) 2019  Netherlands eScience Center and TU Eindhoven
 
 This program is free software: you can redistribute it and/or modify
@@ -34,35 +34,16 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-04-2020
 #include <geoviz/flow_map/flow_map.h>
 
 #include "test/test.h"
-#include "test/test_registry.h"
+#include "test/test_registry_timer.h"
 
 
 void TestFlowMap() {}  // Linking hack, each new test cpp file has it.
 
 constexpr const size_t kP = 2;
 constexpr const size_t kV = 2;
-struct PrintTimes;
-using Reg = Registry<double, kP, kV, PrintTimes>;
 
-
-struct PrintTimes
-{
-  using Memory = typename Reg::Memory;
-  using Block = typename Reg::Block;
-
-  void operator()(const Memory& memory) const
-  {
-    double geom = 0, data = 0;
-    for (const Block& block : memory)
-    {
-      std::cout << "Read time [" << block.first << "] geom: " << block.second[0] << " seconds; data: " << block.second[1] << " seconds" << std::endl;
-      geom += block.second[0];
-      data += block.second[1];
-    }
-
-    std::cout << "Read time [TOTAL] geom: " << geom << " seconds; data: " << data << " seconds" << std::endl;
-  }
-}; // struct PrintTimes
+using PT = PrintTimes<double, kP, kV>;
+using Reg = PT::R_;
 
 static Reg kRegistry;
 
@@ -76,7 +57,8 @@ struct FlowData
   }
 
   std::vector<geoviz::Region> context;
-  std::vector<geoviz::flow_map::Node> nodes;
+  std::vector<geoviz::flow_map::Place::Ptr> places;
+  size_t index_root;
 }; // struct FlowData
 
 static const filesystem::path kDataDir = filesystem::path(GEOVIZ_TEST_DATA_DIR) / "flow_map";
@@ -105,7 +87,7 @@ struct FlowDataUsa
   FlowDataUsa() :
     data(kUsa)
   {
-    if (data.nodes.empty())
+    if (data.places.empty())
     {
       kRegistry.Register(&data, "FlowDataUsa");
 
@@ -114,7 +96,7 @@ struct FlowDataUsa
       const filesystem::path in_geometry_path = kDataDir / "USA.svg";
 
       geoviz::Timer time;
-      UNITTEST_REQUIRE UNITTEST_CHECK(svg_reader.ReadFile(in_geometry_path, data.context, data.nodes));
+      UNITTEST_REQUIRE UNITTEST_CHECK(svg_reader.ReadFile(in_geometry_path, data.context, data.places));
       kRegistry(&data, 0) = time.Stamp();
     }
   }
@@ -129,7 +111,7 @@ struct FlowDataUsa
     const filesystem::path in_data_path = kDataDir / "USA.csv";
 
     geoviz::Timer time;
-    const bool result = data_reader.ReadFile(in_data_path, in_value_name, data.nodes);
+    const bool result = data_reader.ReadFile(in_data_path, in_value_name, data.places, data.index_root);
     kRegistry(&data, 1) = time.Stamp();
 
     return result;
@@ -160,7 +142,7 @@ struct FlowDataWorld
   FlowDataWorld() :
     data(kWorld)
   {
-    if (data.nodes.empty())
+    if (data.places.empty())
     {
       kRegistry.Register(&data, "FlowDataWorld");
 
@@ -169,7 +151,7 @@ struct FlowDataWorld
       const filesystem::path in_geometry_path = kDataDir / "World.svg";
 
       geoviz::Timer time;
-      UNITTEST_REQUIRE UNITTEST_CHECK(svg_reader.ReadFile(in_geometry_path, data.context, data.nodes));
+      UNITTEST_REQUIRE UNITTEST_CHECK(svg_reader.ReadFile(in_geometry_path, data.context, data.places));
       kRegistry(&data, 0) = time.Stamp();
     }
   }
@@ -184,7 +166,7 @@ struct FlowDataWorld
     const filesystem::path in_data_path = kDataDir / "World.csv";
 
     geoviz::Timer time;
-    const bool result = data_reader.ReadFile(in_data_path, in_value_name, data.nodes);
+    const bool result = data_reader.ReadFile(in_data_path, in_value_name, data.places, data.index_root);
     kRegistry(&data, 1) = time.Stamp();
 
     return result;

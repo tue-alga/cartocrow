@@ -1,8 +1,8 @@
 /*
-The Flow Map console application implements the algorithmic
-geo-visualization method by the same name, developed by
-Bettina Speckmann and Kevin Verbeek at TU Eindhoven
-(DOI: 10.1109/TVCG.2010.180 & 10.1142/S021819591550003X).
+The Flow Map library implements the algorithmic geo-visualization
+method by the same name, developed by Kevin Verbeek, Kevin Buchin,
+and Bettina Speckmann at TU Eindhoven
+(DOI: 10.1007/s00453-013-9867-z & 10.1109/TVCG.2011.202).
 Copyright (C) 2019  Netherlands eScience Center and TU Eindhoven
 
 This program is free software: you can redistribute it and/or modify
