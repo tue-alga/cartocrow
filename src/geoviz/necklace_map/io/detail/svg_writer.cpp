@@ -67,6 +67,7 @@ constexpr const char* kBeadAngleStyle = "fill:none;"
 
 constexpr char kAbsoluteMove = 'M';
 constexpr char kAbsoluteCubicBezier = 'C';
+constexpr char kAbsoluteArc = 'A';
 constexpr char kAbsoluteClose = 'Z';
 
 
@@ -225,14 +226,45 @@ class DrawNecklaceShapeVisitor : public necklace_map::NecklaceShapeVisitor
     const Point& kernel = shape.kernel();
     const Number radius = shape.ComputeRadius();
 
-    printer_.OpenElement("circle");
-    printer_.PushAttribute("style", necklace_style_.c_str());
-    printer_.PushAttribute("cx", kernel.x());
-    printer_.PushAttribute("cy", kernel.y());
-    printer_.PushAttribute("r", radius);
-    printer_.PushAttribute("transform", transform_matrix_.c_str());
-    printer_.PushAttribute("necklace_id", necklace_->id.c_str());
-    printer_.CloseElement();  // circle
+    if (shape.cw_rad() == shape.ccw_rad())
+    {
+      printer_.OpenElement("circle");
+      printer_.PushAttribute("style", necklace_style_.c_str());
+      printer_.PushAttribute("cx", kernel.x());
+      printer_.PushAttribute("cy", kernel.y());
+      printer_.PushAttribute("r", radius);
+      printer_.PushAttribute("transform", transform_matrix_.c_str());
+      printer_.PushAttribute("necklace_id", necklace_->id.c_str());
+      printer_.CloseElement();  // circle
+    }
+    else
+    {
+      std::string path;
+      {
+        const Number& cw_rad = shape.cw_rad();
+        const Number& ccw_rad = shape.ccw_rad();
+
+        const Point cw = kernel + radius * Vector(std::cos(cw_rad), std::sin(cw_rad));
+        const Point ccw = kernel + radius * Vector(std::cos(ccw_rad), std::sin(ccw_rad));
+        const bool large_arc = M_PI < Modulo(ccw_rad - cw_rad);
+
+        std::stringstream stream;
+        stream << kAbsoluteMove << " " << cw.x() << " " << cw.y() << " ";
+        stream << kAbsoluteArc << " " << radius << " " << radius << " 0 " << (large_arc ? "1" : "0") << " 1 ";
+        stream << ccw.x() << " " << ccw.y() << " ";
+
+        path = stream.str();
+      }
+
+      printer_.OpenElement("path");
+      printer_.PushAttribute("style", necklace_style_.c_str());
+      printer_.PushAttribute("d", path.c_str());
+      printer_.PushAttribute("kx", kernel.x());
+      printer_.PushAttribute("ky", kernel.y());
+      printer_.PushAttribute("transform", transform_matrix_.c_str());
+      printer_.PushAttribute("necklace_id", necklace_->id.c_str());
+      printer_.CloseElement();  // path
+    }
   }
 
   void Visit(necklace_map::BezierNecklace& shape) override

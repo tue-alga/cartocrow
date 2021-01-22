@@ -196,6 +196,13 @@ DEFINE_double
   "Font size (in pixels) of the bead IDs in the output. Must be larger than 0."
 );
 
+DEFINE_string
+(
+  bound_necklaces_deg,
+  "",
+  "The angles between which to draw the circular necklaces. Must be formatted as 'N_id;cw_deg;ccw_deg', where N_id is the ID of the necklace, and cw_deg and ccw_deg are the clockwise and counterclockwise extremes of the necklace. This pattern may repeat to bound multiple necklaces, separated by whitespace."
+);
+
 DEFINE_bool
 (
   draw_necklace_curve,
@@ -329,6 +336,8 @@ ValidateFlags(geoviz::necklace_map::Parameters& parameters, geoviz::necklace_map
     correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(bead_opacity), MakeRangeCheck(0.0, 1.0));
     write_options->bead_opacity = FLAGS_bead_opacity;
 
+    PrintFlag(FLAGS_NAME_AND_VALUE(bound_necklaces_deg));
+
     correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(bead_id_font_size_px), IsStrictlyPositive<double>());
     write_options->bead_id_font_size_px = FLAGS_bead_id_font_size_px;
 
@@ -374,6 +383,57 @@ bool ReadGeometry
   return svg_reader.ReadFile(FLAGS_in_geometry_filename, elements, necklaces, scale_factor);
 }
 
+void ApplyNecklaceDrawBounds
+(
+  std::vector<geoviz::necklace_map::Necklace::Ptr>& necklaces,
+  const std::string& bound_necklaces_deg
+)
+{
+  std::stringstream stream(bound_necklaces_deg);
+  while (stream && !stream.eof())
+  {
+    std::string token;
+    stream >> token;
+
+    std::vector<std::string> bits;
+    while (!token.empty())
+    {
+      const size_t pos = token.find(";");
+      bits.push_back(token.substr(0, pos));
+      token = pos == std::string::npos ? "" : token.substr(pos + 1);
+    }
+    if (bits.size() < 3)
+      continue;
+
+    const std::string necklace_id = bits[0];
+    double cw_deg, ccw_deg;
+
+    try
+    {
+      cw_deg = std::stod(bits[1]);
+      ccw_deg = std::stod(bits[2]);
+    }
+    catch (...)
+    {
+      continue;
+    }
+
+    for (geoviz::necklace_map::Necklace::Ptr& necklace : necklaces)
+    {
+      if (necklace->id != necklace_id)
+        continue;
+
+      geoviz::necklace_map::CircleNecklace::Ptr shape = std::dynamic_pointer_cast<geoviz::necklace_map::CircleNecklace>( necklace->shape );
+      if (!shape)
+        continue;
+
+      shape->cw_rad() = cw_deg * M_PI / 180;
+      shape->ccw_rad() = ccw_deg * M_PI / 180;
+      break;
+    }
+  }
+}
+
 void WriteOutput
 (
   const std::vector<geoviz::necklace_map::MapElement::Ptr>& elements,
@@ -398,12 +458,12 @@ void WriteOutput
 int main(int argc, char** argv)
 {
   InitApplication
-    (
-      argc,
-      argv,
-      "Command line application that exposes the functionality of the GeoViz necklace map.",
-      {"--in_geometry_filename=<file>", "--in_data_filename=<file>", "--in_value_name=<column>"}
-    );
+  (
+    argc,
+    argv,
+    "Command line application that exposes the functionality of the GeoViz necklace map.",
+    {"--in_geometry_filename=<file>", "--in_data_filename=<file>", "--in_value_name=<column>"}
+  );
 
 
   // Validate the settings.
@@ -446,6 +506,7 @@ int main(int argc, char** argv)
 
 
   // Write the output.
+  ApplyNecklaceDrawBounds(necklaces, FLAGS_bound_necklaces_deg);
   WriteOutput(elements, necklaces, scale_factor, write_options);
   const double time_write = time.Stamp();
 

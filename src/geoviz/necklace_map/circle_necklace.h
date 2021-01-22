@@ -41,6 +41,12 @@ class CircleNecklace : public NecklaceShape
 
   const Point& kernel() const override;
 
+  const Number& cw_rad() const;
+  Number& cw_rad();
+
+  const Number& ccw_rad() const;
+  Number& ccw_rad();
+
   bool IsValid() const override;
 
   /*bool IsEmpty() const override;
@@ -66,6 +72,8 @@ class CircleNecklace : public NecklaceShape
 
  private:
   Number radius_;
+
+  Number cw_rad_, ccw_rad_;
 }; // class CircleNecklace
 
 } // namespace necklace_map

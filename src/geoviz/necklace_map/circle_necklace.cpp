@@ -43,7 +43,7 @@ namespace necklace_map
  * The necklace kernel is the circle center.
  * @param shape the circle covered by the necklace.
  */
-CircleNecklace::CircleNecklace(const Circle& shape) : NecklaceShape(), shape_(shape)
+CircleNecklace::CircleNecklace(const Circle& shape) : NecklaceShape(), shape_(shape), cw_rad_(0), ccw_rad_(0)
 {
   radius_ = CGAL::sqrt(shape_.squared_radius());
 }
@@ -51,6 +51,26 @@ CircleNecklace::CircleNecklace(const Circle& shape) : NecklaceShape(), shape_(sh
 const Point& CircleNecklace::kernel() const
 {
   return shape_.center();
+}
+
+const Number& CircleNecklace::cw_rad() const
+{
+  return cw_rad_;
+}
+
+Number& CircleNecklace::cw_rad()
+{
+  return cw_rad_;
+}
+
+const Number& CircleNecklace::ccw_rad() const
+{
+  return ccw_rad_;
+}
+
+Number& CircleNecklace::ccw_rad()
+{
+  return ccw_rad_;
 }
 
 bool CircleNecklace::IsValid() const
