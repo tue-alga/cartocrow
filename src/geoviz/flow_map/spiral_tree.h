@@ -43,7 +43,19 @@ struct Node
 {
   using Ptr = std::shared_ptr<Node>;
 
+  enum class Type
+  {
+    kRoot,
+    kLeaf,
+    kJoin,
+    kSubdivision
+  };
+
   explicit Node(const Place::Ptr& place = nullptr);
+
+  Type GetType() const;
+
+  bool IsSteiner() const;
 
   Place::Ptr place;
   Ptr parent;

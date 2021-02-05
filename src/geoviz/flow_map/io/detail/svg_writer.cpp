@@ -555,7 +555,7 @@ void SvgWriter::DrawRoots()
 {
   for (const Node::Ptr& node : tree_->nodes_)
   {
-    if (node->parent != nullptr)
+    if (node->GetType() != Node::Type::kRoot)
       continue;
 
     printer_.OpenElement("path");
@@ -599,7 +599,7 @@ void SvgWriter::DrawLeaves()
 {
   for (const Node::Ptr& node : tree_->nodes_)
   {
-    if (node->place == nullptr)
+    if (node->GetType() == Node::Type::kRoot || node->IsSteiner())
       continue;
 
     printer_.OpenElement("circle");
@@ -637,7 +637,7 @@ void SvgWriter::DrawJoinNodes()
 {
   for (const Node::Ptr& node : tree_->nodes_)
   {
-    if (1 < node->children.size())
+    if (node->GetType() != Node::Type::kJoin || !node->IsSteiner())
       continue;
 
     printer_.OpenElement("circle");
@@ -675,7 +675,7 @@ void SvgWriter::DrawSubdivisionNodes()
 {
   for (const Node::Ptr& node : tree_->nodes_)
   {
-    if (node->children.size() == 1 && node->place == nullptr)
+    if (node->GetType() != Node::Type::kSubdivision || !node->IsSteiner())
       continue;
 
     printer_.OpenElement("circle");

@@ -88,6 +88,44 @@ Node::Node(const Place::Ptr& place /*= nullptr*/) :
   place(place)
 {}
 
+/**@brief Determine the topological type of this node.
+ *
+ * Each node is either the root, a leaf, a join node, or a subdivision node.
+ * * The root has no parent.
+ * * Leaves have no children.
+ * * Join nodes have multiple children.
+ * * Subdivision nodes have exactly one child.
+ *
+ * Note that this type does not describe whether the node is associated with a place on the map. This can be determined using IsSteiner().
+ * @return the node type.
+ */
+Node::Type Node::GetType() const
+{
+  if (parent == nullptr)
+    return Type::kRoot;
+  else switch (children.size())
+  {
+    case 0:
+      return Type::kLeaf;
+    case 1:
+      return Type::kSubdivision;
+    default:
+      return Type::kJoin;
+  }
+}
+
+/**@brief Determine whether this node is a Steiner node.
+ *
+ * Steiner nodes are not part of the input places. They support the tree, either by splitting the flow, or by guiding the flow around obstacles.
+ * @return whether this node is a Steiner node.
+ */
+bool Node::IsSteiner() const
+{
+  return
+    place == nullptr ||
+    (place->flow_in <= 0 && parent != nullptr);
+}
+
 /**@fn Place::Ptr Node::place
  * @brief The place associated with this node.
  *
