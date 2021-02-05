@@ -44,6 +44,7 @@ struct WriteOptions
   int numeric_precision;
 
   double region_opacity;
+  double obstacle_opacity;
   double flow_opacity;
   double node_opacity;
 }; // struct WriteOptions

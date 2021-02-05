@@ -45,6 +45,7 @@ class SvgWriter
   bool Write
   (
     const std::vector<Region>& context,
+    const std::vector<Region>& obstacles,
     const FlowTree::Ptr& tree,
     const WriteOptions::Ptr& options,
     std::ostream& out

@@ -30,6 +30,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 28-10-2020
 #include <queue>
 #include <vector>
 
+#include "geoviz/common/region.h"
 #include "geoviz/flow_map/place.h"
 #include "geoviz/flow_map/spiral.h"
 
@@ -88,6 +89,8 @@ class SpiralTree
 
   void AddPlaces(const std::vector<Place::Ptr>& places);
 
+  void AddObstacles(const std::vector<Region>& obstacles);
+
   void Compute();
 
   void SetRoot(const Point& root);
@@ -103,6 +106,7 @@ class SpiralTree
   Vector root_translation_;
 
   std::vector<Node::Ptr> nodes_;  // Note that the positions of these nodes are offset by the position of the root.
+  std::vector<Region> obstacles_;
 }; // class SpiralTree
 
 } // namespace flow_map

@@ -39,21 +39,28 @@ DEFINE_string
 (
   in_geometry_filename,
   "",
-  "The input map geometry filename."
+  "The filename for the map geometry input."
 );
 
 DEFINE_string
 (
   in_data_filename,
   "",
-  "The input numeric data filename."
+  "The filename for the numeric data input."
 );
 
 DEFINE_string
 (
-  in_structure_filename,
+  in_obstacles_filename,
   "",
-  "The input tree structure filename."
+  "The filename for the geometric restrictions input, such as obstacles and waypoints."
+);
+
+DEFINE_string
+(
+  in_topology_filename,
+  "",
+  "The filename for the tree topology restrictions input, such as clusters and waypoint assignment."
 );
 
 DEFINE_string
@@ -109,6 +116,15 @@ DEFINE_double
 
 DEFINE_double
 (
+  obstacle_opacity,
+  -1,
+  "Opacity of the obstacles in the output. Must be no larger than 1."
+  " For negative values, the input opacity is maintained."
+  " The obstacles are otherwise drawn with the same style as the input obstacles."
+);
+
+DEFINE_double
+(
   flow_opacity,
   1,
   "Opacity of the flow tree in the output. Must be in the range [0, 1]."
@@ -135,7 +151,8 @@ void ValidateFlags(geoviz::flow_map::Parameters& parameters, geoviz::flow_map::W
   // There must be input geometry and input numeric data.
   correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(in_geometry_filename), ExistsFile);
   correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(in_data_filename), ExistsFile);
-  correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(in_structure_filename), Or<Empty,ExistsFile>);
+  correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(in_obstacles_filename), Or<Empty,ExistsFile>);
+  correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(in_topology_filename), Or<Empty,ExistsFile>);
   correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(in_value_name), Not<Empty>);
 
   // Note that we allow overwriting existing output.
@@ -160,6 +177,9 @@ void ValidateFlags(geoviz::flow_map::Parameters& parameters, geoviz::flow_map::W
     correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(region_opacity), MakeUpperBoundCheck(1.0));
     write_options->region_opacity = FLAGS_region_opacity;
 
+    correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(obstacle_opacity), MakeUpperBoundCheck(1.0));
+    write_options->obstacle_opacity = FLAGS_obstacle_opacity;
+
     correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(flow_opacity), MakeUpperBoundCheck(1.0));
     write_options->flow_opacity = FLAGS_flow_opacity;
 
@@ -174,33 +194,34 @@ void ValidateFlags(geoviz::flow_map::Parameters& parameters, geoviz::flow_map::W
   if( !correct ) LOG(FATAL) << "Errors in flags; Terminating.";
 }
 
-bool ReadGeometry(std::vector<geoviz::Region>& context, std::vector<geoviz::flow_map::Place::Ptr>& places)
+bool ReadGeometry(const std::string& filename, std::vector<geoviz::Region>& context, std::vector<geoviz::flow_map::Place::Ptr>& places)
 {
   geoviz::flow_map::SvgReader svg_reader;
-  return svg_reader.ReadFile(FLAGS_in_geometry_filename, context, places);
+  return svg_reader.ReadFile(filename, context, places);
 }
 
-bool ReadData(std::vector<geoviz::flow_map::Place::Ptr>& places, size_t& root_index)
+bool ReadData(const std::string& filename, std::vector<geoviz::flow_map::Place::Ptr>& places, size_t& root_index)
 {
   geoviz::flow_map::DataReader data_reader;
-  return data_reader.ReadFile(FLAGS_in_data_filename, FLAGS_in_value_name, places, root_index);
+  return data_reader.ReadFile(filename, FLAGS_in_value_name, places, root_index);
 }
 
 void WriteOutput
 (
   const std::vector<geoviz::Region>& context,
+  const std::vector<geoviz::Region>& obstacles,
   const geoviz::flow_map::FlowTree::Ptr& tree,
   const geoviz::flow_map::WriteOptions::Ptr& write_options
 )
 {
   geoviz::flow_map::SvgWriter writer;
   if (FLAGS_out_website)
-    writer.Write(context, tree, write_options, std::cout);
+    writer.Write(context, obstacles, tree, write_options, std::cout);
 
   if (!FLAGS_out_filename.empty())
   {
     std::ofstream out(FLAGS_out_filename);
-    writer.Write(context, tree, write_options, out);
+    writer.Write(context, obstacles, tree, write_options, out);
     out.close();
   }
 }
@@ -226,27 +247,28 @@ int main(int argc, char **argv)
 
   using Region = geoviz::Region;
   using Place = geoviz::flow_map::Place;
-  std::vector<Region> context;
-  std::vector<Place::Ptr> places;
+  std::vector<Region> context, obstacles;
+  std::vector<Place::Ptr> places, waypoints;
   size_t index_root;
 
   // Read the geometry and data.
   // Note that the regions should be written in the same order as in the input,
   // because some smaller regions may be used to simulate enclaves inside larger regions.
   // This forces the geometry to be read first.
-  const bool success_read_svg = ReadGeometry(context, places);
-  const bool success_read_data = ReadData(places, index_root);
+  const bool success_read_svg = ReadGeometry(FLAGS_in_geometry_filename, context, places);
+  const bool success_read_data = ReadData(FLAGS_in_data_filename, places, index_root);
   CHECK(success_read_svg && success_read_data) << "Terminating program.";
+  CHECK(FLAGS_in_obstacles_filename.empty() ? true : ReadGeometry(FLAGS_in_obstacles_filename, obstacles, waypoints)) << "Terminating program.";
   const double time_read = time.Stamp();
 
   // Compute flow map.
   geoviz::flow_map::FlowTree::Ptr tree;
-  ComputeFlowMap(parameters, places, index_root, tree);
+  ComputeFlowMap(parameters, places, index_root, obstacles, tree);
   LOG(INFO) << "Computed flow map";
   const double time_compute = time.Stamp();
 
   // Write the output.
-  WriteOutput(context, tree, write_options);
+  WriteOutput(context, obstacles, tree, write_options);
   const double time_write = time.Stamp();
 
   const double time_total = time.Span();

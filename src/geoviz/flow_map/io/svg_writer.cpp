@@ -43,6 +43,7 @@ SvgWriter::SvgWriter() {}
 
 /**@brief Write a flow map to a stream.
  * @param context the context regions of the flow map.
+ * @param obstacles the polygonal obstacles that must be avoided by the flow tree.
  * @param tree the flow tree.
  * @param options the options for how to write the flow map.
  * @param out the stream to which to write.
@@ -51,15 +52,17 @@ SvgWriter::SvgWriter() {}
 bool SvgWriter::Write
 (
   const std::vector<Region>& context,
+  const std::vector<Region>& obstacles,
   const FlowTree::Ptr& tree,
   const WriteOptions::Ptr& options,
   std::ostream& out
 ) const
 {
-  detail::SvgWriter writer(context, tree, options, out);
+  detail::SvgWriter writer(context, obstacles, tree, options, out);
 
   // The order of drawing the features determines their stacking order, i.e. the last one will be on top.
   writer.DrawContext();
+  writer.DrawObstacles();
   writer.DrawFlow();
   writer.DrawNodes();
 

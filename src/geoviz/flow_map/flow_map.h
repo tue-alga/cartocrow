@@ -47,6 +47,7 @@ void ComputeFlowMap
   const Parameters& parameters,
   const std::vector<Place::Ptr>& places,
   const size_t index_root,
+  const std::vector<Region>& obstacles,
   FlowTree::Ptr& tree
 );
 

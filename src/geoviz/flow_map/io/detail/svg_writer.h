@@ -50,6 +50,7 @@ class SvgWriter
   SvgWriter
   (
     const std::vector<Region>& context,
+    const std::vector<Region>& obstacles,
     const FlowTree::Ptr& tree,
     const WriteOptions::Ptr& options,
     std::ostream& out
@@ -58,6 +59,8 @@ class SvgWriter
   ~SvgWriter();
 
   void DrawContext();
+
+  void DrawObstacles();
 
   void DrawFlow();
 
@@ -82,7 +85,12 @@ class SvgWriter
 
   void DrawSubdivisionNodes();
 
+  void DrawObstacleVertices(const Region& obstacle);
+
+  void DrawObstacleVertices(const Polygon& polygon);
+
   const std::vector<Region>& context_;
+  const std::vector<Region>& obstacles_;
   const FlowTree::Ptr& tree_;
   std::ostream& out_;
 

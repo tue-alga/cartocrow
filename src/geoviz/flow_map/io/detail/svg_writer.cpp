@@ -61,6 +61,12 @@ constexpr const char* kSubdivisionStyle = "fill:rgba(0%,30%,100%,100%);"
                                           "stroke-linecap:butt;"
                                           "stroke-linejoin:round;";
 
+constexpr const char* kVertexStyle = "fill:rgba(0%,0%,0%,100%);"
+                                     "stroke:rgba(0%,0%,0%,100%);"
+                                     "stroke-linecap:butt;"
+                                     "stroke-linejoin:round;"
+                                     "stroke-width:0;";
+
 constexpr char kAbsoluteMove = 'M';
 constexpr char kAbsoluteCubicBezier = 'C';
 constexpr char kAbsoluteClose = 'Z';
@@ -78,6 +84,7 @@ constexpr const double kRootWidthPx = 6;
 constexpr const double kLeafRadiusPx = 3;
 constexpr const double kJoinRadiusPx = 2;
 constexpr const double kSubdivisionRadiusPx = 3;
+constexpr const double kVertexRadiusPx = 1.5;
 constexpr const double kBoundingBoxBufferPx = 5;
 
 constexpr const double kSpiralStep = 0.1;
@@ -226,11 +233,13 @@ namespace detail
 SvgWriter::SvgWriter
 (
   const std::vector<Region>& context,
+  const std::vector<Region>& obstacles,
   const FlowTree::Ptr& tree,
   const WriteOptions::Ptr& options,
   std::ostream& out
 ) :
   context_(context),
+  obstacles_(obstacles),
   tree_(tree),
   out_(out),
   options_(options)
@@ -271,6 +280,40 @@ void SvgWriter::DrawContext()
       printer_.PushAttribute("d", RegionToPath(region, options_->numeric_precision).c_str());
       printer_.PushAttribute("transform", transform_matrix_.c_str());
       printer_.CloseElement(); // path
+    }
+  }
+
+  printer_.CloseElement(); // g
+}
+
+
+/**@brief Add the obstacle regions.
+ *
+ * These are drawn with the same style as the input, with the exception of the opacity. The opacity can either be set to the input opacity, or to some fixed value.
+ */
+void SvgWriter::DrawObstacles()
+{
+  printer_.OpenElement("g");
+  printer_.PushComment("Obstacles");
+
+  {
+    for (const Region& obstacle : obstacles_)
+    {
+      if (obstacle.IsPoint())
+        continue;
+
+      // Draw the region as a piecewise linear polygon with same style as the input, except the opacity may be adjusted and the color may be changed.
+      std::string style = obstacle.style;
+      if (0 <= options_->region_opacity)
+        style = ForceStyle(style, "fill-opacity:", options_->obstacle_opacity);
+
+      printer_.OpenElement("path");
+      printer_.PushAttribute("style", style.c_str());
+      printer_.PushAttribute("d", RegionToPath(obstacle, options_->numeric_precision).c_str());
+      printer_.PushAttribute("transform", transform_matrix_.c_str());
+      printer_.CloseElement(); // path
+
+      DrawObstacleVertices(obstacle);
     }
   }
 
@@ -700,6 +743,42 @@ void SvgWriter::DrawSubdivisionNodes()
     {
       std::stringstream stream;
       const Number radius = kSubdivisionRadiusPx * unit_px_;
+      stream << radius;
+      printer_.PushAttribute("r", stream.str().c_str());
+    }
+
+    printer_.PushAttribute("transform", transform_matrix_.c_str());
+    printer_.CloseElement(); // circle
+  }
+}
+
+void SvgWriter::DrawObstacleVertices(const Region& obstacle)
+{
+  for (const Polygon_with_holes& polygon : obstacle.shape)
+  {
+    DrawObstacleVertices(polygon.outer_boundary());
+
+    for (Polygon_with_holes::Hole_const_iterator hole_iter = polygon.holes_begin(); hole_iter != polygon.holes_end(); ++hole_iter)
+      DrawObstacleVertices(*hole_iter);
+  }
+}
+
+void SvgWriter::DrawObstacleVertices(const Polygon& polygon)
+{
+  for (Polygon::Vertex_const_iterator vertex_iter = polygon.vertices_begin(); vertex_iter != polygon.vertices_end(); ++vertex_iter)
+  {
+    printer_.OpenElement("circle");
+    printer_.PushAttribute("style", kVertexStyle);
+
+    {
+      const Point& position = *vertex_iter;
+      printer_.PushAttribute("cx", position.x());
+      printer_.PushAttribute("cy", position.y());
+    }
+
+    {
+      std::stringstream stream;
+      const Number radius = kVertexRadiusPx * unit_px_;
       stream << radius;
       printer_.PushAttribute("r", stream.str().c_str());
     }

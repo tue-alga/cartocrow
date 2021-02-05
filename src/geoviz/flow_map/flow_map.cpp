@@ -37,6 +37,7 @@ namespace flow_map
  * @param parameters the parameter settings to apply to the computations.
  * @param places the places (e.g. root and leaf nodes) on the flow map.
  * @param index_root the index of the root node of the flow map.
+ * @param obstacles the polygonal obstacles that must be avoided by the flow tree.
  * @param tree the flow tree that shows the flow from the root to the leaf nodes.
  */
 void ComputeFlowMap
@@ -44,6 +45,7 @@ void ComputeFlowMap
   const Parameters& parameters,
   const std::vector<Place::Ptr>& places,
   const size_t index_root,
+  const std::vector<Region>& obstacles,
   FlowTree::Ptr& tree
 )
 {
@@ -138,6 +140,7 @@ void ComputeFlowMap
 
   SpiralTree spiral_tree(root, parameters.restricting_angle_rad);
   spiral_tree.AddPlaces(places);
+  spiral_tree.AddObstacles(obstacles);
   spiral_tree.Compute();
 
   tree = std::make_shared<FlowTree>(spiral_tree);

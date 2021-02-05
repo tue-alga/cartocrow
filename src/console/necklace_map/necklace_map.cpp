@@ -200,7 +200,8 @@ DEFINE_string
 (
   bound_necklaces_deg,
   "",
-  "The angles between which to draw the circular necklaces. Must be formatted as 'N_id;cw_deg;ccw_deg', where N_id is the ID of the necklace, and cw_deg and ccw_deg are the clockwise and counterclockwise extremes of the necklace. This pattern may repeat to bound multiple necklaces, separated by whitespace."
+  "The angles between which to draw the circular necklaces. Must be formatted as 'N_id;cw_deg;ccw_deg', where N_id is the ID of the necklace, and cw_deg and ccw_deg are the clockwise and counterclockwise extreme angles"
+  " (in degrees) of the necklace. This pattern may repeat to bound multiple necklaces, separated by whitespace."
 );
 
 DEFINE_bool

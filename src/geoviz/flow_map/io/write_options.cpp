@@ -40,6 +40,7 @@ WriteOptions::Ptr WriteOptions::Default()
 
   options->numeric_precision = 9;
   options->region_opacity = -1;
+  options->obstacle_opacity = -1;
   options->flow_opacity = 1;
   options->node_opacity = 1;
 
@@ -57,6 +58,7 @@ WriteOptions::Ptr WriteOptions::Debug()
 
   options->numeric_precision = 9;
   options->region_opacity = -1;
+  options->obstacle_opacity = -1;
   options->flow_opacity = 0.5;
   options->node_opacity = 1;
 
@@ -81,6 +83,14 @@ WriteOptions::Ptr WriteOptions::Debug()
  * This must be at most 1.
  *
  * For negative values, the opacity of the input regions is used instead.
+ */
+
+/**@fn double WriteOptions::obstacle_opacity
+ * @brief The opacity with which to draw the obstacles.
+ *
+ * This must be at most 1.
+ *
+ * For negative values, the opacity of the input obstacles is used instead.
  */
 
 /**@fn double WriteOptions::flow_opacity

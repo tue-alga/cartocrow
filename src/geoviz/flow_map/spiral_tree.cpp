@@ -174,6 +174,7 @@ SpiralTree::SpiralTree(const Point& root, const Number& restricting_angle_rad) :
   root_translation_(Point(CGAL::ORIGIN) - root)
 {
   CHECK_GT(restricting_angle_rad, 0);
+  CHECK_LE(restricting_angle_rad, M_PI_2);
 }
 
 /**@fn Point SpiralTree::GetRoot() const
@@ -224,6 +225,22 @@ void SpiralTree::AddPlaces(const std::vector<Place::Ptr>& places)
   {
     if (0 < place->flow_in)
       nodes_.push_back(std::make_shared<Node>(place));
+  }
+}
+
+/**@brief Add a set of obstacles to the spiral tree.
+ *
+ * Note that the spiral arcs are not automatically computed after adding the obstacles. This requires manually calling the Compute() method.
+ * @param obstacles the set of obstacles to add to the spiral tree.
+ */
+void SpiralTree::AddObstacles(const std::vector<Region>& obstacles)
+{
+  Clean();
+
+  for (const Region& obstacle : obstacles)
+  {
+    // TODO(tvl) add additional points on certain places of the obstacles.
+    obstacles_.push_back(obstacle);
   }
 }
 
@@ -409,6 +426,7 @@ void SpiralTree::SetRoot(const Point& root)
 void SpiralTree::SetRestrictingAngle(const Number& restricting_angle_rad)
 {
   CHECK_GT(restricting_angle_rad, 0);
+  CHECK_LE(restricting_angle_rad, M_PI_2);
   restricting_angle_rad_ = restricting_angle_rad;
 
   Clean();
