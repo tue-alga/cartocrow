@@ -16,36 +16,30 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-Created by tvl (t.vanlankveld@esciencecenter.nl) on 04-09-2020
+Created by tvl (t.vanlankveld@esciencecenter.nl) on 02-09-2020
 */
 
-#ifndef GEOVIZ_COMMON_POLAR_POINT_INC
-#define GEOVIZ_COMMON_POLAR_POINT_INC
+#ifndef GEOVIZ_COMMON_IO_WRITE_OPTIONS_H
+#define GEOVIZ_COMMON_IO_WRITE_OPTIONS_H
 
-#include "geoviz/common/core_types.h"
-
-#include <glog/logging.h>
+#include <memory>
 
 
 namespace geoviz
 {
 
-/**@brief Construct a polar point.
- * @tparam T1 the number type for the distance to the pole.
- * @tparam T2 the number type for the angle relative to the positive x-axis.
- * @param R the distance to the pole.
- * @param phi the angle from the pole.
- */
-template<typename T1, typename T2>
-PolarPoint::PolarPoint(const T1& R, const T2& phi) : R_(R), phi_(phi)
+struct WriteOptions
 {
-  CHECK_LE(0, R);
-  while (phi_ < -M_PI)
-    phi_ += M_2xPI;
-  while (M_PI < phi_)
-    phi_ -= M_2xPI;
-}
+  using Ptr = std::shared_ptr<WriteOptions>;
+
+  static Ptr Default();
+
+  static Ptr Debug();
+
+  int pixel_width;
+  int numeric_precision;
+}; // struct WriteOptions
 
 } // namespace geoviz
 
-#endif //GEOVIZ_COMMON_POLAR_POINT_INC
+#endif //GEOVIZ_COMMON_IO_WRITE_OPTIONS_H

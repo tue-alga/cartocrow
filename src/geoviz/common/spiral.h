@@ -1,8 +1,6 @@
 /*
-The Flow Map library implements the algorithmic geo-visualization
-method by the same name, developed by Kevin Verbeek, Kevin Buchin,
-and Bettina Speckmann at TU Eindhoven
-(DOI: 10.1007/s00453-013-9867-z & 10.1109/TVCG.2011.202).
+The GeoViz library implements algorithmic geo-visualization methods,
+developed at TU Eindhoven.
 Copyright (C) 2019  Netherlands eScience Center and TU Eindhoven
 
 This program is free software: you can redistribute it and/or modify
@@ -21,10 +19,10 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Created by tvl (t.vanlankveld@esciencecenter.nl) on 16-10-2020
 */
 
-#ifndef GEOVIZ_FLOW_MAP_SPIRAL_ARC_H
-#define GEOVIZ_FLOW_MAP_SPIRAL_ARC_H
+#ifndef GEOVIZ_COMMON_SPIRAL_H
+#define GEOVIZ_COMMON_SPIRAL_H
 
-#include <memory>
+#include <ostream>
 
 #include "geoviz/common/core_types.h"
 #include "geoviz/common/polar_point.h"
@@ -32,41 +30,47 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 16-10-2020
 
 namespace geoviz
 {
-namespace flow_map
-{
 
 class Spiral
 {
  public:
-  using Ptr = std::shared_ptr<Spiral>;
+  Spiral(const PolarPoint& anchor, const Number& angle_rad);
 
-  Spiral(const Number& angle_rad, const PolarPoint& anchor);
-
-  Spiral(const PolarPoint& source, const PolarPoint& target);
-
-  const Number& angle_rad() const;
+  Spiral(const PolarPoint& point_1, const PolarPoint& point_2);
 
   const PolarPoint& anchor() const;
 
+  const Number& angle_rad() const;
+
   bool IsLeft() const;
   bool IsRight() const;
-  bool IsStraight() const;
+  bool IsCollinear() const;
+
+  Number EvaluateR(const Number& t) const;
+
+  Number EvaluatePhi(const Number& t) const;
 
   PolarPoint Evaluate(const Number& t) const;
 
-  Number ComputeOrder() const;
+  Number ComputeT(const Number& R) const;
 
-  PolarPoint Intersect(const Spiral& s) const;
+  Number ComputePhi(const Number& R) const;
 
-  Box ComputeBoundingBox() const;
+  Number SampleT(const Number& phi) const;
+
+  Number SampleR(const Number& phi) const;
+
+  Number ComputePeriod() const;
 
  private:
-  Number angle_rad_;
-
   PolarPoint anchor_;
+
+  Number angle_rad_;
 }; // class Spiral
 
-} // namespace flow_map
+
+std::ostream& operator<<(std::ostream& os, const Spiral& spiral);
+
 } // namespace geoviz
 
-#endif //GEOVIZ_FLOW_MAP_SPIRAL_ARC_H
+#endif //GEOVIZ_COMMON_SPIRAL_H

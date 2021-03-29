@@ -27,10 +27,10 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 05-12-2019
 #include <set>
 #include <vector>
 
+#include "geoviz/common/circular_range.h"
 #include "geoviz/common/core_types.h"
 #include "geoviz/necklace_map/map_element.h"
 #include "geoviz/necklace_map/necklace.h"
-#include "geoviz/necklace_map/circular_range.h"
 #include "geoviz/necklace_map/parameters.h"
 
 

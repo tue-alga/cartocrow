@@ -23,9 +23,15 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 28-10-2020
 
 #include "spiral_tree.h"
 
+#include <ostream>
+
 #include <glog/logging.h>
 
+#include "geoviz/common/circular_range.h"
 #include "geoviz/common/circulator.h"
+#include "geoviz/common/intersections.h"
+#include "geoviz/common/spiral_segment.h"
+#include "geoviz/common/polar_segment.h"
 
 
 namespace geoviz
@@ -99,18 +105,18 @@ Node::Node(const Place::Ptr& place /*= nullptr*/) :
  * Note that this type does not describe whether the node is associated with a place on the map. This can be determined using IsSteiner().
  * @return the node type.
  */
-Node::Type Node::GetType() const
+Node::ConnectionType Node::GetType() const
 {
   if (parent == nullptr)
-    return Type::kRoot;
+    return ConnectionType::kRoot;
   else switch (children.size())
   {
     case 0:
-      return Type::kLeaf;
+      return ConnectionType::kLeaf;
     case 1:
-      return Type::kSubdivision;
+      return ConnectionType::kSubdivision;
     default:
-      return Type::kJoin;
+      return ConnectionType::kJoin;
   }
 }
 
@@ -238,10 +244,8 @@ void SpiralTree::AddObstacles(const std::vector<Region>& obstacles)
   Clean();
 
   for (const Region& obstacle : obstacles)
-  {
-    // TODO(tvl) add additional points on certain places of the obstacles.
-    obstacles_.push_back(obstacle);
-  }
+    for (const Polygon_with_holes& polygon : obstacle.shape)
+      AddObstacle(polygon);
 }
 
 /**@brief Compute the spiral tree arcs.
@@ -249,6 +253,114 @@ void SpiralTree::AddObstacles(const std::vector<Region>& obstacles)
  * These arcs are based on the position of the nodes, relative to the root, and the restricting angle of the tree.
  */
 void SpiralTree::Compute()
+{
+  if (obstacles_.empty())
+    ComputeUnobstructed();
+  else
+    ComputeObstructed();
+}
+
+/**@brief Change the root position.
+ *
+ * This removes all existing arcs of the tree. The new tree can be computed using Compute().
+ * @param root the new root position.
+ */
+void SpiralTree::SetRoot(const Point& root)
+{
+  root_translation_ = Point(CGAL::ORIGIN) - root;
+
+  Clean();
+}
+
+/**@brief Change the restricting angle.
+ *
+ * This removes all existing arcs of the tree. The new tree can be computed using Compute().
+ * @param restricting_angle_rad the new restricting angle.
+ */
+void SpiralTree::SetRestrictingAngle(const Number& restricting_angle_rad)
+{
+  CHECK_GT(restricting_angle_rad, 0);
+  CHECK_LT(restricting_angle_rad, M_PI_2);
+  restricting_angle_rad_ = restricting_angle_rad;
+
+  Clean();
+}
+
+void SpiralTree::Clean()
+{
+  size_t num_places = 0;
+
+  // Clean the node connections.
+  for (Node::Ptr& node : nodes_)
+  {
+    if (node->place == nullptr)
+      break;
+    ++num_places;
+
+    node->parent = nullptr;
+    node->children.clear();
+  }
+
+  // Remove support nodes, e.g. join nodes.
+  nodes_.resize(num_places);
+}
+
+bool SpiralTree::IsReachable(const PolarPoint& parent_point, const PolarPoint& child_point) const
+{
+  if (parent_point == child_point)
+    return true;
+
+  const Spiral spiral(child_point, parent_point);
+  return std::abs(spiral.angle_rad()) <= restricting_angle_rad_;
+}
+
+void SpiralTree::AddObstacle(const Polygon_with_holes& polygon)
+{
+  // Ignore the holes of the obstacle: flow cannot cross the obstacle boundary.
+  const Polygon& boundary = polygon.outer_boundary();
+  if (boundary.is_empty())
+    return;
+
+  CHECK_NE(boundary.oriented_side(GetRoot()), CGAL::ON_BOUNDED_SIDE) << "Root inside an obstacle.";
+
+  obstacles_.emplace_back();
+  Obstacle& obstacle = obstacles_.back();
+  for (Polygon::Vertex_const_iterator vertex_iter = boundary.vertices_begin(); vertex_iter != boundary.vertices_end(); ++vertex_iter)
+    obstacle.emplace_back(*vertex_iter, root_translation_);
+
+  // Enforce counter-clockwise obstacles for a canonical arrangement.
+//  if (!boundary.is_counterclockwise_oriented())
+//    obstacle.reverse();
+
+  // Add vertices for the points closest to the root as well as spiral points.
+  // The wedge with the root as apex and boundaries through a closest point and a spiral point (on the same edge) has a fixed angle.
+  const Number phi_offset = M_PI_2 - restricting_angle_rad_;
+  CHECK_LT(0, phi_offset);
+
+  Obstacle::iterator vertex_prev = --obstacle.end();
+  for (Obstacle::iterator vertex_iter = obstacle.begin(); vertex_iter != obstacle.end(); vertex_prev = vertex_iter++)
+  {
+    const PolarSegment edge(*vertex_prev, *vertex_iter);
+    const PolarPoint closest = edge.SupportingLine().foot();
+
+    // The spiral points have fixed R and their phi is offset from the phi of the closest by +/- phi_offset.
+    const Number R_s = closest.R() / std::sin(restricting_angle_rad_);
+
+    const int sign = vertex_prev->phi() < vertex_iter->phi() ? -1 : 1;
+    const Number phi_s_prev = closest.phi() - sign * phi_offset;
+    const Number phi_s_next = closest.phi() + sign * phi_offset;
+
+    // The closest point and spiral points must be added ordered from p to q and only if they are on the edge.
+    if (edge.ContainsPhi(phi_s_prev))
+      obstacle.insert(vertex_iter, PolarPoint(R_s, phi_s_prev));
+    if (edge.ContainsPhi(closest.phi()))
+      obstacle.insert(vertex_iter, closest);
+    if (edge.ContainsPhi(phi_s_next))
+      obstacle.insert(vertex_iter, PolarPoint(R_s, phi_s_next));
+  }
+}
+
+void SpiralTree::ComputeUnobstructed()
 {
   using Wavefront = std::map<Number, Event>;
   Wavefront wavefront;
@@ -340,7 +452,7 @@ void SpiralTree::Compute()
           {
             // Connect the event node to the neighbor.
             // Note that this ignores the implied obstacle behind the event node.
-            //event_node->type = Node::Type::kSubdivision;
+            //event_node->type = Node::ConnectionType::kSubdivision;
             event.node->children.push_back(node_circ->second.node);
             node_circ->second.node->parent = event.node;
           }
@@ -364,9 +476,15 @@ void SpiralTree::Compute()
       // Clockwise.
       Circulator<Wavefront> cw_iter = --make_circulator(node_iter, wavefront);
 
-      const Spiral spiral_left(-restricting_angle_rad_, event.relative_position);
-      const Spiral spiral_right(restricting_angle_rad_, cw_iter->second.relative_position);
-      const PolarPoint intersection = spiral_left.Intersect(spiral_right);
+      const Spiral spiral_left(event.relative_position, -restricting_angle_rad_);
+      const Spiral spiral_right(cw_iter->second.relative_position, restricting_angle_rad_);
+
+      PolarPoint intersections[2];
+      const int num = ComputeIntersections(spiral_left, spiral_right, intersections);
+      CHECK_LT(0, num);
+
+      // Note that the intersections should be the two closest to the anchor of the first spiral.
+      const PolarPoint& intersection = intersections[0];
       CHECK_LE(intersection.R(), event.relative_position.R());
       CHECK_LE(intersection.R(), cw_iter->second.relative_position.R());
 
@@ -386,9 +504,15 @@ void SpiralTree::Compute()
       // Counter-clockwise.
       Circulator<Wavefront> ccw_iter = ++make_circulator(node_iter, wavefront);
 
-      const Spiral spiral_left(-restricting_angle_rad_, ccw_iter->second.relative_position);
-      const Spiral spiral_right(restricting_angle_rad_, event.relative_position);
-      const PolarPoint intersection = spiral_left.Intersect(spiral_right);
+      const Spiral spiral_left(ccw_iter->second.relative_position, -restricting_angle_rad_);
+      const Spiral spiral_right(event.relative_position, restricting_angle_rad_);
+
+      PolarPoint intersections[2];
+      const int num = ComputeIntersections(spiral_left, spiral_right, intersections);
+      CHECK_LT(0, num);
+
+      // Note that the intersections should be the two closest to the anchor of the first spiral.
+      const PolarPoint& intersection = intersections[0];
       CHECK_LE(intersection.R(), ccw_iter->second.relative_position.R());
       CHECK_LE(intersection.R(), event.relative_position.R());
 
@@ -406,58 +530,359 @@ void SpiralTree::Compute()
   }
 }
 
-/**@brief Change the root position.
- *
- * This removes all existing arcs of the tree. The new tree can be computed using Compute().
- * @param root the new root position.
- */
-void SpiralTree::SetRoot(const Point& root)
+
+
+
+
+
+///////////////////////////
+/// Obstructed ST impl. ///
+///////////////////////////
+
+
+namespace obst
 {
-  root_translation_ = Point(CGAL::ORIGIN) - root;
 
-  Clean();
-}
 
-/**@brief Change the restricting angle.
- *
- * This removes all existing arcs of the tree. The new tree can be computed using Compute().
- * @param restricting_angle_rad the new restricting angle.
- */
-void SpiralTree::SetRestrictingAngle(const Number& restricting_angle_rad)
+class EdgeStraight;
+class EdgeSpiral;
+
+class Edge
 {
-  CHECK_GT(restricting_angle_rad, 0);
-  CHECK_LE(restricting_angle_rad, M_PI_2);
-  restricting_angle_rad_ = restricting_angle_rad;
+ public:
+  using Ptr = std::shared_ptr<Edge>;  // TODO(tvl) remove all references to Ptr types, unless they are explicitly used in the method interfaces of a class.
 
-  Clean();
-}
+  Edge() {}
+  virtual ~Edge() {}
 
-void SpiralTree::Clean()
+  virtual const EdgeStraight* AsEdgeStraight() const { return nullptr; }
+  virtual const EdgeSpiral* AsEdgeSpiral() const { return nullptr; }
+
+  virtual Number R_max() const = 0;
+
+  virtual Number R_min() const = 0;
+
+  virtual Number ComputePhi(const Number& R) const = 0;
+
+  virtual PolarPoint Intersect(const EdgeStraight& edge) const = 0;
+  virtual PolarPoint Intersect(const EdgeSpiral& edge) const = 0;
+
+  virtual std::ostream& print(std::ostream& os) const = 0;
+}; // class Edge
+
+class EdgeStraight : public Edge
 {
-  size_t num_places = 0;
+ public:
+  EdgeStraight(const PolarPoint& a, const PolarPoint& b) :
+    Edge(), segment(a, b)
+  {}
 
-  // Clean the node connections.
-  for (Node::Ptr& node : nodes_)
-  {
-    if (node->place == nullptr)
-      break;
-    ++num_places;
+  const EdgeStraight* AsEdgeStraight() const { return this; }
 
-    node->parent = nullptr;
-    node->children.clear();
+  Number R_max() const { return 0/*segment.far().R()*/; // TODO(tvl) fix this so the segment is always oriented correctly. Better yet, replace the method(s) by getting the (unoriented) endpoints...
   }
 
-  // Remove support nodes, e.g. join nodes.
-  nodes_.resize(num_places);
+  Number R_min() const { return 0/*segment.near().R()*/; // TODO(tvl) fix this so the segment is always oriented correctly.
+  }
+
+  Number ComputePhi(const Number& R) const
+  {
+    // Note, due to minor round-off errors, there can be two very similar phi values near the point closest to the root.
+    Number phi[2];
+    CHECK_LT(0, segment.CollectPhi(R, phi));
+
+    return phi[0];
+  }
+
+  PolarPoint Intersect(const EdgeStraight& edge) const { return PolarPoint(); }
+  PolarPoint Intersect(const EdgeSpiral& edge) const { return PolarPoint(); }
+
+  std::ostream& print(std::ostream& os) const
+  {
+    os << segment;
+    return os;
+  }
+
+  // Note that because each edge was split at the point closest to the root, the vertices cannot be equidistant from the root.
+  PolarSegment segment;
+}; // class EdgeStraight
+
+class EdgeSpiral : public Edge
+{
+ public:
+  EdgeSpiral(const PolarPoint& a, const PolarPoint& b) : Edge(), segment(a, b) {}
+
+  const EdgeSpiral* AsEdgeSpiral() const { return this; }
+
+  Number R_max() const { return segment.far().R(); }
+
+  Number R_min() const { return segment.near().R(); }
+
+  Number ComputePhi(const Number& R) const
+  {
+    return segment.ComputePhi(R);
+  }
+
+  PolarPoint Intersect(const EdgeStraight& edge) const { return PolarPoint(); }
+  PolarPoint Intersect(const EdgeSpiral& edge) const { return PolarPoint(); }
+
+  std::ostream& print(std::ostream& os) const
+  {
+    os << segment;
+    return os;
+  }
+
+  SpiralSegment segment;
+}; // class EdgeSpiral
+
+std::ostream& operator<<(std::ostream& os, const Edge& edge)
+{
+  edge.print(os);
+  return os;
 }
 
-bool SpiralTree::IsReachable(const PolarPoint& parent_point, const PolarPoint& child_point) const
-{
-  if (parent_point == child_point)
-    return true;
 
-  const Spiral spiral(child_point, parent_point);
-  return std::abs(spiral.angle_rad()) <= restricting_angle_rad_;
+
+
+class Interval
+{
+ public:
+  using Ptr = std::shared_ptr<Interval>;
+
+  Interval(const Edge::Ptr& edge_cw, const Edge::Ptr& edge_ccw, const bool obstacle = false) : edge_cw(edge_cw), edge_ccw(edge_ccw), obstacle(obstacle), tag(nullptr) {}
+
+  Interval(const Edge::Ptr& edge_cw, const Edge::Ptr& edge_ccw, const Node::Ptr& tag) : edge_cw(edge_cw), edge_ccw(edge_ccw), obstacle(false), tag(tag) {}
+
+  // Note that an open interval referencing a connected node counts as a free interval.
+  bool IsFree() const { return tag == nullptr || tag->parent != nullptr; }
+
+  bool obstacle;
+  Node::Ptr tag;
+
+  Edge::Ptr edge_cw, edge_ccw;
+}; // class Interval
+
+struct CompareIntervals
+{
+  bool operator()(const Interval::Ptr& a, const Interval::Ptr& b) const
+  {
+    const Edge::Ptr& edge_ccw_a = a->edge_ccw;
+    const Edge::Ptr& edge_ccw_b = b->edge_ccw;
+
+    // Compare the ccw edges somewhere inside (we use the center of their shared range of R.
+    //
+    //
+    // at their 'farthest' shared point (this would be closest to the root for the reverse ordering).
+    // Note that there shouldn't be a case where the cw edges of two intervals don't share some part (distance from the root), due to the processing of the events in order.
+    // Also note that if two edges are found to intersect, they should be replaced by their subdivided counterparts, because otherwise the 'farthest' point is no longer a good measurement for the order of the intervals on the circle.
+    const Number& R_max = std::min(edge_ccw_a->R_max(), edge_ccw_b->R_max());
+    const Number& R_min = std::max(edge_ccw_a->R_min(), edge_ccw_b->R_min());
+    CHECK_LE(R_min, R_max);
+
+    const Number R = (R_min + R_max) / 2;
+    const Number& phi_a = edge_ccw_a->ComputePhi(R);
+    const Number& phi_b = edge_ccw_b->ComputePhi(R);
+    return phi_a < phi_b;
+  }
+}; // struct CompareIntervals
+
+
+
+class Event
+{
+ public:
+  using Ptr = std::shared_ptr<Event>;
+
+  // Node event.
+  Event(const PolarPoint& relative_position, const Node::Ptr& node) :
+    relative_position(relative_position), node(node) {}
+
+  // Vertex event.
+  Event
+  (
+    const PolarPoint& relative_position,
+    const Node::Ptr& vertex,
+    const Edge::Ptr& edge_cw,
+    const Edge::Ptr& edge_ccw
+  ) : relative_position(relative_position), node(vertex), edge_cw(edge_cw), edge_ccw(edge_ccw) {}
+
+  // Vanishing event.
+  Event
+  (
+    const PolarPoint& relative_position,
+    const Edge::Ptr& edge_cw,
+    const Edge::Ptr& edge_ccw
+  ) : Event(relative_position, nullptr, edge_cw, edge_ccw) {}
+
+  bool IsNode() const { return (bool)node && !HasEdge(); }
+  bool IsVertex() const { return (bool)node && HasEdge(); }
+  bool IsVanishing() const { return !node; }
+
+  PolarPoint relative_position;
+
+  Node::Ptr node;
+  Edge::Ptr edge_cw, edge_ccw;
+
+ private:
+  bool HasEdge() const { return (bool)edge_cw || (bool)edge_ccw; }
+}; // class Event
+
+std::ostream& operator<<(std::ostream& os, const Event& event)
+{
+  os << "Event @ " << event.relative_position << std::endl;
+
+  os << "CW: ";
+  if (event.edge_cw)
+    os << (*event.edge_cw) << std::endl;
+  else
+    os << "null" << std::endl;
+
+  os << "CCW: ";
+  if (event.edge_ccw)
+    os << (*event.edge_ccw) << std::endl;
+  else
+    os << "null" << std::endl;
+}
+
+
+struct CompareEvents
+{
+  bool operator()(const Event::Ptr& a, const Event::Ptr& b) const
+  {
+    return a->relative_position.R() < b->relative_position.R();
+  }
+}; // struct CompareEvents
+
+struct CompareEventsReverse : public CompareEvents
+{
+  bool operator()(const Event::Ptr& a, const Event::Ptr& b) const
+  {
+    return CompareEvents::operator()(b, a);
+  }
+}; // struct CompareEventsReverse
+
+
+// Strictly speaking, the wavefront should be the collection of unconnected nodes that have been passed by the sweep circle.
+// In practice, we keep track of the intervals on this sweep circle instead, ordered by their edges intersecting the sweep circle.
+class SweepStatus
+{
+ public:
+  using Boundary = obst::Edge::Ptr;
+  using BoundarySet = std::set<Boundary>;
+
+
+
+  BoundarySet boundaries;
+}; // class SweepStatus
+
+
+} // namespace obst
+
+
+
+void SpiralTree::ComputeObstructed()
+{
+  // Required data types:
+  // Points (events):
+  // * Node/terminal
+  //   - tree node
+  //   - Reachable regions? (or is the node stored in the region?)
+  //     probably necessary to clean up all reachable regions of this node, once it is connected to another point. However, this may also be done implicitly by smart definitions.
+  // * Vertex
+  //   - obstacle vertex (that can become part of the tree).
+  //   - 2 obstacle edges connected to the vertex.
+  // * Vanishing point (of a region); could be at a vertex, but these should probably be handled by the vertex case.
+  //   - should this have the region that vanishes attached?
+  //   - probably better: the 2 edges involved.
+  //   vanishing points should be checked when encountered: are they still applicable (or should they be 'removed' when their interval changes?), i.e. are their two edges still next to each other (needs sorted list iterators to check)?
+  //
+  // Edges (endpoints):
+  // * Straight
+  // * Spiral
+  // Each edge has two associated regions/intervals.
+  //
+  // Intervals (is it necessary to declare these explicitly, or can they be implicitly defined in their edges?):
+  // - Vanishing event?
+  // * Free/unreachable (e.g. beyond the last node or behind an obstacle)
+  // * Obstacle
+  // * Reachable:
+  //   - 1 parent (tagged) node/vertex: node/vertex n 'inside' interval, farther from the root (to connect to next node touching interval). This is actually the point in the region fartest from the root.
+  //   - Could we just mark free intervals as 'reachable' intervals without a parent?
+  // Stored in (balanced) search tree by their endpoints, i.e. their edges. The order of the endpoints never changes: when this would be the case, a new region is inserted. Can we store only the left (or right) edge with each interval?
+  //
+  // Maybe: an interval is marked as either "obstacle" or "open". An open interval can have a tagged event (node/vertex); an open interval that either has no tagged event or that has a tagged event that is already assigned a parent is called a "free interval".
+  // Is merging newly freed up intervals really necessary? Isn't this just a case of more clutter without actual problems?
+  //
+  // Event (per point type).
+
+
+  // Debug lists of all elements ever created.
+  std::vector<obst::Interval::Ptr> intervals_d;
+  std::vector<obst::Edge::Ptr> edges_d;
+
+  // Actual functional collections.
+  std::priority_queue<obst::Event::Ptr, std::vector<obst::Event::Ptr>, obst::CompareEventsReverse> queue;
+
+  std::vector<Node::Ptr> vertices;
+
+
+  // Add the obstacles.
+  for (const Obstacle& obstacle : obstacles_)
+  {
+    if (obstacle.empty())
+      continue;
+
+    obst::Event::Ptr vertex;
+    obst::EdgeStraight::Ptr edge_first = nullptr;
+
+    Obstacle::const_iterator prev_iter = --obstacle.end();
+    for (Obstacle::const_iterator vertex_iter = obstacle.begin(); vertex_iter != obstacle.end(); prev_iter = vertex_iter++)
+    {
+      obst::EdgeStraight::Ptr edge_cw = std::make_shared<obst::EdgeStraight>(*prev_iter, *vertex_iter);
+      edges_d.push_back(edge_cw);
+      if (edge_first == nullptr)
+        edge_first = edge_cw;
+
+      if (vertex)
+        vertex->edge_ccw = edge_cw;
+
+      vertices.push_back(std::make_shared<Node>());
+      const Node::Ptr& node = vertices.back();
+
+      vertex = std::make_shared<obst::Event>(*vertex_iter, node, edge_cw, nullptr);
+      queue.push(vertex);
+    }
+
+    CHECK(vertex);
+    vertex->edge_ccw = edge_first;
+  }
+
+
+  // Compute the reachable region by handling the events (in reverse order) and keeping track of the boundaries of the reachable intervals.
+  obst::SweepStatus intervals;
+
+
+
+
+  bool test0 = true;
+
+  // DEBUG //
+  while (!queue.empty())
+  {
+    obst::Event::Ptr event = queue.top();
+    queue.pop();
+
+    std::cerr << (*event) << std::endl << std::endl;
+  }
+
+
+  bool test = true;
+
+
+
+
+  // TODO(tvl) temp placeholder.
+  //ComputeUnobstructed();
 }
 
 } // namespace flow_map

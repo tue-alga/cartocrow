@@ -44,18 +44,25 @@ PolarPoint::PolarPoint(const CGAL::Origin& o) : R_(0), phi_(0) {}
  */
 PolarPoint::PolarPoint(const PolarPoint& p) : R_(p.R()), phi_(p.phi()) {}
 
-/**@brief Construct a polar point.
- *
- * @param p the Cartesian coordinates of the polar point.
- */
-PolarPoint::PolarPoint(const Point& p) : PolarPoint(to_polar(p)) {}
-
 /**@brief Construct a polar point from a polar point with a different pole.
  *
  * @param p the reference polar point.
  * @param t the Cartesian coordinates of p's pole (relative to the pole of the point to construct)
  */
 PolarPoint::PolarPoint(const PolarPoint& p, const Vector& t) : PolarPoint(translate_pole(p, t)) {}
+
+/**@brief Construct a polar point.
+ *
+ * @param p the Cartesian coordinates of the polar point.
+ */
+PolarPoint::PolarPoint(const Point& p) : PolarPoint(to_polar(p)) {}
+
+/**@brief Construct a polar point with a different pole.
+ *
+ * @param p the Cartesian coordinates of the polar point.
+ * @param t the Cartesian coordinates of p's pole (relative to the pole of the point to construct)
+ */
+PolarPoint::PolarPoint(const Point& p, const Vector& t) : PolarPoint(to_polar(p + t)) {}
 
 /**@brief Return the distance to the pole.
  * @return the distance to the pole.
@@ -78,6 +85,7 @@ Point PolarPoint::to_cartesian() const
 
 PolarPoint PolarPoint::to_polar(const Point& p)
 {
+  // Positive by construction.
   const Number R = CGAL::sqrt((p - Point(CGAL::ORIGIN)).squared_length());
 
   if (p.x() == 0 && p.y() == 0)
@@ -95,12 +103,18 @@ PolarPoint PolarPoint::translate_pole(const PolarPoint& p, const Vector& t)
 
 bool operator==(const PolarPoint& p, const PolarPoint& q)
 {
-  return p.R() == q.R() && p.phi() == q.phi();
+  return p.R() == q.R() && (p.R() == 0 || p.phi() == q.phi());
 }
 
 bool operator!=(const PolarPoint& p, const PolarPoint& q)
 {
   return !(p == q);
+}
+
+std::ostream& operator<<(std::ostream& os, const PolarPoint& point)
+{
+  os << "p(R= " << point.R() << ", phi= " << point.phi() << ")";
+  return os;
 }
 
 } // namespace geoviz

@@ -1,8 +1,6 @@
 /*
-The Flow Map library implements the algorithmic geo-visualization
-method by the same name, developed by Kevin Verbeek, Kevin Buchin,
-and Bettina Speckmann at TU Eindhoven
-(DOI: 10.1007/s00453-013-9867-z & 10.1109/TVCG.2011.202).
+The GeoViz library implements algorithmic geo-visualization methods,
+developed at TU Eindhoven.
 Copyright (C) 2019  Netherlands eScience Center and TU Eindhoven
 
 This program is free software: you can redistribute it and/or modify
@@ -18,28 +16,27 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-Created by tvl (t.vanlankveld@esciencecenter.nl) on 16-10-2020
+Created by tvl (t.vanlankveld@esciencecenter.nl) on 09-03-2021
 */
 
-#ifndef GEOVIZ_FLOW_MAP_IO_DETAIL_SVG_WRITER_H
-#define GEOVIZ_FLOW_MAP_IO_DETAIL_SVG_WRITER_H
+#ifndef GEOVIZ_COMMON_IO_DETAIL_SVG_WRITER_H
+#define GEOVIZ_COMMON_IO_DETAIL_SVG_WRITER_H
 
+#include <iostream>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
 #include <tinyxml2.h>
 
 #include "geoviz/common/core_types.h"
-#include "geoviz/common/region.h"
+#include "geoviz/common/polar_line.h"
+#include "geoviz/common/polar_segment.h"
 #include "geoviz/common/spiral.h"
-#include "geoviz/flow_map/flow_tree.h"
-#include "geoviz/flow_map/io/write_options.h"
+#include "geoviz/common/spiral_segment.h"
+#include "geoviz/common/io/write_options.h"
 
 
 namespace geoviz
-{
-namespace flow_map
 {
 namespace detail
 {
@@ -49,22 +46,22 @@ class SvgWriter
  public:
   SvgWriter
   (
-    const std::vector<Region>& context,
-    const std::vector<Region>& obstacles,
-    const FlowTree::Ptr& tree,
+    const std::vector<PolarPoint>& points,
+    const std::vector<Spiral>& spirals,
+    const std::vector<SpiralSegment>& spiral_segments,
+    const std::vector<PolarLine>& lines,
+    const std::vector<PolarSegment>& line_segments,
     const WriteOptions::Ptr& options,
     std::ostream& out
   );
 
   ~SvgWriter();
 
-  void DrawContext();
+  void DrawSpirals();
 
-  void DrawObstacles();
+  void DrawLines();
 
-  void DrawFlow();
-
-  void DrawNodes();
+  void DrawPoints();
 
  private:
   void OpenSvg();
@@ -73,31 +70,21 @@ class SvgWriter
 
   void ComputeBoundingBox();
 
-  void AddDropShadowFilter();
+  void DrawSpiral(const Spiral& spiral, const Number& R_max, const Number& R_min = 0);
 
-  void DrawSpiral(const Spiral& spiral, const Vector& offset, const PolarPoint& parent);
+  void DrawLine(const PolarLine& line, const Number& t_from, const Number& t_to);
 
-  void DrawRoots();
+  const std::vector<PolarPoint>& points_;
+  const std::vector<Spiral>& spirals_;
+  const std::vector<SpiralSegment>& spiral_segments_;
+  const std::vector<PolarLine>& lines_;
+  const std::vector<PolarSegment>& line_segments_;
 
-  void DrawLeaves();
-
-  void DrawJoinNodes();
-
-  void DrawSubdivisionNodes();
-
-  void DrawObstacleVertices(const Region& obstacle);
-
-  void DrawObstacleVertices(const Polygon& polygon);
-
-  const std::vector<Region>& context_;
-  const std::vector<Region>& obstacles_;
-  const FlowTree::Ptr& tree_;
   std::ostream& out_;
 
   WriteOptions::Ptr options_;
 
   Box bounding_box_;
-  Box bounding_box_spirals_;
   double unit_px_;
   std::string transform_matrix_;
 
@@ -105,7 +92,6 @@ class SvgWriter
 }; // class SvgWriter
 
 } // namespace detail
-} // namespace flow_map
 } // namespace geoviz
 
-#endif //GEOVIZ_FLOW_MAP_IO_DETAIL_SVG_WRITER_H
+#endif //GEOVIZ_COMMON_IO_DETAIL_SVG_WRITER_H

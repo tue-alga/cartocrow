@@ -38,6 +38,10 @@ FlowTree::FlowTree(const SpiralTree& spiral_tree) :
   root_translation_(Point(CGAL::ORIGIN) - spiral_tree.GetRoot()),
   nodes_(spiral_tree.nodes_begin(), spiral_tree.nodes_end())
 {
+  // Clone the nodes.
+//  for (SpiralTree::NodeConstIterator node_iter = spiral_tree.nodes_begin(); node_iter != spiral_tree.nodes_end(); ++node_iter)
+//    if ((*node_iter)->GetType() == Node::Type::kRoot)
+//      nodes_.push_back(*node_iter);
   for (const Node::Ptr& node : nodes_)
   {
     if (node->parent == nullptr)
@@ -48,6 +52,30 @@ FlowTree::FlowTree(const SpiralTree& spiral_tree) :
 
     const Spiral spiral(node_relative_position, parent_relative_position);
     arcs_.emplace_back(spiral, parent_relative_position);
+  }
+
+  // Clone the obstacles.
+  for
+  (
+    SpiralTree::ObstacleConstIterator obstacle_iter = spiral_tree.obstacles_begin();
+    obstacle_iter != spiral_tree.obstacles_end();
+    ++obstacle_iter
+  )
+  {
+    obstacles_.emplace_back("");
+    Region& region = obstacles_.back();
+
+    region.shape.emplace_back();
+    Polygon_with_holes& shape = region.shape.back();
+    for (const PolarPoint& polar_point : *obstacle_iter)
+    {
+      shape.outer_boundary().push_back(polar_point.to_cartesian() - root_translation_);
+
+      // TODO(tvl) temp for debugging.
+//      const Number& angle_rad = spiral_tree.GetRestrictingAngle();
+//      arcs_.emplace_back(Spiral(angle_rad, polar_point), PolarPoint());
+//      arcs_.emplace_back(Spiral(-angle_rad, polar_point), PolarPoint());
+    }
   }
 }
 

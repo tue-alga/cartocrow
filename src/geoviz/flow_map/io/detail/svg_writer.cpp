@@ -26,7 +26,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 16-10-2020
 #include <glog/logging.h>
 
 #include "geoviz/common/bounding_box.h"
-#include "geoviz/flow_map/spiral.h"
+#include "geoviz/common/spiral.h"
 
 
 namespace geoviz
@@ -61,6 +61,11 @@ constexpr const char* kSubdivisionStyle = "fill:rgba(0%,30%,100%,100%);"
                                           "stroke-linecap:butt;"
                                           "stroke-linejoin:round;";
 
+constexpr const char* kObstacleStyle = "fill:rgb(80%,80%,80%);"
+                                       "stroke:rgb(50%,50%,50%,100%);"
+                                       "stroke-width:0.4;"
+                                       "stroke-linecap:butt;"
+                                       "stroke-linejoin:round;";
 constexpr const char* kVertexStyle = "fill:rgba(0%,0%,0%,100%);"
                                      "stroke:rgba(0%,0%,0%,100%);"
                                      "stroke-linecap:butt;"
@@ -174,7 +179,7 @@ std::string RegionToPath(const Region& region, const int precision)
   return stream.str().substr(1);
 }
 
-std::string SpiralToPath(const flow_map::Spiral& spiral, const Vector& offset, const int precision, const PolarPoint& parent)
+std::string SpiralToPath(const Spiral& spiral, const Vector& offset, const int precision, const PolarPoint& parent)
 {
   std::stringstream stream;
   stream << std::setprecision(precision);
@@ -297,13 +302,14 @@ void SvgWriter::DrawObstacles()
   printer_.PushComment("Obstacles");
 
   {
-    for (const Region& obstacle : obstacles_)
+    //for (const Region& obstacle : obstacles_)  // TODO(tvl) temporary replacement for debugging purposes. In the end, the original obstacles should be shown.
+    for (const Region& obstacle : tree_->obstacles_)
     {
       if (obstacle.IsPoint())
         continue;
 
       // Draw the region as a piecewise linear polygon with same style as the input, except the opacity may be adjusted and the color may be changed.
-      std::string style = obstacle.style;
+      std::string style = kObstacleStyle;
       if (0 <= options_->region_opacity)
         style = ForceStyle(style, "fill-opacity:", options_->obstacle_opacity);
 
@@ -362,10 +368,6 @@ void SvgWriter::DrawFlow()
       const PolarPoint& parent = arc.second;
 
       DrawSpiral(spiral, offset, parent);
-
-
-
-
     }
   }
 
@@ -580,7 +582,7 @@ void SvgWriter::DrawSpiral(const Spiral& spiral, const Vector& offset, const Pol
 
   if (false)
   {
-    const Number hue = spiral.ComputeOrder();
+    const Number hue = spiral.ComputePhi(1);
 
     std::stringstream stream;
     stream << "hsla(" << hue << "rad,100%,50%,100%)";
@@ -598,7 +600,7 @@ void SvgWriter::DrawRoots()
 {
   for (const Node::Ptr& node : tree_->nodes_)
   {
-    if (node->GetType() != Node::Type::kRoot)
+    if (node->GetType() != Node::ConnectionType::kRoot)
       continue;
 
     printer_.OpenElement("path");
@@ -642,7 +644,7 @@ void SvgWriter::DrawLeaves()
 {
   for (const Node::Ptr& node : tree_->nodes_)
   {
-    if (node->GetType() == Node::Type::kRoot || node->IsSteiner())
+    if (node->GetType() == Node::ConnectionType::kRoot || node->IsSteiner())
       continue;
 
     printer_.OpenElement("circle");
@@ -680,7 +682,7 @@ void SvgWriter::DrawJoinNodes()
 {
   for (const Node::Ptr& node : tree_->nodes_)
   {
-    if (node->GetType() != Node::Type::kJoin || !node->IsSteiner())
+    if (node->GetType() != Node::ConnectionType::kJoin || !node->IsSteiner())
       continue;
 
     printer_.OpenElement("circle");
@@ -718,7 +720,7 @@ void SvgWriter::DrawSubdivisionNodes()
 {
   for (const Node::Ptr& node : tree_->nodes_)
   {
-    if (node->GetType() != Node::Type::kSubdivision || !node->IsSteiner())
+    if (node->GetType() != Node::ConnectionType::kSubdivision || !node->IsSteiner())
       continue;
 
     printer_.OpenElement("circle");

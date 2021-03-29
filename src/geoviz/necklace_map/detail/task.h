@@ -27,7 +27,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 06-05-2020
 
 #include "geoviz/common/bit_string.h"
 #include "geoviz/common/core_types.h"
-#include "geoviz/necklace_map/range.h"
+#include "geoviz/common/range.h"
 #include "geoviz/necklace_map/detail/cycle_node_layered.h"
 
 

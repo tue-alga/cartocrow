@@ -16,40 +16,27 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-Created by tvl (t.vanlankveld@esciencecenter.nl) on 13-05-2020
+Created by tvl (t.vanlankveld@esciencecenter.nl) on 26-02-2021
 */
 
-#ifndef GEOVIZ_COMMON_DETAIL_SVG_BEZIER_PARSER_H
-#define GEOVIZ_COMMON_DETAIL_SVG_BEZIER_PARSER_H
+#ifndef GEOVIZ_COMMON_DETAIL_POLAR_BOUNDS_H
+#define GEOVIZ_COMMON_DETAIL_POLAR_BOUNDS_H
 
-#include "geoviz/common/bezier_spline.h"
 #include "geoviz/common/core_types.h"
-#include "geoviz/common/detail/svg_path_parser.h"
+#include "geoviz/common/polar_segment.h"
+#include "geoviz/common/spiral.h"
+#include "geoviz/common/spiral_segment.h"
 
 
 namespace geoviz
 {
-namespace detail
-{
 
-class SvgBezierConverter : public SvgPathConverter
-{
- public:
-  explicit SvgBezierConverter(BezierSpline& shape);
+Box ConstructBoundingBox(const PolarSegment& segment);
 
- private:
-  void MoveTo_(const Point& to) override;
-  void LineTo_(const Point& to) override;
-  void QuadBezierTo_(const Point& control, const Point& to) override;
-  void CubeBezierTo_(const Point& control_1, const Point& control_2, const Point& to) override;
-  void Close_() override;
+Box ConstructBoundingBox(const Spiral& spiral);
 
-  BezierSpline& shape_;
+Box ConstructBoundingBox(const SpiralSegment& segment);
 
-  Point source_;
-}; // class SvgBezierConverter
-
-} // namespace detail
 } // namespace geoviz
 
-#endif //GEOVIZ_COMMON_DETAIL_SVG_BEZIER_PARSER_H
+#endif //GEOVIZ_COMMON_DETAIL_POLAR_BOUNDS_H

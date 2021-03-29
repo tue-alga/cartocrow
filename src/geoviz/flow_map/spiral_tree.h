@@ -32,7 +32,6 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 28-10-2020
 
 #include "geoviz/common/region.h"
 #include "geoviz/flow_map/place.h"
-#include "geoviz/flow_map/spiral.h"
 
 
 namespace geoviz
@@ -44,7 +43,7 @@ struct Node
 {
   using Ptr = std::shared_ptr<Node>;
 
-  enum class Type
+  enum class ConnectionType
   {
     kRoot,
     kLeaf,
@@ -54,7 +53,7 @@ struct Node
 
   explicit Node(const Place::Ptr& place = nullptr);
 
-  Type GetType() const;
+  ConnectionType GetType() const;
 
   bool IsSteiner() const;
 
@@ -69,11 +68,17 @@ class SpiralTree
  private:
   using NodeSet = std::vector<Node::Ptr>;
 
+  using Obstacle = std::list<PolarPoint>;
+  using ObstacleSet = std::vector<Obstacle>;
+
  public:
   using Ptr = std::shared_ptr<SpiralTree>;
 
   using NodeIterator = NodeSet::iterator;
   using NodeConstIterator = NodeSet::const_iterator;
+
+  using ObstacleIterator = ObstacleSet::iterator;
+  using ObstacleConstIterator = ObstacleSet::const_iterator;
 
   SpiralTree(const Point& root, const Number& restricting_angle_rad);
 
@@ -86,6 +91,12 @@ class SpiralTree
 
   NodeIterator nodes_begin() { return nodes_.begin(); }
   NodeIterator nodes_end() { return nodes_.end(); }
+
+  ObstacleConstIterator obstacles_begin() const { return obstacles_.begin(); }
+  ObstacleConstIterator obstacles_end() const { return obstacles_.end(); }
+
+  ObstacleIterator obstacles_begin() { return obstacles_.begin(); }
+  ObstacleIterator obstacles_end() { return obstacles_.end(); }
 
   void AddPlaces(const std::vector<Place::Ptr>& places);
 
@@ -102,11 +113,17 @@ class SpiralTree
 
   bool IsReachable(const PolarPoint& parent_point, const PolarPoint& child_point) const;
 
+  void AddObstacle(const Polygon_with_holes& polygon);
+
+  void ComputeUnobstructed();
+
+  void ComputeObstructed();
+
   Number restricting_angle_rad_;
   Vector root_translation_;
 
-  std::vector<Node::Ptr> nodes_;  // Note that the positions of these nodes are offset by the position of the root.
-  std::vector<Region> obstacles_;
+  NodeSet nodes_;  // Note that the positions of these nodes are offset by the position of the root.
+  ObstacleSet obstacles_;
 }; // class SpiralTree
 
 } // namespace flow_map

@@ -23,6 +23,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 04-09-2020
 #define GEOVIZ_COMMON_POLAR_POINT_H
 
 #include <cmath>
+#include <ostream>
 
 #include "geoviz/common/cgal_types.h"
 
@@ -37,14 +38,16 @@ class PolarPoint
 
   PolarPoint(const CGAL::Origin& o);
 
-  PolarPoint(const PolarPoint& p);
-
   template<typename T1, typename T2>
   PolarPoint(const T1& R, const T2& phi);
 
-  explicit PolarPoint(const Point& p);
+  PolarPoint(const PolarPoint& p);
 
   PolarPoint(const PolarPoint& p, const Vector& t);
+
+  explicit PolarPoint(const Point& p);
+
+  PolarPoint(const Point& p, const Vector& t);
 
   const Number& R() const;
   const Number& phi() const;
@@ -60,6 +63,8 @@ class PolarPoint
 
 bool operator==(const PolarPoint& p, const PolarPoint& q);
 bool operator!=(const PolarPoint& p, const PolarPoint& q);
+
+std::ostream& operator<<(std::ostream& os, const PolarPoint& point);
 
 } // namespace geoviz
 

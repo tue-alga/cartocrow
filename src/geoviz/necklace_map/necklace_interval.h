@@ -23,8 +23,8 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 01-04-2020
 #ifndef GEOVIZ_NECKLACE_MAP_NECKLACE_INTERVAL_H
 #define GEOVIZ_NECKLACE_MAP_NECKLACE_INTERVAL_H
 
+#include "geoviz/common/circular_range.h"
 #include "geoviz/common/core_types.h"
-#include "geoviz/necklace_map/circular_range.h"
 
 
 namespace geoviz

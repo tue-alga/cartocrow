@@ -16,13 +16,11 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-Created by tvl (t.vanlankveld@esciencecenter.nl) on 04-09-2020
+Created by tvl (t.vanlankveld@esciencecenter.nl) on 19-02-2021
 */
 
-#ifndef GEOVIZ_COMMON_POLAR_POINT_INC
-#define GEOVIZ_COMMON_POLAR_POINT_INC
-
-#include "geoviz/common/core_types.h"
+#ifndef GEOVIZ_COMMON_POLAR_SEGMENT_INC
+#define GEOVIZ_COMMON_POLAR_SEGMENT_INC
 
 #include <glog/logging.h>
 
@@ -30,22 +28,38 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 04-09-2020
 namespace geoviz
 {
 
-/**@brief Construct a polar point.
- * @tparam T1 the number type for the distance to the pole.
- * @tparam T2 the number type for the angle relative to the positive x-axis.
- * @param R the distance to the pole.
- * @param phi the angle from the pole.
- */
-template<typename T1, typename T2>
-PolarPoint::PolarPoint(const T1& R, const T2& phi) : R_(R), phi_(phi)
+template<class OutputIterator>
+int PolarSegment::CollectT(const Number& R, OutputIterator t) const
 {
-  CHECK_LE(0, R);
-  while (phi_ < -M_PI)
-    phi_ += M_2xPI;
-  while (M_PI < phi_)
-    phi_ -= M_2xPI;
+  Number d[2];
+  const int num_d = PolarLine::CollectT(R, d);
+
+  int num = 0;
+  for (int i = 0; i < num_d; ++i)
+  {
+    const Number tt = ToT(d[i]);
+    if (ContainsT(tt))
+    {
+      *t++ = tt;
+      ++num;
+    }
+  }
+
+  return num;
+}
+
+template<class OutputIterator>
+int PolarSegment::CollectPhi(const Number& R, OutputIterator phi) const
+{
+  Number t[2];
+  const int num = CollectT(R, t);
+
+  for (int i = 0; i < num; ++i)
+    *phi++ = EvaluatePhi(t[i]);
+
+  return num;
 }
 
 } // namespace geoviz
 
-#endif //GEOVIZ_COMMON_POLAR_POINT_INC
+#endif //GEOVIZ_COMMON_POLAR_SEGMENT_INC

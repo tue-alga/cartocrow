@@ -23,11 +23,11 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 03-03-2020
 #ifndef GEOVIZ_NECKLACE_MAP_COMPUTE_FEASIBLE_CENTROID_INTERVAL_H
 #define GEOVIZ_NECKLACE_MAP_COMPUTE_FEASIBLE_CENTROID_INTERVAL_H
 
+#include "geoviz/common/range.h"
 #include "geoviz/common/core_types.h"
 #include "geoviz/necklace_map/compute_feasible_interval.h"
 #include "geoviz/necklace_map/necklace.h"
 #include "geoviz/necklace_map/parameters.h"
-#include "geoviz/necklace_map/range.h"
 
 
 namespace geoviz

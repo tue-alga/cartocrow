@@ -27,6 +27,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 16-10-2020
 #include <memory>
 #include <vector>
 
+#include "geoviz/common/spiral.h"
 #include "geoviz/flow_map/place.h"
 #include "geoviz/flow_map/spiral_tree.h"
 
@@ -41,7 +42,7 @@ class FlowTree
  public:
   using Ptr = std::shared_ptr<FlowTree>;
 
-  using FlowArc = std::pair<Spiral, PolarPoint>;
+  using FlowArc = std::pair<Spiral, PolarPoint>;  // TODO(tvl) the second element should probably be the minimum R, instead of a full point. Replace by SpiralSegment
 
   FlowTree(const SpiralTree& spiral_tree);
 
@@ -49,6 +50,8 @@ class FlowTree
   Vector root_translation_;
 
   std::vector<Node::Ptr> nodes_;  // Note that the positions of these nodes are offset by the position of the root.
+
+  std::vector<Region> obstacles_;  // TODO(tvl) remove after debugging: output should use original obstacles, not adjusted obstacles.
 
   std::vector<FlowArc> arcs_;
 }; // class FlowTree

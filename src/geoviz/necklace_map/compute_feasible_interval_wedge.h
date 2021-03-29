@@ -27,7 +27,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 03-03-2020
 #include "geoviz/necklace_map/compute_feasible_interval.h"
 #include "geoviz/necklace_map/necklace.h"
 #include "geoviz/necklace_map/parameters.h"
-#include "geoviz/necklace_map/range.h"
+#include "geoviz/common/range.h"
 
 
 namespace geoviz

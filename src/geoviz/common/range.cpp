@@ -1,7 +1,6 @@
 /*
-The Necklace Map library implements the algorithmic geo-visualization
-method by the same name, developed by Bettina Speckmann and Kevin Verbeek
-at TU Eindhoven (DOI: 10.1109/TVCG.2010.180 & 10.1142/S021819591550003X).
+The GeoViz library implements algorithmic geo-visualization methods,
+developed at TU Eindhoven.
 Copyright (C) 2019  Netherlands eScience Center and TU Eindhoven
 
 This program is free software: you can redistribute it and/or modify
@@ -24,8 +23,6 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 09-12-2019
 
 
 namespace geoviz
-{
-namespace necklace_map
 {
 
 /**@class Range
@@ -145,5 +142,4 @@ Number Range::ComputeLength() const
   return to() - from();
 }
 
-} // namespace necklace_map
 } // namespace geoviz

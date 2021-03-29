@@ -28,8 +28,8 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 06-05-2020
 #include <memory>
 #include <vector>
 
+#include "geoviz/common/range.h"
 #include "geoviz/necklace_map/bead.h"
-#include "geoviz/necklace_map/range.h"
 #include "geoviz/necklace_map/detail/cycle_node.h"
 #include "geoviz/necklace_map/detail/cycle_node_layered.h"
 

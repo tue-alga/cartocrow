@@ -1,7 +1,6 @@
 /*
-The Necklace Map library implements the algorithmic geo-visualization
-method by the same name, developed by Bettina Speckmann and Kevin Verbeek
-at TU Eindhoven (DOI: 10.1109/TVCG.2010.180 & 10.1142/S021819591550003X).
+The GeoViz library implements algorithmic geo-visualization methods,
+developed at TU Eindhoven.
 Copyright (C) 2019  Netherlands eScience Center and TU Eindhoven
 
 This program is free software: you can redistribute it and/or modify
@@ -20,16 +19,14 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Created by tvl (t.vanlankveld@esciencecenter.nl) on 09-12-2019
 */
 
-#ifndef GEOVIZ_NECKLACE_MAP_RANGE_H
-#define GEOVIZ_NECKLACE_MAP_RANGE_H
+#ifndef GEOVIZ_COMMON_RANGE_H
+#define GEOVIZ_COMMON_RANGE_H
 
 #include <memory>
 
 #include "geoviz/common/core_types.h"
 
 namespace geoviz
-{
-namespace necklace_map
 {
 
 class Range
@@ -64,7 +61,6 @@ class Range
   Number to_;
 }; // class Range
 
-} // namespace necklace_map
 } // namespace geoviz
 
-#endif //GEOVIZ_NECKLACE_MAP_RANGE_H
+#endif //GEOVIZ_COMMON_RANGE_H

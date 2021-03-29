@@ -25,8 +25,8 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 15-01-2020
 
 #include <memory>
 
+#include "geoviz/common/circular_range.h"
 #include "geoviz/common/core_types.h"
-#include "geoviz/necklace_map/circular_range.h"
 
 
 namespace geoviz

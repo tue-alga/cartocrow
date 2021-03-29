@@ -1,7 +1,6 @@
 /*
-The Necklace Map library implements the algorithmic geo-visualization
-method by the same name, developed by Bettina Speckmann and Kevin Verbeek
-at TU Eindhoven (DOI: 10.1109/TVCG.2010.180 & 10.1142/S021819591550003X).
+The GeoViz library implements algorithmic geo-visualization methods,
+developed at TU Eindhoven.
 Copyright (C) 2019  Netherlands eScience Center and TU Eindhoven
 
 This program is free software: you can redistribute it and/or modify
@@ -24,8 +23,6 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 06-05-2020
 
 
 namespace geoviz
-{
-namespace necklace_map
 {
 
 /**@class CircularRange
@@ -164,5 +161,16 @@ Number CircularRange::ComputeCentroid() const
   return Modulo(.5 * (from() + to()));
 }
 
-} // namespace necklace_map
+/**@brief Reverse the orientation of the range.
+ */
+void CircularRange::Reverse()
+{
+  if (IsFull())
+    return;
+
+  const Number from_rad_old = from_rad();
+  from_rad() = Modulo(to_rad());
+  to_rad() = Modulo(from_rad_old, from_rad());
+}
+
 } // namespace geoviz

@@ -25,11 +25,11 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 26-11-2019
 
 #include <glog/logging.h>
 
+#include "geoviz/common/circular_range.h"
 #include "geoviz/common/detail/svg_path_parser.h"
 #include "geoviz/common/detail/svg_point_parser.h"
 #include "geoviz/common/detail/svg_bezier_parser.h"
 #include "geoviz/common/detail/svg_polygon_parser.h"
-#include "geoviz/necklace_map/circular_range.h"
 
 
 namespace geoviz
@@ -350,7 +350,7 @@ bool SvgVisitor::AddMapElement
       std::stringstream stream(feasible);
       Number from_rad, to_rad;
       stream >> from_rad >> to_rad;
-      element->input_feasible = std::make_shared<necklace_map::CircularRange>(from_rad, to_rad);
+      element->input_feasible = std::make_shared<CircularRange>(from_rad, to_rad);
     }
     catch (...)
     {

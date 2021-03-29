@@ -1,6 +1,6 @@
 /*
-The GeoViz console applications implement algorithmic geo-visualization
-methods, developed at TU Eindhoven.
+The GeoViz library implements algorithmic geo-visualization methods,
+developed at TU Eindhoven.
 Copyright (C) 2019  Netherlands eScience Center and TU Eindhoven
 
 This program is free software: you can redistribute it and/or modify
