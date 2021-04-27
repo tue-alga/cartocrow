@@ -44,14 +44,14 @@ write_basic_package_version_file(
 
 # Configure a header file to pass CMake settings to the source code.
 configure_file(
-    "${CMAKE_MODULE_PATH}/geoviz_config.h.in"
-    "${CMAKE_MODULE_PATH}/geoviz_config.h"
+    "${CMAKE_SOURCE_DIR}/cmake/geoviz_config.h.in"
+    "${CMAKE_SOURCE_DIR}/cmake/geoviz_config.h"
 )
-install(FILES "${CMAKE_MODULE_PATH}/geoviz_config.h" DESTINATION "${CMAKE_INSTALL_SOURCE_DIR}/cmake")
+install(FILES "${CMAKE_SOURCE_DIR}/cmake/geoviz_config.h" DESTINATION "${CMAKE_INSTALL_SOURCE_DIR}/cmake")
 
 # Configure the doxygen configuration file to pass CMake settings to the doxygen.
 configure_file(
-    "${CMAKE_MODULE_PATH}/Doxyfile.in"
+    "${CMAKE_SOURCE_DIR}/cmake/Doxyfile.in"
     "Doxyfile"
 )
 
@@ -83,7 +83,7 @@ add_subdirectory(test)
 # Install rules.
 install(
     FILES
-    "${CMAKE_MODULE_PATH}/GeoVizConfig.cmake"
+    "${CMAKE_SOURCE_DIR}/cmake/GeoVizConfig.cmake"
     "${CMAKE_CURRENT_BINARY_DIR}/GeoVizConfigVersion.cmake"
     DESTINATION ${INSTALL_CONFIG_DIR}/GeoViz
 )

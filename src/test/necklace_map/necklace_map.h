@@ -173,6 +173,19 @@ UNITTEST_TEST_FIXTURE(NecklaceDataWesternEurope, WestEurope)
   UNITTEST_CHECK_CLOSE(1.675, scale_factor, 0.001);
 }
 
+UNITTEST_TEST_FIXTURE(NecklaceDataWesternEurope, WestEuropeDegenerateCentroid)
+{
+  const std::string in_value_name = "value";
+  UNITTEST_CHECK(ReadValues(in_value_name));
+
+  DefaultParameters(parameters);
+  parameters.interval_type = geoviz::necklace_map::IntervalType::kCentroid;
+  parameters.centroid_interval_length_rad = 0;
+
+  const geoviz::Number scale_factor = ComputeScaleFactor(parameters, data.elements, data.necklaces);
+  UNITTEST_CHECK_CLOSE(0.403, scale_factor, 0.001);
+}
+
 UNITTEST_TEST_FIXTURE(NecklaceDataWesternEurope, WestEuropeNopoints)
 {
   const std::string in_value_name = "value";
@@ -182,7 +195,7 @@ UNITTEST_TEST_FIXTURE(NecklaceDataWesternEurope, WestEuropeNopoints)
   parameters.ignore_point_regions = true;
 
   const geoviz::Number scale_factor = ComputeScaleFactor(parameters, data.elements, data.necklaces);
-  UNITTEST_CHECK_CLOSE(1.673, scale_factor, 0.001);
+  UNITTEST_CHECK_CLOSE(1.675, scale_factor, 0.001);
 }
 
 UNITTEST_TEST_FIXTURE(NecklaceDataWesternEurope, WestEuropeBuffer)
