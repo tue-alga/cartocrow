@@ -1,7 +1,7 @@
 /*
 The GeoViz library implements algorithmic geo-visualization methods,
 developed at TU Eindhoven.
-Copyright (C) 2019  Netherlands eScience Center and TU Eindhoven
+Copyright (C) 2021  Netherlands eScience Center and TU Eindhoven
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -182,7 +182,7 @@ int ComputeIntersectionT(const PolarLine& line_1, const PolarLine& line_2, Outpu
   // t_1 = R_2 / sin(phi_d) - R_1 * cos(phi_d) / sin(phi_d) = R_2 / sin(phi_d) - R_1 / tan(phi_d)
 
   const Number phi_d = Modulo(line_2.foot().phi() - line_1.foot().phi());
-  if (phi_d == 0 || phi_d == M_PI)
+  if (std::abs(phi_d) < Number(1e-15) || std::abs(phi_d - M_PI) < Number(1e-15))
     return 0;
 
   // Projection of first line.

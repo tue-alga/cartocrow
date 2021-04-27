@@ -1,7 +1,7 @@
 /*
 The GeoViz library implements algorithmic geo-visualization methods,
 developed at TU Eindhoven.
-Copyright (C) 2019  Netherlands eScience Center and TU Eindhoven
+Copyright (C) 2021  Netherlands eScience Center and TU Eindhoven
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -44,15 +44,47 @@ PolarSegment::PolarSegment(const PolarPoint& point_1, const PolarPoint& point_2)
 }
 
 // TODO(tvl) remove.
+/**@brief Compute the smallest time on the line segment.
+ *
+ * The point evaluated at this time is an endpoint of the line segment.
+ * @return the smallest time on the line segment.
+ */
 Number PolarSegment::FromT() const
 {
   return ToDistance(0);
 }
 
 // TODO(tvl) remove.
+/**@brief Compute the largest time on the line segment.
+ *
+ * The point evaluated at this time is an endpoint of the line segment.
+ * @return the largest time on the line segment.
+ */
 Number PolarSegment::ToT() const
 {
   return ToDistance(1);
+}
+
+/**@brief Compute the smallest distance to the pole of any point on the line segment.
+ * @return the distance between the pole and the point on the line segment closest to the pole.
+ */
+Number PolarSegment::R_min() const
+{
+  // Note that the closest point on the supporting line may not lie inside the segment.
+  if (ContainsPhi(foot().phi()))
+    return foot().R();
+
+  return std::min(EvaluateR(0), EvaluateR(1));
+}
+
+/**@brief Compute the largest distance to the pole of any point on the line segment.
+ *
+ * Note that this point must be an endpoint of the line segment.
+ * @return the distance between the pole and the point on the line segment farthest from the pole.
+ */
+Number PolarSegment::R_max() const
+{
+  return std::max(EvaluateR(0), EvaluateR(1));
 }
 
 /**@brief Check whether the line is a left line.
@@ -83,6 +115,11 @@ bool PolarSegment::IsCollinear() const
   return 0 == foot().R();
 }
 
+/**@brief Check whether the line contains the foot of its supporting line.
+ *
+ * The foot of the supporting line is the point on that line closest to the pole.
+ * @return whether the line contains the foot of its supporting line.
+ */
 bool PolarSegment::ContainsFoot() const
 {
   if (ContainsPhi(foot().phi()))
@@ -104,12 +141,7 @@ bool PolarSegment::ContainsT(const Number& t) const
  */
 bool PolarSegment::ContainsR(const Number& R) const
 {
-  // Compare to the endpoints.
-  if (EvaluateR(0) < R && EvaluateR(1) < R)
-    return false;
-
-  // Compare the closest point.
-  return ComputeClosestToPole().R() <= R;
+  return R_min() <= R && R <= R_max();
 }
 
 /**@brief Check whether the line segment contains any point with a given phi coordinate.
@@ -125,18 +157,30 @@ bool PolarSegment::ContainsPhi(const Number& phi) const
   return ContainsT(t);
 }
 
+/**@brief Evaluate the distance between a point on the line segment and the pole.
+ * @param t the time value of the point on the line segment.
+ * @return the distance from the pole at the evaluated point.
+ */
 Number PolarSegment::EvaluateR(const Number& t) const
 {
   const Number distance = ToDistance(t);
   return PolarLine::EvaluateR(distance);
 }
 
+/**@brief Evaluate the phi of a point on the line segment.
+ * @param t the time value of the point on the line segment.
+ * @return the phi of the evaluated point.
+ */
 Number PolarSegment::EvaluatePhi(const Number& t) const
 {
   const Number distance = ToDistance(t);
   return PolarLine::EvaluatePhi(distance);
 }
 
+/**@brief Evaluate a point on the line segment and the pole.
+ * @param t the time value of the point on the line segment.
+ * @return the evaluated point.
+ */
 PolarPoint PolarSegment::Evaluate(const Number& t) const
 {
   const Number distance = ToDistance(t);

@@ -1,7 +1,7 @@
 /*
 The GeoViz library implements algorithmic geo-visualization methods,
 developed at TU Eindhoven.
-Copyright (C) 2019  Netherlands eScience Center and TU Eindhoven
+Copyright (C) 2021  Netherlands eScience Center and TU Eindhoven
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -61,6 +61,8 @@ class Spiral
   Number SampleR(const Number& phi) const;
 
   Number ComputePeriod() const;
+
+  void MoveAnchor(const Number& R);
 
  private:
   PolarPoint anchor_;

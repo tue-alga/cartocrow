@@ -1,6 +1,6 @@
 # Example minimal website with map and C++ backend.
 
-This website is meant to be a minimal starting point for deploying a C++ back-end that generates data to be shown on a geographical map.
+This website can call the geographical visualization algorithm back-end provided in this repository and show the generated geographical map data.
 
 This website has been developed with design principles to promote responsiveness and good mobile usability:
 
@@ -11,7 +11,7 @@ This website has been developed with design principles to promote responsiveness
 
 ## Licensing
 
-Copyright 2019 Netherlands eScience Center and TU Eindhoven
+Copyright 2021 Netherlands eScience Center and TU Eindhoven
 Licensed under the Apache License, version 2.0. See LICENSE for details.
 
 This website depends on the GeoViz software library distributed together with this website.

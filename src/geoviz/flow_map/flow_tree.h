@@ -3,7 +3,7 @@ The Flow Map library implements the algorithmic geo-visualization
 method by the same name, developed by Kevin Verbeek, Kevin Buchin,
 and Bettina Speckmann at TU Eindhoven
 (DOI: 10.1007/s00453-013-9867-z & 10.1109/TVCG.2011.202).
-Copyright (C) 2019  Netherlands eScience Center and TU Eindhoven
+Copyright (C) 2021  Netherlands eScience Center and TU Eindhoven
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -42,7 +42,7 @@ class FlowTree
  public:
   using Ptr = std::shared_ptr<FlowTree>;
 
-  using FlowArc = std::pair<Spiral, PolarPoint>;  // TODO(tvl) the second element should probably be the minimum R, instead of a full point. Replace by SpiralSegment
+  using FlowArc = std::pair<Spiral, PolarPoint>;  // TODO(tvl) the second element should probably be the minimum R, instead of a full point. Replace by SpiralSegment? Is this one even needed once we add thickness to the arcs; replace by custom class?
 
   FlowTree(const SpiralTree& spiral_tree);
 

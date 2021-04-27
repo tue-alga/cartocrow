@@ -3,7 +3,7 @@ The Flow Map console application implements the algorithmic
 geo-visualization method by the same name, developed by
 Bettina Speckmann and Kevin Verbeek at TU Eindhoven
 (DOI: 10.1109/TVCG.2010.180 & 10.1142/S021819591550003X).
-Copyright (C) 2019  Netherlands eScience Center and TU Eindhoven
+Copyright (C) 2021  Netherlands eScience Center and TU Eindhoven
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -275,8 +275,17 @@ int main(int argc, char **argv)
 
   LOG(INFO) << "Time cost (read files): " << time_read;
   LOG(INFO) << "Time cost (compute FM): " << time_compute;
-//  LOG(INFO) << "Time cost (serialize):  " << time_write;
+  LOG(INFO) << "Time cost (serialize):  " << time_write;
   LOG(INFO) << "Time cost (total):      " << time_total;
 
   return 0;
 }
+
+/**
+ * While the flow map code is still incomplete, here is an example usage for this flow map application:
+ * ./flow_map --in_geometry_filename [geoviz_root]/data/flow_map/USA.svg --in_data_filename [geoviz_root]/data/flow_map/USA.csv --in_value_name TX --out_filename "[geoviz_root]/wwwroot/data/tmp/USA_flow_out.svg" --logtostderr
+ *
+ * Don't forget to fill in the [geoviz_root] parts.
+ * The output will be written to the wwwroot/data/tmp/ directory; this SVG output can be viewed using a browser.
+ */
+

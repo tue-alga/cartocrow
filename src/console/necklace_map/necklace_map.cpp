@@ -3,7 +3,7 @@ The Necklace Map console application implements the algorithmic
 geo-visualization method by the same name, developed by
 Bettina Speckmann and Kevin Verbeek at TU Eindhoven
 (DOI: 10.1109/TVCG.2010.180 & 10.1142/S021819591550003X).
-Copyright (C) 2019  Netherlands eScience Center and TU Eindhoven
+Copyright (C) 2021  Netherlands eScience Center and TU Eindhoven
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -293,10 +293,10 @@ ValidateFlags(geoviz::necklace_map::Parameters& parameters, geoviz::necklace_map
   // Scale factor optimization parameters.
   {
     correct &= CheckAndPrintFlag
-      (
-        FLAGS_NAME_AND_VALUE(order_type),
-        geoviz::necklace_map::OrderTypeParser(parameters.order_type)
-      );
+    (
+      FLAGS_NAME_AND_VALUE(order_type),
+      geoviz::necklace_map::OrderTypeParser(parameters.order_type)
+    );
 
     correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(buffer_rad), MakeRangeCheck(0.0, M_PI));
     parameters.buffer_rad = FLAGS_buffer_rad;
@@ -428,8 +428,8 @@ void ApplyNecklaceDrawBounds
       if (!shape)
         continue;
 
-      shape->cw_rad() = cw_deg * M_PI / 180;
-      shape->ccw_rad() = ccw_deg * M_PI / 180;
+      shape->draw_bounds_cw_rad() = cw_deg * M_PI / 180;
+      shape->draw_bounds_ccw_rad() = ccw_deg * M_PI / 180;
       break;
     }
   }

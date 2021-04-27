@@ -3,7 +3,7 @@ The Necklace Map library implements the algorithmic
 geo-visualization method by the same name, developed by
 Bettina Speckmann and Kevin Verbeek at TU Eindhoven
 (DOI: 10.1109/TVCG.2010.180 & 10.1142/S021819591550003X).
-Copyright (C) 2019  Netherlands eScience Center and TU Eindhoven
+Copyright (C) 2021  Netherlands eScience Center and TU Eindhoven
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -31,6 +31,18 @@ namespace necklace_map
 
 /**@class IntervalTypeParser
  * @brief A simple parser to convert strings to interval types or vise versa.
+ */
+
+/**@fn IntervalTypeParser::IntervalType
+ * @brief The type of intervals in which the necklace beads must be placed.
+ */
+
+/**@fn IntervalTypeParser::kCentroid
+ * @brief The string representation of the centroid IntervalType.
+ */
+
+/**@fn IntervalTypeParser::kWedge
+ * @brief The string representation of the wedge IntervalType.
  */
 
 /**@brief Construct an interval type parser.
@@ -78,6 +90,22 @@ std::string IntervalTypeParser::Serialize() const
 
 /**@class OrderTypeParser
  * @brief A simple parser to convert strings to order types or vise versa.
+ */
+
+/**@fn OrderTypeParser::OrderType
+ * @brief The order in which the necklace beads must be placed.
+ */
+
+/**@fn OrderTypeParser::kFixed
+ * @brief The string representation of the fixed OrderType.
+ *
+ * For fixed order necklaces, the beads must be placed on the necklace in the same order as the order of the region centroids, projected onto the necklace.
+ */
+
+/**@fn OrderTypeParser::kAny
+ * @brief The string representation of the any OrderType.
+ *
+ * For any order necklaces, the beads can be placed in any onto the necklace. This allows the order of beads to be swapped if this results in a larger scale factor.
  */
 
 /**@brief Construct an order type parser.

@@ -1,6 +1,6 @@
 # Example website with C++ back-end
 
-This repository gives a minimal starting point for deploying a C++ back-end that generates data to be shown on a geographical map in a website.
+This repository gives a C++ back-end for geographical visualization algorithms and a website to show the generated geographical map data.
 The back-end is contained in the `./src/` subdirectory. The front-end is contained in the `./wwwroot/` subdirectory.
 Both of these subdirectories contain a more specific README.md file describing some particularities and a LICENSE file with the license that applies to that part.
 

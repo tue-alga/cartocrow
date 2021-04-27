@@ -1,5 +1,5 @@
 /*
-    Copyright 2019 Netherlands eScience Center and TU Eindhoven
+    Copyright 2021 Netherlands eScience Center and TU Eindhoven
     Licensed under the Apache License, version 2.0. See LICENSE for details.
 */
 
@@ -29,7 +29,7 @@ function initMap() {
   getTileLayer({
     server: tileServer.CARTODB,
     id: 'light_only_labels',
-    pane: 'labels'
+    pane: 'labels',
   }).addTo(map_obj);
 
   // Enable to overlay a grid on the map.
@@ -90,7 +90,7 @@ function initMap() {
 
 // Callback function to add the SVG direct child elements in the response text to the map.
 function addSvgResponseToMap() {
-  return function(response) {
+  return function (response) {
     // Add the response text as a new element.
     let wrapperElement = document.createElement('div');
     wrapperElement.innerHTML = response;
@@ -101,7 +101,7 @@ function addSvgResponseToMap() {
         // Note that children without a parsable "bounds" attribute are added but not shown.
         let bounds = [
           [0, 0],
-          [0, 0]
+          [0, 0],
         ];
         if (child.hasAttribute('bounds'))
           try {
@@ -121,7 +121,7 @@ function tryAddSvgToMap(url) {
 
 // Some additional cleanup on destroying a SVG container.
 L.SVG.include({
-  _destroyContainer: function() {
+  _destroyContainer: function () {
     L.DomUtil.remove(this._container);
     L.DomEvent.off(this._container);
     delete this._container;
@@ -130,12 +130,12 @@ L.SVG.include({
     // Make sure to also clear the cache for svgSize,
     // so that next container width and height will be set.
     delete this._svgSize;
-  }
+  },
 });
 
 // Callback function to replace the map by the SVG direct child elements in the response text.
 function replaceMapBySvgResponse(focus = false) {
-  return function(response) {
+  return function (response) {
     let was_world = world_map;
     if (world_map) {
       map_obj.remove();
@@ -143,7 +143,7 @@ function replaceMapBySvgResponse(focus = false) {
       //L.control.neclaceSettings().addTo(map_obj);
       world_map = false;
     } else {
-      map_obj.eachLayer(function(thisLayer) {
+      map_obj.eachLayer(function (thisLayer) {
         map_obj.removeLayer(thisLayer);
       });
 
@@ -158,7 +158,7 @@ function replaceMapBySvgResponse(focus = false) {
     // Collect the bounds from the response text.
     let map_bounds = [
       [Infinity, Infinity],
-      [-Infinity, -Infinity]
+      [-Infinity, -Infinity],
     ];
     for (let child of wrapperElement.children) {
       if (child.tagName === 'svg') {
@@ -189,7 +189,7 @@ function replaceMapBySvgResponse(focus = false) {
         // Note that children without a parsable "bounds" attribute are added but not shown.
         let bounds = [
           [0, 0],
-          [0, 0]
+          [0, 0],
         ];
         if (child.hasAttribute('bounds'))
           try {
@@ -213,7 +213,7 @@ const tileServer = {
   CARTODB: 'CartoDB light *',
   MAPBOX: 'MapBox *',
   OSM: 'OpenStreetMap',
-  STAMEN: 'Stamen Design *'
+  STAMEN: 'Stamen Design *',
 };
 
 // Add a base map from the above selection of tile servers.
@@ -285,14 +285,14 @@ function getTileLayer(
 
 // Extension of L.GridLayer that draws a border around each tile and shows the tile coordinates.
 L.GridLayer.DebugGridLayer = L.GridLayer.extend({
-  createTile: function(coords) {
+  createTile: function (coords) {
     let tile = document.createElement('div');
     tile.innerHTML = [coords.x, coords.y, coords.z].join(', ');
     tile.style.outline = '1px solid lightblue';
     return tile;
-  }
+  },
 });
 
-L.gridLayer.debugCoords = function(opts) {
+L.gridLayer.debugCoords = function (opts) {
   return new L.GridLayer.DebugGridLayer(opts);
 };

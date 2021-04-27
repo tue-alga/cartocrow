@@ -1,7 +1,7 @@
 /*
 The GeoViz library implements algorithmic geo-visualization methods,
 developed at TU Eindhoven.
-Copyright (C) 2019  Netherlands eScience Center and TU Eindhoven
+Copyright (C) 2021  Netherlands eScience Center and TU Eindhoven
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -166,7 +166,7 @@ bool PolarLine::ComputeAngle(const Number& R, Number& angle_rad) const
 Number PolarLine::SetFoot(const PolarPoint& point_1, const PolarPoint& point_2)
 {
   const Number C = Modulo(point_2.phi() - point_1.phi());
-  const int sign = C < std::sin(C) ? -1 : 1;
+  const int sign = /*C < std::sin(C) ? -1 : 1;*/ std::sin(C) < 0 ? -1 : 1;
 
   // Cosine law.
   const Number c = sign * std::sqrt(point_1.R() * point_1.R() + point_2.R() * point_2.R() - 2 * point_1.R() * point_2.R() * std::cos(C));

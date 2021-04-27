@@ -3,7 +3,7 @@ The Flow Map library implements the algorithmic geo-visualization
 method by the same name, developed by Kevin Verbeek, Kevin Buchin,
 and Bettina Speckmann at TU Eindhoven
 (DOI: 10.1007/s00453-013-9867-z & 10.1109/TVCG.2011.202).
-Copyright (C) 2019  Netherlands eScience Center and TU Eindhoven
+Copyright (C) 2021  Netherlands eScience Center and TU Eindhoven
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -83,6 +83,34 @@ using EventQueue = std::priority_queue<Event, std::deque<Event>, CompareEvents>;
 
 /**@fn Node::Ptr
  * @brief The preferred pointer type for storing or sharing a node.
+ */
+
+/**@fn Node::ConnectionType
+ * @brief The type of node, as defined by its connections.
+ */
+
+/**@var Node::kRoot
+ * @brief The type of the root node.
+ *
+ * This is the only node without a parent.
+ */
+
+/**@var Node::kLeaf
+ * @brief The type of a leaf node.
+ *
+ * This is a node without any children.
+ */
+
+/**@var Node::kJoin
+ * @brief The type of a join node.
+ *
+ * This is a node with at least two children.
+ */
+
+/**@var Node::kSubdivision
+ * @brief The type of a subdivision node.
+ *
+ * This is a node with exactly one child.
  */
 
 /**@brief Construct a new node.
@@ -250,116 +278,24 @@ void SpiralTree::AddObstacles(const std::vector<Region>& obstacles)
 
 /**@brief Compute the spiral tree arcs.
  *
- * These arcs are based on the position of the nodes, relative to the root, and the restricting angle of the tree.
+ * These arcs are based on the position of the nodes, the restricting angle of the tree, and any obstacles that are present.
+ *
+ * Note that if no specific obstacles have been added, input nodes are not forced to be leaf nodes in the final tree. If this is desired, use ComputeObstructed() instead.
  */
 void SpiralTree::Compute()
 {
-  if (obstacles_.empty())
+  if (true) //obstacles_.empty())  // TODO(tvl) commented out while code is not complete.
     ComputeUnobstructed();
   else
     ComputeObstructed();
 }
 
-/**@brief Change the root position.
+/**@brief Compute the spiral tree arcs, ignoring any obstacles.
  *
- * This removes all existing arcs of the tree. The new tree can be computed using Compute().
- * @param root the new root position.
- */
-void SpiralTree::SetRoot(const Point& root)
-{
-  root_translation_ = Point(CGAL::ORIGIN) - root;
-
-  Clean();
-}
-
-/**@brief Change the restricting angle.
+ * These arcs are based on the position of the nodes and the restricting angle of the tree.
  *
- * This removes all existing arcs of the tree. The new tree can be computed using Compute().
- * @param restricting_angle_rad the new restricting angle.
+ * Note that input nodes are not forced to be leaf nodes in the final tree. If this is desired, use ComputeObstructed() instead.
  */
-void SpiralTree::SetRestrictingAngle(const Number& restricting_angle_rad)
-{
-  CHECK_GT(restricting_angle_rad, 0);
-  CHECK_LT(restricting_angle_rad, M_PI_2);
-  restricting_angle_rad_ = restricting_angle_rad;
-
-  Clean();
-}
-
-void SpiralTree::Clean()
-{
-  size_t num_places = 0;
-
-  // Clean the node connections.
-  for (Node::Ptr& node : nodes_)
-  {
-    if (node->place == nullptr)
-      break;
-    ++num_places;
-
-    node->parent = nullptr;
-    node->children.clear();
-  }
-
-  // Remove support nodes, e.g. join nodes.
-  nodes_.resize(num_places);
-}
-
-bool SpiralTree::IsReachable(const PolarPoint& parent_point, const PolarPoint& child_point) const
-{
-  if (parent_point == child_point)
-    return true;
-
-  const Spiral spiral(child_point, parent_point);
-  return std::abs(spiral.angle_rad()) <= restricting_angle_rad_;
-}
-
-void SpiralTree::AddObstacle(const Polygon_with_holes& polygon)
-{
-  // Ignore the holes of the obstacle: flow cannot cross the obstacle boundary.
-  const Polygon& boundary = polygon.outer_boundary();
-  if (boundary.is_empty())
-    return;
-
-  CHECK_NE(boundary.oriented_side(GetRoot()), CGAL::ON_BOUNDED_SIDE) << "Root inside an obstacle.";
-
-  obstacles_.emplace_back();
-  Obstacle& obstacle = obstacles_.back();
-  for (Polygon::Vertex_const_iterator vertex_iter = boundary.vertices_begin(); vertex_iter != boundary.vertices_end(); ++vertex_iter)
-    obstacle.emplace_back(*vertex_iter, root_translation_);
-
-  // Enforce counter-clockwise obstacles for a canonical arrangement.
-//  if (!boundary.is_counterclockwise_oriented())
-//    obstacle.reverse();
-
-  // Add vertices for the points closest to the root as well as spiral points.
-  // The wedge with the root as apex and boundaries through a closest point and a spiral point (on the same edge) has a fixed angle.
-  const Number phi_offset = M_PI_2 - restricting_angle_rad_;
-  CHECK_LT(0, phi_offset);
-
-  Obstacle::iterator vertex_prev = --obstacle.end();
-  for (Obstacle::iterator vertex_iter = obstacle.begin(); vertex_iter != obstacle.end(); vertex_prev = vertex_iter++)
-  {
-    const PolarSegment edge(*vertex_prev, *vertex_iter);
-    const PolarPoint closest = edge.SupportingLine().foot();
-
-    // The spiral points have fixed R and their phi is offset from the phi of the closest by +/- phi_offset.
-    const Number R_s = closest.R() / std::sin(restricting_angle_rad_);
-
-    const int sign = vertex_prev->phi() < vertex_iter->phi() ? -1 : 1;
-    const Number phi_s_prev = closest.phi() - sign * phi_offset;
-    const Number phi_s_next = closest.phi() + sign * phi_offset;
-
-    // The closest point and spiral points must be added ordered from p to q and only if they are on the edge.
-    if (edge.ContainsPhi(phi_s_prev))
-      obstacle.insert(vertex_iter, PolarPoint(R_s, phi_s_prev));
-    if (edge.ContainsPhi(closest.phi()))
-      obstacle.insert(vertex_iter, closest);
-    if (edge.ContainsPhi(phi_s_next))
-      obstacle.insert(vertex_iter, PolarPoint(R_s, phi_s_next));
-  }
-}
-
 void SpiralTree::ComputeUnobstructed()
 {
   using Wavefront = std::map<Number, Event>;
@@ -433,10 +369,10 @@ void SpiralTree::ComputeUnobstructed()
       {
         Circulator<Wavefront> node_circ = make_circulator(wavefront.lower_bound(order), wavefront);
         if
-        (
+          (
           IsReachable(event.relative_position, node_circ->second.relative_position) ||
           IsReachable(event.relative_position, (--node_circ)->second.relative_position)
-        )
+          )
         {
           // A neighbor is reachable.
           // Check whether the nodes overlap.
@@ -530,10 +466,113 @@ void SpiralTree::ComputeUnobstructed()
   }
 }
 
+/**@brief Change the root position.
+ *
+ * This removes all existing arcs of the tree. The new tree can be computed using Compute().
+ * @param root the new root position.
+ */
+void SpiralTree::SetRoot(const Point& root)
+{
+  root_translation_ = Point(CGAL::ORIGIN) - root;
+
+  Clean();
+}
+
+/**@brief Change the restricting angle.
+ *
+ * This removes all existing arcs of the tree. The new tree can be computed using Compute().
+ * @param restricting_angle_rad the new restricting angle.
+ */
+void SpiralTree::SetRestrictingAngle(const Number& restricting_angle_rad)
+{
+  CHECK_GT(restricting_angle_rad, 0);
+  CHECK_LT(restricting_angle_rad, M_PI_2);
+  restricting_angle_rad_ = restricting_angle_rad;
+
+  Clean();
+}
+
+void SpiralTree::Clean()
+{
+  size_t num_places = 0;
+
+  // Clean the node connections.
+  for (Node::Ptr& node : nodes_)
+  {
+    if (node->place == nullptr)
+      break;
+    ++num_places;
+
+    node->parent = nullptr;
+    node->children.clear();
+  }
+
+  // Remove support nodes, e.g. join nodes.
+  nodes_.resize(num_places);
+}
+
+bool SpiralTree::IsReachable(const PolarPoint& parent_point, const PolarPoint& child_point) const
+{
+  if (parent_point == child_point)
+    return true;
+
+  const Spiral spiral(child_point, parent_point);
+  return std::abs(spiral.angle_rad()) <= restricting_angle_rad_;
+}
+
+void SpiralTree::AddObstacle(const Polygon_with_holes& polygon)
+{
+  // Ignore the holes of the obstacle: flow cannot cross the obstacle boundary.
+  const Polygon& boundary = polygon.outer_boundary();
+  if (boundary.is_empty())
+    return;
+
+  CHECK_NE(boundary.oriented_side(GetRoot()), CGAL::ON_BOUNDED_SIDE) << "Root inside an obstacle.";
+
+  obstacles_.emplace_back();
+  Obstacle& obstacle = obstacles_.back();
+  for (Polygon::Vertex_const_iterator vertex_iter = boundary.vertices_begin(); vertex_iter != boundary.vertices_end(); ++vertex_iter)
+    obstacle.emplace_back(*vertex_iter, root_translation_);
+
+  // Enforce counter-clockwise obstacles for a canonical arrangement.
+  // Note that this is necessary to be able check on which side of the vertices the interior of the polygon lies.
+  if (!boundary.is_counterclockwise_oriented())
+    obstacle.reverse();
+
+  // Add vertices for the points closest to the root as well as spiral points.
+  // The wedge with the root as apex and boundaries through a closest point and a spiral point (on the same edge) has a fixed angle.
+  const Number phi_offset = M_PI_2 - restricting_angle_rad_;
+  CHECK_LT(0, phi_offset);
+
+  Obstacle::iterator vertex_prev = --obstacle.end();
+  for (Obstacle::iterator vertex_iter = obstacle.begin(); vertex_iter != obstacle.end(); vertex_prev = vertex_iter++)
+  {
+    const PolarSegment edge(*vertex_prev, *vertex_iter);
+    const PolarPoint closest = edge.SupportingLine().foot();
+
+    // The spiral points have fixed R and their phi is offset from the phi of the closest by +/- phi_offset.
+    const Number R_s = closest.R() / std::sin(restricting_angle_rad_);
+
+    const int sign = vertex_prev->phi() < vertex_iter->phi() ? -1 : 1;
+    const Number phi_s_prev = closest.phi() - sign * phi_offset;
+    const Number phi_s_next = closest.phi() + sign * phi_offset;
+
+    // The closest point and spiral points must be added ordered from p to q and only if they are on the edge.
+    if (edge.ContainsPhi(phi_s_prev))
+      obstacle.insert(vertex_iter, PolarPoint(R_s, phi_s_prev));
+    if (edge.ContainsPhi(closest.phi()))
+      obstacle.insert(vertex_iter, closest);
+    if (edge.ContainsPhi(phi_s_next))
+      obstacle.insert(vertex_iter, PolarPoint(R_s, phi_s_next));
+  }
+}
 
 
 
+// Note, the following code has been commented out when the GeoViz implementation project had to be cut short.
+// This may be used as a starting point to continue implementation at some later date.
 
+/*
 
 ///////////////////////////
 /// Obstructed ST impl. ///
@@ -543,47 +582,297 @@ void SpiralTree::ComputeUnobstructed()
 namespace obst
 {
 
+// This following classes are here to provide a topological embedding for the sweep circle, that is: faces (intervals) incident to edges (spiral or straight line) and nodes (node, vertex, and vanishing events).
+// This embedding should enable easy traversal of these incident elements. For example, a vertex event can exactly determine which edges and faces are incident without breaking due to point location roundoff errors.
+// While this embedding is very similar to the CGAL halfedge data structure, we cannot use that structure because:
+// * it requires the halfedges to specify the next edge that shares the same face (to enable traversing the boundary of the face). In our case, we only know the edges intersected by the sweep circle (and possibly those intersected earlier).
+// * each face stores one halfedge, while we want the face to store both edges intersected by the sweep circle.
 
-class EdgeStraight;
-class EdgeSpiral;
 
-class Edge
+// Types for the halfedge embedding (connectivity between the different pieces)
+struct EmbeddingNode;
+struct EmbeddingHalfedge;
+struct EmbeddingFace;
+
+// Types used for functional processing (event order, segments that can be intersected, interval types).
+struct NodeElement;  // Event.
+struct EdgeElement;  // Spiral segment, polar segment, or halfline (note that the edge element is shared by both haldedges).
+struct FaceElement;  // Interval.
+
+
+struct EmbeddingNode
 {
- public:
-  using Ptr = std::shared_ptr<Edge>;  // TODO(tvl) remove all references to Ptr types, unless they are explicitly used in the method interfaces of a class.
+  using NodePtr = std::shared_ptr<EmbeddingNode>;
+  using HalfedgePtr = std::shared_ptr<EmbeddingHalfedge>;
 
-  Edge() {}
-  virtual ~Edge() {}
+  using NodeElementPtr = std::shared_ptr<NodeElement>;
 
-  virtual const EdgeStraight* AsEdgeStraight() const { return nullptr; }
-  virtual const EdgeSpiral* AsEdgeSpiral() const { return nullptr; }
+  static void SetEvent(NodePtr& node, NodeElementPtr& event);
 
-  virtual Number R_max() const = 0;
+  bool IsValid() const;
 
-  virtual Number R_min() const = 0;
+  HalfedgePtr edge;
+
+  NodeElementPtr event;
+}; // struct EmbeddingNode
+
+struct EmbeddingHalfedge
+{
+  using NodePtr = std::shared_ptr<EmbeddingNode>;
+  using HalfedgePtr = std::shared_ptr<EmbeddingHalfedge>;
+  using FacePtr = std::shared_ptr<EmbeddingFace>;
+
+  using EdgeElementPtr = std::shared_ptr<EdgeElement>;
+
+  void SetSegment(const EdgeElementPtr& segment);
+  static void SetNode(HalfedgePtr& edge, NodePtr& node);
+
+  bool IsValid() const;
+
+  static HalfedgePtr ConstructWithOpposite();
+
+  NodePtr node;
+  HalfedgePtr opposite;
+  FacePtr face;
+
+  EdgeElementPtr segment;
+}; // struct EmbeddingHalfedge
+
+
+struct EmbeddingFace
+{
+  using HalfedgePtr = std::shared_ptr<EmbeddingHalfedge>;
+  using FaceElementPtr = std::shared_ptr<FaceElement>;
+  using FacePtr = std::shared_ptr<EmbeddingFace>;
+
+  static FacePtr ConstructBetweenEdges(const HalfedgePtr& edge_cw, const HalfedgePtr& edge_ccw);
+
+  static void SetEdgeCw(const HalfedgePtr& edge, FacePtr& face);
+  static void SetEdgeCcw(const HalfedgePtr& edge, FacePtr& face);
+
+  static void LinkInterval(FacePtr& face, FaceElementPtr& interval);
+
+  bool IsValid() const;
+
+  HalfedgePtr edge_cw, edge_ccw;
+
+  FaceElementPtr interval;
+}; // struct EmbeddingFace
+
+void EmbeddingHalfedge::SetSegment(const EdgeElementPtr& segment)
+{
+  this->segment = segment;
+  if (opposite)
+    opposite->segment = segment;
+}
+
+void EmbeddingHalfedge::SetNode(HalfedgePtr& edge, NodePtr& node)
+{
+  edge->node = node;
+  node->edge = edge;
+}
+
+bool EmbeddingHalfedge::IsValid() const
+{
+  // Note that an edge is not forced to have a node, so their correct linkage is not part of the validity check.
+  return
+    (bool)opposite && this == opposite->opposite.get() &&
+    (bool)face && (this == face->edge_cw.get() || this == face->edge_ccw.get());
+}
+
+// Construct a two halfedges of a segment.
+EmbeddingHalfedge::HalfedgePtr EmbeddingHalfedge::ConstructWithOpposite()
+{
+  HalfedgePtr x_axis_halfedge_1 = std::make_shared<EmbeddingHalfedge>();
+  HalfedgePtr x_axis_halfedge_2 = std::make_shared<EmbeddingHalfedge>();
+  x_axis_halfedge_1->opposite = x_axis_halfedge_2;
+  x_axis_halfedge_2->opposite = x_axis_halfedge_1;
+}
+
+EmbeddingFace::FacePtr EmbeddingFace::ConstructBetweenEdges(const HalfedgePtr& edge_cw, const HalfedgePtr& edge_ccw)
+{
+  FacePtr face = std::make_shared<EmbeddingFace>();
+  EmbeddingFace::SetEdgeCw(edge_cw, face);
+  EmbeddingFace::SetEdgeCcw(edge_ccw, face);
+}
+
+void EmbeddingFace::SetEdgeCw(const HalfedgePtr& edge, FacePtr& face)
+{
+  face->edge_cw = edge;
+  edge->face = face;
+}
+
+void EmbeddingFace::SetEdgeCcw(const HalfedgePtr& edge, FacePtr& face)
+{
+  face->edge_ccw = edge;
+  edge->face = face;
+}
+
+bool EmbeddingFace::IsValid() const
+{
+  return
+    (bool)edge_cw && this == edge_cw->face.get() &&
+    (bool)edge_ccw && this == edge_ccw->face.get();
+}
+
+
+
+
+
+
+// TODO(tvl) rename Event?
+struct NodeElement
+{
+  using EmbeddingNodePtr = std::shared_ptr<EmbeddingNode>;
+
+  NodeElement(const PolarPoint& relative_position) : relative_position(relative_position) {}
+
+  bool IsValid() const
+  {
+    if (embedding)
+      return embedding->IsValid();
+  }
+
+  PolarPoint relative_position;
+
+  EmbeddingNodePtr embedding;
+}; // struct NodeElement
+
+
+struct NodeEvent : public NodeElement
+{
+  NodeEvent(const PolarPoint& relative_position, const Node::Ptr& node) :
+    NodeElement(relative_position), node(node) {}
+
+    // Node events have a spiral tree node.
+  Node::Ptr node;
+}; // struct NodeEvent
+
+struct VertexEvent : public NodeElement
+{
+  using EdgeElementPtr = std::shared_ptr<EdgeElement>;
+
+  VertexEvent
+  (
+    const PolarPoint& relative_position,
+    const EdgeElementPtr& edge_prev,
+    const EdgeElementPtr& edge_next
+  ) : NodeElement(relative_position), edge_prev(edge_prev), edge_next(edge_next) {}
+
+  // Obstacle vertex events need to know their polygon edges.
+  EdgeElementPtr edge_prev, edge_next;
+}; // struct VertexEvent
+
+struct VanishingEvent : public NodeElement
+{
+  VanishingEvent(const PolarPoint& relative_position, FaceElement* interval) :
+    NodeElement(relative_position), interval(interval) {}
+
+  // Instead of active/deactive, check whether the interval still has this event as vanishing event.
+
+  FaceElement* interval;
+}; // struct VanishingEvent
+
+
+//std::ostream& operator<<(std::ostream& os, const Event& event)
+//{
+//  os << "Event @ " << event.relative_position << std::endl;
+//
+//  os << (event.node == nullptr ? "vanishing" : "node/vertex");
+//
+//  if (event.edges[0])
+//    os << "Edge 0: " << (*event.edges[0]) << std::endl;
+//  if (event.edges[1])
+//    os << "Edge 1: " << (*event.edges[1]) << std::endl;
+//}
+
+using EventPtr = std::shared_ptr<NodeElement>;
+
+struct CompareEvents
+{
+  bool operator()(const EventPtr& a, const EventPtr& b) const
+  {
+    return a->relative_position.R() < b->relative_position.R();
+  }
+}; // struct CompareEvents
+
+struct CompareEventsReverse : public CompareEvents
+{
+  bool operator()(const EventPtr& a, const EventPtr& b) const
+  {
+    return CompareEvents::operator()(b, a);
+  }
+}; // struct CompareEventsReverse
+
+void EmbeddingNode::SetEvent(NodePtr& node, NodeElementPtr& event)
+{
+  node->event = event;
+  event->embedding = node;
+}
+
+bool EmbeddingNode::IsValid() const
+{
+  return
+    (bool)edge && this == edge->node.get() &&
+    (bool)event && this == event->embedding.get();
+}
+
+
+struct EdgeElement
+{
+  virtual ~EdgeElement() {}
+
+  virtual bool ContainsR(const Number& R) const = 0;
 
   virtual Number ComputePhi(const Number& R) const = 0;
 
-  virtual PolarPoint Intersect(const EdgeStraight& edge) const = 0;
-  virtual PolarPoint Intersect(const EdgeSpiral& edge) const = 0;
-
   virtual std::ostream& print(std::ostream& os) const = 0;
-}; // class Edge
+}; // struct EdgeElement
 
-class EdgeStraight : public Edge
+std::ostream& operator<<(std::ostream& os, const EdgeElement& edge)
 {
+  edge.print(os);
+  return os;
+}
+
+template<class T_>
+struct EdgeElement_ : public EdgeElement
+{
+  EdgeElement_(const T_& segment) : segment(segment) {}
+
+  std::ostream& print(std::ostream& os) const
+  {
+    os << segment;
+    return os;
+  }
+
+  T_ segment;
+}; // class EdgeElement_
+
+template<class Edge1_, class Edge2_>
+PolarPoint Intersect(const Edge1_& edge_1, const Edge2_& edge_2);
+
+template<class T1_, class T2_>
+PolarPoint Intersect(const EdgeElement_<T1_>& edge_1, const EdgeElement_<T2_>& edge_2)
+{
+  PolarPoint intersections[2];
+  const int num = ComputeIntersections(edge_1.segment, edge_2.segment, intersections);
+  CHECK_LT(0, num);
+
+  if (1 < num && intersections[1].R() < intersections[0].R())
+    return intersections[1];
+
+  return intersections[0];
+}
+
+class EdgeStraight : public EdgeElement_<PolarSegment>
+{
+  using Base = EdgeElement_<PolarSegment>;
+
  public:
-  EdgeStraight(const PolarPoint& a, const PolarPoint& b) :
-    Edge(), segment(a, b)
-  {}
+  EdgeStraight(const PolarPoint& a, const PolarPoint& b) : Base(PolarSegment(a, b)) {}
 
-  const EdgeStraight* AsEdgeStraight() const { return this; }
-
-  Number R_max() const { return 0/*segment.far().R()*/; // TODO(tvl) fix this so the segment is always oriented correctly. Better yet, replace the method(s) by getting the (unoriented) endpoints...
-  }
-
-  Number R_min() const { return 0/*segment.near().R()*/; // TODO(tvl) fix this so the segment is always oriented correctly.
-  }
+  bool ContainsR(const Number& R) const { return segment.ContainsR(R); }
 
   Number ComputePhi(const Number& R) const
   {
@@ -593,187 +882,474 @@ class EdgeStraight : public Edge
 
     return phi[0];
   }
-
-  PolarPoint Intersect(const EdgeStraight& edge) const { return PolarPoint(); }
-  PolarPoint Intersect(const EdgeSpiral& edge) const { return PolarPoint(); }
-
-  std::ostream& print(std::ostream& os) const
-  {
-    os << segment;
-    return os;
-  }
-
-  // Note that because each edge was split at the point closest to the root, the vertices cannot be equidistant from the root.
-  PolarSegment segment;
 }; // class EdgeStraight
 
-class EdgeSpiral : public Edge
+
+class EdgeSpiral : public EdgeElement_<SpiralSegment>
 {
+  using Base = EdgeElement_<SpiralSegment>;
+
  public:
-  EdgeSpiral(const PolarPoint& a, const PolarPoint& b) : Edge(), segment(a, b) {}
+  EdgeSpiral(const PolarPoint& a, const PolarPoint& b) : Base(SpiralSegment(a, b)) {}
 
-  const EdgeSpiral* AsEdgeSpiral() const { return this; }
-
-  Number R_max() const { return segment.far().R(); }
-
-  Number R_min() const { return segment.near().R(); }
+  bool ContainsR(const Number& R) const { return segment.ContainsR(R); }
 
   Number ComputePhi(const Number& R) const
   {
     return segment.ComputePhi(R);
   }
-
-  PolarPoint Intersect(const EdgeStraight& edge) const { return PolarPoint(); }
-  PolarPoint Intersect(const EdgeSpiral& edge) const { return PolarPoint(); }
-
-  std::ostream& print(std::ostream& os) const
-  {
-    os << segment;
-    return os;
-  }
-
-  SpiralSegment segment;
 }; // class EdgeSpiral
 
-std::ostream& operator<<(std::ostream& os, const Edge& edge)
+
+class EdgeHalfline : public EdgeElement_<Spiral>
 {
-  edge.print(os);
-  return os;
-}
+  using Base = EdgeElement_<Spiral>;
 
-
-
-
-class Interval
-{
  public:
-  using Ptr = std::shared_ptr<Interval>;
+  EdgeHalfline(const PolarPoint& point) : Base(Spiral(point, 0)) {}
 
-  Interval(const Edge::Ptr& edge_cw, const Edge::Ptr& edge_ccw, const bool obstacle = false) : edge_cw(edge_cw), edge_ccw(edge_ccw), obstacle(obstacle), tag(nullptr) {}
+  bool ContainsR(const Number& R) const { return true; }
 
-  Interval(const Edge::Ptr& edge_cw, const Edge::Ptr& edge_ccw, const Node::Ptr& tag) : edge_cw(edge_cw), edge_ccw(edge_ccw), obstacle(false), tag(tag) {}
+  Number ComputePhi(const Number& R) const
+  {
+    return segment.ComputePhi(R);
+  }
+}; // class EdgeHalfline
+
+
+// TODO(tvl) rename Interval?
+struct FaceElement
+{
+  using FacePtr = std::shared_ptr<EmbeddingFace>;
+  using HalfedgePtr = std::shared_ptr<EmbeddingHalfedge>;
+
+  using NodeElementPtr = std::shared_ptr<NodeElement>;
+  using FaceElementPtr = std::shared_ptr<FaceElement>;
+
+  FaceElement() { UpdateVanishingEvent(); }
+
+  bool IsValid() const
+  {
+    if (face)
+      return face->edge_cw->IsValid() && face->edge_ccw->IsValid(); //&& face->IsValid()
+  }
+
+  const NodeElementPtr& Vanishing() const { return vanishing_; }
+
+  void SetEdges(const HalfedgePtr& edge_cw, const HalfedgePtr& edge_ccw)
+  {
+    face->edge_cw = edge_cw;
+    face->edge_ccw = edge_ccw;
+    UpdateVanishingEvent();
+  }
+  void SetEdgeCw(const HalfedgePtr& edge_cw)
+  {
+    face->edge_cw = edge_cw;
+    UpdateVanishingEvent();
+  }
+  void SetEdgeCcw(const HalfedgePtr& edge_ccw)
+  {
+    face->edge_ccw = edge_ccw;
+    UpdateVanishingEvent();
+  }
+
+  FacePtr face;
+
+ private:
+
+  void UpdateVanishingEvent()
+  {
+//    if (vanishing_)
+//      vanishing_->Deactivate();
+//
+//    if (!edge_cw_ || !edge_ccw_)
+//    {
+//      vanishing_ = nullptr;
+//      return;
+//    }
+
+    const PolarPoint position = Intersect(*face->edge_cw->segment, *face->edge_ccw->segment);
+    vanishing_ = std::make_shared<VanishingEvent>(position, this);
+  }
+
+  NodeElementPtr vanishing_;
+}; // struct FaceElement
+
+struct ObstacleInterval : public FaceElement
+{
+  using FacePtr = std::shared_ptr<EmbeddingFace>;
+
+  ObstacleInterval() : FaceElement() {}
+}; // struct ObstacleInterval
+
+struct OpenInterval : public FaceElement
+{
+  using FacePtr = std::shared_ptr<EmbeddingFace>;
+
+  OpenInterval(const Node::Ptr& tag = nullptr) : FaceElement(), tag(tag) {}
 
   // Note that an open interval referencing a connected node counts as a free interval.
   bool IsFree() const { return tag == nullptr || tag->parent != nullptr; }
 
-  bool obstacle;
   Node::Ptr tag;
+}; // struct OpenInterval
 
-  Edge::Ptr edge_cw, edge_ccw;
-}; // class Interval
+using IntervalPtr = std::shared_ptr<FaceElement>;
 
-struct CompareIntervals
-{
-  bool operator()(const Interval::Ptr& a, const Interval::Ptr& b) const
-  {
-    const Edge::Ptr& edge_ccw_a = a->edge_ccw;
-    const Edge::Ptr& edge_ccw_b = b->edge_ccw;
-
-    // Compare the ccw edges somewhere inside (we use the center of their shared range of R.
-    //
-    //
-    // at their 'farthest' shared point (this would be closest to the root for the reverse ordering).
-    // Note that there shouldn't be a case where the cw edges of two intervals don't share some part (distance from the root), due to the processing of the events in order.
-    // Also note that if two edges are found to intersect, they should be replaced by their subdivided counterparts, because otherwise the 'farthest' point is no longer a good measurement for the order of the intervals on the circle.
-    const Number& R_max = std::min(edge_ccw_a->R_max(), edge_ccw_b->R_max());
-    const Number& R_min = std::max(edge_ccw_a->R_min(), edge_ccw_b->R_min());
-    CHECK_LE(R_min, R_max);
-
-    const Number R = (R_min + R_max) / 2;
-    const Number& phi_a = edge_ccw_a->ComputePhi(R);
-    const Number& phi_b = edge_ccw_b->ComputePhi(R);
-    return phi_a < phi_b;
-  }
-}; // struct CompareIntervals
-
-
-
-class Event
+// TODO(tvl) make part of sweep circle?
+class CompareIntervals
 {
  public:
-  using Ptr = std::shared_ptr<Event>;
+  CompareIntervals(const Number& R) : R(R) {}
 
-  // Node event.
-  Event(const PolarPoint& relative_position, const Node::Ptr& node) :
-    relative_position(relative_position), node(node) {}
+  bool operator()(const IntervalPtr& a, const IntervalPtr& b) const
+  {
+    // Compare the clockwise edges at the current R.
+    // Note that these edges must always have a point at the specified R,
+    // because the events are processed in order based on R.
+    // Also note that if two edges are found to intersect,
+    // they should be replaced by their subdivided counterparts to prevent overlapping intervals.
+    CHECK_LT(0, R);
 
-  // Vertex event.
-  Event
-  (
-    const PolarPoint& relative_position,
-    const Node::Ptr& vertex,
-    const Edge::Ptr& edge_cw,
-    const Edge::Ptr& edge_ccw
-  ) : relative_position(relative_position), node(vertex), edge_cw(edge_cw), edge_ccw(edge_ccw) {}
+    using EdgePtr = std::shared_ptr<EdgeElement>;
 
-  // Vanishing event.
-  Event
-  (
-    const PolarPoint& relative_position,
-    const Edge::Ptr& edge_cw,
-    const Edge::Ptr& edge_ccw
-  ) : Event(relative_position, nullptr, edge_cw, edge_ccw) {}
+    const EdgePtr& edge_a = a->face->edge_cw->segment;
+    const EdgePtr& edge_b = b->face->edge_cw->segment;
+    CHECK(edge_a->ContainsR(R));
+    CHECK(edge_b->ContainsR(R));
 
-  bool IsNode() const { return (bool)node && !HasEdge(); }
-  bool IsVertex() const { return (bool)node && HasEdge(); }
-  bool IsVanishing() const { return !node; }
+    const Number phi_a = edge_a->ComputePhi(R);
+    const Number phi_b = edge_b->ComputePhi(R);
 
-  PolarPoint relative_position;
+    // Note that edges may cross the x-axis, which should change the order of the intervals.
+    // i.e. the interval should move from the front of the set to the end or vice versa.
+    return phi_a < phi_b;
+  }
 
-  Node::Ptr node;
-  Edge::Ptr edge_cw, edge_ccw;
+  const Number& R;
+}; // struct CompareIntervals
 
- private:
-  bool HasEdge() const { return (bool)edge_cw || (bool)edge_ccw; }
-}; // class Event
-
-std::ostream& operator<<(std::ostream& os, const Event& event)
+void EmbeddingFace::LinkInterval(FacePtr& face, FaceElementPtr& interval)
 {
-  os << "Event @ " << event.relative_position << std::endl;
-
-  os << "CW: ";
-  if (event.edge_cw)
-    os << (*event.edge_cw) << std::endl;
-  else
-    os << "null" << std::endl;
-
-  os << "CCW: ";
-  if (event.edge_ccw)
-    os << (*event.edge_ccw) << std::endl;
-  else
-    os << "null" << std::endl;
+  face->interval = interval;
+  interval->face = face;
 }
 
 
-struct CompareEvents
-{
-  bool operator()(const Event::Ptr& a, const Event::Ptr& b) const
-  {
-    return a->relative_position.R() < b->relative_position.R();
-  }
-}; // struct CompareEvents
 
-struct CompareEventsReverse : public CompareEvents
+// Note, the following implements a structure similar to a half-edge data-structure.
+// We should probably explicitly implement to incidence relations between these classes as well.
+
+enum SweepDirection
 {
-  bool operator()(const Event::Ptr& a, const Event::Ptr& b) const
+  kInward,
+  kOutward
+};
+
+template<SweepDirection D_>
+struct SweepCompareEvents;
+
+template<>
+struct SweepCompareEvents<SweepDirection::kInward>
+{
+  using Type = CompareEvents;
+};
+
+template<>
+struct SweepCompareEvents<SweepDirection::kOutward>
+{
+  using Type = CompareEventsReverse;
+};
+
+template<SweepDirection D_>
+class SweepCircle
+{
+ public:
+  using CompareEvents = typename SweepCompareEvents<D_>::Type;
+
+  // Note that the intervals order may be invalidated while changing R; specifically, the first and last elements may have to be moved to the other side of the collection.
+  // For this reason, the intervals are not stored in a collection that assumes correct order.
+  // Instead, the collection is regularly resorted.
+  using IntervalPtr = std::shared_ptr<FaceElement>;
+  using IntervalSet = std::vector<IntervalPtr>;
+
+  using EventPtr = std::shared_ptr<NodeElement>;
+  using Queue = std::priority_queue<EventPtr, std::vector<EventPtr>, CompareEvents>;
+
+  SweepCircle(const Node::Ptr& root);
+
+  SweepDirection Direction() const { return D_; }
+
+  bool IsValid() const
   {
-    return CompareEvents::operator()(b, a);
+    bool valid = true;
+    for (const IntervalPtr& interval : intervals)
+      valid &= interval->IsValid();
+    for (const EventPtr& event : queue)
+      valid &= event->IsValid();
+    return valid;
   }
-}; // struct CompareEventsReverse
+
+  Number R;
+  IntervalSet intervals;
+  Queue queue;
+}; // class SweepCircle
+
+
+template<>
+SweepCircle<SweepDirection::kInward>::SweepCircle(const Node::Ptr& root) : R(-1)
+{
+  EmbeddingHalfedge::HalfedgePtr halfedge = EmbeddingHalfedge::ConstructWithOpposite();
+
+  EmbeddingHalfedge::EdgeElementPtr x_axis = std::make_shared<EdgeHalfline>(PolarPoint(1, 0));  // Relevant: edge geometry.
+  halfedge->SetSegment(x_axis);
+
+  EmbeddingFace::FacePtr face = EmbeddingFace::ConstructBetweenEdges(halfedge, halfedge->opposite);
+
+  EmbeddingFace::FaceElementPtr interval = std::make_shared<OpenInterval>();  // Relevant: interval is open.
+  EmbeddingFace::LinkInterval(face, interval);
+
+  intervals.push_back(interval);
+
+  CHECK(halfedge->IsValid());
+  CHECK(halfedge->opposite->IsValid());
+  CHECK(face->IsValid());
+}
+
+template<>
+SweepCircle<SweepDirection::kOutward>::SweepCircle(const Node::Ptr& root) : R(0)
+{
+  EmbeddingHalfedge::HalfedgePtr halfedge = EmbeddingHalfedge::ConstructWithOpposite();
+
+  EmbeddingHalfedge::EdgeElementPtr x_axis = std::make_shared<EdgeHalfline>(PolarPoint(1, 0));  // Relevant: edge geometry.
+  halfedge->SetSegment(x_axis);
+
+  EmbeddingFace::FacePtr face = EmbeddingFace::ConstructBetweenEdges(halfedge, halfedge->opposite);
+
+  EmbeddingFace::FaceElementPtr interval = std::make_shared<OpenInterval>();  // Relevant: interval is open.
+  EmbeddingFace::LinkInterval(face, interval);
+
+  intervals.push_back(interval);
+
+  // Note that the root event specifically is not inserted into the event queue.
+  EmbeddingNode::NodeElementPtr root_event = std::make_shared<NodeEvent>(PolarPoint(0, 0), root);  // Relevant: node position.
+
+  EmbeddingNode::NodePtr root_node = std::make_shared<EmbeddingNode>();
+  EmbeddingNode::SetEvent(root_node, root_event);
+  EmbeddingHalfedge::SetNode(halfedge, root_node);
+
+  CHECK(halfedge->IsValid());
+  CHECK(halfedge->opposite->IsValid());
+  CHECK(face->IsValid());
+  CHECK(root_node->IsValid());
+}
+
+
 
 
 // Strictly speaking, the wavefront should be the collection of unconnected nodes that have been passed by the sweep circle.
 // In practice, we keep track of the intervals on this sweep circle instead, ordered by their edges intersecting the sweep circle.
-class SweepStatus
+class SweepCircleOld
 {
  public:
-  using Boundary = obst::Edge::Ptr;
-  using BoundarySet = std::set<Boundary>;
+
+  SweepCircleOld(): R(-1) {}
+
+
+  // TODO(tvl) replace add_events by output iterator? Or insert directly into the event queue?
+  void Handle(const Event::Ptr& event, std::vector<Event::Ptr>& add_events)
+  {
+    if (event->IsNode())
+      HandleTerminal(event, add_events);
+    else if (event->IsVertex())
+      HandleVertex(event, add_events);
+    else if (event->IsVanishing())
+      HandleVanishing(event, add_events);
+    else
+      CHECK(false);
+  }
+
+  void HandleTerminal(const Event::Ptr& event, std::vector<Event::Ptr>& add_events)
+  {
+    //TODO(tvl) implement.
+    CHECK(false);
+  }
+
+  void HandleVertex(const Event::Ptr& event, std::vector<Event::Ptr>& add_events)
+  {
+    IntervalSet::iterator interval_iter = FindInterval(event);
+
+    const OpenInterval* open_interval = (*interval_iter)->AsOpenInterval();
+    if (open_interval == nullptr)
+    {
+      // If v is in an obstacle interval, then we add a free interval, where the endpoints of the interval trace the edges of P′ connected to v.
+      // Note that these descriptions are imprecise, as there can be overlap in obstacles.
+      //
+      // Instead, first check whether the edges associated with the event are on the "same side of the event" (i.e. both moving towards or away from the root).
+      // If they are, then this vertex indicates either the start or end of an obstacle: which one determines whether to start and obstacle interval, or to start a free/reachable interval.
+      // If they are not, then the vertex should separate an obstacle interval from a non-obstacle interval, where the obstacle interval should start following the next edge connected to the vertex.
+      // Whenever a reachable interval continues after this event, it may either start following the next edge connected to the vertex, or it may start following a spiral edge containing the vertex; in the last case, a new free interval should fill the space between the new spiral and the next edge of the vertex.
 
 
 
-  BoundarySet boundaries;
-}; // class SweepStatus
+    }
+    else if (open_interval->IsFree())
+    {
+      //If v is in a free interval, then we add an obstacle interval, where the endpoints of the interval trace the edges of P′ connected to v.
+
+
+
+    }
+    else
+    {
+      // Otherwise, v is in a reachable interval or at the endpoint between a reachable interval and an obstacle interval.
+
+
+
+    }
+
+
+  }
+
+  void MergeSimilarNeighbors(IntervalSet::iterator interval_iter, IntervalSet::iterator neighbor_iter_cw, IntervalSet::iterator neighbor_iter_ccw, std::vector<Event::Ptr>& add_events)
+  {
+    // Merge the neighbors into the clockwise one and remove the other two intervals.
+    EdgePtr edge_ccw = (*neighbor_iter_ccw)->edge_ccw();
+    (*neighbor_iter_cw)->SetEdgeCcw(edge_ccw);
+    add_events.push_back((*neighbor_iter_cw)->Vanishing());
+
+    intervals.erase(neighbor_iter_ccw);
+    intervals.erase(interval_iter);
+  }
+
+  void RemoveIntervalFollowEdgeCw(IntervalSet::iterator interval_iter, IntervalSet::iterator neighbor_iter_cw, IntervalSet::iterator neighbor_iter_ccw, std::vector<Event::Ptr>& add_events)
+  {
+    // Adjust the counter-clockwise neighbor to follow the edge of the clockwise neighbor and remove the middle interval.
+    EdgePtr edge = (*neighbor_iter_cw)->edge_ccw();
+    (*neighbor_iter_ccw)->SetEdgeCw(edge);
+    add_events.push_back((*neighbor_iter_ccw)->Vanishing());
+
+    intervals.erase(interval_iter);
+  }
+
+  void RemoveIntervalFollowEdgeCcw(IntervalSet::iterator interval_iter, IntervalSet::iterator neighbor_iter_cw, IntervalSet::iterator neighbor_iter_ccw, std::vector<Event::Ptr>& add_events)
+  {
+    // Adjust the clockwise neighbor to follow the edge of the counter-clockwise neighbor and remove the middle interval.
+    EdgePtr edge = (*neighbor_iter_ccw)->edge_cw();
+    (*neighbor_iter_cw)->SetEdgeCw(edge);
+    add_events.push_back((*neighbor_iter_cw)->Vanishing());
+
+    intervals.erase(interval_iter);
+  }
+
+  void HandleVanishing(const EventPtr& event, std::vector<EventPtr>& add_events)
+  {
+    if (!event->IsActive())
+      return;
+
+    // Find the interval to vanish and its neighbors.
+    IntervalSet::iterator interval_iter = FindInterval(event);
+    IntervalSet::iterator neighbor_iter_cw = --make_circulator(interval_iter, intervals);
+    IntervalSet::iterator neighbor_iter_ccw = ++make_circulator(interval_iter, intervals);
+
+    const OpenInterval* open_cw = (*neighbor_iter_cw)->AsOpenInterval();
+    const OpenInterval* open_ccw = (*neighbor_iter_ccw)->AsOpenInterval();
+
+    // Obstacle neighbors take precedence.
+    if (open_cw == nullptr && open_ccw == nullptr)
+    {
+      MergeSimilarNeighbors(interval_iter, neighbor_iter_cw, neighbor_iter_ccw, add_events);
+    }
+    else if (open_cw == nullptr)
+    {
+      RemoveIntervalFollowEdgeCw(interval_iter, neighbor_iter_cw, neighbor_iter_ccw, add_events);
+    }
+    else if (open_ccw == nullptr)
+    {
+      RemoveIntervalFollowEdgeCcw(interval_iter, neighbor_iter_cw, neighbor_iter_ccw, add_events);
+    }
+    else if (open_cw->IsFree() && open_ccw->IsFree())
+    {
+      MergeSimilarNeighbors(interval_iter, neighbor_iter_cw, neighbor_iter_ccw, add_events);
+    }
+    else if (open_cw->IsFree())
+    {
+      // The reachable neighbor takes precedence.
+      RemoveIntervalFollowEdgeCcw(interval_iter, neighbor_iter_cw, neighbor_iter_ccw, add_events);
+    }
+    else if (open_ccw->IsFree())
+    {
+      // The reachable neighbor takes precedence.
+      RemoveIntervalFollowEdgeCw(interval_iter, neighbor_iter_cw, neighbor_iter_ccw, add_events);
+    }
+    else if (open_cw->tag == open_ccw->tag)
+    {
+      // TODO(tvl) check:
+      // According to the paper, we should keep both neighbors, separated by the positive spiral from this vanishing event.
+      // However, this seems strange when we could also just merge the two neighbors.
+      MergeSimilarNeighbors(interval_iter, neighbor_iter_cw, neighbor_iter_ccw, add_events);
+    }
+    else
+    {
+      // Join the two tags.
+      // TODO(tvl) implement.
+      CHECK(false);
+    }
+  }
+
+  IntervalSet::iterator FindInterval(const PolarPoint& position)
+  {
+    CHECK(!intervals.empty());
+
+    // Before we return the interval containing the event, we may have to update the collection.
+    // Specifically, the intervals near the end of the collection may have to be moved to the other side of the collection.
+    R = position.R();
+    if (intervals.size() == 1)
+      return intervals.begin();
+
+    CompareIntervals compare;
+    if (!compare(*intervals.begin(), *--intervals.end()))
+      std::sort(intervals.begin(), intervals.end(), compare);
+
+    // We search for the interval using a dummy interval.
+    EdgePtr edge = std::make_shared<EdgeHalfline>(position);
+    IntervalPtr dummy = std::make_shared<Interval>(R, edge, edge);
+
+    // Compute the interval that is counter-clockwise of the event.
+    IntervalSet::iterator ccw_iter = std::upper_bound(intervals.begin(), intervals.end(), dummy, compare);
+    if (ccw_iter == intervals.begin())
+      ccw_iter = intervals.end();
+
+    // Return the interval before that.
+    return --ccw_iter;
+  }
+
+  IntervalSet::iterator FindInterval(const EventPtr& event)
+  {
+    IntervalSet::iterator iter = FindInterval(event->relative_position);
+    if (event->IsVanishing())
+    {
+      CHECK_EQ(event, (*iter)->VanishingEvent());
+
+      // Make sure the interval is the one linked to this vanishing event.
+//      while ((*iter)->VanishingEvent() != event)
+//      {
+//        CHECK_NE(intervals.begin(), iter);
+//        --iter;
+//      }
+    }
+    else if (event->IsVertex())
+    {
+      // Make sure that the interval is correct: either both edges of the event lie on the same side of the event, or the event is on the boundary of the interval.
+      event->edges[0]
+
+
+
+    }
+
+    return iter;
+  }
+}; // class SweepCircleOld
 
 
 } // namespace obst
@@ -806,7 +1382,7 @@ void SpiralTree::ComputeObstructed()
   // * Free/unreachable (e.g. beyond the last node or behind an obstacle)
   // * Obstacle
   // * Reachable:
-  //   - 1 parent (tagged) node/vertex: node/vertex n 'inside' interval, farther from the root (to connect to next node touching interval). This is actually the point in the region fartest from the root.
+  //   - 1 parent (tagged) node/vertex: node/vertex n 'inside' interval, farther from the root (to connect to next node touching interval). This is actually the point in the region farthest from the root. (note that farthest should be replaced by closest for the reverse order)
   //   - Could we just mark free intervals as 'reachable' intervals without a parent?
   // Stored in (balanced) search tree by their endpoints, i.e. their edges. The order of the endpoints never changes: when this would be the case, a new region is inserted. Can we store only the left (or right) edge with each interval?
   //
@@ -815,16 +1391,17 @@ void SpiralTree::ComputeObstructed()
   //
   // Event (per point type).
 
+//  obst::GreedyAlgorithm algorithm;
 
-  // Debug lists of all elements ever created.
-  std::vector<obst::Interval::Ptr> intervals_d;
-  std::vector<obst::Edge::Ptr> edges_d;
+  // Note, the reachable region should really be made explicit: it is necessary to make sure that join nodes constructed in the second pass are not constructed outside the reachable region.
 
-  // Actual functional collections.
-  std::priority_queue<obst::Event::Ptr, std::vector<obst::Event::Ptr>, obst::CompareEventsReverse> queue;
 
-  std::vector<Node::Ptr> vertices;
+  using EventPtr = obst::Event::Ptr;
+  using Queue = std::priority_queue<EventPtr, std::vector<EventPtr>, obst::CompareEvents>;
+  using ReverseQueue = std::priority_queue<EventPtr, std::vector<EventPtr>, obst::CompareEventsReverse>;
 
+  //Queue queue;
+  ReverseQueue queue_reverse;
 
   // Add the obstacles.
   for (const Obstacle& obstacle : obstacles_)
@@ -833,33 +1410,45 @@ void SpiralTree::ComputeObstructed()
       continue;
 
     obst::Event::Ptr vertex;
-    obst::EdgeStraight::Ptr edge_first = nullptr;
+    obst::EdgePtr edge_first = nullptr;
 
     Obstacle::const_iterator prev_iter = --obstacle.end();
     for (Obstacle::const_iterator vertex_iter = obstacle.begin(); vertex_iter != obstacle.end(); prev_iter = vertex_iter++)
     {
-      obst::EdgeStraight::Ptr edge_cw = std::make_shared<obst::EdgeStraight>(*prev_iter, *vertex_iter);
-      edges_d.push_back(edge_cw);
+      obst::EdgePtr edge_prev = std::make_shared<obst::EdgeStraight>(*prev_iter, *vertex_iter);
       if (edge_first == nullptr)
-        edge_first = edge_cw;
+        edge_first = edge_prev;
 
       if (vertex)
-        vertex->edge_ccw = edge_cw;
+        vertex->edges[1] = edge_prev;
 
-      vertices.push_back(std::make_shared<Node>());
-      const Node::Ptr& node = vertices.back();
-
-      vertex = std::make_shared<obst::Event>(*vertex_iter, node, edge_cw, nullptr);
-      queue.push(vertex);
+      vertex = std::make_shared<obst::Event>(*vertex_iter, std::make_shared<Node>(), edge_prev, nullptr);
+      queue_reverse.push(vertex);
     }
 
     CHECK(vertex);
-    vertex->edge_ccw = edge_first;
+    vertex->edges[1] = edge_first;
   }
+
+  // TODO(tvl) I probably also have to add the nodes to the queue so they can be marked.
+
+  Node::Ptr root;
+  for (const Node::Ptr& node : nodes_)
+  {
+    CHECK_NOTNULL(node->place);
+
+    const PolarPoint relative_position(node->place->position, root_translation_);
+    if (relative_position.R() == 0)
+      root = node;
+  }
+  CHECK_NOTNULL(root);
 
 
   // Compute the reachable region by handling the events (in reverse order) and keeping track of the boundaries of the reachable intervals.
-  obst::SweepStatus intervals;
+  obst::SweepCircleOld wavefront;
+
+  // Add the root interval to the wavefront.
+  wavefront.AddRootInterval(root);
 
 
 
@@ -867,12 +1456,23 @@ void SpiralTree::ComputeObstructed()
   bool test0 = true;
 
   // DEBUG //
-  while (!queue.empty())
+  while (!queue_reverse.empty())
   {
-    obst::Event::Ptr event = queue.top();
-    queue.pop();
+    obst::Event::Ptr event = queue_reverse.top();
+    queue_reverse.pop();
 
     std::cerr << (*event) << std::endl << std::endl;
+
+
+    std::vector<obst::Event::Ptr> add_events;
+    wavefront.Handle(event, add_events);
+
+    for (const obst::Event::Ptr& add_event : add_events)
+    {
+      // All added events must occur after the current one.
+      if (event->relative_position.R() < add_event->relative_position.R())
+        queue_reverse.push(add_event);
+    }
   }
 
 
@@ -883,6 +1483,11 @@ void SpiralTree::ComputeObstructed()
 
   // TODO(tvl) temp placeholder.
   //ComputeUnobstructed();
+}
+*/
+void SpiralTree::ComputeObstructed()
+{
+  CHECK(false) << "Not implemented yet.";
 }
 
 } // namespace flow_map

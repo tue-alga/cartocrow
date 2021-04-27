@@ -3,7 +3,7 @@ The Necklace Map library implements the algorithmic
 geo-visualization method by the same name, developed by
 Bettina Speckmann and Kevin Verbeek at TU Eindhoven
 (DOI: 10.1109/TVCG.2010.180 & 10.1142/S021819591550003X).
-Copyright (C) 2019  Netherlands eScience Center and TU Eindhoven
+Copyright (C) 2021  Netherlands eScience Center and TU Eindhoven
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -226,7 +226,7 @@ class DrawNecklaceShapeVisitor : public necklace_map::NecklaceShapeVisitor
     const Point& kernel = shape.kernel();
     const Number radius = shape.ComputeRadius();
 
-    if (shape.cw_rad() == shape.ccw_rad())
+    if (shape.draw_bounds_cw_rad() == shape.draw_bounds_ccw_rad())
     {
       printer_.OpenElement("circle");
       printer_.PushAttribute("style", necklace_style_.c_str());
@@ -241,8 +241,8 @@ class DrawNecklaceShapeVisitor : public necklace_map::NecklaceShapeVisitor
     {
       std::string path;
       {
-        const Number& cw_rad = shape.cw_rad();
-        const Number& ccw_rad = shape.ccw_rad();
+        const Number& cw_rad = shape.draw_bounds_cw_rad();
+        const Number& ccw_rad = shape.draw_bounds_ccw_rad();
 
         const Point cw = kernel + radius * Vector(std::cos(cw_rad), std::sin(cw_rad));
         const Point ccw = kernel + radius * Vector(std::cos(ccw_rad), std::sin(ccw_rad));

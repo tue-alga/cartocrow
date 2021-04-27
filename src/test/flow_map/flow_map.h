@@ -3,7 +3,7 @@ The Flow Map library implements the algorithmic geo-visualization
 method by the same name, developed by Kevin Verbeek, Kevin Buchin,
 and Bettina Speckmann at TU Eindhoven
 (DOI: 10.1007/s00453-013-9867-z & 10.1109/TVCG.2011.202).
-Copyright (C) 2019  Netherlands eScience Center and TU Eindhoven
+Copyright (C) 2021  Netherlands eScience Center and TU Eindhoven
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -180,10 +180,10 @@ struct FlowDataWorld
 
 UNITTEST_TEST_FIXTURE(FlowDataWorld, EastAsiaAgriculture)
 {
-  const std::string in_value_name = "Karstner";
-  UNITTEST_CHECK(ReadValues(in_value_name));
-
-  DefaultParameters(parameters);
+//  const std::string in_value_name = "Karstner";
+//  UNITTEST_CHECK(ReadValues(in_value_name));
+//
+//  DefaultParameters(parameters);
 
 //  const geoviz::Number scale_factor = ComputeScaleFactor(parameters, data.elements, data.necklaces);
 //  UNITTEST_CHECK_CLOSE(1.005, scale_factor, 0.001);

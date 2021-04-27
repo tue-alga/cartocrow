@@ -1,7 +1,7 @@
 /*
 The GeoViz library implements algorithmic geo-visualization methods,
 developed at TU Eindhoven.
-Copyright (C) 2019  Netherlands eScience Center and TU Eindhoven
+Copyright (C) 2021  Netherlands eScience Center and TU Eindhoven
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -36,31 +36,31 @@ struct CirculatorBase
   using Container = C_;
   using Iterator = I_;
 
-  using value_type = typename I_::value_type;
-  using reference = typename I_::reference;
-  using pointer = typename I_::pointer;
-  using iterator_category = typename I_::iterator_category;
-  using difference_type = typename I_::difference_type;
+  using value_type = typename Iterator::value_type;
+  using reference = typename Iterator::reference;
+  using pointer = typename Iterator::pointer;
+  using iterator_category = typename Iterator::iterator_category;
+  using difference_type = typename Iterator::difference_type;
 
   CirculatorBase() : cursor_(), container_() {}
 
   CirculatorBase(const CirculatorBase& circulator) : cursor_(circulator.cursor_), container_(circulator.container_) {}
 
-  CirculatorBase(const I_& iterator, C_& container) : cursor_(iterator), container_(container)
+  CirculatorBase(const Iterator& iterator, Container& container) : cursor_(iterator), container_(container)
   {
     if (cursor_ == container_.end())
       cursor_ = container_.begin();
   }
 
-  explicit CirculatorBase(C_& container) : CirculatorBase(container.begin(), container) {}
+  explicit CirculatorBase(Container& container) : CirculatorBase(container.begin(), container) {}
 
   inline reference operator*() const { return *cursor_; }
 
   inline pointer operator->() const { return &*cursor_; }
 
-  operator I_&() { return cursor_; }
+  operator Iterator&() { return cursor_; }
 
-  operator const I_&() const { return cursor_; }
+  operator const Iterator&() const { return cursor_; }
 
   Self& operator++()
   {
@@ -152,18 +152,6 @@ struct ConstCirculator :
 
 
 template<typename Container, typename Iterator>
-Circulator<Container, Iterator> make_circulator(const Iterator& iterator, Container& container)
-{
-  return Circulator<Container, Iterator>(iterator, container);
-}
-
-template<typename Container>
-Circulator<Container> make_circulator(Container& container)
-{
-  return Circulator<Container>(container);
-}
-
-template<typename Container, typename Iterator>
 ConstCirculator<Container, Iterator> make_circulator(const Iterator& iterator, const Container& container)
 {
   return ConstCirculator<Container, Iterator>(iterator, container);
@@ -173,6 +161,18 @@ template<typename Container>
 ConstCirculator<Container> make_circulator(const Container& container)
 {
   return ConstCirculator<Container>(container);
+}
+
+template<typename Container, typename Iterator>
+Circulator<Container, Iterator> make_circulator(const Iterator& iterator, Container& container)
+{
+  return Circulator<Container, Iterator>(iterator, container);
+}
+
+template<typename Container>
+Circulator<Container> make_circulator(Container& container)
+{
+  return Circulator<Container>(container);
 }
 
 } // namespace geoviz

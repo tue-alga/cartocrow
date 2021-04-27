@@ -2,7 +2,7 @@
 The Necklace Map library implements the algorithmic geo-visualization
 method by the same name, developed by Bettina Speckmann and Kevin Verbeek
 at TU Eindhoven (DOI: 10.1109/TVCG.2010.180 & 10.1142/S021819591550003X).
-Copyright (C) 2019  Netherlands eScience Center and TU Eindhoven
+Copyright (C) 2021  Netherlands eScience Center and TU Eindhoven
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -43,7 +43,7 @@ namespace necklace_map
  * The necklace kernel is the circle center.
  * @param shape the circle covered by the necklace.
  */
-CircleNecklace::CircleNecklace(const Circle& shape) : NecklaceShape(), shape_(shape), cw_rad_(0), ccw_rad_(0)
+CircleNecklace::CircleNecklace(const Circle& shape) : NecklaceShape(), shape_(shape), draw_bounds_cw_rad_(0), draw_bounds_ccw_rad_(0)
 {
   radius_ = CGAL::sqrt(shape_.squared_radius());
 }
@@ -53,24 +53,44 @@ const Point& CircleNecklace::kernel() const
   return shape_.center();
 }
 
-const Number& CircleNecklace::cw_rad() const
+/**@brief Access the clockwise endpoint for drawing the necklace.
+ *
+ * If this is equal to the counterclockwise endpoint, the full circle is drawn.
+ * @return the clockwise endpoint for drawing the necklace.
+ */
+const Number& CircleNecklace::draw_bounds_cw_rad() const
 {
-  return cw_rad_;
+  return draw_bounds_cw_rad_;
 }
 
-Number& CircleNecklace::cw_rad()
+/**@brief Access the clockwise endpoint for drawing the necklace.
+ *
+ * If this is equal to the counterclockwise endpoint, the full circle is drawn.
+ * @return the clockwise endpoint for drawing the necklace.
+ */
+Number& CircleNecklace::draw_bounds_cw_rad()
 {
-  return cw_rad_;
+  return draw_bounds_cw_rad_;
 }
 
-const Number& CircleNecklace::ccw_rad() const
+/**@brief Access the counterclockwise endpoint for drawing the necklace.
+ *
+ * If this is equal to the clockwise endpoint, the full circle is drawn.
+ * @return the counterclockwise endpoint for drawing the necklace.
+ */
+const Number& CircleNecklace::draw_bounds_ccw_rad() const
 {
-  return ccw_rad_;
+  return draw_bounds_ccw_rad_;
 }
 
-Number& CircleNecklace::ccw_rad()
+/**@brief Access the counterclockwise endpoint for drawing the necklace.
+ *
+ * If this is equal to the clockwise endpoint, the full circle is drawn.
+ * @return the counterclockwise endpoint for drawing the necklace.
+ */
+Number& CircleNecklace::draw_bounds_ccw_rad()
 {
-  return ccw_rad_;
+  return draw_bounds_ccw_rad_;
 }
 
 bool CircleNecklace::IsValid() const

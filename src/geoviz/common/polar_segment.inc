@@ -1,7 +1,7 @@
 /*
 The GeoViz library implements algorithmic geo-visualization methods,
 developed at TU Eindhoven.
-Copyright (C) 2019  Netherlands eScience Center and TU Eindhoven
+Copyright (C) 2021  Netherlands eScience Center and TU Eindhoven
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -28,6 +28,12 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 19-02-2021
 namespace geoviz
 {
 
+/**@brief Collect the t at a given distance from the pole.
+ * @tparam OutputIterator the type of output iterator to which to send the output.
+ * @param R the given distance from the pole.
+ * @param t the t values of the points on the line segment at the desired distance.
+ * @return the number of points on the line segment at the given distance. This can be either 0, 1, or 2.
+ */
 template<class OutputIterator>
 int PolarSegment::CollectT(const Number& R, OutputIterator t) const
 {
@@ -48,6 +54,12 @@ int PolarSegment::CollectT(const Number& R, OutputIterator t) const
   return num;
 }
 
+/**@brief Compute the phi at a given distance from the pole.
+ * @tparam OutputIterator the type of output iterator to which to send the output.
+ * @param R the given distance from the pole.
+ * @param phi the phi values of the points on the line segment at the desired distance.
+ * @return the number of points on the line segment at the given distance. This can be either 0, 1, or 2.
+ */
 template<class OutputIterator>
 int PolarSegment::CollectPhi(const Number& R, OutputIterator phi) const
 {

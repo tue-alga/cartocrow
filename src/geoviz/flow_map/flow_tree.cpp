@@ -3,7 +3,7 @@ The Flow Map library implements the algorithmic geo-visualization
 method by the same name, developed by Kevin Verbeek, Kevin Buchin,
 and Bettina Speckmann at TU Eindhoven
 (DOI: 10.1007/s00453-013-9867-z & 10.1109/TVCG.2011.202).
-Copyright (C) 2019  Netherlands eScience Center and TU Eindhoven
+Copyright (C) 2021  Netherlands eScience Center and TU Eindhoven
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -31,9 +31,23 @@ namespace geoviz
 namespace flow_map
 {
 
-// Flow tree is the thickened tree, as opposed to the 'thin' spiral tree.
-// Note that while the spiral tree is a binary tree, the flow tree is not necessarily a binary tree.
+/**@class FlowTree
+ * @brief A tree where each arc is a smooth curve with a thickness indicating the flow.
+ *
+ * This tree is based on a spiral tree. Unlike a spiral tree, a flow tree is not necessarily a binary tree.
+ */
 
+/**@fn FlowTree::Ptr
+ * @brief The preferred pointer type for storing or sharing a flow tree.
+ */
+
+/**@fn FlowTree::FlowArc
+ * @brief The type for the initial arcs in the flow tree, before they are assigned a thickness or pushed farther from obstacles.
+ */
+
+/**@brief Construct a flow tree.
+ * @param spiral_tree the spiral tree describing the initial arrangement of the arcs of the tree.
+ */
 FlowTree::FlowTree(const SpiralTree& spiral_tree) :
   root_translation_(Point(CGAL::ORIGIN) - spiral_tree.GetRoot()),
   nodes_(spiral_tree.nodes_begin(), spiral_tree.nodes_end())
@@ -54,7 +68,8 @@ FlowTree::FlowTree(const SpiralTree& spiral_tree) :
     arcs_.emplace_back(spiral, parent_relative_position);
   }
 
-  // Clone the obstacles.
+  // TODO(tvl) disabled until computing the tree with obstructions is implemented.
+  /*// Clone the obstacles.
   for
   (
     SpiralTree::ObstacleConstIterator obstacle_iter = spiral_tree.obstacles_begin();
@@ -76,7 +91,7 @@ FlowTree::FlowTree(const SpiralTree& spiral_tree) :
 //      arcs_.emplace_back(Spiral(angle_rad, polar_point), PolarPoint());
 //      arcs_.emplace_back(Spiral(-angle_rad, polar_point), PolarPoint());
     }
-  }
+  }*/
 }
 
 } // namespace flow_map

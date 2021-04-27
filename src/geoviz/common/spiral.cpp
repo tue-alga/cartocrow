@@ -1,7 +1,7 @@
 /*
 The GeoViz library implements algorithmic geo-visualization methods,
 developed at TU Eindhoven.
-Copyright (C) 2019  Netherlands eScience Center and TU Eindhoven
+Copyright (C) 2021  Netherlands eScience Center and TU Eindhoven
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -45,7 +45,7 @@ Spiral::Spiral(const PolarPoint& anchor, const Number& angle_rad) :
   angle_rad_(angle_rad),
   anchor_(anchor)
 {
-  CHECK_NE(anchor_.R(), 0);
+  CHECK_LT(0, anchor_.R());
 }
 
 /**@brief Construct a logarithmic spiral containing two points.
@@ -219,6 +219,17 @@ Number Spiral::SampleR(const Number& phi) const
 Number Spiral::ComputePeriod() const
 {
   return M_2xPI / std::tan(angle_rad());
+}
+
+/**@brief Move the anchor on the spiral.
+ *
+ * @param R the distance from the pole of the new anchor.
+ */
+void Spiral::MoveAnchor(const Number& R)
+{
+  CHECK_LT(0, anchor_.R());
+  const Number phi = ComputePhi(R);
+  anchor_ = PolarPoint(R, phi);
 }
 
 

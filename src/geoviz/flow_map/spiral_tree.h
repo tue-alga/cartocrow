@@ -3,7 +3,7 @@ The Flow Map library implements the algorithmic geo-visualization
 method by the same name, developed by Kevin Verbeek, Kevin Buchin,
 and Bettina Speckmann at TU Eindhoven
 (DOI: 10.1007/s00453-013-9867-z & 10.1109/TVCG.2011.202).
-Copyright (C) 2019  Netherlands eScience Center and TU Eindhoven
+Copyright (C) 2021  Netherlands eScience Center and TU Eindhoven
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -77,8 +77,10 @@ class SpiralTree
   using NodeIterator = NodeSet::iterator;
   using NodeConstIterator = NodeSet::const_iterator;
 
+ private:  // TODO(tvl) made private until computing the tree with obstructions is implemented.
   using ObstacleIterator = ObstacleSet::iterator;
   using ObstacleConstIterator = ObstacleSet::const_iterator;
+ public:
 
   SpiralTree(const Point& root, const Number& restricting_angle_rad);
 
@@ -92,17 +94,27 @@ class SpiralTree
   NodeIterator nodes_begin() { return nodes_.begin(); }
   NodeIterator nodes_end() { return nodes_.end(); }
 
+ private:  // TODO(tvl) made private until computing the tree with obstructions is implemented.
   ObstacleConstIterator obstacles_begin() const { return obstacles_.begin(); }
   ObstacleConstIterator obstacles_end() const { return obstacles_.end(); }
 
   ObstacleIterator obstacles_begin() { return obstacles_.begin(); }
   ObstacleIterator obstacles_end() { return obstacles_.end(); }
+ public:
 
   void AddPlaces(const std::vector<Place::Ptr>& places);
 
+ private:  // TODO(tvl) made private until computing the tree with obstructions is implemented.
   void AddObstacles(const std::vector<Region>& obstacles);
+ public:
 
   void Compute();
+
+ private:  // TODO(tvl) made private until computing the tree with obstructions is implemented.
+  void ComputeUnobstructed();
+
+  void ComputeObstructed();
+ public:
 
   void SetRoot(const Point& root);
 
@@ -114,10 +126,6 @@ class SpiralTree
   bool IsReachable(const PolarPoint& parent_point, const PolarPoint& child_point) const;
 
   void AddObstacle(const Polygon_with_holes& polygon);
-
-  void ComputeUnobstructed();
-
-  void ComputeObstructed();
 
   Number restricting_angle_rad_;
   Vector root_translation_;

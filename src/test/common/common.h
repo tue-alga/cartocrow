@@ -1,7 +1,7 @@
 /*
 The GeoViz library implements algorithmic geo-visualization methods,
 developed at TU Eindhoven.
-Copyright (C) 2019  Netherlands eScience Center and TU Eindhoven
+Copyright (C) 2021  Netherlands eScience Center and TU Eindhoven
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -441,7 +441,7 @@ UNITTEST_TEST(SpiralIntersections)
 
   const geoviz::PolarLine line_1(geoviz::PolarPoint(geoviz::Point(11, -2)), geoviz::PolarPoint(geoviz::Point(-1, 7)));
   const geoviz::PolarLine line_2(geoviz::PolarPoint(geoviz::Point(-2, -4)), geoviz::PolarPoint(geoviz::Point(1, 0)));
-  const geoviz::PolarLine line_3(geoviz::PolarPoint(geoviz::Point(0, 0)), geoviz::PolarPoint(geoviz::Point(4, -3)));
+  const geoviz::PolarLine line_3(geoviz::PolarPoint(geoviz::Point(4, -3)), geoviz::PolarPoint(geoviz::Point(0, 0)));
   const geoviz::PolarLine line_4(geoviz::PolarPoint(geoviz::Point(0, 0)), geoviz::PolarPoint(geoviz::Point(4, 0)));
   const geoviz::Spiral spiral_1(geoviz::PolarPoint(geoviz::Point(11, -3)), M_PI * 3.0 / 8);
   const geoviz::Spiral spiral_2(geoviz::PolarPoint(geoviz::Point(11, -3)), -M_PI * 3.0 / 8);
@@ -467,8 +467,8 @@ UNITTEST_TEST(SpiralIntersections)
   geoviz::PolarPoint expected_intersection_line_2_spiral_5_0(0.8000, -0.6435);
   geoviz::PolarPoint expected_intersection_line_3_spiral_1_0(13.3302, -0.6435);
   geoviz::PolarPoint expected_intersection_line_3_spiral_1_1(3.6282, 2.4981);
-  geoviz::PolarPoint expected_intersection_line_3_spiral_5_0(5, -0.6435);
-  geoviz::PolarPoint expected_intersection_line_3_spiral_5_1(0, 0);
+  geoviz::PolarPoint expected_intersection_line_3_spiral_5_0(0, 0);
+  geoviz::PolarPoint expected_intersection_line_3_spiral_5_1(5, -0.6435);
   geoviz::PolarPoint expected_intersection_line_4_spiral_5_0(0, 0);
 
 

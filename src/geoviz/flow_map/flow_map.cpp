@@ -3,7 +3,7 @@ The Flow Map library implements the algorithmic geo-visualization
 method by the same name, developed by Kevin Verbeek, Kevin Buchin,
 and Bettina Speckmann at TU Eindhoven
 (DOI: 10.1007/s00453-013-9867-z & 10.1109/TVCG.2011.202).
-Copyright (C) 2019  Netherlands eScience Center and TU Eindhoven
+Copyright (C) 2021  Netherlands eScience Center and TU Eindhoven
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -140,7 +140,7 @@ void ComputeFlowMap
 
   SpiralTree spiral_tree(root, parameters.restricting_angle_rad);
   spiral_tree.AddPlaces(places);
-  spiral_tree.AddObstacles(obstacles);
+//  spiral_tree.AddObstacles(obstacles);  // TODO(tvl) disabled until computing the tree with obstructions is implemented.
   spiral_tree.Compute();
 
   tree = std::make_shared<FlowTree>(spiral_tree);
