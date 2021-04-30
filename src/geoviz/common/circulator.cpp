@@ -23,6 +23,8 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 13-11-2020
 
 namespace geoviz
 {
+namespace detail
+{
 
 /**@struct CirculatorBase
  * @brief The base class for circular iterators.
@@ -143,6 +145,8 @@ namespace geoviz
  * @param other the circulator to compare to.
  * @return True if and only if this circulator points to a different element as the other circulator.
  */
+
+} // namespace detail
 
 
 /**@struct Circulator

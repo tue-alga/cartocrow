@@ -14,16 +14,14 @@ This library has been developed according to the following design principles to 
 Copyright 2021 Netherlands eScience Center and TU Eindhoven
 Licensed under the GPLv3.0 license. See LICENSE for details.
 
-## Directory structure
-
-This directory contains the GeoViz C++ library.
-Subdirectories are organized as follows:
-
-- cmake : configuration and template files for CMake.
-- console : command-line applications to expose the functionality of the library.
-- geoviz : all the functional code. Note that I/O methods can be found with the relevant applications.
-- test : unit testing applications.
-
 # Dependencies
 
 For the code dependencies, see the top level README.md
+
+# Code structure
+
+For the code structure and implementation guidelines, see CONTRIBUTE.md
+
+# Connection to website
+
+This library can be used as the backend to the website shipped in this repository. These two are connected using PHP scripts, as described in CONTRIBUTE.md

@@ -1,4 +1,4 @@
-# Example minimal website with map and C++ backend.
+# GeoViz website with map and C++ back-end.
 
 This website can call the geographical visualization algorithm back-end provided in this repository and show the generated geographical map data.
 
@@ -17,19 +17,10 @@ Licensed under the Apache License, version 2.0. See LICENSE for details.
 This website depends on the GeoViz software library distributed together with this website.
 The GeoViz software library is Licensed under the GPLv3.0 license. See its LICENSE for details.
 
-## Directory structure
+# Code structure
 
-This directory contains the example website.
-Subdirectories are organized as follows:
+For the website file structure and guidelines, see CONTRIBUTE.md
 
-- bin : native (server-side C++) applications.
-- data : data stores such as databases.
-- html : doxygen-generated HTML documentation.
-- include : source code for native applications.
-- latex : doxygen-generated LaTeX documentation.
-- lib : native (server-side C++) libraries.
-- page : referenced webpages.
-- res : webpage resources like images and icons.
-- script : javascript and other (client-side) scripts.
-- style : stylesheets.
+# Connection to library
 
+This website uses as a back-end the library shipped in this repository. These two are connected using PHP scripts, as described in CONTRIBUTE.md

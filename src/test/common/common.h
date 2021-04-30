@@ -473,7 +473,7 @@ UNITTEST_TEST(SpiralIntersections)
 
 
   // TODO(tvl) TMP DEBUG
-  geoviz::common::SvgWriter writer;
+  geoviz::SvgWriter writer;
   writer.Add(line_1);
   writer.Add(line_2);
   writer.Add(line_3);

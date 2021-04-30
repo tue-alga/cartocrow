@@ -19,17 +19,17 @@ To generate and start serving the site (note that these scripts expect to be cal
 ./serve.sh
 ```
 
-The code depends on several packages that may need to be installed before it can compile successfully:
-* CMake
-* convert
-* CGAL
-* DoxyGen
-* gflags
-* glog
-* latex
-* php
-* tinyxml2
-* unittest-cpp
+The code depends on several packages that may need to be installed before it can compile successfully (later versions may be backwards-compatible):
+* CMake (3.10.2-1ubuntu2.18.04.1)
+* ImageMagick convert (8:6.9.7.4+dfsg-16ubuntu6.9)
+* CGAL (4.11-2build1)
+* DoxyGen (1.8.13-10)
+* gflags (2.2.1-1)
+* glog (0.3.5-1)
+* latex (2017.20180305-1)
+* php (7.2.24-0ubuntu0.18.04.7)
+* tinyxml2 (6.0.0+dfsg-1)
+* unittest-cpp (v2.0.0)
 
 On Ubuntu, most can be installed by running:
 

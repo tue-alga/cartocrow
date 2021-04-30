@@ -35,8 +35,6 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 09-03-2021
 
 namespace geoviz
 {
-namespace common
-{
 
 class SvgWriter
 {
@@ -63,7 +61,6 @@ class SvgWriter
   std::vector<PolarSegment> line_segments_;
 }; // class SvgWriter
 
-} // namespace common
 } // namespace geoviz
 
 #endif //GEOVIZ_COMMON_IO_SVG_WRITER_H

@@ -1,4 +1,4 @@
-# Example minimal website with map and C++ backend.
+# GeoViz website with map and C++ back-end.
 
 This website can call the geographical visualization algorithm back-end provided in this repository and show the generated geographical map data.
 
@@ -12,7 +12,31 @@ This website has been developed with design principles to promote responsiveness
 ## Framework
 
 Note that there are several widely used frameworks that can be used to make it easier to build and maintain the website, such as React, Vue, and Angular.
-This website does not use these frameworks to keep it lightweight, but they are definately worth considering before the website becomes large.
+This website does not use these frameworks to keep it lightweight, but they are definitely worth considering before the website becomes large.
+
+## Directory structure
+
+This directory contains the example website.
+Subdirectories are organized as follows:
+
+- bin : native (server-side C++) applications.
+- data : data stores such as databases.
+- html : doxygen-generated HTML documentation.
+- include : source code for native applications.
+- latex : doxygen-generated LaTeX documentation.
+- lib : native (server-side C++) libraries.
+- page : referenced webpages.
+- res : webpage resources like images and icons.
+- script : javascript and other (client-side) scripts.
+- style : stylesheets.
+
+# Connection to library
+
+This website uses as a back-end the library shipped in this repository. These two are connected using PHP scripts built when building the library and copied to the script directory when the library is installed.
+Note that each application included in the library provides its own PHP script, because this reduces security risks by enforcing absolute paths.
+
+Each PHP script can be called by POST request, while providing any relevant usage parameters and data. The script will return the contents of an SVG file to replace the current map in the website.
+
 
 ## Style
 

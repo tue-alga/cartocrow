@@ -26,8 +26,6 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 09-03-2021
 
 namespace geoviz
 {
-namespace common
-{
 
 /**@class SvgWriter
  * @brief A writer for commonly used geometry.
@@ -95,5 +93,4 @@ bool SvgWriter::Write(const WriteOptions::Ptr& options, std::ostream& out) const
   return true;
 }
 
-} // namespace common
 } // namespace geoviz
