@@ -238,6 +238,12 @@ function updateFormState() {
     return;
   }
   document.getElementById('options_panel').style.display = 'block';
+
+  if (!svg_output) {
+    document.getElementById('output_panel').style.display = 'none';
+    return;
+  }
+  document.getElementById('output_panel').style.display = 'block';
 }
 
 /**
@@ -409,6 +415,7 @@ function runNecklaceAlgorithm() {
 
   if (!necklace_data_base64) {
     let necklace_geometry = atob(necklace_geometry_base64);
+    svg_output = '';
     processNecklaceMapResponse()(necklace_geometry);
     setColumnList('');
     return;
@@ -434,5 +441,16 @@ function runNecklaceAlgorithm() {
 
   // Run the necklace map PHP script on the server.
   ajaxPost('/script/run_necklace_map.php', body, processNecklaceMapResponse());
+}
+
+function onClickedDownload() {
+  alert(svg_output);
+  /*const svg_blob = Blob(svg_output)
+  const url = URL.createObjectURL(svg_blob);
+  const a = document.createElement('a');
+  a.download = 'map.svg';
+  a.href = url;
+  a.click();*/
+  // todo remove
 }
 
