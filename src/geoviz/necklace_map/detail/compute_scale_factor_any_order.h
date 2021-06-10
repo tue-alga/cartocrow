@@ -61,7 +61,7 @@ class ComputeScaleFactorAnyOrder
  protected:
   virtual Number ComputeScaleUpperBound();
 
-  virtual Number ComputeCoveringRadii(const Number& scale_factor);
+  virtual void ComputeCoveringRadii(const Number& scale_factor);
 
  private:
   int AssignLayers();

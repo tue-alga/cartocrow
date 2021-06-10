@@ -52,7 +52,7 @@ class ComputeScaleFactorAnyOrderIngot : public ComputeScaleFactorAnyOrder
  protected:
   Number ComputeScaleUpperBound() override;
 
-  Number ComputeCoveringRadii(const Number& scale_factor) override;
+  void ComputeCoveringRadii(const Number& scale_factor) override;
 }; // class ComputeScaleFactorAnyOrderIngot
 
 } // namespace detail
