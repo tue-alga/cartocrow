@@ -131,7 +131,7 @@ Number ComputeScaleFactorAnyOrder::ComputeScaleUpperBound()
   return lower_bound;
 }
 
-Number ComputeScaleFactorAnyOrder::ComputeCoveringRadii(const Number& scale_factor)
+void ComputeScaleFactorAnyOrder::ComputeCoveringRadii(const Number& scale_factor)
 {
   for (CycleNodeLayered::Ptr& node : nodes_)
     node->bead->covering_radius_rad =

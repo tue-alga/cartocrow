@@ -55,7 +55,7 @@ Number ComputeScaleFactorAnyOrderIngot::ComputeScaleUpperBound()
   return M_PI / nodes_.size() - half_buffer_rad_;
 }
 
-Number ComputeScaleFactorAnyOrderIngot::ComputeCoveringRadii(const Number& scale_factor)
+void ComputeScaleFactorAnyOrderIngot::ComputeCoveringRadii(const Number& scale_factor)
 {
   for (CycleNodeLayered::Ptr& node : nodes_)
     node->bead->covering_radius_rad = scale_factor + half_buffer_rad_;
