@@ -61,12 +61,13 @@ bool IntervalTypeParser::operator()(const std::string& str) const
  */
 std::string IntervalTypeParser::Serialize() const
 {
-  switch (type)
+  if (type == IntervalType::kCentroid)
   {
-    case IntervalType::kCentroid:
-      return kCentroid;
-    case IntervalType::kWedge:
-      return kWedge;
+    return kCentroid;
+  }
+  else
+  {
+    return kWedge;
   }
 }
 
@@ -109,12 +110,13 @@ bool OrderTypeParser::operator()(const std::string& str) const
  */
 std::string OrderTypeParser::Serialize() const
 {
-  switch (type)
+  if (type == OrderType::kFixed)
   {
-    case OrderType::kFixed:
-      return kFixed;
-    case OrderType::kAny:
-      return kAny;
+    return kFixed;
+  }
+  else
+  {
+    return kAny;
   }
 }
 

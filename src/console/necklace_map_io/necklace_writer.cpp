@@ -46,7 +46,7 @@ NecklaceWriter::NecklaceWriter()
  * @param out the stream to which to write.
  * @return whether the necklace map could be successfully written to the stream.
  */
-bool NecklaceWriter::Write
+void NecklaceWriter::Write
 (
   const std::vector<MapElement::Ptr>& elements,
   const std::vector<Necklace::Ptr>& necklaces,

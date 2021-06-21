@@ -45,7 +45,7 @@ class NecklaceWriter
 
   NecklaceWriter();
 
-  bool Write
+  void Write
   (
     const std::vector<MapElement::Ptr>& elements,
     const std::vector<Necklace::Ptr>& necklaces,
