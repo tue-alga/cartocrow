@@ -69,7 +69,7 @@ bool ReadGeometry
   geoviz::Number& scale_factor
 )
 {
-  geoviz::SvgReader svg_reader;
+  geoviz::necklace_map::SvgReader svg_reader;
   return svg_reader.ReadFile(FLAGS_in_geometry_filename, elements, necklaces, scale_factor);
 }
 

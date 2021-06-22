@@ -3,7 +3,7 @@ The Necklace Map console application implements the algorithmic
 geo-visualization method by the same name, developed by
 Bettina Speckmann and Kevin Verbeek at TU Eindhoven
 (DOI: 10.1109/TVCG.2010.180 & 10.1142/S021819591550003X).
-Copyright (C) 2019  Netherlands eScience Center and TU Eindhoven
+Copyright (C) 2021  Netherlands eScience Center and TU Eindhoven
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -30,9 +30,8 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-2019
 #include <geoviz/common/timer.h>
 #include <geoviz/necklace_map/necklace_map.h>
 
-#include "console/common/utils_cla.h"
-#include "console/common/utils_flags.h"
-#include "console/necklace_map_io/necklace_map_io.h"
+#include <console/common/utils_cla.h>
+#include <console/common/utils_flags.h>
 
 
 // the input flags are mutually exclusive per type to prevent accidentally setting both and 'the wrong one' being used.
@@ -69,7 +68,7 @@ DEFINE_bool
 (
   out_website,
   false,
-  "Whether to write the output to the standard output stream for the website. This also forces logging to the standard error stream."
+  "Whether to write the output to the standard output stream for the website."
 );
 
 DEFINE_bool
@@ -187,7 +186,7 @@ DEFINE_double
   "Opacity of the necklace beads in the output. Must be in the range [0, 1]."
   " The necklace beads are drawn with roughly the same style as the input regions."
   " However, the boundaries will be hidden for transparant beads."
-  // The reason for hiding the boundary is that it has undesirable interaction with the drop shadow filter applied to the beads.
+// The reason for hiding the boundary is that it has undesirable interaction with the drop shadow filter applied to the beads.
 );
 
 DEFINE_double
@@ -195,6 +194,14 @@ DEFINE_double
   bead_id_font_size_px,
   16,
   "Font size (in pixels) of the bead IDs in the output. Must be larger than 0."
+);
+
+DEFINE_string
+(
+  bound_necklaces_deg,
+  "",
+  "The angles between which to draw the circular necklaces. Must be formatted as 'N_id;cw_deg;ccw_deg', where N_id is the ID of the necklace, and cw_deg and ccw_deg are the clockwise and counterclockwise extreme angles"
+  " (in degrees) of the necklace. This pattern may repeat to bound multiple necklaces, separated by whitespace."
 );
 
 DEFINE_bool
@@ -247,7 +254,8 @@ DEFINE_bool
 );
 
 
-void ValidateFlags(geoviz::necklace_map::Parameters& parameters, geoviz::WriterOptions::Ptr& write_options)
+void
+ValidateFlags(geoviz::necklace_map::Parameters& parameters, geoviz::necklace_map::WriteOptions::Ptr& write_options)
 {
   bool correct = true;
   LOG(INFO) << "necklace_map_cla flags:";
@@ -267,7 +275,11 @@ void ValidateFlags(geoviz::necklace_map::Parameters& parameters, geoviz::WriterO
 
   // Interval parameters.
   {
-    correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(interval_type), geoviz::IntervalTypeParser(parameters.interval_type));
+    correct &= CheckAndPrintFlag
+    (
+      FLAGS_NAME_AND_VALUE(interval_type),
+      geoviz::necklace_map::IntervalTypeParser(parameters.interval_type)
+    );
 
     correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(centroid_interval_length_rad), MakeRangeCheck(0.0, M_PI));
     parameters.centroid_interval_length_rad = FLAGS_centroid_interval_length_rad;
@@ -280,7 +292,11 @@ void ValidateFlags(geoviz::necklace_map::Parameters& parameters, geoviz::WriterO
 
   // Scale factor optimization parameters.
   {
-    correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(order_type), geoviz::OrderTypeParser(parameters.order_type));
+    correct &= CheckAndPrintFlag
+    (
+      FLAGS_NAME_AND_VALUE(order_type),
+      geoviz::necklace_map::OrderTypeParser(parameters.order_type)
+    );
 
     correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(buffer_rad), MakeRangeCheck(0.0, M_PI));
     parameters.buffer_rad = FLAGS_buffer_rad;
@@ -297,7 +313,6 @@ void ValidateFlags(geoviz::necklace_map::Parameters& parameters, geoviz::WriterO
     correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(placement_cycles), MakeLowerBoundCheck(0));
     parameters.placement_cycles = FLAGS_placement_cycles;
 
-    using Closure = Closure;
     correct &= CheckAndPrintFlag
     (
       FLAGS_NAME_AND_VALUE(aversion_ratio),
@@ -307,7 +322,7 @@ void ValidateFlags(geoviz::necklace_map::Parameters& parameters, geoviz::WriterO
   }
 
   // Output parameters.
-  using Options = geoviz::WriterOptions;
+  using Options = geoviz::necklace_map::WriteOptions;
   write_options = Options::Default();
   {
     correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(pixel_width), IsStrictlyPositive<int32_t>());
@@ -321,6 +336,8 @@ void ValidateFlags(geoviz::necklace_map::Parameters& parameters, geoviz::WriterO
 
     correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(bead_opacity), MakeRangeCheck(0.0, 1.0));
     write_options->bead_opacity = FLAGS_bead_opacity;
+
+    PrintFlag(FLAGS_NAME_AND_VALUE(bound_necklaces_deg));
 
     correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(bead_id_font_size_px), IsStrictlyPositive<double>());
     write_options->bead_id_font_size_px = FLAGS_bead_id_font_size_px;
@@ -343,16 +360,16 @@ void ValidateFlags(geoviz::necklace_map::Parameters& parameters, geoviz::WriterO
     write_options->draw_bead_angles = FLAGS_draw_bead_angles;
   }
 
-  correct &= CheckAndPrintFlag( FLAGS_NAME_AND_VALUE( log_dir ), Or<Empty, IsDirectory> );
-  PrintFlag( FLAGS_NAME_AND_VALUE( stderrthreshold ) );
-  PrintFlag( FLAGS_NAME_AND_VALUE( v ) );
+  correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(log_dir), Or<Empty, IsDirectory>);
+  PrintFlag(FLAGS_NAME_AND_VALUE(stderrthreshold));
+  PrintFlag(FLAGS_NAME_AND_VALUE(v));
 
-  if( !correct ) LOG(FATAL) << "Errors in flags; Terminating.";
+  if (!correct) LOG(FATAL) << "Errors in flags; Terminating.";
 }
 
 bool ReadData(std::vector<geoviz::necklace_map::MapElement::Ptr>& elements)
 {
-  geoviz::DataReader data_reader;
+  geoviz::necklace_map::DataReader data_reader;
   return data_reader.ReadFile(FLAGS_in_data_filename, FLAGS_in_value_name, elements);
 }
 
@@ -363,8 +380,59 @@ bool ReadGeometry
   geoviz::Number& scale_factor
 )
 {
-  geoviz::SvgReader svg_reader;
+  geoviz::necklace_map::SvgReader svg_reader;
   return svg_reader.ReadFile(FLAGS_in_geometry_filename, elements, necklaces, scale_factor);
+}
+
+void ApplyNecklaceDrawBounds
+(
+  std::vector<geoviz::necklace_map::Necklace::Ptr>& necklaces,
+  const std::string& bound_necklaces_deg
+)
+{
+  std::stringstream stream(bound_necklaces_deg);
+  while (stream && !stream.eof())
+  {
+    std::string token;
+    stream >> token;
+
+    std::vector<std::string> bits;
+    while (!token.empty())
+    {
+      const size_t pos = token.find(";");
+      bits.push_back(token.substr(0, pos));
+      token = pos == std::string::npos ? "" : token.substr(pos + 1);
+    }
+    if (bits.size() < 3)
+      continue;
+
+    const std::string necklace_id = bits[0];
+    double cw_deg, ccw_deg;
+
+    try
+    {
+      cw_deg = std::stod(bits[1]);
+      ccw_deg = std::stod(bits[2]);
+    }
+    catch (...)
+    {
+      continue;
+    }
+
+    for (geoviz::necklace_map::Necklace::Ptr& necklace : necklaces)
+    {
+      if (necklace->id != necklace_id)
+        continue;
+
+      geoviz::necklace_map::CircleNecklace::Ptr shape = std::dynamic_pointer_cast<geoviz::necklace_map::CircleNecklace>( necklace->shape );
+      if (!shape)
+        continue;
+
+      shape->draw_bounds_cw_rad() = cw_deg * M_PI / 180;
+      shape->draw_bounds_ccw_rad() = ccw_deg * M_PI / 180;
+      break;
+    }
+  }
 }
 
 void WriteOutput
@@ -372,10 +440,10 @@ void WriteOutput
   const std::vector<geoviz::necklace_map::MapElement::Ptr>& elements,
   const std::vector<geoviz::necklace_map::Necklace::Ptr>& necklaces,
   const geoviz::Number& scale_factor,
-  const geoviz::WriterOptions::Ptr& write_options
+  const geoviz::necklace_map::WriteOptions::Ptr& write_options
 )
 {
-  geoviz::NecklaceWriter writer;
+  geoviz::necklace_map::SvgWriter writer;
   if (FLAGS_out_website)
     writer.Write(elements, necklaces, scale_factor, write_options, std::cout);
 
@@ -388,7 +456,7 @@ void WriteOutput
 }
 
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
   InitApplication
   (
@@ -401,7 +469,7 @@ int main(int argc, char **argv)
 
   // Validate the settings.
   geoviz::necklace_map::Parameters parameters;
-  geoviz::WriterOptions::Ptr write_options;
+  geoviz::necklace_map::WriteOptions::Ptr write_options;
   ValidateFlags(parameters, write_options);
 
 
@@ -415,7 +483,8 @@ int main(int argc, char **argv)
 
   // Read the geometry and data.
   // Note that the regions should be written in the same order as in the input,
-  // which forces the geometry to be read first.
+  // because some smaller regions may be used to simulate enclaves inside larger regions.
+  // This forces the geometry to be read first.
   geoviz::Number scale_factor;
   const bool success_read_svg = ReadGeometry(elements, necklaces, scale_factor);
   const bool success_read_data = ReadData(elements);
@@ -428,8 +497,7 @@ int main(int argc, char **argv)
     // Compute the optimal scale factor and placement.
     scale_factor = ComputeScaleFactor(parameters, elements, necklaces);
     LOG(INFO) << "Computed scale factor: " << scale_factor;
-  }
-  else
+  } else
   {
     // Compute just the placement.
     ComputePlacement(parameters, scale_factor, elements, necklaces);
@@ -439,6 +507,7 @@ int main(int argc, char **argv)
 
 
   // Write the output.
+  ApplyNecklaceDrawBounds(necklaces, FLAGS_bound_necklaces_deg);
   WriteOutput(elements, necklaces, scale_factor, write_options);
   const double time_write = time.Stamp();
 

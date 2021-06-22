@@ -1,9 +1,8 @@
 /*
-The Necklace Map console application implements the algorithmic
-geo-visualization method by the same name, developed by
-Bettina Speckmann and Kevin Verbeek at TU Eindhoven
-(DOI: 10.1109/TVCG.2010.180 & 10.1142/S021819591550003X).
-Copyright (C) 2019  Netherlands eScience Center and TU Eindhoven
+The Necklace Map library implements the algorithmic geo-visualization
+method by the same name, developed by Bettina Speckmann and Kevin Verbeek
+at TU Eindhoven (DOI: 10.1109/TVCG.2010.180 & 10.1142/S021819591550003X).
+Copyright (C) 2021  Netherlands eScience Center and TU Eindhoven
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -30,13 +29,23 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-04-2020
 
 #include <cmake/geoviz_test_config.h>
 #include <console/common/utils_filesystem.h>
-#include <console/necklace_map_io/necklace_map_io.h>
+#include <geoviz/common/timer.h>
 #include <geoviz/necklace_map/necklace_map.h>
 
 #include "test/test.h"
+#include "test/test_registry_timer.h"
 
 
 void TestNecklaceMap() {}  // Linking hack, each new test cpp file has it.
+
+constexpr const size_t kP = 2;
+constexpr const size_t kV = 2;
+
+using PT = PrintTimes<double, kP, kV>;
+using Reg = PT::R_;
+
+static Reg kRegistry;
+
 
 struct NecklaceData
 {
@@ -78,10 +87,15 @@ struct NecklaceDataWesternEurope
   {
     if (data.elements.empty())
     {
+      kRegistry.Register(&data, "NecklaceDataWesternEurope");
+
       // Read the geometry.
-      geoviz::SvgReader svg_reader;
+      geoviz::necklace_map::SvgReader svg_reader;
       const filesystem::path in_geometry_path = kDataDir / "wEU.svg";
+
+      geoviz::Timer time;
       UNITTEST_REQUIRE UNITTEST_CHECK(svg_reader.ReadFile(in_geometry_path, data.elements, data.necklaces));
+      kRegistry(&data, 0) = time.Stamp();
     }
   }
 
@@ -91,9 +105,14 @@ struct NecklaceDataWesternEurope
       return true;
     value_name = in_value_name;
 
-    geoviz::DataReader data_reader;
+    geoviz::necklace_map::DataReader data_reader;
     const filesystem::path in_data_path = kDataDir / "wEU.txt";
-    return data_reader.ReadFile(in_data_path, in_value_name, data.elements);
+
+    geoviz::Timer time;
+    const bool result = data_reader.ReadFile(in_data_path, in_value_name, data.elements);
+    kRegistry(&data, 1) = time.Stamp();
+
+    return result;
   }
 
   NecklaceData& data;
@@ -235,10 +254,15 @@ struct NecklaceDataEastAsia
   {
     if (data.elements.empty())
     {
+      kRegistry.Register(&data, "NecklaceDataEastAsia");
+
       // Read the geometry.
-      geoviz::SvgReader svg_reader;
+      geoviz::necklace_map::SvgReader svg_reader;
       const filesystem::path in_geometry_path = kDataDir / "eAsia.svg";
+
+      geoviz::Timer time;
       UNITTEST_REQUIRE UNITTEST_CHECK(svg_reader.ReadFile(in_geometry_path, data.elements, data.necklaces));
+      kRegistry(&data, 0) = time.Stamp();
     }
   }
 
@@ -248,9 +272,14 @@ struct NecklaceDataEastAsia
       return true;
     value_name = in_value_name;
 
-    geoviz::DataReader data_reader;
+    geoviz::necklace_map::DataReader data_reader;
     const filesystem::path in_data_path = kDataDir / "eAsia.txt";
-    return data_reader.ReadFile(in_data_path, in_value_name, data.elements);
+
+    geoviz::Timer time;
+    const bool result = data_reader.ReadFile(in_data_path, in_value_name, data.elements);
+    kRegistry(&data, 1) = time.Stamp();
+
+    return result;
   }
 
   NecklaceData& data;

@@ -2,7 +2,7 @@
 The Necklace Map library implements the algorithmic geo-visualization
 method by the same name, developed by Bettina Speckmann and Kevin Verbeek
 at TU Eindhoven (DOI: 10.1109/TVCG.2010.180 & 10.1142/S021819591550003X).
-Copyright (C) 2019  Netherlands eScience Center and TU Eindhoven
+Copyright (C) 2021  Netherlands eScience Center and TU Eindhoven
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -65,6 +65,12 @@ Parameters::Parameters() :
 
 /**@fn Number Parameters::centroid_interval_length_rad;
  * @brief The length of any centroid intervals generated when computing the feasible intervals.
+ */
+
+/**@fn Number Parameters::wedge_interval_length_min_rad;
+ * @brief The minimum length of any wedge interval generated when computing the feasible intervals.
+ *
+ * If a generated wedge interval is shorter than this length, it is replaced by a centroid interval with this length.
  */
 
 /**@fn bool Parameters::ignore_point_regions;

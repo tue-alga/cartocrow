@@ -1,7 +1,7 @@
 /*
 The GeoViz console applications implement algorithmic geo-visualization
 methods, developed at TU Eindhoven.
-Copyright (C) 2019  Netherlands eScience Center and TU Eindhoven
+Copyright (C) 2021  Netherlands eScience Center and TU Eindhoven
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -43,7 +43,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-10-2019
 std::string CopyrightNotice(const bool interactive /*= false*/)
 {
   std::stringstream out;
-  out << "Copyright (C) 2019  Netherlands eScience Center and TU Eindhoven" << std::endl;
+  out << "Copyright (C) 2021  Netherlands eScience Center and TU Eindhoven" << std::endl;
   out << "This program comes with ABSOLUTELY NO WARRANTY" << (interactive ? "; type `show w' for details." : ".") << std::endl;
   out << "This is free software, and you are welcome to redistribute it under certain" << std::endl;
   out << "conditions" << (interactive ? "; type `show c' for details." : ".");

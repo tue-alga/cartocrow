@@ -1,7 +1,7 @@
 /*
 The GeoViz library implements algorithmic geo-visualization methods,
 developed at TU Eindhoven.
-Copyright (C) 2019  Netherlands eScience Center and TU Eindhoven
+Copyright (C) 2021  Netherlands eScience Center and TU Eindhoven
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -19,8 +19,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Created by tvl (t.vanlankveld@esciencecenter.nl) on 07-11-2019
 */
 
-#ifndef GEOVIZ_NECKLACE_MAP_REGION_H
-#define GEOVIZ_NECKLACE_MAP_REGION_H
+#ifndef GEOVIZ_COMMON_REGION_H
+#define GEOVIZ_COMMON_REGION_H
 
 #include <string>
 #include <vector>
@@ -57,4 +57,4 @@ class Region
 
 } // namespace geoviz
 
-#endif //GEOVIZ_NECKLACE_MAP_REGION_H
+#endif //GEOVIZ_COMMON_REGION_H

@@ -76,11 +76,9 @@ find_package(gflags REQUIRED)
 ### LIBRARIES ###
 
 add_subdirectory(common)
-add_subdirectory(necklace_map_io)
 
 # Propagate variables up.
 set(COMMON_CLA_TARGET ${COMMON_CLA_TARGET} PARENT_SCOPE)
-set(NECKLACE_MAP_IO_TARGET ${NECKLACE_MAP_IO_TARGET} PARENT_SCOPE)
 
 ### EXECUTABLES ###
 # A few notes:
@@ -92,6 +90,7 @@ add_subdirectory(draw_logo)
 add_subdirectory(multi_library_app)
 add_subdirectory(necklace_map)
 add_subdirectory(map_regions)
+add_subdirectory(flow_map)
 
 # Set the default executable to run in Visual Studio.
 if(MSVC)

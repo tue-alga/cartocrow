@@ -87,5 +87,6 @@ target_compile_definitions(${TARGET} PUBLIC "GEOVIZ_DISABLE_SUITE_MAIN")
 # - The executables are named after the library they test.
 # - The executable targets start with "test_".
 
+add_subdirectory(common)
 add_subdirectory(necklace_map)
-add_subdirectory(flow_diagram)
+add_subdirectory(flow_map)

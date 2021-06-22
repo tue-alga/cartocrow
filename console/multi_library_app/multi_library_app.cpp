@@ -1,6 +1,6 @@
 /*
 Application to demonstrates linking multiple libraries to one executable.
-Copyright (C) 2019  Netherlands eScience Center and TU Eindhoven
+Copyright (C) 2021  Netherlands eScience Center and TU Eindhoven
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -29,7 +29,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-2019
 
 #include <cmake/geoviz_config.h>
 #include <geoviz/necklace_map/necklace_map.h>
-#include <geoviz/flow_diagram/flow_diagram.h>
+#include <geoviz/flow_map/flow_map.h>
 
 #include "console/common/utils_cla.h"
 #include "console/multi_library_app/internal/test_internal.h"
@@ -66,7 +66,7 @@ int main(int argc, char **argv)
     LOG(INFO) << "\t" << argv[i];
 
   //LOG(INFO) << "Necklace map: " << geoviz::proc_necklace_map();
-  LOG(INFO) << "Flow Diagram: " << geoviz::proc_flow_diagram();
+  //LOG(INFO) << "Flow Diagram: " << geoviz::flow_map::proc_flow_map();
 
   LOG(INFO) << "GeoViz version: " << GEOVIZ_VERSION;
 

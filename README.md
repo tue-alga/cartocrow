@@ -9,16 +9,16 @@ CartoCrow is a framework that simplifies the implementation of algorithms in car
 
 CartoCrow depends on the following packages:
 
-* CMake
-* convert
-* CGAL
-* Doxygen
-* gflags
-* glog
-* latex
-* php
-* tinyxml2
-* unittest-cpp
+* CMake (3.10.2-1ubuntu2.18.04.1)
+* ImageMagick convert (8:6.9.7.4+dfsg-16ubuntu6.9)
+* CGAL (4.11-2build1)
+* DoxyGen (1.8.13-10)
+* gflags (2.2.1-1)
+* glog (0.3.5-1)
+* latex (2017.20180305-1)
+* php (7.2.24-0ubuntu0.18.04.7)
+* tinyxml2 (6.0.0+dfsg-1)
+* unittest-cpp (v2.0.0)
 
 On Ubuntu, most can be installed by running:
 

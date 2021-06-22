@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="287pt" height="180pt" viewBox="0 0 287 180" version="1.1">
+<g id="obstacles">
+<path style="fill-rule:evenodd;fill:rgb(80%,80%,80%);fill-opacity:1;stroke-width:0.4;stroke-linecap:butt;stroke-linejoin:round;stroke:rgb(50.1%,50.1%,50.1%);stroke-opacity:1;stroke-miterlimit:10;" d="M 382.431281 260.921094 L 396.021125 252.811719 L 411.900031 264.276563 L 406.364875 273.245313 Z " transform="matrix(1,0,0,-1,-237.443,339.05)"/>
+<path style="fill-rule:evenodd;fill:rgb(80%,80%,80%);fill-opacity:1;stroke-width:0.4;stroke-linecap:butt;stroke-linejoin:round;stroke:rgb(50.1%,50.1%,50.1%);stroke-opacity:1;stroke-miterlimit:10;" d="M 290 180 L 440 180 L 440 190 L 290 190 Z " transform="matrix(1,0,0,-1,-237.443,339.05)"/>
+<path style="fill-rule:evenodd;fill:rgb(80%,80%,80%);fill-opacity:1;stroke-width:0.4;stroke-linecap:butt;stroke-linejoin:round;stroke:rgb(50.1%,50.1%,50.1%);stroke-opacity:1;stroke-miterlimit:10;" d="M 290 280 L 440 190 L 440 210 L 290 300 Z " transform="matrix(1,0,0,-1,-237.443,339.05)"/>
+</g>
+</svg>

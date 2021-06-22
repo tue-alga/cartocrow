@@ -2,7 +2,7 @@
 The Necklace Map library implements the algorithmic geo-visualization
 method by the same name, developed by Bettina Speckmann and Kevin Verbeek
 at TU Eindhoven (DOI: 10.1109/TVCG.2010.180 & 10.1142/S021819591550003X).
-Copyright (C) 2019  Netherlands eScience Center and TU Eindhoven
+Copyright (C) 2021  Netherlands eScience Center and TU Eindhoven
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -41,11 +41,17 @@ class CircleNecklace : public NecklaceShape
 
   const Point& kernel() const override;
 
+  const Number& draw_bounds_cw_rad() const;
+  Number& draw_bounds_cw_rad();
+
+  const Number& draw_bounds_ccw_rad() const;
+  Number& draw_bounds_ccw_rad();
+
   bool IsValid() const override;
 
-  bool IsEmpty() const override;
+  /*bool IsEmpty() const override;
 
-  bool IsClosed() const override;
+  bool IsClosed() const override;*/
 
   bool IntersectRay(const Number& angle_rad, Point& intersection) const override;
 
@@ -66,6 +72,8 @@ class CircleNecklace : public NecklaceShape
 
  private:
   Number radius_;
+
+  Number draw_bounds_cw_rad_, draw_bounds_ccw_rad_;
 }; // class CircleNecklace
 
 } // namespace necklace_map

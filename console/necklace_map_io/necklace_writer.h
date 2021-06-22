@@ -1,9 +1,9 @@
 /*
-The Necklace Map console application implements the algorithmic
+The Necklace Map library implements the algorithmic
 geo-visualization method by the same name, developed by
 Bettina Speckmann and Kevin Verbeek at TU Eindhoven
 (DOI: 10.1109/TVCG.2010.180 & 10.1142/S021819591550003X).
-Copyright (C) 2019  Netherlands eScience Center and TU Eindhoven
+Copyright (C) 2021  Netherlands eScience Center and TU Eindhoven
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -21,8 +21,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Created by tvl (t.vanlankveld@esciencecenter.nl) on 29-01-2020
 */
 
-#ifndef CONSOLE_NECKLACE_MAP_IO_NECKLACE_WRITER_H
-#define CONSOLE_NECKLACE_MAP_IO_NECKLACE_WRITER_H
+#ifndef GEOVIZ_NECKLACE_MAP_IO_SVG_WRITER_H
+#define GEOVIZ_NECKLACE_MAP_IO_SVG_WRITER_H
 
 #include <memory>
 #include <ostream>
@@ -31,30 +31,33 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 29-01-2020
 #include "geoviz/common/core_types.h"
 #include "geoviz/necklace_map/map_element.h"
 #include "geoviz/necklace_map/necklace.h"
-#include "console/necklace_map_io/detail/necklace_writer.h"
+#include "geoviz/necklace_map/io/write_options.h"
 
 
 namespace geoviz
 {
+namespace necklace_map
+{
 
-class NecklaceWriter
+class SvgWriter
 {
  public:
   using MapElement = necklace_map::MapElement;
   using Necklace = necklace_map::Necklace;
 
-  NecklaceWriter();
+  SvgWriter();
 
   void Write
   (
     const std::vector<MapElement::Ptr>& elements,
     const std::vector<Necklace::Ptr>& necklaces,
     const Number& scale_factor,
-    const WriterOptions::Ptr& options,
+    const WriteOptions::Ptr& options,
     std::ostream& out
   ) const;
-}; // class NecklaceWriter
+}; // class SvgWriter
 
+} // namespace necklace_map
 } // namespace geoviz
 
-#endif //CONSOLE_NECKLACE_MAP_IO_NECKLACE_WRITER_H
+#endif //GEOVIZ_NECKLACE_MAP_IO_SVG_WRITER_H

@@ -2,7 +2,7 @@
 The Necklace Map library implements the algorithmic geo-visualization
 method by the same name, developed by Bettina Speckmann and Kevin Verbeek
 at TU Eindhoven (DOI: 10.1109/TVCG.2010.180 & 10.1142/S021819591550003X).
-Copyright (C) 2019  Netherlands eScience Center and TU Eindhoven
+Copyright (C) 2021  Netherlands eScience Center and TU Eindhoven
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -25,8 +25,8 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 15-01-2020
 
 #include <memory>
 
+#include "geoviz/common/circular_range.h"
 #include "geoviz/common/core_types.h"
-#include "geoviz/necklace_map/circular_range.h"
 
 
 namespace geoviz

@@ -2,7 +2,7 @@
 The Necklace Map library implements the algorithmic geo-visualization
 method by the same name, developed by Bettina Speckmann and Kevin Verbeek
 at TU Eindhoven (DOI: 10.1109/TVCG.2010.180 & 10.1142/S021819591550003X).
-Copyright (C) 2019  Netherlands eScience Center and TU Eindhoven
+Copyright (C) 2021  Netherlands eScience Center and TU Eindhoven
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -133,6 +133,14 @@ void MapElement::InitializeBead(const Parameters& parameters)
  * @brief The necklace bead associated with this element.
  *
  * If MapElement::necklace is null, then this must also be null.
+ */
+
+/**@fn BeadMap MapElement::input_angle_rad;
+ * @brief The predefined angle of the bead associated with this element.
+ */
+
+/**@fn BeadMap MapElement::input_feasible;
+ * @brief The predefined feasible interval of the bead associated with this element.
  */
 
 } // namespace necklace_map

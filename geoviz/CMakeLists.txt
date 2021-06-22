@@ -33,11 +33,11 @@ endmacro(geoviz_add_library)
 # Note that each of these will have to be added to the GeoViz interface target and the GeoViz library archive.
 add_subdirectory(common)
 add_subdirectory(necklace_map)
-add_subdirectory(flow_diagram)
+add_subdirectory(flow_map)
 
 set(GEOVIZ_COMMON_TARGET ${GEOVIZ_COMMON_TARGET} PARENT_SCOPE)
 set(NECKLACE_MAP_TARGET ${NECKLACE_MAP_TARGET} PARENT_SCOPE)
-set(FLOW_DIAGRAM_TARGET ${FLOW_DIAGRAM_TARGET} PARENT_SCOPE)
+set(FLOW_MAP_TARGET ${FLOW_MAP_TARGET} PARENT_SCOPE)
 
 
 # The GeoViz library is an "interface" library:
@@ -48,7 +48,7 @@ target_link_libraries(
     ${GEOVIZ_TARGET} INTERFACE
     ${GEOVIZ_COMMON_TARGET}
     ${NECKLACE_MAP_TARGET}
-    ${FLOW_DIAGRAM_TARGET}
+    ${FLOW_MAP_TARGET}
 )
 
 install(
@@ -73,7 +73,7 @@ if(GEOVIZ_CREATE_ARCHIVE)
         COMMAND ${CMAKE_AR} rc ${GEOVIZ_ARCHIVE}
         $<TARGET_FILE:${GEOVIZ_COMMON_TARGET}>
         $<TARGET_FILE:${NECKLACE_MAP_TARGET}>
-        $<TARGET_FILE:${FLOW_DIAGRAM_TARGET}>
+        $<TARGET_FILE:${FLOW_MAP_TARGET}>
     )
     install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${GEOVIZ_ARCHIVE} DESTINATION ${CMAKE_INSTALL_LIBRARY_DIR})
 endif(GEOVIZ_CREATE_ARCHIVE)

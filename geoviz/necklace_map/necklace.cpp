@@ -2,7 +2,7 @@
 The Necklace Map library implements the algorithmic geo-visualization
 method by the same name, developed by Bettina Speckmann and Kevin Verbeek
 at TU Eindhoven (DOI: 10.1109/TVCG.2010.180 & 10.1142/S021819591550003X).
-Copyright (C) 2019  Netherlands eScience Center and TU Eindhoven
+Copyright (C) 2021  Netherlands eScience Center and TU Eindhoven
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -62,6 +62,12 @@ void Necklace::SortBeads()
     }
   );
 }
+
+/**@fn std::vector<Bead::Ptr> Necklace::id;
+ * @brief The identifier of the necklace.
+ *
+ * Regions can be linked to a necklace by specifying this identifier in the geometry input.
+ */
 
 /**@fn NecklaceShape::Ptr Necklace::shape;
  * @brief The shape of the necklace.

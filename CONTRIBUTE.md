@@ -1,7 +1,7 @@
 # GeoViz CONTRIBUTE
 
-This library is a minimal (dummy) C++ library meant to demonstrate functionality that can be called from a website and return new content for that website.
-Note that this implementation depends on quick processing times. Heavier processing may take longer than the allowedresponse delay, in which case more complex processing control may be required.
+This repository gives a C++ library for geographical visualization algorithms.
+Note that this implementation depends on quick processing times. Heavier processing may take longer than the allowed response delay, in which case more complex processing control may be required.
 
 This library has been developed according to the following design principles to promote usability, sustainability, and platform independence:
 
@@ -9,13 +9,39 @@ This library has been developed according to the following design principles to 
 - Project configuration using CMake.
 - Separate libraries and applications per method.
 
+## Directory structure
+
+This directory contains the GeoViz C++ library.
+Subdirectories are organized as follows:
+
+- cmake : configuration and template files for CMake.
+- console : command-line applications to expose the functionality of the library. *
+- doc : the front page for the DoxyGen documentation.
+- geoviz : all the functional code. Note that I/O methods can be found with the relevant applications. *
+- test : unit testing applications. *
+
+  * each of these has a subdirectory per module (e.g. common, flow_map, necklace_map).
+
+# Connection to website
+
+This library can be used as the backend to the website shipped in this repository. These two are connected using PHP scripts. These scripts are built based on .php.in files provided with each console application.
+Note that each application provides its own PHP script, because this reduces security risks by enforcing absolute paths.
+
+Each PHP script is provided any relevant usage parameters and data when it is called by POST request. It should check the input data, write it to temporary files on the server where necessary, call the application, remove the temporary files, and finally return the output of the application. This output must be the contents of an SVG file to replace the current map in the website.
+
 ## Code styles
+
+### CMake
 
 Note that within the CMakeLists files, we follow a loose naming convention:
 - All variables are UPPER_CASE, all methods are lower_case.
 - All project-specific CMake build options have the GEOVIZ_ prefix.
 - Similar to CMake, most variables are [project_name]_<target_name>_<type> (e.g. GEOVIZ_INSTALL_SOURCE_DIR or NECKLACE_MAP_TARGET)._
 - Applications exposing the functionality of an individual library are suffixed by _CLA (for command-line application).
+
+Whenever a file should be processed by CMake, it must be and [filename].in file, where [filename] is the filename (with extension) that will be created.
+
+### C++
 
 For the c++ code, we follow the Google style guide (https://google.github.io/styleguide/cppguide.html) with minor adjustments.
 - Source files use the .cpp extension. Template implementations may be separated from their declaration in a file with the same name and the .inc extension.
@@ -72,3 +98,15 @@ This choice is motived by a few arguments:
 Where appropriate, the documentation should specify pre- and post-conditions and it should specify processing efficiency, e.g. O(n) notation.
 
 Note that autobrief is disabled, because it can give unexpected results in rare cases where the documentation is in both header and source files.
+
+## Adding new modules.
+
+When adding new modules to the library, i.e. new algorithms, the following must be taken into account. Note that the website must also be updated to call the new module. How this should be done may be very dependent on the module and is not described here.
+
+A module can generally be separated into a functional component, an input-output and executable component (including call arguments), and a testing component.
+
+Each component should be stored in a new subdirectory inside the correct subdirectory of this root /src/ directory (i.e. inside /src/geoviz, /src/console, and /src/test respectively). The functional component should work independently of any input-output operations (including file access), whenever possible. The executable component should provide the source for a main method and call argument parsing, and a PHP script to call the application from the website.
+Keep in mind that some of the source may be very generic and application-independent. In this case it is worth considering moving it into the common module.
+
+The source must be assigned to a build target in de CMake structure. The places where "necklace_map" (case insensitive) is referenced inside any CMakeLists.txt files provides a good example of how to achieve this.
+In short, most directories must contain a CMakeLists.txt describing the target to generate from that directory and where to install when the target is built. These files must then be referenced from the CMakeLists.txt file in their parent directory. This parent CMakeLists.txt must sometimes also adjust the scope of the target, so the parent (and sibling) CMakeLists.txt file can reference it.
