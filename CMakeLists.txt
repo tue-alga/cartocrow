@@ -1,8 +1,10 @@
-cmake_minimum_required(VERSION 3.13.0)
+cmake_minimum_required(VERSION 3.15)
 
-# GeoViz project.
-set(PROJECT_NAME GeoViz)
-project(${PROJECT_NAME})
+project(CartoCrow
+    VERSION 0.1.2
+    DESCRIPTION "Framework for algorithmic thematic mapping"
+    HOMEPAGE_URL "https://github.com/tue-alga/cartocrow"
+    LANGUAGES CXX)
 
 # CMake options.
 set(CMAKE_INSTALL_BINARY_DIR bin CACHE STRING "Installation subdirectory for compiled executables and shared libraries.")
