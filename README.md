@@ -43,7 +43,7 @@ To run unit tests (from the current directory):
 CartoCrow uses CMake as its build system and can therefore be built as any other CMake application, for example:
 
 ```sh
-cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=<install-directory> -S src -B <build-directory>
+cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=<install-directory> -S . -B <build-directory>
 cmake --build <build-directory>
 cmake --install <build-directory>
 ```
@@ -71,3 +71,10 @@ We provide some sample input data to experiment with:
 ```bash
 build/console/necklace_map/necklace_map_cla --in_geometry_filename=data/necklace_map/wEU.svg --in_data_filename=data/necklace_map/wEU.txt --in_value_name=value
 ```
+
+
+## License
+
+Copyright (c) 2019-2021 Netherlands eScience Center and TU Eindhoven
+Licensed under the GPLv3.0 license. See LICENSE for details.
+
