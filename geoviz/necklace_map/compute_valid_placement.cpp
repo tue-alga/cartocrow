@@ -323,7 +323,7 @@ ComputeValidPlacementAnyOrder::ComputeValidPlacementAnyOrder
 void ComputeValidPlacementAnyOrder::SwapBeads(Necklace::Ptr& necklace) const
 {
   const size_t num_beads = necklace->beads.size();
-  for (int index_bead = 0; index_bead < num_beads; index_bead++)
+  for (size_t index_bead = 0; index_bead < num_beads; index_bead++)
   {
     const size_t index_next = (index_bead+1)%num_beads;
 

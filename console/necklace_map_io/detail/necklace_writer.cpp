@@ -802,7 +802,6 @@ void NecklaceWriter::DrawBeadAngles()
     {
       const Point& kernel = necklace->shape->kernel();
 
-      size_t count = 1;
       for (const Bead::Ptr& bead : necklace->beads)
       {
         if (!bead->valid)

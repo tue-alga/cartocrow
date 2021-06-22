@@ -94,7 +94,7 @@ bool CheckFeasibleHeuristic::Feasible()
 
   // Check whether any nodes overlap.
   // Note that the nodes to check are in clockwise order.
-  int count = 0;
+  size_t count = 0;
   for
   (
     CheckSet::iterator left_iter = nodes_check_.begin(), right_iter = nodes_check_.begin();

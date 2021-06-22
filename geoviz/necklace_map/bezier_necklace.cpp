@@ -338,7 +338,7 @@ bool BezierNecklace::IsValid() const
   for (const BezierCurve& curve : curves_)
   {
     valid &=
-      curve.IsValid(kernel()) &
+      curve.IsValid(kernel()) &&
       curve.source() == current;
     current = curve.target();
   }

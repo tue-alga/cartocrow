@@ -71,7 +71,8 @@ Number CheckFeasible::Value::CoveringRadius() const
   return task->bead->covering_radius_rad;
 }
 
-CheckFeasible::CheckFeasible(NodeSet& nodes) : slices_(), nodes_(nodes) {}
+CheckFeasible::CheckFeasible(NodeSet& nodes) :
+    nodes_(nodes), slices_() {}
 
 void CheckFeasible::InitializeSlices()
 {
@@ -98,7 +99,7 @@ void CheckFeasible::InitializeSlices()
       active_nodes[node->layer] = node;
 
   slices_.reserve(events.size());
-  for (int i = 0; i < events.size(); ++i)
+  for (size_t i = 0; i < events.size(); ++i)
   {
     const TaskEvent& event_from = events[i];
     const TaskEvent& event_to = events[(i + 1) % events.size()];

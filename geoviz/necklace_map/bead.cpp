@@ -50,8 +50,10 @@ namespace necklace_map
  * @endparblock
  * @param id the ID of the region associated with this bead.
  */
-Bead::Bead(const Number& radius_base, const std::string& style, const std::string& id)
-  : radius_base(radius_base), id(id), feasible(), covering_radius_rad(-1), valid(), angle_rad(0), region_style(style) {}
+Bead::Bead(const Number& radius_base, const std::string& style, const std::string& id) :
+  radius_base(radius_base), id(id), feasible(),
+  region_style(style), covering_radius_rad(-1),
+  valid(), angle_rad(0) {}
 
 /**@brief Check whether the bead is valid.
  *

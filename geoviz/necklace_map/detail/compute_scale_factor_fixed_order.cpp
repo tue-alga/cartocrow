@@ -46,10 +46,10 @@ namespace detail
  * @param buffer_rad the minimum angle in radians of the empty wedge between neighboring necklace beads that has the necklace kernel as apex.
  */
 ComputeScaleFactorFixedOrder::ComputeScaleFactorFixedOrder(const Necklace::Ptr& necklace, const Number& buffer_rad /*= 0*/) :
-  max_buffer_rad_(-1),
   nodes_(),
   necklace_shape_(necklace->shape),
-  buffer_rad_(buffer_rad)
+  buffer_rad_(buffer_rad),
+  max_buffer_rad_(-1)
 {
   // The necklace must be sorted by the feasible intervals of its beads.
   necklace->SortBeads();
