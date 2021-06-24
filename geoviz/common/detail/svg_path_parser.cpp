@@ -83,7 +83,7 @@ inline void SvgPathConverter::MoveTo(const Point& to)
 inline void SvgPathConverter::LineTo(const Point& to)
 {
   if (std::isnan(to.x())) LineTo_(Point(previous_.x(), to.y()));
-  else if (std::isnan(to.x())) LineTo_(Point(to.x(), previous_.x()));
+  else if (std::isnan(to.y())) LineTo_(Point(to.x(), previous_.x()));
   else LineTo_(to);
   previous_ = to;
 }
