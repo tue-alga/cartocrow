@@ -122,8 +122,7 @@ bool PolarSegment::IsCollinear() const
  */
 bool PolarSegment::ContainsFoot() const
 {
-  if (ContainsPhi(foot().phi()))
-    return true;
+  return ContainsPhi(foot().phi());
 }
 
 /**@brief Check whether the line segment contains a point evaluated at a given time.
