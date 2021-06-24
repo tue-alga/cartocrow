@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.15)
 
 project(CartoCrow
-    VERSION 0.1.2
+    VERSION 0.1.5
     DESCRIPTION "Framework for algorithmic thematic mapping"
     HOMEPAGE_URL "https://github.com/tue-alga/cartocrow"
     LANGUAGES CXX)
@@ -60,7 +60,9 @@ configure_file(
 
 ### DEPENDENCIES ###
 
-find_package(CGAL)
+find_package(CGAL REQUIRED)
+find_path(CGAL_INCLUDE_DIR CGAL/Exact_predicates_inexact_constructions_kernel.h)
+include_directories(${CGAL_INCLUDE_DIR})
 
 
 ### SOURCES ###
