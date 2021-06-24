@@ -338,10 +338,10 @@ bool SvgPathParser::operator()(const std::string& path, SvgPathConverter& conver
           converter.LineTo(pp.Pt(ss));
           break;
         case kAbsoluteHorizontalLine:
-          converter.LineTo(Point(pp.X(ss), 0.0/0.0));
+          converter.LineTo(Point(pp.X(ss), NAN));
           break;
         case kAbsoluteVerticalLine:
-          converter.LineTo(Point(0.0/0.0, pp.Y(ss)));
+          converter.LineTo(Point(NAN, pp.Y(ss)));
           break;
         case kAbsoluteQuadraticBezier:
         {
@@ -377,10 +377,10 @@ bool SvgPathParser::operator()(const std::string& path, SvgPathConverter& conver
           converter.LineTo(pp.Vec(ss));
           break;
         case kRelativeHorizontalLine:
-          converter.LineTo(Vector(pp.X(ss), 0.0/0.0));
+          converter.LineTo(Vector(pp.X(ss), NAN));
           break;
         case kRelativeVerticalLine:
-          converter.LineTo(Vector(0.0/0.0, pp.Y(ss)));
+          converter.LineTo(Vector(NAN, pp.Y(ss)));
           break;
         case kRelativeQuadraticBezier:
         {
