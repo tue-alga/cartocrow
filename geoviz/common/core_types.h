@@ -22,6 +22,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 05-12-2019
 #ifndef GEOVIZ_COMMON_CORE_TYPES_H
 #define GEOVIZ_COMMON_CORE_TYPES_H
 
+#define _USE_MATH_DEFINES
 #include <cmath>
 
 #include "geoviz/common/cgal_types.h"
