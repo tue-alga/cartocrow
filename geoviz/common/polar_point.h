@@ -22,6 +22,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 04-09-2020
 #ifndef GEOVIZ_COMMON_POLAR_POINT_H
 #define GEOVIZ_COMMON_POLAR_POINT_H
 
+#define _USE_MATH_DEFINES
 #include <cmath>
 #include <ostream>
 
