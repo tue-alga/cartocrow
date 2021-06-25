@@ -7,7 +7,7 @@ target_link_libraries(
     ${FLOW_MAP_TARGET}
     ${GEOVIZ_COMMON_TARGET}
     CGAL::CGAL
-    tinyxml2
+    tinyxml2::tinyxml2
 )
 
 # PHP script to run the executable.

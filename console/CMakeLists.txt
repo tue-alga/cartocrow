@@ -31,8 +31,7 @@ macro(add_cla_exe_properties target)
         ${target}
         ${COMMON_CLA_TARGET}
         gflags
-        glog
-        stdc++fs
+        glog::glog
     )
 
     if(MSVC)
