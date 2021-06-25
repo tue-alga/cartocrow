@@ -24,6 +24,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-04-2020
 #ifndef GEOVIZ_TEST_TEST_H
 #define GEOVIZ_TEST_TEST_H
 
+#define UNITTEST_DISABLE_SHORT_MACROS
 #include <UnitTest++/UnitTest++.h>
 
 #ifdef GEOVIZ_DISABLE_SUITE_MAIN
