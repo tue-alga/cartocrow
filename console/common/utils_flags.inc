@@ -25,20 +25,20 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-02-2020
 namespace validate
 {
 
-template<bool (*F1_)(const std::string&), bool (*F2_)(const std::string&)>
-inline bool Or(const std::string& value)
+template<bool (*F1_)(const std::filesystem::path&), bool (*F2_)(const std::filesystem::path&)>
+inline bool Or(const std::filesystem::path& value)
 {
   return F1_(value) || F2_(value);
 }
 
-template<bool (*F1_)(const std::string&), bool (*F2_)(const std::string&)>
-inline bool And(const std::string& value)
+template<bool (*F1_)(const std::filesystem::path&), bool (*F2_)(const std::filesystem::path&)>
+inline bool And(const std::filesystem::path& value)
 {
   return F1_(value) && F2_(value);
 }
 
-template<bool (*F_)(const std::string&)>
-inline bool Not(const std::string& value)
+template<bool (*F_)(const std::filesystem::path&)>
+inline bool Not(const std::filesystem::path& value)
 {
   return !F_(value);
 }

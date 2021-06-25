@@ -23,12 +23,12 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-04-2020
 #ifndef GEOVIZ_TEST_NECKLACE_MAP_NECKLACE_MAP_H
 #define GEOVIZ_TEST_NECKLACE_MAP_NECKLACE_MAP_H
 
+#include <filesystem>
 #include <memory>
 
 #include <glog/logging.h>
 
 #include <cmake/geoviz_test_config.h>
-#include <console/common/utils_filesystem.h>
 #include <geoviz/common/timer.h>
 #include <geoviz/necklace_map/necklace_map.h>
 
@@ -59,7 +59,7 @@ struct NecklaceData
   std::vector<geoviz::necklace_map::Necklace::Ptr> necklaces;
 }; // struct NecklaceData
 
-static const filesystem::path kDataDir = filesystem::path(GEOVIZ_TEST_DATA_DIR) / "necklace_map";
+static const std::filesystem::path kDataDir = std::filesystem::path(GEOVIZ_TEST_DATA_DIR) / "necklace_map";
 
 static NecklaceData kWesternEurope = NecklaceData();
 static NecklaceData kEastAsia = NecklaceData();

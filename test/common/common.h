@@ -23,13 +23,13 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 16-11-2020
 #define GEOVIZ_TEST_COMMON_COMMON_H
 
 #include <algorithm>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 
 #include <glog/logging.h>
 
 #include <cmake/geoviz_test_config.h>
-#include <console/common/utils_filesystem.h>
 #include <geoviz/common/circulator.h>
 #include <geoviz/common/polar_line.h>
 #include <geoviz/common/polar_segment.h>
@@ -54,7 +54,7 @@ void TestCommon() {}  // Linking hack, each new test cpp file has it.
 //static Reg kRegistry;
 
 
-static const filesystem::path kDataDir = filesystem::path(GEOVIZ_TEST_DATA_DIR) / "common";
+static const std::filesystem::path kDataDir = filesystem::path(GEOVIZ_TEST_DATA_DIR) / "common";
 
 
 UNITTEST_SUITE(Common)

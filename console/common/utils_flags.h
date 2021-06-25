@@ -22,6 +22,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-02-2020
 #ifndef CONSOLE_COMMON_UTILS_FLAGS_H
 #define CONSOLE_COMMON_UTILS_FLAGS_H
 
+#include <filesystem>
 #include <functional>
 
 #include <gflags/gflags.h>
@@ -33,24 +34,24 @@ namespace validate
 
 #ifndef DOXYGEN_RUNNING
 
-bool IsFile(const std::string& value);
-bool IsDirectory(const std::string& value);
+bool IsFile(const std::filesystem::path& value);
+bool IsDirectory(const std::filesystem::path& value);
 
-bool ExistsFile(const std::string& value);
-bool ExistsDirectory(const std::string& value);
-bool ExistsPath(const std::string& value);
+bool ExistsFile(const std::filesystem::path& value);
+bool ExistsDirectory(const std::filesystem::path& value);
+bool ExistsPath(const std::filesystem::path& value);
 
-bool AvailableFile(const std::string& value);  // Does not exist, but parent directory does.
-bool MakeAvailableFile(const std::string& value);  // Make sure parent directory exists.
+bool AvailableFile(const std::filesystem::path& value);  // Does not exist, but parent directory does.
+bool MakeAvailableFile(const std::filesystem::path& value);  // Make sure parent directory exists.
 
-bool Empty(const std::string& value);
+bool Empty(const std::filesystem::path& value);
 
-template<bool (*F1_)(const std::string&), bool (*F2_)(const std::string&)>
-bool Or(const std::string& value);
-template<bool (*F1_)(const std::string&), bool (*F2_)(const std::string&)>
-bool And(const std::string& value);
-template<bool (*F_)(const std::string&)>
-bool Not(const std::string& value);
+template<bool (*F1_)(const std::filesystem::path&), bool (*F2_)(const std::filesystem::path&)>
+bool Or(const std::filesystem::path& value);
+template<bool (*F1_)(const std::filesystem::path&), bool (*F2_)(const std::filesystem::path&)>
+bool And(const std::filesystem::path& value);
+template<bool (*F_)(const std::filesystem::path&)>
+bool Not(const std::filesystem::path& value);
 
 
 

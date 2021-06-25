@@ -24,12 +24,12 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-04-2020
 #ifndef GEOVIZ_TEST_FLOW_MAP_FLOW_MAP_H
 #define GEOVIZ_TEST_FLOW_MAP_FLOW_MAP_H
 
+#include <filesystem>
 #include <iostream>
 
 #include <glog/logging.h>
 
 #include <cmake/geoviz_test_config.h>
-#include <console/common/utils_filesystem.h>
 #include <geoviz/common/timer.h>
 #include <geoviz/flow_map/flow_map.h>
 
@@ -61,7 +61,7 @@ struct FlowData
   size_t index_root;
 }; // struct FlowData
 
-static const filesystem::path kDataDir = filesystem::path(GEOVIZ_TEST_DATA_DIR) / "flow_map";
+static const std::filesystem::path kDataDir = std::filesystem::path(GEOVIZ_TEST_DATA_DIR) / "flow_map";
 
 static FlowData kUsa = FlowData();
 static FlowData kWorld = FlowData();

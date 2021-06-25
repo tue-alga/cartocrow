@@ -21,18 +21,16 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-02-2020
 
 #include "utils_flags.h"
 
-#include "console/common/utils_filesystem.h"
-
 
 namespace validate
 {
 
-bool IsFile(const std::string& value)
+bool IsFile(const std::filesystem::path& value)
 {
   return !IsDirectory(value);
 }
 
-bool IsDirectory(const std::string& value)
+bool IsDirectory(const std::filesystem::path& value)
 {
   try
   {
@@ -45,7 +43,7 @@ bool IsDirectory(const std::string& value)
   }
 }
 
-bool ExistsFile(const std::string& value)
+bool ExistsFile(const std::filesystem::path& value)
 {
   try
   {
@@ -58,7 +56,7 @@ bool ExistsFile(const std::string& value)
   }
 }
 
-bool ExistsDirectory(const std::string& value)
+bool ExistsDirectory(const std::filesystem::path& value)
 {
   try
   {
@@ -71,7 +69,7 @@ bool ExistsDirectory(const std::string& value)
   }
 }
 
-bool ExistsPath(const std::string& value)
+bool ExistsPath(const std::filesystem::path& value)
 {
   try
   {
@@ -84,7 +82,7 @@ bool ExistsPath(const std::string& value)
   }
 }
 
-bool AvailableFile(const std::string& value)
+bool AvailableFile(const std::filesystem::path& value)
 {
   try
   {
@@ -100,7 +98,7 @@ bool AvailableFile(const std::string& value)
   }
 }
 
-bool MakeAvailableFile(const std::string& value)
+bool MakeAvailableFile(const std::filesystem::path& value)
 {
   try
   {
@@ -120,7 +118,7 @@ bool MakeAvailableFile(const std::string& value)
   }
 }
 
-bool Empty(const std::string& value)
+bool Empty(const std::filesystem::path& value)
 {
   return value.empty();
 }
