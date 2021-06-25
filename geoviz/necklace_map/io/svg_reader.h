@@ -24,6 +24,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 26-11-2019
 #ifndef GEOVIZ_NECKLACE_MAP_IO_SVG_READER_H
 #define GEOVIZ_NECKLACE_MAP_IO_SVG_READER_H
 
+#include <filesystem>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -46,7 +47,7 @@ class SvgReader
 
   bool ReadFile
   (
-    const std::string& filename,
+    const std::filesystem::path& filename,
     std::vector<necklace_map::MapElement::Ptr>& elements,
     std::vector<necklace_map::Necklace::Ptr>& necklaces,
     int max_retries = 2
@@ -54,7 +55,7 @@ class SvgReader
 
   bool ReadFile
   (
-    const std::string& filename,
+    const std::filesystem::path& filename,
     std::vector<necklace_map::MapElement::Ptr>& elements,
     std::vector<necklace_map::Necklace::Ptr>& necklaces,
     Number& scale_factor,

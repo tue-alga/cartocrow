@@ -93,7 +93,7 @@ struct FlowDataUsa
 
       // Read the geometry.
       geoviz::flow_map::SvgReader svg_reader;
-      const filesystem::path in_geometry_path = kDataDir / "USA.svg";
+      const std::filesystem::path in_geometry_path = kDataDir / "USA.svg";
 
       geoviz::Timer time;
       UNITTEST_REQUIRE UNITTEST_CHECK(svg_reader.ReadFile(in_geometry_path, data.context, data.places));
@@ -108,7 +108,7 @@ struct FlowDataUsa
     value_name = in_value_name;
 
     geoviz::flow_map::DataReader data_reader;
-    const filesystem::path in_data_path = kDataDir / "USA.csv";
+    const std::filesystem::path in_data_path = kDataDir / "USA.csv";
 
     geoviz::Timer time;
     const bool result = data_reader.ReadFile(in_data_path, in_value_name, data.places, data.index_root);
@@ -148,7 +148,7 @@ struct FlowDataWorld
 
       // Read the geometry.
       geoviz::flow_map::SvgReader svg_reader;
-      const filesystem::path in_geometry_path = kDataDir / "World.svg";
+      const std::filesystem::path in_geometry_path = kDataDir / "World.svg";
 
       geoviz::Timer time;
       UNITTEST_REQUIRE UNITTEST_CHECK(svg_reader.ReadFile(in_geometry_path, data.context, data.places));
@@ -163,7 +163,7 @@ struct FlowDataWorld
     value_name = in_value_name;
 
     geoviz::flow_map::DataReader data_reader;
-    const filesystem::path in_data_path = kDataDir / "World.csv";
+    const std::filesystem::path in_data_path = kDataDir / "World.csv";
 
     geoviz::Timer time;
     const bool result = data_reader.ReadFile(in_data_path, in_value_name, data.places, data.index_root);

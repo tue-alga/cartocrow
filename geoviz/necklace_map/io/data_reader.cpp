@@ -66,7 +66,7 @@ DataReader::DataReader()
  */
 bool DataReader::ReadFile
 (
-  const std::string& filename,
+  const std::filesystem::path& filename,
   const std::string& value_name,
   std::vector<MapElement::Ptr>& elements,
   int max_retries /*= 2*/

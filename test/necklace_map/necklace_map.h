@@ -91,7 +91,7 @@ struct NecklaceDataWesternEurope
 
       // Read the geometry.
       geoviz::necklace_map::SvgReader svg_reader;
-      const filesystem::path in_geometry_path = kDataDir / "wEU.svg";
+      const std::filesystem::path in_geometry_path = kDataDir / "wEU.svg";
 
       geoviz::Timer time;
       UNITTEST_REQUIRE UNITTEST_CHECK(svg_reader.ReadFile(in_geometry_path, data.elements, data.necklaces));
@@ -106,7 +106,7 @@ struct NecklaceDataWesternEurope
     value_name = in_value_name;
 
     geoviz::necklace_map::DataReader data_reader;
-    const filesystem::path in_data_path = kDataDir / "wEU.txt";
+    const std::filesystem::path in_data_path = kDataDir / "wEU.txt";
 
     geoviz::Timer time;
     const bool result = data_reader.ReadFile(in_data_path, in_value_name, data.elements);
@@ -258,7 +258,7 @@ struct NecklaceDataEastAsia
 
       // Read the geometry.
       geoviz::necklace_map::SvgReader svg_reader;
-      const filesystem::path in_geometry_path = kDataDir / "eAsia.svg";
+      const std::filesystem::path in_geometry_path = kDataDir / "eAsia.svg";
 
       geoviz::Timer time;
       UNITTEST_REQUIRE UNITTEST_CHECK(svg_reader.ReadFile(in_geometry_path, data.elements, data.necklaces));
@@ -273,7 +273,7 @@ struct NecklaceDataEastAsia
     value_name = in_value_name;
 
     geoviz::necklace_map::DataReader data_reader;
-    const filesystem::path in_data_path = kDataDir / "eAsia.txt";
+    const std::filesystem::path in_data_path = kDataDir / "eAsia.txt";
 
     geoviz::Timer time;
     const bool result = data_reader.ReadFile(in_data_path, in_value_name, data.elements);

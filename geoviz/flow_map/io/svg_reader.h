@@ -24,6 +24,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 04-09-2020
 #ifndef GEOVIZ_FLOW_MAP_IO_SVG_READER_H
 #define GEOVIZ_FLOW_MAP_IO_SVG_READER_H
 
+#include <filesystem>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -46,7 +47,7 @@ class SvgReader
 
   bool ReadFile
   (
-    const std::string& filename,
+    const std::filesystem::path& filename,
     std::vector<geoviz::Region>& context,
     std::vector<Place::Ptr>& places,
     int max_retries = 2

@@ -52,7 +52,7 @@ SvgReader::SvgReader() {}
  */
 bool SvgReader::ReadFile
 (
-  const std::string& filename,
+  const std::filesystem::path& filename,
   std::vector<necklace_map::MapElement::Ptr>& elements,
   std::vector<necklace_map::Necklace::Ptr>& necklaces,
   int max_retries /*= 2*/
@@ -72,7 +72,7 @@ bool SvgReader::ReadFile
  */
 bool SvgReader::ReadFile
 (
-  const std::string& filename,
+  const std::filesystem::path& filename,
   std::vector<necklace_map::MapElement::Ptr>& elements,
   std::vector<necklace_map::Necklace::Ptr>& necklaces,
   Number& scale_factor,

@@ -52,7 +52,7 @@ SvgReader::SvgReader() {}
  */
 bool SvgReader::ReadFile
 (
-  const std::string& filename,
+  const std::filesystem::path& filename,
   std::vector<geoviz::Region>& context,
   std::vector<Place::Ptr>& places,
   int max_retries /*= 2*/

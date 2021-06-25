@@ -24,6 +24,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 06-10-2020
 #ifndef GEOVIZ_FLOW_MAP_IO_DATA_READER_H
 #define GEOVIZ_FLOW_MAP_IO_DATA_READER_H
 
+#include <filesystem>
 #include <iostream>
 #include <string>
 #include <unordered_map>
@@ -45,7 +46,7 @@ class DataReader : public geoviz::detail::TableParser
 
   bool ReadFile
   (
-    const std::string& filename,
+    const std::filesystem::path& filename,
     const std::string& value_name,
     std::vector<Place::Ptr>& places,
     size_t& index_root,

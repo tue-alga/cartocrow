@@ -24,6 +24,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 03-12-2019
 #ifndef GEOVIZ_NECKLACE_MAP_IO_DATA_READER_H
 #define GEOVIZ_NECKLACE_MAP_IO_DATA_READER_H
 
+#include <filesystem>
 #include <iostream>
 #include <string>
 #include <unordered_map>
@@ -45,7 +46,7 @@ class DataReader : public geoviz::detail::TableParser
 
   bool ReadFile
   (
-    const std::string& filename,
+    const std::filesystem::path& filename,
     const std::string& value_name,
     std::vector<MapElement::Ptr>& elements,
     int max_retries = 2
