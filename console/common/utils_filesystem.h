@@ -28,8 +28,8 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 14-04-2020
 // it is currently shipped with my operating system.
 // Other compilers or later versions may fully implement the C++17 standard,
 // in which case this namespace will need to be updated as well.
-#include <experimental/filesystem>
+#include <filesystem>
 
-namespace filesystem = std::experimental::filesystem;
+//namespace filesystem = std::experimental::filesystem;
 
 #endif //CONSOLE_COMMON_UTILS_FILESYSTEM_H

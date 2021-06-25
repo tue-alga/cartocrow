@@ -22,7 +22,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-10-2019
 #include "utils_cla.h"
 
 #include <sstream>
-#include <experimental/filesystem>
+#include <filesystem>
 
 #include <gflags/gflags.h>
 #include <glog/logging.h>
@@ -69,13 +69,13 @@ std::string UsageMessage
   // it is currently shipped with my operating system.
   // Other compilers or later versions may fully implement the C++17 standard,
   // in which case this namespace will need to be updated as well.
-  namespace filesystem = std::experimental::filesystem;
+  //namespace filesystem = std::experimental::filesystem;
 
   std::stringstream out;
   out << std::endl << CopyrightNotice() << std::endl << std::endl;
   out << description << std::endl;
   out << "Sample usage:" << std::endl;
-  out << filesystem::path(executable_name).filename().string();
+  out << std::filesystem::path(executable_name).filename().string();
   for (const std::string& argument : sample_arguments)
     out << std::endl << "\t" << argument;
   return out.str();

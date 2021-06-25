@@ -36,7 +36,7 @@ bool IsDirectory(const std::string& value)
 {
   try
   {
-    return filesystem::is_directory(value);
+    return std::filesystem::is_directory(value);
   }
   catch (const std::exception& e)
   {
@@ -49,7 +49,7 @@ bool ExistsFile(const std::string& value)
 {
   try
   {
-    return filesystem::is_regular_file(value) && ExistsPath(value);
+    return std::filesystem::is_regular_file(value) && ExistsPath(value);
   }
   catch (const std::exception& e)
   {
@@ -75,7 +75,7 @@ bool ExistsPath(const std::string& value)
 {
   try
   {
-    return filesystem::exists(value);
+    return std::filesystem::exists(value);
   }
   catch (const std::exception& e)
   {
@@ -88,7 +88,7 @@ bool AvailableFile(const std::string& value)
 {
   try
   {
-    filesystem::path path(value);
+    std::filesystem::path path(value);
     if (path.has_parent_path() && !ExistsDirectory(path.parent_path()))
       return false;
     return IsFile(value) && !ExistsPath(value);
@@ -104,11 +104,11 @@ bool MakeAvailableFile(const std::string& value)
 {
   try
   {
-    filesystem::path path(value);
+    std::filesystem::path path(value);
     if (path.has_parent_path())
     {
       if (!ExistsDirectory(path.parent_path()))
-        filesystem::create_directories(path.parent_path());
+        std::filesystem::create_directories(path.parent_path());
       return ExistsDirectory(path.parent_path());
     }
     return true;
