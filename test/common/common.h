@@ -54,7 +54,7 @@ void TestCommon() {}  // Linking hack, each new test cpp file has it.
 //static Reg kRegistry;
 
 
-static const std::filesystem::path kDataDir = filesystem::path(GEOVIZ_TEST_DATA_DIR) / "common";
+static const std::filesystem::path kDataDir = std::filesystem::path(GEOVIZ_TEST_DATA_DIR) / "common";
 
 
 UNITTEST_SUITE(Common)
