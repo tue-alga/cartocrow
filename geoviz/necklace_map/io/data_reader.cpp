@@ -95,16 +95,20 @@ bool DataReader::ReadFile
   } while (true);
 
   // Data files must start with four magic characters and the data file version.
-  char magic[4] = {'\0', '\0', '\0', '\0'};
+  char magic[5] = {'\0', '\0', '\0', '\0', '\0'};
   fin.read(magic, 4);
-  if (!fin || std::strcmp(magic, kMagicCharacters) != 0)
+  if (!fin || std::strcmp(magic, kMagicCharacters) != 0) {
+    LOG(INFO) << "Data file did not start with magic characters: " << filename;
     return false;
+  }
 
   // Read the version.
   std::string version;
   fin >> version;
-  if (!fin)
-    return false;
+  if (!fin) {
+      LOG(INFO) << "Data file did not start with a version: " << filename;
+      return false;
+  }
 
   return Parse(fin, value_name, elements, version);
 }
