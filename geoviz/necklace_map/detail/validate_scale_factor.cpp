@@ -87,10 +87,9 @@ bool ValidateScaleFactor::operator()(Necklace::Ptr& necklace) const
   }
 
   // Each node is duplicated with an offset to its interval to force cyclic validity.
-  const NodeSet::iterator end = nodes.end();
-  for (NodeSet::iterator node_iter = nodes.begin(); node_iter != end; ++node_iter)
-  {
-    nodes.emplace_back(*node_iter);
+  for (size_t i = 0, n = nodes.size(); i < n; ++i) {
+    auto& node = nodes[i];
+    nodes.emplace_back(node);
 
     nodes.back().valid->from() += M_2xPI;
     nodes.back().valid->to() += M_2xPI;
