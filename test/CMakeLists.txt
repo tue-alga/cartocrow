@@ -62,7 +62,7 @@ endmacro(test_link_libraries)
 
 
 # Configure a header file to pass CMake settings to the source code.
-set(TEST_DATA_DIR ${CMAKE_SOURCE_DIR}/../data)
+set(TEST_DATA_DIR ${CMAKE_SOURCE_DIR}/data)
 configure_file(
     "${CMAKE_SOURCE_DIR}/cmake/geoviz_test_config.h.in"
     "${CMAKE_SOURCE_DIR}/cmake/geoviz_test_config.h"

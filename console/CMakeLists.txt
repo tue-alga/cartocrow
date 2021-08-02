@@ -29,6 +29,7 @@ macro(add_cla_exe_properties target)
     set_target_properties( ${target} PROPERTIES DEBUG_POSTFIX d )
     target_link_libraries(
         ${target}
+        PRIVATE
         ${COMMON_CLA_TARGET}
         gflags
         glog::glog

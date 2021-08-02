@@ -3,6 +3,7 @@ geoviz_add_cla(map_regions)
 
 target_link_libraries(
     ${TARGET}
+    PRIVATE
     ${NECKLACE_MAP_IO_TARGET}
     ${COMMON_CLA_TARGET}
     ${NECKLACE_MAP_TARGET}

@@ -3,6 +3,7 @@ geoviz_add_cla(flow_map)
 
 target_link_libraries(
     ${TARGET}
+    PRIVATE
     ${COMMON_CLA_TARGET}
     ${FLOW_MAP_TARGET}
     ${GEOVIZ_COMMON_TARGET}

@@ -3,6 +3,7 @@ geoviz_add_cla(multi_library_app)
 
 target_link_libraries(
     ${TARGET}
+    PRIVATE
     ${GEOVIZ_TARGET}
     CGAL::CGAL
 )
