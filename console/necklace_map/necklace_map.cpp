@@ -495,7 +495,7 @@ int main(int argc, char** argv)
   if (FLAGS_force_recompute_scale_factor || scale_factor < 0)
   {
     // Compute the optimal scale factor and placement.
-    scale_factor = ComputeScaleFactor(parameters, elements, necklaces);
+    scale_factor = geoviz::necklace_map::ComputeScaleFactor(parameters, elements, necklaces);
     LOG(INFO) << "Computed scale factor: " << scale_factor;
   } else
   {
