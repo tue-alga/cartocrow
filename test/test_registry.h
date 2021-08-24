@@ -21,8 +21,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Created by tvl (t.vanlankveld@esciencecenter.nl) on 08-10-2020
 */
 
-#ifndef GEOVIZ_TEST_TEST_REGISTRY_H
-#define GEOVIZ_TEST_TEST_REGISTRY_H
+#ifndef CARTOCROW_TEST_TEST_REGISTRY_H
+#define CARTOCROW_TEST_TEST_REGISTRY_H
 
 #include <array>
 #include <map>
@@ -114,4 +114,4 @@ struct DeallocNone
 }; // class DeallocNone
 
 
-#endif //GEOVIZ_TEST_TEST_REGISTRY_H
+#endif //CARTOCROW_TEST_TEST_REGISTRY_H

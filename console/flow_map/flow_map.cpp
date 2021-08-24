@@ -29,8 +29,8 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 31-08-2020
 
 #include <console/common/utils_cla.h>
 #include <console/common/utils_flags.h>
-#include <geoviz/common/timer.h>
-#include <geoviz/flow_map/flow_map.h>
+#include <cartocrow/common/timer.h>
+#include <cartocrow/flow_map/flow_map.h>
 
 
 // the input flags are mutually exclusive per type to prevent accidentally setting both and 'the wrong one' being used.
@@ -138,7 +138,7 @@ DEFINE_double
 );
 
 
-void ValidateFlags(geoviz::flow_map::Parameters& parameters, geoviz::flow_map::WriteOptions::Ptr& write_options)
+void ValidateFlags(cartocrow::flow_map::Parameters& parameters, cartocrow::flow_map::WriteOptions::Ptr& write_options)
 {
   bool correct = true;
   LOG(INFO) << "flow_map_cla flags:";
@@ -165,7 +165,7 @@ void ValidateFlags(geoviz::flow_map::Parameters& parameters, geoviz::flow_map::W
   }
 
   // Output parameters.
-  using Options = geoviz::flow_map::WriteOptions;
+  using Options = cartocrow::flow_map::WriteOptions;
   write_options = Options::Default();
   {
     correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(pixel_width), IsStrictlyPositive<int32_t>());
@@ -194,27 +194,27 @@ void ValidateFlags(geoviz::flow_map::Parameters& parameters, geoviz::flow_map::W
   if( !correct ) LOG(FATAL) << "Errors in flags; Terminating.";
 }
 
-bool ReadGeometry(const std::string& filename, std::vector<geoviz::Region>& context, std::vector<geoviz::flow_map::Place::Ptr>& places)
+bool ReadGeometry(const std::string& filename, std::vector<cartocrow::Region>& context, std::vector<cartocrow::flow_map::Place::Ptr>& places)
 {
-  geoviz::flow_map::SvgReader svg_reader;
+  cartocrow::flow_map::SvgReader svg_reader;
   return svg_reader.ReadFile(filename, context, places);
 }
 
-bool ReadData(const std::string& filename, std::vector<geoviz::flow_map::Place::Ptr>& places, size_t& root_index)
+bool ReadData(const std::string& filename, std::vector<cartocrow::flow_map::Place::Ptr>& places, size_t& root_index)
 {
-  geoviz::flow_map::DataReader data_reader;
+  cartocrow::flow_map::DataReader data_reader;
   return data_reader.ReadFile(filename, FLAGS_in_value_name, places, root_index);
 }
 
 void WriteOutput
 (
-  const std::vector<geoviz::Region>& context,
-  const std::vector<geoviz::Region>& obstacles,
-  const geoviz::flow_map::FlowTree::Ptr& tree,
-  const geoviz::flow_map::WriteOptions::Ptr& write_options
+  const std::vector<cartocrow::Region>& context,
+  const std::vector<cartocrow::Region>& obstacles,
+  const cartocrow::flow_map::FlowTree::Ptr& tree,
+  const cartocrow::flow_map::WriteOptions::Ptr& write_options
 )
 {
-  geoviz::flow_map::SvgWriter writer;
+  cartocrow::flow_map::SvgWriter writer;
   if (FLAGS_out_website)
     writer.Write(context, obstacles, tree, write_options, std::cout);
 
@@ -233,20 +233,20 @@ int main(int argc, char **argv)
   (
     argc,
     argv,
-    "Command line application that exposes the functionality of the GeoViz flow map.",
+    "Command line application that exposes the functionality of the CartoCrow flow map.",
     {"--in_geometry_filename=<file>", "--in_data_filename=<file>", "--in_value_name=<column>"}
   );
 
 
   // Validate the settings.
-  geoviz::flow_map::Parameters parameters;
-  geoviz::flow_map::WriteOptions::Ptr write_options;
+  cartocrow::flow_map::Parameters parameters;
+  cartocrow::flow_map::WriteOptions::Ptr write_options;
   ValidateFlags(parameters, write_options);
 
-  geoviz::Timer time;
+  cartocrow::Timer time;
 
-  using Region = geoviz::Region;
-  using Place = geoviz::flow_map::Place;
+  using Region = cartocrow::Region;
+  using Place = cartocrow::flow_map::Place;
   std::vector<Region> context, obstacles;
   std::vector<Place::Ptr> places, waypoints;
   size_t index_root;
@@ -262,7 +262,7 @@ int main(int argc, char **argv)
   const double time_read = time.Stamp();
 
   // Compute flow map.
-  geoviz::flow_map::FlowTree::Ptr tree;
+  cartocrow::flow_map::FlowTree::Ptr tree;
   ComputeFlowMap(parameters, places, index_root, obstacles, tree);
   LOG(INFO) << "Computed flow map";
   const double time_compute = time.Stamp();
@@ -283,9 +283,9 @@ int main(int argc, char **argv)
 
 /**
  * While the flow map code is still incomplete, here is an example usage for this flow map application:
- * ./flow_map --in_geometry_filename [geoviz_root]/data/flow_map/USA.svg --in_data_filename [geoviz_root]/data/flow_map/USA.csv --in_value_name TX --out_filename "[geoviz_root]/wwwroot/data/tmp/USA_flow_out.svg" --logtostderr
+ * ./flow_map --in_geometry_filename [cartocrow_root]/data/flow_map/USA.svg --in_data_filename [cartocrow_root]/data/flow_map/USA.csv --in_value_name TX --out_filename "[cartocrow_root]/wwwroot/data/tmp/USA_flow_out.svg" --logtostderr
  *
- * Don't forget to fill in the [geoviz_root] parts.
+ * Don't forget to fill in the [cartocrow_root] parts.
  * The output will be written to the wwwroot/data/tmp/ directory; this SVG output can be viewed using a browser.
  */
 

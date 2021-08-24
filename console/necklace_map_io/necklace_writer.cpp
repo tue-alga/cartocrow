@@ -25,10 +25,10 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 29-01-2020
 
 #include <glog/logging.h>
 
-#include "geoviz/necklace_map/io/detail/svg_writer.h"
+#include "cartocrow/necklace_map/io/detail/svg_writer.h"
 
 
-namespace geoviz
+namespace cartocrow
 {
 namespace necklace_map
 {
@@ -63,7 +63,7 @@ void NecklaceWriter::Write
 bool NecklaceWriter::Write
 =======
 bool SvgWriter::Write
->>>>>>> dev_final:geoviz/necklace_map/io/svg_writer.cpp
+>>>>>>> dev_final:cartocrow/necklace_map/io/svg_writer.cpp
 (
   const std::vector<MapElement::Ptr>& elements,
   const std::vector<Necklace::Ptr>& necklaces,
@@ -88,4 +88,4 @@ bool SvgWriter::Write
 }
 
 } // namespace necklace_map
-} // namespace geoviz
+} // namespace cartocrow

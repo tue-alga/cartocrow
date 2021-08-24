@@ -21,7 +21,7 @@ macro(add_test_exe_properties target)
     endif(MSVC)
 endmacro(add_test_exe_properties)
 
-macro(geoviz_add_test NAME)
+macro(cartocrow_add_test NAME)
     set(TARGET "test_${NAME}")
     set(INSTALL_DIR ${INSTALL_TEST_DIR}/${NAME})
 
@@ -45,7 +45,7 @@ macro(geoviz_add_test NAME)
         DEPENDS ${TARGET}
         COMMENT "Running unit test suite: ${TARGET}"
     )
-endmacro(geoviz_add_test)
+endmacro(cartocrow_add_test)
 
 macro(test_link_libraries)
     foreach(LIBRARY ${ARGN})
@@ -64,10 +64,10 @@ endmacro(test_link_libraries)
 # Configure a header file to pass CMake settings to the source code.
 set(TEST_DATA_DIR ${CMAKE_SOURCE_DIR}/data)
 configure_file(
-    "${CMAKE_SOURCE_DIR}/cmake/geoviz_test_config.h.in"
-    "${CMAKE_SOURCE_DIR}/cmake/geoviz_test_config.h"
+    "${CMAKE_SOURCE_DIR}/cmake/cartocrow_test_config.h.in"
+    "${CMAKE_SOURCE_DIR}/cmake/cartocrow_test_config.h"
 )
-install(FILES "${CMAKE_SOURCE_DIR}/cmake/geoviz_test_config.h" DESTINATION "${CMAKE_INSTALL_SOURCE_DIR}/cmake")
+install(FILES "${CMAKE_SOURCE_DIR}/cmake/cartocrow_test_config.h" DESTINATION "${CMAKE_INSTALL_SOURCE_DIR}/cmake")
 
 
 # Most command-line applications use gflags to parse command-line arguments.
@@ -78,9 +78,9 @@ find_package(UnitTest++ REQUIRED)
 ### EXECUTABLES ###
 
 # The test_all executable runs all unit tests
-geoviz_add_test(all)
+cartocrow_add_test(all)
 set(TEST_ALL_TARGET ${TARGET})
-target_compile_definitions(${TARGET} PUBLIC "GEOVIZ_DISABLE_SUITE_MAIN")
+target_compile_definitions(${TARGET} PUBLIC "CARTOCROW_DISABLE_SUITE_MAIN")
 
 
 # A few notes:
@@ -90,3 +90,4 @@ target_compile_definitions(${TARGET} PUBLIC "GEOVIZ_DISABLE_SUITE_MAIN")
 add_subdirectory(common)
 add_subdirectory(necklace_map)
 add_subdirectory(flow_map)
+

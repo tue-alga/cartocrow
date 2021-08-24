@@ -30,7 +30,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 03-12-2019
 #include <glog/logging.h>
 
 
-namespace geoviz
+namespace cartocrow
 {
 namespace
 {
@@ -209,4 +209,4 @@ bool DataReader::Parse
 }
 
 } // namespace necklace_map
-} // namespace geoviz
+} // namespace cartocrow

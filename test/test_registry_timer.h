@@ -21,8 +21,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Created by tvl (t.vanlankveld@esciencecenter.nl) on 16-11-2020
 */
 
-#ifndef GEOVIZ_TEST_TEST_REGISTRY_TIMER_H
-#define GEOVIZ_TEST_TEST_REGISTRY_TIMER_H
+#ifndef CARTOCROW_TEST_TEST_REGISTRY_TIMER_H
+#define CARTOCROW_TEST_TEST_REGISTRY_TIMER_H
 
 #include "test/test_registry.h"
 
@@ -50,4 +50,4 @@ struct PrintTimes
   }
 }; // struct PrintTimes
 
-#endif //GEOVIZ_TEST_TEST_REGISTRY_TIMER_H
+#endif //CARTOCROW_TEST_TEST_REGISTRY_TIMER_H

@@ -21,24 +21,24 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Created by tvl (t.vanlankveld@esciencecenter.nl) on 03-12-2019
 */
 
-#ifndef GEOVIZ_NECKLACE_MAP_IO_DATA_READER_H
-#define GEOVIZ_NECKLACE_MAP_IO_DATA_READER_H
+#ifndef CARTOCROW_NECKLACE_MAP_IO_DATA_READER_H
+#define CARTOCROW_NECKLACE_MAP_IO_DATA_READER_H
 
 #include <iostream>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
-#include "geoviz/common/detail/table_parser.h"
-#include "geoviz/necklace_map/map_element.h"
+#include "cartocrow/common/detail/table_parser.h"
+#include "cartocrow/necklace_map/map_element.h"
 
 
-namespace geoviz
+namespace cartocrow
 {
 namespace necklace_map
 {
 
-class DataReader : public geoviz::detail::TableParser
+class DataReader : public cartocrow::detail::TableParser
 {
  public:
   DataReader();
@@ -61,6 +61,6 @@ class DataReader : public geoviz::detail::TableParser
 }; // class DataReader
 
 } // namespace necklace_map
-} // namespace geoviz
+} // namespace cartocrow
 
-#endif //GEOVIZ_NECKLACE_MAP_IO_DATA_READER_H
+#endif //CARTOCROW_NECKLACE_MAP_IO_DATA_READER_H

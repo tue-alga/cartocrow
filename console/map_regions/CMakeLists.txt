@@ -1,5 +1,5 @@
 # The map_regions_cla executable analyses a map SVG file and returns if it is valid.
-geoviz_add_cla(map_regions)
+cartocrow_add_cla(map_regions)
 
 target_link_libraries(
     ${TARGET}
@@ -7,7 +7,7 @@ target_link_libraries(
     ${NECKLACE_MAP_IO_TARGET}
     ${COMMON_CLA_TARGET}
     ${NECKLACE_MAP_TARGET}
-    ${GEOVIZ_COMMON_TARGET}
+    ${CARTOCROW_COMMON_TARGET}
     CGAL::CGAL
     tinyxml2::tinyxml2
 )

@@ -12,7 +12,7 @@ set(CMAKE_INSTALL_LIBRARY_DIR lib CACHE STRING "Installation subdirectory for co
 set(CMAKE_INSTALL_SOURCE_DIR include CACHE STRING "Installation subdirectory for source code.")
 set(CMAKE_INSTALL_SCRIPT_DIR script CACHE STRING "Installation subdirectory for scripts.")
 
-option(GEOVIZ_CREATE_ARCHIVE "Create an archive GeoViz library, collecting all Geo-visualization methods." OFF)
+option(CARTOCROW_CREATE_ARCHIVE "Create an archive CartoCrow library, collecting all Geo-visualization methods." OFF)
 
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 set(INSTALL_CONFIG_DIR ${CMAKE_INSTALL_LIBRARY_DIR}/cmake)
@@ -39,17 +39,17 @@ message(STATUS "${PROJECT_NAME} version: ${VERSION_PROJECT}")
 # Indicate the version to CMake (for find_package)
 include(CMakePackageConfigHelpers)
 write_basic_package_version_file(
-    GeoVizConfigVersion.cmake
+    CartoCrowConfigVersion.cmake
     VERSION ${VERSION_PROJECT}
     COMPATIBILITY AnyNewerVersion
 )
 
 # Configure a header file to pass CMake settings to the source code.
 configure_file(
-    "${CMAKE_SOURCE_DIR}/cmake/geoviz_config.h.in"
-    "${CMAKE_SOURCE_DIR}/cmake/geoviz_config.h"
+    "${CMAKE_SOURCE_DIR}/cmake/cartocrow_config.h.in"
+    "${CMAKE_SOURCE_DIR}/cmake/cartocrow_config.h"
 )
-install(FILES "${CMAKE_SOURCE_DIR}/cmake/geoviz_config.h" DESTINATION "${CMAKE_INSTALL_SOURCE_DIR}/cmake")
+install(FILES "${CMAKE_SOURCE_DIR}/cmake/cartocrow_config.h" DESTINATION "${CMAKE_INSTALL_SOURCE_DIR}/cmake")
 
 # Configure the doxygen configuration file to pass CMake settings to the doxygen.
 configure_file(
@@ -71,29 +71,28 @@ find_package(tinyxml2 REQUIRED)
 
 ### SOURCES ###
 
-# All source files should use include paths relative to the source root.
+# All source files should use include paths relative to the source root
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
-# By default, we use the C++17 dialect.
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# The GeoViz library.
-add_subdirectory(geoviz)
+# The CartoCrow library
+add_subdirectory(cartocrow)
 
-# Executables that use or expose GeoViz.
+# Executables that use or expose CartoCrow
 add_subdirectory(console)
 
-# Unit tests of the GeoViz library.
+# Unit tests of the CartoCrow library
 add_subdirectory(test)
 
 
-# Install rules.
+# Install rules
 install(
     FILES
-    "${CMAKE_SOURCE_DIR}/cmake/GeoVizConfig.cmake"
-    "${CMAKE_CURRENT_BINARY_DIR}/GeoVizConfigVersion.cmake"
-    DESTINATION ${INSTALL_CONFIG_DIR}/GeoViz
+    "${CMAKE_SOURCE_DIR}/cmake/CartoCrowConfig.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/CartoCrowConfigVersion.cmake"
+    DESTINATION ${INSTALL_CONFIG_DIR}/CartoCrow
 )
 
 # Custom install target for IDE.
@@ -105,6 +104,6 @@ install(
 #add_custom_target(
 #    install_${PROJECT_NAME}
 #    "${CMAKE_COMMAND}" --build "${CMAKE_BINARY_DIR}" --target install
-#    DEPENDS ${GEOVIZ_TARGET}
+#    DEPENDS ${CARTOCROW_TARGET}
 #    COMMENT "Installing ${PROJECT_NAME}"
 #)

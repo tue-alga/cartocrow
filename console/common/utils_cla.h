@@ -1,5 +1,5 @@
 /*
-The GeoViz console applications implement algorithmic geo-visualization
+The CartoCrow console applications implement algorithmic geo-visualization
 methods, developed at TU Eindhoven.
 Copyright (C) 2021  Netherlands eScience Center and TU Eindhoven
 

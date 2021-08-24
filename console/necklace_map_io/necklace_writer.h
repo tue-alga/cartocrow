@@ -21,20 +21,20 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Created by tvl (t.vanlankveld@esciencecenter.nl) on 29-01-2020
 */
 
-#ifndef GEOVIZ_NECKLACE_MAP_IO_SVG_WRITER_H
-#define GEOVIZ_NECKLACE_MAP_IO_SVG_WRITER_H
+#ifndef CARTOCROW_NECKLACE_MAP_IO_SVG_WRITER_H
+#define CARTOCROW_NECKLACE_MAP_IO_SVG_WRITER_H
 
 #include <memory>
 #include <ostream>
 #include <vector>
 
-#include "geoviz/common/core_types.h"
-#include "geoviz/necklace_map/map_element.h"
-#include "geoviz/necklace_map/necklace.h"
-#include "geoviz/necklace_map/io/write_options.h"
+#include "cartocrow/common/core_types.h"
+#include "cartocrow/necklace_map/map_element.h"
+#include "cartocrow/necklace_map/necklace.h"
+#include "cartocrow/necklace_map/io/write_options.h"
 
 
-namespace geoviz
+namespace cartocrow
 {
 namespace necklace_map
 {
@@ -58,6 +58,6 @@ class SvgWriter
 }; // class SvgWriter
 
 } // namespace necklace_map
-} // namespace geoviz
+} // namespace cartocrow
 
-#endif //GEOVIZ_NECKLACE_MAP_IO_SVG_WRITER_H
+#endif //CARTOCROW_NECKLACE_MAP_IO_SVG_WRITER_H

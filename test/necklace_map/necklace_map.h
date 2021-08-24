@@ -20,17 +20,17 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-04-2020
 */
 
-#ifndef GEOVIZ_TEST_NECKLACE_MAP_NECKLACE_MAP_H
-#define GEOVIZ_TEST_NECKLACE_MAP_NECKLACE_MAP_H
+#ifndef CARTOCROW_TEST_NECKLACE_MAP_NECKLACE_MAP_H
+#define CARTOCROW_TEST_NECKLACE_MAP_NECKLACE_MAP_H
 
 #include <filesystem>
 #include <memory>
 
 #include <glog/logging.h>
 
-#include <cmake/geoviz_test_config.h>
-#include <geoviz/common/timer.h>
-#include <geoviz/necklace_map/necklace_map.h>
+#include <cmake/cartocrow_test_config.h>
+#include <cartocrow/common/timer.h>
+#include <cartocrow/necklace_map/necklace_map.h>
 
 #include "test/test.h"
 #include "test/test_registry_timer.h"
@@ -55,11 +55,11 @@ struct NecklaceData
     FLAGS_minloglevel = 2;
   }
 
-  std::vector<geoviz::necklace_map::MapElement::Ptr> elements;
-  std::vector<geoviz::necklace_map::Necklace::Ptr> necklaces;
+  std::vector<cartocrow::necklace_map::MapElement::Ptr> elements;
+  std::vector<cartocrow::necklace_map::Necklace::Ptr> necklaces;
 }; // struct NecklaceData
 
-static const std::filesystem::path kDataDir = std::filesystem::path(GEOVIZ_TEST_DATA_DIR) / "necklace_map";
+static const std::filesystem::path kDataDir = std::filesystem::path(CARTOCROW_TEST_DATA_DIR) / "necklace_map";
 
 static NecklaceData kWesternEurope = NecklaceData();
 static NecklaceData kEastAsia = NecklaceData();
@@ -68,13 +68,13 @@ static NecklaceData kEastAsia = NecklaceData();
 UNITTEST_SUITE(NecklaceMap)
 {
 
-void DefaultParameters(geoviz::necklace_map::Parameters& parameters)
+void DefaultParameters(cartocrow::necklace_map::Parameters& parameters)
 {
-  parameters.interval_type = geoviz::necklace_map::IntervalType::kWedge;
+  parameters.interval_type = cartocrow::necklace_map::IntervalType::kWedge;
   parameters.centroid_interval_length_rad = 0.2 * M_PI;
   parameters.ignore_point_regions = false;
 
-  parameters.order_type = geoviz::necklace_map::OrderType::kAny;
+  parameters.order_type = cartocrow::necklace_map::OrderType::kAny;
   parameters.buffer_rad = 0;
   parameters.aversion_ratio = 0.001;
 }
@@ -90,11 +90,11 @@ struct NecklaceDataWesternEurope
       kRegistry.Register(&data, "NecklaceDataWesternEurope");
 
       // Read the geometry.
-      geoviz::necklace_map::SvgReader svg_reader;
+      cartocrow::necklace_map::SvgReader svg_reader;
       const std::filesystem::path in_geometry_path = kDataDir / "wEU.svg";
       std::cout << "map path: " << in_geometry_path << std::endl;
 
-      geoviz::Timer time;
+      cartocrow::Timer time;
       UNITTEST_REQUIRE UNITTEST_CHECK(svg_reader.ReadFile(in_geometry_path, data.elements, data.necklaces));
       kRegistry(&data, 0) = time.Stamp();
     }
@@ -106,11 +106,11 @@ struct NecklaceDataWesternEurope
       return true;
     value_name = in_value_name;
 
-    geoviz::necklace_map::DataReader data_reader;
+    cartocrow::necklace_map::DataReader data_reader;
     const std::filesystem::path in_data_path = kDataDir / "wEU.txt";
     std::cout << "data path: " << in_data_path << std::endl;
 
-    geoviz::Timer time;
+    cartocrow::Timer time;
     const bool result = data_reader.ReadFile(in_data_path, in_value_name, data.elements);
     kRegistry(&data, 1) = time.Stamp();
 
@@ -120,7 +120,7 @@ struct NecklaceDataWesternEurope
   NecklaceData& data;
   std::string value_name;
 
-  geoviz::necklace_map::Parameters parameters;
+  cartocrow::necklace_map::Parameters parameters;
 }; // struct NecklaceDataWesternEurope
 
 UNITTEST_TEST_FIXTURE(NecklaceDataWesternEurope, WestEuropeCentroidFixed)
@@ -129,10 +129,10 @@ UNITTEST_TEST_FIXTURE(NecklaceDataWesternEurope, WestEuropeCentroidFixed)
   UNITTEST_CHECK(ReadValues(in_value_name));
 
   DefaultParameters(parameters);
-  parameters.interval_type = geoviz::necklace_map::IntervalType::kCentroid;
-  parameters.order_type = geoviz::necklace_map::OrderType::kFixed;
+  parameters.interval_type = cartocrow::necklace_map::IntervalType::kCentroid;
+  parameters.order_type = cartocrow::necklace_map::OrderType::kFixed;
 
-  const geoviz::Number scale_factor = geoviz::necklace_map::ComputeScaleFactor(parameters, data.elements, data.necklaces);
+  const cartocrow::Number scale_factor = cartocrow::necklace_map::ComputeScaleFactor(parameters, data.elements, data.necklaces);
   UNITTEST_CHECK_CLOSE(1.580, scale_factor, 0.001);
 }
 
@@ -142,11 +142,11 @@ UNITTEST_TEST_FIXTURE(NecklaceDataWesternEurope, WestEuropeCentroidFixedNopoints
   UNITTEST_CHECK(ReadValues(in_value_name));
 
   DefaultParameters(parameters);
-  parameters.interval_type = geoviz::necklace_map::IntervalType::kCentroid;
+  parameters.interval_type = cartocrow::necklace_map::IntervalType::kCentroid;
   parameters.ignore_point_regions = true;
-  parameters.order_type = geoviz::necklace_map::OrderType::kFixed;
+  parameters.order_type = cartocrow::necklace_map::OrderType::kFixed;
 
-  const geoviz::Number scale_factor = geoviz::necklace_map::ComputeScaleFactor(parameters, data.elements, data.necklaces);
+  const cartocrow::Number scale_factor = cartocrow::necklace_map::ComputeScaleFactor(parameters, data.elements, data.necklaces);
   UNITTEST_CHECK_CLOSE(1.813, scale_factor, 0.001);
 }
 
@@ -156,11 +156,11 @@ UNITTEST_TEST_FIXTURE(NecklaceDataWesternEurope, WestEuropeCentroidFixedBuffer)
   UNITTEST_CHECK(ReadValues(in_value_name));
 
   DefaultParameters(parameters);
-  parameters.interval_type = geoviz::necklace_map::IntervalType::kCentroid;
-  parameters.order_type = geoviz::necklace_map::OrderType::kFixed;
+  parameters.interval_type = cartocrow::necklace_map::IntervalType::kCentroid;
+  parameters.order_type = cartocrow::necklace_map::OrderType::kFixed;
   parameters.buffer_rad = 0.22;
     
-  const geoviz::Number scale_factor = geoviz::necklace_map::ComputeScaleFactor(parameters, data.elements, data.necklaces);
+  const cartocrow::Number scale_factor = cartocrow::necklace_map::ComputeScaleFactor(parameters, data.elements, data.necklaces);
   UNITTEST_CHECK_CLOSE(0.629, scale_factor, 0.001);
 }
 
@@ -171,7 +171,7 @@ UNITTEST_TEST_FIXTURE(NecklaceDataWesternEurope, WestEurope)
 
   DefaultParameters(parameters);
 
-  const geoviz::Number scale_factor = geoviz::necklace_map::ComputeScaleFactor(parameters, data.elements, data.necklaces);
+  const cartocrow::Number scale_factor = cartocrow::necklace_map::ComputeScaleFactor(parameters, data.elements, data.necklaces);
   UNITTEST_CHECK_CLOSE(1.675, scale_factor, 0.001);
 }
 
@@ -181,10 +181,10 @@ UNITTEST_TEST_FIXTURE(NecklaceDataWesternEurope, WestEuropeDegenerateCentroid)
   UNITTEST_CHECK(ReadValues(in_value_name));
 
   DefaultParameters(parameters);
-  parameters.interval_type = geoviz::necklace_map::IntervalType::kCentroid;
+  parameters.interval_type = cartocrow::necklace_map::IntervalType::kCentroid;
   parameters.centroid_interval_length_rad = 0;
 
-  const geoviz::Number scale_factor = geoviz::necklace_map::ComputeScaleFactor(parameters, data.elements, data.necklaces);
+  const cartocrow::Number scale_factor = cartocrow::necklace_map::ComputeScaleFactor(parameters, data.elements, data.necklaces);
   UNITTEST_CHECK_CLOSE(0.403, scale_factor, 0.001);
 }
 
@@ -196,7 +196,7 @@ UNITTEST_TEST_FIXTURE(NecklaceDataWesternEurope, WestEuropeNopoints)
   DefaultParameters(parameters);
   parameters.ignore_point_regions = true;
 
-  const geoviz::Number scale_factor = geoviz::necklace_map::ComputeScaleFactor(parameters, data.elements, data.necklaces);
+  const cartocrow::Number scale_factor = cartocrow::necklace_map::ComputeScaleFactor(parameters, data.elements, data.necklaces);
   UNITTEST_CHECK_CLOSE(1.675, scale_factor, 0.001);
 }
 
@@ -208,7 +208,7 @@ UNITTEST_TEST_FIXTURE(NecklaceDataWesternEurope, WestEuropeBuffer)
   DefaultParameters(parameters);
   parameters.buffer_rad = 0.0349; // Roughly 2 degrees.
 
-  const geoviz::Number scale_factor = geoviz::necklace_map::ComputeScaleFactor(parameters, data.elements, data.necklaces);
+  const cartocrow::Number scale_factor = cartocrow::necklace_map::ComputeScaleFactor(parameters, data.elements, data.necklaces);
   UNITTEST_CHECK_CLOSE(1.470, scale_factor, 0.001);
 }
 
@@ -220,7 +220,7 @@ UNITTEST_TEST_FIXTURE(NecklaceDataWesternEurope, WestEuropeExact)
   DefaultParameters(parameters);
   parameters.heuristic_cycles = 0;
 
-  const geoviz::Number scale_factor = geoviz::necklace_map::ComputeScaleFactor(parameters, data.elements, data.necklaces);
+  const cartocrow::Number scale_factor = cartocrow::necklace_map::ComputeScaleFactor(parameters, data.elements, data.necklaces);
   UNITTEST_CHECK_CLOSE(1.675, scale_factor, 0.001);
 }
 
@@ -233,7 +233,7 @@ UNITTEST_TEST_FIXTURE(NecklaceDataWesternEurope, WestEuropeExactBuffer)
   parameters.buffer_rad = 0.0349; // Roughly 2 degrees.
   parameters.heuristic_cycles = 0;
 
-  const geoviz::Number scale_factor = geoviz::necklace_map::ComputeScaleFactor(parameters, data.elements, data.necklaces);
+  const cartocrow::Number scale_factor = cartocrow::necklace_map::ComputeScaleFactor(parameters, data.elements, data.necklaces);
   UNITTEST_CHECK_CLOSE(1.470, scale_factor, 0.001);
 }
 
@@ -244,7 +244,7 @@ UNITTEST_TEST_FIXTURE(NecklaceDataWesternEurope, WestEuropeSmaller)
 
   DefaultParameters(parameters);
 
-  const geoviz::Number scale_factor = geoviz::necklace_map::ComputeScaleFactor(parameters, data.elements, data.necklaces);
+  const cartocrow::Number scale_factor = cartocrow::necklace_map::ComputeScaleFactor(parameters, data.elements, data.necklaces);
   UNITTEST_CHECK_CLOSE(2.507, scale_factor, 0.001);
 }
 
@@ -259,10 +259,10 @@ struct NecklaceDataEastAsia
       kRegistry.Register(&data, "NecklaceDataEastAsia");
 
       // Read the geometry.
-      geoviz::necklace_map::SvgReader svg_reader;
+      cartocrow::necklace_map::SvgReader svg_reader;
       const std::filesystem::path in_geometry_path = kDataDir / "eAsia.svg";
 
-      geoviz::Timer time;
+      cartocrow::Timer time;
       UNITTEST_REQUIRE UNITTEST_CHECK(svg_reader.ReadFile(in_geometry_path, data.elements, data.necklaces));
       kRegistry(&data, 0) = time.Stamp();
     }
@@ -274,10 +274,10 @@ struct NecklaceDataEastAsia
       return true;
     value_name = in_value_name;
 
-    geoviz::necklace_map::DataReader data_reader;
+    cartocrow::necklace_map::DataReader data_reader;
     const std::filesystem::path in_data_path = kDataDir / "eAsia.txt";
 
-    geoviz::Timer time;
+    cartocrow::Timer time;
     const bool result = data_reader.ReadFile(in_data_path, in_value_name, data.elements);
     kRegistry(&data, 1) = time.Stamp();
 
@@ -287,7 +287,7 @@ struct NecklaceDataEastAsia
   NecklaceData& data;
   std::string value_name;
 
-  geoviz::necklace_map::Parameters parameters;
+  cartocrow::necklace_map::Parameters parameters;
 }; // struct NecklaceDataEastAsia
 
 UNITTEST_TEST_FIXTURE(NecklaceDataEastAsia, EastAsiaAgriculture)
@@ -297,7 +297,7 @@ UNITTEST_TEST_FIXTURE(NecklaceDataEastAsia, EastAsiaAgriculture)
 
   DefaultParameters(parameters);
 
-  const geoviz::Number scale_factor = geoviz::necklace_map::ComputeScaleFactor(parameters, data.elements, data.necklaces);
+  const cartocrow::Number scale_factor = cartocrow::necklace_map::ComputeScaleFactor(parameters, data.elements, data.necklaces);
   UNITTEST_CHECK_CLOSE(1.005, scale_factor, 0.001);
 }
 
@@ -309,7 +309,7 @@ UNITTEST_TEST_FIXTURE(NecklaceDataEastAsia, EastAsiaExactAgriculture)
   DefaultParameters(parameters);
   parameters.heuristic_cycles = 0;
 
-  const geoviz::Number scale_factor = geoviz::necklace_map::ComputeScaleFactor(parameters, data.elements, data.necklaces);
+  const cartocrow::Number scale_factor = cartocrow::necklace_map::ComputeScaleFactor(parameters, data.elements, data.necklaces);
   UNITTEST_CHECK_CLOSE(1.005, scale_factor, 0.001);
 }
 
@@ -320,7 +320,7 @@ UNITTEST_TEST_FIXTURE(NecklaceDataEastAsia, EastAsiaPoverty)
 
   DefaultParameters(parameters);
 
-  const geoviz::Number scale_factor = geoviz::necklace_map::ComputeScaleFactor(parameters, data.elements, data.necklaces);
+  const cartocrow::Number scale_factor = cartocrow::necklace_map::ComputeScaleFactor(parameters, data.elements, data.necklaces);
   UNITTEST_CHECK_CLOSE(1.003, scale_factor, 0.001);
 }
 
@@ -332,7 +332,7 @@ UNITTEST_TEST_FIXTURE(NecklaceDataEastAsia, EastAsiaExactPoverty)
   DefaultParameters(parameters);
   parameters.heuristic_cycles = 0;
 
-  const geoviz::Number scale_factor = geoviz::necklace_map::ComputeScaleFactor(parameters, data.elements, data.necklaces);
+  const cartocrow::Number scale_factor = cartocrow::necklace_map::ComputeScaleFactor(parameters, data.elements, data.necklaces);
   UNITTEST_CHECK_CLOSE(1.003, scale_factor, 0.001);
 }
 
@@ -343,7 +343,7 @@ UNITTEST_TEST_FIXTURE(NecklaceDataEastAsia, EastAsiaInternet)
 
   DefaultParameters(parameters);
 
-  const geoviz::Number scale_factor = geoviz::necklace_map::ComputeScaleFactor(parameters, data.elements, data.necklaces);
+  const cartocrow::Number scale_factor = cartocrow::necklace_map::ComputeScaleFactor(parameters, data.elements, data.necklaces);
   UNITTEST_CHECK_CLOSE(1.511, scale_factor, 0.001);
 }
 
@@ -355,10 +355,10 @@ UNITTEST_TEST_FIXTURE(NecklaceDataEastAsia, EastAsiaExactInternet)
   DefaultParameters(parameters);
   parameters.heuristic_cycles = 0;
 
-  const geoviz::Number scale_factor = geoviz::necklace_map::ComputeScaleFactor(parameters, data.elements, data.necklaces);
+  const cartocrow::Number scale_factor = cartocrow::necklace_map::ComputeScaleFactor(parameters, data.elements, data.necklaces);
   UNITTEST_CHECK_CLOSE(1.511, scale_factor, 0.001);
 }
 
 } // UNITTEST_SUITE(NecklaceMap)
 
-#endif //GEOVIZ_TEST_NECKLACE_MAP_NECKLACE_MAP_H
+#endif //CARTOCROW_TEST_NECKLACE_MAP_NECKLACE_MAP_H

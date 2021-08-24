@@ -27,8 +27,8 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-2019
 #include <gflags/gflags.h>
 #include <glog/logging.h>
 
-#include <geoviz/common/timer.h>
-#include <geoviz/necklace_map/necklace_map.h>
+#include <cartocrow/common/timer.h>
+#include <cartocrow/necklace_map/necklace_map.h>
 
 #include <console/common/utils_cla.h>
 #include <console/common/utils_flags.h>
@@ -255,7 +255,7 @@ DEFINE_bool
 
 
 void
-ValidateFlags(geoviz::necklace_map::Parameters& parameters, geoviz::necklace_map::WriteOptions::Ptr& write_options)
+ValidateFlags(cartocrow::necklace_map::Parameters& parameters, cartocrow::necklace_map::WriteOptions::Ptr& write_options)
 {
   bool correct = true;
   LOG(INFO) << "necklace_map_cla flags:";
@@ -278,7 +278,7 @@ ValidateFlags(geoviz::necklace_map::Parameters& parameters, geoviz::necklace_map
     correct &= CheckAndPrintFlag
     (
       FLAGS_NAME_AND_VALUE(interval_type),
-      geoviz::necklace_map::IntervalTypeParser(parameters.interval_type)
+      cartocrow::necklace_map::IntervalTypeParser(parameters.interval_type)
     );
 
     correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(centroid_interval_length_rad), MakeRangeCheck(0.0, M_PI));
@@ -295,7 +295,7 @@ ValidateFlags(geoviz::necklace_map::Parameters& parameters, geoviz::necklace_map
     correct &= CheckAndPrintFlag
     (
       FLAGS_NAME_AND_VALUE(order_type),
-      geoviz::necklace_map::OrderTypeParser(parameters.order_type)
+      cartocrow::necklace_map::OrderTypeParser(parameters.order_type)
     );
 
     correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(buffer_rad), MakeRangeCheck(0.0, M_PI));
@@ -322,7 +322,7 @@ ValidateFlags(geoviz::necklace_map::Parameters& parameters, geoviz::necklace_map
   }
 
   // Output parameters.
-  using Options = geoviz::necklace_map::WriteOptions;
+  using Options = cartocrow::necklace_map::WriteOptions;
   write_options = Options::Default();
   {
     correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(pixel_width), IsStrictlyPositive<int32_t>());
@@ -367,26 +367,26 @@ ValidateFlags(geoviz::necklace_map::Parameters& parameters, geoviz::necklace_map
   if (!correct) LOG(FATAL) << "Errors in flags; Terminating.";
 }
 
-bool ReadData(std::vector<geoviz::necklace_map::MapElement::Ptr>& elements)
+bool ReadData(std::vector<cartocrow::necklace_map::MapElement::Ptr>& elements)
 {
-  geoviz::necklace_map::DataReader data_reader;
+  cartocrow::necklace_map::DataReader data_reader;
   return data_reader.ReadFile(FLAGS_in_data_filename, FLAGS_in_value_name, elements);
 }
 
 bool ReadGeometry
 (
-  std::vector<geoviz::necklace_map::MapElement::Ptr>& elements,
-  std::vector<geoviz::necklace_map::Necklace::Ptr>& necklaces,
-  geoviz::Number& scale_factor
+  std::vector<cartocrow::necklace_map::MapElement::Ptr>& elements,
+  std::vector<cartocrow::necklace_map::Necklace::Ptr>& necklaces,
+  cartocrow::Number& scale_factor
 )
 {
-  geoviz::necklace_map::SvgReader svg_reader;
+  cartocrow::necklace_map::SvgReader svg_reader;
   return svg_reader.ReadFile(FLAGS_in_geometry_filename, elements, necklaces, scale_factor);
 }
 
 void ApplyNecklaceDrawBounds
 (
-  std::vector<geoviz::necklace_map::Necklace::Ptr>& necklaces,
+  std::vector<cartocrow::necklace_map::Necklace::Ptr>& necklaces,
   const std::string& bound_necklaces_deg
 )
 {
@@ -419,12 +419,12 @@ void ApplyNecklaceDrawBounds
       continue;
     }
 
-    for (geoviz::necklace_map::Necklace::Ptr& necklace : necklaces)
+    for (cartocrow::necklace_map::Necklace::Ptr& necklace : necklaces)
     {
       if (necklace->id != necklace_id)
         continue;
 
-      geoviz::necklace_map::CircleNecklace::Ptr shape = std::dynamic_pointer_cast<geoviz::necklace_map::CircleNecklace>( necklace->shape );
+      cartocrow::necklace_map::CircleNecklace::Ptr shape = std::dynamic_pointer_cast<cartocrow::necklace_map::CircleNecklace>( necklace->shape );
       if (!shape)
         continue;
 
@@ -437,13 +437,13 @@ void ApplyNecklaceDrawBounds
 
 void WriteOutput
 (
-  const std::vector<geoviz::necklace_map::MapElement::Ptr>& elements,
-  const std::vector<geoviz::necklace_map::Necklace::Ptr>& necklaces,
-  const geoviz::Number& scale_factor,
-  const geoviz::necklace_map::WriteOptions::Ptr& write_options
+  const std::vector<cartocrow::necklace_map::MapElement::Ptr>& elements,
+  const std::vector<cartocrow::necklace_map::Necklace::Ptr>& necklaces,
+  const cartocrow::Number& scale_factor,
+  const cartocrow::necklace_map::WriteOptions::Ptr& write_options
 )
 {
-  geoviz::necklace_map::SvgWriter writer;
+  cartocrow::necklace_map::SvgWriter writer;
   if (FLAGS_out_website)
     writer.Write(elements, necklaces, scale_factor, write_options, std::cout);
 
@@ -462,21 +462,21 @@ int main(int argc, char** argv)
   (
     argc,
     argv,
-    "Command line application that exposes the functionality of the GeoViz necklace map.",
+    "Command line application that exposes the functionality of the CartoCrow necklace map.",
     {"--in_geometry_filename=<file>", "--in_data_filename=<file>", "--in_value_name=<column>"}
   );
 
 
   // Validate the settings.
-  geoviz::necklace_map::Parameters parameters;
-  geoviz::necklace_map::WriteOptions::Ptr write_options;
+  cartocrow::necklace_map::Parameters parameters;
+  cartocrow::necklace_map::WriteOptions::Ptr write_options;
   ValidateFlags(parameters, write_options);
 
 
-  geoviz::Timer time;
+  cartocrow::Timer time;
 
-  using MapElement = geoviz::necklace_map::MapElement;
-  using Necklace = geoviz::necklace_map::Necklace;
+  using MapElement = cartocrow::necklace_map::MapElement;
+  using Necklace = cartocrow::necklace_map::Necklace;
   std::vector<MapElement::Ptr> elements;
   std::vector<Necklace::Ptr> necklaces;
 
@@ -485,7 +485,7 @@ int main(int argc, char** argv)
   // Note that the regions should be written in the same order as in the input,
   // because some smaller regions may be used to simulate enclaves inside larger regions.
   // This forces the geometry to be read first.
-  geoviz::Number scale_factor;
+  cartocrow::Number scale_factor;
   const bool success_read_svg = ReadGeometry(elements, necklaces, scale_factor);
   const bool success_read_data = ReadData(elements);
   CHECK(success_read_svg && success_read_data) << "Terminating program.";
@@ -495,7 +495,7 @@ int main(int argc, char** argv)
   if (FLAGS_force_recompute_scale_factor || scale_factor < 0)
   {
     // Compute the optimal scale factor and placement.
-    scale_factor = geoviz::necklace_map::ComputeScaleFactor(parameters, elements, necklaces);
+    scale_factor = cartocrow::necklace_map::ComputeScaleFactor(parameters, elements, necklaces);
     LOG(INFO) << "Computed scale factor: " << scale_factor;
   } else
   {

@@ -1,5 +1,5 @@
 # The draw_logo_cla executable prints a logo formatted as an svg HTML element.
-geoviz_add_cla(draw_logo)
+cartocrow_add_cla(draw_logo)
 
 # PHP script to run the executable.
 # Note that the configure file uses the ${CURRENT_CLA} variable to determine the executable to run.

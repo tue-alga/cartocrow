@@ -25,8 +25,8 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-2019
 #include <gflags/gflags.h>
 #include <glog/logging.h>
 
-#include <geoviz/common/timer.h>
-#include <geoviz/necklace_map/necklace_map.h>
+#include <cartocrow/common/timer.h>
+#include <cartocrow/necklace_map/necklace_map.h>
 
 #include "console/common/utils_cla.h"
 #include "console/common/utils_flags.h"
@@ -64,19 +64,19 @@ void ValidateFlags()
 
 bool ReadGeometry
 (
-  std::vector<geoviz::necklace_map::MapElement::Ptr>& elements,
-  std::vector<geoviz::necklace_map::Necklace::Ptr>& necklaces,
-  geoviz::Number& scale_factor
+  std::vector<cartocrow::necklace_map::MapElement::Ptr>& elements,
+  std::vector<cartocrow::necklace_map::Necklace::Ptr>& necklaces,
+  cartocrow::Number& scale_factor
 )
 {
-  geoviz::necklace_map::SvgReader svg_reader;
+  cartocrow::necklace_map::SvgReader svg_reader;
   return svg_reader.ReadFile(FLAGS_in_geometry_filename, elements, necklaces, scale_factor);
 }
 
 void WriteOutput
 (
-  const std::vector<geoviz::necklace_map::MapElement::Ptr>& elements,
-  const std::vector<geoviz::necklace_map::Necklace::Ptr>& necklaces
+  const std::vector<cartocrow::necklace_map::MapElement::Ptr>& elements,
+  const std::vector<cartocrow::necklace_map::Necklace::Ptr>& necklaces
 )
 {
   for (auto element : elements) {
@@ -98,13 +98,13 @@ int main(int argc, char **argv)
   // Validate the settings.
   ValidateFlags();
 
-  using MapElement = geoviz::necklace_map::MapElement;
-  using Necklace = geoviz::necklace_map::Necklace;
+  using MapElement = cartocrow::necklace_map::MapElement;
+  using Necklace = cartocrow::necklace_map::Necklace;
   std::vector<MapElement::Ptr> elements;
   std::vector<Necklace::Ptr> necklaces;
 
   // Read the map.
-  geoviz::Number scale_factor;
+  cartocrow::Number scale_factor;
   const bool success_read_svg = ReadGeometry(elements, necklaces, scale_factor);
   CHECK(success_read_svg) << "Map invalid";
 

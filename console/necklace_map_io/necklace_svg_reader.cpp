@@ -27,10 +27,10 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 26-11-2019
 
 #include <glog/logging.h>
 
-#include "geoviz/necklace_map/io/detail/svg_visitor.h"
+#include "cartocrow/necklace_map/io/detail/svg_visitor.h"
 
 
-namespace geoviz
+namespace cartocrow
 {
 namespace necklace_map
 {
@@ -143,4 +143,4 @@ bool SvgReader::Parse
 }
 
 } // namespace necklace_map
-} // namespace geoviz
+} // namespace cartocrow

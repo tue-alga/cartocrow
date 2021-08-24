@@ -19,7 +19,7 @@
 
   // Make sure that the temporary directory exists.
   $tmp = sys_get_temp_dir();
-  $tmpdir = "$tmp/geoviz/";
+  $tmpdir = "$tmp/cartocrow/";
   if (!file_exists($tmpdir))
     mkdir($tmpdir);
 

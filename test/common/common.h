@@ -1,5 +1,5 @@
 /*
-The GeoViz library implements algorithmic geo-visualization methods,
+The CartoCrow library implements algorithmic geo-visualization methods,
 developed at TU Eindhoven.
 Copyright (C) 2021  Netherlands eScience Center and TU Eindhoven
 
@@ -19,8 +19,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Created by tvl (t.vanlankveld@esciencecenter.nl) on 16-11-2020
 */
 
-#ifndef GEOVIZ_TEST_COMMON_COMMON_H
-#define GEOVIZ_TEST_COMMON_COMMON_H
+#ifndef CARTOCROW_TEST_COMMON_COMMON_H
+#define CARTOCROW_TEST_COMMON_COMMON_H
 
 #include <algorithm>
 #include <filesystem>
@@ -29,15 +29,15 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 16-11-2020
 
 #include <glog/logging.h>
 
-#include <cmake/geoviz_test_config.h>
-#include <geoviz/common/circulator.h>
-#include <geoviz/common/polar_line.h>
-#include <geoviz/common/polar_segment.h>
-#include <geoviz/common/spiral.h>
-#include <geoviz/common/spiral_segment.h>
-#include <geoviz/common/timer.h>
-#include <geoviz/common/detail/polar_intersections.h>
-#include <geoviz/common/io/svg_writer.h>
+#include <cmake/cartocrow_test_config.h>
+#include <cartocrow/common/circulator.h>
+#include <cartocrow/common/polar_line.h>
+#include <cartocrow/common/polar_segment.h>
+#include <cartocrow/common/spiral.h>
+#include <cartocrow/common/spiral_segment.h>
+#include <cartocrow/common/timer.h>
+#include <cartocrow/common/detail/polar_intersections.h>
+#include <cartocrow/common/io/svg_writer.h>
 
 #include "test/test.h"
 #include "test/test_registry_timer.h"
@@ -54,7 +54,7 @@ void TestCommon() {}  // Linking hack, each new test cpp file has it.
 //static Reg kRegistry;
 
 
-static const std::filesystem::path kDataDir = std::filesystem::path(GEOVIZ_TEST_DATA_DIR) / "common";
+static const std::filesystem::path kDataDir = std::filesystem::path(CARTOCROW_TEST_DATA_DIR) / "common";
 
 
 UNITTEST_SUITE(Common)
@@ -67,7 +67,7 @@ UNITTEST_TEST(Circulator)
   const std::vector<int> expected = {0, 2, 0, 1, 1, 2, 1};
 
   {
-    auto iter = geoviz::make_circulator(test.begin(), test);
+    auto iter = cartocrow::make_circulator(test.begin(), test);
     const auto fixed_iter = iter;
     UNITTEST_CHECK_EQUAL(*iter, 0);
     UNITTEST_CHECK(fixed_iter == iter);
@@ -91,7 +91,7 @@ UNITTEST_TEST(Circulator)
   }
 
   {
-    auto iter = geoviz::make_circulator(test);
+    auto iter = cartocrow::make_circulator(test);
     const auto fixed_iter = iter;
     UNITTEST_CHECK_EQUAL(*iter, 0);
     UNITTEST_CHECK(fixed_iter == iter);
@@ -124,7 +124,7 @@ UNITTEST_TEST(StructCirculator)
   const std::vector<int> expected = {0, 2, 0, 1, 1, 2, 1};
 
   {
-    auto iter = geoviz::make_circulator(test.begin(), test);
+    auto iter = cartocrow::make_circulator(test.begin(), test);
     UNITTEST_CHECK_EQUAL(iter->value, 0);
 
     std::vector<int> results;
@@ -149,7 +149,7 @@ UNITTEST_TEST(ConstCirculator)
   const std::vector<int> expected = {0, 2, 0, 1, 1, 2, 1};
 
   {
-    auto iter = geoviz::make_circulator(test.begin(), test);
+    auto iter = cartocrow::make_circulator(test.begin(), test);
     const auto fixed_iter = iter;
     UNITTEST_CHECK_EQUAL(*iter, 0);
     UNITTEST_CHECK(fixed_iter == iter);
@@ -173,7 +173,7 @@ UNITTEST_TEST(ConstCirculator)
   }
 
   {
-    auto iter = geoviz::make_circulator(test);
+    auto iter = cartocrow::make_circulator(test);
     const auto fixed_iter = iter;
     UNITTEST_CHECK_EQUAL(*iter, 0);
     UNITTEST_CHECK(fixed_iter == iter);
@@ -205,7 +205,7 @@ UNITTEST_CHECK_CLOSE(expected, actual, tolerance);
 
 #ifndef CHECK_POLAR_POINTS_CLOSE_PHI
 #define CHECK_POLAR_POINTS_CLOSE_PHI(expected, actual, tolerance) \
-UNITTEST_CHECK_CLOSE(0, geoviz::Modulo(actual - expected, -M_PI), tolerance);
+UNITTEST_CHECK_CLOSE(0, cartocrow::Modulo(actual - expected, -M_PI), tolerance);
 #endif
 
 #ifndef CHECK_POLAR_POINTS_CLOSE
@@ -218,47 +218,47 @@ CHECK_POLAR_POINTS_CLOSE_PHI(expected.phi(), actual.phi(), tolerance);
 UNITTEST_TEST(PolarStraightLines)
 {
   // Straight line and line segment that do not and do contain the pole.
-  const geoviz::PolarLine line
+  const cartocrow::PolarLine line
   (
-    geoviz::PolarPoint(geoviz::Point(11, -2)),
-    geoviz::PolarPoint(geoviz::Point(-1, 7))
+    cartocrow::PolarPoint(cartocrow::Point(11, -2)),
+    cartocrow::PolarPoint(cartocrow::Point(-1, 7))
   );
-  const geoviz::PolarLine line_pole
+  const cartocrow::PolarLine line_pole
   (
-    geoviz::PolarPoint(geoviz::Point(8, -6)),
-    geoviz::PolarPoint(geoviz::Point(-4, 3))
+    cartocrow::PolarPoint(cartocrow::Point(8, -6)),
+    cartocrow::PolarPoint(cartocrow::Point(-4, 3))
   );
-  const geoviz::PolarSegment segment
+  const cartocrow::PolarSegment segment
   (
-    geoviz::PolarPoint(geoviz::Point(11, -2)),
-    geoviz::PolarPoint(geoviz::Point(-1, 7))
+    cartocrow::PolarPoint(cartocrow::Point(11, -2)),
+    cartocrow::PolarPoint(cartocrow::Point(-1, 7))
   );
-  const geoviz::PolarSegment segment_pole
+  const cartocrow::PolarSegment segment_pole
   (
-    geoviz::PolarPoint(geoviz::Point(8, -6)),
-    geoviz::PolarPoint(geoviz::Point(-4, 3))
+    cartocrow::PolarPoint(cartocrow::Point(8, -6)),
+    cartocrow::PolarPoint(cartocrow::Point(-4, 3))
   );
 
   // Straight line sub-segment that does not contain the point on the supporting line closest to the pole.
-  const geoviz::PolarSegment segment_farther
+  const cartocrow::PolarSegment segment_farther
   (
-    geoviz::PolarPoint(geoviz::Point(11, -2)),
-    geoviz::PolarPoint(geoviz::Point(7, 1))
+    cartocrow::PolarPoint(cartocrow::Point(11, -2)),
+    cartocrow::PolarPoint(cartocrow::Point(7, 1))
   );
 
   ////////////////////////////
   // Point closest to pole. //
   ////////////////////////////
 
-  const geoviz::PolarPoint expected_close(geoviz::Point(3, 4));
-  const geoviz::PolarPoint expected_close_pole(geoviz::Point(0, 0));
-  const geoviz::PolarPoint expected_close_2(geoviz::Point(7, 1));
+  const cartocrow::PolarPoint expected_close(cartocrow::Point(3, 4));
+  const cartocrow::PolarPoint expected_close_pole(cartocrow::Point(0, 0));
+  const cartocrow::PolarPoint expected_close_2(cartocrow::Point(7, 1));
 
-  const geoviz::PolarPoint closest_point_line = line.foot();
-  const geoviz::PolarPoint closest_point_line_pole = line_pole.foot();
-  const geoviz::PolarPoint closest_point_segment = segment.ComputeClosestToPole();
-  const geoviz::PolarPoint closest_point_segment_pole = segment_pole.ComputeClosestToPole();
-  const geoviz::PolarPoint closest_point_segment_farther = segment_farther.ComputeClosestToPole();
+  const cartocrow::PolarPoint closest_point_line = line.foot();
+  const cartocrow::PolarPoint closest_point_line_pole = line_pole.foot();
+  const cartocrow::PolarPoint closest_point_segment = segment.ComputeClosestToPole();
+  const cartocrow::PolarPoint closest_point_segment_pole = segment_pole.ComputeClosestToPole();
+  const cartocrow::PolarPoint closest_point_segment_farther = segment_farther.ComputeClosestToPole();
 
   CHECK_POLAR_POINTS_CLOSE_R(expected_close.R(), closest_point_line.R(), 0.001);  // Note that the phi of the foot depends on the line's direction.
   CHECK_POLAR_POINTS_CLOSE(expected_close, closest_point_segment, 0.001);
@@ -272,15 +272,15 @@ UNITTEST_TEST(PolarStraightLines)
 
   // Note that the computations contain double precision errors in the order magnitude of ~10e-15.
   // This means that the mathematical closest point is not always on the line.
-  const geoviz::Number r_too_small = 1;
-  const geoviz::Number r_closest = 5.0000001;
-  const geoviz::Number r_2 = 6;
-  const geoviz::Number r_3 = 8;
-  const geoviz::Number r_4 = 14;
-  const geoviz::Number r_closest_pole = 0;
-  const geoviz::Number r_2_pole = 4;
-  const geoviz::Number r_3_pole = 6;
-  const geoviz::Number r_4_pole = 11;
+  const cartocrow::Number r_too_small = 1;
+  const cartocrow::Number r_closest = 5.0000001;
+  const cartocrow::Number r_2 = 6;
+  const cartocrow::Number r_3 = 8;
+  const cartocrow::Number r_4 = 14;
+  const cartocrow::Number r_closest_pole = 0;
+  const cartocrow::Number r_2_pole = 4;
+  const cartocrow::Number r_3_pole = 6;
+  const cartocrow::Number r_4_pole = 11;
 
   UNITTEST_CHECK_EQUAL(false, line.ContainsR(r_too_small));
   UNITTEST_CHECK_EQUAL(true, line.ContainsR(r_closest));
@@ -311,11 +311,11 @@ UNITTEST_TEST(PolarStraightLines)
   // Whether a point at given phi is on line. //
   //////////////////////////////////////////////
 
-  //const geoviz::PolarPoint expected_close(geoviz::Point(3, 4));
-  const geoviz::PolarPoint on_line(geoviz::Point(7, 1));
-  const geoviz::PolarPoint on_line_far(geoviz::Point(-5, 10));
-  const geoviz::PolarPoint parallel(geoviz::Point(4, -3));
-  const geoviz::PolarPoint off_line(geoviz::Point(4, -4));
+  //const cartocrow::PolarPoint expected_close(cartocrow::Point(3, 4));
+  const cartocrow::PolarPoint on_line(cartocrow::Point(7, 1));
+  const cartocrow::PolarPoint on_line_far(cartocrow::Point(-5, 10));
+  const cartocrow::PolarPoint parallel(cartocrow::Point(4, -3));
+  const cartocrow::PolarPoint off_line(cartocrow::Point(4, -4));
 
   UNITTEST_CHECK_EQUAL(true, line.ContainsPhi(expected_close.phi()));
   UNITTEST_CHECK_EQUAL(true, line.ContainsPhi(on_line.phi()));
@@ -334,12 +334,12 @@ UNITTEST_TEST(PolarStraightLines)
   // Compute phi of point on line at given distance. //
   /////////////////////////////////////////////////////
 
-  const geoviz::PolarPoint expected_vertical(geoviz::Point(0, 7 - (3 / 4.0)));
-  const geoviz::PolarPoint expected_smaller(geoviz::Point(-4, 3));
-  const geoviz::PolarPoint expected_larger(geoviz::Point(4, -3));
+  const cartocrow::PolarPoint expected_vertical(cartocrow::Point(0, 7 - (3 / 4.0)));
+  const cartocrow::PolarPoint expected_smaller(cartocrow::Point(-4, 3));
+  const cartocrow::PolarPoint expected_larger(cartocrow::Point(4, -3));
 
   int num;
-  geoviz::Number phi[2];
+  cartocrow::Number phi[2];
 
   num = line.CollectPhi(r_too_small, phi);
   UNITTEST_CHECK_EQUAL(0, num);
@@ -369,10 +369,10 @@ UNITTEST_TEST(PolarStraightLines)
   CHECK_POLAR_POINTS_CLOSE_PHI(expected_smaller.phi(), phi[0], 0.001);
   CHECK_POLAR_POINTS_CLOSE_PHI(expected_larger.phi(), phi[1], 0.001);
 
-  const geoviz::PolarPoint sample_both_inside(geoviz::Point(5, 2.5));
-  const geoviz::PolarPoint sample_other_inside(geoviz::Point(1, 5.5));
-  const geoviz::PolarPoint sample_one_inside(geoviz::Point(9, -0.5));
-  const geoviz::PolarPoint sample_both_outside(geoviz::Point(15, -5));
+  const cartocrow::PolarPoint sample_both_inside(cartocrow::Point(5, 2.5));
+  const cartocrow::PolarPoint sample_other_inside(cartocrow::Point(1, 5.5));
+  const cartocrow::PolarPoint sample_one_inside(cartocrow::Point(9, -0.5));
+  const cartocrow::PolarPoint sample_both_outside(cartocrow::Point(15, -5));
 
   num = segment.CollectPhi(sample_both_inside.R(), phi);
   UNITTEST_CHECK_EQUAL(2, num);
@@ -387,10 +387,10 @@ UNITTEST_TEST(PolarStraightLines)
   num = segment.CollectPhi(sample_both_outside.R(), phi);
   UNITTEST_CHECK_EQUAL(0, num);
 
-  const geoviz::PolarPoint sample_both_inside_pole(geoviz::Point(-2, 1.5));
-  const geoviz::PolarPoint sample_other_inside_pole(geoviz::Point(2, -1.5));
-  const geoviz::PolarPoint sample_one_inside_pole(geoviz::Point(6, -4.5));
-  const geoviz::PolarPoint sample_both_outside_pole(geoviz::Point(12, -9));
+  const cartocrow::PolarPoint sample_both_inside_pole(cartocrow::Point(-2, 1.5));
+  const cartocrow::PolarPoint sample_other_inside_pole(cartocrow::Point(2, -1.5));
+  const cartocrow::PolarPoint sample_one_inside_pole(cartocrow::Point(6, -4.5));
+  const cartocrow::PolarPoint sample_both_outside_pole(cartocrow::Point(12, -9));
 
   num = segment_pole.CollectPhi(sample_both_inside_pole.R(), phi);
   UNITTEST_CHECK_EQUAL(2, num);
@@ -409,15 +409,15 @@ UNITTEST_TEST(PolarStraightLines)
   // Compute line angle at given distance. //
   ///////////////////////////////////////////
 
-  const geoviz::Number r_5 = std::sqrt(31.25);
-  const geoviz::Number r_6 = std::sqrt(50);
-  const geoviz::Number r_7 = std::sqrt(125);
+  const cartocrow::Number r_5 = std::sqrt(31.25);
+  const cartocrow::Number r_6 = std::sqrt(50);
+  const cartocrow::Number r_7 = std::sqrt(125);
 
-  geoviz::Number angle_rad;
-  const geoviz::Number expected_angle_closest = M_PI_2;
-  const geoviz::Number expected_angle_5 = std::atan2(5, 2.5);
-  const geoviz::Number expected_angle_6 = M_PI_4;
-  const geoviz::Number expected_angle_7 = std::atan2(5, 10);
+  cartocrow::Number angle_rad;
+  const cartocrow::Number expected_angle_closest = M_PI_2;
+  const cartocrow::Number expected_angle_5 = std::atan2(5, 2.5);
+  const cartocrow::Number expected_angle_6 = M_PI_4;
+  const cartocrow::Number expected_angle_7 = std::atan2(5, 10);
 
   UNITTEST_CHECK_EQUAL(false, line.ComputeAngle(r_too_small, angle_rad));
 
@@ -436,44 +436,44 @@ UNITTEST_TEST(PolarStraightLines)
 
 UNITTEST_TEST(SpiralIntersections)
 {
-  geoviz::PolarPoint intersections[2];
+  cartocrow::PolarPoint intersections[2];
   int num;
 
-  const geoviz::PolarLine line_1(geoviz::PolarPoint(geoviz::Point(11, -2)), geoviz::PolarPoint(geoviz::Point(-1, 7)));
-  const geoviz::PolarLine line_2(geoviz::PolarPoint(geoviz::Point(-2, -4)), geoviz::PolarPoint(geoviz::Point(1, 0)));
-  const geoviz::PolarLine line_3(geoviz::PolarPoint(geoviz::Point(4, -3)), geoviz::PolarPoint(geoviz::Point(0, 0)));
-  const geoviz::PolarLine line_4(geoviz::PolarPoint(geoviz::Point(0, 0)), geoviz::PolarPoint(geoviz::Point(4, 0)));
-  const geoviz::Spiral spiral_1(geoviz::PolarPoint(geoviz::Point(11, -3)), M_PI * 3.0 / 8);
-  const geoviz::Spiral spiral_2(geoviz::PolarPoint(geoviz::Point(11, -3)), -M_PI * 3.0 / 8);
-  const geoviz::Spiral spiral_3(geoviz::PolarPoint(geoviz::Point(2, 3)), M_PI_4);
-  const geoviz::Spiral spiral_4(geoviz::PolarPoint(geoviz::Point(-11, 3)), M_PI * 3.0 / 8);
-  const geoviz::Spiral spiral_5(geoviz::PolarPoint(geoviz::Point(4, -3)), 0);
+  const cartocrow::PolarLine line_1(cartocrow::PolarPoint(cartocrow::Point(11, -2)), cartocrow::PolarPoint(cartocrow::Point(-1, 7)));
+  const cartocrow::PolarLine line_2(cartocrow::PolarPoint(cartocrow::Point(-2, -4)), cartocrow::PolarPoint(cartocrow::Point(1, 0)));
+  const cartocrow::PolarLine line_3(cartocrow::PolarPoint(cartocrow::Point(4, -3)), cartocrow::PolarPoint(cartocrow::Point(0, 0)));
+  const cartocrow::PolarLine line_4(cartocrow::PolarPoint(cartocrow::Point(0, 0)), cartocrow::PolarPoint(cartocrow::Point(4, 0)));
+  const cartocrow::Spiral spiral_1(cartocrow::PolarPoint(cartocrow::Point(11, -3)), M_PI * 3.0 / 8);
+  const cartocrow::Spiral spiral_2(cartocrow::PolarPoint(cartocrow::Point(11, -3)), -M_PI * 3.0 / 8);
+  const cartocrow::Spiral spiral_3(cartocrow::PolarPoint(cartocrow::Point(2, 3)), M_PI_4);
+  const cartocrow::Spiral spiral_4(cartocrow::PolarPoint(cartocrow::Point(-11, 3)), M_PI * 3.0 / 8);
+  const cartocrow::Spiral spiral_5(cartocrow::PolarPoint(cartocrow::Point(4, -3)), 0);
 
-  const geoviz::PolarSegment line_segment_1(geoviz::PolarPoint(geoviz::Point(11, -2)), geoviz::PolarPoint(geoviz::Point(-1, 7)));
-  const geoviz::PolarSegment line_segment_2(geoviz::PolarPoint(geoviz::Point(11, -2)), geoviz::PolarPoint(geoviz::Point(7, 1)));
-  const geoviz::SpiralSegment spiral_segment_1(geoviz::PolarPoint(geoviz::Point(5, 5)), M_PI * 3.0 / 8, 0, 15);
-  const geoviz::SpiralSegment spiral_segment_2(geoviz::PolarPoint(geoviz::Point(5, 5)), M_PI * 3.0 / 8, 0, 10);
-  const geoviz::SpiralSegment spiral_segment_3(geoviz::PolarPoint(geoviz::Point(5, 5)), M_PI * 3.0 / 8, 6, 10);
+  const cartocrow::PolarSegment line_segment_1(cartocrow::PolarPoint(cartocrow::Point(11, -2)), cartocrow::PolarPoint(cartocrow::Point(-1, 7)));
+  const cartocrow::PolarSegment line_segment_2(cartocrow::PolarPoint(cartocrow::Point(11, -2)), cartocrow::PolarPoint(cartocrow::Point(7, 1)));
+  const cartocrow::SpiralSegment spiral_segment_1(cartocrow::PolarPoint(cartocrow::Point(5, 5)), M_PI * 3.0 / 8, 0, 15);
+  const cartocrow::SpiralSegment spiral_segment_2(cartocrow::PolarPoint(cartocrow::Point(5, 5)), M_PI * 3.0 / 8, 0, 10);
+  const cartocrow::SpiralSegment spiral_segment_3(cartocrow::PolarPoint(cartocrow::Point(5, 5)), M_PI * 3.0 / 8, 6, 10);
 
-  geoviz::PolarPoint expected_intersection_line_1_line_2(5.0634, 0.7686);
-  geoviz::PolarPoint expected_intersection_line_3_line_4(0, 0);
-  geoviz::PolarPoint expected_intersection_spiral_1_spiral_2_0(3.1033, 2.8753);
-  geoviz::PolarPoint expected_intersection_spiral_1_spiral_2_1(11.4018, -0.2663);
-  geoviz::PolarPoint expected_intersection_spiral_2_spiral_3_0(1.8628, 1.6432);
-  geoviz::PolarPoint expected_intersection_spiral_2_spiral_3_1(11.7329, -0.1971);
-  geoviz::PolarPoint expected_intersection_line_1_spiral_1_0(51.0082, 2.3999);
-  geoviz::PolarPoint expected_intersection_line_1_spiral_1_1(10.9538, -0.1695);
-  geoviz::PolarPoint expected_intersection_line_2_spiral_3_0(4.5484, 0.7505);
-  geoviz::PolarPoint expected_intersection_line_2_spiral_5_0(0.8000, -0.6435);
-  geoviz::PolarPoint expected_intersection_line_3_spiral_1_0(13.3302, -0.6435);
-  geoviz::PolarPoint expected_intersection_line_3_spiral_1_1(3.6282, 2.4981);
-  geoviz::PolarPoint expected_intersection_line_3_spiral_5_0(0, 0);
-  geoviz::PolarPoint expected_intersection_line_3_spiral_5_1(5, -0.6435);
-  geoviz::PolarPoint expected_intersection_line_4_spiral_5_0(0, 0);
+  cartocrow::PolarPoint expected_intersection_line_1_line_2(5.0634, 0.7686);
+  cartocrow::PolarPoint expected_intersection_line_3_line_4(0, 0);
+  cartocrow::PolarPoint expected_intersection_spiral_1_spiral_2_0(3.1033, 2.8753);
+  cartocrow::PolarPoint expected_intersection_spiral_1_spiral_2_1(11.4018, -0.2663);
+  cartocrow::PolarPoint expected_intersection_spiral_2_spiral_3_0(1.8628, 1.6432);
+  cartocrow::PolarPoint expected_intersection_spiral_2_spiral_3_1(11.7329, -0.1971);
+  cartocrow::PolarPoint expected_intersection_line_1_spiral_1_0(51.0082, 2.3999);
+  cartocrow::PolarPoint expected_intersection_line_1_spiral_1_1(10.9538, -0.1695);
+  cartocrow::PolarPoint expected_intersection_line_2_spiral_3_0(4.5484, 0.7505);
+  cartocrow::PolarPoint expected_intersection_line_2_spiral_5_0(0.8000, -0.6435);
+  cartocrow::PolarPoint expected_intersection_line_3_spiral_1_0(13.3302, -0.6435);
+  cartocrow::PolarPoint expected_intersection_line_3_spiral_1_1(3.6282, 2.4981);
+  cartocrow::PolarPoint expected_intersection_line_3_spiral_5_0(0, 0);
+  cartocrow::PolarPoint expected_intersection_line_3_spiral_5_1(5, -0.6435);
+  cartocrow::PolarPoint expected_intersection_line_4_spiral_5_0(0, 0);
 
 
   // TODO(tvl) TMP DEBUG
-  geoviz::SvgWriter writer;
+  cartocrow::SvgWriter writer;
   writer.Add(line_1);
   writer.Add(line_2);
   writer.Add(line_3);
@@ -505,101 +505,101 @@ UNITTEST_TEST(SpiralIntersections)
   writer.Add(expected_intersection_line_3_spiral_5_1);
   writer.Add(expected_intersection_line_4_spiral_5_0);
 
-  geoviz::WriteOptions::Ptr options = geoviz::WriteOptions::Default();
-  std::ofstream out("/storage/GeoViz/wwwroot/data/tmp/common_out.svg");
+  cartocrow::WriteOptions::Ptr options = cartocrow::WriteOptions::Default();
+  std::ofstream out("/storage/CartoCrow/wwwroot/data/tmp/common_out.svg");
   writer.Write(options, out);
   out.close();
 
   // Line - line.
-  num = geoviz::ComputeIntersections(line_1, line_2, intersections);
+  num = cartocrow::ComputeIntersections(line_1, line_2, intersections);
   UNITTEST_CHECK_EQUAL(1, num);
   CHECK_POLAR_POINTS_CLOSE(expected_intersection_line_1_line_2, intersections[0], 0.001);
 
   // Line - line (parallel).
-  num = geoviz::ComputeIntersections(line_1, line_3, intersections);
+  num = cartocrow::ComputeIntersections(line_1, line_3, intersections);
   UNITTEST_CHECK_EQUAL(0, num);
 
   // Line - line (pole).
-  num = geoviz::ComputeIntersections(line_3, line_4, intersections);
+  num = cartocrow::ComputeIntersections(line_3, line_4, intersections);
   UNITTEST_CHECK_EQUAL(1, num);
   CHECK_POLAR_POINTS_CLOSE(expected_intersection_line_3_line_4, intersections[0], 0.001);
 
   // Spiral - spiral (opposite angle).
-  num = geoviz::ComputeIntersections(spiral_1, spiral_2, intersections);
+  num = cartocrow::ComputeIntersections(spiral_1, spiral_2, intersections);
   UNITTEST_CHECK_EQUAL(2, num);
   CHECK_POLAR_POINTS_CLOSE(expected_intersection_spiral_1_spiral_2_0, intersections[0], 0.001);
   CHECK_POLAR_POINTS_CLOSE(expected_intersection_spiral_1_spiral_2_1, intersections[1], 0.001);
 
   // Spiral - spiral.
-  num = geoviz::ComputeIntersections(spiral_2, spiral_3, intersections);
+  num = cartocrow::ComputeIntersections(spiral_2, spiral_3, intersections);
   UNITTEST_CHECK_EQUAL(2, num);
   CHECK_POLAR_POINTS_CLOSE(expected_intersection_spiral_2_spiral_3_0, intersections[0], 0.001);
   CHECK_POLAR_POINTS_CLOSE(expected_intersection_spiral_2_spiral_3_1, intersections[1], 0.001);
 
   // Spiral - spiral (equal angle).
-  num = geoviz::ComputeIntersections(spiral_1, spiral_4, intersections);
+  num = cartocrow::ComputeIntersections(spiral_1, spiral_4, intersections);
   UNITTEST_CHECK_EQUAL(0, num);
 
   // Line - spiral.
-  num = geoviz::ComputeIntersections(line_1, spiral_1, intersections);
+  num = cartocrow::ComputeIntersections(line_1, spiral_1, intersections);
   UNITTEST_CHECK_EQUAL(2, num);
   CHECK_POLAR_POINTS_CLOSE(expected_intersection_line_1_spiral_1_0, intersections[0], 0.001);
   CHECK_POLAR_POINTS_CLOSE(expected_intersection_line_1_spiral_1_1, intersections[1], 0.001);
 
   // Line - spiral (one side).
-  num = geoviz::ComputeIntersections(line_2, spiral_3, intersections);
+  num = cartocrow::ComputeIntersections(line_2, spiral_3, intersections);
   UNITTEST_CHECK_EQUAL(1, num);
   CHECK_POLAR_POINTS_CLOSE(expected_intersection_line_2_spiral_3_0, intersections[0], 0.001);
 
   // Line (through pole) - spiral.
-  num = geoviz::ComputeIntersections(spiral_1, line_3, intersections);
+  num = cartocrow::ComputeIntersections(spiral_1, line_3, intersections);
   UNITTEST_CHECK_EQUAL(2, num);
   CHECK_POLAR_POINTS_CLOSE(expected_intersection_line_3_spiral_1_0, intersections[0], 0.001);
   CHECK_POLAR_POINTS_CLOSE(expected_intersection_line_3_spiral_1_1, intersections[1], 0.001);
 
   // Line - spiral (straight).
-  num = geoviz::ComputeIntersections(spiral_5, line_2, intersections);
+  num = cartocrow::ComputeIntersections(spiral_5, line_2, intersections);
   UNITTEST_CHECK_EQUAL(1, num);
   CHECK_POLAR_POINTS_CLOSE(expected_intersection_line_2_spiral_5_0, intersections[0], 0.001);
 
   // Line (parallel) - spiral (straight).
-  num = geoviz::ComputeIntersections(spiral_5, line_1, intersections);
+  num = cartocrow::ComputeIntersections(spiral_5, line_1, intersections);
   UNITTEST_CHECK_EQUAL(0, num);
 
   // Line (through pole) - spiral (straight).
-  num = geoviz::ComputeIntersections(spiral_5, line_4, intersections);
+  num = cartocrow::ComputeIntersections(spiral_5, line_4, intersections);
   UNITTEST_CHECK_EQUAL(1, num);
   CHECK_POLAR_POINTS_CLOSE(expected_intersection_line_4_spiral_5_0, intersections[0], 0.001);
 
   // Line (parallel through pole) - spiral (straight).
-  num = geoviz::ComputeIntersections(spiral_5, line_3, intersections);
+  num = cartocrow::ComputeIntersections(spiral_5, line_3, intersections);
   UNITTEST_CHECK_EQUAL(2, num);
   CHECK_POLAR_POINTS_CLOSE(expected_intersection_line_3_spiral_5_0, intersections[0], 0.001);
   CHECK_POLAR_POINTS_CLOSE(expected_intersection_line_3_spiral_5_1, intersections[1], 0.001);
 
 
   // Line - line segment.
-  num = geoviz::ComputeIntersections(line_2, line_segment_1, intersections);
+  num = cartocrow::ComputeIntersections(line_2, line_segment_1, intersections);
   UNITTEST_CHECK_EQUAL(1, num);
 
-  num = geoviz::ComputeIntersections(line_2, line_segment_2, intersections);
+  num = cartocrow::ComputeIntersections(line_2, line_segment_2, intersections);
   UNITTEST_CHECK_EQUAL(0, num);
 
   // Line - spiral segment.
-  num = geoviz::ComputeIntersections(line_1, spiral_segment_1, intersections);
+  num = cartocrow::ComputeIntersections(line_1, spiral_segment_1, intersections);
   UNITTEST_CHECK_EQUAL(2, num);
 
-  num = geoviz::ComputeIntersections(line_1, spiral_segment_2, intersections);
+  num = cartocrow::ComputeIntersections(line_1, spiral_segment_2, intersections);
   UNITTEST_CHECK_EQUAL(1, num);
 
-  num = geoviz::ComputeIntersections(line_1, spiral_segment_3, intersections);
+  num = cartocrow::ComputeIntersections(line_1, spiral_segment_3, intersections);
   UNITTEST_CHECK_EQUAL(0, num);
 
   // Line segment - spiral segment.
-  num = geoviz::ComputeIntersections(line_segment_2, spiral_segment_2, intersections);
+  num = cartocrow::ComputeIntersections(line_segment_2, spiral_segment_2, intersections);
   UNITTEST_CHECK_EQUAL(0, num);
 }
 
 } // UNITTEST_SUITE(Common)
 
-#endif //GEOVIZ_TEST_COMMON_COMMON_H
+#endif //CARTOCROW_TEST_COMMON_COMMON_H

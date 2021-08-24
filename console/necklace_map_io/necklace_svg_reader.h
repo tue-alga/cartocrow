@@ -21,8 +21,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Created by tvl (t.vanlankveld@esciencecenter.nl) on 26-11-2019
 */
 
-#ifndef GEOVIZ_NECKLACE_MAP_IO_SVG_READER_H
-#define GEOVIZ_NECKLACE_MAP_IO_SVG_READER_H
+#ifndef CARTOCROW_NECKLACE_MAP_IO_SVG_READER_H
+#define CARTOCROW_NECKLACE_MAP_IO_SVG_READER_H
 
 #include <iostream>
 #include <string>
@@ -30,11 +30,11 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 26-11-2019
 
 #include <gflags/gflags.h>
 
-#include "geoviz/necklace_map/map_element.h"
-#include "geoviz/necklace_map/necklace.h"
+#include "cartocrow/necklace_map/map_element.h"
+#include "cartocrow/necklace_map/necklace.h"
 
 
-namespace geoviz
+namespace cartocrow
 {
 namespace necklace_map
 {
@@ -71,6 +71,6 @@ class SvgReader
 }; // class SvgReader
 
 } // namespace necklace_map
-} // namespace geoviz
+} // namespace cartocrow
 
-#endif //GEOVIZ_NECKLACE_MAP_IO_SVG_READER_H
+#endif //CARTOCROW_NECKLACE_MAP_IO_SVG_READER_H

@@ -5,7 +5,7 @@
 #ifndef CONSOLE_NECKLACE_MAP_INTERNAL_TEST_INTERNAL_H
 #define CONSOLE_NECKLACE_MAP_INTERNAL_TEST_INTERNAL_H
 
-namespace geoviz
+namespace cartocrow
 {
 namespace internal
 {
@@ -14,6 +14,6 @@ namespace internal
 inline int test() { return 2; }
 
 } // namespace internal
-} // namespace geoviz
+} // namespace cartocrow
 
 #endif //CONSOLE_NECKLACE_MAP_INTERNAL_TEST_INTERNAL_H

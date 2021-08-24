@@ -27,9 +27,9 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-2019
 #include <gflags/gflags.h>
 #include <glog/logging.h>
 
-#include <cmake/geoviz_config.h>
-#include <geoviz/necklace_map/necklace_map.h>
-#include <geoviz/flow_map/flow_map.h>
+#include <cmake/cartocrow_config.h>
+#include <cartocrow/necklace_map/necklace_map.h>
+#include <cartocrow/flow_map/flow_map.h>
 
 #include "console/common/utils_cla.h"
 #include "console/multi_library_app/internal/test_internal.h"
@@ -44,7 +44,7 @@ int main(int argc, char **argv)
   (
     argc,
     argv,
-    "Command line application that exposes the functionality of the GeoViz necklace map.",
+    "Command line application that exposes the functionality of the CartoCrow necklace map.",
     {"<some arg>", "<another arg>"}
   );
 
@@ -65,12 +65,12 @@ int main(int argc, char **argv)
   for (int i = 1; i < argc; ++i)
     LOG(INFO) << "\t" << argv[i];
 
-  //LOG(INFO) << "Necklace map: " << geoviz::proc_necklace_map();
-  //LOG(INFO) << "Flow Diagram: " << geoviz::flow_map::proc_flow_map();
+  //LOG(INFO) << "Necklace map: " << cartocrow::proc_necklace_map();
+  //LOG(INFO) << "Flow Diagram: " << cartocrow::flow_map::proc_flow_map();
 
-  LOG(INFO) << "GeoViz version: " << GEOVIZ_VERSION;
+  LOG(INFO) << "CartoCrow version: " << CARTOCROW_VERSION;
 
-  LOG(INFO) << "Internal number: " << geoviz::internal::test();
+  LOG(INFO) << "Internal number: " << cartocrow::internal::test();
 
   std::cout << "<div>";
   std::cout << "<!--To be loaded as support card.-->";

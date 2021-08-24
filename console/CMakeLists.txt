@@ -7,7 +7,7 @@ endif(MSVC)
 
 ### MACROS ###
 
-macro(geoviz_add_console_library TARGET INSTALL_DIR)
+macro(cartocrow_add_console_library TARGET INSTALL_DIR)
     # - While CMake will try various file extensions when adding files,
     #   specifying the files without extension may give problems due to ambiguity.
     file(GLOB_RECURSE HDRS "*.h")
@@ -23,7 +23,7 @@ macro(geoviz_add_console_library TARGET INSTALL_DIR)
     )
     install_files_and_directories("${HDRS}" ${INSTALL_DIR})
     install_files_and_directories("${SRCS}" ${INSTALL_DIR})
-endmacro(geoviz_add_console_library)
+endmacro(cartocrow_add_console_library)
 
 macro(add_cla_exe_properties target)
     set_target_properties( ${target} PROPERTIES DEBUG_POSTFIX d )
@@ -42,7 +42,7 @@ macro(add_cla_exe_properties target)
     endif(MSVC)
 endmacro(add_cla_exe_properties)
 
-macro(geoviz_add_cla NAME)
+macro(cartocrow_add_cla NAME)
     set(TARGET "${NAME}_cla")
     set(INSTALL_DIR ${INSTALL_CONSOLE_DIR}/${NAME})
 
@@ -67,7 +67,7 @@ macro(geoviz_add_cla NAME)
     #    "${CMAKE_CURRENT_BINARY_DIR}/${PHP}"
     #)
     #install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${PHP}" DESTINATION "${INSTALL_SCRIPT_DIR}")
-endmacro(geoviz_add_cla)
+endmacro(cartocrow_add_cla)
 
 
 # Most command-line applications use gflags to parse command-line arguments.

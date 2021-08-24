@@ -1,6 +1,6 @@
 \mainpage Algorithmic Geographic Visualization Library
 
-<a href="/index.html">GeoViz webpage</a>
+<a href="/index.html">CartoCrow webpage</a>
 
 
 \section sec_introduction Introduction

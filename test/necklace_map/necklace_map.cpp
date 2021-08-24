@@ -22,4 +22,4 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-04-2020
 
 #include "necklace_map.h"
 
-GEOVIZ_RUN_TESTS(TestNecklaceMap)
+CARTOCROW_RUN_TESTS(TestNecklaceMap)

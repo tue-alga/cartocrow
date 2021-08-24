@@ -1,5 +1,5 @@
 /*
-The GeoViz console applications implement algorithmic geo-visualization
+The CartoCrow console applications implement algorithmic geo-visualization
 methods, developed at TU Eindhoven.
 Copyright (C) 2021  Netherlands eScience Center and TU Eindhoven
 
@@ -27,7 +27,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-10-2019
 #include <gflags/gflags.h>
 #include <glog/logging.h>
 
-#include <cmake/geoviz_config.h>
+#include <cmake/cartocrow_config.h>
 
 
 /**@file utils_cla.h
@@ -63,14 +63,6 @@ std::string UsageMessage
   const std::vector<std::string>& sample_arguments /*= {}*/
 )
 {
-  // Note that GCC 7.4.0 implements the C++17 filesystem specification as experimental.
-  // This experimental implementation requires linking the "stdc++fs" static library.
-  // Note that this choice for compiler and version is made for convenience:
-  // it is currently shipped with my operating system.
-  // Other compilers or later versions may fully implement the C++17 standard,
-  // in which case this namespace will need to be updated as well.
-  //namespace filesystem = std::experimental::filesystem;
-
   std::stringstream out;
   out << std::endl << CopyrightNotice() << std::endl << std::endl;
   out << description << std::endl;
@@ -98,7 +90,7 @@ void InitApplication
   google::InitGoogleLogging(argv[0]);
 
   gflags::SetUsageMessage(UsageMessage(argv[0], description, sample_arguments));
-  gflags::SetVersionString(GEOVIZ_VERSION);
+  gflags::SetVersionString(CARTOCROW_VERSION);
 
   // Writing to the standard output is generally reserved for text to return to a calling website.
   FLAGS_stderrthreshold = 2;

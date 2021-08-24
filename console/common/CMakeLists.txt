@@ -2,4 +2,4 @@
 set(COMMON_CLA_TARGET "common_cla")
 set(COMMON_CLA_TARGET ${COMMON_CLA_TARGET} PARENT_SCOPE)
 
-geoviz_add_console_library(${COMMON_CLA_TARGET} "${INSTALL_CONSOLE_DIR}/common")
+cartocrow_add_console_library(${COMMON_CLA_TARGET} "${INSTALL_CONSOLE_DIR}/common")

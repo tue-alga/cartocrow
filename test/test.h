@@ -21,19 +21,19 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-04-2020
 */
 
-#ifndef GEOVIZ_TEST_TEST_H
-#define GEOVIZ_TEST_TEST_H
+#ifndef CARTOCROW_TEST_TEST_H
+#define CARTOCROW_TEST_TEST_H
 
 #define UNITTEST_DISABLE_SHORT_MACROS
 #include <UnitTest++/UnitTest++.h>
 
-#ifdef GEOVIZ_DISABLE_SUITE_MAIN
-#define GEOVIZ_RUN_TESTS(x)
-#endif // GEOVIZ_DISABLE_SUITE_MAIN
+#ifdef CARTOCROW_DISABLE_SUITE_MAIN
+#define CARTOCROW_RUN_TESTS(x)
+#endif // CARTOCROW_DISABLE_SUITE_MAIN
 
 // Note that calling the extern is a hack for release configuration to force rebuilding the code.
-#ifndef GEOVIZ_RUN_TESTS
-#define GEOVIZ_RUN_TESTS(x) int main() { extern void x(); x(); return UnitTest::RunAllTests(); }
-#endif // GEOVIZ_RUN_TESTS
+#ifndef CARTOCROW_RUN_TESTS
+#define CARTOCROW_RUN_TESTS(x) int main() { extern void x(); x(); return UnitTest::RunAllTests(); }
+#endif // CARTOCROW_RUN_TESTS
 
-#endif //GEOVIZ_TEST_TEST_H
+#endif //CARTOCROW_TEST_TEST_H

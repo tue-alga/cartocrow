@@ -1,5 +1,5 @@
 /*
-The GeoViz library implements algorithmic geo-visualization methods,
+The CartoCrow library implements algorithmic geo-visualization methods,
 developed at TU Eindhoven.
 Copyright (C) 2021  Netherlands eScience Center and TU Eindhoven
 
@@ -21,4 +21,4 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 16-11-2020
 
 #include "common.h"
 
-GEOVIZ_RUN_TESTS(TestCommon)
+CARTOCROW_RUN_TESTS(TestCommon)

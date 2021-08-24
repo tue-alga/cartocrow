@@ -23,4 +23,4 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-04-2020
 
 #include "flow_map.h"
 
-GEOVIZ_RUN_TESTS(TestFlowMap)
+CARTOCROW_RUN_TESTS(TestFlowMap)

@@ -1,12 +1,12 @@
 # The flow_map_cla executable exposes the Flow Map geo-visualization method.
-geoviz_add_cla(flow_map)
+cartocrow_add_cla(flow_map)
 
 target_link_libraries(
     ${TARGET}
     PRIVATE
     ${COMMON_CLA_TARGET}
     ${FLOW_MAP_TARGET}
-    ${GEOVIZ_COMMON_TARGET}
+    ${CARTOCROW_COMMON_TARGET}
     CGAL::CGAL
     tinyxml2::tinyxml2
 )

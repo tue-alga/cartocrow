@@ -21,17 +21,17 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-04-2020
 */
 
-#ifndef GEOVIZ_TEST_FLOW_MAP_FLOW_MAP_H
-#define GEOVIZ_TEST_FLOW_MAP_FLOW_MAP_H
+#ifndef CARTOCROW_TEST_FLOW_MAP_FLOW_MAP_H
+#define CARTOCROW_TEST_FLOW_MAP_FLOW_MAP_H
 
 #include <filesystem>
 #include <iostream>
 
 #include <glog/logging.h>
 
-#include <cmake/geoviz_test_config.h>
-#include <geoviz/common/timer.h>
-#include <geoviz/flow_map/flow_map.h>
+#include <cmake/cartocrow_test_config.h>
+#include <cartocrow/common/timer.h>
+#include <cartocrow/flow_map/flow_map.h>
 
 #include "test/test.h"
 #include "test/test_registry_timer.h"
@@ -56,12 +56,12 @@ struct FlowData
     FLAGS_minloglevel = 2;
   }
 
-  std::vector<geoviz::Region> context;
-  std::vector<geoviz::flow_map::Place::Ptr> places;
+  std::vector<cartocrow::Region> context;
+  std::vector<cartocrow::flow_map::Place::Ptr> places;
   size_t index_root;
 }; // struct FlowData
 
-static const std::filesystem::path kDataDir = std::filesystem::path(GEOVIZ_TEST_DATA_DIR) / "flow_map";
+static const std::filesystem::path kDataDir = std::filesystem::path(CARTOCROW_TEST_DATA_DIR) / "flow_map";
 
 static FlowData kUsa = FlowData();
 static FlowData kWorld = FlowData();
@@ -70,13 +70,13 @@ static FlowData kWorld = FlowData();
 UNITTEST_SUITE(FlowMap)
 {
 
-void DefaultParameters(geoviz::flow_map::Parameters& parameters)
+void DefaultParameters(cartocrow::flow_map::Parameters& parameters)
 {
-//  parameters.interval_type = geoviz::necklace_map::IntervalType::kWedge;
+//  parameters.interval_type = cartocrow::necklace_map::IntervalType::kWedge;
 //  parameters.centroid_interval_length_rad = 0.2 * M_PI;
 //  parameters.ignore_point_regions = false;
 //
-//  parameters.order_type = geoviz::necklace_map::OrderType::kAny;
+//  parameters.order_type = cartocrow::necklace_map::OrderType::kAny;
 //  parameters.buffer_rad = 0;
 //  parameters.aversion_ratio = 0.001;
 }
@@ -92,10 +92,10 @@ struct FlowDataUsa
       kRegistry.Register(&data, "FlowDataUsa");
 
       // Read the geometry.
-      geoviz::flow_map::SvgReader svg_reader;
+      cartocrow::flow_map::SvgReader svg_reader;
       const std::filesystem::path in_geometry_path = kDataDir / "USA.svg";
 
-      geoviz::Timer time;
+      cartocrow::Timer time;
       UNITTEST_REQUIRE UNITTEST_CHECK(svg_reader.ReadFile(in_geometry_path, data.context, data.places));
       kRegistry(&data, 0) = time.Stamp();
     }
@@ -107,10 +107,10 @@ struct FlowDataUsa
       return true;
     value_name = in_value_name;
 
-    geoviz::flow_map::DataReader data_reader;
+    cartocrow::flow_map::DataReader data_reader;
     const std::filesystem::path in_data_path = kDataDir / "USA.csv";
 
-    geoviz::Timer time;
+    cartocrow::Timer time;
     const bool result = data_reader.ReadFile(in_data_path, in_value_name, data.places, data.index_root);
     kRegistry(&data, 1) = time.Stamp();
 
@@ -120,7 +120,7 @@ struct FlowDataUsa
   FlowData& data;
   std::string value_name;
 
-  geoviz::flow_map::Parameters parameters;
+  cartocrow::flow_map::Parameters parameters;
 }; // struct FlowDataUsa
 
 UNITTEST_TEST_FIXTURE(FlowDataUsa, UsaGreedy)
@@ -129,10 +129,10 @@ UNITTEST_TEST_FIXTURE(FlowDataUsa, UsaGreedy)
   UNITTEST_CHECK(ReadValues(in_value_name));
 
   DefaultParameters(parameters);
-//  parameters.interval_type = geoviz::necklace_map::IntervalType::kCentroid;
-//  parameters.order_type = geoviz::necklace_map::OrderType::kFixed;
+//  parameters.interval_type = cartocrow::necklace_map::IntervalType::kCentroid;
+//  parameters.order_type = cartocrow::necklace_map::OrderType::kFixed;
 
-//  const geoviz::Number scale_factor = ComputeScaleFactor(parameters, data.elements, data.necklaces);
+//  const cartocrow::Number scale_factor = ComputeScaleFactor(parameters, data.elements, data.necklaces);
 //  UNITTEST_CHECK_CLOSE(1.580, scale_factor, 0.001);
 }
 
@@ -147,10 +147,10 @@ struct FlowDataWorld
       kRegistry.Register(&data, "FlowDataWorld");
 
       // Read the geometry.
-      geoviz::flow_map::SvgReader svg_reader;
+      cartocrow::flow_map::SvgReader svg_reader;
       const std::filesystem::path in_geometry_path = kDataDir / "World.svg";
 
-      geoviz::Timer time;
+      cartocrow::Timer time;
       UNITTEST_REQUIRE UNITTEST_CHECK(svg_reader.ReadFile(in_geometry_path, data.context, data.places));
       kRegistry(&data, 0) = time.Stamp();
     }
@@ -162,10 +162,10 @@ struct FlowDataWorld
       return true;
     value_name = in_value_name;
 
-    geoviz::flow_map::DataReader data_reader;
+    cartocrow::flow_map::DataReader data_reader;
     const std::filesystem::path in_data_path = kDataDir / "World.csv";
 
-    geoviz::Timer time;
+    cartocrow::Timer time;
     const bool result = data_reader.ReadFile(in_data_path, in_value_name, data.places, data.index_root);
     kRegistry(&data, 1) = time.Stamp();
 
@@ -175,7 +175,7 @@ struct FlowDataWorld
   FlowData& data;
   std::string value_name;
 
-  geoviz::flow_map::Parameters parameters;
+  cartocrow::flow_map::Parameters parameters;
 }; // struct FlowDataWorld
 
 UNITTEST_TEST_FIXTURE(FlowDataWorld, EastAsiaAgriculture)
@@ -185,10 +185,10 @@ UNITTEST_TEST_FIXTURE(FlowDataWorld, EastAsiaAgriculture)
 //
 //  DefaultParameters(parameters);
 
-//  const geoviz::Number scale_factor = ComputeScaleFactor(parameters, data.elements, data.necklaces);
+//  const cartocrow::Number scale_factor = ComputeScaleFactor(parameters, data.elements, data.necklaces);
 //  UNITTEST_CHECK_CLOSE(1.005, scale_factor, 0.001);
 }
 
 } // UNITTEST_SUITE(FlowMap)
 
-#endif //GEOVIZ_TEST_FLOW_MAP_FLOW_MAP_H
+#endif //CARTOCROW_TEST_FLOW_MAP_FLOW_MAP_H
