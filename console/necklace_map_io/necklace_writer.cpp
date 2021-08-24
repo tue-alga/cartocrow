@@ -27,11 +27,8 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 29-01-2020
 
 #include "cartocrow/necklace_map/io/detail/svg_writer.h"
 
-
-namespace cartocrow
-{
-namespace necklace_map
-{
+namespace cartocrow {
+namespace necklace_map {
 
 /**@class SvgWriter
  * @brief A writer for necklace map output geometry.
@@ -64,27 +61,21 @@ bool NecklaceWriter::Write
 =======
 bool SvgWriter::Write
 >>>>>>> dev_final:cartocrow/necklace_map/io/svg_writer.cpp
-(
-  const std::vector<MapElement::Ptr>& elements,
-  const std::vector<Necklace::Ptr>& necklaces,
-  const Number& scale_factor,
-  const WriteOptions::Ptr& options,
-  std::ostream& out
-) const
-{
-  detail::SvgWriter writer(elements, necklaces, scale_factor, options, out);
+    (const std::vector<MapElement::Ptr>& elements, const std::vector<Necklace::Ptr>& necklaces,
+     const Number& scale_factor, const WriteOptions::Ptr& options, std::ostream& out) const {
+	detail::SvgWriter writer(elements, necklaces, scale_factor, options, out);
 
-  // The order of drawing the features determines their stacking order, i.e. the last one will be on top.
-  writer.DrawPolygonRegions();
-  writer.DrawPointRegions();
-  writer.DrawNecklaces();
-  writer.DrawValidIntervals();
-  writer.DrawRegionAngles();
-  writer.DrawBeadAngles();
-  writer.DrawFeasibleIntervals();
-  writer.DrawBeads();
+	// The order of drawing the features determines their stacking order, i.e. the last one will be on top.
+	writer.DrawPolygonRegions();
+	writer.DrawPointRegions();
+	writer.DrawNecklaces();
+	writer.DrawValidIntervals();
+	writer.DrawRegionAngles();
+	writer.DrawBeadAngles();
+	writer.DrawFeasibleIntervals();
+	writer.DrawBeads();
 
-  return true;
+	return true;
 }
 
 } // namespace necklace_map

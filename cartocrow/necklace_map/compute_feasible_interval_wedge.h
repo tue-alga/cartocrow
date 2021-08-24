@@ -24,33 +24,29 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 03-03-2020
 #define CARTOCROW_NECKLACE_MAP_COMPUTE_FEASIBLE_WEDGE_INTERVAL_H
 
 #include "cartocrow/common/core_types.h"
+#include "cartocrow/common/range.h"
 #include "cartocrow/necklace_map/compute_feasible_interval.h"
 #include "cartocrow/necklace_map/necklace.h"
 #include "cartocrow/necklace_map/parameters.h"
-#include "cartocrow/common/range.h"
 
+namespace cartocrow {
+namespace necklace_map {
 
-namespace cartocrow
-{
-namespace necklace_map
-{
+class ComputeFeasibleWedgeInterval : public ComputeFeasibleInterval {
+  public:
+	CircularRange::Ptr operator()(const Polygon& extent, const Necklace::Ptr& necklace) const override;
 
-class ComputeFeasibleWedgeInterval : public ComputeFeasibleInterval
-{
- public:
-  CircularRange::Ptr operator()(const Polygon& extent, const Necklace::Ptr& necklace) const override;
+  protected:
+	ComputeFeasibleWedgeInterval(const Parameters& parameters);
 
- protected:
-  ComputeFeasibleWedgeInterval(const Parameters& parameters);
+  private:
+	friend ComputeFeasibleInterval;
 
- private:
-  friend ComputeFeasibleInterval;
+	Number interval_length_min_rad_;
 
-  Number interval_length_min_rad_;
-
-  ComputeFeasibleInterval::Ptr fallback_point_regions_;
-  ComputeFeasibleInterval::Ptr fallback_kernel_region_;
-  ComputeFeasibleInterval::Ptr fallback_small_regions_;
+	ComputeFeasibleInterval::Ptr fallback_point_regions_;
+	ComputeFeasibleInterval::Ptr fallback_kernel_region_;
+	ComputeFeasibleInterval::Ptr fallback_small_regions_;
 }; // class ComputeFeasibleWedgeInterval
 
 } // namespace necklace_map

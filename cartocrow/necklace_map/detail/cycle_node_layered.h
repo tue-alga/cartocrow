@@ -25,33 +25,27 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 06-05-2020
 
 #include "cartocrow/necklace_map/detail/cycle_node.h"
 
-
-namespace cartocrow
-{
-namespace necklace_map
-{
-namespace detail
-{
+namespace cartocrow {
+namespace necklace_map {
+namespace detail {
 
 // A cycle node that can be assigned a layer.
-struct CycleNodeLayered : public CycleNode
-{
-  using Ptr = std::shared_ptr<CycleNodeLayered>;
+struct CycleNodeLayered : public CycleNode {
+	using Ptr = std::shared_ptr<CycleNodeLayered>;
 
-  CycleNodeLayered();
+	CycleNodeLayered();
 
-  explicit CycleNodeLayered(const Bead::Ptr& bead);
+	explicit CycleNodeLayered(const Bead::Ptr& bead);
 
-  CycleNodeLayered(const CycleNodeLayered::Ptr& node);
+	CycleNodeLayered(const CycleNodeLayered::Ptr& node);
 
-  int layer;
-  bool disabled;
+	int layer;
+	bool disabled;
 }; // struct CycleNodeLayered
 
-class CompareCycleNodeLayered
-{
- public:
-  bool operator()(const CycleNodeLayered::Ptr& a, const CycleNodeLayered::Ptr& b) const;
+class CompareCycleNodeLayered {
+  public:
+	bool operator()(const CycleNodeLayered::Ptr& a, const CycleNodeLayered::Ptr& b) const;
 }; // class CompareCycleNodeLayered
 
 } // namespace detail

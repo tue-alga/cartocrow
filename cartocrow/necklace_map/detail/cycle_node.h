@@ -28,33 +28,28 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 23-01-2020
 #include "cartocrow/common/core_types.h"
 #include "cartocrow/necklace_map/bead.h"
 
-
-namespace cartocrow
-{
-namespace necklace_map
-{
-namespace detail
-{
+namespace cartocrow {
+namespace necklace_map {
+namespace detail {
 
 // A bead with valid interval.
 // The main use is in a sorted cycle of beads that may go around the circle multiple times.
-struct CycleNode
-{
-  using Ptr = std::shared_ptr<CycleNode>;
+struct CycleNode {
+	using Ptr = std::shared_ptr<CycleNode>;
 
-  CycleNode(const CycleNode& node);
+	CycleNode(const CycleNode& node);
 
-  explicit CycleNode(const Bead::Ptr& bead);
+	explicit CycleNode(const Bead::Ptr& bead);
 
-  CycleNode(const Bead::Ptr& bead, const Range::Ptr& valid);
+	CycleNode(const Bead::Ptr& bead, const Range::Ptr& valid);
 
-  Bead::Ptr bead;
+	Bead::Ptr bead;
 
-  // Note that unlike the bead's feasible interval, the valid interval may go outside the [0, 2pi) range.
-  Range::Ptr valid;
+	// Note that unlike the bead's feasible interval, the valid interval may go outside the [0, 2pi) range.
+	Range::Ptr valid;
 
- protected:
-  CycleNode();
+  protected:
+	CycleNode();
 }; // struct CycleNode
 
 } // namespace detail

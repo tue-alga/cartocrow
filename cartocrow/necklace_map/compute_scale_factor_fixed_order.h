@@ -27,18 +27,14 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 03-03-2020
 #include "cartocrow/necklace_map/compute_scale_factor.h"
 #include "cartocrow/necklace_map/necklace.h"
 
+namespace cartocrow {
+namespace necklace_map {
 
-namespace cartocrow
-{
-namespace necklace_map
-{
+class ComputeScaleFactorFixedOrder : public ComputeScaleFactor {
+  public:
+	explicit ComputeScaleFactorFixedOrder(const Parameters& parameters);
 
-class ComputeScaleFactorFixedOrder : public ComputeScaleFactor
-{
- public:
-  explicit ComputeScaleFactorFixedOrder(const Parameters& parameters);
-
-  Number operator()(Necklace::Ptr& necklace) override;
+	Number operator()(Necklace::Ptr& necklace) override;
 }; // class ComputeScaleFactorFixedOrder
 
 } // namespace necklace_map

@@ -29,11 +29,8 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 04-09-2020
 
 #include "cartocrow/flow_map/io/detail/svg_visitor.h"
 
-
-namespace cartocrow
-{
-namespace flow_map
-{
+namespace cartocrow {
+namespace flow_map {
 
 /**@class SvgReader
  * @brief A reader for SVG flow map input geometry.
@@ -50,43 +47,32 @@ SvgReader::SvgReader() {}
  * @param max_retries the maximum number of times to retry reading the file.
  * @return whether the read operation could be completed successfully.
  */
-bool SvgReader::ReadFile
-(
-  const std::filesystem::path& filename,
-  std::vector<cartocrow::Region>& context,
-  std::vector<Place::Ptr>& places,
-  int max_retries /*= 2*/
-)
-{
-  std::string input;
-  int retry = 0;
-  do
-  {
-    try
-    {
-      std::fstream fin(filename);
-      if (fin)
-      {
-        using Iterator = std::istreambuf_iterator<char>;
-        input.assign(Iterator(fin), Iterator());
-        break;
-      }
-    }
-    catch (const std::exception& e)
-    {
-      LOG(ERROR) << e.what();
-    }
+bool SvgReader::ReadFile(const std::filesystem::path& filename,
+                         std::vector<cartocrow::Region>& context, std::vector<Place::Ptr>& places,
+                         int max_retries /*= 2*/
+) {
+	std::string input;
+	int retry = 0;
+	do {
+		try {
+			std::fstream fin(filename);
+			if (fin) {
+				using Iterator = std::istreambuf_iterator<char>;
+				input.assign(Iterator(fin), Iterator());
+				break;
+			}
+		} catch (const std::exception& e) {
+			LOG(ERROR) << e.what();
+		}
 
-    if (max_retries < retry++)
-    {
-      LOG(INFO) << "Failed to open flow map geometry file: " << filename;
-      return false;
-    }
-  } while (true);
+		if (max_retries < retry++) {
+			LOG(INFO) << "Failed to open flow map geometry file: " << filename;
+			return false;
+		}
+	} while (true);
 
-  return Parse(input, context, places);
+	return Parse(input, context, places);
 }
-
 
 /**@brief Parse flow map SVG input from a string.
  * @param input the string to parse.
@@ -94,25 +80,21 @@ bool SvgReader::ReadFile
  * @param places the collection in which to collect the places on the flow map (e.g. root and leaf nodes).
  * @return whether the string could be parsed successfully.
  */
-bool SvgReader::Parse
-(
-  const std::string& input,
-  std::vector<cartocrow::Region>& context,
-  std::vector<Place::Ptr>& places
-)
-{
-  tinyxml2::XMLDocument doc;
-  tinyxml2::XMLError result = doc.Parse(input.data());
-  //tinyxml2::XMLError result = doc.Parse(content_str); // This would be how to parse a string instead of a file using tinyxml2
-  if (result != tinyxml2::XML_SUCCESS) return false;
+bool SvgReader::Parse(const std::string& input, std::vector<cartocrow::Region>& context,
+                      std::vector<Place::Ptr>& places) {
+	tinyxml2::XMLDocument doc;
+	tinyxml2::XMLError result = doc.Parse(input.data());
+	//tinyxml2::XMLError result = doc.Parse(content_str); // This would be how to parse a string instead of a file using tinyxml2
+	if (result != tinyxml2::XML_SUCCESS)
+		return false;
 
-  using Visitor = detail::SvgVisitor;
-  Visitor visitor(context, places);
-  doc.Accept(&visitor);
+	using Visitor = detail::SvgVisitor;
+	Visitor visitor(context, places);
+	doc.Accept(&visitor);
 
-  LOG(INFO) << "Successfully parsed flow map geometry for " << places.size() << " place(s).";
+	LOG(INFO) << "Successfully parsed flow map geometry for " << places.size() << " place(s).";
 
-  return true;
+	return true;
 }
 
 } // namespace flow_map

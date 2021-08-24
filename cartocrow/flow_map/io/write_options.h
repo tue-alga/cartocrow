@@ -26,27 +26,23 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 02-09-2020
 
 #include <memory>
 
+namespace cartocrow {
+namespace flow_map {
 
-namespace cartocrow
-{
-namespace flow_map
-{
+struct WriteOptions {
+	using Ptr = std::shared_ptr<WriteOptions>;
 
-struct WriteOptions
-{
-  using Ptr = std::shared_ptr<WriteOptions>;
+	static Ptr Default();
 
-  static Ptr Default();
+	static Ptr Debug();
 
-  static Ptr Debug();
+	int pixel_width;
+	int numeric_precision;
 
-  int pixel_width;
-  int numeric_precision;
-
-  double region_opacity;
-  double obstacle_opacity;
-  double flow_opacity;
-  double node_opacity;
+	double region_opacity;
+	double obstacle_opacity;
+	double flow_opacity;
+	double node_opacity;
 }; // struct WriteOptions
 
 } // namespace flow_map

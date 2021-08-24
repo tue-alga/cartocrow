@@ -27,26 +27,22 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 26-11-2019
 
 #include "cartocrow/common/core_types.h"
 
+namespace cartocrow {
+namespace detail {
 
-namespace cartocrow
-{
-namespace detail
-{
+class SvgPointParser {
+  public:
+	Number N(const std::string& str);
+	Number X(const std::string& str);
+	Number Y(const std::string& str);
+	Point Pt(const std::string& str_x, const std::string& str_y);
+	Vector Vec(const std::string& str_x, const std::string& str_y);
 
-class SvgPointParser
-{
- public:
-  Number N(const std::string& str);
-  Number X(const std::string& str);
-  Number Y(const std::string& str);
-  Point Pt(const std::string& str_x, const std::string& str_y);
-  Vector Vec(const std::string& str_x, const std::string& str_y);
-
-  Number N(std::stringstream& ss);
-  Number X(std::stringstream& ss);
-  Number Y(std::stringstream& ss);
-  Point Pt(std::stringstream& ss);
-  Vector Vec(std::stringstream& ss);
+	Number N(std::stringstream& ss);
+	Number X(std::stringstream& ss);
+	Number Y(std::stringstream& ss);
+	Point Pt(std::stringstream& ss);
+	Vector Vec(std::stringstream& ss);
 }; // class SvgPointParser
 
 } // namespace detail

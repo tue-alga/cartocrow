@@ -28,51 +28,45 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 15-01-2020
 #include "cartocrow/common/circular_range.h"
 #include "cartocrow/common/core_types.h"
 
-
-namespace cartocrow
-{
-namespace necklace_map
-{
+namespace cartocrow {
+namespace necklace_map {
 
 class CircleNecklace;
 class BezierNecklace;
 
-
-class NecklaceShapeVisitor
-{
- public:
-  virtual void Visit(CircleNecklace& shape);
-  virtual void Visit(BezierNecklace& shape);
+class NecklaceShapeVisitor {
+  public:
+	virtual void Visit(CircleNecklace& shape);
+	virtual void Visit(BezierNecklace& shape);
 }; // class NecklaceShapeVisitor
 
+class NecklaceShape {
+  public:
+	using Ptr = std::shared_ptr<NecklaceShape>;
 
-class NecklaceShape
-{
- public:
-  using Ptr = std::shared_ptr<NecklaceShape>;
+	virtual const Point& kernel() const = 0;
 
-  virtual const Point& kernel() const = 0;
+	virtual bool IsValid() const = 0;
 
-  virtual bool IsValid() const = 0;
+	virtual bool IntersectRay(const Number& angle_rad, Point& intersection) const = 0;
 
-  virtual bool IntersectRay(const Number& angle_rad, Point& intersection) const = 0;
+	virtual Box ComputeBoundingBox() const = 0;
 
-  virtual Box ComputeBoundingBox() const = 0;
+	virtual Number ComputeCoveringRadiusRad(const Range::Ptr& range, const Number& radius) const = 0;
 
-  virtual Number ComputeCoveringRadiusRad(const Range::Ptr& range, const Number& radius) const = 0;
+	virtual Number ComputeDistanceToKernel(const Range::Ptr& range) const = 0;
 
-  virtual Number ComputeDistanceToKernel(const Range::Ptr& range) const = 0;
+	Number ComputeAngleRad(const Point& point) const;
 
-  Number ComputeAngleRad(const Point& point) const;
+	virtual Number ComputeAngleAtDistanceRad(const Number& angle_rad,
+	                                         const Number& distance) const = 0;
 
-  virtual Number ComputeAngleAtDistanceRad(const Number& angle_rad, const Number& distance) const = 0;
-
-  virtual void Accept(NecklaceShapeVisitor& visitor) = 0;
-  // TODO(tvl) should the necklace contain methods for adapting the 1D solution to the 2D solution?
-  // This would mainly come into play for Bezier necklaces. For impl: check the 30x for loop in the Java prototype code.
-  // Another case would be when a bead contains the necklace center;
-  // in this case, the scale factor should be reduced such that the bead does not contain the necklace center
-  // (could this cause recursive failure and if so, in which cases? This *may* actually prove scientifically interesting).
+	virtual void Accept(NecklaceShapeVisitor& visitor) = 0;
+	// TODO(tvl) should the necklace contain methods for adapting the 1D solution to the 2D solution?
+	// This would mainly come into play for Bezier necklaces. For impl: check the 30x for loop in the Java prototype code.
+	// Another case would be when a bead contains the necklace center;
+	// in this case, the scale factor should be reduced such that the bead does not contain the necklace center
+	// (could this cause recursive failure and if so, in which cases? This *may* actually prove scientifically interesting).
 }; // class NecklaceShape
 
 } // namespace necklace_map

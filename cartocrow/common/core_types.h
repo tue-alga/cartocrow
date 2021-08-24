@@ -28,8 +28,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 05-12-2019
 #include "cartocrow/common/cgal_types.h"
 #include "cartocrow/common/polygon.h"
 
-namespace cartocrow
-{
+namespace cartocrow {
 
 /// The value 2*PI, defined for convenience.
 constexpr const Number M_2xPI = 2 * M_PI;

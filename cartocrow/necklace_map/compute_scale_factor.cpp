@@ -27,11 +27,8 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 28-11-2019
 #include "cartocrow/necklace_map/compute_scale_factor_any_order.h"
 #include "cartocrow/necklace_map/compute_scale_factor_fixed_order.h"
 
-
-namespace cartocrow
-{
-namespace necklace_map
-{
+namespace cartocrow {
+namespace necklace_map {
 
 /**@struct ComputeScaleFactor
  * @brief A functor to compute the optimal scale factor for a collection of necklace map elements.
@@ -51,17 +48,15 @@ namespace necklace_map
  * @param parameters the parameters describing the desired type of functor.
  * @return a unique pointer containing a new functor or a nullptr if the functor could not be constructed.
  */
-ComputeScaleFactor::Ptr ComputeScaleFactor::New(const Parameters& parameters)
-{
-  switch (parameters.order_type)
-  {
-    case OrderType::kFixed:
-      return Ptr(new ComputeScaleFactorFixedOrder(parameters));
-    case OrderType::kAny:
-      return Ptr(new ComputeScaleFactorAnyOrder(parameters));
-    default:
-      return nullptr;
-  }
+ComputeScaleFactor::Ptr ComputeScaleFactor::New(const Parameters& parameters) {
+	switch (parameters.order_type) {
+	case OrderType::kFixed:
+		return Ptr(new ComputeScaleFactorFixedOrder(parameters));
+	case OrderType::kAny:
+		return Ptr(new ComputeScaleFactorAnyOrder(parameters));
+	default:
+		return nullptr;
+	}
 }
 
 /**@brief Construct a bead scale factor computation functor.
@@ -73,10 +68,9 @@ ComputeScaleFactor::Ptr ComputeScaleFactor::New(const Parameters& parameters)
  * @endparblock
  */
 ComputeScaleFactor::ComputeScaleFactor(const Parameters& parameters)
-  : buffer_rad_(parameters.buffer_rad), max_buffer_rad_(-1)
-{
-  CHECK_GE(buffer_rad_, 0);
-  CHECK_LE(buffer_rad_, M_PI);
+    : buffer_rad_(parameters.buffer_rad), max_buffer_rad_(-1) {
+	CHECK_GE(buffer_rad_, 0);
+	CHECK_LE(buffer_rad_, M_PI);
 }
 
 /**@fn virtual Number ComputeScaleFactor::operator()(Necklace::Ptr& necklace) = 0;
@@ -91,44 +85,41 @@ ComputeScaleFactor::ComputeScaleFactor(const Parameters& parameters)
  * @param necklaces the necklaces for which to determine the optimal scale factor.
  * @return the optimal scale factor.
  */
-Number ComputeScaleFactor::operator()(std::vector<Necklace::Ptr>& necklaces)
-{
-  // Determine the optimal scale factor per necklace;
-  // the global optimum is the smallest of these.
-  Number scale_factor = -1;
-  for (Necklace::Ptr& necklace : necklaces)
-  {
-    // Clean beads without a feasible interval.
-    std::vector<Bead::Ptr> keep_beads;
-    for (const Bead::Ptr& bead : necklace->beads)
-      if (bead->feasible)
-        keep_beads.push_back(bead);
-    necklace->beads.swap(keep_beads);
+Number ComputeScaleFactor::operator()(std::vector<Necklace::Ptr>& necklaces) {
+	// Determine the optimal scale factor per necklace;
+	// the global optimum is the smallest of these.
+	Number scale_factor = -1;
+	for (Necklace::Ptr& necklace : necklaces) {
+		// Clean beads without a feasible interval.
+		std::vector<Bead::Ptr> keep_beads;
+		for (const Bead::Ptr& bead : necklace->beads)
+			if (bead->feasible)
+				keep_beads.push_back(bead);
+		necklace->beads.swap(keep_beads);
 
-    if (necklace->beads.empty())
-      continue;
+		if (necklace->beads.empty())
+			continue;
 
-    // Limit the initial bead radii.
-    Number rescale = 1;
-    for (const Bead::Ptr& bead : necklace->beads)
-    {
-      CHECK_GT(bead->radius_base, 0);
-      const Number distance = necklace->shape->ComputeDistanceToKernel(bead->feasible);
-      const Number bead_rescale = bead->radius_base / distance;
-      rescale = std::max(rescale, bead_rescale);
-    }
-    for (const Bead::Ptr& bead : necklace->beads)
-      bead->radius_base /= rescale;
+		// Limit the initial bead radii.
+		Number rescale = 1;
+		for (const Bead::Ptr& bead : necklace->beads) {
+			CHECK_GT(bead->radius_base, 0);
+			const Number distance = necklace->shape->ComputeDistanceToKernel(bead->feasible);
+			const Number bead_rescale = bead->radius_base / distance;
+			rescale = std::max(rescale, bead_rescale);
+		}
+		for (const Bead::Ptr& bead : necklace->beads)
+			bead->radius_base /= rescale;
 
-    const Number necklace_scale_factor = (*this)(necklace) / rescale;
+		const Number necklace_scale_factor = (*this)(necklace) / rescale;
 
-    for (const Bead::Ptr& bead : necklace->beads)
-      bead->radius_base *= rescale;
+		for (const Bead::Ptr& bead : necklace->beads)
+			bead->radius_base *= rescale;
 
-    if (scale_factor < 0 || necklace_scale_factor < scale_factor)
-      scale_factor = necklace_scale_factor;
-  }
-  return std::max(scale_factor, Number(0));
+		if (scale_factor < 0 || necklace_scale_factor < scale_factor)
+			scale_factor = necklace_scale_factor;
+	}
+	return std::max(scale_factor, Number(0));
 }
 
 /**@fn const Number& ComputeScaleFactor::max_buffer_rad() const;
@@ -138,4 +129,4 @@ Number ComputeScaleFactor::operator()(std::vector<Necklace::Ptr>& necklaces)
  */
 
 } // namespace necklace_map
-} // namespace cartocrow"
+} // namespace cartocrow

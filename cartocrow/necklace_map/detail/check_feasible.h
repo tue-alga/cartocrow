@@ -31,68 +31,54 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 06-05-2020
 #include "cartocrow/necklace_map/detail/cycle_node_layered.h"
 #include "cartocrow/necklace_map/detail/task.h"
 
-
-namespace cartocrow
-{
-namespace necklace_map
-{
-namespace detail
-{
+namespace cartocrow {
+namespace necklace_map {
+namespace detail {
 
 // Solve the decision problem defined in the node set: "Is there a valid placement for this set of nodes?"
 // Note that the covering radii of the nodes must be pre-computed outside this functor.
-class CheckFeasible
-{
- public:
-  using NodeSet = std::vector<CycleNodeLayered::Ptr>;
-  using Ptr = std::shared_ptr<CheckFeasible>;
+class CheckFeasible {
+  public:
+	using NodeSet = std::vector<CycleNodeLayered::Ptr>;
+	using Ptr = std::shared_ptr<CheckFeasible>;
 
-  static Ptr New(NodeSet& nodes, const int heuristic_cycles);
+	static Ptr New(NodeSet& nodes, const int heuristic_cycles);
 
-  void Initialize();
+	void Initialize();
 
-  // Note that the covering radius of each node should be set before calling this.
-  virtual bool operator()() = 0;
+	// Note that the covering radius of each node should be set before calling this.
+	virtual bool operator()() = 0;
 
- protected:
-  struct Value
-  {
-    Value();
+  protected:
+	struct Value {
+		Value();
 
-    void Reset();
+		void Reset();
 
-    Number CoveringRadius() const;
+		Number CoveringRadius() const;
 
-    CycleNodeLayered::Ptr task;
-    Number angle_rad;  // The angle of the bead center.
-  }; // struct Value
+		CycleNodeLayered::Ptr task;
+		Number angle_rad; // The angle of the bead center.
+	}; // struct Value
 
-  CheckFeasible(NodeSet& nodes);
+	CheckFeasible(NodeSet& nodes);
 
-  virtual void InitializeSlices();
+	virtual void InitializeSlices();
 
-  void InitializeContainer();
+	void InitializeContainer();
 
-  void ResetContainer();
+	void ResetContainer();
 
-  void FillContainer
-  (
-    const size_t first_slice_index,
-    const BitString& first_slice_layer_set,
-    const BitString& first_slice_remaining_set
-  );
+	void FillContainer(const size_t first_slice_index, const BitString& first_slice_layer_set,
+	                   const BitString& first_slice_remaining_set);
 
-  virtual void AssignAngle(const Number& angle_rad, Bead::Ptr& bead) = 0;
+	virtual void AssignAngle(const Number& angle_rad, Bead::Ptr& bead) = 0;
 
-  bool ProcessContainer
-  (
-    const size_t first_slice_index,
-    const BitString& first_slice_remaining_set
-  );
+	bool ProcessContainer(const size_t first_slice_index, const BitString& first_slice_remaining_set);
 
-  NodeSet& nodes_;
-  std::vector<TaskSlice> slices_;
-  std::vector<std::vector<Value> > values_;
+	NodeSet& nodes_;
+	std::vector<TaskSlice> slices_;
+	std::vector<std::vector<Value>> values_;
 }; // class CheckFeasible
 
 } // namespace detail

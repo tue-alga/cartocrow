@@ -29,31 +29,27 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 28-11-2019
 #include "cartocrow/necklace_map/necklace.h"
 #include "cartocrow/necklace_map/parameters.h"
 
+namespace cartocrow {
+namespace necklace_map {
 
-namespace cartocrow
-{
-namespace necklace_map
-{
+class ComputeScaleFactor {
+  public:
+	using Ptr = std::unique_ptr<ComputeScaleFactor>;
 
-class ComputeScaleFactor
-{
- public:
-  using Ptr = std::unique_ptr<ComputeScaleFactor>;
+	static Ptr New(const Parameters& parameters);
 
-  static Ptr New(const Parameters& parameters);
+	explicit ComputeScaleFactor(const Parameters& parameters);
 
-  explicit ComputeScaleFactor(const Parameters& parameters);
+	// Note that elements with value 0 will not be included in the ordering.
+	virtual Number operator()(Necklace::Ptr& necklace) = 0;
 
-  // Note that elements with value 0 will not be included in the ordering.
-  virtual Number operator()(Necklace::Ptr& necklace) = 0;
+	Number operator()(std::vector<Necklace::Ptr>& necklaces);
 
-  Number operator()(std::vector<Necklace::Ptr>& necklaces);
+	const Number& max_buffer_rad() const { return max_buffer_rad_; }
 
-  const Number& max_buffer_rad() const { return max_buffer_rad_; }
-
- protected:
-  Number buffer_rad_;
-  Number max_buffer_rad_;
+  protected:
+	Number buffer_rad_;
+	Number max_buffer_rad_;
 }; // class ComputeScaleFactor
 
 } // namespace necklace_map

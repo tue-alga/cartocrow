@@ -23,46 +23,41 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 02-09-2020
 
 #include "write_options.h"
 
-
-namespace cartocrow
-{
-namespace flow_map
-{
+namespace cartocrow {
+namespace flow_map {
 
 /**@brief Initialize write options with default values.
  * @return Default write options.
  */
-WriteOptions::Ptr WriteOptions::Default()
-{
-  WriteOptions::Ptr options = std::make_shared<WriteOptions>();
+WriteOptions::Ptr WriteOptions::Default() {
+	WriteOptions::Ptr options = std::make_shared<WriteOptions>();
 
-  options->pixel_width = 500;
+	options->pixel_width = 500;
 
-  options->numeric_precision = 9;
-  options->region_opacity = -1;
-  options->obstacle_opacity = -1;
-  options->flow_opacity = 1;
-  options->node_opacity = 1;
+	options->numeric_precision = 9;
+	options->region_opacity = -1;
+	options->obstacle_opacity = -1;
+	options->flow_opacity = 1;
+	options->node_opacity = 1;
 
-  return options;
+	return options;
 }
 
 /**@brief Initialize write options with debug values.
  * @return Debug write options.
  */
-WriteOptions::Ptr WriteOptions::Debug()
-{
-  WriteOptions::Ptr options = std::make_shared<WriteOptions>();
+WriteOptions::Ptr WriteOptions::Debug() {
+	WriteOptions::Ptr options = std::make_shared<WriteOptions>();
 
-  options->pixel_width = 500;
+	options->pixel_width = 500;
 
-  options->numeric_precision = 9;
-  options->region_opacity = -1;
-  options->obstacle_opacity = -1;
-  options->flow_opacity = 0.5;
-  options->node_opacity = 1;
+	options->numeric_precision = 9;
+	options->region_opacity = -1;
+	options->obstacle_opacity = -1;
+	options->flow_opacity = 0.5;
+	options->node_opacity = 1;
 
-  return options;
+	return options;
 }
 
 /**@fn WriteOptions::Ptr

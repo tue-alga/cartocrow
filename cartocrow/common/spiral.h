@@ -27,49 +27,45 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 16-10-2020
 #include "cartocrow/common/core_types.h"
 #include "cartocrow/common/polar_point.h"
 
+namespace cartocrow {
 
-namespace cartocrow
-{
+class Spiral {
+  public:
+	Spiral(const PolarPoint& anchor, const Number& angle_rad);
 
-class Spiral
-{
- public:
-  Spiral(const PolarPoint& anchor, const Number& angle_rad);
+	Spiral(const PolarPoint& point_1, const PolarPoint& point_2);
 
-  Spiral(const PolarPoint& point_1, const PolarPoint& point_2);
+	const PolarPoint& anchor() const;
 
-  const PolarPoint& anchor() const;
+	const Number& angle_rad() const;
 
-  const Number& angle_rad() const;
+	bool IsLeft() const;
+	bool IsRight() const;
+	bool IsCollinear() const;
 
-  bool IsLeft() const;
-  bool IsRight() const;
-  bool IsCollinear() const;
+	Number EvaluateR(const Number& t) const;
 
-  Number EvaluateR(const Number& t) const;
+	Number EvaluatePhi(const Number& t) const;
 
-  Number EvaluatePhi(const Number& t) const;
+	PolarPoint Evaluate(const Number& t) const;
 
-  PolarPoint Evaluate(const Number& t) const;
+	Number ComputeT(const Number& R) const;
 
-  Number ComputeT(const Number& R) const;
+	Number ComputePhi(const Number& R) const;
 
-  Number ComputePhi(const Number& R) const;
+	Number SampleT(const Number& phi) const;
 
-  Number SampleT(const Number& phi) const;
+	Number SampleR(const Number& phi) const;
 
-  Number SampleR(const Number& phi) const;
+	Number ComputePeriod() const;
 
-  Number ComputePeriod() const;
+	void MoveAnchor(const Number& R);
 
-  void MoveAnchor(const Number& R);
+  private:
+	PolarPoint anchor_;
 
- private:
-  PolarPoint anchor_;
-
-  Number angle_rad_;
+	Number angle_rad_;
 }; // class Spiral
-
 
 std::ostream& operator<<(std::ostream& os, const Spiral& spiral);
 

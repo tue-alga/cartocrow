@@ -26,11 +26,8 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 03-03-2020
 
 #include "cartocrow/necklace_map/necklace_interval.h"
 
-
-namespace cartocrow
-{
-namespace necklace_map
-{
+namespace cartocrow {
+namespace necklace_map {
 
 /**@class ComputeFeasibleCentroidInterval
  * @brief A functor to generate feasible centroid intervals for necklace bead placement.
@@ -40,13 +37,13 @@ namespace necklace_map
  * If the centroid of the region is the necklace kernel, the wedge bisector is undefined. In this case the wedge is chosen such that the inner bisector has the same direction as the positive x axis.
  */
 
-CircularRange::Ptr
-ComputeFeasibleCentroidInterval::operator()(const Polygon& extent, const Necklace::Ptr& necklace) const
-{
-  const Point centroid = ComputeCentroid()(extent);
-  const Number angle_rad = necklace->shape->ComputeAngleRad(centroid);
+CircularRange::Ptr ComputeFeasibleCentroidInterval::operator()(const Polygon& extent,
+                                                               const Necklace::Ptr& necklace) const {
+	const Point centroid = ComputeCentroid()(extent);
+	const Number angle_rad = necklace->shape->ComputeAngleRad(centroid);
 
-  return std::make_shared<IntervalCentroid>(angle_rad - half_length_rad_, angle_rad + half_length_rad_);
+	return std::make_shared<IntervalCentroid>(angle_rad - half_length_rad_,
+	                                          angle_rad + half_length_rad_);
 }
 
 /**@brief Construct a centroid interval generator.
@@ -55,12 +52,11 @@ ComputeFeasibleCentroidInterval::operator()(const Polygon& extent, const Necklac
  * The centroid intervals cannot be empty or cover the whole necklace, i.e. the length is restricted to the range (0, 2*pi).
  * @endparblock
  */
-ComputeFeasibleCentroidInterval::ComputeFeasibleCentroidInterval(const Parameters& parameters) :
-  ComputeFeasibleInterval(parameters),
-  half_length_rad_(0.5 * parameters.centroid_interval_length_rad)
-{
-  CHECK_GE(half_length_rad_, 0);
-  CHECK_LT(half_length_rad_, M_PI);
+ComputeFeasibleCentroidInterval::ComputeFeasibleCentroidInterval(const Parameters& parameters)
+    : ComputeFeasibleInterval(parameters),
+      half_length_rad_(0.5 * parameters.centroid_interval_length_rad) {
+	CHECK_GE(half_length_rad_, 0);
+	CHECK_LT(half_length_rad_, M_PI);
 }
 
 } // namespace necklace_map

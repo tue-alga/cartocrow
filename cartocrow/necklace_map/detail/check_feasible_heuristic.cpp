@@ -24,107 +24,81 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 06-05-2020
 
 #include <glog/logging.h>
 
+namespace cartocrow {
+namespace necklace_map {
+namespace detail {
 
-namespace cartocrow
-{
-namespace necklace_map
-{
-namespace detail
-{
+CycleNodeCheck::CycleNodeCheck(const Bead::Ptr& bead, const Number& angle_rad)
+    : CycleNode(bead, std::make_shared<Range>(angle_rad - bead->covering_radius_rad,
+                                              angle_rad + bead->covering_radius_rad)),
+      check(0), angle_rad(angle_rad) {}
 
-CycleNodeCheck::CycleNodeCheck(const Bead::Ptr& bead, const Number& angle_rad) :
-  CycleNode
-  (
-    bead,
-    std::make_shared<Range>
-    (
-      angle_rad - bead->covering_radius_rad,
-      angle_rad + bead->covering_radius_rad
-    )
-  ), check(0), angle_rad(angle_rad)
-{}
+CheckFeasibleHeuristic::CheckFeasibleHeuristic(NodeSet& nodes, const int heuristic_cycles)
+    : CheckFeasible(nodes), heuristic_cycles_(heuristic_cycles) {}
 
+bool CheckFeasibleHeuristic::operator()() {
+	if (slices_.empty())
+		return true;
 
-CheckFeasibleHeuristic::CheckFeasibleHeuristic(NodeSet& nodes, const int heuristic_cycles) :
-  CheckFeasible(nodes),
-  heuristic_cycles_(heuristic_cycles)
-{}
+	ResetContainer();
 
-bool CheckFeasibleHeuristic::operator()()
-{
-  if (slices_.empty())
-    return true;
-
-  ResetContainer();
-
-  return Feasible();
+	return Feasible();
 }
 
-void CheckFeasibleHeuristic::InitializeSlices()
-{
-  CheckFeasible::InitializeSlices();
-  const size_t num_slices = slices_.size();
+void CheckFeasibleHeuristic::InitializeSlices() {
+	CheckFeasible::InitializeSlices();
+	const size_t num_slices = slices_.size();
 
-  // The main method in which the heuristic algorithm tries to save time is by stacking a number of duplicate slice collections back-to-back.
-  // The solution is then decided in intervals of length 2pi on these slices.
+	// The main method in which the heuristic algorithm tries to save time is by stacking a number of duplicate slice collections back-to-back.
+	// The solution is then decided in intervals of length 2pi on these slices.
 
-  // Clone the slices.
-  std::vector<TaskSlice> slices_clone;
-  slices_clone.swap(slices_);
+	// Clone the slices.
+	std::vector<TaskSlice> slices_clone;
+	slices_clone.swap(slices_);
 
-  slices_.reserve(num_slices * heuristic_cycles_);
-  for (int cycle = 0; cycle < heuristic_cycles_; ++cycle)
-    for (size_t j = 0; j < num_slices; ++j)
-      slices_.emplace_back(slices_clone[j], slices_clone[0].coverage.from(), cycle);
+	slices_.reserve(num_slices * heuristic_cycles_);
+	for (int cycle = 0; cycle < heuristic_cycles_; ++cycle)
+		for (size_t j = 0; j < num_slices; ++j)
+			slices_.emplace_back(slices_clone[j], slices_clone[0].coverage.from(), cycle);
 }
 
-void CheckFeasibleHeuristic::AssignAngle(const Number& angle_rad, Bead::Ptr& bead)
-{
-  CHECK_NOTNULL(bead);
-  nodes_check_.push_back(std::make_shared<CycleNodeCheck>(bead, angle_rad));
+void CheckFeasibleHeuristic::AssignAngle(const Number& angle_rad, Bead::Ptr& bead) {
+	CHECK_NOTNULL(bead);
+	nodes_check_.push_back(std::make_shared<CycleNodeCheck>(bead, angle_rad));
 }
 
-bool CheckFeasibleHeuristic::Feasible()
-{
-  FillContainer(0, BitString(), BitString());
+bool CheckFeasibleHeuristic::Feasible() {
+	FillContainer(0, BitString(), BitString());
 
-  nodes_check_.clear();
-  if (!ProcessContainer(0, slices_.back().layer_sets.back()))
-    return false;
+	nodes_check_.clear();
+	if (!ProcessContainer(0, slices_.back().layer_sets.back()))
+		return false;
 
-  // Check whether any nodes overlap.
-  // Note that the nodes to check are in clockwise order.
-  size_t count = 0;
-  for
-  (
-    CheckSet::iterator left_iter = nodes_check_.begin(), right_iter = nodes_check_.begin();
-    left_iter != nodes_check_.end() && right_iter != nodes_check_.end();
-  )
-  {
-    if ((*right_iter)->valid->from() + M_2xPI < (*left_iter)->valid->to())
-    {
-      if (--(*right_iter)->check == 0)
-        --count;
-      ++right_iter;
-    }
-    else
-    {
-      if (++(*left_iter)->check == 1)
-        if (++count == nodes_check_.size())
-        {
-          // Feasible interval found; adjust the angles to use this interval.
-          for (CheckSet::iterator node_iter = left_iter; node_iter != right_iter; --node_iter)
-          {
-            Bead::Ptr& bead = (*node_iter)->bead;
-            bead->angle_rad = Modulo((*node_iter)->angle_rad);
-          }
-          return true;
-        }
-      ++left_iter;
-    }
-  }
+	// Check whether any nodes overlap.
+	// Note that the nodes to check are in clockwise order.
+	size_t count = 0;
+	for (CheckSet::iterator left_iter = nodes_check_.begin(), right_iter = nodes_check_.begin();
+	     left_iter != nodes_check_.end() && right_iter != nodes_check_.end();) {
+		if ((*right_iter)->valid->from() + M_2xPI < (*left_iter)->valid->to()) {
+			if (--(*right_iter)->check == 0)
+				--count;
+			++right_iter;
+		} else {
+			if (++(*left_iter)->check == 1)
+				if (++count == nodes_check_.size()) {
+					// Feasible interval found; adjust the angles to use this interval.
+					for (CheckSet::iterator node_iter = left_iter; node_iter != right_iter;
+					     --node_iter) {
+						Bead::Ptr& bead = (*node_iter)->bead;
+						bead->angle_rad = Modulo((*node_iter)->angle_rad);
+					}
+					return true;
+				}
+			++left_iter;
+		}
+	}
 
-  return false;
+	return false;
 }
 
 } // namespace detail

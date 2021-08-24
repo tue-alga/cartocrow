@@ -31,29 +31,26 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 16-10-2020
 #include "cartocrow/flow_map/place.h"
 #include "cartocrow/flow_map/spiral_tree.h"
 
+namespace cartocrow {
+namespace flow_map {
 
-namespace cartocrow
-{
-namespace flow_map
-{
+class FlowTree {
+  public:
+	using Ptr = std::shared_ptr<FlowTree>;
 
-class FlowTree
-{
- public:
-  using Ptr = std::shared_ptr<FlowTree>;
+	using FlowArc =
+	    std::pair<Spiral, PolarPoint>; // TODO(tvl) the second element should probably be the minimum R, instead of a full point. Replace by SpiralSegment? Is this one even needed once we add thickness to the arcs; replace by custom class?
 
-  using FlowArc = std::pair<Spiral, PolarPoint>;  // TODO(tvl) the second element should probably be the minimum R, instead of a full point. Replace by SpiralSegment? Is this one even needed once we add thickness to the arcs; replace by custom class?
+	FlowTree(const SpiralTree& spiral_tree);
 
-  FlowTree(const SpiralTree& spiral_tree);
+	//private:
+	Vector root_translation_;
 
- //private:
-  Vector root_translation_;
+	std::vector<Node::Ptr> nodes_; // Note that the positions of these nodes are offset by the position of the root.
 
-  std::vector<Node::Ptr> nodes_;  // Note that the positions of these nodes are offset by the position of the root.
+	std::vector<Region> obstacles_; // TODO(tvl) remove after debugging: output should use original obstacles, not adjusted obstacles.
 
-  std::vector<Region> obstacles_;  // TODO(tvl) remove after debugging: output should use original obstacles, not adjusted obstacles.
-
-  std::vector<FlowArc> arcs_;
+	std::vector<FlowArc> arcs_;
 }; // class FlowTree
 
 } // namespace flow_map

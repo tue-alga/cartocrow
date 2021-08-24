@@ -26,23 +26,17 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 01-04-2020
 #include "cartocrow/common/circular_range.h"
 #include "cartocrow/common/core_types.h"
 
+namespace cartocrow {
+namespace necklace_map {
 
-namespace cartocrow
-{
-namespace necklace_map
-{
-
-class IntervalCentroid : public CircularRange
-{
- public:
-  IntervalCentroid(const Number& from_rad, const Number& to_rad);
+class IntervalCentroid : public CircularRange {
+  public:
+	IntervalCentroid(const Number& from_rad, const Number& to_rad);
 }; // class IntervalCentroid
 
-
-class IntervalWedge : public CircularRange
-{
- public:
-  IntervalWedge(const Number& from_rad, const Number& to_rad);
+class IntervalWedge : public CircularRange {
+  public:
+	IntervalWedge(const Number& from_rad, const Number& to_rad);
 }; // class IntervalWedge
 
 } // namespace necklace_map

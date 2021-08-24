@@ -31,55 +31,47 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 04-09-2020
 #include <tinyxml2.h>
 
 #include "cartocrow/common/core_types.h"
-#include "cartocrow/common/region.h"
 #include "cartocrow/common/detail/svg_visitor.h"
+#include "cartocrow/common/region.h"
 #include "cartocrow/flow_map/place.h"
 
+namespace cartocrow {
+namespace flow_map {
+namespace detail {
 
-namespace cartocrow
-{
-namespace flow_map
-{
-namespace detail
-{
+class SvgVisitor : public cartocrow::detail::SvgVisitor {
+  private:
+	using Region = cartocrow::Region;
+	using LookupTable = std::unordered_map<std::string, size_t>;
 
-class SvgVisitor : public cartocrow::detail::SvgVisitor
-{
- private:
-  using Region = cartocrow::Region;
-  using LookupTable = std::unordered_map<std::string, size_t>;
+  public:
+	SvgVisitor(std::vector<Region>& context, std::vector<Place::Ptr>& places,
+	           const bool strict_validity = true);
 
- public:
-  SvgVisitor
-  (
-    std::vector<Region>& context,
-    std::vector<Place::Ptr>& places,
-    const bool strict_validity = true
-  );
+  private:
+	bool VisitExit(const tinyxml2::XMLElement& element);
 
- private:
-  bool VisitExit(const tinyxml2::XMLElement& element);
+	void VisitSvg(const tinyxml2::XMLAttribute* attributes);
 
-  void VisitSvg(const tinyxml2::XMLAttribute* attributes);
+	bool VisitCircle(const Point& center, const Number& radius,
+	                 const tinyxml2::XMLAttribute* attributes);
 
-  bool VisitCircle(const Point& center, const Number& radius, const tinyxml2::XMLAttribute* attributes);
+	bool VisitPath(const std::string& commands, const tinyxml2::XMLAttribute* attributes);
 
-  bool VisitPath(const std::string& commands, const tinyxml2::XMLAttribute* attributes);
+	bool FinalizeSvg();
 
-  bool FinalizeSvg();
+	bool AddPlace(const std::string& id, const Point& point);
 
-  bool AddPlace(const std::string& id, const Point& point);
+	bool AddPlace(const std::string& id, const std::string& commands);
 
-  bool AddPlace(const std::string& id, const std::string& commands);
+	bool AddRegion(const std::string& commands, const std::string& style);
 
-  bool AddRegion(const std::string& commands, const std::string& style);
+	std::vector<Region>& context_;
+	std::vector<Place::Ptr>& places_;
 
-  std::vector<Region>& context_;
-  std::vector<Place::Ptr>& places_;
+	LookupTable id_to_place_index_;
 
-  LookupTable id_to_place_index_;
-
-  bool strict_validity_;
+	bool strict_validity_;
 }; // class SvgVisitor
 
 } // namespace detail

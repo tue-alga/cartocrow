@@ -24,11 +24,8 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 28-11-2019
 
 #include <glog/logging.h>
 
-
-namespace cartocrow
-{
-namespace necklace_map
-{
+namespace cartocrow {
+namespace necklace_map {
 
 /**@struct MapElement
  * @brief A region and its associated data for use in a necklace map.
@@ -60,7 +57,7 @@ namespace necklace_map
  * @endparblock
  */
 MapElement::MapElement(const std::string& id)
-  : region(id), value(0), necklace(nullptr), bead(nullptr) {}
+    : region(id), value(0), necklace(nullptr), bead(nullptr) {}
 
 /**@brief Construct a necklace region and data element from a region.
  * @param region @parblock the region of the element.
@@ -69,7 +66,7 @@ MapElement::MapElement(const std::string& id)
  * @endparblock
  */
 MapElement::MapElement(const Region& region)
-  : region(region), value(0), necklace(nullptr), bead(nullptr) {}
+    : region(region), value(0), necklace(nullptr), bead(nullptr) {}
 
 /**@brief Check whether the necklace element is valid.
  *
@@ -77,20 +74,19 @@ MapElement::MapElement(const Region& region)
  * @param strict whether the value must be strictly larger than 0.
  * @return whether the element is valid.
  */
-bool MapElement::IsValid(const bool strict /*= true*/) const
-{
-  if (!region.IsValid())
-    return false;
+bool MapElement::IsValid(const bool strict /*= true*/) const {
+	if (!region.IsValid())
+		return false;
 
-  if (value < 0)
-    return false;
-  if (strict && value == 0)
-    return false;
+	if (value < 0)
+		return false;
+	if (strict && value == 0)
+		return false;
 
-  if (bead && (!necklace || !bead->IsValid()))
-    return false;
+	if (bead && (!necklace || !bead->IsValid()))
+		return false;
 
-  return true;
+	return true;
 }
 
 /**@brief Create a bead on the necklace.
@@ -98,23 +94,21 @@ bool MapElement::IsValid(const bool strict /*= true*/) const
  * This is skipped if this element does not have a positive value.
  * @param parameters the parameters describing the desired type of beads.
  */
-void MapElement::InitializeBead(const Parameters& parameters)
-{
-  // Elements on a necklace must have strictly positive value.
-  if (!necklace || value <= 0)
-    return;
+void MapElement::InitializeBead(const Parameters& parameters) {
+	// Elements on a necklace must have strictly positive value.
+	if (!necklace || value <= 0)
+		return;
 
-  if (parameters.ignore_point_regions)
-  {
-    Polygon extent;
-    region.MakeSimple(extent);
+	if (parameters.ignore_point_regions) {
+		Polygon extent;
+		region.MakeSimple(extent);
 
-    if (extent.size() < 2)
-      return;
-  }
+		if (extent.size() < 2)
+			return;
+	}
 
-  bead = std::make_shared<necklace_map::Bead>(CGAL::sqrt(value), region.style, region.id);
-  necklace->beads.push_back(bead);
+	bead = std::make_shared<necklace_map::Bead>(CGAL::sqrt(value), region.style, region.id);
+	necklace->beads.push_back(bead);
 }
 
 /**@fn Region MapElement::region;
@@ -144,4 +138,4 @@ void MapElement::InitializeBead(const Parameters& parameters)
  */
 
 } // namespace necklace_map
-} // namespace cartocrow"
+} // namespace cartocrow

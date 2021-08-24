@@ -26,17 +26,13 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 02-09-2020
 
 #include "cartocrow/common/core_types.h"
 
+namespace cartocrow {
+namespace flow_map {
 
-namespace cartocrow
-{
-namespace flow_map
-{
+struct Parameters {
+	Parameters();
 
-struct Parameters
-{
-  Parameters();
-
-  Number restricting_angle_rad;
+	Number restricting_angle_rad;
 }; // struct Parameters
 
 } // namespace flow_map

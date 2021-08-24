@@ -33,105 +33,93 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 28-10-2020
 #include "cartocrow/common/region.h"
 #include "cartocrow/flow_map/place.h"
 
+namespace cartocrow {
+namespace flow_map {
 
-namespace cartocrow
-{
-namespace flow_map
-{
+struct Node {
+	using Ptr = std::shared_ptr<Node>;
 
-struct Node
-{
-  using Ptr = std::shared_ptr<Node>;
+	enum class ConnectionType { kRoot, kLeaf, kJoin, kSubdivision };
 
-  enum class ConnectionType
-  {
-    kRoot,
-    kLeaf,
-    kJoin,
-    kSubdivision
-  };
+	explicit Node(const Place::Ptr& place = nullptr);
 
-  explicit Node(const Place::Ptr& place = nullptr);
+	ConnectionType GetType() const;
 
-  ConnectionType GetType() const;
+	bool IsSteiner() const;
 
-  bool IsSteiner() const;
-
-  Place::Ptr place;
-  Ptr parent;
-  std::vector<Ptr> children;
+	Place::Ptr place;
+	Ptr parent;
+	std::vector<Ptr> children;
 }; // struct Node
 
+class SpiralTree {
+  private:
+	using NodeSet = std::vector<Node::Ptr>;
 
-class SpiralTree
-{
- private:
-  using NodeSet = std::vector<Node::Ptr>;
+	using Obstacle = std::list<PolarPoint>;
+	using ObstacleSet = std::vector<Obstacle>;
 
-  using Obstacle = std::list<PolarPoint>;
-  using ObstacleSet = std::vector<Obstacle>;
+  public:
+	using Ptr = std::shared_ptr<SpiralTree>;
 
- public:
-  using Ptr = std::shared_ptr<SpiralTree>;
+	using NodeIterator = NodeSet::iterator;
+	using NodeConstIterator = NodeSet::const_iterator;
 
-  using NodeIterator = NodeSet::iterator;
-  using NodeConstIterator = NodeSet::const_iterator;
+  private: // TODO(tvl) made private until computing the tree with obstructions is implemented.
+	using ObstacleIterator = ObstacleSet::iterator;
+	using ObstacleConstIterator = ObstacleSet::const_iterator;
 
- private:  // TODO(tvl) made private until computing the tree with obstructions is implemented.
-  using ObstacleIterator = ObstacleSet::iterator;
-  using ObstacleConstIterator = ObstacleSet::const_iterator;
- public:
+  public:
+	SpiralTree(const Point& root, const Number& restricting_angle_rad);
 
-  SpiralTree(const Point& root, const Number& restricting_angle_rad);
+	inline Point GetRoot() const { return Point(CGAL::ORIGIN) - root_translation_; }
 
-  inline Point GetRoot() const { return Point(CGAL::ORIGIN) - root_translation_; }
+	inline Number GetRestrictingAngle() const { return restricting_angle_rad_; }
 
-  inline Number GetRestrictingAngle() const { return restricting_angle_rad_; }
+	NodeConstIterator nodes_begin() const { return nodes_.begin(); }
+	NodeConstIterator nodes_end() const { return nodes_.end(); }
 
-  NodeConstIterator nodes_begin() const { return nodes_.begin(); }
-  NodeConstIterator nodes_end() const { return nodes_.end(); }
+	NodeIterator nodes_begin() { return nodes_.begin(); }
+	NodeIterator nodes_end() { return nodes_.end(); }
 
-  NodeIterator nodes_begin() { return nodes_.begin(); }
-  NodeIterator nodes_end() { return nodes_.end(); }
+  private: // TODO(tvl) made private until computing the tree with obstructions is implemented.
+	ObstacleConstIterator obstacles_begin() const { return obstacles_.begin(); }
+	ObstacleConstIterator obstacles_end() const { return obstacles_.end(); }
 
- private:  // TODO(tvl) made private until computing the tree with obstructions is implemented.
-  ObstacleConstIterator obstacles_begin() const { return obstacles_.begin(); }
-  ObstacleConstIterator obstacles_end() const { return obstacles_.end(); }
+	ObstacleIterator obstacles_begin() { return obstacles_.begin(); }
+	ObstacleIterator obstacles_end() { return obstacles_.end(); }
 
-  ObstacleIterator obstacles_begin() { return obstacles_.begin(); }
-  ObstacleIterator obstacles_end() { return obstacles_.end(); }
- public:
+  public:
+	void AddPlaces(const std::vector<Place::Ptr>& places);
 
-  void AddPlaces(const std::vector<Place::Ptr>& places);
+  private: // TODO(tvl) made private until computing the tree with obstructions is implemented.
+	void AddObstacles(const std::vector<Region>& obstacles);
 
- private:  // TODO(tvl) made private until computing the tree with obstructions is implemented.
-  void AddObstacles(const std::vector<Region>& obstacles);
- public:
+  public:
+	void Compute();
 
-  void Compute();
+  private: // TODO(tvl) made private until computing the tree with obstructions is implemented.
+	void ComputeUnobstructed();
 
- private:  // TODO(tvl) made private until computing the tree with obstructions is implemented.
-  void ComputeUnobstructed();
+	void ComputeObstructed();
 
-  void ComputeObstructed();
- public:
+  public:
+	void SetRoot(const Point& root);
 
-  void SetRoot(const Point& root);
+	void SetRestrictingAngle(const Number& restricting_angle_rad);
 
-  void SetRestrictingAngle(const Number& restricting_angle_rad);
+  private:
+	void Clean();
 
- private:
-  void Clean();
+	bool IsReachable(const PolarPoint& parent_point, const PolarPoint& child_point) const;
 
-  bool IsReachable(const PolarPoint& parent_point, const PolarPoint& child_point) const;
+	void AddObstacle(const Polygon_with_holes& polygon);
 
-  void AddObstacle(const Polygon_with_holes& polygon);
+	Number restricting_angle_rad_;
+	Vector root_translation_;
 
-  Number restricting_angle_rad_;
-  Vector root_translation_;
-
-  NodeSet nodes_;  // Note that the positions of these nodes are offset by the position of the root.
-  ObstacleSet obstacles_;
+	NodeSet nodes_; // Note that the positions of these nodes are offset by the position of the root.
+	ObstacleSet obstacles_;
 }; // class SpiralTree
 
 } // namespace flow_map

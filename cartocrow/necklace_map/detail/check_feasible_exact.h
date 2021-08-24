@@ -27,40 +27,27 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 06-05-2020
 
 #include "check_feasible.h"
 
-
-namespace cartocrow
-{
-namespace necklace_map
-{
-namespace detail
-{
+namespace cartocrow {
+namespace necklace_map {
+namespace detail {
 
 // The exact algorithm for the feasibility decision problem computes all possible node orderings until it finds a valid placement.
 // This takes O(n*log(n) + n^2K4^K) time, where n is the number of nodes, and K is the 'width' of the node set (i.e. the maximum number of valid intervals intersected by a ray originating for the necklace kernel).
-class CheckFeasibleExact : public CheckFeasible
-{
- public:
-  CheckFeasibleExact(NodeSet& nodes);
+class CheckFeasibleExact : public CheckFeasible {
+  public:
+	CheckFeasibleExact(NodeSet& nodes);
 
-  bool operator()() override;
+	bool operator()() override;
 
- private:
-  void SplitCircle
-  (
-    const TaskSlice& first_slice,
-    const BitString& layer_set
-  );
+  private:
+	void SplitCircle(const TaskSlice& first_slice, const BitString& layer_set);
 
-  bool FeasibleFromSlice
-  (
-    const size_t first_slice_index,
-    const BitString& first_slice_layer_set
-  );
+	bool FeasibleFromSlice(const size_t first_slice_index, const BitString& first_slice_layer_set);
 
-  void AssignAngle(const Number& angle_rad, Bead::Ptr& bead) override;
+	void AssignAngle(const Number& angle_rad, Bead::Ptr& bead) override;
 
-  using BeadAngleMap = std::map<Number, Bead::Ptr>;
-  BeadAngleMap bead_angles_;
+	using BeadAngleMap = std::map<Number, Bead::Ptr>;
+	BeadAngleMap bead_angles_;
 }; // class CheckFeasibleExact
 
 } // namespace detail

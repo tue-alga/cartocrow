@@ -30,26 +30,18 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-2019
 #include <cartocrow/common/region.h>
 
 #include "cartocrow/flow_map/flow_tree.h"
-#include "cartocrow/flow_map/parameters.h"
-#include "cartocrow/flow_map/place.h"
 #include "cartocrow/flow_map/io/data_reader.h"
 #include "cartocrow/flow_map/io/svg_reader.h"
 #include "cartocrow/flow_map/io/svg_writer.h"
+#include "cartocrow/flow_map/parameters.h"
+#include "cartocrow/flow_map/place.h"
 
+namespace cartocrow {
+namespace flow_map {
 
-namespace cartocrow
-{
-namespace flow_map
-{
-
-void ComputeFlowMap
-(
-  const Parameters& parameters,
-  const std::vector<Place::Ptr>& places,
-  const size_t index_root,
-  const std::vector<Region>& obstacles,
-  FlowTree::Ptr& tree
-);
+void ComputeFlowMap(const Parameters& parameters, const std::vector<Place::Ptr>& places,
+                    const size_t index_root, const std::vector<Region>& obstacles,
+                    FlowTree::Ptr& tree);
 
 } // namespace flow_map
 } // namespace cartocrow

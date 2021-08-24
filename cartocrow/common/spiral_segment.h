@@ -28,35 +28,32 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 26-02-2021
 #include "cartocrow/common/polar_point.h"
 #include "cartocrow/common/spiral.h"
 
+namespace cartocrow {
 
-namespace cartocrow
-{
+class SpiralSegment : public Spiral {
+  public:
+	SpiralSegment(const PolarPoint& point_1, const PolarPoint& point_2);
 
-class SpiralSegment : public Spiral
-{
- public:
-  SpiralSegment(const PolarPoint& point_1, const PolarPoint& point_2);
+	SpiralSegment(const PolarPoint& far, const Number& angle_rad, const Number& R_min);
 
-  SpiralSegment(const PolarPoint& far, const Number& angle_rad, const Number& R_min);
+	SpiralSegment(const PolarPoint& anchor, const Number& angle_rad, const Number& R_min,
+	              const Number& R_max);
 
-  SpiralSegment(const PolarPoint& anchor, const Number& angle_rad, const Number& R_min, const Number& R_max);
+	const PolarPoint far() const;
 
-  const PolarPoint far() const;
+	const PolarPoint near() const;
 
-  const PolarPoint near() const;
+	const Number& R_min() const;
 
-  const Number& R_min() const;
+	const Number& R_max() const;
 
-  const Number& R_max() const;
+	bool ContainsT(const Number& t) const;
 
-  bool ContainsT(const Number& t) const;
+	bool ContainsR(const Number& R) const;
 
-  bool ContainsR(const Number& R) const;
-
- private:
-  Number R_min_, R_max_;
+  private:
+	Number R_min_, R_max_;
 }; // class SpiralSegment
-
 
 std::ostream& operator<<(std::ostream& os, const SpiralSegment& segment);
 

@@ -22,11 +22,8 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 01-04-2020
 
 #include "necklace_interval.h"
 
-
-namespace cartocrow
-{
-namespace necklace_map
-{
+namespace cartocrow {
+namespace necklace_map {
 
 /**@class IntervalCentroid
  * @brief A centroid-based necklace interval.
@@ -44,9 +41,8 @@ namespace necklace_map
  * @param from_rad the clockwise endpoint of the interval.
  * @param to_rad the counterclockwise endpoint of the interval.
  */
-IntervalCentroid::IntervalCentroid(const Number& from_rad, const Number& to_rad) :
-  CircularRange(from_rad, to_rad)
-{}
+IntervalCentroid::IntervalCentroid(const Number& from_rad, const Number& to_rad)
+    : CircularRange(from_rad, to_rad) {}
 
 //Number IntervalCentroid::ComputeOrder() const
 //{
@@ -56,7 +52,6 @@ IntervalCentroid::IntervalCentroid(const Number& from_rad, const Number& to_rad)
 //    return order - M_2xPI;
 //  return order;
 //}
-
 
 /**@class IntervalWedge
  * @brief A wedge-based necklace interval.
@@ -74,9 +69,8 @@ IntervalCentroid::IntervalCentroid(const Number& from_rad, const Number& to_rad)
  * @param from_rad the clockwise endpoint of the interval.
  * @param to_rad the counterclockwise endpoint of the interval.
  */
-IntervalWedge::IntervalWedge(const Number& from_rad, const Number& to_rad) :
-  CircularRange(from_rad, to_rad)
-{}
+IntervalWedge::IntervalWedge(const Number& from_rad, const Number& to_rad)
+    : CircularRange(from_rad, to_rad) {}
 
 //Number IntervalWedge::ComputeOrder() const
 //{

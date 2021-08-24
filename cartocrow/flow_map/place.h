@@ -29,23 +29,19 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 04-09-2020
 #include "cartocrow/common/core_types.h"
 #include "cartocrow/common/polar_point.h"
 
+namespace cartocrow {
+namespace flow_map {
 
-namespace cartocrow
-{
-namespace flow_map
-{
+struct Place {
+	using Ptr = std::shared_ptr<Place>;
 
-struct Place
-{
-  using Ptr = std::shared_ptr<Place>;
+	Place(const std::string& id, const PolarPoint& position);
 
-  Place(const std::string& id, const PolarPoint& position);
+	std::string id;
 
-  std::string id;
+	PolarPoint position;
 
-  PolarPoint position;
-
-  Number flow_in;
+	Number flow_in;
 }; // struct Place
 
 } // namespace flow_map

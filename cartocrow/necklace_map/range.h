@@ -26,39 +26,37 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 09-12-2019
 
 #include "cartocrow/common/core_types.h"
 
-namespace cartocrow
-{
+namespace cartocrow {
 
-class Range
-{
- public:
-  using Ptr = std::shared_ptr<Range>;
+class Range {
+  public:
+	using Ptr = std::shared_ptr<Range>;
 
-  Range(const Number& from, const Number& to);
-  Range(const Range& range);
+	Range(const Number& from, const Number& to);
+	Range(const Range& range);
 
-  const Number& from() const;
-  Number& from();
-  const Number& to() const;
-  Number& to();
+	const Number& from() const;
+	Number& from();
+	const Number& to() const;
+	Number& to();
 
-  virtual bool IsValid() const;
+	virtual bool IsValid() const;
 
-  bool IsDegenerate() const;
+	bool IsDegenerate() const;
 
-  virtual bool Contains(const Number& value) const;
+	virtual bool Contains(const Number& value) const;
 
-  virtual bool ContainsOpen(const Number& value) const;
+	virtual bool ContainsOpen(const Number& value) const;
 
-  virtual bool Intersects(const Range::Ptr& range) const;
+	virtual bool Intersects(const Range::Ptr& range) const;
 
-  virtual bool IntersectsOpen(const Range::Ptr& range) const;
+	virtual bool IntersectsOpen(const Range::Ptr& range) const;
 
-  Number ComputeLength() const;
+	Number ComputeLength() const;
 
- private:
-  Number from_;
-  Number to_;
+  private:
+	Number from_;
+	Number to_;
 }; // class Range
 
 } // namespace cartocrow

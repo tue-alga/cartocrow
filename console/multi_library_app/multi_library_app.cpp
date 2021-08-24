@@ -27,60 +27,54 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-2019
 #include <gflags/gflags.h>
 #include <glog/logging.h>
 
-#include <cmake/cartocrow_config.h>
-#include <cartocrow/necklace_map/necklace_map.h>
 #include <cartocrow/flow_map/flow_map.h>
+#include <cartocrow/necklace_map/necklace_map.h>
+#include <cmake/cartocrow_config.h>
 
 #include "console/common/utils_cla.h"
 #include "console/multi_library_app/internal/test_internal.h"
 
-
 DEFINE_string(test_flag, "", "A test for the gflags dependency for parsing command-line arguments");
 
+int main(int argc, char** argv) {
+	InitApplication(
+	    argc, argv,
+	    "Command line application that exposes the functionality of the CartoCrow necklace map.",
+	    {"<some arg>", "<another arg>"});
 
-int main(int argc, char **argv)
-{
-  InitApplication
-  (
-    argc,
-    argv,
-    "Command line application that exposes the functionality of the CartoCrow necklace map.",
-    {"<some arg>", "<another arg>"}
-  );
+	// Writing to the standard output is reserved for text that should be returned to a calling website.
+	FLAGS_logtostderr = true;
 
-  // Writing to the standard output is reserved for text that should be returned to a calling website.
-  FLAGS_logtostderr = true;
+	LOG(INFO) << "Flags:";
+	LOG(INFO) << FLAGS_test_flag;
 
-  LOG(INFO) << "Flags:";
-  LOG(INFO) << FLAGS_test_flag;
+	// Note that here is a good place to check the validity of the flags.
+	// While this can be done by adding flag validators using gflags,
+	// These generally only allow validating independent flags,
+	// they do not allow validating programmatically set flags,
+	// and they may throw inconvenient compiler warnings about unused variables
+	// (depending on the implementation).
 
-  // Note that here is a good place to check the validity of the flags.
-  // While this can be done by adding flag validators using gflags,
-  // These generally only allow validating independent flags,
-  // they do not allow validating programmatically set flags,
-  // and they may throw inconvenient compiler warnings about unused variables
-  // (depending on the implementation).
+	LOG(INFO) << "Args:";
+	for (int i = 1; i < argc; ++i)
+		LOG(INFO) << "\t" << argv[i];
 
-  LOG(INFO) << "Args:";
-  for (int i = 1; i < argc; ++i)
-    LOG(INFO) << "\t" << argv[i];
+	//LOG(INFO) << "Necklace map: " << cartocrow::proc_necklace_map();
+	//LOG(INFO) << "Flow Diagram: " << cartocrow::flow_map::proc_flow_map();
 
-  //LOG(INFO) << "Necklace map: " << cartocrow::proc_necklace_map();
-  //LOG(INFO) << "Flow Diagram: " << cartocrow::flow_map::proc_flow_map();
+	LOG(INFO) << "CartoCrow version: " << CARTOCROW_VERSION;
 
-  LOG(INFO) << "CartoCrow version: " << CARTOCROW_VERSION;
+	LOG(INFO) << "Internal number: " << cartocrow::internal::test();
 
-  LOG(INFO) << "Internal number: " << cartocrow::internal::test();
+	std::cout << "<div>";
+	std::cout << "<!--To be loaded as support card.-->";
+	std::cout << "<h1>Application-based component</h1>";
+	std::cout << "<p>This page is just to test running a server-side application using PHP.</p>";
+	std::cout << "<p>The following command line arguments were caught:<br>";
+	for (int i = 1; i < argc; ++i)
+		std::cout << argv[i] << "<br>";
+	std::cout << "</p>";
+	std::cout << "</div>";
 
-  std::cout << "<div>";
-  std::cout << "<!--To be loaded as support card.-->";
-  std::cout << "<h1>Application-based component</h1>";
-  std::cout << "<p>This page is just to test running a server-side application using PHP.</p>";
-  std::cout << "<p>The following command line arguments were caught:<br>";
-  for (int i = 1; i < argc; ++i)
-    std::cout << argv[i] << "<br>";
-  std::cout << "</p>";
-  std::cout << "</div>";
-
-  return 0;
+	return 0;
 }

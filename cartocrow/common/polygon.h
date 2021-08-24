@@ -26,19 +26,15 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 05-12-2019
 
 #include "cartocrow/common/cgal_types.h"
 
-
-namespace cartocrow
-{
+namespace cartocrow {
 
 using Polygon = CGAL::Polygon_2<Kernel>;
 using Polygon_with_holes = CGAL::Polygon_with_holes_2<Kernel>;
 
-
-class ComputeCentroid
-{
- public:
-  Point operator()(const Polygon& shape) const;
-  Point operator()(const Polygon_with_holes& shape) const;
+class ComputeCentroid {
+  public:
+	Point operator()(const Polygon& shape) const;
+	Point operator()(const Polygon_with_holes& shape) const;
 }; // class ComputeCentroid
 
 } // namespace cartocrow

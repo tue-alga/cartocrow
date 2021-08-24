@@ -23,11 +23,8 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 13-02-2020
 
 #include "type_parsers.h"
 
-
-namespace cartocrow
-{
-namespace necklace_map
-{
+namespace cartocrow {
+namespace necklace_map {
 
 /**@class IntervalTypeParser
  * @brief A simple parser to convert strings to interval types or vise versa.
@@ -48,46 +45,37 @@ namespace necklace_map
 /**@brief Construct an interval type parser.
  * @param type whether to store any parsed interval types.
  */
-IntervalTypeParser::IntervalTypeParser(IntervalType& type) :
-  type(type) {}
+IntervalTypeParser::IntervalTypeParser(IntervalType& type) : type(type) {}
 
 /**@brief Apply the parser to an interval type string.
  * @param str the string to parse.
  * @return whether the string could be parsed.
  */
-bool IntervalTypeParser::operator()(const std::string& str) const
-{
-  if (str == kCentroid)
-  {
-    type = IntervalType::kCentroid;
-    return true;
-  } else if (str == kWedge)
-  {
-    type = IntervalType::kWedge;
-    return true;
-  }
-  return false;
+bool IntervalTypeParser::operator()(const std::string& str) const {
+	if (str == kCentroid) {
+		type = IntervalType::kCentroid;
+		return true;
+	} else if (str == kWedge) {
+		type = IntervalType::kWedge;
+		return true;
+	}
+	return false;
 }
 
 /**@brief Construct a string from the last interval type parsed.
  * @return the constructed string.
  */
-std::string IntervalTypeParser::Serialize() const
-{
-  if (type == IntervalType::kCentroid)
-  {
-    return kCentroid;
-  }
-  else
-  {
-    return kWedge;
-  }
+std::string IntervalTypeParser::Serialize() const {
+	if (type == IntervalType::kCentroid) {
+		return kCentroid;
+	} else {
+		return kWedge;
+	}
 }
 
 /**@fn IntervalType& IntervalTypeParser::type;
  * @brief The last interval type parsed.
  */
-
 
 /**@class OrderTypeParser
  * @brief A simple parser to convert strings to order types or vise versa.
@@ -112,40 +100,32 @@ std::string IntervalTypeParser::Serialize() const
 /**@brief Construct an order type parser.
  * @param type whether to store any parsed order types.
  */
-OrderTypeParser::OrderTypeParser(OrderType& type) :
-  type(type) {}
+OrderTypeParser::OrderTypeParser(OrderType& type) : type(type) {}
 
 /**@brief Apply the parser to an order type string.
  * @param str the string to parse.
  * @return whether the string could be parsed.
  */
-bool OrderTypeParser::operator()(const std::string& str) const
-{
-  if (str == kFixed)
-  {
-    type = OrderType::kFixed;
-    return true;
-  } else if (str == kAny)
-  {
-    type = OrderType::kAny;
-    return true;
-  }
-  return false;
+bool OrderTypeParser::operator()(const std::string& str) const {
+	if (str == kFixed) {
+		type = OrderType::kFixed;
+		return true;
+	} else if (str == kAny) {
+		type = OrderType::kAny;
+		return true;
+	}
+	return false;
 }
 
 /**@brief Construct a string from the last order type parsed.
  * @return the constructed string.
  */
-std::string OrderTypeParser::Serialize() const
-{
-  if (type == OrderType::kFixed)
-  {
-    return kFixed;
-  }
-  else
-  {
-    return kAny;
-  }
+std::string OrderTypeParser::Serialize() const {
+	if (type == OrderType::kFixed) {
+		return kFixed;
+	} else {
+		return kAny;
+	}
 }
 
 /**@fn OrderType& OrderTypeParser::type;

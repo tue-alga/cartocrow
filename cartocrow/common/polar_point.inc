@@ -26,9 +26,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 04-09-2020
 
 #include <glog/logging.h>
 
-
-namespace cartocrow
-{
+namespace cartocrow {
 
 /**@brief Construct a polar point.
  * @tparam T1 the number type for the distance to the pole.
@@ -36,14 +34,13 @@ namespace cartocrow
  * @param R the distance to the pole.
  * @param phi the angle from the pole.
  */
-template<typename T1, typename T2>
-PolarPoint::PolarPoint(const T1& R, const T2& phi) : R_(R), phi_(phi)
-{
-  CHECK_LE(0, R);
-  while (phi_ < -M_PI)
-    phi_ += M_2xPI;
-  while (M_PI < phi_)
-    phi_ -= M_2xPI;
+template <typename T1, typename T2>
+PolarPoint::PolarPoint(const T1& R, const T2& phi) : R_(R), phi_(phi) {
+	CHECK_LE(0, R);
+	while (phi_ < -M_PI)
+		phi_ += M_2xPI;
+	while (M_PI < phi_)
+		phi_ -= M_2xPI;
 }
 
 } // namespace cartocrow

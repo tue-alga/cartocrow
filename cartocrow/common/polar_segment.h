@@ -29,63 +29,57 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 19-02-2021
 #include "cartocrow/common/polar_line.h"
 #include "cartocrow/common/polar_point.h"
 
+namespace cartocrow {
 
-namespace cartocrow
-{
+class PolarSegment : public PolarLine {
+  public:
+	PolarSegment(const PolarPoint& point_1, const PolarPoint& point_2);
 
-class PolarSegment : public PolarLine
-{
- public:
-  PolarSegment(const PolarPoint& point_1, const PolarPoint& point_2);
+	Number FromT() const;
 
-  Number FromT() const;
+	Number ToT() const;
 
-  Number ToT() const;
+	Number R_min() const;
 
-  Number R_min() const;
+	Number R_max() const;
 
-  Number R_max() const;
+	bool IsLeft() const;
+	bool IsRight() const;
+	bool IsCollinear() const;
 
-  bool IsLeft() const;
-  bool IsRight() const;
-  bool IsCollinear() const;
+	bool ContainsFoot() const;
 
-  bool ContainsFoot() const;
+	bool ContainsT(const Number& t) const;
 
-  bool ContainsT(const Number& t) const;
+	// Note that the following methods shadow the methods of PolarLine, which are not virtual.
 
-  // Note that the following methods shadow the methods of PolarLine, which are not virtual.
+	bool ContainsR(const Number& R) const;
 
-  bool ContainsR(const Number& R) const;
+	bool ContainsPhi(const Number& phi) const;
 
-  bool ContainsPhi(const Number& phi) const;
+	Number EvaluateR(const Number& t) const;
 
-  Number EvaluateR(const Number& t) const;
+	Number EvaluatePhi(const Number& t) const;
 
-  Number EvaluatePhi(const Number& t) const;
+	PolarPoint Evaluate(const Number& t) const;
 
-  PolarPoint Evaluate(const Number& t) const;
+	Number ComputeT(const Number& phi) const;
 
-  Number ComputeT(const Number& phi) const;
+	template <class OutputIterator> int CollectT(const Number& R, OutputIterator t) const;
 
-  template<class OutputIterator>
-  int CollectT(const Number& R, OutputIterator t) const;
+	template <class OutputIterator> int CollectPhi(const Number& R, OutputIterator phi) const;
 
-  template<class OutputIterator>
-  int CollectPhi(const Number& R, OutputIterator phi) const;
+	PolarPoint ComputeClosestToPole() const;
 
-  PolarPoint ComputeClosestToPole() const;
+	const PolarLine& SupportingLine() const;
 
-  const PolarLine& SupportingLine() const;
+  private:
+	// We will call the 't' value of the base PolarLine the 'distance'.
+	Number ToDistance(const Number& t) const;
+	Number ToT(const Number& distance) const;
 
- private:
-  // We will call the 't' value of the base PolarLine the 'distance'.
-  Number ToDistance(const Number& t) const;
-  Number ToT(const Number& distance) const;
-
-  Number offset_, multiplier_;
+	Number offset_, multiplier_;
 }; // class PolarSegment
-
 
 std::ostream& operator<<(std::ostream& os, const PolarSegment& line);
 

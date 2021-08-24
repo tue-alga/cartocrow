@@ -28,13 +28,9 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 20-01-2020
 
 #include "cartocrow/necklace_map/detail/cycle_node.h"
 
-
-namespace cartocrow
-{
-namespace necklace_map
-{
-namespace detail
-{
+namespace cartocrow {
+namespace necklace_map {
+namespace detail {
 
 /**@class ValidateScaleFactor
  * @brief Functor to validate whether for a given scale factor and buffer angle there exists a valid necklace map.
@@ -44,135 +40,127 @@ namespace detail
  * @param scale_factor the scale factor for which to validate the necklace map.
  * @param buffer_rad the buffer angle in radians for which to validate the necklace map.
  */
-ValidateScaleFactor::ValidateScaleFactor
-(
-  const Number& scale_factor,
-  const Number& buffer_rad /*= 0*/,
-  const bool adjust_angle /*= true*/
-)
-  : scale_factor(scale_factor), buffer_rad(buffer_rad), adjust_angle(adjust_angle) {}
+ValidateScaleFactor::ValidateScaleFactor(const Number& scale_factor, const Number& buffer_rad /*= 0*/,
+                                         const bool adjust_angle /*= true*/
+                                         )
+    : scale_factor(scale_factor), buffer_rad(buffer_rad), adjust_angle(adjust_angle) {}
 
 /**@brief Validate a necklace.
  * @param necklace the necklace to validate.
  * @return whether there exists a valid placement of the necklace beads, given the scale factor and buffer angle of the validator.
  */
-bool ValidateScaleFactor::operator()(Necklace::Ptr& necklace) const
-{
-  const Number num_beads = necklace->beads.size();
-  if (num_beads < 2)
-  {
-    // Place the elements in a valid position.
-    for (Bead::Ptr& bead : necklace->beads)
-    {
-      bead->valid = std::make_shared<CircularRange>(*bead->feasible);
-      if (bead->angle_rad == 0)
-        bead->angle_rad = bead->valid->from_rad();
-    }
+bool ValidateScaleFactor::operator()(Necklace::Ptr& necklace) const {
+	const Number num_beads = necklace->beads.size();
+	if (num_beads < 2) {
+		// Place the elements in a valid position.
+		for (Bead::Ptr& bead : necklace->beads) {
+			bead->valid = std::make_shared<CircularRange>(*bead->feasible);
+			if (bead->angle_rad == 0)
+				bead->angle_rad = bead->valid->from_rad();
+		}
 
-    return true;
-  }
+		return true;
+	}
 
-  bool valid = true;
+	bool valid = true;
 
-  using NodeSet = std::vector<detail::CycleNode>;
-  NodeSet nodes;
-  nodes.reserve(2 * num_beads);
+	using NodeSet = std::vector<detail::CycleNode>;
+	NodeSet nodes;
+	nodes.reserve(2 * num_beads);
 
-  // Create a sorted cycle based on the feasible intervals of the necklace beads and compute the scaled covering radii.
-  for (const Bead::Ptr& bead : necklace->beads)
-  {
-    // In case of the any-order algorithm, the current angle limits the valid interval.
-    CHECK_NOTNULL(bead);
-    nodes.emplace_back(bead, std::make_shared<Range>(bead->angle_rad, Modulo(bead->feasible->to(), bead->angle_rad)));
-  }
+	// Create a sorted cycle based on the feasible intervals of the necklace beads and compute the scaled covering radii.
+	for (const Bead::Ptr& bead : necklace->beads) {
+		// In case of the any-order algorithm, the current angle limits the valid interval.
+		CHECK_NOTNULL(bead);
+		nodes.emplace_back(bead, std::make_shared<Range>(
+		                             bead->angle_rad, Modulo(bead->feasible->to(), bead->angle_rad)));
+	}
 
-  // Each node is duplicated with an offset to its interval to force cyclic validity.
-  for (size_t i = 0, n = nodes.size(); i < n; ++i) {
-    auto& node = nodes[i];
-    nodes.emplace_back(node);
+	// Each node is duplicated with an offset to its interval to force cyclic validity.
+	for (size_t i = 0, n = nodes.size(); i < n; ++i) {
+		auto& node = nodes[i];
+		nodes.emplace_back(node);
 
-    nodes.back().valid->from() += M_2xPI;
-    nodes.back().valid->to() += M_2xPI;
-  }
+		nodes.back().valid->from() += M_2xPI;
+		nodes.back().valid->to() += M_2xPI;
+	}
 
-  // Compute the valid intervals at the specified scale factor, where beads can be placed without pairwise overlap.
+	// Compute the valid intervals at the specified scale factor, where beads can be placed without pairwise overlap.
 
-  // Adjust the clockwise extremes.
-  for (size_t n = 1; n < nodes.size(); ++n)
-  {
-    detail::CycleNode& previous = nodes[n - 1];
-    detail::CycleNode& current = nodes[n];
+	// Adjust the clockwise extremes.
+	for (size_t n = 1; n < nodes.size(); ++n) {
+		detail::CycleNode& previous = nodes[n - 1];
+		detail::CycleNode& current = nodes[n];
 
-    // The bead must not overlap the previous one.
-    const Number min_distance = scale_factor * (current.bead->radius_base + previous.bead->radius_base);
-    const Number min_angle_rad =
-      Modulo(necklace->shape->ComputeAngleAtDistanceRad(previous.valid->from(), min_distance) + buffer_rad, previous.valid->from());
+		// The bead must not overlap the previous one.
+		const Number min_distance =
+		    scale_factor * (current.bead->radius_base + previous.bead->radius_base);
+		const Number min_angle_rad =
+		    Modulo(necklace->shape->ComputeAngleAtDistanceRad(previous.valid->from(), min_distance) +
+		               buffer_rad,
+		           previous.valid->from());
 
-    if (current.valid->from() < min_angle_rad)
-    {
-      current.valid->from() = min_angle_rad;
-      if (current.valid->to() < current.valid->from())
-      {
-        valid = false;
-        current.valid->from() = current.valid->to();
-      }
-    }
-  }
+		if (current.valid->from() < min_angle_rad) {
+			current.valid->from() = min_angle_rad;
+			if (current.valid->to() < current.valid->from()) {
+				valid = false;
+				current.valid->from() = current.valid->to();
+			}
+		}
+	}
 
-  // Adjust the counterclockwise extremes.
-  for (ptrdiff_t n = nodes.size() - 2; 0 <= n; --n)
-  {
-    detail::CycleNode& next = nodes[n + 1];
-    detail::CycleNode& current = nodes[n];
+	// Adjust the counterclockwise extremes.
+	for (ptrdiff_t n = nodes.size() - 2; 0 <= n; --n) {
+		detail::CycleNode& next = nodes[n + 1];
+		detail::CycleNode& current = nodes[n];
 
-    // The bead must not overlap the next one.
-    const Number min_distance = scale_factor * (next.bead->radius_base + current.bead->radius_base);
-    const Number min_angle_rad =
-      Modulo(necklace->shape->ComputeAngleAtDistanceRad(current.valid->to(), min_distance) + buffer_rad, current.valid->to());
+		// The bead must not overlap the next one.
+		const Number min_distance =
+		    scale_factor * (next.bead->radius_base + current.bead->radius_base);
+		const Number min_angle_rad =
+		    Modulo(necklace->shape->ComputeAngleAtDistanceRad(current.valid->to(), min_distance) +
+		               buffer_rad,
+		           current.valid->to());
 
-    if (next.valid->to() < min_angle_rad)
-    {
-      current.valid->to() += next.valid->to() - min_angle_rad;
-      if (current.valid->to() < current.valid->from())
-        current.valid->to() = current.valid->from();
-    }
-  }
+		if (next.valid->to() < min_angle_rad) {
+			current.valid->to() += next.valid->to() - min_angle_rad;
+			if (current.valid->to() < current.valid->from())
+				current.valid->to() = current.valid->from();
+		}
+	}
 
-  // Store the valid intervals and place each bead inside its valid interval.
-  for (size_t n = 0; n < num_beads; ++n)
-  {
-    Bead::Ptr& bead = necklace->beads[n];
+	// Store the valid intervals and place each bead inside its valid interval.
+	for (size_t n = 0; n < num_beads; ++n) {
+		Bead::Ptr& bead = necklace->beads[n];
 
-    // The second half of the nodes have the correct clockwise extreme.
-    const Number& from_rad = Modulo(nodes[num_beads + n].valid->from());
+		// The second half of the nodes have the correct clockwise extreme.
+		const Number& from_rad = Modulo(nodes[num_beads + n].valid->from());
 
-    // The first half of the nodes have the correct counterclockwise extreme.
-    const Number& to_rad = Modulo(nodes[n].valid->to(), from_rad);
+		// The first half of the nodes have the correct counterclockwise extreme.
+		const Number& to_rad = Modulo(nodes[n].valid->to(), from_rad);
 
-    bead->valid = std::make_shared<CircularRange>(from_rad, to_rad);
-    if (adjust_angle)
-      bead->angle_rad = bead->valid->from_rad();
-  }
+		bead->valid = std::make_shared<CircularRange>(from_rad, to_rad);
+		if (adjust_angle)
+			bead->angle_rad = bead->valid->from_rad();
+	}
 
-  return valid;
+	return valid;
 }
 
 /**@brief Validate a collection of necklaces.
  * @param necklace the necklaces to validate.
  * @return whether for each necklace there exists a valid placement of the necklace beads, given the scale factor and buffer angle of the validator.
  */
-bool ValidateScaleFactor::operator()(std::vector<Necklace::Ptr>& necklaces) const
-{
-  bool valid = true;
-  for (Necklace::Ptr& necklace : necklaces)
-    valid &= (*this)(necklace);
-  return valid;
+bool ValidateScaleFactor::operator()(std::vector<Necklace::Ptr>& necklaces) const {
+	bool valid = true;
+	for (Necklace::Ptr& necklace : necklaces)
+		valid &= (*this)(necklace);
+	return valid;
 }
 
 /**@fn Number ValidateScaleFactor::scale_factor;
  * @brief The scale factor at which to validate the necklace maps.
  */
-
 
 /**@fn Number ValidateScaleFactor::buffer_rad;
  * @brief The buffer angle at which to validate the necklace maps.

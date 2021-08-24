@@ -27,11 +27,8 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 02-09-2020
 
 #include "cartocrow/flow_map/io/detail/svg_writer.h"
 
-
-namespace cartocrow
-{
-namespace flow_map
-{
+namespace cartocrow {
+namespace flow_map {
 
 /**@class SvgWriter
  * @brief A writer for flow map output geometry.
@@ -49,24 +46,18 @@ SvgWriter::SvgWriter() {}
  * @param out the stream to which to write.
  * @return whether the flow map could be successfully written to the stream.
  */
-bool SvgWriter::Write
-(
-  const std::vector<Region>& context,
-  const std::vector<Region>& obstacles,
-  const FlowTree::Ptr& tree,
-  const WriteOptions::Ptr& options,
-  std::ostream& out
-) const
-{
-  detail::SvgWriter writer(context, obstacles, tree, options, out);
+bool SvgWriter::Write(const std::vector<Region>& context, const std::vector<Region>& obstacles,
+                      const FlowTree::Ptr& tree, const WriteOptions::Ptr& options,
+                      std::ostream& out) const {
+	detail::SvgWriter writer(context, obstacles, tree, options, out);
 
-  // The order of drawing the features determines their stacking order, i.e. the last one will be on top.
-  writer.DrawContext();
-  writer.DrawObstacles();
-  writer.DrawFlow();
-  writer.DrawNodes();
+	// The order of drawing the features determines their stacking order, i.e. the last one will be on top.
+	writer.DrawContext();
+	writer.DrawObstacles();
+	writer.DrawFlow();
+	writer.DrawNodes();
 
-  return true;
+	return true;
 }
 
 } // namespace flow_map

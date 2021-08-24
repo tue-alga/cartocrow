@@ -26,13 +26,9 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 03-12-2019
 
 #include <glog/logging.h>
 
-
-namespace cartocrow
-{
-namespace detail
-{
-namespace
-{
+namespace cartocrow {
+namespace detail {
+namespace {
 
 constexpr const char kCharInteger = 'i';
 constexpr const char kCharDouble = 'd';
@@ -57,7 +53,6 @@ DataColumn::DataColumn(const std::string& name) : name(name) {}
 /**@fn std::string DataColumn::name;
  * @brief The name of the column.
  */
-
 
 /**@class TableParser
  * @brief A parser for tabular data input.
@@ -86,116 +81,104 @@ TableParser::TableParser() : table_() {}
  * @param[in/out] in the stream to parse.
  * @return whether the table could be parsed successfully.
  */
-bool TableParser::Parse(std::istream& in)
-{
-  if (!in)
-    return false;
+bool TableParser::Parse(std::istream& in) {
+	if (!in)
+		return false;
 
-  // Read the number of data elements.
-  size_t num_elements;
-  in >> num_elements;
-  if (!in)
-    return false;
+	// Read the number of data elements.
+	size_t num_elements;
+	in >> num_elements;
+	if (!in)
+		return false;
 
-  // Read the element format.
-  std::string format;
-  in >> format;
-  if (!in)
-    return false;
-  CHECK(!format.empty());
+	// Read the element format.
+	std::string format;
+	in >> format;
+	if (!in)
+		return false;
+	CHECK(!format.empty());
 
-  std::transform(format.begin(), format.end(), format.begin(), [](unsigned char c) { return std::tolower(c); });
+	std::transform(format.begin(), format.end(), format.begin(),
+	               [](unsigned char c) { return std::tolower(c); });
 
-  // Read the name per value.
-  table_.clear();
-  for(const char& type : format)
-  {
-    std::string name;
-    in >> name;
-    if (!in)
-      return false;
+	// Read the name per value.
+	table_.clear();
+	for (const char& type : format) {
+		std::string name;
+		in >> name;
+		if (!in)
+			return false;
 
-    if (name[0] == '\"')
-    {
-      std::string part;
-      do
-      {
-        in >> part;
-        name += " " + part;
-      } while (part.back() != '\"');
-      name = name.substr(1, name.length() - 2);
-    }
+		if (name[0] == '\"') {
+			std::string part;
+			do {
+				in >> part;
+				name += " " + part;
+			} while (part.back() != '\"');
+			name = name.substr(1, name.length() - 2);
+		}
 
-    switch (type)
-    {
-      case kCharInteger:
-        table_.emplace_back(new ValueColumn<int>(name, num_elements));
-        break;
-      case kCharDouble:
-        table_.emplace_back(new ValueColumn<double>(name, num_elements));
-        break;
-      case kCharString:
-        table_.emplace_back(new ValueColumn<std::string>(name, num_elements));
-        break;
-      default:
-        LOG(FATAL) << "Unknown value type: " << type;
-    }
-  }
+		switch (type) {
+		case kCharInteger:
+			table_.emplace_back(new ValueColumn<int>(name, num_elements));
+			break;
+		case kCharDouble:
+			table_.emplace_back(new ValueColumn<double>(name, num_elements));
+			break;
+		case kCharString:
+			table_.emplace_back(new ValueColumn<std::string>(name, num_elements));
+			break;
+		default:
+			LOG(FATAL) << "Unknown value type: " << type;
+		}
+	}
 
-  // Read the element values.
-  for (size_t e = 0; e < num_elements; ++e)
-  {
-    for (Table::iterator column_iter = table_.begin(); column_iter != table_.end();)
-    {
-      std::string value;
-      in >> value;
-      if (!in)
-        return false;
+	// Read the element values.
+	for (size_t e = 0; e < num_elements; ++e) {
+		for (Table::iterator column_iter = table_.begin(); column_iter != table_.end();) {
+			std::string value;
+			in >> value;
+			if (!in)
+				return false;
 
-      while (!value.empty())
-      {
-        size_t pos = value.find("\"");
-        if (pos != std::string::npos)
-        {
-          if (0 < pos)
-          {
-            const std::string before = value.substr(0, pos);
-            (*column_iter++)->push_back(before);
-            value = value.substr(pos);
-          }
+			while (!value.empty()) {
+				size_t pos = value.find("\"");
+				if (pos != std::string::npos) {
+					if (0 < pos) {
+						const std::string before = value.substr(0, pos);
+						(*column_iter++)->push_back(before);
+						value = value.substr(pos);
+					}
 
-          // Parse quoted string.
-          std::stringstream stream;
-          stream << value;
-          do
-          {
-            in >> value;
-            if (!in)
-              return false;
-            pos = value.find("\"");
-            if (pos == std::string::npos)
-              stream << " " << value;
-            else
-              stream << " " << value.substr(0, pos+1);
-          } while (pos == std::string::npos);
-          const std::string quote = stream.str();
-          (*column_iter++)->push_back(quote);
+					// Parse quoted string.
+					std::stringstream stream;
+					stream << value;
+					do {
+						in >> value;
+						if (!in)
+							return false;
+						pos = value.find("\"");
+						if (pos == std::string::npos)
+							stream << " " << value;
+						else
+							stream << " " << value.substr(0, pos + 1);
+					} while (pos == std::string::npos);
+					const std::string quote = stream.str();
+					(*column_iter++)->push_back(quote);
 
-          if (pos + 1 < value.length())
-            value = value.substr(pos+1);
-          else
-            value = "";
-        }
-        else
-        {
-          (*column_iter++)->push_back(value);
-          value = "";
-        }
-      }
-    }
-  }
+					if (pos + 1 < value.length())
+						value = value.substr(pos + 1);
+					else
+						value = "";
+				} else {
+					(*column_iter++)->push_back(value);
+					value = "";
+				}
+			}
+		}
+	}
 
-  return true;
+	return true;
 }
 
 } // namespace detail

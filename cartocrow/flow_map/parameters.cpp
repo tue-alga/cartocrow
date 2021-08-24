@@ -23,11 +23,8 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 02-09-2020
 
 #include "parameters.h"
 
-
-namespace cartocrow
-{
-namespace flow_map
-{
+namespace cartocrow {
+namespace flow_map {
 
 /**@struct Parameters
  * @brief A struct to collect the parameters used for computing the flow map.
@@ -37,9 +34,7 @@ namespace flow_map
  *
  * All parameters are initialized as valid values.
  */
-Parameters::Parameters() :
-  restricting_angle_rad(0.61)
-{}
+Parameters::Parameters() : restricting_angle_rad(0.61) {}
 
 /**@fn Number Parameters::restricting_angle_rad;
  * @brief The maximum angle between the line connecting the root and any point on a tree arc and arc's tangent line at that point.

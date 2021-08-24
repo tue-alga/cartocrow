@@ -21,34 +21,30 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 02-09-2020
 
 #include "write_options.h"
 
-
-namespace cartocrow
-{
+namespace cartocrow {
 
 /**@brief Initialize write options with default values.
  * @return Default write options.
  */
-WriteOptions::Ptr WriteOptions::Default()
-{
-  WriteOptions::Ptr options = std::make_shared<WriteOptions>();
+WriteOptions::Ptr WriteOptions::Default() {
+	WriteOptions::Ptr options = std::make_shared<WriteOptions>();
 
-  options->pixel_width = 500;
-  options->numeric_precision = 9;
+	options->pixel_width = 500;
+	options->numeric_precision = 9;
 
-  return options;
+	return options;
 }
 
 /**@brief Initialize write options with debug values.
  * @return Debug write options.
  */
-WriteOptions::Ptr WriteOptions::Debug()
-{
-  WriteOptions::Ptr options = std::make_shared<WriteOptions>();
+WriteOptions::Ptr WriteOptions::Debug() {
+	WriteOptions::Ptr options = std::make_shared<WriteOptions>();
 
-  options->pixel_width = 500;
-  options->numeric_precision = 9;
+	options->pixel_width = 500;
+	options->numeric_precision = 9;
 
-  return options;
+	return options;
 }
 
 /**@fn WriteOptions::Ptr

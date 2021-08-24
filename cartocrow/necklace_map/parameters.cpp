@@ -22,11 +22,8 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 28-01-2020
 
 #include "parameters.h"
 
-
-namespace cartocrow
-{
-namespace necklace_map
-{
+namespace cartocrow {
+namespace necklace_map {
 
 /**@class cartocrow::necklace_map::IntervalType
  * @brief A type of feasible interval on a necklace.
@@ -35,7 +32,6 @@ namespace necklace_map
 /**@class cartocrow::necklace_map::OrderType
  * @brief A type of ordering to apply when computing the optimal scale factor and bead placement.
  */
-
 
 /**@struct Parameters
  * @brief A struct to collect the parameters used for computing the necklace map.
@@ -47,17 +43,10 @@ namespace necklace_map
  *
  * All parameters are initialized as valid values.
  */
-Parameters::Parameters() :
-  interval_type(IntervalType::kCentroid),
-  centroid_interval_length_rad(1),
-  ignore_point_regions(false),
-  order_type(OrderType::kFixed),
-  buffer_rad(0),
-  binary_search_depth(10),
-  heuristic_cycles(5),
-  placement_cycles(30),
-  aversion_ratio(0)
-{}
+Parameters::Parameters()
+    : interval_type(IntervalType::kCentroid), centroid_interval_length_rad(1),
+      ignore_point_regions(false), order_type(OrderType::kFixed), buffer_rad(0),
+      binary_search_depth(10), heuristic_cycles(5), placement_cycles(30), aversion_ratio(0) {}
 
 /**@fn IntervalType Parameters::interval_type;
  * @brief The type of feasible intervals to compute.

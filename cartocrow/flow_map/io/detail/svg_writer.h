@@ -36,72 +36,61 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 16-10-2020
 #include "cartocrow/flow_map/flow_tree.h"
 #include "cartocrow/flow_map/io/write_options.h"
 
+namespace cartocrow {
+namespace flow_map {
+namespace detail {
 
-namespace cartocrow
-{
-namespace flow_map
-{
-namespace detail
-{
+class SvgWriter {
+  public:
+	SvgWriter(const std::vector<Region>& context, const std::vector<Region>& obstacles,
+	          const FlowTree::Ptr& tree, const WriteOptions::Ptr& options, std::ostream& out);
 
-class SvgWriter
-{
- public:
-  SvgWriter
-  (
-    const std::vector<Region>& context,
-    const std::vector<Region>& obstacles,
-    const FlowTree::Ptr& tree,
-    const WriteOptions::Ptr& options,
-    std::ostream& out
-  );
+	~SvgWriter();
 
-  ~SvgWriter();
+	void DrawContext();
 
-  void DrawContext();
+	void DrawObstacles();
 
-  void DrawObstacles();
+	void DrawFlow();
 
-  void DrawFlow();
+	void DrawNodes();
 
-  void DrawNodes();
+  private:
+	void OpenSvg();
 
- private:
-  void OpenSvg();
+	void CloseSvg();
 
-  void CloseSvg();
+	void ComputeBoundingBox();
 
-  void ComputeBoundingBox();
+	void AddDropShadowFilter();
 
-  void AddDropShadowFilter();
+	void DrawSpiral(const Spiral& spiral, const Vector& offset, const PolarPoint& parent);
 
-  void DrawSpiral(const Spiral& spiral, const Vector& offset, const PolarPoint& parent);
+	void DrawRoots();
 
-  void DrawRoots();
+	void DrawLeaves();
 
-  void DrawLeaves();
+	void DrawJoinNodes();
 
-  void DrawJoinNodes();
+	void DrawSubdivisionNodes();
 
-  void DrawSubdivisionNodes();
+	void DrawObstacleVertices(const Region& obstacle);
 
-  void DrawObstacleVertices(const Region& obstacle);
+	void DrawObstacleVertices(const Polygon& polygon);
 
-  void DrawObstacleVertices(const Polygon& polygon);
+	const std::vector<Region>& context_;
+	const std::vector<Region>& obstacles_;
+	const FlowTree::Ptr& tree_;
+	std::ostream& out_;
 
-  const std::vector<Region>& context_;
-  const std::vector<Region>& obstacles_;
-  const FlowTree::Ptr& tree_;
-  std::ostream& out_;
+	WriteOptions::Ptr options_;
 
-  WriteOptions::Ptr options_;
+	Box bounding_box_;
+	Box bounding_box_spirals_;
+	double unit_px_;
+	std::string transform_matrix_;
 
-  Box bounding_box_;
-  Box bounding_box_spirals_;
-  double unit_px_;
-  std::string transform_matrix_;
-
-  tinyxml2::XMLPrinter printer_;
+	tinyxml2::XMLPrinter printer_;
 }; // class SvgWriter
 
 } // namespace detail

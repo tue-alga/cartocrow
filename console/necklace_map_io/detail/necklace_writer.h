@@ -31,87 +31,77 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 29-01-2020
 #include <tinyxml2.h>
 
 #include "cartocrow/common/core_types.h"
+#include "cartocrow/necklace_map/io/write_options.h"
 #include "cartocrow/necklace_map/map_element.h"
 #include "cartocrow/necklace_map/necklace.h"
-#include "cartocrow/necklace_map/io/write_options.h"
 
+namespace cartocrow {
+namespace necklace_map {
+namespace detail {
 
-namespace cartocrow
-{
-namespace necklace_map
-{
-namespace detail
-{
+class SvgWriter {
+  public:
+	using MapElement = necklace_map::MapElement;
+	using Necklace = necklace_map::Necklace;
 
-class SvgWriter
-{
- public:
-  using MapElement = necklace_map::MapElement;
-  using Necklace = necklace_map::Necklace;
+	SvgWriter(const std::vector<MapElement::Ptr>& elements,
+	          const std::vector<Necklace::Ptr>& necklaces, const Number& scale_factor,
+	          const WriteOptions::Ptr& options, std::ostream& out);
 
-  SvgWriter
-  (
-    const std::vector<MapElement::Ptr>& elements,
-    const std::vector<Necklace::Ptr>& necklaces,
-    const Number& scale_factor,
-    const WriteOptions::Ptr& options,
-    std::ostream& out
-  );
+	~SvgWriter();
 
-  ~SvgWriter();
+	void DrawPolygonRegions();
 
-  void DrawPolygonRegions();
+	void DrawPointRegions();
 
-  void DrawPointRegions();
+	void DrawNecklaces();
 
-  void DrawNecklaces();
+	void DrawBeads();
 
-  void DrawBeads();
+	void DrawFeasibleIntervals();
 
-  void DrawFeasibleIntervals();
+	void DrawValidIntervals();
 
-  void DrawValidIntervals();
+	void DrawRegionAngles();
 
-  void DrawRegionAngles();
+	void DrawBeadAngles();
 
-  void DrawBeadAngles();
+  private:
+	using Bead = necklace_map::Bead;
 
- private:
-  using Bead = necklace_map::Bead;
+	using NecklaceShape = necklace_map::NecklaceShape;
+	using CircleNecklace = necklace_map::CircleNecklace;
+	using BezierNecklace = necklace_map::BezierNecklace;
+	using BeadIntervalMap = std::unordered_map<Bead::Ptr, CircleNecklace::Ptr>;
 
-  using NecklaceShape = necklace_map::NecklaceShape;
-  using CircleNecklace = necklace_map::CircleNecklace;
-  using BezierNecklace = necklace_map::BezierNecklace;
-  using BeadIntervalMap = std::unordered_map<Bead::Ptr, CircleNecklace::Ptr>;
+	void OpenSvg();
 
-  void OpenSvg();
+	void CloseSvg();
 
-  void CloseSvg();
+	void ComputeBoundingBox();
 
-  void ComputeBoundingBox();
+	void CreateBeadIntervalShapes();
 
-  void CreateBeadIntervalShapes();
+	void AddDropShadowFilter();
 
-  void AddDropShadowFilter();
+	void DrawKernel(const Point& kernel);
 
-  void DrawKernel(const Point& kernel);
+	void DrawBeadIds();
 
-  void DrawBeadIds();
+	const std::vector<MapElement::Ptr>& elements_;
+	const std::vector<Necklace::Ptr>& necklaces_;
+	const Number scale_factor_;
+	std::ostream& out_;
 
-  const std::vector<MapElement::Ptr>& elements_;
-  const std::vector<Necklace::Ptr>& necklaces_;
-  const Number scale_factor_;
-  std::ostream& out_;
+	WriteOptions::Ptr options_;
 
-  WriteOptions::Ptr options_;
+	Box bounding_box_;
+	double unit_px_;
+	std::string transform_matrix_;
 
-  Box bounding_box_;
-  double unit_px_;
-  std::string transform_matrix_;
+	BeadIntervalMap bead_interval_map_;
 
-  BeadIntervalMap bead_interval_map_;
-
-  tinyxml2::XMLPrinter printer_;
+	tinyxml2::XMLPrinter printer_;
 }; // class SvgWriter
 
 } // namespace detail

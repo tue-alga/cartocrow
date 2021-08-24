@@ -26,58 +26,48 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 02-04-2020
 #include <vector>
 
 #include "cartocrow/common/core_types.h"
-#include "cartocrow/necklace_map/necklace.h"
-#include "cartocrow/necklace_map/necklace_shape.h"
 #include "cartocrow/necklace_map/detail/check_feasible.h"
 #include "cartocrow/necklace_map/detail/cycle_node_layered.h"
+#include "cartocrow/necklace_map/necklace.h"
+#include "cartocrow/necklace_map/necklace_shape.h"
 
+namespace cartocrow {
+namespace necklace_map {
+namespace detail {
 
-namespace cartocrow
-{
-namespace necklace_map
-{
-namespace detail
-{
+class ComputeScaleFactorAnyOrder {
+  protected:
+	// Note that the scaler must be able to access the set by index.
+	using NodeSet = std::vector<CycleNodeLayered::Ptr>;
 
-class ComputeScaleFactorAnyOrder
-{
- protected:
-  // Note that the scaler must be able to access the set by index.
-  using NodeSet = std::vector<CycleNodeLayered::Ptr>;
+  public:
+	constexpr static const int kMaxLayers = 15;
 
- public:
-  constexpr static const int kMaxLayers = 15;
+	ComputeScaleFactorAnyOrder(const Necklace::Ptr& necklace, const Number& buffer_rad = 0,
+	                           const int binary_search_depth = 10, const int heuristic_cycles = 5);
 
-  ComputeScaleFactorAnyOrder
-  (
-    const Necklace::Ptr& necklace,
-    const Number& buffer_rad = 0,
-    const int binary_search_depth = 10,
-    const int heuristic_cycles = 5
-  );
+	Number Optimize();
 
-  Number Optimize();
+  protected:
+	virtual Number ComputeScaleUpperBound();
 
- protected:
-  virtual Number ComputeScaleUpperBound();
+	virtual void ComputeCoveringRadii(const Number& scale_factor);
 
-  virtual void ComputeCoveringRadii(const Number& scale_factor);
+  private:
+	int AssignLayers();
 
- private:
-  int AssignLayers();
+	void ComputeBufferUpperBound(const Number& scale_factor);
 
-  void ComputeBufferUpperBound(const Number& scale_factor);
+  protected:
+	NecklaceShape::Ptr necklace_shape_;
 
- protected:
-  NecklaceShape::Ptr necklace_shape_;
+	NodeSet nodes_;
 
-  NodeSet nodes_;
+	Number half_buffer_rad_;
+	Number max_buffer_rad_;
 
-  Number half_buffer_rad_;
-  Number max_buffer_rad_;
-
-  int binary_search_depth_;
-  CheckFeasible::Ptr check_;
+	int binary_search_depth_;
+	CheckFeasible::Ptr check_;
 }; // class ComputeScaleFactorAnyOrder
 
 } // namespace detail

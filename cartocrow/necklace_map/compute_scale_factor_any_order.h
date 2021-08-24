@@ -27,22 +27,18 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 03-03-2020
 #include "cartocrow/necklace_map/compute_scale_factor.h"
 #include "cartocrow/necklace_map/necklace.h"
 
+namespace cartocrow {
+namespace necklace_map {
 
-namespace cartocrow
-{
-namespace necklace_map
-{
+class ComputeScaleFactorAnyOrder : public ComputeScaleFactor {
+  public:
+	explicit ComputeScaleFactorAnyOrder(const Parameters& parameters);
 
-class ComputeScaleFactorAnyOrder : public ComputeScaleFactor
-{
- public:
-  explicit ComputeScaleFactorAnyOrder(const Parameters& parameters);
+	Number operator()(Necklace::Ptr& necklace) override;
 
-  Number operator()(Necklace::Ptr& necklace) override;
-
- private:
-  int binary_search_depth_;
-  int heuristic_cycles_;
+  private:
+	int binary_search_depth_;
+	int heuristic_cycles_;
 }; // class ComputeScaleFactorAnyOrder
 
 } // namespace necklace_map

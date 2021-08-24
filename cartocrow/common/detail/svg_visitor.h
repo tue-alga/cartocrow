@@ -27,59 +27,43 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 20-11-2019
 
 #include "cartocrow/common/core_types.h"
 
-
-namespace cartocrow
-{
-namespace detail
-{
+namespace cartocrow {
+namespace detail {
 
 // Note that while the SVG input is stored in an XML file, it does not make use of the
 // main feature that makes XML preferable over JSON: validatibility (i.e. assigning a
 // schema). This means that we do not need to use a comprehensive XML library such as
 // xerces; we can instead use a lightweight library such as tinyxml.
-class SvgVisitor : public tinyxml2::XMLVisitor
-{
- public:
-  bool VisitEnter(const tinyxml2::XMLElement& element, const tinyxml2::XMLAttribute* attributes);
+class SvgVisitor : public tinyxml2::XMLVisitor {
+  public:
+	bool VisitEnter(const tinyxml2::XMLElement& element, const tinyxml2::XMLAttribute* attributes);
 
- protected:
-  virtual void VisitSvg(const tinyxml2::XMLAttribute* attributes);
+  protected:
+	virtual void VisitSvg(const tinyxml2::XMLAttribute* attributes);
 
-  virtual bool VisitLine(const Point& point_1, const Point& point_2, const tinyxml2::XMLAttribute* attributes);
+	virtual bool VisitLine(const Point& point_1, const Point& point_2,
+	                       const tinyxml2::XMLAttribute* attributes);
 
-  virtual bool VisitRectangle
-  (
-    const Point& corner,
-    const Number& width,
-    const Number& height,
-    const tinyxml2::XMLAttribute* attributes
-  );
+	virtual bool VisitRectangle(const Point& corner, const Number& width, const Number& height,
+	                            const tinyxml2::XMLAttribute* attributes);
 
-  virtual bool VisitPolygon(const std::string& points, const tinyxml2::XMLAttribute* attributes);
+	virtual bool VisitPolygon(const std::string& points, const tinyxml2::XMLAttribute* attributes);
 
-  virtual bool VisitPolyline(const std::string& points, const tinyxml2::XMLAttribute* attributes);
+	virtual bool VisitPolyline(const std::string& points, const tinyxml2::XMLAttribute* attributes);
 
-  virtual bool VisitCircle(const Point& center, const Number& radius, const tinyxml2::XMLAttribute* attributes);
+	virtual bool VisitCircle(const Point& center, const Number& radius,
+	                         const tinyxml2::XMLAttribute* attributes);
 
-  virtual bool VisitEllipse
-  (
-    const Point& center,
-    const Number& radius_x,
-    const Number& radius_y,
-    const tinyxml2::XMLAttribute* attributes
-  );
+	virtual bool VisitEllipse(const Point& center, const Number& radius_x, const Number& radius_y,
+	                          const tinyxml2::XMLAttribute* attributes);
 
-  virtual bool VisitPath(const std::string& commands, const tinyxml2::XMLAttribute* attributes);
+	virtual bool VisitPath(const std::string& commands, const tinyxml2::XMLAttribute* attributes);
 
-  bool FindAttribute(const tinyxml2::XMLAttribute* attributes, const std::string& name, std::string& value) const;
+	bool FindAttribute(const tinyxml2::XMLAttribute* attributes, const std::string& name,
+	                   std::string& value) const;
 
-  bool FindAttributes
-  (
-    const tinyxml2::XMLAttribute* attributes,
-    const size_t num,
-    const std::string* names,
-    std::string* values
-  ) const;
+	bool FindAttributes(const tinyxml2::XMLAttribute* attributes, const size_t num,
+	                    const std::string* names, std::string* values) const;
 }; // class SvgVisitor
 
 } // namespace detail

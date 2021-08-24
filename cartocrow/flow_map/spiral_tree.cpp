@@ -30,50 +30,36 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 28-10-2020
 #include "cartocrow/common/circular_range.h"
 #include "cartocrow/common/circulator.h"
 #include "cartocrow/common/intersections.h"
-#include "cartocrow/common/spiral_segment.h"
 #include "cartocrow/common/polar_segment.h"
+#include "cartocrow/common/spiral_segment.h"
 
+namespace cartocrow {
+namespace flow_map {
+namespace {
 
-namespace cartocrow
-{
-namespace flow_map
-{
-namespace
-{
+struct Event {
+	Event(const Node::Ptr& node, const PolarPoint& relative_position)
+	    : node(node), relative_position(relative_position) {}
 
-struct Event
-{
-  Event(const Node::Ptr& node, const PolarPoint& relative_position) :
-    node(node),
-    relative_position(relative_position)
-  {}
+	Event(const Event& event) : node(event.node), relative_position(event.relative_position) {}
 
-  Event(const Event& event) :
-    node(event.node),
-    relative_position(event.relative_position)
-  {}
-
-  Node::Ptr node;
-  PolarPoint relative_position;
+	Node::Ptr node;
+	PolarPoint relative_position;
 }; // struct Event
 
+struct CompareEvents {
+	bool operator()(const Event& a, const Event& b) const {
+		// Join nodes are conceptually farther from the root than other nodes.
+		if (a.relative_position.R() == b.relative_position.R())
+			return 1 < b.node->children.size();
 
-struct CompareEvents
-{
-  bool operator()(const Event& a, const Event& b) const
-  {
-    // Join nodes are conceptually farther from the root than other nodes.
-    if (a.relative_position.R() == b.relative_position.R())
-      return 1 < b.node->children.size();
-
-    return a.relative_position.R() < b.relative_position.R();
-  }
+		return a.relative_position.R() < b.relative_position.R();
+	}
 }; // struct CompareEvents
 
 using EventQueue = std::priority_queue<Event, std::deque<Event>, CompareEvents>;
 
-}  // anonymous namespace
-
+} // anonymous namespace
 
 /**@struct Node
  * @brief A node in a tree.
@@ -118,9 +104,7 @@ using EventQueue = std::priority_queue<Event, std::deque<Event>, CompareEvents>;
  * A node may be associated with a place on the map that either sends or receives flow. These nodes are the root and leaf nodes. Other nodes will have the same amount of incoming flow as the sum of the outgoing flow.
  * @param place the place associated with this node.
  */
-Node::Node(const Place::Ptr& place /*= nullptr*/) :
-  place(place)
-{}
+Node::Node(const Place::Ptr& place /*= nullptr*/) : place(place) {}
 
 /**@brief Determine the topological type of this node.
  *
@@ -133,19 +117,18 @@ Node::Node(const Place::Ptr& place /*= nullptr*/) :
  * Note that this type does not describe whether the node is associated with a place on the map. This can be determined using IsSteiner().
  * @return the node type.
  */
-Node::ConnectionType Node::GetType() const
-{
-  if (parent == nullptr)
-    return ConnectionType::kRoot;
-  else switch (children.size())
-  {
-    case 0:
-      return ConnectionType::kLeaf;
-    case 1:
-      return ConnectionType::kSubdivision;
-    default:
-      return ConnectionType::kJoin;
-  }
+Node::ConnectionType Node::GetType() const {
+	if (parent == nullptr)
+		return ConnectionType::kRoot;
+	else
+		switch (children.size()) {
+		case 0:
+			return ConnectionType::kLeaf;
+		case 1:
+			return ConnectionType::kSubdivision;
+		default:
+			return ConnectionType::kJoin;
+		}
 }
 
 /**@brief Determine whether this node is a Steiner node.
@@ -153,11 +136,8 @@ Node::ConnectionType Node::GetType() const
  * Steiner nodes are not part of the input places. They support the tree, either by splitting the flow, or by guiding the flow around obstacles.
  * @return whether this node is a Steiner node.
  */
-bool Node::IsSteiner() const
-{
-  return
-    place == nullptr ||
-    (place->flow_in <= 0 && parent != nullptr);
+bool Node::IsSteiner() const {
+	return place == nullptr || (place->flow_in <= 0 && parent != nullptr);
 }
 
 /**@fn Place::Ptr Node::place
@@ -177,7 +157,6 @@ bool Node::IsSteiner() const
  *
  * Note that while generally the nodes of a tree without children are refered to as leaf nodes, a node with the leaf type may have children if it is located inside the spiral region of another node.
  */
-
 
 /**@class SpiralTree
  * @brief A binary tree where each arc is a logarithmic spiral.
@@ -203,12 +182,10 @@ bool Node::IsSteiner() const
  * @param root the position of the root node. This point is used to determine the relative position of all the nodes in the tree and the shape of the spiral arcs.
  * @param restricting_angle_rad the restricting angle used to construct all the spiral arcs of the tree. This number must be strictly positive.
  */
-SpiralTree::SpiralTree(const Point& root, const Number& restricting_angle_rad) :
-  restricting_angle_rad_(restricting_angle_rad),
-  root_translation_(Point(CGAL::ORIGIN) - root)
-{
-  CHECK_GT(restricting_angle_rad, 0);
-  CHECK_LE(restricting_angle_rad, M_PI_2);
+SpiralTree::SpiralTree(const Point& root, const Number& restricting_angle_rad)
+    : restricting_angle_rad_(restricting_angle_rad), root_translation_(Point(CGAL::ORIGIN) - root) {
+	CHECK_GT(restricting_angle_rad, 0);
+	CHECK_LE(restricting_angle_rad, M_PI_2);
 }
 
 /**@fn Point SpiralTree::GetRoot() const
@@ -251,15 +228,13 @@ SpiralTree::SpiralTree(const Point& root, const Number& restricting_angle_rad) :
  * Non-root places with a non-positive incoming flow will be ignored.
  * @endparblock
  */
-void SpiralTree::AddPlaces(const std::vector<Place::Ptr>& places)
-{
-  Clean();
+void SpiralTree::AddPlaces(const std::vector<Place::Ptr>& places) {
+	Clean();
 
-  for (const Place::Ptr& place : places)
-  {
-    if (0 < place->flow_in)
-      nodes_.push_back(std::make_shared<Node>(place));
-  }
+	for (const Place::Ptr& place : places) {
+		if (0 < place->flow_in)
+			nodes_.push_back(std::make_shared<Node>(place));
+	}
 }
 
 /**@brief Add a set of obstacles to the spiral tree.
@@ -267,13 +242,12 @@ void SpiralTree::AddPlaces(const std::vector<Place::Ptr>& places)
  * Note that the spiral arcs are not automatically computed after adding the obstacles. This requires manually calling the Compute() method.
  * @param obstacles the set of obstacles to add to the spiral tree.
  */
-void SpiralTree::AddObstacles(const std::vector<Region>& obstacles)
-{
-  Clean();
+void SpiralTree::AddObstacles(const std::vector<Region>& obstacles) {
+	Clean();
 
-  for (const Region& obstacle : obstacles)
-    for (const Polygon_with_holes& polygon : obstacle.shape)
-      AddObstacle(polygon);
+	for (const Region& obstacle : obstacles)
+		for (const Polygon_with_holes& polygon : obstacle.shape)
+			AddObstacle(polygon);
 }
 
 /**@brief Compute the spiral tree arcs.
@@ -282,12 +256,11 @@ void SpiralTree::AddObstacles(const std::vector<Region>& obstacles)
  *
  * Note that if no specific obstacles have been added, input nodes are not forced to be leaf nodes in the final tree. If this is desired, use ComputeObstructed() instead.
  */
-void SpiralTree::Compute()
-{
-  if (true) //obstacles_.empty())  // TODO(tvl) commented out while code is not complete.
-    ComputeUnobstructed();
-  else
-    ComputeObstructed();
+void SpiralTree::Compute() {
+	if (true) //obstacles_.empty())  // TODO(tvl) commented out while code is not complete.
+		ComputeUnobstructed();
+	else
+		ComputeObstructed();
 }
 
 /**@brief Compute the spiral tree arcs, ignoring any obstacles.
@@ -296,174 +269,163 @@ void SpiralTree::Compute()
  *
  * Note that input nodes are not forced to be leaf nodes in the final tree. If this is desired, use ComputeObstructed() instead.
  */
-void SpiralTree::ComputeUnobstructed()
-{
-  using Wavefront = std::map<Number, Event>;
-  Wavefront wavefront;
+void SpiralTree::ComputeUnobstructed() {
+	using Wavefront = std::map<Number, Event>;
+	Wavefront wavefront;
 
-  EventQueue events;
-  for (const Node::Ptr& node : nodes_)
-  {
-    CHECK_NOTNULL(node->place);
+	EventQueue events;
+	for (const Node::Ptr& node : nodes_) {
+		CHECK_NOTNULL(node->place);
 
-    const PolarPoint relative_position(node->place->position, root_translation_);
-    events.push(Event(node, relative_position));
-  }
+		const PolarPoint relative_position(node->place->position, root_translation_);
+		events.push(Event(node, relative_position));
+	}
 
-  while (!events.empty())
-  {
-    Event event = events.top();
-    events.pop();
+	while (!events.empty()) {
+		Event event = events.top();
+		events.pop();
 
-    if (event.relative_position.R() == 0)
-    {
-      // Connect the remaining node to the root.
-      CHECK_EQ(wavefront.size(), 1);
-      CHECK_NOTNULL(wavefront.begin()->second.node);
+		if (event.relative_position.R() == 0) {
+			// Connect the remaining node to the root.
+			CHECK_EQ(wavefront.size(), 1);
+			CHECK_NOTNULL(wavefront.begin()->second.node);
 
-      event.node->children.push_back(wavefront.begin()->second.node);
-      wavefront.begin()->second.node->parent = event.node;
+			event.node->children.push_back(wavefront.begin()->second.node);
+			wavefront.begin()->second.node->parent = event.node;
 
-      VLOG(2) << "Added root node: " << event.node->place->id;
+			VLOG(2) << "Added root node: " << event.node->place->id;
 
-      wavefront.clear();
-      continue;
-    }
+			wavefront.clear();
+			continue;
+		}
 
-    // Compute the position of the event node on the wavefront.
-    const Number order = event.relative_position.phi();
-    Wavefront::iterator node_iter;
+		// Compute the position of the event node on the wavefront.
+		const Number order = event.relative_position.phi();
+		Wavefront::iterator node_iter;
 
-    if (1 < event.node->children.size())
-    {
-      // Join node.
+		if (1 < event.node->children.size()) {
+			// Join node.
 
-      // Check whether both children are still active.
-      CHECK_EQ(event.node->children.size(), 2);
-      if (event.node->children[0]->parent != nullptr || event.node->children[1]->parent != nullptr)
-        continue;
+			// Check whether both children are still active.
+			CHECK_EQ(event.node->children.size(), 2);
+			if (event.node->children[0]->parent != nullptr ||
+			    event.node->children[1]->parent != nullptr)
+				continue;
 
-      // Add the join node to the wavefront and the collection of nodes.
-      node_iter = wavefront.emplace(order, event).first;
-      nodes_.push_back(event.node);
+			// Add the join node to the wavefront and the collection of nodes.
+			node_iter = wavefront.emplace(order, event).first;
+			nodes_.push_back(event.node);
 
-      VLOG(2) << "Added join node to wavefront: " << node_iter->second.node->place->id;
+			VLOG(2) << "Added join node to wavefront: " << node_iter->second.node->place->id;
 
-      // Connect the neighbors to the join node and remove them from the wavefront.
-      event.node->children[0]->parent = event.node;
-      event.node->children[1]->parent = event.node;
+			// Connect the neighbors to the join node and remove them from the wavefront.
+			event.node->children[0]->parent = event.node;
+			event.node->children[1]->parent = event.node;
 
-      CHECK_GE(wavefront.size(), 3);
-      wavefront.erase(--make_circulator(node_iter, wavefront));
-      wavefront.erase(++make_circulator(node_iter, wavefront));
-    }
-    else
-    {
-      // Leaf node.
+			CHECK_GE(wavefront.size(), 3);
+			wavefront.erase(--make_circulator(node_iter, wavefront));
+			wavefront.erase(++make_circulator(node_iter, wavefront));
+		} else {
+			// Leaf node.
 
-      // If the event node is reachable by another node, they should be connected and the other node should be removed from the wavefront.
-      // If the event node is reachable by two nodes u and v, either the event node overlaps the join node of u and v, or that join node must have been handled before (removing u and v from the wavefront).
-      // If the event node is reachable by three or more nodes, it is also reachable by two nodes and the above applies.
-      // Note that these cases ignore the implied obstacle behind the event node.
-      if (!wavefront.empty())
-      {
-        Circulator<Wavefront> node_circ = make_circulator(wavefront.lower_bound(order), wavefront);
-        if
-          (
-          IsReachable(event.relative_position, node_circ->second.relative_position) ||
-          IsReachable(event.relative_position, (--node_circ)->second.relative_position)
-          )
-        {
-          // A neighbor is reachable.
-          // Check whether the nodes overlap.
-          if (event.relative_position == node_circ->second.relative_position)
-          {
-            // Replace the event node by the join node.
-            // Note that this ignores the implied obstacle behind the event node.
+			// If the event node is reachable by another node, they should be connected and the other node should be removed from the wavefront.
+			// If the event node is reachable by two nodes u and v, either the event node overlaps the join node of u and v, or that join node must have been handled before (removing u and v from the wavefront).
+			// If the event node is reachable by three or more nodes, it is also reachable by two nodes and the above applies.
+			// Note that these cases ignore the implied obstacle behind the event node.
+			if (!wavefront.empty()) {
+				Circulator<Wavefront> node_circ =
+				    make_circulator(wavefront.lower_bound(order), wavefront);
+				if (IsReachable(event.relative_position, node_circ->second.relative_position) ||
+				    IsReachable(event.relative_position, (--node_circ)->second.relative_position)) {
+					// A neighbor is reachable.
+					// Check whether the nodes overlap.
+					if (event.relative_position == node_circ->second.relative_position) {
+						// Replace the event node by the join node.
+						// Note that this ignores the implied obstacle behind the event node.
 
-            node_circ->second.node->place = event.node->place;
-            event.node = node_circ->second.node;
-          }
-          else
-          {
-            // Connect the event node to the neighbor.
-            // Note that this ignores the implied obstacle behind the event node.
-            //event_node->type = Node::ConnectionType::kSubdivision;
-            event.node->children.push_back(node_circ->second.node);
-            node_circ->second.node->parent = event.node;
-          }
+						node_circ->second.node->place = event.node->place;
+						event.node = node_circ->second.node;
+					} else {
+						// Connect the event node to the neighbor.
+						// Note that this ignores the implied obstacle behind the event node.
+						//event_node->type = Node::ConnectionType::kSubdivision;
+						event.node->children.push_back(node_circ->second.node);
+						node_circ->second.node->parent = event.node;
+					}
 
-          // Remove the neighbor from the wavefront.
-          wavefront.erase(node_circ);
-        }
-      }
+					// Remove the neighbor from the wavefront.
+					wavefront.erase(node_circ);
+				}
+			}
 
-      // Add the event node to the wavefront.
-      node_iter = wavefront.emplace(order, event).first;
+			// Add the event node to the wavefront.
+			node_iter = wavefront.emplace(order, event).first;
 
-      VLOG(2) << "Added leaf node to wavefront: " << node_iter->second.node->place->id;
-    }
+			VLOG(2) << "Added leaf node to wavefront: " << node_iter->second.node->place->id;
+		}
 
-    if (wavefront.size() < 2)
-      continue;
+		if (wavefront.size() < 2)
+			continue;
 
-    // Add join nodes with the neighbors to the event queue.
-    {
-      // Clockwise.
-      Circulator<Wavefront> cw_iter = --make_circulator(node_iter, wavefront);
+		// Add join nodes with the neighbors to the event queue.
+		{
+			// Clockwise.
+			Circulator<Wavefront> cw_iter = --make_circulator(node_iter, wavefront);
 
-      const Spiral spiral_left(event.relative_position, -restricting_angle_rad_);
-      const Spiral spiral_right(cw_iter->second.relative_position, restricting_angle_rad_);
+			const Spiral spiral_left(event.relative_position, -restricting_angle_rad_);
+			const Spiral spiral_right(cw_iter->second.relative_position, restricting_angle_rad_);
 
-      PolarPoint intersections[2];
-      const int num = ComputeIntersections(spiral_left, spiral_right, intersections);
-      CHECK_LT(0, num);
+			PolarPoint intersections[2];
+			const int num = ComputeIntersections(spiral_left, spiral_right, intersections);
+			CHECK_LT(0, num);
 
-      // Note that the intersections should be the two closest to the anchor of the first spiral.
-      const PolarPoint& intersection = intersections[0];
-      CHECK_LE(intersection.R(), event.relative_position.R());
-      CHECK_LE(intersection.R(), cw_iter->second.relative_position.R());
+			// Note that the intersections should be the two closest to the anchor of the first spiral.
+			const PolarPoint& intersection = intersections[0];
+			CHECK_LE(intersection.R(), event.relative_position.R());
+			CHECK_LE(intersection.R(), cw_iter->second.relative_position.R());
 
-      Node::Ptr join = std::make_shared<Node>();
-      join->children = {event.node, cw_iter->second.node};
+			Node::Ptr join = std::make_shared<Node>();
+			join->children = {event.node, cw_iter->second.node};
 
-      events.push(Event(join, intersection));
+			events.push(Event(join, intersection));
 
 #ifndef NDEBUG
-      const std::string id = "[" + cw_iter->second.node->place->id + "+" + event.node->place->id + "]";
-      PolarPoint absolute_position(intersection, -root_translation_);
-      join->place = std::make_shared<Place>(id, absolute_position);
+			const std::string id =
+			    "[" + cw_iter->second.node->place->id + "+" + event.node->place->id + "]";
+			PolarPoint absolute_position(intersection, -root_translation_);
+			join->place = std::make_shared<Place>(id, absolute_position);
 #endif // NDEBUG
-    }
+		}
 
-    {
-      // Counter-clockwise.
-      Circulator<Wavefront> ccw_iter = ++make_circulator(node_iter, wavefront);
+		{
+			// Counter-clockwise.
+			Circulator<Wavefront> ccw_iter = ++make_circulator(node_iter, wavefront);
 
-      const Spiral spiral_left(ccw_iter->second.relative_position, -restricting_angle_rad_);
-      const Spiral spiral_right(event.relative_position, restricting_angle_rad_);
+			const Spiral spiral_left(ccw_iter->second.relative_position, -restricting_angle_rad_);
+			const Spiral spiral_right(event.relative_position, restricting_angle_rad_);
 
-      PolarPoint intersections[2];
-      const int num = ComputeIntersections(spiral_left, spiral_right, intersections);
-      CHECK_LT(0, num);
+			PolarPoint intersections[2];
+			const int num = ComputeIntersections(spiral_left, spiral_right, intersections);
+			CHECK_LT(0, num);
 
-      // Note that the intersections should be the two closest to the anchor of the first spiral.
-      const PolarPoint& intersection = intersections[0];
-      CHECK_LE(intersection.R(), ccw_iter->second.relative_position.R());
-      CHECK_LE(intersection.R(), event.relative_position.R());
+			// Note that the intersections should be the two closest to the anchor of the first spiral.
+			const PolarPoint& intersection = intersections[0];
+			CHECK_LE(intersection.R(), ccw_iter->second.relative_position.R());
+			CHECK_LE(intersection.R(), event.relative_position.R());
 
-      Node::Ptr join = std::make_shared<Node>();
-      join->children = {ccw_iter->second.node, event.node};
+			Node::Ptr join = std::make_shared<Node>();
+			join->children = {ccw_iter->second.node, event.node};
 
-      events.push(Event(join, intersection));
+			events.push(Event(join, intersection));
 
 #ifndef NDEBUG
-      const std::string id = "[" + event.node->place->id + "+" + ccw_iter->second.node->place->id + "]";
-      PolarPoint absolute_position(intersection, -root_translation_);
-      join->place = std::make_shared<Place>(id, absolute_position);
+			const std::string id =
+			    "[" + event.node->place->id + "+" + ccw_iter->second.node->place->id + "]";
+			PolarPoint absolute_position(intersection, -root_translation_);
+			join->place = std::make_shared<Place>(id, absolute_position);
 #endif // NDEBUG
-    }
-  }
+		}
+	}
 }
 
 /**@brief Change the root position.
@@ -471,11 +433,10 @@ void SpiralTree::ComputeUnobstructed()
  * This removes all existing arcs of the tree. The new tree can be computed using Compute().
  * @param root the new root position.
  */
-void SpiralTree::SetRoot(const Point& root)
-{
-  root_translation_ = Point(CGAL::ORIGIN) - root;
+void SpiralTree::SetRoot(const Point& root) {
+	root_translation_ = Point(CGAL::ORIGIN) - root;
 
-  Clean();
+	Clean();
 }
 
 /**@brief Change the restricting angle.
@@ -483,91 +444,86 @@ void SpiralTree::SetRoot(const Point& root)
  * This removes all existing arcs of the tree. The new tree can be computed using Compute().
  * @param restricting_angle_rad the new restricting angle.
  */
-void SpiralTree::SetRestrictingAngle(const Number& restricting_angle_rad)
-{
-  CHECK_GT(restricting_angle_rad, 0);
-  CHECK_LT(restricting_angle_rad, M_PI_2);
-  restricting_angle_rad_ = restricting_angle_rad;
+void SpiralTree::SetRestrictingAngle(const Number& restricting_angle_rad) {
+	CHECK_GT(restricting_angle_rad, 0);
+	CHECK_LT(restricting_angle_rad, M_PI_2);
+	restricting_angle_rad_ = restricting_angle_rad;
 
-  Clean();
+	Clean();
 }
 
-void SpiralTree::Clean()
-{
-  size_t num_places = 0;
+void SpiralTree::Clean() {
+	size_t num_places = 0;
 
-  // Clean the node connections.
-  for (Node::Ptr& node : nodes_)
-  {
-    if (node->place == nullptr)
-      break;
-    ++num_places;
+	// Clean the node connections.
+	for (Node::Ptr& node : nodes_) {
+		if (node->place == nullptr)
+			break;
+		++num_places;
 
-    node->parent = nullptr;
-    node->children.clear();
-  }
+		node->parent = nullptr;
+		node->children.clear();
+	}
 
-  // Remove support nodes, e.g. join nodes.
-  nodes_.resize(num_places);
+	// Remove support nodes, e.g. join nodes.
+	nodes_.resize(num_places);
 }
 
-bool SpiralTree::IsReachable(const PolarPoint& parent_point, const PolarPoint& child_point) const
-{
-  if (parent_point == child_point)
-    return true;
+bool SpiralTree::IsReachable(const PolarPoint& parent_point, const PolarPoint& child_point) const {
+	if (parent_point == child_point)
+		return true;
 
-  const Spiral spiral(child_point, parent_point);
-  return std::abs(spiral.angle_rad()) <= restricting_angle_rad_;
+	const Spiral spiral(child_point, parent_point);
+	return std::abs(spiral.angle_rad()) <= restricting_angle_rad_;
 }
 
-void SpiralTree::AddObstacle(const Polygon_with_holes& polygon)
-{
-  // Ignore the holes of the obstacle: flow cannot cross the obstacle boundary.
-  const Polygon& boundary = polygon.outer_boundary();
-  if (boundary.is_empty())
-    return;
+void SpiralTree::AddObstacle(const Polygon_with_holes& polygon) {
+	// Ignore the holes of the obstacle: flow cannot cross the obstacle boundary.
+	const Polygon& boundary = polygon.outer_boundary();
+	if (boundary.is_empty())
+		return;
 
-  CHECK_NE(boundary.oriented_side(GetRoot()), CGAL::ON_BOUNDED_SIDE) << "Root inside an obstacle.";
+	CHECK_NE(boundary.oriented_side(GetRoot()), CGAL::ON_BOUNDED_SIDE)
+	    << "Root inside an obstacle.";
 
-  obstacles_.emplace_back();
-  Obstacle& obstacle = obstacles_.back();
-  for (Polygon::Vertex_const_iterator vertex_iter = boundary.vertices_begin(); vertex_iter != boundary.vertices_end(); ++vertex_iter)
-    obstacle.emplace_back(*vertex_iter, root_translation_);
+	obstacles_.emplace_back();
+	Obstacle& obstacle = obstacles_.back();
+	for (Polygon::Vertex_const_iterator vertex_iter = boundary.vertices_begin();
+	     vertex_iter != boundary.vertices_end(); ++vertex_iter)
+		obstacle.emplace_back(*vertex_iter, root_translation_);
 
-  // Enforce counter-clockwise obstacles for a canonical arrangement.
-  // Note that this is necessary to be able check on which side of the vertices the interior of the polygon lies.
-  if (!boundary.is_counterclockwise_oriented())
-    obstacle.reverse();
+	// Enforce counter-clockwise obstacles for a canonical arrangement.
+	// Note that this is necessary to be able check on which side of the vertices the interior of the polygon lies.
+	if (!boundary.is_counterclockwise_oriented())
+		obstacle.reverse();
 
-  // Add vertices for the points closest to the root as well as spiral points.
-  // The wedge with the root as apex and boundaries through a closest point and a spiral point (on the same edge) has a fixed angle.
-  const Number phi_offset = M_PI_2 - restricting_angle_rad_;
-  CHECK_LT(0, phi_offset);
+	// Add vertices for the points closest to the root as well as spiral points.
+	// The wedge with the root as apex and boundaries through a closest point and a spiral point (on the same edge) has a fixed angle.
+	const Number phi_offset = M_PI_2 - restricting_angle_rad_;
+	CHECK_LT(0, phi_offset);
 
-  Obstacle::iterator vertex_prev = --obstacle.end();
-  for (Obstacle::iterator vertex_iter = obstacle.begin(); vertex_iter != obstacle.end(); vertex_prev = vertex_iter++)
-  {
-    const PolarSegment edge(*vertex_prev, *vertex_iter);
-    const PolarPoint closest = edge.SupportingLine().foot();
+	Obstacle::iterator vertex_prev = --obstacle.end();
+	for (Obstacle::iterator vertex_iter = obstacle.begin(); vertex_iter != obstacle.end();
+	     vertex_prev = vertex_iter++) {
+		const PolarSegment edge(*vertex_prev, *vertex_iter);
+		const PolarPoint closest = edge.SupportingLine().foot();
 
-    // The spiral points have fixed R and their phi is offset from the phi of the closest by +/- phi_offset.
-    const Number R_s = closest.R() / std::sin(restricting_angle_rad_);
+		// The spiral points have fixed R and their phi is offset from the phi of the closest by +/- phi_offset.
+		const Number R_s = closest.R() / std::sin(restricting_angle_rad_);
 
-    const int sign = vertex_prev->phi() < vertex_iter->phi() ? -1 : 1;
-    const Number phi_s_prev = closest.phi() - sign * phi_offset;
-    const Number phi_s_next = closest.phi() + sign * phi_offset;
+		const int sign = vertex_prev->phi() < vertex_iter->phi() ? -1 : 1;
+		const Number phi_s_prev = closest.phi() - sign * phi_offset;
+		const Number phi_s_next = closest.phi() + sign * phi_offset;
 
-    // The closest point and spiral points must be added ordered from p to q and only if they are on the edge.
-    if (edge.ContainsPhi(phi_s_prev))
-      obstacle.insert(vertex_iter, PolarPoint(R_s, phi_s_prev));
-    if (edge.ContainsPhi(closest.phi()))
-      obstacle.insert(vertex_iter, closest);
-    if (edge.ContainsPhi(phi_s_next))
-      obstacle.insert(vertex_iter, PolarPoint(R_s, phi_s_next));
-  }
+		// The closest point and spiral points must be added ordered from p to q and only if they are on the edge.
+		if (edge.ContainsPhi(phi_s_prev))
+			obstacle.insert(vertex_iter, PolarPoint(R_s, phi_s_prev));
+		if (edge.ContainsPhi(closest.phi()))
+			obstacle.insert(vertex_iter, closest);
+		if (edge.ContainsPhi(phi_s_next))
+			obstacle.insert(vertex_iter, PolarPoint(R_s, phi_s_next));
+	}
 }
-
-
 
 // Note, the following code has been commented out when the CartoCrow implementation project had to be cut short.
 // This may be used as a starting point to continue implementation at some later date.
@@ -1485,10 +1441,7 @@ void SpiralTree::ComputeObstructed()
   //ComputeUnobstructed();
 }
 */
-void SpiralTree::ComputeObstructed()
-{
-  CHECK(false) << "Not implemented yet.";
-}
+void SpiralTree::ComputeObstructed() { CHECK(false) << "Not implemented yet."; }
 
 } // namespace flow_map
 } // namespace cartocrow

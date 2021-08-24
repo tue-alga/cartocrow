@@ -26,27 +26,23 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 20-11-2019
 
 #include "cartocrow/common/detail/svg_path_parser.h"
 
+namespace cartocrow {
+namespace detail {
 
-namespace cartocrow
-{
-namespace detail
-{
+class SvgPolygonConverter : public SvgPathConverter {
+  public:
+	using PolygonSet = std::vector<Polygon_with_holes>;
 
-class SvgPolygonConverter : public SvgPathConverter
-{
- public:
-  using PolygonSet = std::vector<Polygon_with_holes>;
+  public:
+	explicit SvgPolygonConverter(PolygonSet& shape);
 
- public:
-  explicit SvgPolygonConverter(PolygonSet& shape);
+  private:
+	void MoveTo_(const Point& to) override;
+	void LineTo_(const Point& to) override;
+	void Close_() override;
 
- private:
-  void MoveTo_(const Point& to) override;
-  void LineTo_(const Point& to) override;
-  void Close_() override;
-
-  PolygonSet& shape_;
-  Polygon current_;
+	PolygonSet& shape_;
+	Polygon current_;
 }; // class SvgPolygonConverter
 
 } // namespace detail

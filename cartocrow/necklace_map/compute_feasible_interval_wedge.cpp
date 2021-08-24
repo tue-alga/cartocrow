@@ -26,11 +26,8 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 03-03-2020
 
 #include "cartocrow/necklace_map/necklace_interval.h"
 
-
-namespace cartocrow
-{
-namespace necklace_map
-{
+namespace cartocrow {
+namespace necklace_map {
 
 /**@class ComputeFeasibleWedgeInterval
  * @brief A functor to generate feasible wedge intervals for necklace bead placement.
@@ -40,53 +37,50 @@ namespace necklace_map
  * If the region contains the necklace kernel, the wedge interval would cover the complete plane. In this case, a centroid interval in generated instead.
  */
 
-CircularRange::Ptr
-ComputeFeasibleWedgeInterval::operator()(const Polygon& extent, const Necklace::Ptr& necklace) const
-{
-  CHECK_GT(extent.size(), 0);
-  if (extent.size() == 1)
-    return (*fallback_point_regions_)(extent, necklace);
+CircularRange::Ptr ComputeFeasibleWedgeInterval::operator()(const Polygon& extent,
+                                                            const Necklace::Ptr& necklace) const {
+	CHECK_GT(extent.size(), 0);
+	if (extent.size() == 1)
+		return (*fallback_point_regions_)(extent, necklace);
 
-  const Number angle = necklace->shape->ComputeAngleRad(*extent.vertices_begin());
-  CircularRange obscured(angle, angle);
+	const Number angle = necklace->shape->ComputeAngleRad(*extent.vertices_begin());
+	CircularRange obscured(angle, angle);
 
-  const Point& kernel = necklace->shape->kernel();
-  for (Polygon::Edge_const_iterator edge_iter = extent.edges_begin(); edge_iter != extent.edges_end(); ++edge_iter)
-  {
-    const Segment& segment = *edge_iter;
-    const Number angle_target = necklace->shape->ComputeAngleRad(segment[1]);
+	const Point& kernel = necklace->shape->kernel();
+	for (Polygon::Edge_const_iterator edge_iter = extent.edges_begin();
+	     edge_iter != extent.edges_end(); ++edge_iter) {
+		const Segment& segment = *edge_iter;
+		const Number angle_target = necklace->shape->ComputeAngleRad(segment[1]);
 
-    if (CGAL::left_turn( segment[0], segment[1], kernel ))
-    {
-      // Counterclockwise segment.
-      obscured.to_rad() = std::max(obscured.to_rad(), ModuloNonZero(angle_target, obscured.from_rad()));
-    }
-    else
-    {
-      // Clockwise segment.
-      Number angle_target_adj = angle_target;
-      while (obscured.to_rad() < angle_target_adj)
-        angle_target_adj -= M_2xPI;
-      obscured.from_rad() = std::min(obscured.from_rad(), angle_target_adj);
-    }
-  }
+		if (CGAL::left_turn(segment[0], segment[1], kernel)) {
+			// Counterclockwise segment.
+			obscured.to_rad() =
+			    std::max(obscured.to_rad(), ModuloNonZero(angle_target, obscured.from_rad()));
+		} else {
+			// Clockwise segment.
+			Number angle_target_adj = angle_target;
+			while (obscured.to_rad() < angle_target_adj)
+				angle_target_adj -= M_2xPI;
+			obscured.from_rad() = std::min(obscured.from_rad(), angle_target_adj);
+		}
+	}
 
-  const Number interval_length = obscured.ComputeLength();
-  if (interval_length == 0)
-    return (*fallback_point_regions_)(extent, necklace);
-  else if (M_2xPI <= interval_length)
-    return (*fallback_kernel_region_)(extent, necklace);
-  else if (interval_length < interval_length_min_rad_)
-    return (*fallback_small_regions_)(extent, necklace);
+	const Number interval_length = obscured.ComputeLength();
+	if (interval_length == 0)
+		return (*fallback_point_regions_)(extent, necklace);
+	else if (M_2xPI <= interval_length)
+		return (*fallback_kernel_region_)(extent, necklace);
+	else if (interval_length < interval_length_min_rad_)
+		return (*fallback_small_regions_)(extent, necklace);
 
-  // Force the angles into the correct interval.
-  return std::make_shared<IntervalWedge>(Modulo(obscured.from_rad()), ModuloNonZero(obscured.to_rad(), obscured.from_rad()));
+	// Force the angles into the correct interval.
+	return std::make_shared<IntervalWedge>(Modulo(obscured.from_rad()),
+	                                       ModuloNonZero(obscured.to_rad(), obscured.from_rad()));
 }
 
-ComputeFeasibleWedgeInterval::ComputeFeasibleWedgeInterval(const Parameters& parameters) :
-  ComputeFeasibleInterval(parameters),
-  interval_length_min_rad_(parameters.wedge_interval_length_min_rad)
-{}
+ComputeFeasibleWedgeInterval::ComputeFeasibleWedgeInterval(const Parameters& parameters)
+    : ComputeFeasibleInterval(parameters),
+      interval_length_min_rad_(parameters.wedge_interval_length_min_rad) {}
 
 } // namespace necklace_map
 } // namespace cartocrow

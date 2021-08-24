@@ -33,41 +33,22 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 26-11-2019
 #include "cartocrow/necklace_map/map_element.h"
 #include "cartocrow/necklace_map/necklace.h"
 
+namespace cartocrow {
+namespace necklace_map {
 
-namespace cartocrow
-{
-namespace necklace_map
-{
+class SvgReader {
+  public:
+	SvgReader();
 
-class SvgReader
-{
- public:
-  SvgReader();
+	bool ReadFile(const std::string& filename, std::vector<necklace_map::MapElement::Ptr>& elements,
+	              std::vector<necklace_map::Necklace::Ptr>& necklaces, int max_retries = 2);
 
-  bool ReadFile
-  (
-    const std::string& filename,
-    std::vector<necklace_map::MapElement::Ptr>& elements,
-    std::vector<necklace_map::Necklace::Ptr>& necklaces,
-    int max_retries = 2
-  );
+	bool ReadFile(const std::string& filename, std::vector<necklace_map::MapElement::Ptr>& elements,
+	              std::vector<necklace_map::Necklace::Ptr>& necklaces, Number& scale_factor,
+	              int max_retries = 2);
 
-  bool ReadFile
-  (
-    const std::string& filename,
-    std::vector<necklace_map::MapElement::Ptr>& elements,
-    std::vector<necklace_map::Necklace::Ptr>& necklaces,
-    Number& scale_factor,
-    int max_retries = 2
-  );
-
-  bool Parse
-  (
-    const std::string& input,
-    std::vector<necklace_map::MapElement::Ptr>& elements,
-    std::vector<necklace_map::Necklace::Ptr>& necklaces,
-    Number& scale_factor
-  );
+	bool Parse(const std::string& input, std::vector<necklace_map::MapElement::Ptr>& elements,
+	           std::vector<necklace_map::Necklace::Ptr>& necklaces, Number& scale_factor);
 }; // class SvgReader
 
 } // namespace necklace_map

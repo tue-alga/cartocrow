@@ -33,46 +33,39 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 06-05-2020
 #include "cartocrow/necklace_map/detail/cycle_node.h"
 #include "cartocrow/necklace_map/detail/cycle_node_layered.h"
 
-
-namespace cartocrow
-{
-namespace necklace_map
-{
-namespace detail
-{
+namespace cartocrow {
+namespace necklace_map {
+namespace detail {
 
 // A cycle node that can be assigned a layer.
-struct CycleNodeCheck : public CycleNode
-{
-  using Ptr = std::shared_ptr<CycleNodeCheck>;
+struct CycleNodeCheck : public CycleNode {
+	using Ptr = std::shared_ptr<CycleNodeCheck>;
 
-  CycleNodeCheck(const Bead::Ptr& bead, const Number& angle_rad);
+	CycleNodeCheck(const Bead::Ptr& bead, const Number& angle_rad);
 
-  int check;
-  Number angle_rad;
+	int check;
+	Number angle_rad;
 }; // struct CycleNodeCheck
-
 
 // The heuristic algorithm for the feasibility decision problem computes a number of node orderings hoping to find a valid placement.
 // This takes O(n*log(n) + cnK2^K) time, where n is the number of nodes, c is the number of heuristic steps (typically 5), and K is the 'width' of the node set (i.e. the maximum number of valid intervals intersected by a ray originating for the necklace kernel).
-class CheckFeasibleHeuristic : public CheckFeasible
-{
- public:
-  CheckFeasibleHeuristic(NodeSet& nodes, const int heuristic_cycles);
+class CheckFeasibleHeuristic : public CheckFeasible {
+  public:
+	CheckFeasibleHeuristic(NodeSet& nodes, const int heuristic_cycles);
 
-  bool operator()() override;
+	bool operator()() override;
 
- private:
-  void InitializeSlices() override;
+  private:
+	void InitializeSlices() override;
 
-  void AssignAngle(const Number& angle_rad, Bead::Ptr& bead) override;
+	void AssignAngle(const Number& angle_rad, Bead::Ptr& bead) override;
 
-  bool Feasible();
+	bool Feasible();
 
-  const int heuristic_cycles_;
+	const int heuristic_cycles_;
 
-  using CheckSet = std::vector<CycleNodeCheck::Ptr>;
-  CheckSet nodes_check_;
+	using CheckSet = std::vector<CycleNodeCheck::Ptr>;
+	CheckSet nodes_check_;
 }; // class CheckFeasibleHeuristic
 
 } // namespace detail

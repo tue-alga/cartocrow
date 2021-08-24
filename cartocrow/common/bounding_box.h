@@ -26,20 +26,16 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 29-01-2020
 
 #include "cartocrow/common/core_types.h"
 
+namespace cartocrow {
 
-namespace cartocrow
-{
-
-inline Box GrowBoundingBox(const Box& box, const Number& buffer)
-{
-  CHECK_GE(buffer, 0);
-  return Box(box.xmin() - buffer, box.ymin() - buffer, box.xmax() + buffer, box.ymax() + buffer);
+inline Box GrowBoundingBox(const Box& box, const Number& buffer) {
+	CHECK_GE(buffer, 0);
+	return Box(box.xmin() - buffer, box.ymin() - buffer, box.xmax() + buffer, box.ymax() + buffer);
 }
 
-inline Box GrowBoundingBox(const Point& center, const Number& buffer)
-{
-  CHECK_GE(buffer, 0);
-  return Box(center.x() - buffer, center.y() - buffer, center.x() + buffer, center.y() + buffer);
+inline Box GrowBoundingBox(const Point& center, const Number& buffer) {
+	CHECK_GE(buffer, 0);
+	return Box(center.x() - buffer, center.y() - buffer, center.x() + buffer, center.y() + buffer);
 }
 
 } // namespace cartocrow

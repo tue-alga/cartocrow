@@ -21,10 +21,8 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 13-11-2020
 
 #include "circulator.h"
 
-namespace cartocrow
-{
-namespace detail
-{
+namespace cartocrow {
+namespace detail {
 
 /**@struct CirculatorBase
  * @brief The base class for circular iterators.
@@ -148,7 +146,6 @@ namespace detail
 
 } // namespace detail
 
-
 /**@struct Circulator
  * @brief A circular iterator.
  *
@@ -207,7 +204,6 @@ namespace detail
  * @brief Construct a circulator pointing to the first element of a container.
  * @param container the container to circulate.
  */
-
 
 /**@struct ConstCirculator
  * @brief A circular constant iterator.

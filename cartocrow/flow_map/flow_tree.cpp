@@ -25,11 +25,8 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 16-10-2020
 
 #include <glog/logging.h>
 
-
-namespace cartocrow
-{
-namespace flow_map
-{
+namespace cartocrow {
+namespace flow_map {
 
 /**@class FlowTree
  * @brief A tree where each arc is a smooth curve with a thickness indicating the flow.
@@ -48,28 +45,26 @@ namespace flow_map
 /**@brief Construct a flow tree.
  * @param spiral_tree the spiral tree describing the initial arrangement of the arcs of the tree.
  */
-FlowTree::FlowTree(const SpiralTree& spiral_tree) :
-  root_translation_(Point(CGAL::ORIGIN) - spiral_tree.GetRoot()),
-  nodes_(spiral_tree.nodes_begin(), spiral_tree.nodes_end())
-{
-  // Clone the nodes.
-//  for (SpiralTree::NodeConstIterator node_iter = spiral_tree.nodes_begin(); node_iter != spiral_tree.nodes_end(); ++node_iter)
-//    if ((*node_iter)->GetType() == Node::Type::kRoot)
-//      nodes_.push_back(*node_iter);
-  for (const Node::Ptr& node : nodes_)
-  {
-    if (node->parent == nullptr)
-      continue;
+FlowTree::FlowTree(const SpiralTree& spiral_tree)
+    : root_translation_(Point(CGAL::ORIGIN) - spiral_tree.GetRoot()),
+      nodes_(spiral_tree.nodes_begin(), spiral_tree.nodes_end()) {
+	// Clone the nodes.
+	//  for (SpiralTree::NodeConstIterator node_iter = spiral_tree.nodes_begin(); node_iter != spiral_tree.nodes_end(); ++node_iter)
+	//    if ((*node_iter)->GetType() == Node::Type::kRoot)
+	//      nodes_.push_back(*node_iter);
+	for (const Node::Ptr& node : nodes_) {
+		if (node->parent == nullptr)
+			continue;
 
-    const PolarPoint node_relative_position(node->place->position, root_translation_);
-    const PolarPoint parent_relative_position(node->parent->place->position, root_translation_);
+		const PolarPoint node_relative_position(node->place->position, root_translation_);
+		const PolarPoint parent_relative_position(node->parent->place->position, root_translation_);
 
-    const Spiral spiral(node_relative_position, parent_relative_position);
-    arcs_.emplace_back(spiral, parent_relative_position);
-  }
+		const Spiral spiral(node_relative_position, parent_relative_position);
+		arcs_.emplace_back(spiral, parent_relative_position);
+	}
 
-  // TODO(tvl) disabled until computing the tree with obstructions is implemented.
-  /*// Clone the obstacles.
+	// TODO(tvl) disabled until computing the tree with obstructions is implemented.
+	/*// Clone the obstacles.
   for
   (
     SpiralTree::ObstacleConstIterator obstacle_iter = spiral_tree.obstacles_begin();

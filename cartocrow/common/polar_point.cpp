@@ -21,9 +21,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 04-09-2020
 
 #include "polar_point.h"
 
-
-namespace cartocrow
-{
+namespace cartocrow {
 
 /**@class PolarPoint
  * A 2D point with polar coordinates.
@@ -77,44 +75,35 @@ const Number& PolarPoint::phi() const { return phi_; }
 /**@brief Convert to a point with Cartesian coordinates.
  * @return the point with its coordinates converted to Cartesian.
  */
-Point PolarPoint::to_cartesian() const
-{
-  const Vector d = Vector(std::cos(phi()), std::sin(phi()));
-  return Point(CGAL::ORIGIN) + R() * d;
+Point PolarPoint::to_cartesian() const {
+	const Vector d = Vector(std::cos(phi()), std::sin(phi()));
+	return Point(CGAL::ORIGIN) + R() * d;
 }
 
-PolarPoint PolarPoint::to_polar(const Point& p)
-{
-  // Positive by construction.
-  const Number R = CGAL::sqrt((p - Point(CGAL::ORIGIN)).squared_length());
+PolarPoint PolarPoint::to_polar(const Point& p) {
+	// Positive by construction.
+	const Number R = CGAL::sqrt((p - Point(CGAL::ORIGIN)).squared_length());
 
-  if (p.x() == 0 && p.y() == 0)
-    return PolarPoint(R, 0);
+	if (p.x() == 0 && p.y() == 0)
+		return PolarPoint(R, 0);
 
-  const Number phi = std::atan2(CGAL::to_double(p.y()), CGAL::to_double(p.x()));
-  return PolarPoint(R, phi);
+	const Number phi = std::atan2(CGAL::to_double(p.y()), CGAL::to_double(p.x()));
+	return PolarPoint(R, phi);
 }
 
-PolarPoint PolarPoint::translate_pole(const PolarPoint& p, const Vector& t)
-{
-  return to_polar(p.to_cartesian() + t);
+PolarPoint PolarPoint::translate_pole(const PolarPoint& p, const Vector& t) {
+	return to_polar(p.to_cartesian() + t);
 }
 
-
-bool operator==(const PolarPoint& p, const PolarPoint& q)
-{
-  return p.R() == q.R() && (p.R() == 0 || p.phi() == q.phi());
+bool operator==(const PolarPoint& p, const PolarPoint& q) {
+	return p.R() == q.R() && (p.R() == 0 || p.phi() == q.phi());
 }
 
-bool operator!=(const PolarPoint& p, const PolarPoint& q)
-{
-  return !(p == q);
-}
+bool operator!=(const PolarPoint& p, const PolarPoint& q) { return !(p == q); }
 
-std::ostream& operator<<(std::ostream& os, const PolarPoint& point)
-{
-  os << "p(R= " << point.R() << ", phi= " << point.phi() << ")";
-  return os;
+std::ostream& operator<<(std::ostream& os, const PolarPoint& point) {
+	os << "p(R= " << point.R() << ", phi= " << point.phi() << ")";
+	return os;
 }
 
 } // namespace cartocrow

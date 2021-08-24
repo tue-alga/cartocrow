@@ -21,9 +21,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 06-05-2020
 
 #include "bit_string.h"
 
-
-namespace cartocrow
-{
+namespace cartocrow {
 
 /**@class BitStr
  * @brief An index-accessible string (or array) of bits.

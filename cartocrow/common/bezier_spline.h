@@ -27,66 +27,64 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 08-09-2020
 
 #include "cartocrow/common/core_types.h"
 
+namespace cartocrow {
 
-namespace cartocrow
-{
+class BezierCurve {
+  public:
+	BezierCurve(const Point& source, const Point& control, const Point& target);
+	BezierCurve(const Point& source, const Point& source_control, const Point& target_control,
+	            const Point& target);
 
-class BezierCurve
-{
- public:
-  BezierCurve(const Point& source, const Point& control, const Point& target);
-  BezierCurve(const Point& source, const Point& source_control, const Point& target_control, const Point& target);
+	Point source() const;
+	Point source_control() const;
+	Point target_control() const;
+	Point target() const;
 
-  Point source() const;
-  Point source_control() const;
-  Point target_control() const;
-  Point target() const;
+	Point Evaluate(const Number& t) const;
 
-  Point Evaluate(const Number& t) const;
+	// There can be up to three intersections.
+	size_t IntersectRay(const Point& source, const Point& target, Point* intersections,
+	                    Number* intersection_t) const;
 
-  // There can be up to three intersections.
-  size_t IntersectRay(const Point& source, const Point& target, Point* intersections, Number* intersection_t) const;
-
- protected:
-  // Note that the control points are stored as vectors, because this simplifies most operations.
-  std::array<Vector, 4> control_points_;
-  std::array<Vector, 4> coefficients_;
+  protected:
+	// Note that the control points are stored as vectors, because this simplifies most operations.
+	std::array<Vector, 4> control_points_;
+	std::array<Vector, 4> coefficients_;
 }; // class BezierCurve
 
+class BezierSpline {
+  public:
+	using CurveSet = std::vector<BezierCurve>;
 
-class BezierSpline
-{
- public:
-  using CurveSet = std::vector<BezierCurve>;
+	BezierSpline();
 
-  BezierSpline();
+	bool IsValid() const;
 
-  bool IsValid() const;
+	bool IsEmpty() const;
 
-  bool IsEmpty() const;
+	bool IsContinuous() const;
 
-  bool IsContinuous() const;
+	bool IsClosed() const;
 
-  bool IsClosed() const;
+	bool ToCircle(Circle& circle, const Number& epsilon = 0.01) const;
 
-  bool ToCircle(Circle& circle, const Number& epsilon = 0.01) const;
+	const CurveSet& curves() const;
 
-  const CurveSet& curves() const;
+	CurveSet& curves();
 
-  CurveSet& curves();
+	void AppendCurve(const Point& source, const Point& source_control, const Point& target_control,
+	                 const Point& target);
 
-  void AppendCurve(const Point& source, const Point& source_control, const Point& target_control, const Point& target);
+	void AppendCurve(const Point& source_control, const Point& target_control, const Point& target);
 
-  void AppendCurve(const Point& source_control, const Point& target_control, const Point& target);
+	void Reverse();
 
-  void Reverse();
+	Box ComputeBoundingBox() const;
 
-  Box ComputeBoundingBox() const;
+  private:
+	CurveSet curves_;
 
- private:
-  CurveSet curves_;
-
-  mutable Box bounding_box_;
+	mutable Box bounding_box_;
 }; // class BezierSpline
 
 } // namespace cartocrow

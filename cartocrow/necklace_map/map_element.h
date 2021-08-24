@@ -32,33 +32,29 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 28-11-2019
 #include "cartocrow/necklace_map/necklace.h"
 #include "cartocrow/necklace_map/parameters.h"
 
+namespace cartocrow {
+namespace necklace_map {
 
-namespace cartocrow
-{
-namespace necklace_map
-{
+struct MapElement {
+	using Ptr = std::shared_ptr<MapElement>;
 
-struct MapElement
-{
-  using Ptr = std::shared_ptr<MapElement>;
+	explicit MapElement(const std::string& id);
+	explicit MapElement(const Region& region);
 
-  explicit MapElement(const std::string& id);
-  explicit MapElement(const Region& region);
+	//@param strict whether the value associated with each region must be strictly larger than 0.
+	bool IsValid(const bool strict = true) const;
 
-  //@param strict whether the value associated with each region must be strictly larger than 0.
-  bool IsValid(const bool strict = true) const;
+	void InitializeBead(const Parameters& parameters);
 
-  void InitializeBead(const Parameters& parameters);
+	Region region;
+	Number value; // Note that the value is correlated with the area of the bead, i.e. its squared radius.
 
-  Region region;
-  Number value;  // Note that the value is correlated with the area of the bead, i.e. its squared radius.
+	Necklace::Ptr necklace;
+	Bead::Ptr bead;
 
-  Necklace::Ptr necklace;
-  Bead::Ptr bead;
-
-  // Computed values extracted from the input.
-  Number input_angle_rad;
-  CircularRange::Ptr input_feasible;
+	// Computed values extracted from the input.
+	Number input_angle_rad;
+	CircularRange::Ptr input_feasible;
 }; // struct MapElement
 
 } // namespace necklace_map

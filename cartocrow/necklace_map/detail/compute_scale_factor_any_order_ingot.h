@@ -28,31 +28,22 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 06-05-2020
 #include "cartocrow/common/core_types.h"
 #include "cartocrow/necklace_map/necklace.h"
 
-
-namespace cartocrow
-{
-namespace necklace_map
-{
-namespace detail
-{
+namespace cartocrow {
+namespace necklace_map {
+namespace detail {
 
 // Compute the scale factor where beads can be placed in any order and the beads have ingot shapes.
 // All ingots will use the same (maximal) covering interval, and instead represent the data value by their length.
-class ComputeScaleFactorAnyOrderIngot : public ComputeScaleFactorAnyOrder
-{
- public:
-  ComputeScaleFactorAnyOrderIngot
-  (
-    const Necklace::Ptr& necklace,
-    const Number& buffer_rad = 0,
-    const int binary_search_depth = 10,
-    const int heuristic_cycles = 5
-  );
+class ComputeScaleFactorAnyOrderIngot : public ComputeScaleFactorAnyOrder {
+  public:
+	ComputeScaleFactorAnyOrderIngot(const Necklace::Ptr& necklace, const Number& buffer_rad = 0,
+	                                const int binary_search_depth = 10,
+	                                const int heuristic_cycles = 5);
 
- protected:
-  Number ComputeScaleUpperBound() override;
+  protected:
+	Number ComputeScaleUpperBound() override;
 
-  void ComputeCoveringRadii(const Number& scale_factor) override;
+	void ComputeCoveringRadii(const Number& scale_factor) override;
 }; // class ComputeScaleFactorAnyOrderIngot
 
 } // namespace detail

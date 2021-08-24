@@ -29,11 +29,8 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 26-11-2019
 
 #include "cartocrow/necklace_map/io/detail/svg_visitor.h"
 
-
-namespace cartocrow
-{
-namespace necklace_map
-{
+namespace cartocrow {
+namespace necklace_map {
 
 /**@class SvgReader
  * @brief A reader for SVG necklace map input geometry.
@@ -50,16 +47,12 @@ SvgReader::SvgReader() {}
  * @param max_retries the maximum number of times to retry reading the file.
  * @return whether the read operation could be completed successfully.
  */
-bool SvgReader::ReadFile
-(
-  const std::filesystem::path& filename,
-  std::vector<necklace_map::MapElement::Ptr>& elements,
-  std::vector<necklace_map::Necklace::Ptr>& necklaces,
-  int max_retries /*= 2*/
-)
-{
-  Number scale_factor;
-  return ReadFile(filename, elements, necklaces, scale_factor, max_retries);
+bool SvgReader::ReadFile(const std::filesystem::path& filename,
+                         std::vector<necklace_map::MapElement::Ptr>& elements,
+                         std::vector<necklace_map::Necklace::Ptr>& necklaces, int max_retries /*= 2*/
+) {
+	Number scale_factor;
+	return ReadFile(filename, elements, necklaces, scale_factor, max_retries);
 }
 
 /**@brief Read necklace map SVG input from a file.
@@ -70,44 +63,33 @@ bool SvgReader::ReadFile
  * @param max_retries the maximum number of times to retry reading the file.
  * @return whether the read operation could be completed successfully.
  */
-bool SvgReader::ReadFile
-(
-  const std::filesystem::path& filename,
-  std::vector<necklace_map::MapElement::Ptr>& elements,
-  std::vector<necklace_map::Necklace::Ptr>& necklaces,
-  Number& scale_factor,
-  int max_retries /*= 2*/
-)
-{
-  std::string input;
-  int retry = 0;
-  do
-  {
-    try
-    {
-      std::fstream fin(filename);
-      if (fin)
-      {
-        using Iterator = std::istreambuf_iterator<char>;
-        input.assign(Iterator(fin), Iterator());
-        break;
-      }
-    }
-    catch (const std::exception& e)
-    {
-      LOG(ERROR) << e.what();
-    }
+bool SvgReader::ReadFile(const std::filesystem::path& filename,
+                         std::vector<necklace_map::MapElement::Ptr>& elements,
+                         std::vector<necklace_map::Necklace::Ptr>& necklaces, Number& scale_factor,
+                         int max_retries /*= 2*/
+) {
+	std::string input;
+	int retry = 0;
+	do {
+		try {
+			std::fstream fin(filename);
+			if (fin) {
+				using Iterator = std::istreambuf_iterator<char>;
+				input.assign(Iterator(fin), Iterator());
+				break;
+			}
+		} catch (const std::exception& e) {
+			LOG(ERROR) << e.what();
+		}
 
-    if (max_retries < retry++)
-    {
-      LOG(INFO) << "Failed to open necklace map geometry file: " << filename;
-      return false;
-    }
-  } while (true);
+		if (max_retries < retry++) {
+			LOG(INFO) << "Failed to open necklace map geometry file: " << filename;
+			return false;
+		}
+	} while (true);
 
-  return Parse(input, elements, necklaces, scale_factor);
+	return Parse(input, elements, necklaces, scale_factor);
 }
-
 
 /**@brief Parse necklace map SVG input from a string.
  * @param input the string to parse.
@@ -116,30 +98,23 @@ bool SvgReader::ReadFile
  * @param scale_factor where to place the scale factor, if defined.
  * @return whether the string could be parsed successfully.
  */
-bool SvgReader::Parse
-(
-  const std::string& input,
-  std::vector<necklace_map::MapElement::Ptr>& elements,
-  std::vector<necklace_map::Necklace::Ptr>& necklaces,
-  Number& scale_factor
-)
-{
-  tinyxml2::XMLDocument doc;
-  tinyxml2::XMLError result = doc.Parse(input.data());
-  //tinyxml2::XMLError result = doc.Parse(content_str); // This would be how to parse a string instead of a file using tinyxml2
-  if (result != tinyxml2::XML_SUCCESS) return false;
+bool SvgReader::Parse(const std::string& input, std::vector<necklace_map::MapElement::Ptr>& elements,
+                      std::vector<necklace_map::Necklace::Ptr>& necklaces, Number& scale_factor) {
+	tinyxml2::XMLDocument doc;
+	tinyxml2::XMLError result = doc.Parse(input.data());
+	//tinyxml2::XMLError result = doc.Parse(content_str); // This would be how to parse a string instead of a file using tinyxml2
+	if (result != tinyxml2::XML_SUCCESS)
+		return false;
 
-  using Visitor = detail::SvgVisitor;
-  Visitor visitor(elements, necklaces, scale_factor);
-  doc.Accept(&visitor);
+	using Visitor = detail::SvgVisitor;
+	Visitor visitor(elements, necklaces, scale_factor);
+	doc.Accept(&visitor);
 
-  // Note(tvl) we should allow the SVG to not contain the necklace: then create the necklace as smallest enclosing circle.
-  LOG(INFO) <<
-            "Successfully parsed necklace map geometry for " <<
-            elements.size() << " region(s) and " <<
-            necklaces.size() << " necklace(s).";
+	// Note(tvl) we should allow the SVG to not contain the necklace: then create the necklace as smallest enclosing circle.
+	LOG(INFO) << "Successfully parsed necklace map geometry for " << elements.size()
+	          << " region(s) and " << necklaces.size() << " necklace(s).";
 
-  return true;
+	return true;
 }
 
 } // namespace necklace_map

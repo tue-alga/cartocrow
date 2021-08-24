@@ -25,40 +25,37 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 09-03-2021
 #include <iostream>
 #include <vector>
 
+#include "cartocrow/common/io/write_options.h"
 #include "cartocrow/common/polar_line.h"
 #include "cartocrow/common/polar_point.h"
 #include "cartocrow/common/polar_segment.h"
 #include "cartocrow/common/spiral.h"
 #include "cartocrow/common/spiral_segment.h"
-#include "cartocrow/common/io/write_options.h"
 
+namespace cartocrow {
 
-namespace cartocrow
-{
+class SvgWriter {
+  public:
+	SvgWriter();
 
-class SvgWriter
-{
- public:
-  SvgWriter();
+	void Add(const PolarPoint& point);
 
-  void Add(const PolarPoint& point);
+	void Add(const Spiral& spiral);
 
-  void Add(const Spiral& spiral);
+	void Add(const SpiralSegment& segment);
 
-  void Add(const SpiralSegment& segment);
+	void Add(const PolarLine& line);
 
-  void Add(const PolarLine& line);
+	void Add(const PolarSegment& segment);
 
-  void Add(const PolarSegment& segment);
+	bool Write(const WriteOptions::Ptr& options, std::ostream& out) const;
 
-  bool Write(const WriteOptions::Ptr& options, std::ostream& out) const;
-
- private:
-  std::vector<PolarPoint> points_;
-  std::vector<Spiral> spirals_;
-  std::vector<SpiralSegment> spiral_segments_;
-  std::vector<PolarLine> lines_;
-  std::vector<PolarSegment> line_segments_;
+  private:
+	std::vector<PolarPoint> points_;
+	std::vector<Spiral> spirals_;
+	std::vector<SpiralSegment> spiral_segments_;
+	std::vector<PolarLine> lines_;
+	std::vector<PolarSegment> line_segments_;
 }; // class SvgWriter
 
 } // namespace cartocrow

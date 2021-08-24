@@ -21,14 +21,13 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-10-2019
 
 #include "utils_cla.h"
 
-#include <sstream>
 #include <filesystem>
+#include <sstream>
 
 #include <gflags/gflags.h>
 #include <glog/logging.h>
 
 #include <cmake/cartocrow_config.h>
-
 
 /**@file utils_cla.h
  * @brief Generic methods for command-line applications.
@@ -40,14 +39,14 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-10-2019
  * @param interactive whether the executable accepts user input while running.
  * @return the copyright notice.
  */
-std::string CopyrightNotice(const bool interactive /*= false*/)
-{
-  std::stringstream out;
-  out << "Copyright (C) 2021  Netherlands eScience Center and TU Eindhoven" << std::endl;
-  out << "This program comes with ABSOLUTELY NO WARRANTY" << (interactive ? "; type `show w' for details." : ".") << std::endl;
-  out << "This is free software, and you are welcome to redistribute it under certain" << std::endl;
-  out << "conditions" << (interactive ? "; type `show c' for details." : ".");
-  return out.str();
+std::string CopyrightNotice(const bool interactive /*= false*/) {
+	std::stringstream out;
+	out << "Copyright (C) 2021  Netherlands eScience Center and TU Eindhoven" << std::endl;
+	out << "This program comes with ABSOLUTELY NO WARRANTY"
+	    << (interactive ? "; type `show w' for details." : ".") << std::endl;
+	out << "This is free software, and you are welcome to redistribute it under certain" << std::endl;
+	out << "conditions" << (interactive ? "; type `show c' for details." : ".");
+	return out.str();
 }
 
 /**@brief Generate a basic usage message for an command-line application.
@@ -56,21 +55,17 @@ std::string CopyrightNotice(const bool interactive /*= false*/)
  * @param sample_arguments command-line arguments that should be part of the sample usage.
  * @return the usage message.
  */
-std::string UsageMessage
-(
-  const std::string& executable_name,
-  const std::string& description,
-  const std::vector<std::string>& sample_arguments /*= {}*/
-)
-{
-  std::stringstream out;
-  out << std::endl << CopyrightNotice() << std::endl << std::endl;
-  out << description << std::endl;
-  out << "Sample usage:" << std::endl;
-  out << std::filesystem::path(executable_name).filename().string();
-  for (const std::string& argument : sample_arguments)
-    out << std::endl << "\t" << argument;
-  return out.str();
+std::string UsageMessage(const std::string& executable_name, const std::string& description,
+                         const std::vector<std::string>& sample_arguments /*= {}*/
+) {
+	std::stringstream out;
+	out << std::endl << CopyrightNotice() << std::endl << std::endl;
+	out << description << std::endl;
+	out << "Sample usage:" << std::endl;
+	out << std::filesystem::path(executable_name).filename().string();
+	for (const std::string& argument : sample_arguments)
+		out << std::endl << "\t" << argument;
+	return out.str();
 }
 
 /**@brief Initialize the processes related to a basic command-line application.
@@ -79,22 +74,17 @@ std::string UsageMessage
  * @param description a one-line description of the application's purpose.
  * @param sample_arguments any command-line arguments that should be part of the sample usage.
  */
-void InitApplication
-(
-  int argc,
-  char **argv,
-  const std::string& description,
-  const std::vector<std::string>& sample_arguments /*= {}*/
-)
-{
-  google::InitGoogleLogging(argv[0]);
+void InitApplication(int argc, char** argv, const std::string& description,
+                     const std::vector<std::string>& sample_arguments /*= {}*/
+) {
+	google::InitGoogleLogging(argv[0]);
 
-  gflags::SetUsageMessage(UsageMessage(argv[0], description, sample_arguments));
-  gflags::SetVersionString(CARTOCROW_VERSION);
+	gflags::SetUsageMessage(UsageMessage(argv[0], description, sample_arguments));
+	gflags::SetVersionString(CARTOCROW_VERSION);
 
-  // Writing to the standard output is generally reserved for text to return to a calling website.
-  FLAGS_stderrthreshold = 2;
+	// Writing to the standard output is generally reserved for text to return to a calling website.
+	FLAGS_stderrthreshold = 2;
 
-  // Note that the command line flags are parsed after applying the defaults above.
-  gflags::ParseCommandLineFlags(&argc, &argv, true);
+	// Note that the command line flags are parsed after applying the defaults above.
+	gflags::ParseCommandLineFlags(&argc, &argv, true);
 }

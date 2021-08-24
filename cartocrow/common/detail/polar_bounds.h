@@ -27,9 +27,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 26-02-2021
 #include "cartocrow/common/spiral.h"
 #include "cartocrow/common/spiral_segment.h"
 
-
-namespace cartocrow
-{
+namespace cartocrow {
 
 Box ConstructBoundingBox(const PolarSegment& segment);
 

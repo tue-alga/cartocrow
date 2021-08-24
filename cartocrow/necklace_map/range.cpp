@@ -21,9 +21,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 09-12-2019
 
 #include "range.h"
 
-
-namespace cartocrow
-{
+namespace cartocrow {
 
 /**@class Range
  * @brief A continuous interval on a circle.
@@ -37,16 +35,12 @@ namespace cartocrow
  * @param from the start of the range.
  * @param to the end of the range.
  */
-Range::Range(const Number& from, const Number& to)
-  : from_(from), to_(to)
-{}
+Range::Range(const Number& from, const Number& to) : from_(from), to_(to) {}
 
 /**@brief Copy a range.
  * @param range the range to copy.
  */
-Range::Range(const Range& range) :
-  from_(range.from()), to_(range.to())
-{}
+Range::Range(const Range& range) : from_(range.from()), to_(range.to()) {}
 
 /**@brief The start of the range.
  * @return the start of the range.
@@ -73,18 +67,12 @@ Number& Range::to() { return to_; }
  * The range is in a valid state if from() <= to().
  * @return whether the interval is valid.
  */
-bool Range::IsValid() const
-{
-  return from() <= to();
-}
+bool Range::IsValid() const { return from() <= to(); }
 
 /**@brief Check whether the range is degenerate.
  * @return true if and only if the range is a single point.
  */
-bool Range::IsDegenerate() const
-{
-  return from() == to();
-}
+bool Range::IsDegenerate() const { return from() == to(); }
 
 /**@brief Check whether the range contains a value.
  *
@@ -92,10 +80,7 @@ bool Range::IsDegenerate() const
  * @param value the value to query.
  * @return whether the range contains the value.
  */
-bool Range::Contains(const Number& value) const
-{
-  return from() <= value && value <= to();
-}
+bool Range::Contains(const Number& value) const { return from() <= value && value <= to(); }
 
 /**@brief Check whether the range contains a value.
  *
@@ -103,10 +88,7 @@ bool Range::Contains(const Number& value) const
  * @param value the value to query.
  * @return whether the range contains the value.
  */
-bool Range::ContainsOpen(const Number& value) const
-{
-  return from() <= value && value <= to();
-}
+bool Range::ContainsOpen(const Number& value) const { return from() <= value && value <= to(); }
 
 /**@brief Check whether this range and another range intersect.
  *
@@ -114,11 +96,8 @@ bool Range::ContainsOpen(const Number& value) const
  * @param range the range for which to check the intersection.
  * @return whether the ranges intersect in their interior.
  */
-bool Range::Intersects(const Range::Ptr& range) const
-{
-  return
-    Contains(range->from()) ||
-    range->Contains(from());
+bool Range::Intersects(const Range::Ptr& range) const {
+	return Contains(range->from()) || range->Contains(from());
 }
 
 /**@brief Check whether this range and another range intersect.
@@ -127,19 +106,14 @@ bool Range::Intersects(const Range::Ptr& range) const
  * @param range the range for which to check the intersection.
  * @return whether the ranges intersect in their interior.
  */
-bool Range::IntersectsOpen(const Range::Ptr& range) const
-{
-  return
-    (Contains(range->from()) && range->from() != to()) ||
-    (range->Contains(from()) && from() != range->to());
+bool Range::IntersectsOpen(const Range::Ptr& range) const {
+	return (Contains(range->from()) && range->from() != to()) ||
+	       (range->Contains(from()) && from() != range->to());
 }
 
 /**@brief Compute the total length of the range.
  * @return the total length.
  */
-Number Range::ComputeLength() const
-{
-  return to() - from();
-}
+Number Range::ComputeLength() const { return to() - from(); }
 
 } // namespace cartocrow

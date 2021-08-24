@@ -33,34 +33,18 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 06-10-2020
 #include "cartocrow/common/detail/table_parser.h"
 #include "cartocrow/flow_map/place.h"
 
+namespace cartocrow {
+namespace flow_map {
 
-namespace cartocrow
-{
-namespace flow_map
-{
+class DataReader : public cartocrow::detail::TableParser {
+  public:
+	DataReader();
 
-class DataReader : public cartocrow::detail::TableParser
-{
- public:
-  DataReader();
+	bool ReadFile(const std::filesystem::path& filename, const std::string& value_name,
+	              std::vector<Place::Ptr>& places, size_t& index_root, int max_retries = 2);
 
-  bool ReadFile
-  (
-    const std::filesystem::path& filename,
-    const std::string& value_name,
-    std::vector<Place::Ptr>& places,
-    size_t& index_root,
-    int max_retries = 2
-  );
-
-  bool Parse
-  (
-    std::istream& in,
-    const std::string& value_name,
-    std::vector<Place::Ptr>& places,
-    size_t& index_root,
-    const std::string& version = "1.0"
-  );
+	bool Parse(std::istream& in, const std::string& value_name, std::vector<Place::Ptr>& places,
+	           size_t& index_root, const std::string& version = "1.0");
 }; // class DataReader
 
 } // namespace flow_map

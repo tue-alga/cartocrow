@@ -25,9 +25,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 26-02-2021
 
 #include <glog/logging.h>
 
-
-namespace cartocrow
-{
+namespace cartocrow {
 
 /**@class SpiralSegment
  * @brief A logarithmic spiral segment.
@@ -47,12 +45,11 @@ namespace cartocrow
  * @param point_1 one of the endpoints of the logarithmic spiral segment.
  * @param point_2 the other endpoint on the logarithmic spiral segment.
  */
-SpiralSegment::SpiralSegment(const PolarPoint& point_1, const PolarPoint& point_2) :
-  Spiral(point_1, point_2), R_min_(point_1.R()), R_max_(point_2.R())
-{
-  CHECK_LE(0, R_min_);
-  if (R_max_ < R_min_)
-    std::swap(R_min_, R_max_);
+SpiralSegment::SpiralSegment(const PolarPoint& point_1, const PolarPoint& point_2)
+    : Spiral(point_1, point_2), R_min_(point_1.R()), R_max_(point_2.R()) {
+	CHECK_LE(0, R_min_);
+	if (R_max_ < R_min_)
+		std::swap(R_min_, R_max_);
 }
 
 /**@brief Construct a logarithmic spiral segment.
@@ -65,11 +62,10 @@ SpiralSegment::SpiralSegment(const PolarPoint& point_1, const PolarPoint& point_
  * This cannot be larger than the R of the far point.
  * @endparblock
  */
-SpiralSegment::SpiralSegment(const PolarPoint& far, const Number& angle_rad, const Number& R_min) :
-  Spiral(far, angle_rad), R_min_(R_min), R_max_(far.R())
-{
-  CHECK_LE(0, R_min_);
-  CHECK_LE(R_min_, R_max_);
+SpiralSegment::SpiralSegment(const PolarPoint& far, const Number& angle_rad, const Number& R_min)
+    : Spiral(far, angle_rad), R_min_(R_min), R_max_(far.R()) {
+	CHECK_LE(0, R_min_);
+	CHECK_LE(R_min_, R_max_);
 }
 
 /**@brief Construct a logarithmic spiral segment.
@@ -80,67 +76,49 @@ SpiralSegment::SpiralSegment(const PolarPoint& far, const Number& angle_rad, con
  * @param R_min the R of the near endpoint of the logarithmic spiral segment.
  * @param R_max the R of the far endpoint of the logarithmic spiral segment. This cannot be smaller than R_min.
  */
-SpiralSegment::SpiralSegment(const PolarPoint& anchor, const Number& angle_rad, const Number& R_min, const Number& R_max) :
-  Spiral(anchor, angle_rad), R_min_(R_min), R_max_(R_max)
-{
-  CHECK_LE(0, R_min_);
-  CHECK_LE(R_min_, R_max_);
+SpiralSegment::SpiralSegment(const PolarPoint& anchor, const Number& angle_rad, const Number& R_min,
+                             const Number& R_max)
+    : Spiral(anchor, angle_rad), R_min_(R_min), R_max_(R_max) {
+	CHECK_LE(0, R_min_);
+	CHECK_LE(R_min_, R_max_);
 }
 
 /**@brief Access the far endpoint of the logarithmic spiral segment.
  * @return the far endpoint of the logarithmic spiral segment.
  */
-const PolarPoint SpiralSegment::far() const
-{
-  return PolarPoint(R_max(), ComputePhi(R_max()));
-}
+const PolarPoint SpiralSegment::far() const { return PolarPoint(R_max(), ComputePhi(R_max())); }
 
 /**@brief Access the near endpoint of the logarithmic spiral segment.
  * @return the near endpoint of the logarithmic spiral segment.
  */
-const PolarPoint SpiralSegment::near() const
-{
-  return PolarPoint(R_min(), ComputePhi(R_min()));
-}
+const PolarPoint SpiralSegment::near() const { return PolarPoint(R_min(), ComputePhi(R_min())); }
 
 /**@brief Access the smallest R on the logarithmic spiral segment.
  * @return the R of the near endpoint of the logarithmic spiral segment.
  */
-const Number& SpiralSegment::R_min() const
-{
-  return R_min_;
-}
+const Number& SpiralSegment::R_min() const { return R_min_; }
 
 /**@brief Access the largest R on the logarithmic spiral segment.
  * @return the R of the far endpoint of the logarithmic spiral segment.
  */
-const Number& SpiralSegment::R_max() const
-{
-  return R_max_;
-}
+const Number& SpiralSegment::R_max() const { return R_max_; }
 
 /**@brief Check whether the supporting logarithmic spiral evaluated at a given time falls within the segment.
  * @param t the time at which to evaluate the supporting logarithmic spiral.
  * @return whether the segment contains the evaluated logarithmic spiral.
  */
-bool SpiralSegment::ContainsT(const Number& t) const
-{
-  return ContainsR(EvaluateR(t));
-}
+bool SpiralSegment::ContainsT(const Number& t) const { return ContainsR(EvaluateR(t)); }
 
 /**@brief Check whether the logarithmic spiral segment contains a point at a given distance from the pole.
  * @param R the distance from the pole to check.
  * @return whether the segment contains a point at a given distance.
  */
-bool SpiralSegment::ContainsR(const Number& R) const
-{
-  return R_min() <= R && R <= R_max();
-}
+bool SpiralSegment::ContainsR(const Number& R) const { return R_min() <= R && R <= R_max(); }
 
-std::ostream& operator<<(std::ostream& os, const SpiralSegment& segment)
-{
-  os << "S<@= " << segment.anchor() << ", ang= " << segment.angle_rad() << ", min_R= " << segment.R_min() << ">";
-  return os;
+std::ostream& operator<<(std::ostream& os, const SpiralSegment& segment) {
+	os << "S<@= " << segment.anchor() << ", ang= " << segment.angle_rad()
+	   << ", min_R= " << segment.R_min() << ">";
+	return os;
 }
 
 } // namespace cartocrow

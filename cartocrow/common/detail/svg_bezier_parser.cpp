@@ -23,11 +23,8 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 13-05-2020
 
 #include <glog/logging.h>
 
-
-namespace cartocrow
-{
-namespace detail
-{
+namespace cartocrow {
+namespace detail {
 
 /**@class SvgBezierConverter
  * @brief An implementation of SvgPathConverter for converting an SVG path element to a Bezier spline.
@@ -42,38 +39,31 @@ namespace detail
 /**@brief Construct an object for converting SVG path elements to a Bezier spline.
  * @param shape the output Bezier spline.
  */
-SvgBezierConverter::SvgBezierConverter(BezierSpline& shape)
-  : SvgPathConverter(), shape_(shape) {}
+SvgBezierConverter::SvgBezierConverter(BezierSpline& shape) : SvgPathConverter(), shape_(shape) {}
 
-void SvgBezierConverter::MoveTo_(const Point& to)
-{
-  CHECK(shape_.IsEmpty() || shape_.IsClosed()) << "Trying to move while spline is not closed.";
-  source_ = to;
+void SvgBezierConverter::MoveTo_(const Point& to) {
+	CHECK(shape_.IsEmpty() || shape_.IsClosed()) << "Trying to move while spline is not closed.";
+	source_ = to;
 }
 
-void SvgBezierConverter::LineTo_(const Point& to)
-{
-  const Point midpoint = CGAL::midpoint(source_, to);
-  shape_.AppendCurve(source_, midpoint, midpoint, to);
-  source_ = to;
+void SvgBezierConverter::LineTo_(const Point& to) {
+	const Point midpoint = CGAL::midpoint(source_, to);
+	shape_.AppendCurve(source_, midpoint, midpoint, to);
+	source_ = to;
 }
 
-void SvgBezierConverter::QuadBezierTo_(const Point& control, const Point& to)
-{
-  shape_.AppendCurve(source_, control, control, to);
-  source_ = to;
+void SvgBezierConverter::QuadBezierTo_(const Point& control, const Point& to) {
+	shape_.AppendCurve(source_, control, control, to);
+	source_ = to;
 }
 
-void SvgBezierConverter::CubeBezierTo_(const Point& control_1, const Point& control_2, const Point& to)
-{
-  shape_.AppendCurve(source_, control_1, control_2, to);
-  source_ = to;
+void SvgBezierConverter::CubeBezierTo_(const Point& control_1, const Point& control_2,
+                                       const Point& to) {
+	shape_.AppendCurve(source_, control_1, control_2, to);
+	source_ = to;
 }
 
-void SvgBezierConverter::Close_()
-{
-  CHECK(shape_.IsValid());
-}
+void SvgBezierConverter::Close_() { CHECK(shape_.IsValid()); }
 
 } // namespace detail
 } // namespace cartocrow

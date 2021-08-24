@@ -29,11 +29,8 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 03-12-2019
 
 #include <glog/logging.h>
 
-
-namespace cartocrow
-{
-namespace
-{
+namespace cartocrow {
+namespace {
 
 constexpr const char* kMagicCharacters = "NcMp";
 
@@ -41,8 +38,7 @@ constexpr const char* kNameId = "id";
 
 } // anonymous namespace
 
-namespace necklace_map
-{
+namespace necklace_map {
 
 /**@class DataReader
  * @brief A reader for necklace map values.
@@ -50,8 +46,7 @@ namespace necklace_map
 
 /**@brief Construct a reader for necklace map values.
  */
-DataReader::DataReader()
-  : detail::TableParser() {}
+DataReader::DataReader() : detail::TableParser() {}
 
 /**@brief Read a necklace map data file.
  *
@@ -64,53 +59,43 @@ DataReader::DataReader()
  * @param max_retries the maximum number of times to retry reading after an error.
  * @return whether the element values could be read successfully.
  */
-bool DataReader::ReadFile
-(
-  const std::filesystem::path& filename,
-  const std::string& value_name,
-  std::vector<MapElement::Ptr>& elements,
-  int max_retries /*= 2*/
-)
-{
-  std::fstream fin;
-  int retry = 0;
-  do
-  {
-    try
-    {
-      fin.open(filename);
-      if (fin)
-        break;
-    }
-    catch (const std::exception& e)
-    {
-      LOG(ERROR) << e.what();
-    }
+bool DataReader::ReadFile(const std::filesystem::path& filename, const std::string& value_name,
+                          std::vector<MapElement::Ptr>& elements, int max_retries /*= 2*/
+) {
+	std::fstream fin;
+	int retry = 0;
+	do {
+		try {
+			fin.open(filename);
+			if (fin)
+				break;
+		} catch (const std::exception& e) {
+			LOG(ERROR) << e.what();
+		}
 
-    if (max_retries < retry++)
-    {
-      LOG(INFO) << "Failed to open necklace map data file: " << filename;
-      return false;
-    }
-  } while (true);
+		if (max_retries < retry++) {
+			LOG(INFO) << "Failed to open necklace map data file: " << filename;
+			return false;
+		}
+	} while (true);
 
-  // Data files must start with four magic characters and the data file version.
-  char magic[5] = {'\0', '\0', '\0', '\0', '\0'};
-  fin.read(magic, 4);
-  if (!fin || std::strcmp(magic, kMagicCharacters) != 0) {
-    LOG(INFO) << "Data file did not start with magic characters: " << filename;
-    return false;
-  }
+	// Data files must start with four magic characters and the data file version.
+	char magic[5] = {'\0', '\0', '\0', '\0', '\0'};
+	fin.read(magic, 4);
+	if (!fin || std::strcmp(magic, kMagicCharacters) != 0) {
+		LOG(INFO) << "Data file did not start with magic characters: " << filename;
+		return false;
+	}
 
-  // Read the version.
-  std::string version;
-  fin >> version;
-  if (!fin) {
-      LOG(INFO) << "Data file did not start with a version: " << filename;
-      return false;
-  }
+	// Read the version.
+	std::string version;
+	fin >> version;
+	if (!fin) {
+		LOG(INFO) << "Data file did not start with a version: " << filename;
+		return false;
+	}
 
-  return Parse(fin, value_name, elements, version);
+	return Parse(fin, value_name, elements, version);
 }
 
 /**@brief Parse a necklace map data string.
@@ -138,78 +123,71 @@ bool DataReader::ReadFile
  * @param version the data format version.
  * @return whether the element values could be read successfully.
  */
-bool DataReader::Parse
-(
-  std::istream& in,
-  const std::string& value_name,
-  std::vector<MapElement::Ptr>& elements,
-  const std::string& version /*= "1.0"*/
-)
-{
-  // Parse the data.
-  if (!detail::TableParser::Parse(in))
-    return false;
+bool DataReader::Parse(std::istream& in, const std::string& value_name,
+                       std::vector<MapElement::Ptr>& elements, const std::string& version /*= "1.0"*/
+) {
+	// Parse the data.
+	if (!detail::TableParser::Parse(in))
+		return false;
 
-  // Find the ID and value columns and check that they are the correct types.
-  using ColumnString = detail::ValueColumn<std::string>;
-  using DataColumn = detail::DataColumn;
-  const ColumnString* column_id = nullptr;
-  const DataColumn* column_value = nullptr;
+	// Find the ID and value columns and check that they are the correct types.
+	using ColumnString = detail::ValueColumn<std::string>;
+	using DataColumn = detail::DataColumn;
+	const ColumnString* column_id = nullptr;
+	const DataColumn* column_value = nullptr;
 
-  for (const detail::TableParser::ColumnPtr& column : table_)
-  {
-    if (column->name == kNameId)
-      column_id = dynamic_cast<const ColumnString*>(column.get());
-    else if (column->name == value_name)
-      column_value = column.get();
-  }
-  if (column_id == nullptr || column_value == nullptr || column_id->values.size() != column_value->size())
-    return false;
+	for (const detail::TableParser::ColumnPtr& column : table_) {
+		if (column->name == kNameId)
+			column_id = dynamic_cast<const ColumnString*>(column.get());
+		else if (column->name == value_name)
+			column_value = column.get();
+	}
+	if (column_id == nullptr || column_value == nullptr ||
+	    column_id->values.size() != column_value->size())
+		return false;
 
+	using ColumnDouble = detail::ValueColumn<double>;
+	using ColumnInteger = detail::ValueColumn<int>;
+	const ColumnDouble* column_double = dynamic_cast<const ColumnDouble*>(column_value);
+	const ColumnInteger* column_int = dynamic_cast<const ColumnInteger*>(column_value);
+	if (column_double == nullptr && column_int == nullptr)
+		return false;
 
-  using ColumnDouble = detail::ValueColumn<double>;
-  using ColumnInteger = detail::ValueColumn<int>;
-  const ColumnDouble* column_double = dynamic_cast<const ColumnDouble*>(column_value);
-  const ColumnInteger* column_int = dynamic_cast<const ColumnInteger*>(column_value);
-  if (column_double == nullptr && column_int == nullptr)
-    return false;
+	// Create a lookup table for the elements.
+	using LookupTable = std::unordered_map<std::string, size_t>;
+	LookupTable id_to_element_index;
+	for (necklace_map::MapElement::Ptr& element : elements) {
+		CHECK_NOTNULL(element);
+		const size_t next_index = id_to_element_index.size();
+		const size_t n = id_to_element_index.insert({element->region.id, next_index}).first->second;
+		CHECK_EQ(next_index, n);
 
-  // Create a lookup table for the elements.
-  using LookupTable = std::unordered_map<std::string, size_t>;
-  LookupTable id_to_element_index;
-  for (necklace_map::MapElement::Ptr& element : elements)
-  {
-    CHECK_NOTNULL(element);
-    const size_t next_index = id_to_element_index.size();
-    const size_t n = id_to_element_index.insert({element->region.id, next_index}).first->second;
-    CHECK_EQ(next_index, n);
+		// Set the value to 0 in case the elements are reused.
+		element->value = 0;
+	}
 
-    // Set the value to 0 in case the elements are reused.
-    element->value = 0;
-  }
+	// Add the values to their associated element.
+	for (size_t v = 0; v < column_id->values.size(); ++v) {
+		const std::string& id = column_id->values[v];
 
-  // Add the values to their associated element.
-  for (size_t v = 0; v < column_id->values.size(); ++v)
-  {
-    const std::string& id = column_id->values[v];
+		// Get the region with the given ID, or create a new one if it does not yet exist.
+		std::pair<LookupTable::iterator, bool> result =
+		    id_to_element_index.emplace(id, elements.size());
+		const size_t e = result.first->second;
+		if (e == elements.size())
+			elements.push_back(std::make_shared<necklace_map::MapElement>(id));
+		necklace_map::MapElement::Ptr& element = elements[e];
+		CHECK_NOTNULL(element);
+		CHECK_EQ(id, element->region.id);
 
-    // Get the region with the given ID, or create a new one if it does not yet exist.
-    std::pair<LookupTable::iterator, bool> result = id_to_element_index.emplace(id, elements.size());
-    const size_t e = result.first->second;
-    if (e == elements.size())
-      elements.push_back(std::make_shared<necklace_map::MapElement>(id));
-    necklace_map::MapElement::Ptr& element = elements[e];
-    CHECK_NOTNULL(element);
-    CHECK_EQ(id, element->region.id);
+		if (column_double == nullptr)
+			element->value = column_int->values[v];
+		else
+			element->value = column_double->values[v];
+	}
 
-    if (column_double == nullptr)
-      element->value = column_int->values[v];
-    else
-      element->value = column_double->values[v];
-  }
-
-  LOG(INFO) << "Successfully parsed necklace map data for " << elements.size() << " element(s).";
-  return true;
+	LOG(INFO) << "Successfully parsed necklace map data for " << elements.size() << " element(s).";
+	return true;
 }
 
 } // namespace necklace_map

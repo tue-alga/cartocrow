@@ -24,9 +24,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 19-02-2021
 
 #include <glog/logging.h>
 
-
-namespace cartocrow
-{
+namespace cartocrow {
 
 /**@brief Collect the t at a given distance from the pole.
  * @tparam OutputIterator the type of output iterator to which to send the output.
@@ -34,24 +32,21 @@ namespace cartocrow
  * @param t the t values of the points on the line segment at the desired distance.
  * @return the number of points on the line segment at the given distance. This can be either 0, 1, or 2.
  */
-template<class OutputIterator>
-int PolarSegment::CollectT(const Number& R, OutputIterator t) const
-{
-  Number d[2];
-  const int num_d = PolarLine::CollectT(R, d);
+template <class OutputIterator>
+int PolarSegment::CollectT(const Number& R, OutputIterator t) const {
+	Number d[2];
+	const int num_d = PolarLine::CollectT(R, d);
 
-  int num = 0;
-  for (int i = 0; i < num_d; ++i)
-  {
-    const Number tt = ToT(d[i]);
-    if (ContainsT(tt))
-    {
-      *t++ = tt;
-      ++num;
-    }
-  }
+	int num = 0;
+	for (int i = 0; i < num_d; ++i) {
+		const Number tt = ToT(d[i]);
+		if (ContainsT(tt)) {
+			*t++ = tt;
+			++num;
+		}
+	}
 
-  return num;
+	return num;
 }
 
 /**@brief Compute the phi at a given distance from the pole.
@@ -60,16 +55,15 @@ int PolarSegment::CollectT(const Number& R, OutputIterator t) const
  * @param phi the phi values of the points on the line segment at the desired distance.
  * @return the number of points on the line segment at the given distance. This can be either 0, 1, or 2.
  */
-template<class OutputIterator>
-int PolarSegment::CollectPhi(const Number& R, OutputIterator phi) const
-{
-  Number t[2];
-  const int num = CollectT(R, t);
+template <class OutputIterator>
+int PolarSegment::CollectPhi(const Number& R, OutputIterator phi) const {
+	Number t[2];
+	const int num = CollectT(R, t);
 
-  for (int i = 0; i < num; ++i)
-    *phi++ = EvaluatePhi(t[i]);
+	for (int i = 0; i < num; ++i)
+		*phi++ = EvaluatePhi(t[i]);
 
-  return num;
+	return num;
 }
 
 } // namespace cartocrow

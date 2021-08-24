@@ -23,29 +23,25 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 03-03-2020
 #ifndef CARTOCROW_NECKLACE_MAP_COMPUTE_FEASIBLE_CENTROID_INTERVAL_H
 #define CARTOCROW_NECKLACE_MAP_COMPUTE_FEASIBLE_CENTROID_INTERVAL_H
 
-#include "cartocrow/common/range.h"
 #include "cartocrow/common/core_types.h"
+#include "cartocrow/common/range.h"
 #include "cartocrow/necklace_map/compute_feasible_interval.h"
 #include "cartocrow/necklace_map/necklace.h"
 #include "cartocrow/necklace_map/parameters.h"
 
+namespace cartocrow {
+namespace necklace_map {
 
-namespace cartocrow
-{
-namespace necklace_map
-{
+class ComputeFeasibleCentroidInterval : public ComputeFeasibleInterval {
+  public:
+	CircularRange::Ptr operator()(const Polygon& extent, const Necklace::Ptr& necklace) const override;
 
-class ComputeFeasibleCentroidInterval : public ComputeFeasibleInterval
-{
- public:
-  CircularRange::Ptr operator()(const Polygon& extent, const Necklace::Ptr& necklace) const override;
+  protected:
+	ComputeFeasibleCentroidInterval(const Parameters& parameters);
 
- protected:
-  ComputeFeasibleCentroidInterval(const Parameters& parameters);
-
- private:
-  friend ComputeFeasibleInterval;
-  Number half_length_rad_;
+  private:
+	friend ComputeFeasibleInterval;
+	Number half_length_rad_;
 }; // class ComputeFeasibleCentroidInterval
 
 } // namespace necklace_map

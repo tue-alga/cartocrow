@@ -25,23 +25,13 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-10-2019
 #include <string>
 #include <vector>
 
-
 //@param interactive whether the executable accepts user input while running.
 std::string CopyrightNotice(const bool interactive = false);
 
-std::string UsageMessage
-(
-  const std::string& executable_name,
-  const std::string& description,
-  const std::vector<std::string>& sample_arguments = {}
-);
+std::string UsageMessage(const std::string& executable_name, const std::string& description,
+                         const std::vector<std::string>& sample_arguments = {});
 
-void InitApplication
-(
-  int argc,
-  char **argv,
-  const std::string& description,
-  const std::vector<std::string>& sample_arguments = {}
-);
+void InitApplication(int argc, char** argv, const std::string& description,
+                     const std::vector<std::string>& sample_arguments = {});
 
 #endif //CONSOLE_COMMON_UTILS_CLA_H

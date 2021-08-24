@@ -29,15 +29,14 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-04-2020
 
 #include <glog/logging.h>
 
-#include <cmake/cartocrow_test_config.h>
 #include <cartocrow/common/timer.h>
 #include <cartocrow/flow_map/flow_map.h>
+#include <cmake/cartocrow_test_config.h>
 
 #include "test/test.h"
 #include "test/test_registry_timer.h"
 
-
-void TestFlowMap() {}  // Linking hack, each new test cpp file has it.
+void TestFlowMap() {} // Linking hack, each new test cpp file has it.
 
 constexpr const size_t kP = 2;
 constexpr const size_t kV = 2;
@@ -47,147 +46,132 @@ using Reg = PT::R_;
 
 static Reg kRegistry;
 
+struct FlowData {
+	FlowData() {
+		// Disable logging to INFO and WARNING.
+		FLAGS_minloglevel = 2;
+	}
 
-struct FlowData
-{
-  FlowData()
-  {
-    // Disable logging to INFO and WARNING.
-    FLAGS_minloglevel = 2;
-  }
-
-  std::vector<cartocrow::Region> context;
-  std::vector<cartocrow::flow_map::Place::Ptr> places;
-  size_t index_root;
+	std::vector<cartocrow::Region> context;
+	std::vector<cartocrow::flow_map::Place::Ptr> places;
+	size_t index_root;
 }; // struct FlowData
 
-static const std::filesystem::path kDataDir = std::filesystem::path(CARTOCROW_TEST_DATA_DIR) / "flow_map";
+static const std::filesystem::path kDataDir =
+    std::filesystem::path(CARTOCROW_TEST_DATA_DIR) / "flow_map";
 
 static FlowData kUsa = FlowData();
 static FlowData kWorld = FlowData();
 
+UNITTEST_SUITE(FlowMap) {
 
-UNITTEST_SUITE(FlowMap)
-{
+	void DefaultParameters(cartocrow::flow_map::Parameters & parameters) {
+		//  parameters.interval_type = cartocrow::necklace_map::IntervalType::kWedge;
+		//  parameters.centroid_interval_length_rad = 0.2 * M_PI;
+		//  parameters.ignore_point_regions = false;
+		//
+		//  parameters.order_type = cartocrow::necklace_map::OrderType::kAny;
+		//  parameters.buffer_rad = 0;
+		//  parameters.aversion_ratio = 0.001;
+	}
 
-void DefaultParameters(cartocrow::flow_map::Parameters& parameters)
-{
-//  parameters.interval_type = cartocrow::necklace_map::IntervalType::kWedge;
-//  parameters.centroid_interval_length_rad = 0.2 * M_PI;
-//  parameters.ignore_point_regions = false;
-//
-//  parameters.order_type = cartocrow::necklace_map::OrderType::kAny;
-//  parameters.buffer_rad = 0;
-//  parameters.aversion_ratio = 0.001;
-}
+	struct FlowDataUsa {
+		FlowDataUsa() : data(kUsa) {
+			if (data.places.empty()) {
+				kRegistry.Register(&data, "FlowDataUsa");
 
+				// Read the geometry.
+				cartocrow::flow_map::SvgReader svg_reader;
+				const std::filesystem::path in_geometry_path = kDataDir / "USA.svg";
 
-struct FlowDataUsa
-{
-  FlowDataUsa() :
-    data(kUsa)
-  {
-    if (data.places.empty())
-    {
-      kRegistry.Register(&data, "FlowDataUsa");
+				cartocrow::Timer time;
+				UNITTEST_REQUIRE UNITTEST_CHECK(
+				    svg_reader.ReadFile(in_geometry_path, data.context, data.places));
+				kRegistry(&data, 0) = time.Stamp();
+			}
+		}
 
-      // Read the geometry.
-      cartocrow::flow_map::SvgReader svg_reader;
-      const std::filesystem::path in_geometry_path = kDataDir / "USA.svg";
+		bool ReadValues(const std::string& in_value_name) {
+			if (in_value_name == value_name)
+				return true;
+			value_name = in_value_name;
 
-      cartocrow::Timer time;
-      UNITTEST_REQUIRE UNITTEST_CHECK(svg_reader.ReadFile(in_geometry_path, data.context, data.places));
-      kRegistry(&data, 0) = time.Stamp();
-    }
-  }
+			cartocrow::flow_map::DataReader data_reader;
+			const std::filesystem::path in_data_path = kDataDir / "USA.csv";
 
-  bool ReadValues(const std::string& in_value_name)
-  {
-    if (in_value_name == value_name)
-      return true;
-    value_name = in_value_name;
+			cartocrow::Timer time;
+			const bool result =
+			    data_reader.ReadFile(in_data_path, in_value_name, data.places, data.index_root);
+			kRegistry(&data, 1) = time.Stamp();
 
-    cartocrow::flow_map::DataReader data_reader;
-    const std::filesystem::path in_data_path = kDataDir / "USA.csv";
+			return result;
+		}
 
-    cartocrow::Timer time;
-    const bool result = data_reader.ReadFile(in_data_path, in_value_name, data.places, data.index_root);
-    kRegistry(&data, 1) = time.Stamp();
+		FlowData& data;
+		std::string value_name;
 
-    return result;
-  }
+		cartocrow::flow_map::Parameters parameters;
+	}; // struct FlowDataUsa
 
-  FlowData& data;
-  std::string value_name;
+	UNITTEST_TEST_FIXTURE(FlowDataUsa, UsaGreedy) {
+		const std::string in_value_name = "CA";
+		UNITTEST_CHECK(ReadValues(in_value_name));
 
-  cartocrow::flow_map::Parameters parameters;
-}; // struct FlowDataUsa
+		DefaultParameters(parameters);
+		//  parameters.interval_type = cartocrow::necklace_map::IntervalType::kCentroid;
+		//  parameters.order_type = cartocrow::necklace_map::OrderType::kFixed;
 
-UNITTEST_TEST_FIXTURE(FlowDataUsa, UsaGreedy)
-{
-  const std::string in_value_name = "CA";
-  UNITTEST_CHECK(ReadValues(in_value_name));
+		//  const cartocrow::Number scale_factor = ComputeScaleFactor(parameters, data.elements, data.necklaces);
+		//  UNITTEST_CHECK_CLOSE(1.580, scale_factor, 0.001);
+	}
 
-  DefaultParameters(parameters);
-//  parameters.interval_type = cartocrow::necklace_map::IntervalType::kCentroid;
-//  parameters.order_type = cartocrow::necklace_map::OrderType::kFixed;
+	struct FlowDataWorld {
+		FlowDataWorld() : data(kWorld) {
+			if (data.places.empty()) {
+				kRegistry.Register(&data, "FlowDataWorld");
 
-//  const cartocrow::Number scale_factor = ComputeScaleFactor(parameters, data.elements, data.necklaces);
-//  UNITTEST_CHECK_CLOSE(1.580, scale_factor, 0.001);
-}
+				// Read the geometry.
+				cartocrow::flow_map::SvgReader svg_reader;
+				const std::filesystem::path in_geometry_path = kDataDir / "World.svg";
 
+				cartocrow::Timer time;
+				UNITTEST_REQUIRE UNITTEST_CHECK(
+				    svg_reader.ReadFile(in_geometry_path, data.context, data.places));
+				kRegistry(&data, 0) = time.Stamp();
+			}
+		}
 
-struct FlowDataWorld
-{
-  FlowDataWorld() :
-    data(kWorld)
-  {
-    if (data.places.empty())
-    {
-      kRegistry.Register(&data, "FlowDataWorld");
+		bool ReadValues(const std::string& in_value_name) {
+			if (in_value_name == value_name)
+				return true;
+			value_name = in_value_name;
 
-      // Read the geometry.
-      cartocrow::flow_map::SvgReader svg_reader;
-      const std::filesystem::path in_geometry_path = kDataDir / "World.svg";
+			cartocrow::flow_map::DataReader data_reader;
+			const std::filesystem::path in_data_path = kDataDir / "World.csv";
 
-      cartocrow::Timer time;
-      UNITTEST_REQUIRE UNITTEST_CHECK(svg_reader.ReadFile(in_geometry_path, data.context, data.places));
-      kRegistry(&data, 0) = time.Stamp();
-    }
-  }
+			cartocrow::Timer time;
+			const bool result =
+			    data_reader.ReadFile(in_data_path, in_value_name, data.places, data.index_root);
+			kRegistry(&data, 1) = time.Stamp();
 
-  bool ReadValues(const std::string& in_value_name)
-  {
-    if (in_value_name == value_name)
-      return true;
-    value_name = in_value_name;
+			return result;
+		}
 
-    cartocrow::flow_map::DataReader data_reader;
-    const std::filesystem::path in_data_path = kDataDir / "World.csv";
+		FlowData& data;
+		std::string value_name;
 
-    cartocrow::Timer time;
-    const bool result = data_reader.ReadFile(in_data_path, in_value_name, data.places, data.index_root);
-    kRegistry(&data, 1) = time.Stamp();
+		cartocrow::flow_map::Parameters parameters;
+	}; // struct FlowDataWorld
 
-    return result;
-  }
+	UNITTEST_TEST_FIXTURE(FlowDataWorld, EastAsiaAgriculture) {
+		//  const std::string in_value_name = "Karstner";
+		//  UNITTEST_CHECK(ReadValues(in_value_name));
+		//
+		//  DefaultParameters(parameters);
 
-  FlowData& data;
-  std::string value_name;
-
-  cartocrow::flow_map::Parameters parameters;
-}; // struct FlowDataWorld
-
-UNITTEST_TEST_FIXTURE(FlowDataWorld, EastAsiaAgriculture)
-{
-//  const std::string in_value_name = "Karstner";
-//  UNITTEST_CHECK(ReadValues(in_value_name));
-//
-//  DefaultParameters(parameters);
-
-//  const cartocrow::Number scale_factor = ComputeScaleFactor(parameters, data.elements, data.necklaces);
-//  UNITTEST_CHECK_CLOSE(1.005, scale_factor, 0.001);
-}
+		//  const cartocrow::Number scale_factor = ComputeScaleFactor(parameters, data.elements, data.necklaces);
+		//  UNITTEST_CHECK_CLOSE(1.005, scale_factor, 0.001);
+	}
 
 } // UNITTEST_SUITE(FlowMap)
 

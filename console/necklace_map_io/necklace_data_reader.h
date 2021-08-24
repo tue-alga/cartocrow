@@ -32,32 +32,18 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 03-12-2019
 #include "cartocrow/common/detail/table_parser.h"
 #include "cartocrow/necklace_map/map_element.h"
 
+namespace cartocrow {
+namespace necklace_map {
 
-namespace cartocrow
-{
-namespace necklace_map
-{
+class DataReader : public cartocrow::detail::TableParser {
+  public:
+	DataReader();
 
-class DataReader : public cartocrow::detail::TableParser
-{
- public:
-  DataReader();
+	bool ReadFile(const std::string& filename, const std::string& value_name,
+	              std::vector<MapElement::Ptr>& elements, int max_retries = 2);
 
-  bool ReadFile
-  (
-    const std::string& filename,
-    const std::string& value_name,
-    std::vector<MapElement::Ptr>& elements,
-    int max_retries = 2
-  );
-
-  bool Parse
-  (
-    std::istream& in,
-    const std::string& value_name,
-    std::vector<MapElement::Ptr>& elements,
-    const std::string& version = "1.0"
-  );
+	bool Parse(std::istream& in, const std::string& value_name,
+	           std::vector<MapElement::Ptr>& elements, const std::string& version = "1.0");
 }; // class DataReader
 
 } // namespace necklace_map

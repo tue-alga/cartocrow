@@ -31,34 +31,22 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-2019
 #include "cartocrow/necklace_map/compute_feasible_interval.h"
 #include "cartocrow/necklace_map/compute_scale_factor.h"
 #include "cartocrow/necklace_map/compute_valid_placement.h"
-#include "cartocrow/necklace_map/map_element.h"
-#include "cartocrow/necklace_map/necklace.h"
-#include "cartocrow/necklace_map/parameters.h"
 #include "cartocrow/necklace_map/io/data_reader.h"
 #include "cartocrow/necklace_map/io/svg_reader.h"
 #include "cartocrow/necklace_map/io/svg_writer.h"
 #include "cartocrow/necklace_map/io/type_parsers.h"
+#include "cartocrow/necklace_map/map_element.h"
+#include "cartocrow/necklace_map/necklace.h"
+#include "cartocrow/necklace_map/parameters.h"
 
+namespace cartocrow {
+namespace necklace_map {
 
-namespace cartocrow
-{
-namespace necklace_map
-{
+Number ComputeScaleFactor(const Parameters& parameters, std::vector<MapElement::Ptr>& elements,
+                          std::vector<Necklace::Ptr>& necklaces);
 
-Number ComputeScaleFactor
-(
-  const Parameters& parameters,
-  std::vector<MapElement::Ptr>& elements,
-  std::vector<Necklace::Ptr>& necklaces
-);
-
-void ComputePlacement
-(
-  const Parameters& parameters,
-  const Number& scale_factor,
-  std::vector<MapElement::Ptr>& elements,
-  std::vector<Necklace::Ptr>& necklaces
-);
+void ComputePlacement(const Parameters& parameters, const Number& scale_factor,
+                      std::vector<MapElement::Ptr>& elements, std::vector<Necklace::Ptr>& necklaces);
 
 } // namespace necklace_map
 

@@ -32,24 +32,20 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 07-11-2019
 #include "cartocrow/necklace_map/circle_necklace.h"
 #include "cartocrow/necklace_map/necklace_shape.h"
 
+namespace cartocrow {
+namespace necklace_map {
 
-namespace cartocrow
-{
-namespace necklace_map
-{
+struct Necklace {
+	using Ptr = std::shared_ptr<Necklace>;
 
-struct Necklace
-{
-  using Ptr = std::shared_ptr<Necklace>;
+	Necklace(const std::string& id, const NecklaceShape::Ptr& shape);
 
-  Necklace(const std::string& id, const NecklaceShape::Ptr& shape);
+	void SortBeads();
 
-  void SortBeads();
+	std::string id;
 
-  std::string id;
-
-  NecklaceShape::Ptr shape;
-  std::vector<Bead::Ptr> beads;
+	NecklaceShape::Ptr shape;
+	std::vector<Bead::Ptr> beads;
 }; // struct Necklace
 
 } // namespace necklace_map

@@ -29,66 +29,56 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 09-03-2021
 #include <tinyxml2.h>
 
 #include "cartocrow/common/core_types.h"
+#include "cartocrow/common/io/write_options.h"
 #include "cartocrow/common/polar_line.h"
 #include "cartocrow/common/polar_segment.h"
 #include "cartocrow/common/spiral.h"
 #include "cartocrow/common/spiral_segment.h"
-#include "cartocrow/common/io/write_options.h"
 
+namespace cartocrow {
+namespace detail {
 
-namespace cartocrow
-{
-namespace detail
-{
+class SvgWriter {
+  public:
+	SvgWriter(const std::vector<PolarPoint>& points, const std::vector<Spiral>& spirals,
+	          const std::vector<SpiralSegment>& spiral_segments,
+	          const std::vector<PolarLine>& lines, const std::vector<PolarSegment>& line_segments,
+	          const WriteOptions::Ptr& options, std::ostream& out);
 
-class SvgWriter
-{
- public:
-  SvgWriter
-  (
-    const std::vector<PolarPoint>& points,
-    const std::vector<Spiral>& spirals,
-    const std::vector<SpiralSegment>& spiral_segments,
-    const std::vector<PolarLine>& lines,
-    const std::vector<PolarSegment>& line_segments,
-    const WriteOptions::Ptr& options,
-    std::ostream& out
-  );
+	~SvgWriter();
 
-  ~SvgWriter();
+	void DrawSpirals();
 
-  void DrawSpirals();
+	void DrawLines();
 
-  void DrawLines();
+	void DrawPoints();
 
-  void DrawPoints();
+  private:
+	void OpenSvg();
 
- private:
-  void OpenSvg();
+	void CloseSvg();
 
-  void CloseSvg();
+	void ComputeBoundingBox();
 
-  void ComputeBoundingBox();
+	void DrawSpiral(const Spiral& spiral, const Number& R_max, const Number& R_min = 0);
 
-  void DrawSpiral(const Spiral& spiral, const Number& R_max, const Number& R_min = 0);
+	void DrawLine(const PolarLine& line, const Number& t_from, const Number& t_to);
 
-  void DrawLine(const PolarLine& line, const Number& t_from, const Number& t_to);
+	const std::vector<PolarPoint>& points_;
+	const std::vector<Spiral>& spirals_;
+	const std::vector<SpiralSegment>& spiral_segments_;
+	const std::vector<PolarLine>& lines_;
+	const std::vector<PolarSegment>& line_segments_;
 
-  const std::vector<PolarPoint>& points_;
-  const std::vector<Spiral>& spirals_;
-  const std::vector<SpiralSegment>& spiral_segments_;
-  const std::vector<PolarLine>& lines_;
-  const std::vector<PolarSegment>& line_segments_;
+	std::ostream& out_;
 
-  std::ostream& out_;
+	WriteOptions::Ptr options_;
 
-  WriteOptions::Ptr options_;
+	Box bounding_box_;
+	double unit_px_;
+	std::string transform_matrix_;
 
-  Box bounding_box_;
-  double unit_px_;
-  std::string transform_matrix_;
-
-  tinyxml2::XMLPrinter printer_;
+	tinyxml2::XMLPrinter printer_;
 }; // class SvgWriter
 
 } // namespace detail

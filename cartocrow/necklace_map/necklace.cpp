@@ -24,11 +24,8 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 07-11-2019
 
 #include <glog/logging.h>
 
-
-namespace cartocrow
-{
-namespace necklace_map
-{
+namespace cartocrow {
+namespace necklace_map {
 
 /**@struct Necklace
  * @brief A collection of visualization symbols that are organized on a curve.
@@ -42,25 +39,19 @@ namespace necklace_map
  * @param id the necklace ID.
  * @param shape the shape of the necklace.
  */
-Necklace::Necklace(const std::string& id, const NecklaceShape::Ptr& shape) : id(id), shape(shape), beads() {}
+Necklace::Necklace(const std::string& id, const NecklaceShape::Ptr& shape)
+    : id(id), shape(shape), beads() {}
 
 /**@brief Sort the beads of the necklace by the clockwise extremes of their feasible interval.
  */
-void Necklace::SortBeads()
-{
-  for (const Bead::Ptr& bead : beads)
-    CHECK_NOTNULL(bead);
+void Necklace::SortBeads() {
+	for (const Bead::Ptr& bead : beads)
+		CHECK_NOTNULL(bead);
 
-  // Sort the beads by the clockwise extreme of their feasible interval.
-  std::sort
-  (
-    beads.begin(),
-    beads.end(),
-    [](const Bead::Ptr& a, const Bead::Ptr& b)
-    {
-      return a->feasible->from_rad() < b->feasible->from_rad();
-    }
-  );
+	// Sort the beads by the clockwise extreme of their feasible interval.
+	std::sort(beads.begin(), beads.end(), [](const Bead::Ptr& a, const Bead::Ptr& b) {
+		return a->feasible->from_rad() < b->feasible->from_rad();
+	});
 }
 
 /**@fn std::vector<Bead::Ptr> Necklace::id;

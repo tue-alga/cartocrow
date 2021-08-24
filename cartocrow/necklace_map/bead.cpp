@@ -24,11 +24,8 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 15-01-2020
 
 #include <glog/logging.h>
 
-
-namespace cartocrow
-{
-namespace necklace_map
-{
+namespace cartocrow {
+namespace necklace_map {
 
 /**@struct Bead
  * @brief A visualization element to show the numeric value associated with a map region.
@@ -50,10 +47,9 @@ namespace necklace_map
  * @endparblock
  * @param id the ID of the region associated with this bead.
  */
-Bead::Bead(const Number& radius_base, const std::string& style, const std::string& id) :
-  radius_base(radius_base), id(id), feasible(),
-  region_style(style), covering_radius_rad(-1),
-  valid(), angle_rad(0) {}
+Bead::Bead(const Number& radius_base, const std::string& style, const std::string& id)
+    : radius_base(radius_base), id(id), feasible(), region_style(style), covering_radius_rad(-1),
+      valid(), angle_rad(0) {}
 
 /**@brief Check whether the bead is valid.
  *
@@ -61,10 +57,9 @@ Bead::Bead(const Number& radius_base, const std::string& style, const std::strin
  *
  * Note that this check does not take into account overlap with other beads.
  */
-bool Bead::IsValid() const
-{
-  CHECK(false) << "Implementation not checked";
-  return feasible != nullptr && feasible->IsValid() && feasible->Contains(angle_rad);
+bool Bead::IsValid() const {
+	CHECK(false) << "Implementation not checked";
+	return feasible != nullptr && feasible->IsValid() && feasible->Contains(angle_rad);
 }
 
 /**@fn Number Bead::radius_base;

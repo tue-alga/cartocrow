@@ -23,62 +23,57 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 02-09-2020
 
 #include "write_options.h"
 
-
-namespace cartocrow
-{
-namespace necklace_map
-{
+namespace cartocrow {
+namespace necklace_map {
 
 /**@brief Initialize write options with default values.
  * @return Default write options.
  */
-WriteOptions::Ptr WriteOptions::Default()
-{
-  WriteOptions::Ptr options = std::make_shared<WriteOptions>();
+WriteOptions::Ptr WriteOptions::Default() {
+	WriteOptions::Ptr options = std::make_shared<WriteOptions>();
 
-  options->pixel_width = 500;
+	options->pixel_width = 500;
 
-  options->region_precision = 9;
-  options->region_opacity = -1;
-  options->bead_opacity = 1;
-  options->bead_id_font_size_px = 16;
+	options->region_precision = 9;
+	options->region_opacity = -1;
+	options->bead_opacity = 1;
+	options->bead_id_font_size_px = 16;
 
-  options->draw_necklace_curve = true;
-  options->draw_necklace_kernel = false;
-  options->draw_bead_ids = true;
+	options->draw_necklace_curve = true;
+	options->draw_necklace_kernel = false;
+	options->draw_bead_ids = true;
 
-  options->draw_feasible_intervals = false;
-  options->draw_valid_intervals = false;
-  options->draw_region_angles = false;
-  options->draw_bead_angles = false;
+	options->draw_feasible_intervals = false;
+	options->draw_valid_intervals = false;
+	options->draw_region_angles = false;
+	options->draw_bead_angles = false;
 
-  return options;
+	return options;
 }
 
 /**@brief Initialize write options with debug values.
  * @return Debug write options.
  */
-WriteOptions::Ptr WriteOptions::Debug()
-{
-  WriteOptions::Ptr options = std::make_shared<WriteOptions>();
+WriteOptions::Ptr WriteOptions::Debug() {
+	WriteOptions::Ptr options = std::make_shared<WriteOptions>();
 
-  options->pixel_width = 500;
+	options->pixel_width = 500;
 
-  options->region_precision = 9;
-  options->region_opacity = -1;
-  options->bead_opacity = 0.5;
-  options->bead_id_font_size_px = 16;
+	options->region_precision = 9;
+	options->region_opacity = -1;
+	options->bead_opacity = 0.5;
+	options->bead_id_font_size_px = 16;
 
-  options->draw_necklace_curve = true;
-  options->draw_necklace_kernel = true;
-  options->draw_bead_ids = true;
+	options->draw_necklace_curve = true;
+	options->draw_necklace_kernel = true;
+	options->draw_bead_ids = true;
 
-  options->draw_feasible_intervals = true;
-  options->draw_valid_intervals = true;
-  options->draw_region_angles = false;
-  options->draw_bead_angles = true;
+	options->draw_feasible_intervals = true;
+	options->draw_valid_intervals = true;
+	options->draw_region_angles = false;
+	options->draw_bead_angles = true;
 
-  return options;
+	return options;
 }
 
 /**@fn WriteOptions::Ptr

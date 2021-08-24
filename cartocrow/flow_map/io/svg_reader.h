@@ -31,34 +31,21 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 04-09-2020
 
 #include <gflags/gflags.h>
 
-#include "cartocrow/flow_map/place.h"
 #include "cartocrow/common/region.h"
+#include "cartocrow/flow_map/place.h"
 
+namespace cartocrow {
+namespace flow_map {
 
-namespace cartocrow
-{
-namespace flow_map
-{
+class SvgReader {
+  public:
+	SvgReader();
 
-class SvgReader
-{
- public:
-  SvgReader();
+	bool ReadFile(const std::filesystem::path& filename, std::vector<cartocrow::Region>& context,
+	              std::vector<Place::Ptr>& places, int max_retries = 2);
 
-  bool ReadFile
-  (
-    const std::filesystem::path& filename,
-    std::vector<cartocrow::Region>& context,
-    std::vector<Place::Ptr>& places,
-    int max_retries = 2
-  );
-
-  bool Parse
-  (
-    const std::string& input,
-    std::vector<cartocrow::Region>& context,
-    std::vector<Place::Ptr>& places
-  );
+	bool Parse(const std::string& input, std::vector<cartocrow::Region>& context,
+	           std::vector<Place::Ptr>& places);
 }; // class SvgReader
 
 } // namespace flow_map

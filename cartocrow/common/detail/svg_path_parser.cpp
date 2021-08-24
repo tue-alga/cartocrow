@@ -28,13 +28,9 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 20-11-2019
 
 #include "cartocrow/common/detail/svg_point_parser.h"
 
-
-namespace cartocrow
-{
-namespace detail
-{
-namespace
-{
+namespace cartocrow {
+namespace detail {
+namespace {
 
 constexpr char kAbsoluteMove = 'M';
 constexpr char kAbsoluteLine = 'L';
@@ -58,7 +54,6 @@ constexpr char kRelativeClose = 'z';
 
 } // anonymous namespace
 
-
 /**@class SvgPathConverter
  * @brief An interface for converting an SVG path element to another data type.
  */
@@ -66,10 +61,9 @@ constexpr char kRelativeClose = 'z';
 /**@brief Move to a point.
  * @param to the absolute coordinates of the point.
  */
-inline void SvgPathConverter::MoveTo(const Point& to)
-{
-  MoveTo_(to);
-  previous_ = to;
+inline void SvgPathConverter::MoveTo(const Point& to) {
+	MoveTo_(to);
+	previous_ = to;
 }
 
 /**@brief Draw a straight line segment.
@@ -80,12 +74,14 @@ inline void SvgPathConverter::MoveTo(const Point& to)
  * Either coordinate may be std::nan to indicate an axis aligned line segment.
  * @endparblock
  */
-inline void SvgPathConverter::LineTo(const Point& to)
-{
-  if (std::isnan(to.x())) LineTo_(Point(previous_.x(), to.y()));
-  else if (std::isnan(to.y())) LineTo_(Point(to.x(), previous_.x()));
-  else LineTo_(to);
-  previous_ = to;
+inline void SvgPathConverter::LineTo(const Point& to) {
+	if (std::isnan(to.x()))
+		LineTo_(Point(previous_.x(), to.y()));
+	else if (std::isnan(to.y()))
+		LineTo_(Point(to.x(), previous_.x()));
+	else
+		LineTo_(to);
+	previous_ = to;
 }
 
 /**@brief Draw a quadratic Bezier curve.
@@ -94,11 +90,10 @@ inline void SvgPathConverter::LineTo(const Point& to)
  * @param control the absolute coordinates of the Bezier control point.
  * @param to the absolute coordinates of the endpoint of the curve.
  */
-inline void SvgPathConverter::QuadBezierTo(const Point& control, const Point& to)
-{
-  QuadBezierTo_(control, to);
-  previous_ = to;
-  previous_control_ = previous_ - control;
+inline void SvgPathConverter::QuadBezierTo(const Point& control, const Point& to) {
+	QuadBezierTo_(control, to);
+	previous_ = to;
+	previous_control_ = previous_ - control;
 }
 
 /**@brief Draw a quadratic Bezier curve as continuation of the previous Bezier curve.
@@ -106,12 +101,11 @@ inline void SvgPathConverter::QuadBezierTo(const Point& control, const Point& to
  * This Bezier curve starts at the previous endpoint. Its control point mirrors the control point of the previous curve in the previous endpoint.
  * @param to the absolute coordinates of the endpoint of the curve.
  */
-inline void SvgPathConverter::ContinueQuadBezierTo(const Point& to)
-{
-  const Point control = previous_ + previous_control_;
-  QuadBezierTo_(control, to);
-  previous_ = to;
-  previous_control_ = previous_ - control;
+inline void SvgPathConverter::ContinueQuadBezierTo(const Point& to) {
+	const Point control = previous_ + previous_control_;
+	QuadBezierTo_(control, to);
+	previous_ = to;
+	previous_control_ = previous_ - control;
 }
 
 /**@brief Draw a cubic Bezier curve.
@@ -121,11 +115,11 @@ inline void SvgPathConverter::ContinueQuadBezierTo(const Point& to)
  * @param control_2 the absolute coordinates of the second Bezier control point.
  * @param to the absolute coordinates of the endpoint of the curve.
  */
-inline void SvgPathConverter::CubeBezierTo(const Point& control_1, const Point& control_2, const Point& to)
-{
-  CubeBezierTo_(control_1, control_2, to);
-  previous_ = to;
-  previous_control_ = previous_ - control_2;
+inline void SvgPathConverter::CubeBezierTo(const Point& control_1, const Point& control_2,
+                                           const Point& to) {
+	CubeBezierTo_(control_1, control_2, to);
+	previous_ = to;
+	previous_control_ = previous_ - control_2;
 }
 
 /**@brief Draw a cubic Bezier curve as continuation of the previous Bezier curve.
@@ -134,12 +128,11 @@ inline void SvgPathConverter::CubeBezierTo(const Point& control_1, const Point& 
  * @param control_2 the absolute coordinates of the second Bezier control point.
  * @param to the absolute coordinates of the endpoint of the curve.
  */
-inline void SvgPathConverter::ContinueCubeBezierTo(const Point& control_2, const Point& to)
-{
-  const Point control_1 = previous_ + previous_control_;
-  CubeBezierTo_(control_1, control_2, to);
-  previous_ = to;
-  previous_control_ = previous_ - control_2;
+inline void SvgPathConverter::ContinueCubeBezierTo(const Point& control_2, const Point& to) {
+	const Point control_1 = previous_ + previous_control_;
+	CubeBezierTo_(control_1, control_2, to);
+	previous_ = to;
+	previous_control_ = previous_ - control_2;
 }
 
 /**@brief Draw an arc on an ellipse.
@@ -154,27 +147,17 @@ inline void SvgPathConverter::ContinueCubeBezierTo(const Point& control_2, const
  * @param sweep_ccw whether the arc should traverse the ellipse in counterclockwise direction from the previous point.
  * @param to the absolute coordinates of the endpoint of the arc.
  */
-inline void SvgPathConverter::EllipticalArcTo
-(
-  const Number& radius_x,
-  const Number& radius_y,
-  const Number& rotation_ccw_rad,
-  const bool long_arc,
-  const bool sweep_ccw,
-  const Point& to
-)
-{
-  EllipticalArcTo_(radius_x, radius_y, rotation_ccw_rad, long_arc, sweep_ccw, to);
-  previous_ = to;
+inline void SvgPathConverter::EllipticalArcTo(const Number& radius_x, const Number& radius_y,
+                                              const Number& rotation_ccw_rad, const bool long_arc,
+                                              const bool sweep_ccw, const Point& to) {
+	EllipticalArcTo_(radius_x, radius_y, rotation_ccw_rad, long_arc, sweep_ccw, to);
+	previous_ = to;
 }
 
 /**@brief Move to a point.
  * @param to the coordinates of the point relative to the previous (end)point.
  */
-inline void SvgPathConverter::MoveTo(const Vector& to)
-{
-  MoveTo(previous_ + to);
-}
+inline void SvgPathConverter::MoveTo(const Vector& to) { MoveTo(previous_ + to); }
 
 /**@brief Draw a straight line segment.
  *
@@ -184,10 +167,7 @@ inline void SvgPathConverter::MoveTo(const Vector& to)
  * Either coordinate may be std::nan to indicate an axis aligned line segment.
  * @endparblock
  */
-inline void SvgPathConverter::LineTo(const Vector& to)
-{
-  LineTo(previous_ + to);
-}
+inline void SvgPathConverter::LineTo(const Vector& to) { LineTo(previous_ + to); }
 
 /**@brief Draw a quadratic Bezier curve.
  *
@@ -195,9 +175,8 @@ inline void SvgPathConverter::LineTo(const Vector& to)
  * @param control the coordinates of the Bezier control point relative to the previous (end)point.
  * @param to the coordinates of the endpoint of the curve relative to the previous (end)point.
  */
-inline void SvgPathConverter::QuadBezierTo(const Vector& control, const Vector& to)
-{
-  QuadBezierTo(previous_ + control, previous_ + to);
+inline void SvgPathConverter::QuadBezierTo(const Vector& control, const Vector& to) {
+	QuadBezierTo(previous_ + control, previous_ + to);
 }
 
 /**@brief Draw a quadratic Bezier curve as continuation of the previous Bezier curve.
@@ -205,9 +184,8 @@ inline void SvgPathConverter::QuadBezierTo(const Vector& control, const Vector& 
  * This Bezier curve starts at the previous endpoint. Its control point mirrors the control point of the previous curve in the previous endpoint.
  * @param to the coordinates of the endpoint of the curve relative to the previous (end)point.
  */
-inline void SvgPathConverter::ContinueQuadBezierTo(const Vector& to)
-{
-  ContinueQuadBezierTo(previous_ + to);
+inline void SvgPathConverter::ContinueQuadBezierTo(const Vector& to) {
+	ContinueQuadBezierTo(previous_ + to);
 }
 
 /**@brief Draw a cubic Bezier curve.
@@ -217,9 +195,9 @@ inline void SvgPathConverter::ContinueQuadBezierTo(const Vector& to)
  * @param control_2 the coordinates of the second Bezier control point relative to the previous (end)point.
  * @param to the coordinates of the endpoint of the curve relative to the previous (end)point.
  */
-inline void SvgPathConverter::CubeBezierTo(const Vector& control_1, const Vector& control_2, const Vector& to)
-{
-  CubeBezierTo(previous_ + control_1, previous_ + control_2, previous_ + to);
+inline void SvgPathConverter::CubeBezierTo(const Vector& control_1, const Vector& control_2,
+                                           const Vector& to) {
+	CubeBezierTo(previous_ + control_1, previous_ + control_2, previous_ + to);
 }
 
 /**@brief Draw a cubic Bezier curve as continuation of the previous Bezier curve.
@@ -228,9 +206,8 @@ inline void SvgPathConverter::CubeBezierTo(const Vector& control_1, const Vector
  * @param control_2 the coordinates of the second Bezier control point relative to the previous (end)point.
  * @param to the coordinates of the endpoint of the curve relative to the previous (end)point.
  */
-inline void SvgPathConverter::ContinueCubeBezierTo(const Vector& control_2, const Vector& to)
-{
-  ContinueCubeBezierTo(previous_ + control_2, previous_ + to);
+inline void SvgPathConverter::ContinueCubeBezierTo(const Vector& control_2, const Vector& to) {
+	ContinueCubeBezierTo(previous_ + control_2, previous_ + to);
 }
 
 /**@brief Draw an arc on an ellipse.
@@ -245,59 +222,33 @@ inline void SvgPathConverter::ContinueCubeBezierTo(const Vector& control_2, cons
  * @param sweep_ccw whether the arc should traverse the ellipse in counterclockwise direction from the previous point.
  * @param to the coordinates of the endpoint of the arc relative to the previous (end)point.
  */
-inline void SvgPathConverter::EllipticalArcTo
-(
-  const Number& radius_x,
-  const Number& radius_y,
-  const Number& rotation_ccw_rad,
-  const bool long_arc,
-  const bool sweep_ccw,
-  const Vector& to
-)
-{
-  EllipticalArcTo(radius_x, radius_y, rotation_ccw_rad, long_arc, sweep_ccw, previous_ + to);
+inline void SvgPathConverter::EllipticalArcTo(const Number& radius_x, const Number& radius_y,
+                                              const Number& rotation_ccw_rad, const bool long_arc,
+                                              const bool sweep_ccw, const Vector& to) {
+	EllipticalArcTo(radius_x, radius_y, rotation_ccw_rad, long_arc, sweep_ccw, previous_ + to);
 }
 
 /**@brief Draw a straight line to the start of the path.
  */
-inline void SvgPathConverter::Close()
-{
-  Close_();
+inline void SvgPathConverter::Close() { Close_(); }
+
+void SvgPathConverter::LineTo_(const Point& to) { LOG(FATAL) << "Adding line not implemented."; }
+
+void SvgPathConverter::QuadBezierTo_(const Point& control, const Point& to) {
+	LOG(FATAL) << "Adding quadratic Bezier curve not implemented.";
 }
 
-void SvgPathConverter::LineTo_(const Point& to)
-{
-  LOG(FATAL) << "Adding line not implemented.";
+void SvgPathConverter::CubeBezierTo_(const Point& control_1, const Point& control_2, const Point& to) {
+	LOG(FATAL) << "Adding cubic Bezier curve not implemented.";
 }
 
-void SvgPathConverter::QuadBezierTo_(const Point& control, const Point& to)
-{
-  LOG(FATAL) << "Adding quadratic Bezier curve not implemented.";
+void SvgPathConverter::EllipticalArcTo_(const Number& radius_x, const Number& radius_y,
+                                        const Number& rotation_ccw_rad, const bool long_arc,
+                                        const bool sweep_ccw, const Point& to) {
+	LOG(FATAL) << "Adding circular curve not implemented.";
 }
 
-void SvgPathConverter::CubeBezierTo_(const Point& control_1, const Point& control_2, const Point& to)
-{
-  LOG(FATAL) << "Adding cubic Bezier curve not implemented.";
-}
-
-void SvgPathConverter::EllipticalArcTo_
-(
-  const Number& radius_x,
-  const Number& radius_y,
-  const Number& rotation_ccw_rad,
-  const bool long_arc,
-  const bool sweep_ccw,
-  const Point& to
-)
-{
-  LOG(FATAL) << "Adding circular curve not implemented.";
-}
-
-void SvgPathConverter::Close_()
-{
-  LOG(FATAL) << "Closing shape not implemented.";
-}
-
+void SvgPathConverter::Close_() { LOG(FATAL) << "Closing shape not implemented."; }
 
 /**@class SvgPathParser
  * @brief Parser for SVG path strings.
@@ -308,118 +259,107 @@ void SvgPathConverter::Close_()
  * @param converter the converter to include path elements in another data format.
  * @return whether the path could be parsed correctly.
  */
-bool SvgPathParser::operator()(const std::string& path, SvgPathConverter& converter)
-{
-  bool started = false;
+bool SvgPathParser::operator()(const std::string& path, SvgPathConverter& converter) {
+	bool started = false;
 
-  // Interpret the path.
-  std::stringstream ss(path);
-  SvgPointParser pp;
-  while (ss)
-  {
-    try
-    {
-      char command;
-      ss >> command;
-      if (ss.eof())
-        break;
+	// Interpret the path.
+	std::stringstream ss(path);
+	SvgPointParser pp;
+	while (ss) {
+		try {
+			char command;
+			ss >> command;
+			if (ss.eof())
+				break;
 
-      CHECK(command == kAbsoluteMove || started) << "Path not started by absolute move command.";
+			CHECK(command == kAbsoluteMove || started)
+			    << "Path not started by absolute move command.";
 
-      // Note that SVG uses a y-down coordinate system, while Leaflet expects north-up coordinates.
-      // Also note that the order of parsing the stream is important, so it cannot be done as part of the converter method parameters (C++ has undefined parameter evaluation order).
-      switch (command)
-      {
-        case kAbsoluteMove:
-          converter.MoveTo(pp.Pt(ss));
-          started = true;
-          break;
-        case kAbsoluteLine:
-          converter.LineTo(pp.Pt(ss));
-          break;
-        case kAbsoluteHorizontalLine:
-          converter.LineTo(Point(pp.X(ss), NAN));
-          break;
-        case kAbsoluteVerticalLine:
-          converter.LineTo(Point(NAN, pp.Y(ss)));
-          break;
-        case kAbsoluteQuadraticBezier:
-        {
-          const Point control = pp.Pt(ss);
-          const Point point = pp.Pt(ss);
-          converter.QuadBezierTo(control, point);
-          break;
-        }
-        case kAbsoluteContinueQuadraticBezier:
-          converter.ContinueQuadBezierTo(pp.Pt(ss));
-          break;
-        case kAbsoluteCubicBezier:
-        {
-          const Point control_1 = pp.Pt(ss);
-          const Point control_2 = pp.Pt(ss);
-          const Point point = pp.Pt(ss);
-          converter.CubeBezierTo(control_1, control_2, point);
-          break;
-        }
-        case kAbsoluteContinueCubicBezier:
-        {
-          const Point control_2 = pp.Pt(ss);
-          const Point point = pp.Pt(ss);
-          converter.ContinueCubeBezierTo(control_2, point);
-          break;
-        }
-        case kAbsoluteClose:
-          converter.Close();
-        case kRelativeMove:
-          converter.MoveTo(pp.Vec(ss));
-          break;
-        case kRelativeLine:
-          converter.LineTo(pp.Vec(ss));
-          break;
-        case kRelativeHorizontalLine:
-          converter.LineTo(Vector(pp.X(ss), NAN));
-          break;
-        case kRelativeVerticalLine:
-          converter.LineTo(Vector(NAN, pp.Y(ss)));
-          break;
-        case kRelativeQuadraticBezier:
-        {
-          const Vector control = pp.Vec(ss);
-          const Vector point = pp.Vec(ss);
-          converter.QuadBezierTo(control, point);
-          break;
-        }
-        case kRelativeContinueQuadraticBezier:
-          converter.ContinueQuadBezierTo(pp.Vec(ss));
-          break;
-        case kRelativeCubicBezier:
-        {
-          const Vector control_1 = pp.Vec(ss);
-          const Vector control_2 = pp.Vec(ss);
-          const Vector point = pp.Vec(ss);
-          converter.CubeBezierTo(control_1, control_2, point);
-          break;
-        }
-        case kRelativeContinueCubicBezier:
-        {
-          const Vector control_2 = pp.Vec(ss);
-          const Vector point = pp.Vec(ss);
-          converter.ContinueCubeBezierTo(control_2, point);
-          break;
-        }
-        case kRelativeClose:
-          converter.Close();
-          break;
-        default:
-          LOG(FATAL) << "Unknown path command: " << command;
-      }
-    }
-    catch (...)
-    {
-      return false;
-    }
-  }
-  return true;
+			// Note that SVG uses a y-down coordinate system, while Leaflet expects north-up coordinates.
+			// Also note that the order of parsing the stream is important, so it cannot be done as part of the converter method parameters (C++ has undefined parameter evaluation order).
+			switch (command) {
+			case kAbsoluteMove:
+				converter.MoveTo(pp.Pt(ss));
+				started = true;
+				break;
+			case kAbsoluteLine:
+				converter.LineTo(pp.Pt(ss));
+				break;
+			case kAbsoluteHorizontalLine:
+				converter.LineTo(Point(pp.X(ss), NAN));
+				break;
+			case kAbsoluteVerticalLine:
+				converter.LineTo(Point(NAN, pp.Y(ss)));
+				break;
+			case kAbsoluteQuadraticBezier: {
+				const Point control = pp.Pt(ss);
+				const Point point = pp.Pt(ss);
+				converter.QuadBezierTo(control, point);
+				break;
+			}
+			case kAbsoluteContinueQuadraticBezier:
+				converter.ContinueQuadBezierTo(pp.Pt(ss));
+				break;
+			case kAbsoluteCubicBezier: {
+				const Point control_1 = pp.Pt(ss);
+				const Point control_2 = pp.Pt(ss);
+				const Point point = pp.Pt(ss);
+				converter.CubeBezierTo(control_1, control_2, point);
+				break;
+			}
+			case kAbsoluteContinueCubicBezier: {
+				const Point control_2 = pp.Pt(ss);
+				const Point point = pp.Pt(ss);
+				converter.ContinueCubeBezierTo(control_2, point);
+				break;
+			}
+			case kAbsoluteClose:
+				converter.Close();
+			case kRelativeMove:
+				converter.MoveTo(pp.Vec(ss));
+				break;
+			case kRelativeLine:
+				converter.LineTo(pp.Vec(ss));
+				break;
+			case kRelativeHorizontalLine:
+				converter.LineTo(Vector(pp.X(ss), NAN));
+				break;
+			case kRelativeVerticalLine:
+				converter.LineTo(Vector(NAN, pp.Y(ss)));
+				break;
+			case kRelativeQuadraticBezier: {
+				const Vector control = pp.Vec(ss);
+				const Vector point = pp.Vec(ss);
+				converter.QuadBezierTo(control, point);
+				break;
+			}
+			case kRelativeContinueQuadraticBezier:
+				converter.ContinueQuadBezierTo(pp.Vec(ss));
+				break;
+			case kRelativeCubicBezier: {
+				const Vector control_1 = pp.Vec(ss);
+				const Vector control_2 = pp.Vec(ss);
+				const Vector point = pp.Vec(ss);
+				converter.CubeBezierTo(control_1, control_2, point);
+				break;
+			}
+			case kRelativeContinueCubicBezier: {
+				const Vector control_2 = pp.Vec(ss);
+				const Vector point = pp.Vec(ss);
+				converter.ContinueCubeBezierTo(control_2, point);
+				break;
+			}
+			case kRelativeClose:
+				converter.Close();
+				break;
+			default:
+				LOG(FATAL) << "Unknown path command: " << command;
+			}
+		} catch (...) {
+			return false;
+		}
+	}
+	return true;
 }
 
 } // namespace detail

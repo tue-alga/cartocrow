@@ -26,9 +26,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 19-02-2021
 
 #include <glog/logging.h>
 
-
-namespace cartocrow
-{
+namespace cartocrow {
 
 /**@brief Collect the t at a given distance from the pole.
  * @tparam OutputIterator the type of output iterator to which to send the output.
@@ -36,33 +34,30 @@ namespace cartocrow
  * @param t the t values of the points on the line at the desired distance.
  * @return the number of points on the line at the given distance. This can be either 0, 1, or 2.
  */
-template<class OutputIterator>
-int PolarLine::CollectT(const Number& R, OutputIterator t) const
-{
-  CHECK_LE(0, R);
+template <class OutputIterator> int PolarLine::CollectT(const Number& R, OutputIterator t) const {
+	CHECK_LE(0, R);
 
-  // The point at a given distance from the pole could be computed using the sine law.
-  // However, we instead base it on the point on the segment closest to the pole for two reasons.
-  // Firstly, the segment is not guaranteed to come close enough to the pole.
-  // Secondly, the sine law computation has to consider four different configurations for the point lying:
-  // * clockwise or counter-clockwise of the closest point (sin(a) = sin(pi-a) identity of the angle near the point at R)
-  // * inside or outside the segment (sin(a) versus sin(pi-a) of the angle at the segment endpoint).
-  // Both issues are easier to resolve when basing the point at distance R on the point closest to the pole.
+	// The point at a given distance from the pole could be computed using the sine law.
+	// However, we instead base it on the point on the segment closest to the pole for two reasons.
+	// Firstly, the segment is not guaranteed to come close enough to the pole.
+	// Secondly, the sine law computation has to consider four different configurations for the point lying:
+	// * clockwise or counter-clockwise of the closest point (sin(a) = sin(pi-a) identity of the angle near the point at R)
+	// * inside or outside the segment (sin(a) versus sin(pi-a) of the angle at the segment endpoint).
+	// Both issues are easier to resolve when basing the point at distance R on the point closest to the pole.
 
-  if (R < foot().R())
-    return 0;
+	if (R < foot().R())
+		return 0;
 
-  if (R == foot().R())
-  {
-    *t++ = 0;
-    return 1;
-  }
+	if (R == foot().R()) {
+		*t++ = 0;
+		return 1;
+	}
 
-  // Note that R = 0 would have been caught by the previous conditions.
-  const Number offset = std::sqrt((R * R) - (foot().R() * foot().R()));
-  *t++ = -offset;
-  *t++ = offset;
-  return 2;
+	// Note that R = 0 would have been caught by the previous conditions.
+	const Number offset = std::sqrt((R * R) - (foot().R() * foot().R()));
+	*t++ = -offset;
+	*t++ = offset;
+	return 2;
 }
 
 /**@brief Compute the phi at a given distance from the pole.
@@ -71,16 +66,15 @@ int PolarLine::CollectT(const Number& R, OutputIterator t) const
  * @param phi the phi values of the points on the line at the desired distance.
  * @return the number of points on the line at the given distance. This can be either 0, 1, or 2.
  */
-template<class OutputIterator>
-int PolarLine::CollectPhi(const Number& R, OutputIterator phi) const
-{
-  Number t[2];
-  const int num = CollectT(R, t);
+template <class OutputIterator>
+int PolarLine::CollectPhi(const Number& R, OutputIterator phi) const {
+	Number t[2];
+	const int num = CollectT(R, t);
 
-  for (int i = 0; i < num; ++i)
-    *phi++ = EvaluatePhi(t[i]);
+	for (int i = 0; i < num; ++i)
+		*phi++ = EvaluatePhi(t[i]);
 
-  return num;
+	return num;
 }
 
 } // namespace cartocrow

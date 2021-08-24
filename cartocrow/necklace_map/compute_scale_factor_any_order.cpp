@@ -24,11 +24,8 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 03-03-2020
 
 #include "cartocrow/necklace_map/detail/compute_scale_factor_any_order.h"
 
-
-namespace cartocrow
-{
-namespace necklace_map
-{
+namespace cartocrow {
+namespace necklace_map {
 
 /**@struct ComputeScaleFactorAnyOrder
  * @brief A functor to compute the optimal scale factor for a collection of necklace map elements with undefined order.
@@ -48,18 +45,16 @@ namespace necklace_map
  * This distance must be in the range [0, pi]. Note that values beyond some threshold based on the input regions, the scale factor is forced to 0.
  * @endparblock
  */
-ComputeScaleFactorAnyOrder::ComputeScaleFactorAnyOrder(const Parameters& parameters) :
-  ComputeScaleFactor(parameters),
-  binary_search_depth_(parameters.binary_search_depth),
-  heuristic_cycles_(parameters.heuristic_cycles)
-{}
+ComputeScaleFactorAnyOrder::ComputeScaleFactorAnyOrder(const Parameters& parameters)
+    : ComputeScaleFactor(parameters), binary_search_depth_(parameters.binary_search_depth),
+      heuristic_cycles_(parameters.heuristic_cycles) {}
 
-Number ComputeScaleFactorAnyOrder::operator()(Necklace::Ptr& necklace)
-{
-  detail::ComputeScaleFactorAnyOrder opt(necklace, buffer_rad_, binary_search_depth_, heuristic_cycles_);
-  const Number scale_factor = opt.Optimize();
+Number ComputeScaleFactorAnyOrder::operator()(Necklace::Ptr& necklace) {
+	detail::ComputeScaleFactorAnyOrder opt(necklace, buffer_rad_, binary_search_depth_,
+	                                       heuristic_cycles_);
+	const Number scale_factor = opt.Optimize();
 
-  return scale_factor;
+	return scale_factor;
 }
 
 } // namespace necklace_map

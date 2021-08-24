@@ -30,11 +30,8 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 05-12-2019
 #include "cartocrow/necklace_map/compute_feasible_interval_centroid.h"
 #include "cartocrow/necklace_map/compute_feasible_interval_wedge.h"
 
-
-namespace cartocrow
-{
-namespace necklace_map
-{
+namespace cartocrow {
+namespace necklace_map {
 
 /**@class ComputeFeasibleInterval
  * @brief An interface for a functor to generate feasible intervals for necklace bead placement.
@@ -48,30 +45,30 @@ namespace necklace_map
  * @param parameters the parameters describing the desired type of functor.
  * @return a unique pointer containing a new functor or a nullptr if the functor could not be constructed.
  */
-ComputeFeasibleInterval::Ptr ComputeFeasibleInterval::New(const Parameters& parameters)
-{
-  // The wedge interval functor also needs a centroid interval functor as fallback.
-  switch (parameters.interval_type)
-  {
-    case IntervalType::kCentroid:
-      return Ptr(new ComputeFeasibleCentroidInterval(parameters));
-    case IntervalType::kWedge:
-    {
-      Ptr compute_wedge(new ComputeFeasibleWedgeInterval(parameters));
+ComputeFeasibleInterval::Ptr ComputeFeasibleInterval::New(const Parameters& parameters) {
+	// The wedge interval functor also needs a centroid interval functor as fallback.
+	switch (parameters.interval_type) {
+	case IntervalType::kCentroid:
+		return Ptr(new ComputeFeasibleCentroidInterval(parameters));
+	case IntervalType::kWedge: {
+		Ptr compute_wedge(new ComputeFeasibleWedgeInterval(parameters));
 
-      ComputeFeasibleWedgeInterval* functor = static_cast<ComputeFeasibleWedgeInterval*>(compute_wedge.get());
-      functor->fallback_point_regions_.reset(new ComputeFeasibleCentroidInterval(parameters));
-      functor->fallback_kernel_region_.reset(new ComputeFeasibleCentroidInterval(parameters));
+		ComputeFeasibleWedgeInterval* functor =
+		    static_cast<ComputeFeasibleWedgeInterval*>(compute_wedge.get());
+		functor->fallback_point_regions_.reset(new ComputeFeasibleCentroidInterval(parameters));
+		functor->fallback_kernel_region_.reset(new ComputeFeasibleCentroidInterval(parameters));
 
-      Parameters small_regions_parameters = parameters;
-      small_regions_parameters.centroid_interval_length_rad = parameters.wedge_interval_length_min_rad;
-      functor->fallback_small_regions_.reset(new ComputeFeasibleCentroidInterval(small_regions_parameters));
+		Parameters small_regions_parameters = parameters;
+		small_regions_parameters.centroid_interval_length_rad =
+		    parameters.wedge_interval_length_min_rad;
+		functor->fallback_small_regions_.reset(
+		    new ComputeFeasibleCentroidInterval(small_regions_parameters));
 
-      return compute_wedge;
-    }
-    default:
-      return nullptr;
-  }
+		return compute_wedge;
+	}
+	default:
+		return nullptr;
+	}
 }
 
 /**@fn virtual CircularRange::Ptr ComputeFeasibleInterval::operator()(const Polygon& extent, const Necklace::Ptr& necklace) const = 0;
@@ -84,29 +81,26 @@ ComputeFeasibleInterval::Ptr ComputeFeasibleInterval::New(const Parameters& para
 /**@brief Apply the functor to a map element.
  * @param[in,out] element the element.
  */
-void ComputeFeasibleInterval::operator()(MapElement::Ptr& element) const
-{
-  Polygon extent;
-  element->region.MakeSimple(extent);
+void ComputeFeasibleInterval::operator()(MapElement::Ptr& element) const {
+	Polygon extent;
+	element->region.MakeSimple(extent);
 
-  if (!element->bead)
-    return;
+	if (!element->bead)
+		return;
 
-  CHECK_NOTNULL(element->necklace);
-  element->bead->feasible = (*this)(extent, element->necklace);
+	CHECK_NOTNULL(element->necklace);
+	element->bead->feasible = (*this)(extent, element->necklace);
 }
 
 /**@brief Apply the functor to a collection of map elements.
  * @param[in,out] elements the elements.
  */
-void ComputeFeasibleInterval::operator()(std::vector<MapElement::Ptr>& elements) const
-{
-  for (MapElement::Ptr& element : elements)
-    (*this)(element);
+void ComputeFeasibleInterval::operator()(std::vector<MapElement::Ptr>& elements) const {
+	for (MapElement::Ptr& element : elements)
+		(*this)(element);
 }
 
 ComputeFeasibleInterval::ComputeFeasibleInterval(const Parameters& parameters) {}
-
 
 } // namespace necklace_map
 } // namespace cartocrow

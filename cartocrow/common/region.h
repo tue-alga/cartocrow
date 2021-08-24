@@ -27,32 +27,29 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 07-11-2019
 
 #include "cartocrow/common/core_types.h"
 
-
-namespace cartocrow
-{
+namespace cartocrow {
 
 ///@brief A geographically significant shape.
-class Region
-{
- public:
-  //using PolygonSet = CGAL::Polygon_set_2<Kernel>; // Polygon_set_2 fails to initialize with the EPIC kernel: using simple list instead.
-  using PolygonSet = std::vector<Polygon_with_holes>;
+class Region {
+  public:
+	//using PolygonSet = CGAL::Polygon_set_2<Kernel>; // Polygon_set_2 fails to initialize with the EPIC kernel: using simple list instead.
+	using PolygonSet = std::vector<Polygon_with_holes>;
 
- public:
-  explicit Region(const std::string& id);
+  public:
+	explicit Region(const std::string& id);
 
-  bool IsPoint() const;
+	bool IsPoint() const;
 
-  bool IsValid() const;
+	bool IsValid() const;
 
-  bool MakeValid();
+	bool MakeValid();
 
-  void MakeSimple(Polygon& simple);
+	void MakeSimple(Polygon& simple);
 
-  std::string id;
-  PolygonSet shape;
+	std::string id;
+	PolygonSet shape;
 
-  std::string style;
+	std::string style;
 }; // class Region
 
 } // namespace cartocrow

@@ -26,9 +26,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 07-11-2019
 #include <CGAL/convex_hull_2.h>
 #include <glog/logging.h>
 
-
-namespace cartocrow
-{
+namespace cartocrow {
 
 /**@class Region
  * A collection of polygons.
@@ -48,16 +46,12 @@ namespace cartocrow
  * See Region::id for more details on this ID.
  * @endparblock
  */
-Region::Region(const std::string& id)
-  : id(id), shape(), style("") {}
+Region::Region(const std::string& id) : id(id), shape(), style("") {}
 
 /**@brief Check whether the region covers a sinlge point.
  * @return whether the region covers a sinlge point.
  */
-bool Region::IsPoint() const
-{
-  return shape.size() == 1 && shape[0].outer_boundary().size() == 1;
-}
+bool Region::IsPoint() const { return shape.size() == 1 && shape[0].outer_boundary().size() == 1; }
 
 /**@brief Check whether the region is valid.
  *
@@ -66,22 +60,18 @@ bool Region::IsPoint() const
  * Note that different polygons may intersect and polygons may be degenerate, i.e. enclosing an empty region such as a single point.
  * @return whether the region is valid.
  */
-bool Region::IsValid() const
-{
-  bool correct = true;
-  for (const Polygon_with_holes& polygon : shape)
-  {
-    const Polygon& outer = polygon.outer_boundary();
+bool Region::IsValid() const {
+	bool correct = true;
+	for (const Polygon_with_holes& polygon : shape) {
+		const Polygon& outer = polygon.outer_boundary();
 
-    // Degenerate polygons are considered correct.
-    if (outer.size() == 1)
-      continue;
+		// Degenerate polygons are considered correct.
+		if (outer.size() == 1)
+			continue;
 
-    correct &=
-      outer.orientation() == CGAL::COUNTERCLOCKWISE &&
-      outer.is_simple();
-  }
-  return correct;
+		correct &= outer.orientation() == CGAL::COUNTERCLOCKWISE && outer.is_simple();
+	}
+	return correct;
 }
 
 /**@brief Make the region as valid as possible.
@@ -91,23 +81,21 @@ bool Region::IsValid() const
  * Self-intersecting polygons are not corrected.
  * @return whether the region is valid after the changes.
  */
-bool Region::MakeValid()
-{
-  bool correct = true;
-  for (Polygon_with_holes& polygon : shape)
-  {
-    Polygon& outer = polygon.outer_boundary();
+bool Region::MakeValid() {
+	bool correct = true;
+	for (Polygon_with_holes& polygon : shape) {
+		Polygon& outer = polygon.outer_boundary();
 
-    // Degenerate polygons are considered correct.
-    if (outer.size() == 1)
-      continue;
+		// Degenerate polygons are considered correct.
+		if (outer.size() == 1)
+			continue;
 
-    if (!outer.is_simple())
-      correct = false;
-    else if (outer.orientation() != CGAL::COUNTERCLOCKWISE)
-      outer.reverse_orientation();
-  }
-  return correct;
+		if (!outer.is_simple())
+			correct = false;
+		else if (outer.orientation() != CGAL::COUNTERCLOCKWISE)
+			outer.reverse_orientation();
+	}
+	return correct;
 }
 
 /**@brief Generate a single polygon without holes that describes the region.
@@ -117,23 +105,22 @@ bool Region::MakeValid()
  * Otherwise, the simple polygon is the convex hull of the set of polygons.
  * @param simple the simple polygon describing the region.
  */
-void Region::MakeSimple(Polygon& simple)
-{
-  if (shape.size() == 1)
-  {
-    simple = shape[0].outer_boundary();
-    return;
-  }
+void Region::MakeSimple(Polygon& simple) {
+	if (shape.size() == 1) {
+		simple = shape[0].outer_boundary();
+		return;
+	}
 
-  // Collect the outer boundary points.
-  std::vector<Point> points;
-  points.reserve(256);  // Reserve for a reasonable point set.
-  for (const Polygon_with_holes& part : shape)
-    points.insert(points.end(), part.outer_boundary().vertices_begin(), part.outer_boundary().vertices_end());
+	// Collect the outer boundary points.
+	std::vector<Point> points;
+	points.reserve(256); // Reserve for a reasonable point set.
+	for (const Polygon_with_holes& part : shape)
+		points.insert(points.end(), part.outer_boundary().vertices_begin(),
+		              part.outer_boundary().vertices_end());
 
-  // Construct the convex hull.
-  simple.clear();
-  CGAL::convex_hull_2(points.begin(), points.end(), std::back_inserter(simple));
+	// Construct the convex hull.
+	simple.clear();
+	CGAL::convex_hull_2(points.begin(), points.end(), std::back_inserter(simple));
 }
 
 /**@fn std::string Region::id

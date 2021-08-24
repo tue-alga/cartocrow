@@ -28,11 +28,8 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-2019
  * Global functions for computing necklace maps.
  */
 
-
-namespace cartocrow
-{
-namespace necklace_map
-{
+namespace cartocrow {
+namespace necklace_map {
 
 /**@anchor necklace_scale_factor
  * @brief Compute a feasible interval per bead, the optimal scale factor for the necklaces, and a valid placement for the scaled beads.
@@ -47,29 +44,24 @@ namespace necklace_map
  * @param necklaces the necklaces involved.
  * @return the optimal scale factor.
  */
-Number ComputeScaleFactor
-(
-  const Parameters& parameters,
-  std::vector<MapElement::Ptr>& elements,
-  std::vector<Necklace::Ptr>& necklaces
-)
-{
-  // Create a bead per necklace that an element is part of.
-  for (Necklace::Ptr& necklace : necklaces)
-    necklace->beads.clear();
-  for(MapElement::Ptr& element : elements)
-    element->InitializeBead(parameters);
+Number ComputeScaleFactor(const Parameters& parameters, std::vector<MapElement::Ptr>& elements,
+                          std::vector<Necklace::Ptr>& necklaces) {
+	// Create a bead per necklace that an element is part of.
+	for (Necklace::Ptr& necklace : necklaces)
+		necklace->beads.clear();
+	for (MapElement::Ptr& element : elements)
+		element->InitializeBead(parameters);
 
-  // Generate intervals based on the regions and necklaces.
-  (*ComputeFeasibleInterval::New(parameters))(elements);
+	// Generate intervals based on the regions and necklaces.
+	(*ComputeFeasibleInterval::New(parameters))(elements);
 
-  // Compute the scaling factor.
-  const Number scale_factor = (*ComputeScaleFactor::New(parameters))(necklaces);
+	// Compute the scaling factor.
+	const Number scale_factor = (*ComputeScaleFactor::New(parameters))(necklaces);
 
-  // Compute valid placement.
-  (*ComputeValidPlacement::New(parameters))(scale_factor, necklaces);
+	// Compute valid placement.
+	(*ComputeValidPlacement::New(parameters))(scale_factor, necklaces);
 
-  return scale_factor;
+	return scale_factor;
 }
 
 /**@anchor necklace_placement
@@ -83,32 +75,24 @@ Number ComputeScaleFactor
  * @param elements the map elements involved.
  * @param necklaces the necklaces involved.
  */
-void ComputePlacement
-(
-  const Parameters& parameters,
-  const Number& scale_factor,
-  std::vector<MapElement::Ptr>& elements,
-  std::vector<Necklace::Ptr>& necklaces
-)
-{
-  // Create a bead per necklace that an element is part of.
-  for (Necklace::Ptr& necklace : necklaces)
-    necklace->beads.clear();
-  for(MapElement::Ptr& element : elements)
-  {
-    element->InitializeBead(parameters);
+void ComputePlacement(const Parameters& parameters, const Number& scale_factor,
+                      std::vector<MapElement::Ptr>& elements, std::vector<Necklace::Ptr>& necklaces) {
+	// Create a bead per necklace that an element is part of.
+	for (Necklace::Ptr& necklace : necklaces)
+		necklace->beads.clear();
+	for (MapElement::Ptr& element : elements) {
+		element->InitializeBead(parameters);
 
-    if (element->bead)
-    {
-      CHECK_NOTNULL(element->input_feasible);
+		if (element->bead) {
+			CHECK_NOTNULL(element->input_feasible);
 
-      element->bead->angle_rad = element->input_angle_rad;
-      element->bead->feasible = element->input_feasible;
-    }
-  }
+			element->bead->angle_rad = element->input_angle_rad;
+			element->bead->feasible = element->input_feasible;
+		}
+	}
 
-  // Compute valid placement.
-  (*ComputeValidPlacement::New(parameters))(scale_factor, necklaces);
+	// Compute valid placement.
+	(*ComputeValidPlacement::New(parameters))(scale_factor, necklaces);
 }
 
 } // namespace necklace_map

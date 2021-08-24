@@ -30,72 +30,59 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 26-11-2019
 
 #include <tinyxml2.h>
 
-#include "cartocrow/common/detail/svg_visitor.h"
 #include "cartocrow/common/core_types.h"
+#include "cartocrow/common/detail/svg_visitor.h"
 #include "cartocrow/necklace_map/bead.h"
-#include "cartocrow/necklace_map/necklace.h"
 #include "cartocrow/necklace_map/map_element.h"
+#include "cartocrow/necklace_map/necklace.h"
 
+namespace cartocrow {
+namespace necklace_map {
+namespace detail {
 
-namespace cartocrow
-{
-namespace necklace_map
-{
-namespace detail
-{
+class SvgVisitor : public cartocrow::detail::SvgVisitor {
+  private:
+	using MapElement = necklace_map::MapElement;
+	using Bead = necklace_map::Bead;
+	using Necklace = necklace_map::Necklace;
+	using LookupTable = std::unordered_map<std::string, size_t>;
 
-class SvgVisitor : public cartocrow::detail::SvgVisitor
-{
- private:
-  using MapElement = necklace_map::MapElement;
-  using Bead = necklace_map::Bead;
-  using Necklace = necklace_map::Necklace;
-  using LookupTable = std::unordered_map<std::string, size_t>;
+  public:
+	SvgVisitor(std::vector<necklace_map::MapElement::Ptr>& elements,
+	           std::vector<necklace_map::Necklace::Ptr>& necklaces, Number& scale_factor,
+	           const bool strict_validity = true);
 
- public:
-  SvgVisitor
-  (
-    std::vector<necklace_map::MapElement::Ptr>& elements,
-    std::vector<necklace_map::Necklace::Ptr>& necklaces,
-    Number& scale_factor,
-    const bool strict_validity = true
-  );
+  private:
+	bool VisitExit(const tinyxml2::XMLElement& element);
 
- private:
-  bool VisitExit(const tinyxml2::XMLElement& element);
+	void VisitSvg(const tinyxml2::XMLAttribute* attributes);
 
-  void VisitSvg(const tinyxml2::XMLAttribute* attributes);
+	bool VisitCircle(const Point& center, const Number& radius,
+	                 const tinyxml2::XMLAttribute* attributes);
 
-  bool VisitCircle(const Point& center, const Number& radius, const tinyxml2::XMLAttribute* attributes);
+	bool VisitPath(const std::string& commands, const tinyxml2::XMLAttribute* attributes);
 
-  bool VisitPath(const std::string& commands, const tinyxml2::XMLAttribute* attributes);
+	bool FinalizeSvg();
 
-  bool FinalizeSvg();
+	bool AddCircleNecklace(const std::string& necklace_id, const Point& center, const Number& radius);
 
-  bool AddCircleNecklace(const std::string& necklace_id, const Point& center, const Number& radius);
+	bool AddGenericNecklace(const std::string& necklace_id, const std::string& commands,
+	                        const Point& kernel);
 
-  bool AddGenericNecklace(const std::string& necklace_id, const std::string& commands, const Point& kernel);
+	bool AddMapElement(const std::string& commands, const std::string& angle_rad,
+	                   const std::string& feasible, const std::string& region_id,
+	                   const std::string& necklace_id, const std::string& style);
 
-  bool AddMapElement
-  (
-    const std::string& commands,
-    const std::string& angle_rad,
-    const std::string& feasible,
-    const std::string& region_id,
-    const std::string& necklace_id,
-    const std::string& style
-  );
+	std::vector<MapElement::Ptr>& elements_;
+	std::vector<std::string> necklace_ids_;
+	std::vector<Necklace::Ptr>& necklaces_;
 
-  std::vector<MapElement::Ptr>& elements_;
-  std::vector<std::string> necklace_ids_;
-  std::vector<Necklace::Ptr>& necklaces_;
+	LookupTable id_to_region_index_;
+	LookupTable id_to_necklace_index_;
 
-  LookupTable id_to_region_index_;
-  LookupTable id_to_necklace_index_;
+	Number& scale_factor_;
 
-  Number& scale_factor_;
-
-  bool strict_validity_;
+	bool strict_validity_;
 }; // class SvgVisitor
 
 } // namespace detail

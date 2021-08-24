@@ -27,39 +27,36 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 06-05-2020
 #include "cartocrow/common/core_types.h"
 #include "cartocrow/common/range.h"
 
+namespace cartocrow {
 
-namespace cartocrow
-{
+class CircularRange : public Range {
+  public:
+	using Ptr = std::shared_ptr<CircularRange>;
 
-class CircularRange : public Range
-{
- public:
-  using Ptr = std::shared_ptr<CircularRange>;
+	CircularRange(const Number& from_rad, const Number& to_rad);
 
-  CircularRange(const Number& from_rad, const Number& to_rad);
+	explicit CircularRange(const Range& range);
 
-  explicit CircularRange(const Range& range);
+	inline const Number& from_rad() const { return from(); }
+	inline Number& from_rad() { return from(); }
+	inline const Number& to_rad() const { return to(); }
+	inline Number& to_rad() { return to(); }
 
-  inline const Number& from_rad() const { return from(); }
-  inline Number& from_rad() { return from(); }
-  inline const Number& to_rad() const { return to(); }
-  inline Number& to_rad() { return to(); }
+	bool IsValid() const override;
 
-  bool IsValid() const override;
+	bool IsFull() const;
 
-  bool IsFull() const;
+	virtual bool Contains(const Number& value) const override;
 
-  virtual bool Contains(const Number& value) const override;
+	virtual bool ContainsOpen(const Number& value) const override;
 
-  virtual bool ContainsOpen(const Number& value) const override;
+	virtual bool Intersects(const Range::Ptr& range) const override;
 
-  virtual bool Intersects(const Range::Ptr& range) const override;
+	virtual bool IntersectsOpen(const Range::Ptr& range) const override;
 
-  virtual bool IntersectsOpen(const Range::Ptr& range) const override;
+	Number ComputeCentroid() const;
 
-  Number ComputeCentroid() const;
-
-  void Reverse();
+	void Reverse();
 }; // class CircularRange
 
 } // namespace cartocrow

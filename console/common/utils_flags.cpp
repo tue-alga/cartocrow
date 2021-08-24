@@ -21,106 +21,73 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-02-2020
 
 #include "utils_flags.h"
 
+namespace validate {
 
-namespace validate
-{
+bool IsFile(const std::filesystem::path& value) { return !IsDirectory(value); }
 
-bool IsFile(const std::filesystem::path& value)
-{
-  return !IsDirectory(value);
+bool IsDirectory(const std::filesystem::path& value) {
+	try {
+		return std::filesystem::is_directory(value);
+	} catch (const std::exception& e) {
+		LOG(INFO) << e.what();
+		return false;
+	}
 }
 
-bool IsDirectory(const std::filesystem::path& value)
-{
-  try
-  {
-    return std::filesystem::is_directory(value);
-  }
-  catch (const std::exception& e)
-  {
-    LOG(INFO) << e.what();
-    return false;
-  }
+bool ExistsFile(const std::filesystem::path& value) {
+	try {
+		return std::filesystem::is_regular_file(value) && ExistsPath(value);
+	} catch (const std::exception& e) {
+		LOG(INFO) << e.what();
+		return false;
+	}
 }
 
-bool ExistsFile(const std::filesystem::path& value)
-{
-  try
-  {
-    return std::filesystem::is_regular_file(value) && ExistsPath(value);
-  }
-  catch (const std::exception& e)
-  {
-    LOG(INFO) << e.what();
-    return false;
-  }
+bool ExistsDirectory(const std::filesystem::path& value) {
+	try {
+		return IsDirectory(value) && ExistsPath(value);
+	} catch (const std::exception& e) {
+		LOG(INFO) << e.what();
+		return false;
+	}
 }
 
-bool ExistsDirectory(const std::filesystem::path& value)
-{
-  try
-  {
-    return IsDirectory(value) && ExistsPath(value);
-  }
-  catch (const std::exception& e)
-  {
-    LOG(INFO) << e.what();
-    return false;
-  }
+bool ExistsPath(const std::filesystem::path& value) {
+	try {
+		return std::filesystem::exists(value);
+	} catch (const std::exception& e) {
+		LOG(INFO) << e.what();
+		return false;
+	}
 }
 
-bool ExistsPath(const std::filesystem::path& value)
-{
-  try
-  {
-    return std::filesystem::exists(value);
-  }
-  catch (const std::exception& e)
-  {
-    LOG(INFO) << e.what();
-    return false;
-  }
+bool AvailableFile(const std::filesystem::path& value) {
+	try {
+		std::filesystem::path path(value);
+		if (path.has_parent_path() && !ExistsDirectory(path.parent_path()))
+			return false;
+		return IsFile(value) && !ExistsPath(value);
+	} catch (const std::exception& e) {
+		LOG(INFO) << e.what();
+		return false;
+	}
 }
 
-bool AvailableFile(const std::filesystem::path& value)
-{
-  try
-  {
-    std::filesystem::path path(value);
-    if (path.has_parent_path() && !ExistsDirectory(path.parent_path()))
-      return false;
-    return IsFile(value) && !ExistsPath(value);
-  }
-  catch (const std::exception& e)
-  {
-    LOG(INFO) << e.what();
-    return false;
-  }
+bool MakeAvailableFile(const std::filesystem::path& value) {
+	try {
+		std::filesystem::path path(value);
+		if (path.has_parent_path()) {
+			if (!ExistsDirectory(path.parent_path()))
+				std::filesystem::create_directories(path.parent_path());
+			return ExistsDirectory(path.parent_path());
+		}
+		return true;
+	} catch (const std::exception& e) {
+		LOG(INFO) << e.what();
+		return false;
+	}
 }
 
-bool MakeAvailableFile(const std::filesystem::path& value)
-{
-  try
-  {
-    std::filesystem::path path(value);
-    if (path.has_parent_path())
-    {
-      if (!ExistsDirectory(path.parent_path()))
-        std::filesystem::create_directories(path.parent_path());
-      return ExistsDirectory(path.parent_path());
-    }
-    return true;
-  }
-  catch (const std::exception& e)
-  {
-    LOG(INFO) << e.what();
-    return false;
-  }
-}
-
-bool Empty(const std::filesystem::path& value)
-{
-  return value.empty();
-}
+bool Empty(const std::filesystem::path& value) { return value.empty(); }
 
 } // namespace validate

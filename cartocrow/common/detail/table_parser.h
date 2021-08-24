@@ -26,41 +26,33 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 03-12-2019
 #include <memory>
 #include <vector>
 
+namespace cartocrow {
+namespace detail {
 
-namespace cartocrow
-{
-namespace detail
-{
-
-struct DataColumn
-{
-  DataColumn(const std::string& name);
-  virtual void push_back(const std::string& value) = 0;
-  virtual size_t size() const = 0;
-  std::string name;
+struct DataColumn {
+	DataColumn(const std::string& name);
+	virtual void push_back(const std::string& value) = 0;
+	virtual size_t size() const = 0;
+	std::string name;
 }; // struct DataColumn
 
-template<typename T_>
-struct ValueColumn : public DataColumn
-{
-  ValueColumn(const std::string& name, const size_t size);
-  void push_back(const std::string& value) override;
-  size_t size() const { return values.size(); }
-  std::vector<T_> values;
+template <typename T_> struct ValueColumn : public DataColumn {
+	ValueColumn(const std::string& name, const size_t size);
+	void push_back(const std::string& value) override;
+	size_t size() const { return values.size(); }
+	std::vector<T_> values;
 }; // struct ValueColumn
 
+class TableParser {
+  public:
+	TableParser();
 
-class TableParser
-{
- public:
-  TableParser();
+	bool Parse(std::istream& in);
 
-  bool Parse(std::istream& in);
-
- protected:
-  using ColumnPtr = std::unique_ptr<DataColumn>;
-  using Table = std::vector<ColumnPtr>;
-  Table table_;
+  protected:
+	using ColumnPtr = std::unique_ptr<DataColumn>;
+	using Table = std::vector<ColumnPtr>;
+	Table table_;
 }; // class TableParser
 
 } // namespace detail

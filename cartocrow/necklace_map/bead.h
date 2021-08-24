@@ -28,36 +28,32 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 15-01-2020
 #include "cartocrow/common/circular_range.h"
 #include "cartocrow/common/core_types.h"
 
+namespace cartocrow {
+namespace necklace_map {
 
-namespace cartocrow
-{
-namespace necklace_map
-{
+struct Bead {
+	using Ptr = std::shared_ptr<Bead>;
 
-struct Bead
-{
-  using Ptr = std::shared_ptr<Bead>;
+	Bead(const Number& radius_base, const std::string& style, const std::string& id);
 
-  Bead(const Number& radius_base, const std::string& style, const std::string& id);
+	bool IsValid() const;
 
-  bool IsValid() const;
+	// Variables before scaling.
+	Number radius_base;
 
-  // Variables before scaling.
-  Number radius_base;
+	std::string id; // Reference for debugging.
 
-  std::string id;  // Reference for debugging.
+	CircularRange::Ptr feasible;
 
-  CircularRange::Ptr feasible;
+	std::string region_style;
 
-  std::string region_style;
+	// Variables during scaling.
+	Number covering_radius_rad; // TODO(tvl) move into CycleNode?
 
-  // Variables during scaling.
-  Number covering_radius_rad; // TODO(tvl) move into CycleNode?
+	// Variables after scaling.
+	CircularRange::Ptr valid; // TODO(tvl) replace CycleNode::valid by this one and see if this can mean that the positioner needs not compute it (may have to add computing valid in fixed order scaler)?
 
-  // Variables after scaling.
-  CircularRange::Ptr valid; // TODO(tvl) replace CycleNode::valid by this one and see if this can mean that the positioner needs not compute it (may have to add computing valid in fixed order scaler)?
-
-  Number angle_rad;
+	Number angle_rad;
 }; // struct Bead
 
 } // namespace necklace_map

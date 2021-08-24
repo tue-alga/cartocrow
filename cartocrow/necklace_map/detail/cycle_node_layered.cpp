@@ -22,36 +22,27 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 06-05-2020
 
 #include "cycle_node_layered.h"
 
+namespace cartocrow {
+namespace necklace_map {
+namespace detail {
 
-namespace cartocrow
-{
-namespace necklace_map
-{
-namespace detail
-{
+CycleNodeLayered::CycleNodeLayered() : CycleNode(), layer(-1), disabled(true) {}
 
-CycleNodeLayered::CycleNodeLayered() :
-  CycleNode(), layer(-1), disabled(true)
-{}
+CycleNodeLayered::CycleNodeLayered(const Bead::Ptr& bead)
+    : CycleNode(bead), layer(-1), disabled(!bead) {}
 
-CycleNodeLayered::CycleNodeLayered(const Bead::Ptr& bead) :
-  CycleNode(bead), layer(-1), disabled(!bead)
-{}
-
-CycleNodeLayered::CycleNodeLayered(const CycleNodeLayered::Ptr& node) :
-  CycleNode(), layer(-1), disabled(!node)
-{
-  if (node)
-  {
-    bead = node->bead;
-    valid = node->valid;
-    layer = node->layer;
-  }
+CycleNodeLayered::CycleNodeLayered(const CycleNodeLayered::Ptr& node)
+    : CycleNode(), layer(-1), disabled(!node) {
+	if (node) {
+		bead = node->bead;
+		valid = node->valid;
+		layer = node->layer;
+	}
 }
 
-bool CompareCycleNodeLayered::operator()(const CycleNodeLayered::Ptr& a, const CycleNodeLayered::Ptr& b) const
-{
-  return a->valid->from() < b->valid->from();
+bool CompareCycleNodeLayered::operator()(const CycleNodeLayered::Ptr& a,
+                                         const CycleNodeLayered::Ptr& b) const {
+	return a->valid->from() < b->valid->from();
 }
 
 } // namespace detail

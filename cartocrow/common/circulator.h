@@ -25,154 +25,143 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 13-11-2020
 #include <iterator>
 #include <type_traits>
 
-namespace cartocrow
-{
-namespace detail
-{
+namespace cartocrow {
+namespace detail {
 
-template<typename C_, typename I_, typename Self>
-struct CirculatorBase
-{
-  using Container = C_;
-  using Iterator = I_;
+template <typename C_, typename I_, typename Self> struct CirculatorBase {
+	using Container = C_;
+	using Iterator = I_;
 
-  using value_type = typename Iterator::value_type;
-  using reference = typename Iterator::reference;
-  using pointer = typename Iterator::pointer;
-  using iterator_category = typename Iterator::iterator_category;
-  using difference_type = typename Iterator::difference_type;
+	using value_type = typename Iterator::value_type;
+	using reference = typename Iterator::reference;
+	using pointer = typename Iterator::pointer;
+	using iterator_category = typename Iterator::iterator_category;
+	using difference_type = typename Iterator::difference_type;
 
-  CirculatorBase() : cursor_(), container_() {}
+	CirculatorBase() : cursor_(), container_() {}
 
-  CirculatorBase(const CirculatorBase& circulator) : cursor_(circulator.cursor_), container_(circulator.container_) {}
+	CirculatorBase(const CirculatorBase& circulator)
+	    : cursor_(circulator.cursor_), container_(circulator.container_) {}
 
-  CirculatorBase(const Iterator& iterator, Container& container) : cursor_(iterator), container_(container)
-  {
-    if (cursor_ == container_.end())
-      cursor_ = container_.begin();
-  }
+	CirculatorBase(const Iterator& iterator, Container& container)
+	    : cursor_(iterator), container_(container) {
+		if (cursor_ == container_.end())
+			cursor_ = container_.begin();
+	}
 
-  explicit CirculatorBase(Container& container) : CirculatorBase(container.begin(), container) {}
+	explicit CirculatorBase(Container& container) : CirculatorBase(container.begin(), container) {}
 
-  inline reference operator*() const { return *cursor_; }
+	inline reference operator*() const { return *cursor_; }
 
-  inline pointer operator->() const { return &*cursor_; }
+	inline pointer operator->() const { return &*cursor_; }
 
-  operator Iterator&() { return cursor_; }
+	operator Iterator&() { return cursor_; }
 
-  operator const Iterator&() const { return cursor_; }
+	operator const Iterator&() const { return cursor_; }
 
-  Self& operator++()
-  {
-    ++cursor_;
-    if (cursor_ == container_.end()) cursor_ = container_.begin();
-    return static_cast<Self&>(*this);
-  }
+	Self& operator++() {
+		++cursor_;
+		if (cursor_ == container_.end())
+			cursor_ = container_.begin();
+		return static_cast<Self&>(*this);
+	}
 
-  Self operator++(int)
-  {
-    Self tmp = *static_cast<Self*>(this);
-    ++(*this);
-    return tmp;
-  }
+	Self operator++(int) {
+		Self tmp = *static_cast<Self*>(this);
+		++(*this);
+		return tmp;
+	}
 
-  Self& operator--()
-  {
-    if (cursor_ == container_.begin()) cursor_ = container_.end();
-    --cursor_;
-    return static_cast<Self&>(*this);
-  }
+	Self& operator--() {
+		if (cursor_ == container_.begin())
+			cursor_ = container_.end();
+		--cursor_;
+		return static_cast<Self&>(*this);
+	}
 
-  Self operator--(int)
-  {
-    Self tmp = *static_cast<Self*>(this);
-    --(*this);
-    return tmp;
-  }
+	Self operator--(int) {
+		Self tmp = *static_cast<Self*>(this);
+		--(*this);
+		return tmp;
+	}
 
-  inline bool operator==(const CirculatorBase& other) const { return cursor_ == other.cursor_; }
+	inline bool operator==(const CirculatorBase& other) const { return cursor_ == other.cursor_; }
 
-  inline bool operator!=(const CirculatorBase& other) const { return cursor_ != other.cursor_; }
+	inline bool operator!=(const CirculatorBase& other) const { return cursor_ != other.cursor_; }
 
- private:
-  I_ cursor_;
-  C_& container_;
+  private:
+	I_ cursor_;
+	C_& container_;
 }; // class CirculatorBase
 
-}  // namespace detail
+} // namespace detail
 
+template <typename C_, typename I_ = typename C_::iterator>
+struct Circulator : public detail::CirculatorBase<C_, I_, Circulator<C_, I_>> {
+	using Base = detail::CirculatorBase<C_, I_, Circulator<C_, I_>>;
 
-template<typename C_, typename I_ = typename C_::iterator>
- struct Circulator : public detail::CirculatorBase<C_, I_, Circulator<C_, I_> >
-{
-  using Base = detail::CirculatorBase<C_, I_, Circulator<C_, I_> >;
+	using Container = typename Base::Container;
+	using Iterator = typename Base::Iterator;
 
-  using Container = typename Base::Container;
-  using Iterator = typename Base::Iterator;
+	using value_type = typename Base::value_type;
+	using reference = typename Base::reference;
+	using pointer = typename Base::pointer;
+	using iterator_category = typename Base::iterator_category;
+	using difference_type = typename Base::difference_type;
 
-  using value_type = typename Base::value_type;
-  using reference = typename Base::reference;
-  using pointer = typename Base::pointer;
-  using iterator_category = typename Base::iterator_category;
-  using difference_type = typename Base::difference_type;
+	Circulator() : Base() {}
 
-  Circulator() : Base() {}
+	Circulator(const Circulator& circulator) : Base(circulator) {}
 
-  Circulator(const Circulator& circulator) : Base(circulator) {}
+	Circulator(const Iterator& iterator, Container& container) : Base(iterator, container) {}
 
-  Circulator(const Iterator& iterator, Container& container) : Base(iterator, container) {}
-
-  explicit Circulator(Container& container) : Base(container) {}
+	explicit Circulator(Container& container) : Base(container) {}
 }; // class Circulator
 
+template <typename C_, typename I_ = typename C_::const_iterator>
+struct ConstCirculator
+    : public detail::CirculatorBase<typename std::add_const<C_>::type, I_,
+                                    Circulator<typename std::add_const<C_>::type, I_>> {
+	using Base = detail::CirculatorBase<typename std::add_const<C_>::type, I_,
+	                                    Circulator<typename std::add_const<C_>::type, I_>>;
 
-template<typename C_, typename I_ = typename C_::const_iterator>
-struct ConstCirculator :
-  public detail::CirculatorBase<typename std::add_const<C_>::type, I_, Circulator<typename std::add_const<C_>::type, I_> >
-{
-  using Base = detail::CirculatorBase<typename std::add_const<C_>::type, I_, Circulator<typename std::add_const<C_>::type, I_> >;
+	using Container = typename Base::Container;
+	using Iterator = typename Base::Iterator;
 
-  using Container = typename Base::Container;
-  using Iterator = typename Base::Iterator;
+	using value_type = typename Base::value_type;
+	using reference = typename Base::reference;
+	using pointer = typename Base::pointer;
+	using iterator_category = typename Base::iterator_category;
+	using difference_type = typename Base::difference_type;
 
-  using value_type = typename Base::value_type;
-  using reference = typename Base::reference;
-  using pointer = typename Base::pointer;
-  using iterator_category = typename Base::iterator_category;
-  using difference_type = typename Base::difference_type;
+	ConstCirculator() : Base() {}
 
-  ConstCirculator() : Base() {}
+	ConstCirculator(const ConstCirculator& circulator) : Base(circulator) {}
 
-  ConstCirculator(const ConstCirculator& circulator) : Base(circulator) {}
+	ConstCirculator(const Iterator& iterator, const Container& container)
+	    : Base(iterator, container) {}
 
-  ConstCirculator(const Iterator& iterator, const Container& container) : Base(iterator, container) {}
-
-  explicit ConstCirculator(const Container& container) : Base(container) {}
+	explicit ConstCirculator(const Container& container) : Base(container) {}
 }; // class ConstCirculator
 
-
-template<typename Container, typename Iterator>
-ConstCirculator<Container, Iterator> make_circulator(const Iterator& iterator, const Container& container)
-{
-  return ConstCirculator<Container, Iterator>(iterator, container);
+template <typename Container, typename Iterator>
+ConstCirculator<Container, Iterator> make_circulator(const Iterator& iterator,
+                                                     const Container& container) {
+	return ConstCirculator<Container, Iterator>(iterator, container);
 }
 
-template<typename Container>
-ConstCirculator<Container> make_circulator(const Container& container)
-{
-  return ConstCirculator<Container>(container);
+template <typename Container>
+ConstCirculator<Container> make_circulator(const Container& container) {
+	return ConstCirculator<Container>(container);
 }
 
-template<typename Container, typename Iterator>
-Circulator<Container, Iterator> make_circulator(const Iterator& iterator, Container& container)
-{
-  return Circulator<Container, Iterator>(iterator, container);
+template <typename Container, typename Iterator>
+Circulator<Container, Iterator> make_circulator(const Iterator& iterator, Container& container) {
+	return Circulator<Container, Iterator>(iterator, container);
 }
 
-template<typename Container>
-Circulator<Container> make_circulator(Container& container)
-{
-  return Circulator<Container>(container);
+template <typename Container> Circulator<Container> make_circulator(Container& container) {
+	return Circulator<Container>(container);
 }
 
 } // namespace cartocrow

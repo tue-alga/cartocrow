@@ -28,9 +28,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-02-2020
 #include <gflags/gflags.h>
 #include <glog/logging.h>
 
-
-namespace validate
-{
+namespace validate {
 
 #ifndef DOXYGEN_RUNNING
 
@@ -41,53 +39,43 @@ bool ExistsFile(const std::filesystem::path& value);
 bool ExistsDirectory(const std::filesystem::path& value);
 bool ExistsPath(const std::filesystem::path& value);
 
-bool AvailableFile(const std::filesystem::path& value);  // Does not exist, but parent directory does.
-bool MakeAvailableFile(const std::filesystem::path& value);  // Make sure parent directory exists.
+bool AvailableFile(const std::filesystem::path& value); // Does not exist, but parent directory does.
+bool MakeAvailableFile(const std::filesystem::path& value); // Make sure parent directory exists.
 
 bool Empty(const std::filesystem::path& value);
 
-template<bool (*F1_)(const std::filesystem::path&), bool (*F2_)(const std::filesystem::path&)>
+template <bool (*F1_)(const std::filesystem::path&), bool (*F2_)(const std::filesystem::path&)>
 bool Or(const std::filesystem::path& value);
-template<bool (*F1_)(const std::filesystem::path&), bool (*F2_)(const std::filesystem::path&)>
+template <bool (*F1_)(const std::filesystem::path&), bool (*F2_)(const std::filesystem::path&)>
 bool And(const std::filesystem::path& value);
-template<bool (*F_)(const std::filesystem::path&)>
-bool Not(const std::filesystem::path& value);
-
-
+template <bool (*F_)(const std::filesystem::path&)> bool Not(const std::filesystem::path& value);
 
 enum BoundSide { kLower, kUpper };
 enum Closure { kClosed, kOpen };
 
-template <typename V_, BoundSide side, Closure closed = Closure::kClosed>
-class IsBounded;
+template <typename V_, BoundSide side, Closure closed = Closure::kClosed> class IsBounded;
 
 template <typename V_, Closure closed_lower = Closure::kClosed, Closure closed_upper = closed_lower>
 class InRange;
 
-template <typename V_>
-class Equals;
-
+template <typename V_> class Equals;
 
 // Convenience methods.
 
-template <BoundSide side, typename V_>
-IsBounded<V_, side> MakeBoundedCheck(const V_& bound);
+template <BoundSide side, typename V_> IsBounded<V_, side> MakeBoundedCheck(const V_& bound);
 
 template <BoundSide side, Closure closed, typename V_>
 IsBounded<V_, side, closed> MakeBoundedCheck(const V_& bound);
 
-template <typename V_>
-IsBounded<V_, BoundSide::kUpper> MakeUpperBoundCheck(const V_& bound);
+template <typename V_> IsBounded<V_, BoundSide::kUpper> MakeUpperBoundCheck(const V_& bound);
 
 template <typename V_>
 IsBounded<V_, BoundSide::kUpper, Closure::kOpen> MakeStrictUpperBoundCheck(const V_& bound);
 
-template <typename V_>
-IsBounded<V_, BoundSide::kLower> MakeLowerBoundCheck(const V_& bound);
+template <typename V_> IsBounded<V_, BoundSide::kLower> MakeLowerBoundCheck(const V_& bound);
 
 template <typename V_>
 IsBounded<V_, BoundSide::kLower, Closure::kOpen> MakeStrictLowerBoundCheck(const V_& bound);
-
 
 template <Closure closed_lower, Closure closed_upper, typename V_>
 InRange<V_, closed_lower, closed_upper> MakeRangeCheck(const V_& lower, const V_& upper);
@@ -95,82 +83,62 @@ InRange<V_, closed_lower, closed_upper> MakeRangeCheck(const V_& lower, const V_
 template <Closure closed, typename V_>
 InRange<V_, closed> MakeRangeCheck(const V_& lower, const V_& upper);
 
-template <typename V_>
-InRange<V_> MakeRangeCheck(const V_& lower, const V_& upper);
+template <typename V_> InRange<V_> MakeRangeCheck(const V_& lower, const V_& upper);
 
-template <typename V_>
-Equals<V_> MakeEqualsCheck(const V_& bound);
+template <typename V_> Equals<V_> MakeEqualsCheck(const V_& bound);
 
+template <typename V_> IsBounded<V_, BoundSide::kLower, Closure::kOpen> IsPositive();
 
-template <typename V_>
-IsBounded<V_, BoundSide::kLower, Closure::kOpen> IsPositive();
+template <typename V_> IsBounded<V_, BoundSide::kLower, Closure::kClosed> IsStrictlyPositive();
 
-template <typename V_>
-IsBounded<V_, BoundSide::kLower, Closure::kClosed> IsStrictlyPositive();
+template <typename V_> IsBounded<V_, BoundSide::kUpper, Closure::kOpen> IsNegative();
 
-template <typename V_>
-IsBounded<V_, BoundSide::kUpper, Closure::kOpen> IsNegative();
-
-template <typename V_>
-IsBounded<V_, BoundSide::kUpper, Closure::kClosed> IsStrictlyNegative();
+template <typename V_> IsBounded<V_, BoundSide::kUpper, Closure::kClosed> IsStrictlyNegative();
 
 #endif // DOXYGEN_RUNNING
 
 } // namespace validate
 
-
-#define FLAGS_NAME_AND_VALUE(v) #v, FLAGS_ ## v
+#define FLAGS_NAME_AND_VALUE(v) #v, FLAGS_##v
 
 // Log a flag's name and value.
-template<typename F_>
-inline void PrintFlag(const std::string& name, const F_& flag)
-{
-  LOG(INFO) << "  " << name << ":\t\"" << flag << "\"";
+template <typename F_> inline void PrintFlag(const std::string& name, const F_& flag) {
+	LOG(INFO) << "  " << name << ":\t\"" << flag << "\"";
 }
 
 // Log a flag's name and value.
-template<>
-inline void PrintFlag<bool>(const std::string& name, const bool& flag)
-{
-  LOG(INFO) << "  " << name << ":\t\"" << (flag ? "TRUE" : "FALSE") << "\"";
+template <> inline void PrintFlag<bool>(const std::string& name, const bool& flag) {
+	LOG(INFO) << "  " << name << ":\t\"" << (flag ? "TRUE" : "FALSE") << "\"";
 }
 
 // Log a flag and apply a boolean function to validate it.
-template<typename V_>
-inline bool CheckAndPrintFlag(const std::string& name, const V_& value, std::function<bool(const V_&)> check)
-{
-  PrintFlag(name, value);
-  const bool correct = check(value);
-  LOG_IF(INFO, !correct) << "  --- ERROR! ---";
-  return correct;
+template <typename V_>
+inline bool CheckAndPrintFlag(const std::string& name, const V_& value,
+                              std::function<bool(const V_&)> check) {
+	PrintFlag(name, value);
+	const bool correct = check(value);
+	LOG_IF(INFO, !correct) << "  --- ERROR! ---";
+	return correct;
 }
 
 // Log a flag and apply a boolean operator to validate it.
-template<typename V_>
-inline bool CheckAndPrintFlag(const std::string& name, const V_& value, bool(*check)(const V_&))
-{
-  return CheckAndPrintFlag(name, value, std::function<bool(const V_&)>(check));
+template <typename V_>
+inline bool CheckAndPrintFlag(const std::string& name, const V_& value, bool (*check)(const V_&)) {
+	return CheckAndPrintFlag(name, value, std::function<bool(const V_&)>(check));
 }
 
 // Log a flag and apply a boolean functor to validate it.
-template<typename V_, typename F_>
-inline bool CheckAndPrintFlag(const std::string& name, const V_& value, F_ check)
-{
-  return CheckAndPrintFlag(name, value, std::function<bool(const V_&)>(check));
+template <typename V_, typename F_>
+inline bool CheckAndPrintFlag(const std::string& name, const V_& value, F_ check) {
+	return CheckAndPrintFlag(name, value, std::function<bool(const V_&)>(check));
 }
 
 // Check whether exactly one of the flags is not empty.
-inline bool CheckMutuallyExclusive
-(
-  const std::string& name_1,
-  const std::string& value_1,
-  const std::string& name_2,
-  const std::string& value_2
-)
-{
-  const bool correct = value_1.empty() || value_2.empty();
-  LOG_IF(INFO, !correct) << "  --- ERROR: " << name_1 << " XOR " << name_2 << " ---";
-  return correct;
+inline bool CheckMutuallyExclusive(const std::string& name_1, const std::string& value_1,
+                                   const std::string& name_2, const std::string& value_2) {
+	const bool correct = value_1.empty() || value_2.empty();
+	LOG_IF(INFO, !correct) << "  --- ERROR: " << name_1 << " XOR " << name_2 << " ---";
+	return correct;
 }
 
 #include "utils_flags.inc"

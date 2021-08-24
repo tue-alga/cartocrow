@@ -31,25 +31,15 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 02-09-2020
 #include "cartocrow/flow_map/flow_tree.h"
 #include "cartocrow/flow_map/io/write_options.h"
 
+namespace cartocrow {
+namespace flow_map {
 
-namespace cartocrow
-{
-namespace flow_map
-{
+class SvgWriter {
+  public:
+	SvgWriter();
 
-class SvgWriter
-{
- public:
-  SvgWriter();
-
-  bool Write
-  (
-    const std::vector<Region>& context,
-    const std::vector<Region>& obstacles,
-    const FlowTree::Ptr& tree,
-    const WriteOptions::Ptr& options,
-    std::ostream& out
-  ) const;
+	bool Write(const std::vector<Region>& context, const std::vector<Region>& obstacles,
+	           const FlowTree::Ptr& tree, const WriteOptions::Ptr& options, std::ostream& out) const;
 }; // class SvgWriter
 
 } // namespace flow_map

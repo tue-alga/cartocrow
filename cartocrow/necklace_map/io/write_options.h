@@ -26,35 +26,31 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 02-09-2020
 
 #include <memory>
 
+namespace cartocrow {
+namespace necklace_map {
 
-namespace cartocrow
-{
-namespace necklace_map
-{
+struct WriteOptions {
+	using Ptr = std::shared_ptr<WriteOptions>;
 
-struct WriteOptions
-{
-  using Ptr = std::shared_ptr<WriteOptions>;
+	static Ptr Default();
 
-  static Ptr Default();
+	static Ptr Debug();
 
-  static Ptr Debug();
+	int pixel_width;
 
-  int pixel_width;
+	int region_precision;
+	double region_opacity;
+	double bead_opacity;
+	double bead_id_font_size_px;
 
-  int region_precision;
-  double region_opacity;
-  double bead_opacity;
-  double bead_id_font_size_px;
+	bool draw_necklace_curve;
+	bool draw_necklace_kernel;
+	bool draw_bead_ids;
 
-  bool draw_necklace_curve;
-  bool draw_necklace_kernel;
-  bool draw_bead_ids;
-
-  bool draw_feasible_intervals;
-  bool draw_valid_intervals;
-  bool draw_region_angles;
-  bool draw_bead_angles;
+	bool draw_feasible_intervals;
+	bool draw_valid_intervals;
+	bool draw_region_angles;
+	bool draw_bead_angles;
 }; // struct WriteOptions
 
 } // namespace necklace_map

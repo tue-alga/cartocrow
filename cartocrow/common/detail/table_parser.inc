@@ -24,10 +24,8 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 03-12-2019
 
 #include <glog/logging.h>
 
-namespace cartocrow
-{
-namespace detail
-{
+namespace cartocrow {
+namespace detail {
 
 /**@struct ValueColumn
  * @brief A type-specific implementation of a DataColumn.
@@ -43,43 +41,30 @@ namespace detail
  *
  * Note that all columns in a table must have matching sizes.
  */
-template<typename T_>
+template <typename T_>
 inline ValueColumn<T_>::ValueColumn(const std::string& name, const size_t size)
-  : DataColumn(name), values()
-{
-  values.reserve(size);
+    : DataColumn(name), values() {
+	values.reserve(size);
 }
 #ifndef DOXYGEN_RUNNING
-template<>
-inline void ValueColumn<int>::push_back(const std::string& value)
-{
-  try
-  {
-    values.push_back(std::stoi(value));
-  }
-  catch (...)
-  {
-    LOG(FATAL) << "Failed conversion to integer: " << value;
-  }
+template <> inline void ValueColumn<int>::push_back(const std::string& value) {
+	try {
+		values.push_back(std::stoi(value));
+	} catch (...) {
+		LOG(FATAL) << "Failed conversion to integer: " << value;
+	}
 }
 
-template<>
-inline void ValueColumn<double>::push_back(const std::string& value)
-{
-  try
-  {
-    values.push_back(std::stod(value));
-  }
-  catch (...)
-  {
-    LOG(FATAL) << "Failed conversion to double: " << value;
-  }
+template <> inline void ValueColumn<double>::push_back(const std::string& value) {
+	try {
+		values.push_back(std::stod(value));
+	} catch (...) {
+		LOG(FATAL) << "Failed conversion to double: " << value;
+	}
 }
 
-template<>
-inline void ValueColumn<std::string>::push_back(const std::string& value)
-{
-  values.push_back(value);
+template <> inline void ValueColumn<std::string>::push_back(const std::string& value) {
+	values.push_back(value);
 }
 #endif //DOXYGEN_RUNNING
 } // namespace detail

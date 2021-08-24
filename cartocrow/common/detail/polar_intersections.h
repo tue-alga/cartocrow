@@ -29,9 +29,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 26-02-2021
 #include "cartocrow/common/spiral.h"
 #include "cartocrow/common/spiral_segment.h"
 
-
-namespace cartocrow
-{
+namespace cartocrow {
 
 template <typename OutputIterator>
 int ComputeIntersectionT(const Spiral& spiral_1, const Spiral& spiral_2, OutputIterator t_1);
@@ -45,9 +43,9 @@ int ComputeIntersectionT(const PolarLine& line, const Spiral& spiral, OutputIter
 // Note that there is no function ComputeIntersectionT(const PolarLine& line, const Spiral& spiral, OutputIterator t_line),
 // because the output must be on the line to enable returning intersections on the pole.
 
-
 template <class Type1_, class Type2_, typename OutputIterator>
-int ComputeIntersections(const Type1_& object_1, const Type2_& object_2, OutputIterator intersections);
+int ComputeIntersections(const Type1_& object_1, const Type2_& object_2,
+                         OutputIterator intersections);
 
 } // namespace cartocrow
 

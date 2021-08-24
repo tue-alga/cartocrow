@@ -25,11 +25,8 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 04-09-2020
 
 #include <glog/logging.h>
 
-
-namespace cartocrow
-{
-namespace flow_map
-{
+namespace cartocrow {
+namespace flow_map {
 
 /**@struct Place
  * @brief A place on the flow map.
@@ -48,7 +45,7 @@ namespace flow_map
  * @endparblock
  */
 Place::Place(const std::string& id, const PolarPoint& position)
-  : id(id), position(position), flow_in(0) {}
+    : id(id), position(position), flow_in(0) {}
 
 /**@fn Region Place::id;
  * @brief The ID of this place.
@@ -63,4 +60,4 @@ Place::Place(const std::string& id, const PolarPoint& position)
  */
 
 } // namespace flow_map
-} // namespace cartocrow"
+} // namespace cartocrow

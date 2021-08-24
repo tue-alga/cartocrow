@@ -26,27 +26,23 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 13-05-2020
 #include "cartocrow/common/core_types.h"
 #include "cartocrow/common/detail/svg_path_parser.h"
 
+namespace cartocrow {
+namespace detail {
 
-namespace cartocrow
-{
-namespace detail
-{
+class SvgBezierConverter : public SvgPathConverter {
+  public:
+	explicit SvgBezierConverter(BezierSpline& shape);
 
-class SvgBezierConverter : public SvgPathConverter
-{
- public:
-  explicit SvgBezierConverter(BezierSpline& shape);
+  private:
+	void MoveTo_(const Point& to) override;
+	void LineTo_(const Point& to) override;
+	void QuadBezierTo_(const Point& control, const Point& to) override;
+	void CubeBezierTo_(const Point& control_1, const Point& control_2, const Point& to) override;
+	void Close_() override;
 
- private:
-  void MoveTo_(const Point& to) override;
-  void LineTo_(const Point& to) override;
-  void QuadBezierTo_(const Point& control, const Point& to) override;
-  void CubeBezierTo_(const Point& control_1, const Point& control_2, const Point& to) override;
-  void Close_() override;
+	BezierSpline& shape_;
 
-  BezierSpline& shape_;
-
-  Point source_;
+	Point source_;
 }; // class SvgBezierConverter
 
 } // namespace detail

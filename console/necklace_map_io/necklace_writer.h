@@ -29,32 +29,23 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 29-01-2020
 #include <vector>
 
 #include "cartocrow/common/core_types.h"
+#include "cartocrow/necklace_map/io/write_options.h"
 #include "cartocrow/necklace_map/map_element.h"
 #include "cartocrow/necklace_map/necklace.h"
-#include "cartocrow/necklace_map/io/write_options.h"
 
+namespace cartocrow {
+namespace necklace_map {
 
-namespace cartocrow
-{
-namespace necklace_map
-{
+class SvgWriter {
+  public:
+	using MapElement = necklace_map::MapElement;
+	using Necklace = necklace_map::Necklace;
 
-class SvgWriter
-{
- public:
-  using MapElement = necklace_map::MapElement;
-  using Necklace = necklace_map::Necklace;
+	SvgWriter();
 
-  SvgWriter();
-
-  void Write
-  (
-    const std::vector<MapElement::Ptr>& elements,
-    const std::vector<Necklace::Ptr>& necklaces,
-    const Number& scale_factor,
-    const WriteOptions::Ptr& options,
-    std::ostream& out
-  ) const;
+	void Write(const std::vector<MapElement::Ptr>& elements,
+	           const std::vector<Necklace::Ptr>& necklaces, const Number& scale_factor,
+	           const WriteOptions::Ptr& options, std::ostream& out) const;
 }; // class SvgWriter
 
 } // namespace necklace_map

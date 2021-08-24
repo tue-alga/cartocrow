@@ -23,9 +23,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 09-03-2021
 
 #include "cartocrow/common/io/detail/svg_writer.h"
 
-
-namespace cartocrow
-{
+namespace cartocrow {
 
 /**@class SvgWriter
  * @brief A writer for commonly used geometry.
@@ -40,57 +38,42 @@ SvgWriter::SvgWriter() {}
 /**@brief Add a point with polar coordinates to the geometry to write.
  * @param point the point with polar coordinates to add.
  */
-void SvgWriter::Add(const PolarPoint& point)
-{
-  points_.push_back(point);
-}
+void SvgWriter::Add(const PolarPoint& point) { points_.push_back(point); }
 
 /**@brief Add a spiral to the geometry to write.
  * @param point the spiral to add.
  */
-void SvgWriter::Add(const Spiral& spiral)
-{
-  spirals_.push_back(spiral);
-}
+void SvgWriter::Add(const Spiral& spiral) { spirals_.push_back(spiral); }
 
 /**@brief Add a spiral segment to the geometry to write.
  * @param point the spiral segment to add.
  */
-void SvgWriter::Add(const SpiralSegment& segment)
-{
-  spiral_segments_.push_back(segment);
-}
+void SvgWriter::Add(const SpiralSegment& segment) { spiral_segments_.push_back(segment); }
 
 /**@brief Add a line with polar coordinates to the geometry to write.
  * @param point the line with polar coordinates to add.
  */
-void SvgWriter::Add(const PolarLine& line)
-{
-  lines_.push_back(line);
-}
+void SvgWriter::Add(const PolarLine& line) { lines_.push_back(line); }
 
 /**@brief Add a line segment with polar coordinates to the geometry to write.
  * @param point the line segment with polar coordinates to add.
  */
-void SvgWriter::Add(const PolarSegment& segment)
-{
-  line_segments_.push_back(segment);
-}
+void SvgWriter::Add(const PolarSegment& segment) { line_segments_.push_back(segment); }
 
 /**@brief Write the collected geometry to a stream.
  * @param out the stream to which to write.
  * @return whether the geometry could be successfully written to the stream.
  */
-bool SvgWriter::Write(const WriteOptions::Ptr& options, std::ostream& out) const
-{
-  detail::SvgWriter writer(points_, spirals_, spiral_segments_, lines_, line_segments_, options, out);
+bool SvgWriter::Write(const WriteOptions::Ptr& options, std::ostream& out) const {
+	detail::SvgWriter writer(points_, spirals_, spiral_segments_, lines_, line_segments_, options,
+	                         out);
 
-  // The order of drawing the features determines their stacking order, i.e. the last one will be on top.
-  writer.DrawSpirals();
-  writer.DrawLines();
-  writer.DrawPoints();
+	// The order of drawing the features determines their stacking order, i.e. the last one will be on top.
+	writer.DrawSpirals();
+	writer.DrawLines();
+	writer.DrawPoints();
 
-  return true;
+	return true;
 }
 
 } // namespace cartocrow

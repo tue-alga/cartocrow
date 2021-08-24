@@ -21,9 +21,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 04-02-2020
 
 #include "timer.h"
 
-
-namespace cartocrow
-{
+namespace cartocrow {
 
 /**@class Timer
  * @brief A simple timer that keeps track of a fixed number of timestamps.
@@ -36,33 +34,27 @@ namespace cartocrow
 /**@brief Construct a new timer and set the memory size limit.
  * @param memory the maximum number of timestamps that the timer remembers.
  */
-Timer::Timer(const size_t memory /*= 10*/) :
-  memory_(memory)
-{
-  Reset();
-}
+Timer::Timer(const size_t memory /*= 10*/) : memory_(memory) { Reset(); }
 
 /**@brief Reset the timer.
  * This clears the memory and sets the current time as starting time and as the first timestamp.
  */
-void Timer::Reset()
-{
-  start_ = clock();
-  times_.clear();
-  times_.push_front(start_);
+void Timer::Reset() {
+	start_ = clock();
+	times_.clear();
+	times_.push_front(start_);
 }
 
 /**@brief Add a timestamp.
  * @return The time since the previous timestamp.
  */
-double Timer::Stamp()
-{
-  const clock_t time = clock();
-  const double difference = Compare(time);
-  times_.push_front(time);
-  if (memory_ < times_.size())
-    times_.pop_back();
-  return difference;
+double Timer::Stamp() {
+	const clock_t time = clock();
+	const double difference = Compare(time);
+	times_.push_front(time);
+	if (memory_ < times_.size())
+		times_.pop_back();
+	return difference;
 }
 
 /**@brief Compute the time since some earlier timestamp.
@@ -74,10 +66,9 @@ double Timer::Stamp()
  * @endparblock
  * @return the time difference between the current time and the considered timestamp.
  */
-double Timer::Peek(const size_t skip /*= 0*/) const
-{
-  const clock_t time = clock();
-  return Compare(time, skip);
+double Timer::Peek(const size_t skip /*= 0*/) const {
+	const clock_t time = clock();
+	return Compare(time, skip);
 }
 
 /**@brief Compute the total time recorded by the timer.
@@ -85,15 +76,11 @@ double Timer::Peek(const size_t skip /*= 0*/) const
  * Note that this does not consider the current time, only time stamps in the memory of the timer and the time since its last reset.
  * @return the time difference between the starting time and the most recent timestamp.
  */
-double Timer::Span() const
-{
-  return double(times_.front() - start_) / CLOCKS_PER_SEC;
-}
+double Timer::Span() const { return double(times_.front() - start_) / CLOCKS_PER_SEC; }
 
-double Timer::Compare(const clock_t time, const size_t skip /*= 0*/) const
-{
-  const clock_t& stamp = skip < times_.size() ? times_.at(skip) : start_;
-  return double(time - stamp) / CLOCKS_PER_SEC;
+double Timer::Compare(const clock_t time, const size_t skip /*= 0*/) const {
+	const clock_t& stamp = skip < times_.size() ? times_.at(skip) : start_;
+	return double(time - stamp) / CLOCKS_PER_SEC;
 }
 
 } // namespace cartocrow

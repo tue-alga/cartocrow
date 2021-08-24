@@ -21,9 +21,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 01-04-2020
 
 #include "core_types.h"
 
-
-namespace cartocrow
-{
+namespace cartocrow {
 
 /**@brief Constrain a value to be beyond some starting value by less than some range.
  * @param value the value to constrain.
@@ -31,14 +29,13 @@ namespace cartocrow
  * @param range the maximum beyond the start value.
  * @return the value in the constrained range of [start, start+range].
  */
-Number Modulo(const Number& value, const Number& start /*= 0*/, const Number& range /*= M_2xPI*/)
-{
-  Number constrained = value;
-  while (constrained < start)
-    constrained += range;
-  while (start + range <= constrained)
-    constrained -= range;
-  return constrained;
+Number Modulo(const Number& value, const Number& start /*= 0*/, const Number& range /*= M_2xPI*/) {
+	Number constrained = value;
+	while (constrained < start)
+		constrained += range;
+	while (start + range <= constrained)
+		constrained -= range;
+	return constrained;
 }
 
 /**@brief Constrain a value to be strictly beyond some starting value by at most some range.
@@ -47,14 +44,14 @@ Number Modulo(const Number& value, const Number& start /*= 0*/, const Number& ra
  * @param range the maximum beyond the start value.
  * @return the value in the constrained range of [start, start+range].
  */
-Number ModuloNonZero(const Number& value, const Number& start /*= 0*/, const Number& range /*= M_2xPI*/)
-{
-  Number constrained = value;
-  while (constrained <= start)
-    constrained += range;
-  while (start + range < constrained)
-    constrained -= range;
-  return constrained;
+Number ModuloNonZero(const Number& value, const Number& start /*= 0*/,
+                     const Number& range /*= M_2xPI*/) {
+	Number constrained = value;
+	while (constrained <= start)
+		constrained += range;
+	while (start + range < constrained)
+		constrained -= range;
+	return constrained;
 }
 
 } // namespace cartocrow

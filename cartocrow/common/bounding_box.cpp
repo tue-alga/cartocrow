@@ -21,7 +21,4 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 29-01-2020
 
 #include "bounding_box.h"
 
-namespace cartocrow
-{
-
-} // namespace cartocrow
+namespace cartocrow {} // namespace cartocrow

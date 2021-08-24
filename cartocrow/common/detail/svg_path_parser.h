@@ -26,85 +26,61 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 20-11-2019
 
 #include "cartocrow/common/core_types.h"
 
+namespace cartocrow {
+namespace detail {
 
-namespace cartocrow
-{
-namespace detail
-{
+class SvgPathConverter {
+  public:
+	///@name Absolute coordinate methods.
+	///@{
+	void MoveTo(const Point& to);
+	void LineTo(const Point& to);
+	void QuadBezierTo(const Point& control, const Point& to);
+	void ContinueQuadBezierTo(const Point& to);
+	void CubeBezierTo(const Point& control_1, const Point& control_2, const Point& to);
+	void ContinueCubeBezierTo(const Point& control_2, const Point& to);
+	void EllipticalArcTo(const Number& radius_x, const Number& radius_y,
+	                     const Number& rotation_ccw_rad, const bool long_arc, const bool sweep_ccw,
+	                     const Point& to);
+	///@}
 
-class SvgPathConverter
-{
- public:
-  ///@name Absolute coordinate methods.
-  ///@{
-  void MoveTo(const Point& to);
-  void LineTo(const Point& to);
-  void QuadBezierTo(const Point& control, const Point& to);
-  void ContinueQuadBezierTo(const Point& to);
-  void CubeBezierTo(const Point& control_1, const Point& control_2, const Point& to);
-  void ContinueCubeBezierTo(const Point& control_2, const Point& to);
-  void EllipticalArcTo
-  (
-    const Number& radius_x,
-    const Number& radius_y,
-    const Number& rotation_ccw_rad,
-    const bool long_arc,
-    const bool sweep_ccw,
-    const Point& to
-  );
-  ///@}
+	///@name Relative coordinate methods.
+	///@{
+	void MoveTo(const Vector& to);
+	void LineTo(const Vector& to);
+	void QuadBezierTo(const Vector& control, const Vector& to);
+	void ContinueQuadBezierTo(const Vector& to);
+	void CubeBezierTo(const Vector& control_1, const Vector& control_2, const Vector& to);
+	void ContinueCubeBezierTo(const Vector& control_2, const Vector& to);
+	void EllipticalArcTo(const Number& radius_x, const Number& radius_y,
+	                     const Number& rotation_ccw_rad, const bool long_arc, const bool sweep_ccw,
+	                     const Vector& to);
+	///@}
 
-  ///@name Relative coordinate methods.
-  ///@{
-  void MoveTo(const Vector& to);
-  void LineTo(const Vector& to);
-  void QuadBezierTo(const Vector& control, const Vector& to);
-  void ContinueQuadBezierTo(const Vector& to);
-  void CubeBezierTo(const Vector& control_1, const Vector& control_2, const Vector& to);
-  void ContinueCubeBezierTo(const Vector& control_2, const Vector& to);
-  void EllipticalArcTo
-  (
-    const Number& radius_x,
-    const Number& radius_y,
-    const Number& rotation_ccw_rad,
-    const bool long_arc,
-    const bool sweep_ccw,
-    const Vector& to
-  );
-  ///@}
+	void Close();
 
-  void Close();
+  protected:
+	// Methods that can be overwritten when implementing this interface.
+	// When methods are called that are not reimplemented, a fatal error is logged.
 
- protected:
-  // Methods that can be overwritten when implementing this interface.
-  // When methods are called that are not reimplemented, a fatal error is logged.
+	virtual void MoveTo_(const Point& to) = 0;
+	virtual void LineTo_(const Point& to);
+	virtual void QuadBezierTo_(const Point& control, const Point& to);
+	virtual void CubeBezierTo_(const Point& control_1, const Point& control_2, const Point& to);
+	virtual void EllipticalArcTo_(const Number& radius_x, const Number& radius_y,
+	                              const Number& rotation_ccw_rad, const bool long_arc,
+	                              const bool sweep_ccw, const Point& to);
 
-  virtual void MoveTo_(const Point& to) = 0;
-  virtual void LineTo_(const Point& to);
-  virtual void QuadBezierTo_(const Point& control, const Point& to);
-  virtual void CubeBezierTo_(const Point& control_1, const Point& control_2, const Point& to);
-  virtual void EllipticalArcTo_
-  (
-    const Number& radius_x,
-    const Number& radius_y,
-    const Number& rotation_ccw_rad,
-    const bool long_arc,
-    const bool sweep_ccw,
-    const Point& to
-  );
+	virtual void Close_();
 
-  virtual void Close_();
-
- private:
-  Point previous_;
-  Vector previous_control_;  // From previous control to previous point.
+  private:
+	Point previous_;
+	Vector previous_control_; // From previous control to previous point.
 }; // class SvgPathConverter
 
-
-class SvgPathParser
-{
- public:
-  bool operator()(const std::string& path, SvgPathConverter& converter);
+class SvgPathParser {
+  public:
+	bool operator()(const std::string& path, SvgPathConverter& converter);
 }; // class SvgPathParser
 
 } // namespace detail

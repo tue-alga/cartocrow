@@ -28,38 +28,34 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 04-09-2020
 
 #include "cartocrow/common/cgal_types.h"
 
+namespace cartocrow {
 
-namespace cartocrow
-{
+class PolarPoint {
+  public:
+	PolarPoint();
 
-class PolarPoint
-{
- public:
-  PolarPoint();
+	PolarPoint(const CGAL::Origin& o);
 
-  PolarPoint(const CGAL::Origin& o);
+	template <typename T1, typename T2> PolarPoint(const T1& R, const T2& phi);
 
-  template<typename T1, typename T2>
-  PolarPoint(const T1& R, const T2& phi);
+	PolarPoint(const PolarPoint& p);
 
-  PolarPoint(const PolarPoint& p);
+	PolarPoint(const PolarPoint& p, const Vector& t);
 
-  PolarPoint(const PolarPoint& p, const Vector& t);
+	explicit PolarPoint(const Point& p);
 
-  explicit PolarPoint(const Point& p);
+	PolarPoint(const Point& p, const Vector& t);
 
-  PolarPoint(const Point& p, const Vector& t);
+	const Number& R() const;
+	const Number& phi() const;
 
-  const Number& R() const;
-  const Number& phi() const;
+	Point to_cartesian() const;
 
-  Point to_cartesian() const;
+  private:
+	static PolarPoint to_polar(const Point& p);
+	static PolarPoint translate_pole(const PolarPoint& p, const Vector& t);
 
- private:
-  static PolarPoint to_polar(const Point& p);
-  static PolarPoint translate_pole(const PolarPoint& p, const Vector& t);
-
-  Number R_, phi_;
+	Number R_, phi_;
 }; // class PolarPoint
 
 bool operator==(const PolarPoint& p, const PolarPoint& q);

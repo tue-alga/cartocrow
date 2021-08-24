@@ -24,21 +24,16 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 07-01-2020
 
 #include <glog/logging.h>
 
-#include "cartocrow/necklace_map/necklace_interval.h"
 #include "cartocrow/necklace_map/detail/cycle_node.h"
+#include "cartocrow/necklace_map/necklace_interval.h"
 
+namespace cartocrow {
+namespace necklace_map {
+namespace detail {
 
-namespace cartocrow
-{
-namespace necklace_map
-{
-namespace detail
-{
-
-inline Number DistanceOnCircle(const Number& from_rad, const Number& to_rad)
-{
-  const Number dist = std::abs(to_rad - from_rad);
-  return std::min(dist, M_2xPI - dist);
+inline Number DistanceOnCircle(const Number& from_rad, const Number& to_rad) {
+	const Number dist = std::abs(to_rad - from_rad);
+	return std::min(dist, M_2xPI - dist);
 }
 
 } // namespace detail
@@ -61,17 +56,17 @@ inline Number DistanceOnCircle(const Number& from_rad, const Number& to_rad)
  * @param parameters the parameters describing the desired type of functor.
  * @return a unique pointer containing a new functor or a nullptr if the functor could not be constructed.
  */
-ComputeValidPlacement::Ptr ComputeValidPlacement::New(const Parameters& parameters)
-{
-  switch (parameters.order_type)
-  {
-    case OrderType::kFixed:
-      return Ptr(new ComputeValidPlacementFixedOrder(parameters.placement_cycles, parameters.aversion_ratio, parameters.buffer_rad));
-    case OrderType::kAny:
-      return Ptr(new ComputeValidPlacementAnyOrder(parameters.placement_cycles, parameters.aversion_ratio, parameters.buffer_rad));
-    default:
-      return nullptr;
-  }
+ComputeValidPlacement::Ptr ComputeValidPlacement::New(const Parameters& parameters) {
+	switch (parameters.order_type) {
+	case OrderType::kFixed:
+		return Ptr(new ComputeValidPlacementFixedOrder(
+		    parameters.placement_cycles, parameters.aversion_ratio, parameters.buffer_rad));
+	case OrderType::kAny:
+		return Ptr(new ComputeValidPlacementAnyOrder(
+		    parameters.placement_cycles, parameters.aversion_ratio, parameters.buffer_rad));
+	default:
+		return nullptr;
+	}
 }
 
 /**@brief Construct a valid placement computation functor.
@@ -82,16 +77,10 @@ ComputeValidPlacement::Ptr ComputeValidPlacement::New(const Parameters& paramete
  * @endparblock
  * @param buffer_rad the minimum distance (in radians on the necklace) between the beads.
  */
-ComputeValidPlacement::ComputeValidPlacement
-(
-  const int cycles,
-  const Number& aversion_ratio,
-  const Number& buffer_rad /*= 0*/
-) :
-  cycles(cycles),
-  aversion_ratio(aversion_ratio),
-  buffer_rad(buffer_rad)
-{}
+ComputeValidPlacement::ComputeValidPlacement(const int cycles, const Number& aversion_ratio,
+                                             const Number& buffer_rad /*= 0*/
+                                             )
+    : cycles(cycles), aversion_ratio(aversion_ratio), buffer_rad(buffer_rad) {}
 
 /**@brief Apply the functor place the beads on a necklace.
  *
@@ -99,144 +88,122 @@ ComputeValidPlacement::ComputeValidPlacement
  * @param scale_factor the factor by which to multiply the radius of the beads.
  * @param necklace the necklace to which to apply the functor.
  */
-void ComputeValidPlacement::operator()(const Number& scale_factor, Necklace::Ptr& necklace) const  // TODO(tvl) factorize.
+void ComputeValidPlacement::operator()(const Number& scale_factor,
+                                       Necklace::Ptr& necklace) const // TODO(tvl) factorize.
 {
-  const NecklaceShape::Ptr& necklace_shape = necklace->shape;
-  for (const Bead::Ptr& bead : necklace->beads)
-  {
-    // Compute the scaled covering radius.
-    CHECK_NOTNULL(bead);
-    bead->angle_rad = scale_factor == 0 ? bead->feasible->from_rad() : Modulo(bead->angle_rad);
-  }
+	const NecklaceShape::Ptr& necklace_shape = necklace->shape;
+	for (const Bead::Ptr& bead : necklace->beads) {
+		// Compute the scaled covering radius.
+		CHECK_NOTNULL(bead);
+		bead->angle_rad = scale_factor == 0 ? bead->feasible->from_rad() : Modulo(bead->angle_rad);
+	}
 
-  // Sort the necklace beads by their current angle.
-  std::sort
-  (
-    necklace->beads.begin(),
-    necklace->beads.end(),
-    [](const Bead::Ptr& a, const Bead::Ptr& b) -> bool { return a->angle_rad < b->angle_rad; }
-  );
+	// Sort the necklace beads by their current angle.
+	std::sort(
+	    necklace->beads.begin(), necklace->beads.end(),
+	    [](const Bead::Ptr& a, const Bead::Ptr& b) -> bool { return a->angle_rad < b->angle_rad; });
 
-  // Compute the valid intervals.
-  const bool adjust_angle = 0 < aversion_ratio;
-  detail::ValidateScaleFactor validate(scale_factor, buffer_rad, adjust_angle);
-  const bool valid = validate(necklace);
+	// Compute the valid intervals.
+	const bool adjust_angle = 0 < aversion_ratio;
+	detail::ValidateScaleFactor validate(scale_factor, buffer_rad, adjust_angle);
+	const bool valid = validate(necklace);
 
-  if (!valid || !adjust_angle)
-    return;
+	if (!valid || !adjust_angle)
+		return;
 
-  const double precision = 1e-7;
-  const Number centroid_ratio = 1;
+	const double precision = 1e-7;
+	const Number centroid_ratio = 1;
 
-  const size_t num_beads = necklace->beads.size();
-  for (int cycle = 0; cycle < cycles; ++cycle)
-  {
-    for (size_t index_bead = 0; index_bead < num_beads; ++index_bead)
-    {
-      Bead::Ptr& bead = necklace->beads[index_bead];
-      CHECK_NOTNULL(bead);
+	const size_t num_beads = necklace->beads.size();
+	for (int cycle = 0; cycle < cycles; ++cycle) {
+		for (size_t index_bead = 0; index_bead < num_beads; ++index_bead) {
+			Bead::Ptr& bead = necklace->beads[index_bead];
+			CHECK_NOTNULL(bead);
 
-      const size_t index_prev = (index_bead + num_beads - 1) % num_beads;
-      const size_t index_next = (index_bead + 1) % num_beads;
+			const size_t index_prev = (index_bead + num_beads - 1) % num_beads;
+			const size_t index_next = (index_bead + 1) % num_beads;
 
-      const Bead::Ptr& prev = necklace->beads[index_prev];
-      const Bead::Ptr& next = necklace->beads[index_next];
+			const Bead::Ptr& prev = necklace->beads[index_prev];
+			const Bead::Ptr& next = necklace->beads[index_next];
 
-      const Number offset_from_prev_rad = CircularRange(prev->angle_rad, bead->angle_rad).ComputeLength();
-      const Number offset_from_centroid_rad = CircularRange
-        (
-          bead->feasible->ComputeCentroid(),
-          bead->angle_rad
-        ).ComputeLength();
+			const Number offset_from_prev_rad =
+			    CircularRange(prev->angle_rad, bead->angle_rad).ComputeLength();
+			const Number offset_from_centroid_rad =
+			    CircularRange(bead->feasible->ComputeCentroid(), bead->angle_rad).ComputeLength();
 
-      const Number& radius_bead = scale_factor * bead->radius_base;
-      const Number& radius_prev = scale_factor * prev->radius_base;
-      const Number& radius_next = scale_factor * next->radius_base;
+			const Number& radius_bead = scale_factor * bead->radius_base;
+			const Number& radius_prev = scale_factor * prev->radius_base;
+			const Number& radius_next = scale_factor * next->radius_base;
 
-      const Number distance_from_prev_min =
-        CircularRange
-        (
-          prev->angle_rad,
-          necklace_shape->ComputeAngleAtDistanceRad(prev->angle_rad, radius_prev + radius_bead)
-        ).ComputeLength() +
-        buffer_rad;
-      const Number distance_from_prev_max =
-        CircularRange
-        (
-          prev->angle_rad,
-          necklace_shape->ComputeAngleAtDistanceRad(next->angle_rad, -(radius_bead + radius_next))
-        ).ComputeLength() -
-        buffer_rad;
+			const Number distance_from_prev_min =
+			    CircularRange(prev->angle_rad, necklace_shape->ComputeAngleAtDistanceRad(
+			                                       prev->angle_rad, radius_prev + radius_bead))
+			        .ComputeLength() +
+			    buffer_rad;
+			const Number distance_from_prev_max =
+			    CircularRange(prev->angle_rad, necklace_shape->ComputeAngleAtDistanceRad(
+			                                       next->angle_rad, -(radius_bead + radius_next)))
+			        .ComputeLength() -
+			    buffer_rad;
 
-      // The 'bubble' is the largest range centered on the bead that does not contain the centroid.
-      const Number offset_prev_to_bubble =
-        offset_from_centroid_rad < M_PI
-        ? (offset_from_prev_rad - offset_from_centroid_rad)
-        : (offset_from_prev_rad + (M_2xPI - offset_from_centroid_rad));
+			// The 'bubble' is the largest range centered on the bead that does not contain the centroid.
+			const Number offset_prev_to_bubble =
+			    offset_from_centroid_rad < M_PI
+			        ? (offset_from_prev_rad - offset_from_centroid_rad)
+			        : (offset_from_prev_rad + (M_2xPI - offset_from_centroid_rad));
 
-      const double w_0 =
-        centroid_ratio * offset_prev_to_bubble * distance_from_prev_min * distance_from_prev_max -
-        aversion_ratio * (distance_from_prev_min + distance_from_prev_max);
-      const double w_1 =
-        aversion_ratio * 2 -
-        centroid_ratio *
-        (
-          (distance_from_prev_min + offset_prev_to_bubble) * (distance_from_prev_max + offset_prev_to_bubble) -
-          offset_prev_to_bubble * offset_prev_to_bubble
-        );
-      const double w_2 = centroid_ratio * (distance_from_prev_min + distance_from_prev_max + offset_prev_to_bubble);
-      const double w_3 = -centroid_ratio;
+			const double w_0 = centroid_ratio * offset_prev_to_bubble * distance_from_prev_min *
+			                       distance_from_prev_max -
+			                   aversion_ratio * (distance_from_prev_min + distance_from_prev_max);
+			const double w_1 =
+			    aversion_ratio * 2 -
+			    centroid_ratio * ((distance_from_prev_min + offset_prev_to_bubble) *
+			                          (distance_from_prev_max + offset_prev_to_bubble) -
+			                      offset_prev_to_bubble * offset_prev_to_bubble);
+			const double w_2 = centroid_ratio * (distance_from_prev_min + distance_from_prev_max +
+			                                     offset_prev_to_bubble);
+			const double w_3 = -centroid_ratio;
 
-      // Solve w_3 * x^3 + w_2 * x^2 + w_1 * x + w_0 = 0 up to the specified precision.
-      if (std::abs(w_3) < precision && std::abs(w_2) < precision)
-      {
-        const Number x = Modulo(-w_0 / w_1 + prev->angle_rad);
+			// Solve w_3 * x^3 + w_2 * x^2 + w_1 * x + w_0 = 0 up to the specified precision.
+			if (std::abs(w_3) < precision && std::abs(w_2) < precision) {
+				const Number x = Modulo(-w_0 / w_1 + prev->angle_rad);
 
-        if (!bead->feasible->Contains(x))
-        {
-          if (0 < 2 * offset_from_prev_rad - distance_from_prev_min + distance_from_prev_max)
-            bead->angle_rad = bead->feasible->from_rad();
-          else
-            bead->angle_rad = bead->feasible->to_rad();
-        }
-        else
-          bead->angle_rad = x;
-      }
-      else
-      {
-        const double q = (3 * w_3 * w_1 - w_2 * w_2) / (9 * w_3 * w_3);
-        const double r = (9 * w_3 * w_2 * w_1 - 27 * w_3 * w_3 * w_0 - 2 * w_2 * w_2 * w_2) / (54 * w_3 * w_3 * w_3);
+				if (!bead->feasible->Contains(x)) {
+					if (0 < 2 * offset_from_prev_rad - distance_from_prev_min + distance_from_prev_max)
+						bead->angle_rad = bead->feasible->from_rad();
+					else
+						bead->angle_rad = bead->feasible->to_rad();
+				} else
+					bead->angle_rad = x;
+			} else {
+				const double q = (3 * w_3 * w_1 - w_2 * w_2) / (9 * w_3 * w_3);
+				const double r = (9 * w_3 * w_2 * w_1 - 27 * w_3 * w_3 * w_0 - 2 * w_2 * w_2 * w_2) /
+				                 (54 * w_3 * w_3 * w_3);
 
-        const double rho = std::max(std::sqrt(-q * q * q), std::abs(r));
+				const double rho = std::max(std::sqrt(-q * q * q), std::abs(r));
 
-        const double theta_3 = std::acos(r / rho) / 3;
-        const double rho_3 = std::pow(rho, 1 / 3.0);
+				const double theta_3 = std::acos(r / rho) / 3;
+				const double rho_3 = std::pow(rho, 1 / 3.0);
 
-        const Number x = Modulo
-        (
-          prev->angle_rad -
-          rho_3 * std::cos(theta_3) - w_2 / (3 * w_3) +
-          rho_3 * std::sqrt(3.0) * std::sin(theta_3)
-        );
+				const Number x = Modulo(prev->angle_rad - rho_3 * std::cos(theta_3) -
+				                        w_2 / (3 * w_3) + rho_3 * std::sqrt(3.0) * std::sin(theta_3));
 
-        if (bead->feasible->Contains(x))
-          bead->angle_rad = x;
-        else if
-        (
-          0 <
-          aversion_ratio * (2 * offset_from_prev_rad - (distance_from_prev_min + distance_from_prev_max)) +
-          centroid_ratio * (offset_prev_to_bubble - offset_from_prev_rad) *
-          (offset_from_prev_rad - distance_from_prev_min) * (offset_from_prev_rad - distance_from_prev_max)
-        )
-          bead->angle_rad = bead->feasible->from_rad();
-        else
-          bead->angle_rad = bead->feasible->to_rad();
-      }
-      bead->angle_rad = Modulo(bead->angle_rad);
-    }
+				if (bead->feasible->Contains(x))
+					bead->angle_rad = x;
+				else if (0 < aversion_ratio * (2 * offset_from_prev_rad -
+				                               (distance_from_prev_min + distance_from_prev_max)) +
+				                 centroid_ratio * (offset_prev_to_bubble - offset_from_prev_rad) *
+				                     (offset_from_prev_rad - distance_from_prev_min) *
+				                     (offset_from_prev_rad - distance_from_prev_max))
+					bead->angle_rad = bead->feasible->from_rad();
+				else
+					bead->angle_rad = bead->feasible->to_rad();
+			}
+			bead->angle_rad = Modulo(bead->angle_rad);
+		}
 
-    SwapBeads(necklace);
-  }
+		SwapBeads(necklace);
+	}
 }
 
 /**@fn Number ComputeValidPlacement::cycles;
@@ -251,15 +218,14 @@ void ComputeValidPlacement::operator()(const Number& scale_factor, Necklace::Ptr
  * @brief The minimum distance (in radians on the necklace) between the beads.
  */
 
-
 /**@brief Apply the functor place the beads on a collection of necklaces.
  * @param scale_factor the factor by which to multiply the radius of the beads.
  * @param necklaces the necklaces to which to apply the functor.
  */
-void ComputeValidPlacement::operator()(const Number& scale_factor, std::vector<Necklace::Ptr>& necklaces) const
-{
-  for (Necklace::Ptr& necklace : necklaces)
-    (*this)(scale_factor, necklace);
+void ComputeValidPlacement::operator()(const Number& scale_factor,
+                                       std::vector<Necklace::Ptr>& necklaces) const {
+	for (Necklace::Ptr& necklace : necklaces)
+		(*this)(scale_factor, necklace);
 }
 
 /**@class ComputeValidPlacementFixedOrder
@@ -282,15 +248,11 @@ void ComputeValidPlacement::operator()(const Number& scale_factor, std::vector<N
  * @endparblock
  * @param buffer_rad the minimum distance (in radians on the necklace) between the beads.
  */
-ComputeValidPlacementFixedOrder::ComputeValidPlacementFixedOrder
-(
-  const int cycles,
-  const Number& aversion_ratio,
-  const Number& buffer_rad /*= 0*/
-) :
-  ComputeValidPlacement(cycles, aversion_ratio, buffer_rad)
-{}
-
+ComputeValidPlacementFixedOrder::ComputeValidPlacementFixedOrder(const int cycles,
+                                                                 const Number& aversion_ratio,
+                                                                 const Number& buffer_rad /*= 0*/
+                                                                 )
+    : ComputeValidPlacement(cycles, aversion_ratio, buffer_rad) {}
 
 /**@class ComputeValidPlacementAnyOrder
  * @brief A functor to compute a valid placement for a collection of unordered necklace beads.
@@ -312,54 +274,55 @@ ComputeValidPlacementFixedOrder::ComputeValidPlacementFixedOrder
  * @endparblock
  * @param min_separation the minimum distance (in radians as seen fron the necklace kernel) between the beads.
  */
-ComputeValidPlacementAnyOrder::ComputeValidPlacementAnyOrder
-(
-  const int cycles,
-  const Number& aversion_ratio,
-  const Number& min_separation /*= 0*/
-) :
-  ComputeValidPlacement(cycles, aversion_ratio, min_separation) {}
+ComputeValidPlacementAnyOrder::ComputeValidPlacementAnyOrder(const int cycles,
+                                                             const Number& aversion_ratio,
+                                                             const Number& min_separation /*= 0*/
+                                                             )
+    : ComputeValidPlacement(cycles, aversion_ratio, min_separation) {}
 
-void ComputeValidPlacementAnyOrder::SwapBeads(Necklace::Ptr& necklace) const
-{
-  const size_t num_beads = necklace->beads.size();
-  for (size_t index_bead = 0; index_bead < num_beads; index_bead++)
-  {
-    const size_t index_next = (index_bead+1)%num_beads;
+void ComputeValidPlacementAnyOrder::SwapBeads(Necklace::Ptr& necklace) const {
+	const size_t num_beads = necklace->beads.size();
+	for (size_t index_bead = 0; index_bead < num_beads; index_bead++) {
+		const size_t index_next = (index_bead + 1) % num_beads;
 
-    Bead::Ptr& bead = necklace->beads[index_bead];
-    Bead::Ptr& next = necklace->beads[index_next];
+		Bead::Ptr& bead = necklace->beads[index_bead];
+		Bead::Ptr& next = necklace->beads[index_next];
 
-    const Number& radius_bead = bead->covering_radius_rad;
-    const Number& radius_next = next->covering_radius_rad;
+		const Number& radius_bead = bead->covering_radius_rad;
+		const Number& radius_next = next->covering_radius_rad;
 
-    // Note that for the swapped angles, the buffers cancel each other out.
-    const Number swapped_angle_bead_rad = Modulo(next->angle_rad + radius_next - radius_bead);
-    const Number swapped_angle_next_rad = Modulo(bead->angle_rad - radius_bead + radius_next);
+		// Note that for the swapped angles, the buffers cancel each other out.
+		const Number swapped_angle_bead_rad = Modulo(next->angle_rad + radius_next - radius_bead);
+		const Number swapped_angle_next_rad = Modulo(bead->angle_rad - radius_bead + radius_next);
 
-    if (bead->feasible->Contains(swapped_angle_bead_rad) && next->feasible->Contains(swapped_angle_next_rad))
-    {
-      const Number centroid_bead_rad = bead->feasible->ComputeCentroid();
-      const Number centroid_next_rad = next->feasible->ComputeCentroid();
+		if (bead->feasible->Contains(swapped_angle_bead_rad) &&
+		    next->feasible->Contains(swapped_angle_next_rad)) {
+			const Number centroid_bead_rad = bead->feasible->ComputeCentroid();
+			const Number centroid_next_rad = next->feasible->ComputeCentroid();
 
-      const Number dist_original_bead = detail::DistanceOnCircle(bead->angle_rad, centroid_bead_rad);
-      const Number dist_original_next = detail::DistanceOnCircle(next->angle_rad, centroid_next_rad);
-      const Number dist_swapped_bead = detail::DistanceOnCircle(swapped_angle_bead_rad, centroid_bead_rad);
-      const Number dist_swapped_next = detail::DistanceOnCircle(swapped_angle_next_rad, centroid_next_rad);
+			const Number dist_original_bead =
+			    detail::DistanceOnCircle(bead->angle_rad, centroid_bead_rad);
+			const Number dist_original_next =
+			    detail::DistanceOnCircle(next->angle_rad, centroid_next_rad);
+			const Number dist_swapped_bead =
+			    detail::DistanceOnCircle(swapped_angle_bead_rad, centroid_bead_rad);
+			const Number dist_swapped_next =
+			    detail::DistanceOnCircle(swapped_angle_next_rad, centroid_next_rad);
 
-      const Number cost_original = dist_original_bead * dist_original_bead + dist_original_next * dist_original_next;
-      const Number cost_swapped = dist_swapped_bead * dist_swapped_bead + dist_swapped_next * dist_swapped_next;
+			const Number cost_original =
+			    dist_original_bead * dist_original_bead + dist_original_next * dist_original_next;
+			const Number cost_swapped =
+			    dist_swapped_bead * dist_swapped_bead + dist_swapped_next * dist_swapped_next;
 
-      if (cost_swapped < cost_original)
-      {
-        // Swap the beads.
-        bead->angle_rad = swapped_angle_bead_rad;
-        next->angle_rad = swapped_angle_next_rad;
+			if (cost_swapped < cost_original) {
+				// Swap the beads.
+				bead->angle_rad = swapped_angle_bead_rad;
+				next->angle_rad = swapped_angle_next_rad;
 
-        std::swap(necklace->beads[index_bead], necklace->beads[index_next]);
-      }
-    }
-  }
+				std::swap(necklace->beads[index_bead], necklace->beads[index_next]);
+			}
+		}
+	}
 }
 
 } // namespace necklace_map

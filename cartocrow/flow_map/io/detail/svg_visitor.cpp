@@ -30,15 +30,10 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 04-09-2020
 #include "cartocrow/common/detail/svg_point_parser.h"
 #include "cartocrow/common/detail/svg_polygon_parser.h"
 
-
-namespace cartocrow
-{
-namespace flow_map
-{
-namespace detail
-{
-namespace
-{
+namespace cartocrow {
+namespace flow_map {
+namespace detail {
+namespace {
 
 constexpr const char* kElementSvg = "svg";
 
@@ -61,104 +56,85 @@ constexpr const char* kCommandsRestrictionContextRegion = "CcQqSsTt";
  * Otherwise some regions may be corrected if this will make them valid.
  * @endparblock
  */
-SvgVisitor::SvgVisitor
-(
-  std::vector<Region>& context,
-  std::vector<Place::Ptr>& places,
-  const bool strict_validity /*= true*/
-) :
-  cartocrow::detail::SvgVisitor(),
-  context_(context),
-  places_(places),
-  strict_validity_(strict_validity)
-{
-  // Add the regions to the lookup table, while checking for duplicates.
-  for (const Place::Ptr& place : places_)
-  {
-    const size_t next_index = id_to_place_index_.size();
-    const size_t n = id_to_place_index_.insert({place->id, next_index}).first->second;
-    CHECK_EQ(next_index, n);
-  }
+SvgVisitor::SvgVisitor(std::vector<Region>& context, std::vector<Place::Ptr>& places,
+                       const bool strict_validity /*= true*/
+                       )
+    : cartocrow::detail::SvgVisitor(), context_(context), places_(places),
+      strict_validity_(strict_validity) {
+	// Add the regions to the lookup table, while checking for duplicates.
+	for (const Place::Ptr& place : places_) {
+		const size_t next_index = id_to_place_index_.size();
+		const size_t n = id_to_place_index_.insert({place->id, next_index}).first->second;
+		CHECK_EQ(next_index, n);
+	}
 }
 
-bool SvgVisitor::VisitExit(const tinyxml2::XMLElement& element)
-{
-  std::string name = element.Name();
-  std::transform(name.begin(), name.end(), name.begin(), [](unsigned char c) { return std::tolower(c); });
+bool SvgVisitor::VisitExit(const tinyxml2::XMLElement& element) {
+	std::string name = element.Name();
+	std::transform(name.begin(), name.end(), name.begin(),
+	               [](unsigned char c) { return std::tolower(c); });
 
-  if (name == kElementSvg)
-  {
-    return FinalizeSvg();
-  }
-  return true;
+	if (name == kElementSvg) {
+		return FinalizeSvg();
+	}
+	return true;
 }
 
+void SvgVisitor::VisitSvg(const tinyxml2::XMLAttribute* attributes) {}
 
-void SvgVisitor::VisitSvg(const tinyxml2::XMLAttribute* attributes)
-{}
+bool SvgVisitor::VisitCircle(const Point& center, const Number& radius,
+                             const tinyxml2::XMLAttribute* attributes) {
+	// Circles without id are ignored.
+	std::string id;
+	if (!FindAttribute(attributes, kAttributePlaceId, id))
+		return false;
 
-bool
-SvgVisitor::VisitCircle(const Point& center, const Number& radius, const tinyxml2::XMLAttribute* attributes)
-{
-  // Circles without id are ignored.
-  std::string id;
-  if (!FindAttribute(attributes, kAttributePlaceId, id))
-    return false;
-
-  // Add a place.
-  AddPlace(id, center);
-  return false;
+	// Add a place.
+	AddPlace(id, center);
+	return false;
 }
 
-bool SvgVisitor::VisitPath(const std::string& commands, const tinyxml2::XMLAttribute* attributes)
-{
-  CHECK(!commands.empty());
+bool SvgVisitor::VisitPath(const std::string& commands, const tinyxml2::XMLAttribute* attributes) {
+	CHECK(!commands.empty());
 
-  // Add a context region.
-  std::string style;
-  FindAttribute(attributes, kAttributeStyle, style);
+	// Add a context region.
+	std::string style;
+	FindAttribute(attributes, kAttributeStyle, style);
 
-  // Context regions may not contain non-linear arcs.
-  if(commands.find_first_of(kCommandsRestrictionContextRegion) == std::string::npos)
-  {
-    return AddRegion(commands, style);
-  }
-  else
-  {
-    // This path must be circular and represent a node.
-    std::string id;
-    CHECK(FindAttribute(attributes, kAttributePlaceId, id));
+	// Context regions may not contain non-linear arcs.
+	if (commands.find_first_of(kCommandsRestrictionContextRegion) == std::string::npos) {
+		return AddRegion(commands, style);
+	} else {
+		// This path must be circular and represent a node.
+		std::string id;
+		CHECK(FindAttribute(attributes, kAttributePlaceId, id));
 
-    // Add a place.
-    AddPlace(id, commands);
-  }
-  return true;
+		// Add a place.
+		AddPlace(id, commands);
+	}
+	return true;
 }
 
-bool SvgVisitor::FinalizeSvg()
-{
-  return true;
-}
+bool SvgVisitor::FinalizeSvg() { return true; }
 
 /**@brief Add a place to the flow map.
  * @param id the place ID.
  * @param point the position of the place in Cartesian coordinates.
  * @return whether the place was constructed correctly.
  */
-bool SvgVisitor::AddPlace(const std::string& id, const cartocrow::Point& point)
-{
-  PolarPoint position(point);
+bool SvgVisitor::AddPlace(const std::string& id, const cartocrow::Point& point) {
+	PolarPoint position(point);
 
-  // IDs must be unique.
-  const size_t next_index = places_.size();
-  const size_t n = id_to_place_index_.insert({id, next_index}).first->second;
+	// IDs must be unique.
+	const size_t next_index = places_.size();
+	const size_t n = id_to_place_index_.insert({id, next_index}).first->second;
 
-  if (next_index == n)
-    places_.push_back(std::make_shared<Place>(id, position));
-  else
-    places_[n]->position = position;
+	if (next_index == n)
+		places_.push_back(std::make_shared<Place>(id, position));
+	else
+		places_[n]->position = position;
 
-  return true;
+	return true;
 }
 
 /**@brief Add a node from a Bezier spline.
@@ -166,29 +142,28 @@ bool SvgVisitor::AddPlace(const std::string& id, const cartocrow::Point& point)
  * @param commands the SVG path commands (including point coordinates).
  * @return whether the place was constructed correctly.
  */
-bool SvgVisitor::AddPlace(const std::string& id, const std::string& commands)
-{
-  // Interpret the commands as a bezier spline.
-  BezierSpline spline;
-  cartocrow::detail::SvgBezierConverter converter(spline);
-  cartocrow::detail::SvgPathParser()(commands, converter);
+bool SvgVisitor::AddPlace(const std::string& id, const std::string& commands) {
+	// Interpret the commands as a bezier spline.
+	BezierSpline spline;
+	cartocrow::detail::SvgBezierConverter converter(spline);
+	cartocrow::detail::SvgPathParser()(commands, converter);
 
-  // The spline must approximate a circle.
-  Circle circle;
-  CHECK(spline.ToCircle(circle, 0.05));
+	// The spline must approximate a circle.
+	Circle circle;
+	CHECK(spline.ToCircle(circle, 0.05));
 
-  PolarPoint position(circle.center());
+	PolarPoint position(circle.center());
 
-  // Node IDs must be unique.
-  const size_t next_index = places_.size();
-  const size_t n = id_to_place_index_.insert({id, next_index}).first->second;
+	// Node IDs must be unique.
+	const size_t next_index = places_.size();
+	const size_t n = id_to_place_index_.insert({id, next_index}).first->second;
 
-  if (next_index == n)
-    places_.push_back(std::make_shared<Place>(id, position));
-  else
-    places_[n]->position = position;
+	if (next_index == n)
+		places_.push_back(std::make_shared<Place>(id, position));
+	else
+		places_[n]->position = position;
 
-  return true;
+	return true;
 }
 
 /**@brief Add a context region based on an SVG path.
@@ -197,24 +172,23 @@ bool SvgVisitor::AddPlace(const std::string& id, const std::string& commands)
  * for the output regions.
  * @return whether the region could be parsed correctly.
  */
-bool SvgVisitor::AddRegion(const std::string& commands, const std::string& style)
-{
-  // Note that these regions do not need an ID.
-  context_.emplace_back("");
-  Region& region = context_.back();
+bool SvgVisitor::AddRegion(const std::string& commands, const std::string& style) {
+	// Note that these regions do not need an ID.
+	context_.emplace_back("");
+	Region& region = context_.back();
 
-  // Interpret the commands as a region.
-  cartocrow::detail::SvgPolygonConverter converter(region.shape);
-  cartocrow::detail::SvgPathParser()(commands, converter);
+	// Interpret the commands as a region.
+	cartocrow::detail::SvgPolygonConverter converter(region.shape);
+	cartocrow::detail::SvgPathParser()(commands, converter);
 
-  region.style = style;
+	region.style = style;
 
-  if (strict_validity_)
-    CHECK(region.IsValid()) << "Invalid region: " << region.id;
-  else
-    region.MakeValid();
+	if (strict_validity_)
+		CHECK(region.IsValid()) << "Invalid region: " << region.id;
+	else
+		region.MakeValid();
 
-  return true;
+	return true;
 }
 
 } // namespace detail

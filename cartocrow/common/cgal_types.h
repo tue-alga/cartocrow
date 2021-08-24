@@ -24,8 +24,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 07-11-2019
 
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 
-namespace cartocrow
-{
+namespace cartocrow {
 
 // The geometric data types are taken from the CGAL library where possible.
 using Kernel = CGAL::Exact_predicates_inexact_constructions_kernel;
@@ -38,7 +37,6 @@ using Box = CGAL::Bbox_2;
 using Circle = CGAL::Circle_2<Kernel>;
 using Line = CGAL::Line_2<Kernel>;
 using Segment = CGAL::Segment_2<Kernel>;
-
 
 constexpr const Number kEpsilon = 0.0000001;
 

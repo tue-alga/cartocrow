@@ -31,8 +31,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 07-11-2019
  * When using the CartoCrow website, the output may be shown in Leaflet.js on top of a base map. In this case, the coordinates should be in the CRS used by the base map, which is EPSG3857 for the default base map, i.e. OpenStreetMap.
  */
 
-namespace cartocrow
-{
+namespace cartocrow {
 
 /**@typedef Kernel
  * @brief The geometry traits used throughout the library.

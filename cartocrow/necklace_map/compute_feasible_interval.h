@@ -33,29 +33,26 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 05-12-2019
 #include "cartocrow/necklace_map/necklace.h"
 #include "cartocrow/necklace_map/parameters.h"
 
+namespace cartocrow {
+namespace necklace_map {
 
-namespace cartocrow
-{
-namespace necklace_map
-{
+class ComputeFeasibleInterval {
+  public:
+	using Ptr = std::unique_ptr<ComputeFeasibleInterval>;
 
-class ComputeFeasibleInterval
-{
- public:
-  using Ptr = std::unique_ptr<ComputeFeasibleInterval>;
+	static Ptr New(const Parameters& parameters);
 
-  static Ptr New(const Parameters& parameters);
+	virtual CircularRange::Ptr operator()(const Polygon& extent,
+	                                      const Necklace::Ptr& necklace) const = 0;
 
-  virtual CircularRange::Ptr operator()(const Polygon& extent, const Necklace::Ptr& necklace) const = 0;
+	void operator()(MapElement::Ptr& element) const;
 
-  void operator()(MapElement::Ptr& element) const;
+	void operator()(std::vector<MapElement::Ptr>& elements) const;
 
-  void operator()(std::vector<MapElement::Ptr>& elements) const;
+  protected:
+	ComputeFeasibleInterval(const Parameters& parameters);
 
- protected:
-  ComputeFeasibleInterval(const Parameters& parameters);
-
-  std::set<Necklace::Ptr> to_clean_;
+	std::set<Necklace::Ptr> to_clean_;
 }; // class ComputeFeasibleInterval
 
 } // namespace necklace_map

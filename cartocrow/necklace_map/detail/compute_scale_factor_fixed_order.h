@@ -27,58 +27,53 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 06-01-2020
 
 #include "cartocrow/common/core_types.h"
 #include "cartocrow/necklace_map/bead.h"
-#include "cartocrow/necklace_map/necklace.h"
 #include "cartocrow/necklace_map/detail/cycle_node.h"
+#include "cartocrow/necklace_map/necklace.h"
 
+namespace cartocrow {
+namespace necklace_map {
+namespace detail {
 
-namespace cartocrow
-{
-namespace necklace_map
-{
-namespace detail
-{
+class ComputeScaleFactorFixedOrder {
+  public:
+	ComputeScaleFactorFixedOrder(const Necklace::Ptr& necklace, const Number& buffer_rad = 0);
 
-class ComputeScaleFactorFixedOrder
-{
- public:
-  ComputeScaleFactorFixedOrder(const Necklace::Ptr& necklace, const Number& buffer_rad = 0);
+	Number Optimize();
 
-  Number Optimize();
+	const Number& max_buffer_rad() const { return max_buffer_rad_; }
 
-  const Number& max_buffer_rad() const { return max_buffer_rad_; }
+  private:
+	// Number of nodes.
+	size_t size() const;
 
- private:
-  // Number of nodes.
-  size_t size() const;
+	// Aggregate buffer between i and j.
+	Number buffer(const size_t i, const size_t j) const;
 
-  // Aggregate buffer between i and j.
-  Number buffer(const size_t i, const size_t j) const;
+	// Clockwise extreme angle a_i of an interval.
+	const Number& a(const size_t i) const;
 
-  // Clockwise extreme angle a_i of an interval.
-  const Number& a(const size_t i) const;
+	// Counterclockwise extreme angle b_i of an interval.
+	const Number& b(const size_t i) const;
 
-  // Counterclockwise extreme angle b_i of an interval.
-  const Number& b(const size_t i) const;
+	// Covering radius r_i.
+	const Number& r(const size_t i) const;
 
-  // Covering radius r_i.
-  const Number& r(const size_t i) const;
+	// Aggregate covering radius r_ij.
+	Number r(const size_t i, const size_t j) const;
 
-  // Aggregate covering radius r_ij.
-  Number r(const size_t i, const size_t j) const;
+	Number CorrectScaleFactor(const Number& rho) const;
 
-  Number CorrectScaleFactor(const Number& rho) const;
+	// Optimize the scale factor for the beads in the range [I, J].
+	Number OptimizeSubProblem(const size_t I, const size_t J, Number& max_buffer_rad) const;
 
-  // Optimize the scale factor for the beads in the range [I, J].
-  Number OptimizeSubProblem(const size_t I, const size_t J, Number& max_buffer_rad) const;
+  private:
+	// Note that the scaler must be able to access the set by index.
+	using NodeSet = std::vector<CycleNode>;
+	NodeSet nodes_;
 
- private:
-  // Note that the scaler must be able to access the set by index.
-  using NodeSet = std::vector<CycleNode>;
-  NodeSet nodes_;
-
-  NecklaceShape::Ptr necklace_shape_;
-  Number buffer_rad_;
-  Number max_buffer_rad_;
+	NecklaceShape::Ptr necklace_shape_;
+	Number buffer_rad_;
+	Number max_buffer_rad_;
 }; // class ComputeScaleFactorFixedOrder
 
 } // namespace detail

@@ -23,11 +23,8 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 20-11-2019
 
 #include <glog/logging.h>
 
-
-namespace cartocrow
-{
-namespace detail
-{
+namespace cartocrow {
+namespace detail {
 
 /**@class SvgPolygonConverter
  * @brief An implementation of SvgPathConverter for converting an SVG path element to a collection of polygons.
@@ -44,27 +41,21 @@ namespace detail
 /**@brief Construct an object for converting SVG path elements to collections of polygons.
  * @param shape the output polygon shape.
  */
-SvgPolygonConverter::SvgPolygonConverter(PolygonSet& shape)
-  : SvgPathConverter(), shape_(shape) {}
+SvgPolygonConverter::SvgPolygonConverter(PolygonSet& shape) : SvgPathConverter(), shape_(shape) {}
 
-void SvgPolygonConverter::MoveTo_(const Point& to)
-{
-  CHECK(current_.is_empty()) << "Trying to move while polygon is not closed.";
-  current_.push_back(to);
+void SvgPolygonConverter::MoveTo_(const Point& to) {
+	CHECK(current_.is_empty()) << "Trying to move while polygon is not closed.";
+	current_.push_back(to);
 }
 
-void SvgPolygonConverter::LineTo_(const Point& to)
-{
-  current_.push_back(to);
-}
+void SvgPolygonConverter::LineTo_(const Point& to) { current_.push_back(to); }
 
-void SvgPolygonConverter::Close_()
-{
-  CHECK(current_.is_simple());
-  if ( current_.is_clockwise_oriented() )
-    current_.reverse_orientation();
-  shape_.emplace_back(current_);
-  current_.clear();
+void SvgPolygonConverter::Close_() {
+	CHECK(current_.is_simple());
+	if (current_.is_clockwise_oriented())
+		current_.reverse_orientation();
+	shape_.emplace_back(current_);
+	current_.clear();
 }
 
 } // namespace detail

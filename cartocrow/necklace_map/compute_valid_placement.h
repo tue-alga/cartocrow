@@ -26,57 +26,52 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 07-01-2020
 #include <vector>
 
 #include "cartocrow/common/core_types.h"
+#include "cartocrow/necklace_map/detail/validate_scale_factor.h"
 #include "cartocrow/necklace_map/necklace.h"
 #include "cartocrow/necklace_map/parameters.h"
-#include "cartocrow/necklace_map/detail/validate_scale_factor.h"
 
+namespace cartocrow {
+namespace necklace_map {
 
-namespace cartocrow
-{
-namespace necklace_map
-{
+class ComputeValidPlacement {
+  public:
+	using Ptr = std::unique_ptr<ComputeValidPlacement>;
 
-class ComputeValidPlacement
-{
- public:
-  using Ptr = std::unique_ptr<ComputeValidPlacement>;
+	static Ptr New(const Parameters& parameters);
 
-  static Ptr New(const Parameters& parameters);
+	ComputeValidPlacement(const int cycles, const Number& aversion_ratio,
+	                      const Number& buffer_rad = 0);
 
-  ComputeValidPlacement(const int cycles, const Number& aversion_ratio, const Number& buffer_rad = 0);
+	void operator()(const Number& scale_factor, Necklace::Ptr& necklace) const;
 
-  void operator()(const Number& scale_factor, Necklace::Ptr& necklace) const;
+	void operator()(const Number& scale_factor, std::vector<Necklace::Ptr>& necklaces) const;
 
-  void operator()(const Number& scale_factor, std::vector<Necklace::Ptr>& necklaces) const;
+	int cycles;
 
-  int cycles;
+	Number aversion_ratio;
 
-  Number aversion_ratio;
+	Number buffer_rad;
 
-  Number buffer_rad;
-
- protected:
-  virtual void SwapBeads(Necklace::Ptr& necklace) const = 0;
+  protected:
+	virtual void SwapBeads(Necklace::Ptr& necklace) const = 0;
 }; // class ComputeValidPlacement
 
+class ComputeValidPlacementFixedOrder : public ComputeValidPlacement {
+  public:
+	ComputeValidPlacementFixedOrder(const int cycles, const Number& aversion_ratio,
+	                                const Number& min_separation = 0);
 
-class ComputeValidPlacementFixedOrder : public ComputeValidPlacement
-{
- public:
-  ComputeValidPlacementFixedOrder(const int cycles, const Number& aversion_ratio, const Number& min_separation = 0);
-
- protected:
-  void SwapBeads(Necklace::Ptr& necklace) const override {}
+  protected:
+	void SwapBeads(Necklace::Ptr& necklace) const override {}
 }; // class ComputeValidPlacementFixedOrder
 
+class ComputeValidPlacementAnyOrder : public ComputeValidPlacement {
+  public:
+	ComputeValidPlacementAnyOrder(const int cycles, const Number& aversion_ratio,
+	                              const Number& min_separation = 0);
 
-class ComputeValidPlacementAnyOrder : public ComputeValidPlacement
-{
- public:
-  ComputeValidPlacementAnyOrder(const int cycles, const Number& aversion_ratio, const Number& min_separation = 0);
-
- protected:
-  void SwapBeads(Necklace::Ptr& necklace) const override;
+  protected:
+	void SwapBeads(Necklace::Ptr& necklace) const override;
 }; // class ComputeValidPlacementAnyOrder
 
 } // namespace necklace_map

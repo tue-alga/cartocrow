@@ -32,84 +32,62 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-2019
 #include "console/common/utils_flags.h"
 #include "console/necklace_map_io/necklace_map_io.h"
 
-
 // the input flags are mutually exclusive per type to prevent accidentally setting both and 'the wrong one' being used.
 
-DEFINE_string
-(
-  in_geometry_filename,
-  "",
-  "The input map geometry filename."
-);
+DEFINE_string(in_geometry_filename, "", "The input map geometry filename.");
 
+void ValidateFlags() {
+	bool correct = true;
+	LOG(INFO) << "map_regions_cla flags:";
 
-void ValidateFlags()
-{
-  bool correct = true;
-  LOG(INFO) << "map_regions_cla flags:";
+	// Note that we mainly print flags to enable reproducibility.
+	// Other flags are validated, but only printed if not valid.
+	// Note that we may skip some low-level flags that almost never change.
+	using namespace validate;
 
-  // Note that we mainly print flags to enable reproducibility.
-  // Other flags are validated, but only printed if not valid.
-  // Note that we may skip some low-level flags that almost never change.
-  using namespace validate;
+	// There must be an input map.
+	correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(in_geometry_filename), ExistsFile);
 
-  // There must be an input map.
-  correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(in_geometry_filename), ExistsFile);
+	PrintFlag(FLAGS_NAME_AND_VALUE(stderrthreshold));
+	PrintFlag(FLAGS_NAME_AND_VALUE(v));
 
-  PrintFlag( FLAGS_NAME_AND_VALUE( stderrthreshold ) );
-  PrintFlag( FLAGS_NAME_AND_VALUE( v ) );
-
-  if( !correct ) LOG(FATAL) << "Errors in flags; Terminating.";
+	if (!correct)
+		LOG(FATAL) << "Errors in flags; Terminating.";
 }
 
-bool ReadGeometry
-(
-  std::vector<cartocrow::necklace_map::MapElement::Ptr>& elements,
-  std::vector<cartocrow::necklace_map::Necklace::Ptr>& necklaces,
-  cartocrow::Number& scale_factor
-)
-{
-  cartocrow::necklace_map::SvgReader svg_reader;
-  return svg_reader.ReadFile(FLAGS_in_geometry_filename, elements, necklaces, scale_factor);
+bool ReadGeometry(std::vector<cartocrow::necklace_map::MapElement::Ptr>& elements,
+                  std::vector<cartocrow::necklace_map::Necklace::Ptr>& necklaces,
+                  cartocrow::Number& scale_factor) {
+	cartocrow::necklace_map::SvgReader svg_reader;
+	return svg_reader.ReadFile(FLAGS_in_geometry_filename, elements, necklaces, scale_factor);
 }
 
-void WriteOutput
-(
-  const std::vector<cartocrow::necklace_map::MapElement::Ptr>& elements,
-  const std::vector<cartocrow::necklace_map::Necklace::Ptr>& necklaces
-)
-{
-  for (auto element : elements) {
-    std::cout << element->region.id << "\n";
-  }
+void WriteOutput(const std::vector<cartocrow::necklace_map::MapElement::Ptr>& elements,
+                 const std::vector<cartocrow::necklace_map::Necklace::Ptr>& necklaces) {
+	for (auto element : elements) {
+		std::cout << element->region.id << "\n";
+	}
 }
 
+int main(int argc, char** argv) {
+	InitApplication(argc, argv, "Checks the validity of an SVG map, and outputs its regions.",
+	                {"--in_geometry_filename=<file>"});
 
-int main(int argc, char **argv)
-{
-  InitApplication
-  (
-    argc,
-    argv,
-    "Checks the validity of an SVG map, and outputs its regions.",
-    {"--in_geometry_filename=<file>"}
-  );
+	// Validate the settings.
+	ValidateFlags();
 
-  // Validate the settings.
-  ValidateFlags();
+	using MapElement = cartocrow::necklace_map::MapElement;
+	using Necklace = cartocrow::necklace_map::Necklace;
+	std::vector<MapElement::Ptr> elements;
+	std::vector<Necklace::Ptr> necklaces;
 
-  using MapElement = cartocrow::necklace_map::MapElement;
-  using Necklace = cartocrow::necklace_map::Necklace;
-  std::vector<MapElement::Ptr> elements;
-  std::vector<Necklace::Ptr> necklaces;
+	// Read the map.
+	cartocrow::Number scale_factor;
+	const bool success_read_svg = ReadGeometry(elements, necklaces, scale_factor);
+	CHECK(success_read_svg) << "Map invalid";
 
-  // Read the map.
-  cartocrow::Number scale_factor;
-  const bool success_read_svg = ReadGeometry(elements, necklaces, scale_factor);
-  CHECK(success_read_svg) << "Map invalid";
+	// Write the output.
+	WriteOutput(elements, necklaces);
 
-  // Write the output.
-  WriteOutput(elements, necklaces);
-
-  return 0;
+	return 0;
 }

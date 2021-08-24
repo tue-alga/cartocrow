@@ -21,9 +21,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 06-05-2020
 
 #include "circular_range.h"
 
-
-namespace cartocrow
-{
+namespace cartocrow {
 
 /**@class CircularRange
  * @brief The interface for a necklace interval.
@@ -45,19 +43,15 @@ namespace cartocrow
  * @param from_rad the clockwise endpoint of the interval.
  * @param to_rad the counterclockwise endpoint of the interval.
  */
-CircularRange::CircularRange(const Number& from_rad, const Number& to_rad) :
-  Range(from_rad, to_rad)
-{
-  if (M_2xPI <= to_rad - from_rad)
-  {
-    from() = 0;
-    to() = M_2xPI;
-  }
-  else
-  {
-    from() = Modulo(from_rad);
-    to() = Modulo(to_rad, from());
-  }
+CircularRange::CircularRange(const Number& from_rad, const Number& to_rad)
+    : Range(from_rad, to_rad) {
+	if (M_2xPI <= to_rad - from_rad) {
+		from() = 0;
+		to() = M_2xPI;
+	} else {
+		from() = Modulo(from_rad);
+		to() = Modulo(to_rad, from());
+	}
 }
 
 /**@brief Construct a circular range from a regular range.
@@ -100,47 +94,35 @@ CircularRange::CircularRange(const Range& range) : CircularRange(range.from(), r
  * The interval is in a valid state if from() is in the range [0, 2*pi) and to() is in the range [from(), from() + 2*pi).
  * @return whether the interval is valid.
  */
-bool CircularRange::IsValid() const
-{
-  return
-    0 <= from_rad() && from_rad() < M_2xPI &&
-    from_rad() <= to_rad() && to_rad() < from_rad() + M_2xPI;
+bool CircularRange::IsValid() const {
+	return 0 <= from_rad() && from_rad() < M_2xPI && from_rad() <= to_rad() &&
+	       to_rad() < from_rad() + M_2xPI;
 }
 
 /**@brief Check whether the interval covers the full circle.
  * @return true if and only if the interval covers the full circle.
  */
-bool CircularRange::IsFull() const
-{
-  return from_rad() == 0 && to_rad() == M_2xPI;
+bool CircularRange::IsFull() const { return from_rad() == 0 && to_rad() == M_2xPI; }
+
+bool CircularRange::Contains(const Number& value) const {
+	const Number value_mod = Modulo(value, from_rad());
+	return from_rad() <= value_mod && value_mod <= to_rad();
 }
 
-bool CircularRange::Contains(const Number& value) const
-{
-  const Number value_mod = Modulo(value, from_rad());
-  return from_rad() <= value_mod && value_mod <= to_rad();
+bool CircularRange::ContainsOpen(const Number& value) const {
+	const Number value_mod = Modulo(value, from_rad());
+	return from_rad() < value_mod && value_mod < to_rad();
 }
 
-bool CircularRange::ContainsOpen(const Number& value) const
-{
-  const Number value_mod = Modulo(value, from_rad());
-  return from_rad() < value_mod && value_mod < to_rad();
+bool CircularRange::Intersects(const Range::Ptr& range) const {
+	CircularRange interval(*range);
+	return Contains(interval.from_rad()) || interval.Contains(from_rad());
 }
 
-bool CircularRange::Intersects(const Range::Ptr& range) const
-{
-  CircularRange interval(*range);
-  return
-    Contains(interval.from_rad()) ||
-    interval.Contains(from_rad());
-}
-
-bool CircularRange::IntersectsOpen(const Range::Ptr& range) const
-{
-  CircularRange interval(*range);
-  return
-    (Contains(interval.from_rad()) && Modulo(interval.from_rad(), from_rad()) != to_rad()) ||
-    (interval.Contains(from_rad()) && Modulo(from_rad(), interval.from_rad()) != interval.to());
+bool CircularRange::IntersectsOpen(const Range::Ptr& range) const {
+	CircularRange interval(*range);
+	return (Contains(interval.from_rad()) && Modulo(interval.from_rad(), from_rad()) != to_rad()) ||
+	       (interval.Contains(from_rad()) && Modulo(from_rad(), interval.from_rad()) != interval.to());
 }
 
 /**@brief Compute a metric to order intervals on a necklace.
@@ -156,21 +138,17 @@ bool CircularRange::IntersectsOpen(const Range::Ptr& range) const
 /**@brief Compute the angle of the centroid of the interval.
  * @return the centroid angle in radians.
  */
-Number CircularRange::ComputeCentroid() const
-{
-  return Modulo(.5 * (from() + to()));
-}
+Number CircularRange::ComputeCentroid() const { return Modulo(.5 * (from() + to())); }
 
 /**@brief Reverse the orientation of the range.
  */
-void CircularRange::Reverse()
-{
-  if (IsFull())
-    return;
+void CircularRange::Reverse() {
+	if (IsFull())
+		return;
 
-  const Number from_rad_old = from_rad();
-  from_rad() = Modulo(to_rad());
-  to_rad() = Modulo(from_rad_old, from_rad());
+	const Number from_rad_old = from_rad();
+	from_rad() = Modulo(to_rad());
+	to_rad() = Modulo(from_rad_old, from_rad());
 }
 
 } // namespace cartocrow

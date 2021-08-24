@@ -22,33 +22,30 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 04-02-2020
 #ifndef CARTOCROW_COMMON_TIMER_H
 #define CARTOCROW_COMMON_TIMER_H
 
-#include <deque>
 #include "time.h"
+#include <deque>
 
+namespace cartocrow {
 
-namespace cartocrow
-{
+class Timer {
+  public:
+	Timer(const size_t memory = 10);
 
-class Timer
-{
- public:
-  Timer(const size_t memory = 10);
+	void Reset();
 
-  void Reset();
+	double Stamp();
 
-  double Stamp();
+	double Peek(const size_t skip = 0) const;
 
-  double Peek(const size_t skip = 0) const;
+	double Span() const;
 
-  double Span() const;
+  private:
+	// If skip is too large, the starting time is used.
+	double Compare(const clock_t time, const size_t skip = 0) const;
 
- private:
-  // If skip is too large, the starting time is used.
-  double Compare(const clock_t time, const size_t skip = 0) const;
-
-  clock_t start_;
-  std::deque<clock_t> times_;
-  size_t memory_;
+	clock_t start_;
+	std::deque<clock_t> times_;
+	size_t memory_;
 }; // class Timer
 
 } // namespace cartocrow

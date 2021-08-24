@@ -28,45 +28,39 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 13-02-2020
 
 #include <cartocrow/necklace_map/parameters.h>
 
+namespace cartocrow {
+namespace necklace_map {
 
-namespace cartocrow
-{
-namespace necklace_map
-{
+class IntervalTypeParser {
+  public:
+	using IntervalType = cartocrow::necklace_map::IntervalType;
 
-class IntervalTypeParser
-{
- public:
-  using IntervalType = cartocrow::necklace_map::IntervalType;
+	static constexpr const char* kCentroid = "centroid";
+	static constexpr const char* kWedge = "wedge";
 
-  static constexpr const char* kCentroid = "centroid";
-  static constexpr const char* kWedge = "wedge";
+	IntervalTypeParser(IntervalType& type);
 
-  IntervalTypeParser(IntervalType& type);
+	bool operator()(const std::string& str) const;
 
-  bool operator()(const std::string& str) const;
+	std::string Serialize() const;
 
-  std::string Serialize() const;
-
-  IntervalType& type;
+	IntervalType& type;
 }; // class IntervalTypeParser
 
+class OrderTypeParser {
+  public:
+	using OrderType = cartocrow::necklace_map::OrderType;
 
-class OrderTypeParser
-{
- public:
-  using OrderType = cartocrow::necklace_map::OrderType;
+	static constexpr const char* kFixed = "fixed";
+	static constexpr const char* kAny = "any";
 
-  static constexpr const char* kFixed = "fixed";
-  static constexpr const char* kAny = "any";
+	OrderTypeParser(OrderType& type);
 
-  OrderTypeParser(OrderType& type);
+	bool operator()(const std::string& str) const;
 
-  bool operator()(const std::string& str) const;
+	std::string Serialize() const;
 
-  std::string Serialize() const;
-
-  OrderType& type;
+	OrderType& type;
 }; // class OrderTypeParser
 
 } // namespace necklace_map

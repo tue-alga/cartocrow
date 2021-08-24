@@ -27,53 +27,47 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 19-02-2021
 #include "cartocrow/common/core_types.h"
 #include "cartocrow/common/polar_point.h"
 
+namespace cartocrow {
 
-namespace cartocrow
-{
+class PolarLine {
+  public:
+	explicit PolarLine(const PolarPoint& closest);
 
-class PolarLine
-{
- public:
-  explicit PolarLine(const PolarPoint& closest);
+	PolarLine(const PolarPoint& point_1, const PolarPoint& point_2);
 
-  PolarLine(const PolarPoint& point_1, const PolarPoint& point_2);
+	const PolarPoint& foot() const;
 
-  const PolarPoint& foot() const;
+	PolarPoint& foot();
 
-  PolarPoint& foot();
+	bool ContainsR(const Number& R) const;
 
-  bool ContainsR(const Number& R) const;
+	bool ContainsPhi(const Number& phi) const;
 
-  bool ContainsPhi(const Number& phi) const;
+	Number EvaluateR(const Number& t) const;
 
-  Number EvaluateR(const Number& t) const;
+	Number EvaluatePhi(const Number& t) const;
 
-  Number EvaluatePhi(const Number& t) const;
+	PolarPoint Evaluate(const Number& t) const;
 
-  PolarPoint Evaluate(const Number& t) const;
+	Number ComputeT(const Number& phi) const;
 
-  Number ComputeT(const Number& phi) const;
+	template <class OutputIterator> int CollectT(const Number& R, OutputIterator t) const;
 
-  template<class OutputIterator>
-  int CollectT(const Number& R, OutputIterator t) const;
+	Number ComputeR(const Number& phi) const;
 
-  Number ComputeR(const Number& phi) const;
+	template <class OutputIterator> int CollectPhi(const Number& R, OutputIterator phi) const;
 
-  template<class OutputIterator>
-  int CollectPhi(const Number& R, OutputIterator phi) const;
+	bool ComputeAngle(const Number& R, Number& angle_rad) const;
 
-  bool ComputeAngle(const Number& R, Number& angle_rad) const;
+  protected:
+	PolarLine() {}
 
- protected:
-  PolarLine() {}
+	// Returns the signed distance from point 1 to point 2.
+	Number SetFoot(const PolarPoint& point_1, const PolarPoint& point_2);
 
-  // Returns the signed distance from point 1 to point 2.
-  Number SetFoot(const PolarPoint& point_1, const PolarPoint& point_2);
-
- private:
-  PolarPoint foot_;
+  private:
+	PolarPoint foot_;
 }; // class PolarLine
-
 
 std::ostream& operator<<(std::ostream& os, const PolarLine& line);
 

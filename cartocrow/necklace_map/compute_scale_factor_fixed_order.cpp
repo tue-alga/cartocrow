@@ -24,11 +24,8 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 03-03-2020
 
 #include "cartocrow/necklace_map/detail/compute_scale_factor_fixed_order.h"
 
-
-namespace cartocrow
-{
-namespace necklace_map
-{
+namespace cartocrow {
+namespace necklace_map {
 
 /**@struct ComputeScaleFactorFixedOrder
  * @brief A functor to compute the optimal scale factor for a collection of necklace map elements with fixed order.
@@ -53,18 +50,16 @@ namespace necklace_map
  * @endparblock
  */
 ComputeScaleFactorFixedOrder::ComputeScaleFactorFixedOrder(const Parameters& parameters)
-  : ComputeScaleFactor(parameters)
-{}
+    : ComputeScaleFactor(parameters) {}
 
-Number ComputeScaleFactorFixedOrder::operator()(Necklace::Ptr& necklace)
-{
-  detail::ComputeScaleFactorFixedOrder impl(necklace, buffer_rad_);
-  const Number scale_factor = impl.Optimize();
+Number ComputeScaleFactorFixedOrder::operator()(Necklace::Ptr& necklace) {
+	detail::ComputeScaleFactorFixedOrder impl(necklace, buffer_rad_);
+	const Number scale_factor = impl.Optimize();
 
-  if (max_buffer_rad_ < 0 || impl.max_buffer_rad() < max_buffer_rad_)
-    max_buffer_rad_ = impl.max_buffer_rad();
+	if (max_buffer_rad_ < 0 || impl.max_buffer_rad() < max_buffer_rad_)
+		max_buffer_rad_ = impl.max_buffer_rad();
 
-  return scale_factor;
+	return scale_factor;
 }
 
 } // namespace necklace_map

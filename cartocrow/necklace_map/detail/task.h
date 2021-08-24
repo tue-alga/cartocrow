@@ -30,66 +30,52 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 06-05-2020
 #include "cartocrow/common/range.h"
 #include "cartocrow/necklace_map/detail/cycle_node_layered.h"
 
-
-namespace cartocrow
-{
-namespace necklace_map
-{
-namespace detail
-{
+namespace cartocrow {
+namespace necklace_map {
+namespace detail {
 
 // The beads will be processed by moving from event to event.
 // Each event indicates that a valid interval starts or stops at the associated angle.
-struct TaskEvent
-{
-  enum class Type {kFrom, kTo};
+struct TaskEvent {
+	enum class Type { kFrom, kTo };
 
-  TaskEvent();
+	TaskEvent();
 
-  TaskEvent(const CycleNodeLayered::Ptr& node, const Number& angle_rad, const Type& type);
+	TaskEvent(const CycleNodeLayered::Ptr& node, const Number& angle_rad, const Type& type);
 
-  CycleNodeLayered::Ptr node;
-  Number angle_rad;
-  Type type;
+	CycleNodeLayered::Ptr node;
+	Number angle_rad;
+	Type type;
 }; // class TaskEvent
 
-
-class CompareTaskEvent
-{
- public:
-  bool operator()(const TaskEvent& a, const TaskEvent& b) const;
+class CompareTaskEvent {
+  public:
+	bool operator()(const TaskEvent& a, const TaskEvent& b) const;
 }; // class CompareTaskEvent
-
 
 // A collection of tasks that are valid within some range.
 // Note that within the complete range all these tasks are valid; they can only start and stop being valid at the start or end of the range.
-class TaskSlice
-{
- public:
-  TaskSlice();
+class TaskSlice {
+  public:
+	TaskSlice();
 
-  TaskSlice
-  (
-    const TaskEvent& event_from,
-    const TaskEvent& event_to,
-    const int num_layers
-  );
+	TaskSlice(const TaskEvent& event_from, const TaskEvent& event_to, const int num_layers);
 
-  TaskSlice(const TaskSlice& slice, const Number& angle_start, const int cycle);
+	TaskSlice(const TaskSlice& slice, const Number& angle_start, const int cycle);
 
-  void Reset();
+	void Reset();
 
-  void Rotate(const TaskSlice& first_slice, const BitString& layer_set);
+	void Rotate(const TaskSlice& first_slice, const BitString& layer_set);
 
-  void AddTask(const CycleNodeLayered::Ptr& task);
+	void AddTask(const CycleNodeLayered::Ptr& task);
 
-  void Finalize();
+	void Finalize();
 
-  TaskEvent event_from, event_to;
-  Range coverage;
+	TaskEvent event_from, event_to;
+	Range coverage;
 
-  std::vector<CycleNodeLayered::Ptr> tasks;
-  std::vector<BitString> layer_sets;
+	std::vector<CycleNodeLayered::Ptr> tasks;
+	std::vector<BitString> layer_sets;
 }; // class TaskSlice
 
 } // namespace detail

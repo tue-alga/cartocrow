@@ -25,45 +25,32 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 28-01-2020
 
 #include "cartocrow/common/core_types.h"
 
+namespace cartocrow {
+namespace necklace_map {
 
-namespace cartocrow
-{
-namespace necklace_map
-{
+enum class IntervalType { kCentroid, kWedge };
 
-enum class IntervalType
-{
-  kCentroid,
-  kWedge
-};
+enum class OrderType { kFixed, kAny };
 
-enum class OrderType
-{
-  kFixed,
-  kAny
-};
+struct Parameters {
+	Parameters();
 
+	// Feasible interval.
+	IntervalType interval_type;
+	Number centroid_interval_length_rad;
+	Number wedge_interval_length_min_rad;
+	bool ignore_point_regions;
 
-struct Parameters
-{
-  Parameters();
+	// Scale factor.
+	OrderType order_type;
+	Number buffer_rad;
 
-  // Feasible interval.
-  IntervalType interval_type;
-  Number centroid_interval_length_rad;
-  Number wedge_interval_length_min_rad;
-  bool ignore_point_regions;
+	int binary_search_depth;
+	int heuristic_cycles;
 
-  // Scale factor.
-  OrderType order_type;
-  Number buffer_rad;
-
-  int binary_search_depth;
-  int heuristic_cycles;
-
-  // Placement.
-  int placement_cycles;
-  Number aversion_ratio;
+	// Placement.
+	int placement_cycles;
+	Number aversion_ratio;
 }; // struct Parameters
 
 } // namespace necklace_map
