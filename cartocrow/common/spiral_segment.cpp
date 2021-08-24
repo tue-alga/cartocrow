@@ -86,34 +86,46 @@ SpiralSegment::SpiralSegment(const PolarPoint& anchor, const Number& angle_rad, 
 /**@brief Access the far endpoint of the logarithmic spiral segment.
  * @return the far endpoint of the logarithmic spiral segment.
  */
-const PolarPoint SpiralSegment::far() const { return PolarPoint(R_max(), ComputePhi(R_max())); }
+const PolarPoint SpiralSegment::far() const {
+	return PolarPoint(R_max(), ComputePhi(R_max()));
+}
 
 /**@brief Access the near endpoint of the logarithmic spiral segment.
  * @return the near endpoint of the logarithmic spiral segment.
  */
-const PolarPoint SpiralSegment::near() const { return PolarPoint(R_min(), ComputePhi(R_min())); }
+const PolarPoint SpiralSegment::near() const {
+	return PolarPoint(R_min(), ComputePhi(R_min()));
+}
 
 /**@brief Access the smallest R on the logarithmic spiral segment.
  * @return the R of the near endpoint of the logarithmic spiral segment.
  */
-const Number& SpiralSegment::R_min() const { return R_min_; }
+const Number& SpiralSegment::R_min() const {
+	return R_min_;
+}
 
 /**@brief Access the largest R on the logarithmic spiral segment.
  * @return the R of the far endpoint of the logarithmic spiral segment.
  */
-const Number& SpiralSegment::R_max() const { return R_max_; }
+const Number& SpiralSegment::R_max() const {
+	return R_max_;
+}
 
 /**@brief Check whether the supporting logarithmic spiral evaluated at a given time falls within the segment.
  * @param t the time at which to evaluate the supporting logarithmic spiral.
  * @return whether the segment contains the evaluated logarithmic spiral.
  */
-bool SpiralSegment::ContainsT(const Number& t) const { return ContainsR(EvaluateR(t)); }
+bool SpiralSegment::ContainsT(const Number& t) const {
+	return ContainsR(EvaluateR(t));
+}
 
 /**@brief Check whether the logarithmic spiral segment contains a point at a given distance from the pole.
  * @param R the distance from the pole to check.
  * @return whether the segment contains a point at a given distance.
  */
-bool SpiralSegment::ContainsR(const Number& R) const { return R_min() <= R && R <= R_max(); }
+bool SpiralSegment::ContainsR(const Number& R) const {
+	return R_min() <= R && R <= R_max();
+}
 
 std::ostream& operator<<(std::ostream& os, const SpiralSegment& segment) {
 	os << "S<@= " << segment.anchor() << ", ang= " << segment.angle_rad()

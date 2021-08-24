@@ -51,13 +51,21 @@ template <typename C_, typename I_, typename Self> struct CirculatorBase {
 
 	explicit CirculatorBase(Container& container) : CirculatorBase(container.begin(), container) {}
 
-	inline reference operator*() const { return *cursor_; }
+	inline reference operator*() const {
+		return *cursor_;
+	}
 
-	inline pointer operator->() const { return &*cursor_; }
+	inline pointer operator->() const {
+		return &*cursor_;
+	}
 
-	operator Iterator&() { return cursor_; }
+	operator Iterator&() {
+		return cursor_;
+	}
 
-	operator const Iterator&() const { return cursor_; }
+	operator const Iterator&() const {
+		return cursor_;
+	}
 
 	Self& operator++() {
 		++cursor_;
@@ -85,9 +93,13 @@ template <typename C_, typename I_, typename Self> struct CirculatorBase {
 		return tmp;
 	}
 
-	inline bool operator==(const CirculatorBase& other) const { return cursor_ == other.cursor_; }
+	inline bool operator==(const CirculatorBase& other) const {
+		return cursor_ == other.cursor_;
+	}
 
-	inline bool operator!=(const CirculatorBase& other) const { return cursor_ != other.cursor_; }
+	inline bool operator!=(const CirculatorBase& other) const {
+		return cursor_ != other.cursor_;
+	}
 
   private:
 	I_ cursor_;

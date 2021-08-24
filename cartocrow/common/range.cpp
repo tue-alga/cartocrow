@@ -45,34 +45,46 @@ Range::Range(const Range& range) : from_(range.from()), to_(range.to()) {}
 /**@brief The start of the range.
  * @return the start of the range.
  */
-const Number& Range::from() const { return from_; }
+const Number& Range::from() const {
+	return from_;
+}
 
 /**@brief The start of the range.
  * @return the start of the range.
  */
-Number& Range::from() { return from_; }
+Number& Range::from() {
+	return from_;
+}
 
 /**@brief The end of the range.
  * @return the end of the range.
  */
-const Number& Range::to() const { return to_; }
+const Number& Range::to() const {
+	return to_;
+}
 
 /**@brief The end of the range.
  * @return the end of the range.
  */
-Number& Range::to() { return to_; }
+Number& Range::to() {
+	return to_;
+}
 
 /**@brief Check whether the range is in a valid state.
  *
  * The range is in a valid state if from() <= to().
  * @return whether the interval is valid.
  */
-bool Range::IsValid() const { return from() <= to(); }
+bool Range::IsValid() const {
+	return from() <= to();
+}
 
 /**@brief Check whether the range is degenerate.
  * @return true if and only if the range is a single point.
  */
-bool Range::IsDegenerate() const { return from() == to(); }
+bool Range::IsDegenerate() const {
+	return from() == to();
+}
 
 /**@brief Check whether the range contains a value.
  *
@@ -80,7 +92,9 @@ bool Range::IsDegenerate() const { return from() == to(); }
  * @param value the value to query.
  * @return whether the range contains the value.
  */
-bool Range::Contains(const Number& value) const { return from() <= value && value <= to(); }
+bool Range::Contains(const Number& value) const {
+	return from() <= value && value <= to();
+}
 
 /**@brief Check whether the range contains a value.
  *
@@ -88,7 +102,9 @@ bool Range::Contains(const Number& value) const { return from() <= value && valu
  * @param value the value to query.
  * @return whether the range contains the value.
  */
-bool Range::ContainsOpen(const Number& value) const { return from() <= value && value <= to(); }
+bool Range::ContainsOpen(const Number& value) const {
+	return from() <= value && value <= to();
+}
 
 /**@brief Check whether this range and another range intersect.
  *
@@ -114,6 +130,8 @@ bool Range::IntersectsOpen(const Range::Ptr& range) const {
 /**@brief Compute the total length of the range.
  * @return the total length.
  */
-Number Range::ComputeLength() const { return to() - from(); }
+Number Range::ComputeLength() const {
+	return to() - from();
+}
 
 } // namespace cartocrow

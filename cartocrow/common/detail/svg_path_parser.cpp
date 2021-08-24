@@ -157,7 +157,9 @@ inline void SvgPathConverter::EllipticalArcTo(const Number& radius_x, const Numb
 /**@brief Move to a point.
  * @param to the coordinates of the point relative to the previous (end)point.
  */
-inline void SvgPathConverter::MoveTo(const Vector& to) { MoveTo(previous_ + to); }
+inline void SvgPathConverter::MoveTo(const Vector& to) {
+	MoveTo(previous_ + to);
+}
 
 /**@brief Draw a straight line segment.
  *
@@ -167,7 +169,9 @@ inline void SvgPathConverter::MoveTo(const Vector& to) { MoveTo(previous_ + to);
  * Either coordinate may be std::nan to indicate an axis aligned line segment.
  * @endparblock
  */
-inline void SvgPathConverter::LineTo(const Vector& to) { LineTo(previous_ + to); }
+inline void SvgPathConverter::LineTo(const Vector& to) {
+	LineTo(previous_ + to);
+}
 
 /**@brief Draw a quadratic Bezier curve.
  *
@@ -230,9 +234,13 @@ inline void SvgPathConverter::EllipticalArcTo(const Number& radius_x, const Numb
 
 /**@brief Draw a straight line to the start of the path.
  */
-inline void SvgPathConverter::Close() { Close_(); }
+inline void SvgPathConverter::Close() {
+	Close_();
+}
 
-void SvgPathConverter::LineTo_(const Point& to) { LOG(FATAL) << "Adding line not implemented."; }
+void SvgPathConverter::LineTo_(const Point& to) {
+	LOG(FATAL) << "Adding line not implemented.";
+}
 
 void SvgPathConverter::QuadBezierTo_(const Point& control, const Point& to) {
 	LOG(FATAL) << "Adding quadratic Bezier curve not implemented.";
@@ -248,7 +256,9 @@ void SvgPathConverter::EllipticalArcTo_(const Number& radius_x, const Number& ra
 	LOG(FATAL) << "Adding circular curve not implemented.";
 }
 
-void SvgPathConverter::Close_() { LOG(FATAL) << "Closing shape not implemented."; }
+void SvgPathConverter::Close_() {
+	LOG(FATAL) << "Closing shape not implemented.";
+}
 
 /**@class SvgPathParser
  * @brief Parser for SVG path strings.

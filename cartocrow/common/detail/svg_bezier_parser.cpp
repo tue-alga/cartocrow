@@ -63,7 +63,9 @@ void SvgBezierConverter::CubeBezierTo_(const Point& control_1, const Point& cont
 	source_ = to;
 }
 
-void SvgBezierConverter::Close_() { CHECK(shape_.IsValid()); }
+void SvgBezierConverter::Close_() {
+	CHECK(shape_.IsValid());
+}
 
 } // namespace detail
 } // namespace cartocrow

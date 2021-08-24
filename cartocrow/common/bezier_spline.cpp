@@ -60,26 +60,34 @@ BezierCurve::BezierCurve(const Point& source, const Point& source_control,
 /**@brief Give the starting point of the curve.
  * @return the starting point of the curve.
  */
-Point BezierCurve::source() const { return Point(CGAL::ORIGIN) + control_points_[0]; }
+Point BezierCurve::source() const {
+	return Point(CGAL::ORIGIN) + control_points_[0];
+}
 
 /**@brief Give the second control point.
  *
  * The curve at the source is tangent to the line connecting the source and this control point.
  * @return the second control point.
  */
-Point BezierCurve::source_control() const { return Point(CGAL::ORIGIN) + control_points_[1]; }
+Point BezierCurve::source_control() const {
+	return Point(CGAL::ORIGIN) + control_points_[1];
+}
 
 /**@brief Give the third control point.
  *
  * The curve at the target is tangent to the line connecting the target and this control point.
  * @return the third control point.
  */
-Point BezierCurve::target_control() const { return Point(CGAL::ORIGIN) + control_points_[2]; }
+Point BezierCurve::target_control() const {
+	return Point(CGAL::ORIGIN) + control_points_[2];
+}
 
 /**@brief Give the terminating point of the curve.
  * @return the terminating point of the curve.
  */
-Point BezierCurve::target() const { return Point(CGAL::ORIGIN) + control_points_[3]; }
+Point BezierCurve::target() const {
+	return Point(CGAL::ORIGIN) + control_points_[3];
+}
 
 /**@brief Evaluate the Bezier curve's function after traversing some ratio of the curve.
  *
@@ -240,7 +248,9 @@ bool BezierSpline::IsValid() const {
 /**@brief Check whether the spline is empty, i.e. it has no curves.
  * @return whether the spline is empty.
  */
-bool BezierSpline::IsEmpty() const { return curves_.empty(); }
+bool BezierSpline::IsEmpty() const {
+	return curves_.empty();
+}
 
 /**@brief Check whether the spline is continuous.
  *
@@ -297,7 +307,9 @@ bool BezierSpline::ToCircle(Circle& circle, const Number& epsilon /*= 0.01*/) co
 		inline Number SquaredRadius() const {
 			return (squared_distance_min + squared_distance_max) / 2.0;
 		}
-		inline Number DistanceRatio() const { return squared_distance_max / squared_distance_min; }
+		inline Number DistanceRatio() const {
+			return squared_distance_max / squared_distance_min;
+		}
 
 		const Point& kernel;
 		Number squared_distance_min, squared_distance_max;
@@ -322,12 +334,16 @@ bool BezierSpline::ToCircle(Circle& circle, const Number& epsilon /*= 0.01*/) co
 /**@brief Access the curves of the spline.
  * @return the set of curves.
  */
-const BezierSpline::CurveSet& BezierSpline::curves() const { return curves_; }
+const BezierSpline::CurveSet& BezierSpline::curves() const {
+	return curves_;
+}
 
 /**@brief Access the curves of the spline.
  * @return the set of curves.
  */
-BezierSpline::CurveSet& BezierSpline::curves() { return curves_; }
+BezierSpline::CurveSet& BezierSpline::curves() {
+	return curves_;
+}
 
 /**@brief Add a Bezier curve to the end of the spline.
  * @param source the source point of the curve.

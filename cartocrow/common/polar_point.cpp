@@ -65,12 +65,16 @@ PolarPoint::PolarPoint(const Point& p, const Vector& t) : PolarPoint(to_polar(p 
 /**@brief Return the distance to the pole.
  * @return the distance to the pole.
  */
-const Number& PolarPoint::R() const { return R_; }
+const Number& PolarPoint::R() const {
+	return R_;
+}
 
 /**@brief Return the angle from the pole.
  * @return the angle from the pole.
  */
-const Number& PolarPoint::phi() const { return phi_; }
+const Number& PolarPoint::phi() const {
+	return phi_;
+}
 
 /**@brief Convert to a point with Cartesian coordinates.
  * @return the point with its coordinates converted to Cartesian.
@@ -99,7 +103,9 @@ bool operator==(const PolarPoint& p, const PolarPoint& q) {
 	return p.R() == q.R() && (p.R() == 0 || p.phi() == q.phi());
 }
 
-bool operator!=(const PolarPoint& p, const PolarPoint& q) { return !(p == q); }
+bool operator!=(const PolarPoint& p, const PolarPoint& q) {
+	return !(p == q);
+}
 
 std::ostream& operator<<(std::ostream& os, const PolarPoint& point) {
 	os << "p(R= " << point.R() << ", phi= " << point.phi() << ")";

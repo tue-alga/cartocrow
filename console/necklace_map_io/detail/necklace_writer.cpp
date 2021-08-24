@@ -158,7 +158,9 @@ class NecklaceIntervalVisitor : public necklace_map::NecklaceShapeVisitor {
   public:
 	NecklaceIntervalVisitor() {}
 
-	const necklace_map::CircleNecklace::Ptr& interval_shape() { return interval_shape_; }
+	const necklace_map::CircleNecklace::Ptr& interval_shape() {
+		return interval_shape_;
+	}
 
 	void Visit(necklace_map::CircleNecklace& shape) {
 		interval_shape_ = std::make_shared<necklace_map::CircleNecklace>(shape);
@@ -192,8 +194,12 @@ class DrawNecklaceShapeVisitor : public necklace_map::NecklaceShapeVisitor {
 	                         tinyxml2::XMLPrinter& printer)
 	    : necklace_style_(necklace_style), transform_matrix_(transform_matrix), printer_(printer) {}
 
-	const necklace_map::Necklace::Ptr& necklace() const { return necklace_; }
-	necklace_map::Necklace::Ptr& necklace() { return necklace_; }
+	const necklace_map::Necklace::Ptr& necklace() const {
+		return necklace_;
+	}
+	necklace_map::Necklace::Ptr& necklace() {
+		return necklace_;
+	}
 
 	void Visit(necklace_map::CircleNecklace& shape) override {
 		CHECK_NOTNULL(necklace_);

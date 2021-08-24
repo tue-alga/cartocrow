@@ -23,7 +23,9 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-02-2020
 
 namespace validate {
 
-bool IsFile(const std::filesystem::path& value) { return !IsDirectory(value); }
+bool IsFile(const std::filesystem::path& value) {
+	return !IsDirectory(value);
+}
 
 bool IsDirectory(const std::filesystem::path& value) {
 	try {
@@ -88,6 +90,8 @@ bool MakeAvailableFile(const std::filesystem::path& value) {
 	}
 }
 
-bool Empty(const std::filesystem::path& value) { return value.empty(); }
+bool Empty(const std::filesystem::path& value) {
+	return value.empty();
+}
 
 } // namespace validate

@@ -47,7 +47,9 @@ void CheckFeasible::Initialize() {
 	InitializeContainer();
 }
 
-CheckFeasible::Value::Value() { Reset(); }
+CheckFeasible::Value::Value() {
+	Reset();
+}
 
 void CheckFeasible::Value::Reset() {
 	task.reset();

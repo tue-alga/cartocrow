@@ -48,7 +48,9 @@ void SvgPolygonConverter::MoveTo_(const Point& to) {
 	current_.push_back(to);
 }
 
-void SvgPolygonConverter::LineTo_(const Point& to) { current_.push_back(to); }
+void SvgPolygonConverter::LineTo_(const Point& to) {
+	current_.push_back(to);
+}
 
 void SvgPolygonConverter::Close_() {
 	CHECK(current_.is_simple());

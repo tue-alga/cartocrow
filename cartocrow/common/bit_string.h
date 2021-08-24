@@ -32,23 +32,39 @@ template <typename bits_t, typename bit_size_t = int> class BitStr {
 		return bit < std::numeric_limits<bits_t>::digits;
 	}
 
-	inline static BitStr FromBit(const bit_size_t& bit) { return BitStr(ToString(bit)); }
+	inline static BitStr FromBit(const bit_size_t& bit) {
+		return BitStr(ToString(bit));
+	}
 
-	inline static BitStr FromString(const bits_t& string) { return BitStr(string); }
+	inline static BitStr FromString(const bits_t& string) {
+		return BitStr(string);
+	}
 
 	BitStr() : bits(0) {}
 
-	inline bool IsEmpty() const { return bits == 0; }
+	inline bool IsEmpty() const {
+		return bits == 0;
+	}
 
-	inline bool Overlaps(const BitStr& string) const { return (string.bits & bits) != 0; }
+	inline bool Overlaps(const BitStr& string) const {
+		return (string.bits & bits) != 0;
+	}
 
-	inline const bits_t& Get() const { return bits; }
+	inline const bits_t& Get() const {
+		return bits;
+	}
 
-	inline bool operator[](const bit_size_t& bit) const { return (ToString(bit) & bits) != 0; }
+	inline bool operator[](const bit_size_t& bit) const {
+		return (ToString(bit) & bits) != 0;
+	}
 
-	inline BitStr operator+(const bit_size_t& bit) const { return BitStr(bits | ToString(bit)); }
+	inline BitStr operator+(const bit_size_t& bit) const {
+		return BitStr(bits | ToString(bit));
+	}
 
-	inline BitStr operator-(const bit_size_t& bit) const { return BitStr(bits & ~ToString(bit)); }
+	inline BitStr operator-(const bit_size_t& bit) const {
+		return BitStr(bits & ~ToString(bit));
+	}
 
 	inline BitStr& operator+=(const bit_size_t& bit) {
 		bits |= ToString(bit);
@@ -60,13 +76,21 @@ template <typename bits_t, typename bit_size_t = int> class BitStr {
 		return *this;
 	}
 
-	inline BitStr operator+(const BitStr& string) const { return BitStr(bits | string.bits); }
+	inline BitStr operator+(const BitStr& string) const {
+		return BitStr(bits | string.bits);
+	}
 
-	inline BitStr operator-(const BitStr& string) const { return BitStr(bits & ~string.bits); }
+	inline BitStr operator-(const BitStr& string) const {
+		return BitStr(bits & ~string.bits);
+	}
 
-	inline BitStr operator&(const BitStr& string) const { return BitStr(bits & string.bits); }
+	inline BitStr operator&(const BitStr& string) const {
+		return BitStr(bits & string.bits);
+	}
 
-	inline BitStr operator^(const BitStr& string) const { return BitStr(bits ^ string.bits); }
+	inline BitStr operator^(const BitStr& string) const {
+		return BitStr(bits ^ string.bits);
+	}
 
 	inline BitStr& operator+=(const BitStr& string) {
 		bits |= string.bits;
@@ -89,7 +113,9 @@ template <typename bits_t, typename bit_size_t = int> class BitStr {
 	}
 
   private:
-	inline static bits_t ToString(const bit_size_t& bit) { return 1 << bit; }
+	inline static bits_t ToString(const bit_size_t& bit) {
+		return 1 << bit;
+	}
 
 	explicit BitStr(const bits_t& string) : bits(string) {}
 

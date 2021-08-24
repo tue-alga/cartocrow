@@ -9,7 +9,9 @@ namespace cartocrow {
 namespace internal {
 
 // This temporary test function is only meant to test whether the source directory structure is maintained on install.
-inline int test() { return 2; }
+inline int test() {
+	return 2;
+}
 
 } // namespace internal
 } // namespace cartocrow

@@ -1,0 +1,16 @@
+---
+Language: Cpp
+BasedOnStyle: LLVM
+AlignTrailingComments: false
+AllowShortFunctionsOnASingleLine: Empty
+ColumnLimit: 100
+IndentWidth: 4
+PenaltyExcessCharacter: 10
+PointerAlignment: Left
+ReflowComments: false
+SpaceAfterCStyleCast: true
+Standard: c++17
+TabWidth: 4
+UseTab: ForIndentation
+...
+

@@ -37,10 +37,18 @@ class CircularRange : public Range {
 
 	explicit CircularRange(const Range& range);
 
-	inline const Number& from_rad() const { return from(); }
-	inline Number& from_rad() { return from(); }
-	inline const Number& to_rad() const { return to(); }
-	inline Number& to_rad() { return to(); }
+	inline const Number& from_rad() const {
+		return from();
+	}
+	inline Number& from_rad() {
+		return from();
+	}
+	inline const Number& to_rad() const {
+		return to();
+	}
+	inline Number& to_rad() {
+		return to();
+	}
 
 	bool IsValid() const override;
 

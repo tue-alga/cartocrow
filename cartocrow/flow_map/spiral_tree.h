@@ -72,22 +72,42 @@ class SpiralTree {
   public:
 	SpiralTree(const Point& root, const Number& restricting_angle_rad);
 
-	inline Point GetRoot() const { return Point(CGAL::ORIGIN) - root_translation_; }
+	inline Point GetRoot() const {
+		return Point(CGAL::ORIGIN) - root_translation_;
+	}
 
-	inline Number GetRestrictingAngle() const { return restricting_angle_rad_; }
+	inline Number GetRestrictingAngle() const {
+		return restricting_angle_rad_;
+	}
 
-	NodeConstIterator nodes_begin() const { return nodes_.begin(); }
-	NodeConstIterator nodes_end() const { return nodes_.end(); }
+	NodeConstIterator nodes_begin() const {
+		return nodes_.begin();
+	}
+	NodeConstIterator nodes_end() const {
+		return nodes_.end();
+	}
 
-	NodeIterator nodes_begin() { return nodes_.begin(); }
-	NodeIterator nodes_end() { return nodes_.end(); }
+	NodeIterator nodes_begin() {
+		return nodes_.begin();
+	}
+	NodeIterator nodes_end() {
+		return nodes_.end();
+	}
 
   private: // TODO(tvl) made private until computing the tree with obstructions is implemented.
-	ObstacleConstIterator obstacles_begin() const { return obstacles_.begin(); }
-	ObstacleConstIterator obstacles_end() const { return obstacles_.end(); }
+	ObstacleConstIterator obstacles_begin() const {
+		return obstacles_.begin();
+	}
+	ObstacleConstIterator obstacles_end() const {
+		return obstacles_.end();
+	}
 
-	ObstacleIterator obstacles_begin() { return obstacles_.begin(); }
-	ObstacleIterator obstacles_end() { return obstacles_.end(); }
+	ObstacleIterator obstacles_begin() {
+		return obstacles_.begin();
+	}
+	ObstacleIterator obstacles_end() {
+		return obstacles_.end();
+	}
 
   public:
 	void AddPlaces(const std::vector<Place::Ptr>& places);

@@ -45,7 +45,9 @@ template <typename V_> class IsBounded<V_, BoundSide::kLower, Closure::kClosed> 
   public:
 	IsBounded(const V_& bound) : bound_(bound) {}
 
-	inline bool operator()(const V_& value) const { return bound_ <= value; }
+	inline bool operator()(const V_& value) const {
+		return bound_ <= value;
+	}
 
   private:
 	V_ bound_;
@@ -55,7 +57,9 @@ template <typename V_> class IsBounded<V_, BoundSide::kLower, Closure::kOpen> {
   public:
 	IsBounded(const V_& bound) : bound_(bound) {}
 
-	inline bool operator()(const V_& value) const { return bound_ < value; }
+	inline bool operator()(const V_& value) const {
+		return bound_ < value;
+	}
 
   private:
 	V_ bound_;
@@ -65,7 +69,9 @@ template <typename V_> class IsBounded<V_, BoundSide::kUpper, Closure::kClosed> 
   public:
 	IsBounded(const V_& bound) : bound_(bound) {}
 
-	inline bool operator()(const V_& value) const { return value <= bound_; }
+	inline bool operator()(const V_& value) const {
+		return value <= bound_;
+	}
 
   private:
 	V_ bound_;
@@ -75,7 +81,9 @@ template <typename V_> class IsBounded<V_, BoundSide::kUpper, Closure::kOpen> {
   public:
 	IsBounded(const V_& bound) : bound_(bound) {}
 
-	inline bool operator()(const V_& value) const { return value < bound_; }
+	inline bool operator()(const V_& value) const {
+		return value < bound_;
+	}
 
   private:
 	V_ bound_;
@@ -99,7 +107,9 @@ template <typename V_> class Equals {
   public:
 	Equals(const V_& target) : target_(target) {}
 
-	inline bool operator()(const V_& value) const { return value = target_; }
+	inline bool operator()(const V_& value) const {
+		return value = target_;
+	}
 
   private:
 	V_ target_;
@@ -146,7 +156,9 @@ template <typename V_> InRange<V_> MakeRangeCheck(const V_& lower, const V_& upp
 	return InRange<V_>(lower, upper);
 }
 
-template <typename V_> Equals<V_> MakeEqualsCheck(const V_& bound) { return Equals<V_>(bound); }
+template <typename V_> Equals<V_> MakeEqualsCheck(const V_& bound) {
+	return Equals<V_>(bound);
+}
 
 template <typename V_> IsBounded<V_, BoundSide::kLower, Closure::kOpen> IsPositive() {
 	return IsBounded<V_, BoundSide::kLower, Closure::kOpen>(0);

@@ -1441,7 +1441,9 @@ void SpiralTree::ComputeObstructed()
   //ComputeUnobstructed();
 }
 */
-void SpiralTree::ComputeObstructed() { CHECK(false) << "Not implemented yet."; }
+void SpiralTree::ComputeObstructed() {
+	CHECK(false) << "Not implemented yet.";
+}
 
 } // namespace flow_map
 } // namespace cartocrow

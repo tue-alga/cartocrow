@@ -49,20 +49,26 @@ PolarLine::PolarLine(const PolarPoint& point_1, const PolarPoint& point_2) {
  * The foot is the point on the line closest to the pole.
  * @return the foot.
  */
-const PolarPoint& PolarLine::foot() const { return foot_; }
+const PolarPoint& PolarLine::foot() const {
+	return foot_;
+}
 
 /**@brief Access the foot.
  *
  * The foot is the point on the line closest to the pole.
  * @return the foot.
  */
-PolarPoint& PolarLine::foot() { return foot_; }
+PolarPoint& PolarLine::foot() {
+	return foot_;
+}
 
 /**@brief Check whether the line contains a point at a given distance from the pole.
  * @param R the given distance from the pole.
  * @return whether the line has any part within the desired distance from the pole.
  */
-bool PolarLine::ContainsR(const Number& R) const { return foot().R() <= R; }
+bool PolarLine::ContainsR(const Number& R) const {
+	return foot().R() <= R;
+}
 
 /**@brief Check whether the line contains any point with a given phi coordinate.
  * @param phi the desired phi coordinate.

@@ -46,7 +46,9 @@ PolarSegment::PolarSegment(const PolarPoint& point_1, const PolarPoint& point_2)
  * The point evaluated at this time is an endpoint of the line segment.
  * @return the smallest time on the line segment.
  */
-Number PolarSegment::FromT() const { return ToDistance(0); }
+Number PolarSegment::FromT() const {
+	return ToDistance(0);
+}
 
 // TODO(tvl) remove.
 /**@brief Compute the largest time on the line segment.
@@ -54,7 +56,9 @@ Number PolarSegment::FromT() const { return ToDistance(0); }
  * The point evaluated at this time is an endpoint of the line segment.
  * @return the largest time on the line segment.
  */
-Number PolarSegment::ToT() const { return ToDistance(1); }
+Number PolarSegment::ToT() const {
+	return ToDistance(1);
+}
 
 /**@brief Compute the smallest distance to the pole of any point on the line segment.
  * @return the distance between the pole and the point on the line segment closest to the pole.
@@ -72,45 +76,59 @@ Number PolarSegment::R_min() const {
  * Note that this point must be an endpoint of the line segment.
  * @return the distance between the pole and the point on the line segment farthest from the pole.
  */
-Number PolarSegment::R_max() const { return std::max(EvaluateR(0), EvaluateR(1)); }
+Number PolarSegment::R_max() const {
+	return std::max(EvaluateR(0), EvaluateR(1));
+}
 
 /**@brief Check whether the line is a left line.
  *
  * A left line moves in clockwise direction when moving from point(0) to point(1).
  * @return whether the line is a left line.
  */
-bool PolarSegment::IsLeft() const { return 0 < foot().R() && multiplier_ < 0; }
+bool PolarSegment::IsLeft() const {
+	return 0 < foot().R() && multiplier_ < 0;
+}
 
 /**@brief Check whether the line is a right line.
  *
  * A left line moves in counter-clockwise direction when moving from point(0) to point(1).
  * @return whether the line is a right line.
  */
-bool PolarSegment::IsRight() const { return 0 < foot().R() && 0 < multiplier_; }
+bool PolarSegment::IsRight() const {
+	return 0 < foot().R() && 0 < multiplier_;
+}
 
 /**@brief Check whether the line is collinear with the pole.
  * @return whether the line is collinear with the pole.
  */
-bool PolarSegment::IsCollinear() const { return 0 == foot().R(); }
+bool PolarSegment::IsCollinear() const {
+	return 0 == foot().R();
+}
 
 /**@brief Check whether the line contains the foot of its supporting line.
  *
  * The foot of the supporting line is the point on that line closest to the pole.
  * @return whether the line contains the foot of its supporting line.
  */
-bool PolarSegment::ContainsFoot() const { return ContainsPhi(foot().phi()); }
+bool PolarSegment::ContainsFoot() const {
+	return ContainsPhi(foot().phi());
+}
 
 /**@brief Check whether the line segment contains a point evaluated at a given time.
  * @param t the time to evaluate the line segment.
  * @return whether the line segment contains a point at the desired time.
  */
-bool PolarSegment::ContainsT(const Number& t) const { return 0 <= t && t <= 1; }
+bool PolarSegment::ContainsT(const Number& t) const {
+	return 0 <= t && t <= 1;
+}
 
 /**@brief Check whether the line segment contains a point at a given distance from the pole.
  * @param R the given distance from the pole.
  * @return whether the line segment contains any point within the desired distance from the pole.
  */
-bool PolarSegment::ContainsR(const Number& R) const { return R_min() <= R && R <= R_max(); }
+bool PolarSegment::ContainsR(const Number& R) const {
+	return R_min() <= R && R <= R_max();
+}
 
 /**@brief Check whether the line segment contains any point with a given phi coordinate.
  * @param phi the desired phi coordinate.
@@ -180,9 +198,13 @@ PolarPoint PolarSegment::ComputeClosestToPole() const {
 /**@brief access the supporting line of this line segment.
  * @return the supporting line.
  */
-const PolarLine& PolarSegment::SupportingLine() const { return *this; }
+const PolarLine& PolarSegment::SupportingLine() const {
+	return *this;
+}
 
-Number PolarSegment::ToDistance(const Number& t) const { return multiplier_ * t - offset_; }
+Number PolarSegment::ToDistance(const Number& t) const {
+	return multiplier_ * t - offset_;
+}
 
 Number PolarSegment::ToT(const Number& distance) const {
 	return (distance + offset_) / multiplier_;

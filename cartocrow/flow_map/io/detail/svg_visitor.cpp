@@ -115,7 +115,9 @@ bool SvgVisitor::VisitPath(const std::string& commands, const tinyxml2::XMLAttri
 	return true;
 }
 
-bool SvgVisitor::FinalizeSvg() { return true; }
+bool SvgVisitor::FinalizeSvg() {
+	return true;
+}
 
 /**@brief Add a place to the flow map.
  * @param id the place ID.

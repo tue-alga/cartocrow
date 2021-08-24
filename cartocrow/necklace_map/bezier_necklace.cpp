@@ -83,12 +83,16 @@ BezierNecklace::BezierNecklace(const BezierSpline spline, const Point& kernel)
 	CHECK(spline_.IsClosed());
 }
 
-const Point& BezierNecklace::kernel() const { return kernel_; }
+const Point& BezierNecklace::kernel() const {
+	return kernel_;
+}
 
 /**@brief Give the Bezier spline shape of the necklace.
  * @return the shape of the necklace.
  */
-const BezierSpline& BezierNecklace::spline() const { return spline_; }
+const BezierSpline& BezierNecklace::spline() const {
+	return spline_;
+}
 
 bool BezierNecklace::IsValid() const {
 	// Check whether the curve is valid in relation to the necklace.
@@ -116,7 +120,9 @@ bool BezierNecklace::IntersectRay(const Number& angle_rad, Point& intersection) 
 	return IntersectRay(angle_rad, curve_iter, intersection, t);
 }
 
-Box BezierNecklace::ComputeBoundingBox() const { return spline_.ComputeBoundingBox(); }
+Box BezierNecklace::ComputeBoundingBox() const {
+	return spline_.ComputeBoundingBox();
+}
 
 Number BezierNecklace::ComputeCoveringRadiusRad(const Range::Ptr& range, const Number& radius) const {
 	if (radius == 0)
@@ -239,7 +245,9 @@ Number BezierNecklace::ComputeAngleAtDistanceRad(const Number& angle_rad,
 	return correct ? angle_out_rad : angle_rad;
 }
 
-void BezierNecklace::Accept(NecklaceShapeVisitor& visitor) { visitor.Visit(*this); }
+void BezierNecklace::Accept(NecklaceShapeVisitor& visitor) {
+	visitor.Visit(*this);
+}
 
 BezierSpline::CurveSet::const_iterator
 BezierNecklace::FindCurveContainingAngle(const Number& angle_rad) const {

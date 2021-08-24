@@ -45,7 +45,9 @@ class ComputeScaleFactor {
 
 	Number operator()(std::vector<Necklace::Ptr>& necklaces);
 
-	const Number& max_buffer_rad() const { return max_buffer_rad_; }
+	const Number& max_buffer_rad() const {
+		return max_buffer_rad_;
+	}
 
   protected:
 	Number buffer_rad_;

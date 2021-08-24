@@ -114,7 +114,9 @@ UNITTEST_SUITE(Common) {
 	UNITTEST_TEST(StructCirculator) {
 		struct MyStruct {
 			MyStruct(const int& value) : value(value) {}
-			operator int&() { return value; }
+			operator int&() {
+				return value;
+			}
 			int value;
 		};
 

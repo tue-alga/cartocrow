@@ -102,7 +102,9 @@ bool CircularRange::IsValid() const {
 /**@brief Check whether the interval covers the full circle.
  * @return true if and only if the interval covers the full circle.
  */
-bool CircularRange::IsFull() const { return from_rad() == 0 && to_rad() == M_2xPI; }
+bool CircularRange::IsFull() const {
+	return from_rad() == 0 && to_rad() == M_2xPI;
+}
 
 bool CircularRange::Contains(const Number& value) const {
 	const Number value_mod = Modulo(value, from_rad());
@@ -138,7 +140,9 @@ bool CircularRange::IntersectsOpen(const Range::Ptr& range) const {
 /**@brief Compute the angle of the centroid of the interval.
  * @return the centroid angle in radians.
  */
-Number CircularRange::ComputeCentroid() const { return Modulo(.5 * (from() + to())); }
+Number CircularRange::ComputeCentroid() const {
+	return Modulo(.5 * (from() + to()));
+}
 
 /**@brief Reverse the orientation of the range.
  */

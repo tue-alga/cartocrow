@@ -108,7 +108,9 @@ Number ComputeScaleFactorFixedOrder::Optimize() {
  * @return the buffer size in radians.
  */
 
-inline size_t ComputeScaleFactorFixedOrder::size() const { return nodes_.size(); }
+inline size_t ComputeScaleFactorFixedOrder::size() const {
+	return nodes_.size();
+}
 
 // Buffer between i and j.
 inline Number ComputeScaleFactorFixedOrder::buffer(const size_t i, const size_t j) const {

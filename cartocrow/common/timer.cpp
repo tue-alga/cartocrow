@@ -34,7 +34,9 @@ namespace cartocrow {
 /**@brief Construct a new timer and set the memory size limit.
  * @param memory the maximum number of timestamps that the timer remembers.
  */
-Timer::Timer(const size_t memory /*= 10*/) : memory_(memory) { Reset(); }
+Timer::Timer(const size_t memory /*= 10*/) : memory_(memory) {
+	Reset();
+}
 
 /**@brief Reset the timer.
  * This clears the memory and sets the current time as starting time and as the first timestamp.
@@ -76,7 +78,9 @@ double Timer::Peek(const size_t skip /*= 0*/) const {
  * Note that this does not consider the current time, only time stamps in the memory of the timer and the time since its last reset.
  * @return the time difference between the starting time and the most recent timestamp.
  */
-double Timer::Span() const { return double(times_.front() - start_) / CLOCKS_PER_SEC; }
+double Timer::Span() const {
+	return double(times_.front() - start_) / CLOCKS_PER_SEC;
+}
 
 double Timer::Compare(const clock_t time, const size_t skip /*= 0*/) const {
 	const clock_t& stamp = skip < times_.size() ? times_.at(skip) : start_;

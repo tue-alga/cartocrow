@@ -95,14 +95,18 @@ Spiral::Spiral(const PolarPoint& point_1, const PolarPoint& point_2) {
  * The anchor point is the point on the spiral evaluated at t=0.
  * @return the anchor point.
  */
-const PolarPoint& Spiral::anchor() const { return anchor_; }
+const PolarPoint& Spiral::anchor() const {
+	return anchor_;
+}
 
 /**@brief Get the polar angle of the spiral's tangents (in radians).
  *
  * A feature of logarithmic spirals is that the angle between a line through the pole and the tangent of the spiral where that line intersects the spiral is constant.
  * @return the angle of the spiral.
  */
-const Number& Spiral::angle_rad() const { return angle_rad_; }
+const Number& Spiral::angle_rad() const {
+	return angle_rad_;
+}
 
 /**@brief Check whether the spiral is a left spiral.
  *
@@ -111,7 +115,9 @@ const Number& Spiral::angle_rad() const { return angle_rad_; }
  * Note that t increases in the direction of the pole.
  * @return whether the spiral is a left spiral.
  */
-bool Spiral::IsLeft() const { return angle_rad_ < 0; }
+bool Spiral::IsLeft() const {
+	return angle_rad_ < 0;
+}
 
 /**@brief Check whether the spiral is a right spiral.
  *
@@ -120,18 +126,24 @@ bool Spiral::IsLeft() const { return angle_rad_ < 0; }
  * Note that t increases in the direction of the pole.
  * @return whether the spiral is a right spiral.
  */
-bool Spiral::IsRight() const { return 0 < angle_rad_; }
+bool Spiral::IsRight() const {
+	return 0 < angle_rad_;
+}
 
 /**@brief Check whether the spiral is a straight line collinear with the pole.
  * @return whether the spiral is a straight line collinear with the pole.
  */
-bool Spiral::IsCollinear() const { return angle_rad_ == 0; }
+bool Spiral::IsCollinear() const {
+	return angle_rad_ == 0;
+}
 
 /**@brief Compute the distance between the point on the spiral at a specific time and the pole.
  * @param t the time at which to evaluate the spiral.
  * @return the distance between the point on the spiral at time t and the pole.
  */
-Number Spiral::EvaluateR(const Number& t) const { return anchor_.R() * std::exp(-t); }
+Number Spiral::EvaluateR(const Number& t) const {
+	return anchor_.R() * std::exp(-t);
+}
 
 /**@brief Compute the phi of the point on the spiral at a specific time.
  * @param t the time at which to evaluate the spiral.
@@ -195,7 +207,9 @@ Number Spiral::SampleR(const Number& phi) const {
  * The angular period is the t to move on the spiral to reach a point with the same phi as where you started.
  * @return the angular period.
  */
-Number Spiral::ComputePeriod() const { return M_2xPI / std::tan(angle_rad()); }
+Number Spiral::ComputePeriod() const {
+	return M_2xPI / std::tan(angle_rad());
+}
 
 /**@brief Move the anchor on the spiral.
  *

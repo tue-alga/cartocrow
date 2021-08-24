@@ -73,13 +73,17 @@ bool BinarySearch(const PolarLine& line, const Spiral& spiral, Number& t_spiral_
 	return true;
 }
 
-bool CheckIntersection(const Spiral& spiral, const PolarPoint& point) { return true; }
+bool CheckIntersection(const Spiral& spiral, const PolarPoint& point) {
+	return true;
+}
 
 bool CheckIntersection(const SpiralSegment& segment, const PolarPoint& point) {
 	return segment.ContainsR(point.R());
 }
 
-bool CheckIntersection(const PolarLine& line, const PolarPoint& point) { return true; }
+bool CheckIntersection(const PolarLine& line, const PolarPoint& point) {
+	return true;
+}
 
 bool CheckIntersection(const PolarSegment& segment, const PolarPoint& point) {
 	return segment.ContainsPhi(point.phi());

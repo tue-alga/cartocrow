@@ -40,7 +40,9 @@ class ComputeScaleFactorFixedOrder {
 
 	Number Optimize();
 
-	const Number& max_buffer_rad() const { return max_buffer_rad_; }
+	const Number& max_buffer_rad() const {
+		return max_buffer_rad_;
+	}
 
   private:
 	// Number of nodes.

@@ -45,37 +45,49 @@ CircleNecklace::CircleNecklace(const Circle& shape)
 	radius_ = CGAL::sqrt(shape_.squared_radius());
 }
 
-const Point& CircleNecklace::kernel() const { return shape_.center(); }
+const Point& CircleNecklace::kernel() const {
+	return shape_.center();
+}
 
 /**@brief Access the clockwise endpoint for drawing the necklace.
  *
  * If this is equal to the counterclockwise endpoint, the full circle is drawn.
  * @return the clockwise endpoint for drawing the necklace.
  */
-const Number& CircleNecklace::draw_bounds_cw_rad() const { return draw_bounds_cw_rad_; }
+const Number& CircleNecklace::draw_bounds_cw_rad() const {
+	return draw_bounds_cw_rad_;
+}
 
 /**@brief Access the clockwise endpoint for drawing the necklace.
  *
  * If this is equal to the counterclockwise endpoint, the full circle is drawn.
  * @return the clockwise endpoint for drawing the necklace.
  */
-Number& CircleNecklace::draw_bounds_cw_rad() { return draw_bounds_cw_rad_; }
+Number& CircleNecklace::draw_bounds_cw_rad() {
+	return draw_bounds_cw_rad_;
+}
 
 /**@brief Access the counterclockwise endpoint for drawing the necklace.
  *
  * If this is equal to the clockwise endpoint, the full circle is drawn.
  * @return the counterclockwise endpoint for drawing the necklace.
  */
-const Number& CircleNecklace::draw_bounds_ccw_rad() const { return draw_bounds_ccw_rad_; }
+const Number& CircleNecklace::draw_bounds_ccw_rad() const {
+	return draw_bounds_ccw_rad_;
+}
 
 /**@brief Access the counterclockwise endpoint for drawing the necklace.
  *
  * If this is equal to the clockwise endpoint, the full circle is drawn.
  * @return the counterclockwise endpoint for drawing the necklace.
  */
-Number& CircleNecklace::draw_bounds_ccw_rad() { return draw_bounds_ccw_rad_; }
+Number& CircleNecklace::draw_bounds_ccw_rad() {
+	return draw_bounds_ccw_rad_;
+}
 
-bool CircleNecklace::IsValid() const { return 0 < radius_; }
+bool CircleNecklace::IsValid() const {
+	return 0 < radius_;
+}
 
 /*bool CircleNecklace::IsEmpty() const
 {
@@ -94,18 +106,24 @@ bool CircleNecklace::IntersectRay(const Number& angle_rad, Point& intersection) 
 	return true;
 }
 
-Box CircleNecklace::ComputeBoundingBox() const { return shape_.bbox(); }
+Box CircleNecklace::ComputeBoundingBox() const {
+	return shape_.bbox();
+}
 
 /**@brief Compute the radius of the circle covered by this necklace.
  * @return the radius.
  */
-Number CircleNecklace::ComputeRadius() const { return radius_; }
+Number CircleNecklace::ComputeRadius() const {
+	return radius_;
+}
 
 Number CircleNecklace::ComputeCoveringRadiusRad(const Range::Ptr& range, const Number& radius) const {
 	return std::asin(radius / radius_);
 }
 
-Number CircleNecklace::ComputeDistanceToKernel(const Range::Ptr& range) const { return radius_; }
+Number CircleNecklace::ComputeDistanceToKernel(const Range::Ptr& range) const {
+	return radius_;
+}
 
 Number CircleNecklace::ComputeAngleAtDistanceRad(const Number& angle_rad,
                                                  const Number& distance) const {
@@ -118,7 +136,9 @@ Number CircleNecklace::ComputeAngleAtDistanceRad(const Number& angle_rad,
 	return 0 < distance ? angle_rad + angle_diff : angle_rad - angle_diff;
 }
 
-void CircleNecklace::Accept(NecklaceShapeVisitor& visitor) { visitor.Visit(*this); }
+void CircleNecklace::Accept(NecklaceShapeVisitor& visitor) {
+	visitor.Visit(*this);
+}
 
 } // namespace necklace_map
 } // namespace cartocrow
