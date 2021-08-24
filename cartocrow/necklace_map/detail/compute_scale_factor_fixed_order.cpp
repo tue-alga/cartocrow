@@ -137,8 +137,9 @@ inline const Number& ComputeScaleFactorFixedOrder::r(const size_t i) const {
 Number ComputeScaleFactorFixedOrder::r(const size_t i, const size_t j) const {
 	// Note that we could store (partial) results, but the gains would be minimal.
 	Number aggregate_radius = 0;
-	for (size_t n = i; n <= j; ++n)
+	for (size_t n = i; n <= j; ++n) {
 		aggregate_radius += r(n);
+	}
 	return aggregate_radius;
 }
 
@@ -172,8 +173,9 @@ Number ComputeScaleFactorFixedOrder::OptimizeSubProblem(const size_t I, const si
 	case 2: {
 		const Number interval_length = b(J) - a(I);
 		max_buffer_rad = std::min(max_buffer_rad, interval_length);
-		if (interval_length <= buffer(I, J))
+		if (interval_length <= buffer(I, J)) {
 			return 0;
+		}
 		return (interval_length - buffer(I, J)) /
 		       (r(I) + r(J)); // rho_IJ = (b_J - a_I) / (2*r_IJ - r_I - r_J)
 	}
@@ -225,8 +227,9 @@ Number ComputeScaleFactorFixedOrder::OptimizeSubProblem(const size_t I, const si
 				rho = edge_iter->right()->point().y();
 				max_buffer_rad = std::min(max_buffer_rad, (b(j) - a(i)) / (j - i));
 
-				if (b(j) - a(i) < buffer(i, j))
+				if (b(j) - a(i) < buffer(i, j)) {
 					return 0;
+				}
 
 				// Note that there is always exactly one vertex of the envelope incident to lines on either side of k.
 				break;
@@ -251,10 +254,12 @@ Number ComputeScaleFactorFixedOrder::OptimizeSubProblem(const size_t I, const si
 
 		// The scaling factor is the minimum or rho_1, rho_2, and rho (ignoring negative values).
 		Number scale_factor = rho;
-		if (0 <= rho_1 && rho_1 < scale_factor)
+		if (0 <= rho_1 && rho_1 < scale_factor) {
 			scale_factor = rho_1;
-		if (0 <= rho_2 && rho_2 < scale_factor)
+		}
+		if (0 <= rho_2 && rho_2 < scale_factor) {
 			scale_factor = rho_2;
+		}
 		return scale_factor;
 	}
 	}

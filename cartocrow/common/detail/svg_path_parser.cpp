@@ -75,12 +75,13 @@ inline void SvgPathConverter::MoveTo(const Point& to) {
  * @endparblock
  */
 inline void SvgPathConverter::LineTo(const Point& to) {
-	if (std::isnan(to.x()))
+	if (std::isnan(to.x())) {
 		LineTo_(Point(previous_.x(), to.y()));
-	else if (std::isnan(to.y()))
+	} else if (std::isnan(to.y())) {
 		LineTo_(Point(to.x(), previous_.x()));
-	else
+	} else {
 		LineTo_(to);
+	}
 	previous_ = to;
 }
 
@@ -279,8 +280,9 @@ bool SvgPathParser::operator()(const std::string& path, SvgPathConverter& conver
 		try {
 			char command;
 			ss >> command;
-			if (ss.eof())
+			if (ss.eof()) {
 				break;
+			}
 
 			CHECK(command == kAbsoluteMove || started)
 			    << "Path not started by absolute move command.";

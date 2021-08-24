@@ -82,20 +82,23 @@ TableParser::TableParser() : table_() {}
  * @return whether the table could be parsed successfully.
  */
 bool TableParser::Parse(std::istream& in) {
-	if (!in)
+	if (!in) {
 		return false;
+	}
 
 	// Read the number of data elements.
 	size_t num_elements;
 	in >> num_elements;
-	if (!in)
+	if (!in) {
 		return false;
+	}
 
 	// Read the element format.
 	std::string format;
 	in >> format;
-	if (!in)
+	if (!in) {
 		return false;
+	}
 	CHECK(!format.empty());
 
 	std::transform(format.begin(), format.end(), format.begin(),
@@ -106,8 +109,9 @@ bool TableParser::Parse(std::istream& in) {
 	for (const char& type : format) {
 		std::string name;
 		in >> name;
-		if (!in)
+		if (!in) {
 			return false;
+		}
 
 		if (name[0] == '\"') {
 			std::string part;
@@ -138,8 +142,9 @@ bool TableParser::Parse(std::istream& in) {
 		for (Table::iterator column_iter = table_.begin(); column_iter != table_.end();) {
 			std::string value;
 			in >> value;
-			if (!in)
+			if (!in) {
 				return false;
+			}
 
 			while (!value.empty()) {
 				size_t pos = value.find("\"");
@@ -155,21 +160,24 @@ bool TableParser::Parse(std::istream& in) {
 					stream << value;
 					do {
 						in >> value;
-						if (!in)
+						if (!in) {
 							return false;
+						}
 						pos = value.find("\"");
-						if (pos == std::string::npos)
+						if (pos == std::string::npos) {
 							stream << " " << value;
-						else
+						} else {
 							stream << " " << value.substr(0, pos + 1);
+						}
 					} while (pos == std::string::npos);
 					const std::string quote = stream.str();
 					(*column_iter++)->push_back(quote);
 
-					if (pos + 1 < value.length())
+					if (pos + 1 < value.length()) {
 						value = value.substr(pos + 1);
-					else
+					} else {
 						value = "";
+					}
 				} else {
 					(*column_iter++)->push_back(value);
 					value = "";

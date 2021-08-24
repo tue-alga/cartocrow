@@ -129,8 +129,9 @@ Number CircleNecklace::ComputeAngleAtDistanceRad(const Number& angle_rad,
                                                  const Number& distance) const {
 	const Number distance_abs = std::abs(distance);
 	CHECK_LE(distance_abs, 2 * radius_);
-	if (distance_abs == 2 * radius_)
+	if (distance_abs == 2 * radius_) {
 		return angle_rad + M_PI;
+	}
 
 	const Number angle_diff = 2 * std::asin(distance_abs / (2 * radius_));
 	return 0 < distance ? angle_rad + angle_diff : angle_rad - angle_diff;

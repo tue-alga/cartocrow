@@ -65,8 +65,9 @@ Number PolarSegment::ToT() const {
  */
 Number PolarSegment::R_min() const {
 	// Note that the closest point on the supporting line may not lie inside the segment.
-	if (ContainsPhi(foot().phi()))
+	if (ContainsPhi(foot().phi())) {
 		return foot().R();
+	}
 
 	return std::min(EvaluateR(0), EvaluateR(1));
 }
@@ -135,8 +136,9 @@ bool PolarSegment::ContainsR(const Number& R) const {
  * @return whether the line segment contains any point with the given phi coordinate.
  */
 bool PolarSegment::ContainsPhi(const Number& phi) const {
-	if (!PolarLine::ContainsPhi(phi))
+	if (!PolarLine::ContainsPhi(phi)) {
 		return false;
+	}
 
 	const Number t = ComputeT(phi);
 	return ContainsT(t);
@@ -187,8 +189,9 @@ Number PolarSegment::ComputeT(const Number& phi) const {
  */
 PolarPoint PolarSegment::ComputeClosestToPole() const {
 	// Note that the closest point on the supporting line may not lie inside the segment.
-	if (ContainsPhi(foot().phi()))
+	if (ContainsPhi(foot().phi())) {
 		return foot();
+	}
 
 	const PolarPoint p0 = Evaluate(0);
 	const PolarPoint p1 = Evaluate(1);

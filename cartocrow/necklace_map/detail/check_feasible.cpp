@@ -36,10 +36,11 @@ namespace necklace_map {
 namespace detail {
 
 CheckFeasible::Ptr CheckFeasible::New(NodeSet& nodes, const int heuristic_cycles) {
-	if (heuristic_cycles == 0)
+	if (heuristic_cycles == 0) {
 		return std::make_shared<CheckFeasibleExact>(nodes);
-	else
+	} else {
 		return std::make_shared<CheckFeasibleHeuristic>(nodes, heuristic_cycles);
+	}
 }
 
 void CheckFeasible::Initialize() {
@@ -57,8 +58,9 @@ void CheckFeasible::Value::Reset() {
 }
 
 Number CheckFeasible::Value::CoveringRadius() const {
-	if (!task || !task->bead)
+	if (!task || !task->bead) {
 		return 0;
+	}
 	return task->bead->covering_radius_rad;
 }
 
@@ -82,9 +84,11 @@ void CheckFeasible::InitializeSlices() {
 	// Each task slice stores the nodes that are valid between two consecutive events, together with a bit string for each combination of these nodes.
 	// For this purpose, keep track of the nodes that are valid at some angle, starting at 0 radians (because the first event has the smallest positive angle).
 	std::vector<CycleNodeLayered::Ptr> active_nodes(num_layers);
-	for (const CycleNodeLayered::Ptr& node : nodes_)
-		if (0 < node->valid->from() && M_2xPI <= node->valid->to())
+	for (const CycleNodeLayered::Ptr& node : nodes_) {
+		if (0 < node->valid->from() && M_2xPI <= node->valid->to()) {
 			active_nodes[node->layer] = node;
+		}
+	}
 
 	slices_.reserve(events.size());
 	for (size_t i = 0; i < events.size(); ++i) {
@@ -97,9 +101,11 @@ void CheckFeasible::InitializeSlices() {
 
 		// Construct a new slice.
 		slices_.emplace_back(event_from, event_to, num_layers);
-		for (const CycleNodeLayered::Ptr& node : active_nodes)
-			if (node)
+		for (const CycleNodeLayered::Ptr& node : active_nodes) {
+			if (node) {
 				slices_.back().AddTask(node);
+			}
+		}
 		slices_.back().Finalize();
 	}
 
@@ -108,26 +114,31 @@ void CheckFeasible::InitializeSlices() {
 	    std::find_if(slices_.begin(), slices_.end(), [](const TaskSlice& slice) -> bool {
 		    return slice.event_from.type == TaskEvent::Type::kFrom;
 	    });
-	if (first_iter != slices_.begin())
+	if (first_iter != slices_.begin()) {
 		std::rotate(slices_.begin(), first_iter, slices_.end());
+	}
 }
 
 void CheckFeasible::InitializeContainer() {
 	// Construct the dynamic programming results container.
 	const int num_subsets = std::pow(2, slices_.front().tasks.size());
 	values_.resize(slices_.size());
-	for (std::vector<Value>& subsets : values_)
+	for (std::vector<Value>& subsets : values_) {
 		subsets.resize(num_subsets);
+	}
 }
 
 void CheckFeasible::ResetContainer() {
-	if (values_[0][0].angle_rad == std::numeric_limits<Number>::max())
+	if (values_[0][0].angle_rad == std::numeric_limits<Number>::max()) {
 		return;
+	}
 
 	// Reset the dynamic programming results container.
-	for (std::vector<Value>& subsets : values_)
-		for (Value& value : subsets)
+	for (std::vector<Value>& subsets : values_) {
+		for (Value& value : subsets) {
 			value.Reset();
+		}
+	}
 }
 
 void CheckFeasible::FillContainer(const size_t first_slice_index,
@@ -146,59 +157,69 @@ void CheckFeasible::FillContainer(const size_t first_slice_index,
 		BitString slice_layer_string = BitString::FromBit(slice.event_from.node->layer);
 
 		for (const BitString& layer_set : slice.layer_sets) {
-			if (value_index == 0 && layer_set.IsEmpty())
+			if (value_index == 0 && layer_set.IsEmpty()) {
 				continue;
+			}
 
 			Value& value = slice_values[layer_set.Get()];
 			value.task = nullptr;
 			value.angle_rad = std::numeric_limits<Number>::max();
 
-			if (value_index == 0 && layer_set.Overlaps(first_slice_remaining_set))
+			if (value_index == 0 && layer_set.Overlaps(first_slice_remaining_set)) {
 				continue;
-			if (value_index == num_slices - 1 && layer_set.Overlaps(first_slice_layer_set))
+			}
+			if (value_index == num_slices - 1 && layer_set.Overlaps(first_slice_layer_set)) {
 				continue;
+			}
 
 			if (0 < value_index) {
 				// Check the previous slice.
 				const std::vector<Value>& subset_prev = values_[value_index - 1];
 				if (slice.event_from.type == TaskEvent::Type::kFrom) {
-					if (!layer_set[slice.event_from.node->layer])
+					if (!layer_set[slice.event_from.node->layer]) {
 						value = subset_prev[layer_set.Get()];
+					}
 				} else {
 					const TaskSlice& slice_prev =
 					    slices_[(slice_index + num_slices - 1) % num_slices];
 
 					if (!slice_prev.tasks[slice.event_from.node->layer] ||
-					    slice_prev.tasks[slice.event_from.node->layer]->disabled) // Special case.
+					    slice_prev.tasks[slice.event_from.node->layer]->disabled) { // Special case.
 						value = subset_prev[layer_set.Get()];
-					else
+					} else {
 						value = subset_prev[(layer_set + slice_layer_string).Get()];
+					}
 				}
 			}
-			if (value.angle_rad < std::numeric_limits<Number>::max())
+			if (value.angle_rad < std::numeric_limits<Number>::max()) {
 				continue;
+			}
 
 			for (const CycleNodeLayered::Ptr& task : slice.tasks) {
-				if (!task || task->disabled || !layer_set[task->layer])
+				if (!task || task->disabled || !layer_set[task->layer]) {
 					continue;
+				}
 
 				const BitString layer_set_without_task = layer_set - BitString::FromBit(task->layer);
 				const Value& value_without_task = slice_values[layer_set_without_task.Get()];
 
 				Number angle_rad = value_without_task.angle_rad;
-				if (angle_rad == std::numeric_limits<Number>::max())
+				if (angle_rad == std::numeric_limits<Number>::max()) {
 					continue;
+				}
 
-				if (value_without_task.task->bead)
+				if (value_without_task.task->bead) {
 					angle_rad += value_without_task.task->bead->covering_radius_rad +
 					             task->bead->covering_radius_rad;
-				else if (task->layer != slice.event_from.node->layer)
+				} else if (task->layer != slice.event_from.node->layer) {
 					continue;
+				}
 				angle_rad = std::max(angle_rad, task->valid->from());
 
 				// Check whether the task would still be in its valid interval.
-				if (task->valid->to() < angle_rad)
+				if (task->valid->to() < angle_rad) {
 					continue;
+				}
 
 				// Check whether the counterclockwise extreme of the bead of this task is closer to the start than any others.
 				if (value.angle_rad == std::numeric_limits<Number>::max() ||
@@ -219,8 +240,9 @@ bool CheckFeasible::ProcessContainer(const size_t first_slice_index,
 	// Check whether the last slice was assigned a value.
 	const size_t num_slices = slices_.size();
 	const Value& value_last_unused = values_[num_slices - 1][first_slice_remaining_set.Get()];
-	if (value_last_unused.angle_rad == std::numeric_limits<Number>::max())
+	if (value_last_unused.angle_rad == std::numeric_limits<Number>::max()) {
 		return false;
+	}
 
 	// Assign an angle to each node.
 	BitString layer_set = first_slice_remaining_set;
@@ -241,13 +263,15 @@ bool CheckFeasible::ProcessContainer(const size_t first_slice_index,
 			const int& value_slice_layer = value_slice.event_from.node->layer;
 			if (value_slice.event_from.type == TaskEvent::Type::kTo &&
 			    slices_[prev_slice_index].tasks[value_slice_layer] &&
-			    !slices_[prev_slice_index].tasks[value_slice_layer]->disabled)
+			    !slices_[prev_slice_index].tasks[value_slice_layer]->disabled) {
 				layer_set += value_slice_layer;
+			}
 
 			--value_index;
 		} else {
-			if (!task || !layer_set[task->layer])
+			if (!task || !layer_set[task->layer]) {
 				return false;
+			}
 
 			CHECK_LE(value.angle_rad, check_angle_rad);
 			check_angle_rad = value.angle_rad;

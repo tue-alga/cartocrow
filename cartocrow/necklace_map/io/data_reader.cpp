@@ -67,8 +67,9 @@ bool DataReader::ReadFile(const std::filesystem::path& filename, const std::stri
 	do {
 		try {
 			fin.open(filename);
-			if (fin)
+			if (fin) {
 				break;
+			}
 		} catch (const std::exception& e) {
 			LOG(ERROR) << e.what();
 		}
@@ -127,8 +128,9 @@ bool DataReader::Parse(std::istream& in, const std::string& value_name,
                        std::vector<MapElement::Ptr>& elements, const std::string& version /*= "1.0"*/
 ) {
 	// Parse the data.
-	if (!detail::TableParser::Parse(in))
+	if (!detail::TableParser::Parse(in)) {
 		return false;
+	}
 
 	// Find the ID and value columns and check that they are the correct types.
 	using ColumnString = detail::ValueColumn<std::string>;
@@ -137,21 +139,24 @@ bool DataReader::Parse(std::istream& in, const std::string& value_name,
 	const DataColumn* column_value = nullptr;
 
 	for (const detail::TableParser::ColumnPtr& column : table_) {
-		if (column->name == kNameId)
+		if (column->name == kNameId) {
 			column_id = dynamic_cast<const ColumnString*>(column.get());
-		else if (column->name == value_name)
+		} else if (column->name == value_name) {
 			column_value = column.get();
+		}
 	}
 	if (column_id == nullptr || column_value == nullptr ||
-	    column_id->values.size() != column_value->size())
+	    column_id->values.size() != column_value->size()) {
 		return false;
+	}
 
 	using ColumnDouble = detail::ValueColumn<double>;
 	using ColumnInteger = detail::ValueColumn<int>;
 	const ColumnDouble* column_double = dynamic_cast<const ColumnDouble*>(column_value);
 	const ColumnInteger* column_int = dynamic_cast<const ColumnInteger*>(column_value);
-	if (column_double == nullptr && column_int == nullptr)
+	if (column_double == nullptr && column_int == nullptr) {
 		return false;
+	}
 
 	// Create a lookup table for the elements.
 	using LookupTable = std::unordered_map<std::string, size_t>;
@@ -174,16 +179,18 @@ bool DataReader::Parse(std::istream& in, const std::string& value_name,
 		std::pair<LookupTable::iterator, bool> result =
 		    id_to_element_index.emplace(id, elements.size());
 		const size_t e = result.first->second;
-		if (e == elements.size())
+		if (e == elements.size()) {
 			elements.push_back(std::make_shared<necklace_map::MapElement>(id));
+		}
 		necklace_map::MapElement::Ptr& element = elements[e];
 		CHECK_NOTNULL(element);
 		CHECK_EQ(id, element->region.id);
 
-		if (column_double == nullptr)
+		if (column_double == nullptr) {
 			element->value = column_int->values[v];
-		else
+		} else {
 			element->value = column_double->values[v];
+		}
 	}
 
 	LOG(INFO) << "Successfully parsed necklace map data for " << elements.size() << " element(s).";

@@ -56,8 +56,9 @@ Number ComputeScaleFactorFixedOrder::operator()(Necklace::Ptr& necklace) {
 	detail::ComputeScaleFactorFixedOrder impl(necklace, buffer_rad_);
 	const Number scale_factor = impl.Optimize();
 
-	if (max_buffer_rad_ < 0 || impl.max_buffer_rad() < max_buffer_rad_)
+	if (max_buffer_rad_ < 0 || impl.max_buffer_rad() < max_buffer_rad_) {
 		max_buffer_rad_ = impl.max_buffer_rad();
+	}
 
 	return scale_factor;
 }

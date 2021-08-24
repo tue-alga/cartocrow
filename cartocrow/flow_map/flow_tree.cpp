@@ -53,8 +53,9 @@ FlowTree::FlowTree(const SpiralTree& spiral_tree)
 	//    if ((*node_iter)->GetType() == Node::Type::kRoot)
 	//      nodes_.push_back(*node_iter);
 	for (const Node::Ptr& node : nodes_) {
-		if (node->parent == nullptr)
+		if (node->parent == nullptr) {
 			continue;
+		}
 
 		const PolarPoint node_relative_position(node->place->position, root_translation_);
 		const PolarPoint parent_relative_position(node->parent->place->position, root_translation_);

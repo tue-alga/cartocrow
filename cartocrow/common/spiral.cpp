@@ -82,10 +82,11 @@ Spiral::Spiral(const PolarPoint& point_1, const PolarPoint& point_2) {
 	}
 
 	Number diff_phi = target.phi() - source.phi();
-	if (diff_phi < -M_PI)
+	if (diff_phi < -M_PI) {
 		diff_phi += M_2xPI;
-	else if (M_PI < diff_phi)
+	} else if (M_PI < diff_phi) {
 		diff_phi -= M_2xPI;
+	}
 
 	angle_rad_ = std::atan(diff_phi / -std::log(target.R() / source.R()));
 }

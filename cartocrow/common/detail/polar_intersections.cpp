@@ -28,8 +28,9 @@ namespace detail {
 
 // Return the side of the line that the point lies: -1: pole side, 0: on line, 1: far side.
 int Orientation(const PolarLine& line, const PolarPoint& point) {
-	if (!line.ContainsPhi(point.phi()))
+	if (!line.ContainsPhi(point.phi())) {
 		return -1;
+	}
 
 	// Note that using the standardized method for computing the R at phi of the point on the line and comparing that with the given point fails for lines through the pole.
 	// Instead, we project the given point onto the pedal vector and compare the distance to the foot of the line.
@@ -49,25 +50,28 @@ bool BinarySearch(const PolarLine& line, const Spiral& spiral, Number& t_spiral_
 		t_spiral_near = t_spiral_far;
 		return true;
 	}
-	if (Orientation(line, spiral.Evaluate(t_spiral_near)) != -orientation_far)
+	if (Orientation(line, spiral.Evaluate(t_spiral_near)) != -orientation_far) {
 		return false;
+	}
 
 	while (t_precision < t_spiral_near - t_spiral_far) {
 		const Number t_mid = (t_spiral_far + t_spiral_near) / 2;
 
 		// Safety switch
-		if (t_mid == t_spiral_far || t_mid == t_spiral_near)
+		if (t_mid == t_spiral_far || t_mid == t_spiral_near) {
 			break;
+		}
 
 		const int orientation_mid = Orientation(line, spiral.Evaluate(t_mid));
 
 		if (orientation_mid == 0) {
 			t_spiral_near = t_spiral_far = t_mid;
 			return true;
-		} else if (orientation_mid == orientation_far)
+		} else if (orientation_mid == orientation_far) {
 			t_spiral_far = t_mid;
-		else
+		} else {
 			t_spiral_near = t_mid;
+		}
 	}
 
 	return true;

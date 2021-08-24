@@ -75,8 +75,9 @@ BezierNecklace::BezierNecklace(const BezierSpline spline, const Point& kernel)
     : spline_(spline), kernel_(kernel) {
 	// Clockwise curves are reversed.
 	if (CGAL::orientation(spline_.curves().begin()->source(),
-	                      spline_.curves().begin()->source_control(), kernel_) == CGAL::CLOCKWISE)
+	                      spline_.curves().begin()->source_control(), kernel_) == CGAL::CLOCKWISE) {
 		spline_.Reverse();
+	}
 
 	// Reorder the curves to start with the curve directly to the right of the kernel.
 	std::sort(spline_.curves().begin(), spline_.curves().end(), CompareBezierCurves(*this));
@@ -101,11 +102,12 @@ bool BezierNecklace::IsValid() const {
 	// Finally, the curve must describe a counterclockwise sweep around the kernel, i.e. the curve must start to the left of the vector from the kernel to the curve source.
 
 	bool valid = spline_.IsValid();
-	for (const BezierCurve& curve : spline_.curves())
+	for (const BezierCurve& curve : spline_.curves()) {
 		valid &= curve.source() != curve.source_control() &&
 		         curve.target() != curve.target_control() &&
 		         !CGAL::right_turn(curve.source(), curve.source_control(), kernel()) &&
 		         !CGAL::left_turn(curve.target(), curve.target_control(), kernel());
+	}
 
 	return valid;
 }
@@ -113,8 +115,9 @@ bool BezierNecklace::IsValid() const {
 bool BezierNecklace::IntersectRay(const Number& angle_rad, Point& intersection) const {
 	// Find the curve that contains the angle.
 	BezierSpline::CurveSet::const_iterator curve_iter = FindCurveContainingAngle(angle_rad);
-	if (curve_iter == spline_.curves().end())
+	if (curve_iter == spline_.curves().end()) {
 		return false;
+	}
 
 	Number t;
 	return IntersectRay(angle_rad, curve_iter, intersection, t);
@@ -125,8 +128,9 @@ Box BezierNecklace::ComputeBoundingBox() const {
 }
 
 Number BezierNecklace::ComputeCoveringRadiusRad(const Range::Ptr& range, const Number& radius) const {
-	if (radius == 0)
+	if (radius == 0) {
 		return 0;
+	}
 
 	// Sample the range and determine the largest covering radius, i.e. the largest angle difference towards the point on the spline at a fixed distance.
 	// There are several viable sampling strategies (with evaluation):
@@ -169,12 +173,14 @@ Number BezierNecklace::ComputeCoveringRadiusRad(const Range::Ptr& range, const N
 		covering_radius_rad = std::max(covering_radius_rad, covering_radius_rad_cw);
 
 		t += t_step;
-		if (curve_iter == curve_iter_to && t_to < t && t < t_to + t_step)
+		if (curve_iter == curve_iter_to && t_to < t && t < t_to + t_step) {
 			t = t_to; // Final step at the exact range endpoint.
+		}
 		if (curve_iter != curve_iter_to && 1 <= t) {
 			t = 0;
-			if (++curve_iter == spline_.curves().end())
+			if (++curve_iter == spline_.curves().end()) {
 				curve_iter = spline_.curves().begin();
+			}
 		}
 	}
 
@@ -213,12 +219,14 @@ Number BezierNecklace::ComputeDistanceToKernel(const Range::Ptr& range) const {
 		squared_distance = std::min(squared_distance, CGAL::squared_distance(point, kernel()));
 
 		t += t_step;
-		if (curve_iter == curve_iter_to && t_to < t && t < t_to + t_step)
+		if (curve_iter == curve_iter_to && t_to < t && t < t_to + t_step) {
 			t = t_to; // Final step at the exact range endpoint.
+		}
 		if (curve_iter != curve_iter_to && 1 <= t) {
 			t = 0;
-			if (++curve_iter == spline_.curves().end())
+			if (++curve_iter == spline_.curves().end()) {
 				curve_iter = spline_.curves().begin();
+			}
 		}
 	}
 
@@ -227,14 +235,16 @@ Number BezierNecklace::ComputeDistanceToKernel(const Range::Ptr& range) const {
 
 Number BezierNecklace::ComputeAngleAtDistanceRad(const Number& angle_rad,
                                                  const Number& distance) const {
-	if (distance == 0)
+	if (distance == 0) {
 		return angle_rad;
+	}
 
 	// Find the curve that contains the angle.
 	/*CHECK(checked_);*/
 	const BezierSpline::CurveSet::const_iterator curve_iter = FindCurveContainingAngle(angle_rad);
-	if (curve_iter == spline_.curves().end())
+	if (curve_iter == spline_.curves().end()) {
 		return false;
+	}
 
 	// Find the angle at the specified distance.
 	Point point;
@@ -266,8 +276,9 @@ bool BezierNecklace::IntersectRay(const Number& angle_rad,
 	Number intersection_t[3];
 	const size_t num_intersection =
 	    curve_iter->IntersectRay(kernel(), target, intersections, intersection_t);
-	if (num_intersection == 0)
+	if (num_intersection == 0) {
 		return false;
+	}
 
 	// Note that the set of Bezier curves must always be a star-shaped curve with the kernel as star point,
 	// meaning that a line through the kernel has at most one intersection with the curve.
@@ -292,8 +303,9 @@ bool BezierNecklace::ComputeAngleAtDistanceRad(const Point& point, const Number&
 				return true;
 			}
 
-			if (++curve_iter == spline_.curves().end())
+			if (++curve_iter == spline_.curves().end()) {
 				curve_iter = spline_.curves().begin();
+			}
 			t_start = 0;
 		} else {
 			if (squared_distance <= CGAL::squared_distance(point, curve_iter->source())) {
@@ -302,8 +314,9 @@ bool BezierNecklace::ComputeAngleAtDistanceRad(const Point& point, const Number&
 				return true;
 			}
 
-			if (curve_iter == spline_.curves().begin())
+			if (curve_iter == spline_.curves().begin()) {
 				curve_iter = spline_.curves().end();
+			}
 			--curve_iter;
 			t_start = 1;
 		}

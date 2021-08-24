@@ -50,8 +50,9 @@ struct Event {
 struct CompareEvents {
 	bool operator()(const Event& a, const Event& b) const {
 		// Join nodes are conceptually farther from the root than other nodes.
-		if (a.relative_position.R() == b.relative_position.R())
+		if (a.relative_position.R() == b.relative_position.R()) {
 			return 1 < b.node->children.size();
+		}
 
 		return a.relative_position.R() < b.relative_position.R();
 	}
@@ -118,9 +119,9 @@ Node::Node(const Place::Ptr& place /*= nullptr*/) : place(place) {}
  * @return the node type.
  */
 Node::ConnectionType Node::GetType() const {
-	if (parent == nullptr)
+	if (parent == nullptr) {
 		return ConnectionType::kRoot;
-	else
+	} else {
 		switch (children.size()) {
 		case 0:
 			return ConnectionType::kLeaf;
@@ -129,6 +130,7 @@ Node::ConnectionType Node::GetType() const {
 		default:
 			return ConnectionType::kJoin;
 		}
+	}
 }
 
 /**@brief Determine whether this node is a Steiner node.
@@ -232,8 +234,9 @@ void SpiralTree::AddPlaces(const std::vector<Place::Ptr>& places) {
 	Clean();
 
 	for (const Place::Ptr& place : places) {
-		if (0 < place->flow_in)
+		if (0 < place->flow_in) {
 			nodes_.push_back(std::make_shared<Node>(place));
+		}
 	}
 }
 
@@ -245,9 +248,11 @@ void SpiralTree::AddPlaces(const std::vector<Place::Ptr>& places) {
 void SpiralTree::AddObstacles(const std::vector<Region>& obstacles) {
 	Clean();
 
-	for (const Region& obstacle : obstacles)
-		for (const Polygon_with_holes& polygon : obstacle.shape)
+	for (const Region& obstacle : obstacles) {
+		for (const Polygon_with_holes& polygon : obstacle.shape) {
 			AddObstacle(polygon);
+		}
+	}
 }
 
 /**@brief Compute the spiral tree arcs.
@@ -257,10 +262,11 @@ void SpiralTree::AddObstacles(const std::vector<Region>& obstacles) {
  * Note that if no specific obstacles have been added, input nodes are not forced to be leaf nodes in the final tree. If this is desired, use ComputeObstructed() instead.
  */
 void SpiralTree::Compute() {
-	if (true) //obstacles_.empty())  // TODO(tvl) commented out while code is not complete.
+	if (true) { //obstacles_.empty())  // TODO(tvl) commented out while code is not complete.
 		ComputeUnobstructed();
-	else
+	} else {
 		ComputeObstructed();
+	}
 }
 
 /**@brief Compute the spiral tree arcs, ignoring any obstacles.
@@ -309,8 +315,9 @@ void SpiralTree::ComputeUnobstructed() {
 			// Check whether both children are still active.
 			CHECK_EQ(event.node->children.size(), 2);
 			if (event.node->children[0]->parent != nullptr ||
-			    event.node->children[1]->parent != nullptr)
+			    event.node->children[1]->parent != nullptr) {
 				continue;
+			}
 
 			// Add the join node to the wavefront and the collection of nodes.
 			node_iter = wavefront.emplace(order, event).first;
@@ -364,8 +371,9 @@ void SpiralTree::ComputeUnobstructed() {
 			VLOG(2) << "Added leaf node to wavefront: " << node_iter->second.node->place->id;
 		}
 
-		if (wavefront.size() < 2)
+		if (wavefront.size() < 2) {
 			continue;
+		}
 
 		// Add join nodes with the neighbors to the event queue.
 		{
@@ -457,8 +465,9 @@ void SpiralTree::Clean() {
 
 	// Clean the node connections.
 	for (Node::Ptr& node : nodes_) {
-		if (node->place == nullptr)
+		if (node->place == nullptr) {
 			break;
+		}
 		++num_places;
 
 		node->parent = nullptr;
@@ -470,8 +479,9 @@ void SpiralTree::Clean() {
 }
 
 bool SpiralTree::IsReachable(const PolarPoint& parent_point, const PolarPoint& child_point) const {
-	if (parent_point == child_point)
+	if (parent_point == child_point) {
 		return true;
+	}
 
 	const Spiral spiral(child_point, parent_point);
 	return std::abs(spiral.angle_rad()) <= restricting_angle_rad_;
@@ -480,8 +490,9 @@ bool SpiralTree::IsReachable(const PolarPoint& parent_point, const PolarPoint& c
 void SpiralTree::AddObstacle(const Polygon_with_holes& polygon) {
 	// Ignore the holes of the obstacle: flow cannot cross the obstacle boundary.
 	const Polygon& boundary = polygon.outer_boundary();
-	if (boundary.is_empty())
+	if (boundary.is_empty()) {
 		return;
+	}
 
 	CHECK_NE(boundary.oriented_side(GetRoot()), CGAL::ON_BOUNDED_SIDE)
 	    << "Root inside an obstacle.";
@@ -489,13 +500,15 @@ void SpiralTree::AddObstacle(const Polygon_with_holes& polygon) {
 	obstacles_.emplace_back();
 	Obstacle& obstacle = obstacles_.back();
 	for (Polygon::Vertex_const_iterator vertex_iter = boundary.vertices_begin();
-	     vertex_iter != boundary.vertices_end(); ++vertex_iter)
+	     vertex_iter != boundary.vertices_end(); ++vertex_iter) {
 		obstacle.emplace_back(*vertex_iter, root_translation_);
+	}
 
 	// Enforce counter-clockwise obstacles for a canonical arrangement.
 	// Note that this is necessary to be able check on which side of the vertices the interior of the polygon lies.
-	if (!boundary.is_counterclockwise_oriented())
+	if (!boundary.is_counterclockwise_oriented()) {
 		obstacle.reverse();
+	}
 
 	// Add vertices for the points closest to the root as well as spiral points.
 	// The wedge with the root as apex and boundaries through a closest point and a spiral point (on the same edge) has a fixed angle.
@@ -516,12 +529,15 @@ void SpiralTree::AddObstacle(const Polygon_with_holes& polygon) {
 		const Number phi_s_next = closest.phi() + sign * phi_offset;
 
 		// The closest point and spiral points must be added ordered from p to q and only if they are on the edge.
-		if (edge.ContainsPhi(phi_s_prev))
+		if (edge.ContainsPhi(phi_s_prev)) {
 			obstacle.insert(vertex_iter, PolarPoint(R_s, phi_s_prev));
-		if (edge.ContainsPhi(closest.phi()))
+		}
+		if (edge.ContainsPhi(closest.phi())) {
 			obstacle.insert(vertex_iter, closest);
-		if (edge.ContainsPhi(phi_s_next))
+		}
+		if (edge.ContainsPhi(phi_s_next)) {
 			obstacle.insert(vertex_iter, PolarPoint(R_s, phi_s_next));
+		}
 	}
 }
 

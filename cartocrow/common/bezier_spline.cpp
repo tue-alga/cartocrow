@@ -102,10 +102,11 @@ Point BezierCurve::target() const {
 Point BezierCurve::Evaluate(const Number& t) const {
 	CHECK_GE(t, 0);
 	CHECK_LE(t, 1);
-	if (t == 0)
+	if (t == 0) {
 		return source();
-	else if (t == 1)
+	} else if (t == 1) {
 		return target();
+	}
 
 	const Number t_ = 1 - t;
 	const Number a = t_ * t_ * t_;
@@ -193,8 +194,9 @@ size_t BezierCurve::IntersectRay(const Point& source, const Point& target, Point
 	size_t num = 0;
 	for (const Number& t : roots) {
 		// Ignore roots outside the range of the curve.
-		if (t < 0 || 1 < t)
+		if (t < 0 || 1 < t) {
 			continue;
+		}
 
 		/*const Number t_3 = t * t * t;
     const Number t_2 = t * t;
@@ -203,8 +205,9 @@ size_t BezierCurve::IntersectRay(const Point& source, const Point& target, Point
 
 		// Verify the intersection is on the ray by using the inner product.
 		const Number s = (intersection.x() - source.x()) * (target.x() - source.x());
-		if (s < 0)
+		if (s < 0) {
 			continue;
+		}
 
 		intersections[num] = intersection;
 		intersection_t[num] = t;
@@ -232,8 +235,9 @@ BezierSpline::BezierSpline() : bounding_box_() {}
  * @return whether the spline is valid.
  */
 bool BezierSpline::IsValid() const {
-	if (IsEmpty())
+	if (IsEmpty()) {
 		return false;
+	}
 
 	bool valid = true;
 	Point current = curves_.front().source();
@@ -261,8 +265,9 @@ bool BezierSpline::IsContinuous() const {
 	Point prev = curves_.front().source();
 	for (const BezierCurve& curve : curves_) {
 		const Point next = curve.source();
-		if (prev != next)
+		if (prev != next) {
 			return false;
+		}
 		prev = curve.target();
 	}
 	return true;
@@ -321,8 +326,9 @@ bool BezierSpline::ToCircle(Circle& circle, const Number& epsilon /*= 0.01*/) co
 	for (const BezierCurve& curve : curves_) {
 		// Note that we do not check the source: this will be checked as the target of the previous curve.
 		const Number denom = 4;
-		for (int e = 1; e < denom; ++e)
+		for (int e = 1; e < denom; ++e) {
 			squared_distance(curve.Evaluate(e / denom));
+		}
 
 		squared_distance(curve.target());
 	}
@@ -401,9 +407,10 @@ Box BezierSpline::ComputeBoundingBox() const {
 		// * taking the bounding box of the set of control points (approximation may be very rough).
 		// We choose the last approach, because overestimating the bounding box is more desirable than underestimating it.
 		Kernel::Construct_bbox_2 bbox = Kernel().construct_bbox_2_object();
-		for (const BezierCurve& curve : curves_)
+		for (const BezierCurve& curve : curves_) {
 			bounding_box_ += bbox(curve.source()) + bbox(curve.source_control()) +
 			                 bbox(curve.target_control()) + bbox(curve.target());
+		}
 	}
 
 	return bounding_box_;

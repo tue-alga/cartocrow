@@ -75,16 +75,20 @@ MapElement::MapElement(const Region& region)
  * @return whether the element is valid.
  */
 bool MapElement::IsValid(const bool strict /*= true*/) const {
-	if (!region.IsValid())
+	if (!region.IsValid()) {
 		return false;
+	}
 
-	if (value < 0)
+	if (value < 0) {
 		return false;
-	if (strict && value == 0)
+	}
+	if (strict && value == 0) {
 		return false;
+	}
 
-	if (bead && (!necklace || !bead->IsValid()))
+	if (bead && (!necklace || !bead->IsValid())) {
 		return false;
+	}
 
 	return true;
 }
@@ -96,15 +100,17 @@ bool MapElement::IsValid(const bool strict /*= true*/) const {
  */
 void MapElement::InitializeBead(const Parameters& parameters) {
 	// Elements on a necklace must have strictly positive value.
-	if (!necklace || value <= 0)
+	if (!necklace || value <= 0) {
 		return;
+	}
 
 	if (parameters.ignore_point_regions) {
 		Polygon extent;
 		region.MakeSimple(extent);
 
-		if (extent.size() < 2)
+		if (extent.size() < 2) {
 			return;
+		}
 	}
 
 	bead = std::make_shared<necklace_map::Bead>(CGAL::sqrt(value), region.style, region.id);

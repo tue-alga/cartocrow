@@ -85,8 +85,9 @@ void ComputeFeasibleInterval::operator()(MapElement::Ptr& element) const {
 	Polygon extent;
 	element->region.MakeSimple(extent);
 
-	if (!element->bead)
+	if (!element->bead) {
 		return;
+	}
 
 	CHECK_NOTNULL(element->necklace);
 	element->bead->feasible = (*this)(extent, element->necklace);
@@ -96,8 +97,9 @@ void ComputeFeasibleInterval::operator()(MapElement::Ptr& element) const {
  * @param[in,out] elements the elements.
  */
 void ComputeFeasibleInterval::operator()(std::vector<MapElement::Ptr>& elements) const {
-	for (MapElement::Ptr& element : elements)
+	for (MapElement::Ptr& element : elements) {
 		(*this)(element);
+	}
 }
 
 ComputeFeasibleInterval::ComputeFeasibleInterval(const Parameters& parameters) {}

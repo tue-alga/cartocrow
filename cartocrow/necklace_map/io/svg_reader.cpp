@@ -103,8 +103,9 @@ bool SvgReader::Parse(const std::string& input, std::vector<necklace_map::MapEle
 	tinyxml2::XMLDocument doc;
 	tinyxml2::XMLError result = doc.Parse(input.data());
 	//tinyxml2::XMLError result = doc.Parse(content_str); // This would be how to parse a string instead of a file using tinyxml2
-	if (result != tinyxml2::XML_SUCCESS)
+	if (result != tinyxml2::XML_SUCCESS) {
 		return false;
+	}
 
 	using Visitor = detail::SvgVisitor;
 	Visitor visitor(elements, necklaces, scale_factor);

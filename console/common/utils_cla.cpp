@@ -63,8 +63,9 @@ std::string UsageMessage(const std::string& executable_name, const std::string& 
 	out << description << std::endl;
 	out << "Sample usage:" << std::endl;
 	out << std::filesystem::path(executable_name).filename().string();
-	for (const std::string& argument : sample_arguments)
+	for (const std::string& argument : sample_arguments) {
 		out << std::endl << "\t" << argument;
+	}
 	return out.str();
 }
 

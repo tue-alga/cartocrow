@@ -55,8 +55,9 @@ bool ValidateScaleFactor::operator()(Necklace::Ptr& necklace) const {
 		// Place the elements in a valid position.
 		for (Bead::Ptr& bead : necklace->beads) {
 			bead->valid = std::make_shared<CircularRange>(*bead->feasible);
-			if (bead->angle_rad == 0)
+			if (bead->angle_rad == 0) {
 				bead->angle_rad = bead->valid->from_rad();
+			}
 		}
 
 		return true;
@@ -124,8 +125,9 @@ bool ValidateScaleFactor::operator()(Necklace::Ptr& necklace) const {
 
 		if (next.valid->to() < min_angle_rad) {
 			current.valid->to() += next.valid->to() - min_angle_rad;
-			if (current.valid->to() < current.valid->from())
+			if (current.valid->to() < current.valid->from()) {
 				current.valid->to() = current.valid->from();
+			}
 		}
 	}
 
@@ -140,8 +142,9 @@ bool ValidateScaleFactor::operator()(Necklace::Ptr& necklace) const {
 		const Number& to_rad = Modulo(nodes[n].valid->to(), from_rad);
 
 		bead->valid = std::make_shared<CircularRange>(from_rad, to_rad);
-		if (adjust_angle)
+		if (adjust_angle) {
 			bead->angle_rad = bead->valid->from_rad();
+		}
 	}
 
 	return valid;
@@ -153,8 +156,9 @@ bool ValidateScaleFactor::operator()(Necklace::Ptr& necklace) const {
  */
 bool ValidateScaleFactor::operator()(std::vector<Necklace::Ptr>& necklaces) const {
 	bool valid = true;
-	for (Necklace::Ptr& necklace : necklaces)
+	for (Necklace::Ptr& necklace : necklaces) {
 		valid &= (*this)(necklace);
+	}
 	return valid;
 }
 

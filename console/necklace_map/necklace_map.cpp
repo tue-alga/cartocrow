@@ -246,8 +246,9 @@ void ValidateFlags(cartocrow::necklace_map::Parameters& parameters,
 	PrintFlag(FLAGS_NAME_AND_VALUE(stderrthreshold));
 	PrintFlag(FLAGS_NAME_AND_VALUE(v));
 
-	if (!correct)
+	if (!correct) {
 		LOG(FATAL) << "Errors in flags; Terminating.";
+	}
 }
 
 bool ReadData(std::vector<cartocrow::necklace_map::MapElement::Ptr>& elements) {
@@ -275,8 +276,9 @@ void ApplyNecklaceDrawBounds(std::vector<cartocrow::necklace_map::Necklace::Ptr>
 			bits.push_back(token.substr(0, pos));
 			token = pos == std::string::npos ? "" : token.substr(pos + 1);
 		}
-		if (bits.size() < 3)
+		if (bits.size() < 3) {
 			continue;
+		}
 
 		const std::string necklace_id = bits[0];
 		double cw_deg, ccw_deg;
@@ -289,13 +291,15 @@ void ApplyNecklaceDrawBounds(std::vector<cartocrow::necklace_map::Necklace::Ptr>
 		}
 
 		for (cartocrow::necklace_map::Necklace::Ptr& necklace : necklaces) {
-			if (necklace->id != necklace_id)
+			if (necklace->id != necklace_id) {
 				continue;
+			}
 
 			cartocrow::necklace_map::CircleNecklace::Ptr shape =
 			    std::dynamic_pointer_cast<cartocrow::necklace_map::CircleNecklace>(necklace->shape);
-			if (!shape)
+			if (!shape) {
 				continue;
+			}
 
 			shape->draw_bounds_cw_rad() = cw_deg * M_PI / 180;
 			shape->draw_bounds_ccw_rad() = ccw_deg * M_PI / 180;
@@ -309,8 +313,9 @@ void WriteOutput(const std::vector<cartocrow::necklace_map::MapElement::Ptr>& el
                  const cartocrow::Number& scale_factor,
                  const cartocrow::necklace_map::WriteOptions::Ptr& write_options) {
 	cartocrow::necklace_map::SvgWriter writer;
-	if (FLAGS_out_website)
+	if (FLAGS_out_website) {
 		writer.Write(elements, necklaces, scale_factor, write_options, std::cout);
+	}
 
 	if (!FLAGS_out_filename.empty()) {
 		std::ofstream out(FLAGS_out_filename);

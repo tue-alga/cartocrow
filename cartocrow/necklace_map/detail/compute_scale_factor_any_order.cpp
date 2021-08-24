@@ -40,8 +40,9 @@ ComputeScaleFactorAnyOrder::ComputeScaleFactorAnyOrder(const Necklace::Ptr& neck
     : necklace_shape_(necklace->shape), half_buffer_rad_(0.5 * buffer_rad), max_buffer_rad_(0),
       binary_search_depth_(binary_search_depth) {
 	// Collect and order the beads based on the start of their valid interval (initialized as their feasible interval).
-	for (const Bead::Ptr& bead : necklace->beads)
+	for (const Bead::Ptr& bead : necklace->beads) {
 		nodes_.push_back(std::make_shared<CycleNodeLayered>(bead));
+	}
 
 	std::sort(nodes_.begin(), nodes_.end(), CompareCycleNodeLayered());
 
@@ -54,8 +55,9 @@ Number ComputeScaleFactorAnyOrder::Optimize() {
 	const int num_layers = AssignLayers();
 
 	// The algorithm is exponential in the number of layers, so we limit this number.
-	if (kMaxLayers < num_layers)
+	if (kMaxLayers < num_layers) {
 		return 0;
+	}
 
 	// Initialize the collection of task slices: collections of fixed tasks that are relevant within some angle range.
 	check_->Initialize();
@@ -69,10 +71,11 @@ Number ComputeScaleFactorAnyOrder::Optimize() {
 		const Number scale_factor = 0.5 * (lower_bound + upper_bound);
 		ComputeCoveringRadii(scale_factor);
 
-		if ((*check_)())
+		if ((*check_)()) {
 			lower_bound = scale_factor;
-		else
+		} else {
 			upper_bound = scale_factor;
+		}
 	}
 
 	ComputeBufferUpperBound(lower_bound);
@@ -92,9 +95,10 @@ Number ComputeScaleFactorAnyOrder::ComputeScaleUpperBound() {
 		upper_bound = 0 < upper_bound ? std::min(upper_bound, scale_factor) : scale_factor;
 
 		// The maximum buffer will be based on the minimum radius and the final scale factor.
-		if (0 < covering_radius_rad)
+		if (0 < covering_radius_rad) {
 			max_buffer_rad_ = 0 < max_buffer_rad_ ? std::min(max_buffer_rad_, covering_radius_rad)
 			                                      : covering_radius_rad;
+		}
 	}
 
 	// Perform a binary search to find the largest scale factor for which all beads could fit.
@@ -103,16 +107,18 @@ Number ComputeScaleFactorAnyOrder::ComputeScaleUpperBound() {
 		const Number scale_factor = 0.5 * (lower_bound + upper_bound);
 
 		Number totalSize = 0.0;
-		for (const CycleNodeLayered::Ptr& node : nodes_)
+		for (const CycleNodeLayered::Ptr& node : nodes_) {
 			totalSize += necklace_shape_->ComputeCoveringRadiusRad(
 			                 node->valid, scale_factor * node->bead->radius_base) +
 			             half_buffer_rad_;
+		}
 
 		// Check whether the scaled beads could fit.
-		if (totalSize <= M_PI)
+		if (totalSize <= M_PI) {
 			lower_bound = scale_factor;
-		else
+		} else {
 			upper_bound = scale_factor;
+		}
 	}
 
 	// The lower bound is the largest confirmed scale factor for which all beads could fit.
@@ -120,10 +126,11 @@ Number ComputeScaleFactorAnyOrder::ComputeScaleUpperBound() {
 }
 
 void ComputeScaleFactorAnyOrder::ComputeCoveringRadii(const Number& scale_factor) {
-	for (CycleNodeLayered::Ptr& node : nodes_)
+	for (CycleNodeLayered::Ptr& node : nodes_) {
 		node->bead->covering_radius_rad = necklace_shape_->ComputeCoveringRadiusRad(
 		                                      node->valid, node->bead->radius_base * scale_factor) +
 		                                  half_buffer_rad_;
+	}
 }
 
 int ComputeScaleFactorAnyOrder::AssignLayers() {
@@ -158,14 +165,16 @@ int ComputeScaleFactorAnyOrder::AssignLayers() {
 			node_iter = remaining_nodes.erase(node_iter);
 			unused_iter = remaining_nodes.end();
 		} else {
-			if (unused_iter == remaining_nodes.end())
+			if (unused_iter == remaining_nodes.end()) {
 				// Mark the node as the first one of the next layer.
 				unused_iter = node_iter;
+			}
 			++node_iter;
 		}
 
-		if (node_iter == remaining_nodes.end())
+		if (node_iter == remaining_nodes.end()) {
 			node_iter = remaining_nodes.begin();
+		}
 	}
 
 	return layer + 1;

@@ -54,8 +54,9 @@ void SvgPolygonConverter::LineTo_(const Point& to) {
 
 void SvgPolygonConverter::Close_() {
 	CHECK(current_.is_simple());
-	if (current_.is_clockwise_oriented())
+	if (current_.is_clockwise_oriented()) {
 		current_.reverse_orientation();
+	}
 	shape_.emplace_back(current_);
 	current_.clear();
 }

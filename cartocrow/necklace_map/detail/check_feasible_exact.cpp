@@ -31,8 +31,9 @@ namespace detail {
 CheckFeasibleExact::CheckFeasibleExact(NodeSet& nodes) : CheckFeasible(nodes) {}
 
 bool CheckFeasibleExact::operator()() {
-	if (slices_.empty())
+	if (slices_.empty()) {
 		return true;
+	}
 
 	ResetContainer();
 
@@ -40,20 +41,23 @@ bool CheckFeasibleExact::operator()() {
 	for (size_t slice_index = 0; slice_index < slices_.size(); ++slice_index) {
 		// The slice must start with an interval beginning event.
 		const TaskSlice& slice = slices_[slice_index];
-		if (slice.event_from.type == TaskEvent::Type::kTo)
+		if (slice.event_from.type == TaskEvent::Type::kTo) {
 			continue;
+		}
 
 		for (const BitString& layer_set : slice.layer_sets) {
 			// The layer set must include the beginning event's node.
-			if (!layer_set[slice.event_from.node->layer])
+			if (!layer_set[slice.event_from.node->layer]) {
 				continue;
+			}
 
 			// Split the circle at the starting event.
 			SplitCircle(slice, layer_set);
 
 			// If at least one set is feasible, the scale factor is feasible.
-			if (FeasibleFromSlice(slice_index, layer_set))
+			if (FeasibleFromSlice(slice_index, layer_set)) {
 				return true;
+			}
 		}
 	}
 
@@ -62,10 +66,12 @@ bool CheckFeasibleExact::operator()() {
 
 void CheckFeasibleExact::SplitCircle(const TaskSlice& first_slice, const BitString& layer_set) {
 	// Reset each slice and then align it with the start of the current slice.
-	for (TaskSlice& slice : slices_)
+	for (TaskSlice& slice : slices_) {
 		slice.Reset();
-	for (TaskSlice& slice : slices_)
+	}
+	for (TaskSlice& slice : slices_) {
 		slice.Rotate(first_slice, layer_set);
+	}
 }
 
 bool CheckFeasibleExact::FeasibleFromSlice(const size_t first_slice_index,
@@ -79,20 +85,24 @@ bool CheckFeasibleExact::FeasibleFromSlice(const size_t first_slice_index,
 	// Check whether the last slice was assigned a value.
 	const size_t num_slices = slices_.size();
 	const Value& value_last_unused = values_[num_slices - 1][first_slice_others_set.Get()];
-	if (value_last_unused.angle_rad == std::numeric_limits<Number>::max())
+	if (value_last_unused.angle_rad == std::numeric_limits<Number>::max()) {
 		return false;
+	}
 
 	// Check whether the first and last beads overlap.
 	if (M_2xPI < value_last_unused.angle_rad + value_last_unused.task->bead->covering_radius_rad +
-	                 slice.event_from.node->bead->covering_radius_rad)
+	                 slice.event_from.node->bead->covering_radius_rad) {
 		return false;
+	}
 
 	bead_angles_.clear();
-	if (!ProcessContainer(first_slice_index, first_slice_others_set))
+	if (!ProcessContainer(first_slice_index, first_slice_others_set)) {
 		return false;
+	}
 
-	for (BeadAngleMap::iterator iter = bead_angles_.begin(); iter != bead_angles_.end(); ++iter)
+	for (BeadAngleMap::iterator iter = bead_angles_.begin(); iter != bead_angles_.end(); ++iter) {
 		iter->second->angle_rad = Modulo(iter->first);
+	}
 	return true;
 }
 

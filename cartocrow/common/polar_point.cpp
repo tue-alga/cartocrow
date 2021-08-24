@@ -88,8 +88,9 @@ PolarPoint PolarPoint::to_polar(const Point& p) {
 	// Positive by construction.
 	const Number R = CGAL::sqrt((p - Point(CGAL::ORIGIN)).squared_length());
 
-	if (p.x() == 0 && p.y() == 0)
+	if (p.x() == 0 && p.y() == 0) {
 		return PolarPoint(R, 0);
+	}
 
 	const Number phi = std::atan2(CGAL::to_double(p.y()), CGAL::to_double(p.x()));
 	return PolarPoint(R, phi);

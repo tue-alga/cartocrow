@@ -58,10 +58,12 @@ Box ConstructBoundingBox(const Spiral& spiral) {
 	Number t = (spiral.angle_rad() - spiral.anchor().phi()) / tan_b;
 
 	// Make sure that we start at the instance farthest from the pole.
-	while (0 < t)
+	while (0 < t) {
 		t -= period;
-	while (t < 0)
+	}
+	while (t < 0) {
 		t += period;
+	}
 
 	for (int k = 0; k < 4; ++k) {
 		const PolarPoint p = spiral.Evaluate(t + k * period);
@@ -93,15 +95,18 @@ Box ConstructBoundingBox(const SpiralSegment& segment) {
 	Number t = (segment.angle_rad() - segment.anchor().phi()) / tan_b;
 
 	// Make sure that we start at the instance farthest from the pole.
-	while (0 < t)
+	while (0 < t) {
 		t -= period;
-	while (t < 0)
+	}
+	while (t < 0) {
 		t += period;
+	}
 
 	for (int k = 0; k < 4; ++k) {
 		const PolarPoint p = segment.Evaluate(t + k * period);
-		if (segment.R_min() < p.R() && p.R() < segment.anchor().R())
+		if (segment.R_min() < p.R() && p.R() < segment.anchor().R()) {
 			bounding_box += bbox(p.to_cartesian());
+		}
 	}
 
 	return bounding_box;

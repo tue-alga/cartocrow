@@ -39,16 +39,18 @@ Number ComputeScaleFactorAnyOrderIngot::ComputeScaleUpperBound() {
 		    necklace_shape_->ComputeCoveringRadiusRad(node->valid, node->bead->radius_base);
 
 		// The maximum buffer will be based on the minimum radius and the final scale factor.
-		if (0 < radius_rad)
+		if (0 < radius_rad) {
 			max_buffer_rad_ = std::min(max_buffer_rad_, radius_rad);
+		}
 	}
 
 	return M_PI / nodes_.size() - half_buffer_rad_;
 }
 
 void ComputeScaleFactorAnyOrderIngot::ComputeCoveringRadii(const Number& scale_factor) {
-	for (CycleNodeLayered::Ptr& node : nodes_)
+	for (CycleNodeLayered::Ptr& node : nodes_) {
 		node->bead->covering_radius_rad = scale_factor + half_buffer_rad_;
+	}
 }
 
 } // namespace detail

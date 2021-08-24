@@ -45,8 +45,9 @@ Necklace::Necklace(const std::string& id, const NecklaceShape::Ptr& shape)
 /**@brief Sort the beads of the necklace by the clockwise extremes of their feasible interval.
  */
 void Necklace::SortBeads() {
-	for (const Bead::Ptr& bead : beads)
+	for (const Bead::Ptr& bead : beads) {
 		CHECK_NOTNULL(bead);
+	}
 
 	// Sort the beads by the clockwise extreme of their feasible interval.
 	std::sort(beads.begin(), beads.end(), [](const Bead::Ptr& a, const Bead::Ptr& b) {

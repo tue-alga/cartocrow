@@ -100,8 +100,9 @@ bool SvgVisitor::VisitExit(const tinyxml2::XMLElement& element) {
 
 void SvgVisitor::VisitSvg(const tinyxml2::XMLAttribute* attributes) {
 	std::string scale_factor;
-	if (!FindAttribute(attributes, kAttributeSvgScaleFactor, scale_factor))
+	if (!FindAttribute(attributes, kAttributeSvgScaleFactor, scale_factor)) {
 		return;
+	}
 
 	try {
 		scale_factor_ = std::stod(scale_factor);
@@ -114,8 +115,9 @@ bool SvgVisitor::VisitCircle(const Point& center, const Number& radius,
                              const tinyxml2::XMLAttribute* attributes) {
 	// Circles without necklace_id are ignored.
 	std::string necklace_id;
-	if (!FindAttribute(attributes, kAttributeNecklaceId, necklace_id))
+	if (!FindAttribute(attributes, kAttributeNecklaceId, necklace_id)) {
 		return false;
+	}
 
 	std::string region_id;
 	if (FindAttribute(attributes, kAttributeRegionId, region_id)) {
@@ -144,8 +146,9 @@ bool SvgVisitor::VisitPath(const std::string& commands, const tinyxml2::XMLAttri
 
 	// Paths without necklace_id are ignored.
 	std::string necklace_id;
-	if (!FindAttribute(attributes, kAttributeNecklaceId, necklace_id))
+	if (!FindAttribute(attributes, kAttributeNecklaceId, necklace_id)) {
 		return false;
+	}
 
 	std::string region_id;
 	if (FindAttribute(attributes, kAttributeRegionId, region_id)) {
@@ -187,8 +190,9 @@ bool SvgVisitor::FinalizeSvg() {
 		CHECK_NOTNULL(element);
 
 		const std::string& necklace_id = necklace_ids_[n];
-		if (necklace_id.empty())
+		if (necklace_id.empty()) {
 			continue;
+		}
 
 		LookupTable::const_iterator index_iter = id_to_necklace_index_.find(necklace_id);
 		CHECK(index_iter != id_to_necklace_index_.end());
@@ -242,11 +246,12 @@ bool SvgVisitor::AddGenericNecklace(const std::string& necklace_id, const std::s
 	// Check whether the spline approximates a circle.
 	Circle circle;
 	const bool is_circle = spline.ToCircle(circle);
-	if (is_circle)
+	if (is_circle) {
 		necklaces_.push_back(std::make_shared<necklace_map::Necklace>(
 		    necklace_id, std::make_shared<necklace_map::CircleNecklace>(circle)));
-	else
+	} else {
 		necklaces_.push_back(std::make_shared<necklace_map::Necklace>(necklace_id, shape));
+	}
 	return true;
 }
 
@@ -286,10 +291,11 @@ bool SvgVisitor::AddMapElement(const std::string& commands, const std::string& a
 	region.style = style;
 	necklace_ids_[n] = necklace_id;
 
-	if (strict_validity_)
+	if (strict_validity_) {
 		CHECK(region.IsValid()) << "Invalid region: " << region.id;
-	else
+	} else {
 		region.MakeValid();
+	}
 
 	if (0 <= scale_factor_ && !angle_rad.empty() && !feasible.empty()) {
 		try {

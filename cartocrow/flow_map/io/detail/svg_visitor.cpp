@@ -86,8 +86,9 @@ bool SvgVisitor::VisitCircle(const Point& center, const Number& radius,
                              const tinyxml2::XMLAttribute* attributes) {
 	// Circles without id are ignored.
 	std::string id;
-	if (!FindAttribute(attributes, kAttributePlaceId, id))
+	if (!FindAttribute(attributes, kAttributePlaceId, id)) {
 		return false;
+	}
 
 	// Add a place.
 	AddPlace(id, center);
@@ -131,10 +132,11 @@ bool SvgVisitor::AddPlace(const std::string& id, const cartocrow::Point& point) 
 	const size_t next_index = places_.size();
 	const size_t n = id_to_place_index_.insert({id, next_index}).first->second;
 
-	if (next_index == n)
+	if (next_index == n) {
 		places_.push_back(std::make_shared<Place>(id, position));
-	else
+	} else {
 		places_[n]->position = position;
+	}
 
 	return true;
 }
@@ -160,10 +162,11 @@ bool SvgVisitor::AddPlace(const std::string& id, const std::string& commands) {
 	const size_t next_index = places_.size();
 	const size_t n = id_to_place_index_.insert({id, next_index}).first->second;
 
-	if (next_index == n)
+	if (next_index == n) {
 		places_.push_back(std::make_shared<Place>(id, position));
-	else
+	} else {
 		places_[n]->position = position;
+	}
 
 	return true;
 }
@@ -185,10 +188,11 @@ bool SvgVisitor::AddRegion(const std::string& commands, const std::string& style
 
 	region.style = style;
 
-	if (strict_validity_)
+	if (strict_validity_) {
 		CHECK(region.IsValid()) << "Invalid region: " << region.id;
-	else
+	} else {
 		region.MakeValid();
+	}
 
 	return true;
 }

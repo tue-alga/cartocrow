@@ -45,8 +45,9 @@ template <typename C_, typename I_, typename Self> struct CirculatorBase {
 
 	CirculatorBase(const Iterator& iterator, Container& container)
 	    : cursor_(iterator), container_(container) {
-		if (cursor_ == container_.end())
+		if (cursor_ == container_.end()) {
 			cursor_ = container_.begin();
+		}
 	}
 
 	explicit CirculatorBase(Container& container) : CirculatorBase(container.begin(), container) {}
@@ -69,8 +70,9 @@ template <typename C_, typename I_, typename Self> struct CirculatorBase {
 
 	Self& operator++() {
 		++cursor_;
-		if (cursor_ == container_.end())
+		if (cursor_ == container_.end()) {
 			cursor_ = container_.begin();
+		}
 		return static_cast<Self&>(*this);
 	}
 
@@ -81,8 +83,9 @@ template <typename C_, typename I_, typename Self> struct CirculatorBase {
 	}
 
 	Self& operator--() {
-		if (cursor_ == container_.begin())
+		if (cursor_ == container_.begin()) {
 			cursor_ = container_.end();
+		}
 		--cursor_;
 		return static_cast<Self&>(*this);
 	}

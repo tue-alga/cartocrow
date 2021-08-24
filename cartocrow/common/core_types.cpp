@@ -31,10 +31,12 @@ namespace cartocrow {
  */
 Number Modulo(const Number& value, const Number& start /*= 0*/, const Number& range /*= M_2xPI*/) {
 	Number constrained = value;
-	while (constrained < start)
+	while (constrained < start) {
 		constrained += range;
-	while (start + range <= constrained)
+	}
+	while (start + range <= constrained) {
 		constrained -= range;
+	}
 	return constrained;
 }
 
@@ -47,10 +49,12 @@ Number Modulo(const Number& value, const Number& start /*= 0*/, const Number& ra
 Number ModuloNonZero(const Number& value, const Number& start /*= 0*/,
                      const Number& range /*= M_2xPI*/) {
 	Number constrained = value;
-	while (constrained <= start)
+	while (constrained <= start) {
 		constrained += range;
-	while (start + range < constrained)
+	}
+	while (start + range < constrained) {
 		constrained -= range;
+	}
 	return constrained;
 }
 

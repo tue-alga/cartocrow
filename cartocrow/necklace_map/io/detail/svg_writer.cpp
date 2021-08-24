@@ -136,21 +136,24 @@ std::string RegionToPath(const Region& region, const int precision) {
 	for (const Polygon_with_holes& polygon : region.shape) {
 		for (Polygon::Vertex_const_iterator point_iter = polygon.outer_boundary().vertices_begin();
 		     point_iter != polygon.outer_boundary().vertices_end(); ++point_iter) {
-			if (point_iter == polygon.outer_boundary().vertices_begin())
+			if (point_iter == polygon.outer_boundary().vertices_begin()) {
 				stream << " M ";
-			else
+			} else {
 				stream << " L ";
+			}
 
 			stream << point_iter->x() << " " << point_iter->y();
 		}
 
-		if (1 < polygon.outer_boundary().size() &&
-		    polygon.outer_boundary().vertices_begin() != --polygon.outer_boundary().vertices_end())
+		if (1 < polygon.outer_boundary().size() && polygon.outer_boundary().vertices_begin() !=
+		                                               --polygon.outer_boundary().vertices_end()) {
 			stream << " Z";
+		}
 	}
 
-	if (stream.str().empty())
+	if (stream.str().empty()) {
 		return "";
+	}
 	return stream.str().substr(1);
 }
 
@@ -257,9 +260,10 @@ class DrawNecklaceShapeVisitor : public necklace_map::NecklaceShapeVisitor {
 			const Point start_point = shape.spline().curves().front().source();
 			path << kAbsoluteMove << " " << start_point;
 
-			for (const BezierCurve& curve : shape.spline().curves())
+			for (const BezierCurve& curve : shape.spline().curves()) {
 				path << " " << kAbsoluteCubicBezier << " " << curve.source_control() << " "
 				     << curve.target_control() << " " << curve.target();
+			}
 
 			path << " " << kAbsoluteClose << " " << kAbsoluteMove << start_point;
 			printer_.PushAttribute("d", path.str().c_str());
@@ -327,17 +331,20 @@ void SvgWriter::DrawPolygonRegions() {
 	{
 		for (const MapElement::Ptr& element : elements_) {
 			const Region& region = element->region;
-			if (region.IsPoint())
+			if (region.IsPoint()) {
 				continue;
+			}
 
 			// Draw the region with the region as a piecewise linear polygon with same style as the input, except the opacity may be adjusted and the color may be changed.
 			std::string style = region.style;
-			if (0 <= options_->region_opacity)
+			if (0 <= options_->region_opacity) {
 				style = ForceStyle(style, "fill-opacity:", options_->region_opacity);
-			if (!element->necklace)
+			}
+			if (!element->necklace) {
 				style = ForceStyle(style, "fill:", kRegionContextColor);
-			else if (element->value <= 0)
+			} else if (element->value <= 0) {
 				style = ForceStyle(style, "fill:", kRegionUnusedColor);
+			}
 
 			const std::string necklace_id = element->necklace ? element->necklace->id : "";
 
@@ -377,18 +384,21 @@ void SvgWriter::DrawPointRegions() {
 	{
 		for (const MapElement::Ptr& element : elements_) {
 			const Region& region = element->region;
-			if (!region.IsPoint())
+			if (!region.IsPoint()) {
 				continue;
+			}
 
 			// Draw the region with the region as a circle with same style as the input, except the opacity may be adjusted and the color may be changed.
 			const Point& position = region.shape[0].outer_boundary()[0];
 			std::string style = region.style;
-			if (0 <= options_->region_opacity)
+			if (0 <= options_->region_opacity) {
 				style = ForceStyle(style, "fill-opacity:", options_->region_opacity);
-			if (!element->necklace)
+			}
+			if (!element->necklace) {
 				style = ForceStyle(style, "fill:", kRegionContextColor);
-			else if (element->value <= 0)
+			} else if (element->value <= 0) {
 				style = ForceStyle(style, "fill:", kRegionUnusedColor);
+			}
 
 			printer_.OpenElement("circle");
 			printer_.PushAttribute("style", style.c_str());
@@ -442,8 +452,9 @@ void SvgWriter::DrawPointRegions() {
  * The necklace curves are always drawn as a solid black curve.
  */
 void SvgWriter::DrawNecklaces() {
-	if (!options_->draw_necklace_curve)
+	if (!options_->draw_necklace_curve) {
 		return;
+	}
 
 	printer_.OpenElement("g");
 	printer_.PushComment("Necklaces");
@@ -472,8 +483,9 @@ void SvgWriter::DrawNecklaces() {
  * However, they can be forced to be semi-transparant. This also influences how their drop shadows and their borders are drawn.
  */
 void SvgWriter::DrawBeads() {
-	if (scale_factor_ == 0)
+	if (scale_factor_ == 0) {
 		return;
+	}
 
 	printer_.OpenElement("g");
 	{
@@ -487,8 +499,9 @@ void SvgWriter::DrawBeads() {
 		// Note these are drawn per necklace as opposed to per element.
 		for (const Necklace::Ptr& necklace : necklaces_) {
 			for (const Bead::Ptr& bead : necklace->beads) {
-				if (!bead->valid)
+				if (!bead->valid) {
 					continue;
+				}
 
 				printer_.OpenElement("circle");
 				{
@@ -527,8 +540,9 @@ void SvgWriter::DrawBeads() {
  * The feasible intervals are drawn as non-overlapping circular arcs with their color matching the interior color of the regions.
  */
 void SvgWriter::DrawFeasibleIntervals() {
-	if (!options_->draw_feasible_intervals)
+	if (!options_->draw_feasible_intervals) {
 		return;
+	}
 
 	printer_.OpenElement("g");
 	printer_.PushComment("Feasible Intervals");
@@ -537,8 +551,9 @@ void SvgWriter::DrawFeasibleIntervals() {
 		// Note these are drawn per necklace as opposed to per element.
 		for (const Necklace::Ptr& necklace : necklaces_) {
 			for (const Bead::Ptr& bead : necklace->beads) {
-				if (!bead->feasible)
+				if (!bead->feasible) {
 					continue;
+				}
 
 				CircleNecklace::Ptr interval_shape = bead_interval_map_[bead];
 				CHECK_NOTNULL(interval_shape);
@@ -592,8 +607,9 @@ void SvgWriter::DrawFeasibleIntervals() {
  * If the feasible regions are also drawn, the valid intervals extend to their corresponding feasible interval. Otherwise, they extend to the necklace curve.
  */
 void SvgWriter::DrawValidIntervals() {
-	if (!options_->draw_valid_intervals)
+	if (!options_->draw_valid_intervals) {
 		return;
+	}
 
 	printer_.OpenElement("g");
 	printer_.PushComment("Valid Intervals");
@@ -602,8 +618,9 @@ void SvgWriter::DrawValidIntervals() {
 		// Note these are drawn per necklace as opposed to per element.
 		for (const Necklace::Ptr& necklace : necklaces_) {
 			for (const Bead::Ptr& bead : necklace->beads) {
-				if (!bead->valid)
+				if (!bead->valid) {
 					continue;
+				}
 
 				CircleNecklace::Ptr interval_shape = bead_interval_map_[bead];
 				CHECK_NOTNULL(interval_shape);
@@ -658,8 +675,9 @@ void SvgWriter::DrawValidIntervals() {
  * If the feasible regions are also drawn, the region angles extend to their corresponding feasible interval. Otherwise, they extend to the necklace curve.
  */
 void SvgWriter::DrawRegionAngles() {
-	if (!options_->draw_region_angles)
+	if (!options_->draw_region_angles) {
 		return;
+	}
 
 	printer_.OpenElement("g");
 	printer_.PushComment("Region Centroids");
@@ -668,15 +686,17 @@ void SvgWriter::DrawRegionAngles() {
 		// Note these are draw per element, because these reference the region.
 		ComputeCentroid compute_centroid;
 		for (const MapElement::Ptr& element : elements_) {
-			if (!element->necklace)
+			if (!element->necklace) {
 				continue;
+			}
 
 			Polygon simple;
 			element->region.MakeSimple(simple);
 			const Point centroid = compute_centroid(simple);
 
-			if (!element->necklace || !element->bead || !element->bead->valid)
+			if (!element->necklace || !element->bead || !element->bead->valid) {
 				continue;
+			}
 
 			printer_.OpenElement("path");
 
@@ -714,8 +734,9 @@ void SvgWriter::DrawRegionAngles() {
  * These line segments are always colored black.
  */
 void SvgWriter::DrawBeadAngles() {
-	if (!options_->draw_bead_angles)
+	if (!options_->draw_bead_angles) {
 		return;
+	}
 
 	printer_.OpenElement("g");
 	printer_.PushComment("Bead Angles");
@@ -726,8 +747,9 @@ void SvgWriter::DrawBeadAngles() {
 			const Point& kernel = necklace->shape->kernel();
 
 			for (const Bead::Ptr& bead : necklace->beads) {
-				if (!bead->valid)
+				if (!bead->valid) {
 					continue;
+				}
 
 				printer_.OpenElement("path");
 
@@ -812,9 +834,11 @@ void SvgWriter::CloseSvg() {
 
 void SvgWriter::ComputeBoundingBox() {
 	// Add the regions to the bounding box.
-	for (const MapElement::Ptr& element : elements_)
-		for (const Polygon_with_holes& polygon : element->region.shape)
+	for (const MapElement::Ptr& element : elements_) {
+		for (const Polygon_with_holes& polygon : element->region.shape) {
 			bounding_box_ += polygon.bbox();
+		}
+	}
 
 	if (options_->draw_necklace_curve || options_->draw_feasible_intervals ||
 	    options_->draw_valid_intervals || options_->draw_region_angles) {
@@ -866,11 +890,13 @@ void SvgWriter::CreateBeadIntervalShapes() {
 
 		size_t count = 0;
 		for (const Bead::Ptr& bead : necklace->beads) {
-			if (!bead->feasible)
+			if (!bead->feasible) {
 				continue;
+			}
 
-			if (bead_interval_map_.find(bead) != bead_interval_map_.end())
+			if (bead_interval_map_.find(bead) != bead_interval_map_.end()) {
 				continue;
+			}
 
 			if (options_->draw_feasible_intervals) {
 				// Create a new circle shape to use for this bead.
@@ -958,10 +984,11 @@ void SvgWriter::AddDropShadowFilter() {
 			// Merge the drop shadow and original.
 			printer_.OpenElement("feMerge");
 			printer_.OpenElement("feMergeNode");
-			if (force_opaque)
+			if (force_opaque) {
 				printer_.PushAttribute("in", "dropShadow");
-			else
+			} else {
 				printer_.PushAttribute("in", "dropShadowMasked");
+			}
 			printer_.CloseElement(); // feMergeNode
 			printer_.OpenElement("feMergeNode");
 			printer_.PushAttribute("in", "SourceGraphic");
@@ -975,8 +1002,9 @@ void SvgWriter::AddDropShadowFilter() {
 }
 
 void SvgWriter::DrawKernel(const Point& kernel) {
-	if (!options_->draw_necklace_kernel)
+	if (!options_->draw_necklace_kernel) {
 		return;
+	}
 
 	// Draw the necklace kernel as dot.
 	printer_.OpenElement("circle");
@@ -1004,8 +1032,9 @@ void SvgWriter::DrawKernel(const Point& kernel) {
 }
 
 void SvgWriter::DrawBeadIds() {
-	if (!options_->draw_bead_ids)
+	if (!options_->draw_bead_ids) {
 		return;
+	}
 
 	printer_.OpenElement("g");
 	printer_.PushAttribute("font-family", kBeadIdFontFamily);
@@ -1022,8 +1051,9 @@ void SvgWriter::DrawBeadIds() {
 		for (const MapElement::Ptr& element : elements_) {
 			const std::string id = element->region.id;
 
-			if (!element->necklace || !element->bead || !element->bead->valid)
+			if (!element->necklace || !element->bead || !element->bead->valid) {
 				continue;
+			}
 
 			printer_.OpenElement("text");
 			printer_.PushAttribute("text-anchor", "middle");

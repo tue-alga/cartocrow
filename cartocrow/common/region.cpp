@@ -68,8 +68,9 @@ bool Region::IsValid() const {
 		const Polygon& outer = polygon.outer_boundary();
 
 		// Degenerate polygons are considered correct.
-		if (outer.size() == 1)
+		if (outer.size() == 1) {
 			continue;
+		}
 
 		correct &= outer.orientation() == CGAL::COUNTERCLOCKWISE && outer.is_simple();
 	}
@@ -89,13 +90,15 @@ bool Region::MakeValid() {
 		Polygon& outer = polygon.outer_boundary();
 
 		// Degenerate polygons are considered correct.
-		if (outer.size() == 1)
+		if (outer.size() == 1) {
 			continue;
+		}
 
-		if (!outer.is_simple())
+		if (!outer.is_simple()) {
 			correct = false;
-		else if (outer.orientation() != CGAL::COUNTERCLOCKWISE)
+		} else if (outer.orientation() != CGAL::COUNTERCLOCKWISE) {
 			outer.reverse_orientation();
+		}
 	}
 	return correct;
 }
@@ -116,9 +119,10 @@ void Region::MakeSimple(Polygon& simple) {
 	// Collect the outer boundary points.
 	std::vector<Point> points;
 	points.reserve(256); // Reserve for a reasonable point set.
-	for (const Polygon_with_holes& part : shape)
+	for (const Polygon_with_holes& part : shape) {
 		points.insert(points.end(), part.outer_boundary().vertices_begin(),
 		              part.outer_boundary().vertices_end());
+	}
 
 	// Construct the convex hull.
 	simple.clear();

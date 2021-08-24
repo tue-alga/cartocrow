@@ -138,8 +138,9 @@ bool PolarLine::ComputeAngle(const Number& R, Number& angle_rad) const {
 	// Note that the segment is not guaranteed to come close enough to the pole.
 	// Otherwise, the smaller angle is returned.
 
-	if (R < foot().R())
+	if (R < foot().R()) {
 		return false;
+	}
 
 	angle_rad = std::asin(foot().R() / R);
 	return true;

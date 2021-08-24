@@ -48,8 +48,9 @@ namespace cartocrow {
 SpiralSegment::SpiralSegment(const PolarPoint& point_1, const PolarPoint& point_2)
     : Spiral(point_1, point_2), R_min_(point_1.R()), R_max_(point_2.R()) {
 	CHECK_LE(0, R_min_);
-	if (R_max_ < R_min_)
+	if (R_max_ < R_min_) {
 		std::swap(R_min_, R_max_);
+	}
 }
 
 /**@brief Construct a logarithmic spiral segment.

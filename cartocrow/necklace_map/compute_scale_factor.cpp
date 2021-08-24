@@ -92,13 +92,16 @@ Number ComputeScaleFactor::operator()(std::vector<Necklace::Ptr>& necklaces) {
 	for (Necklace::Ptr& necklace : necklaces) {
 		// Clean beads without a feasible interval.
 		std::vector<Bead::Ptr> keep_beads;
-		for (const Bead::Ptr& bead : necklace->beads)
-			if (bead->feasible)
+		for (const Bead::Ptr& bead : necklace->beads) {
+			if (bead->feasible) {
 				keep_beads.push_back(bead);
+			}
+		}
 		necklace->beads.swap(keep_beads);
 
-		if (necklace->beads.empty())
+		if (necklace->beads.empty()) {
 			continue;
+		}
 
 		// Limit the initial bead radii.
 		Number rescale = 1;
@@ -108,16 +111,19 @@ Number ComputeScaleFactor::operator()(std::vector<Necklace::Ptr>& necklaces) {
 			const Number bead_rescale = bead->radius_base / distance;
 			rescale = std::max(rescale, bead_rescale);
 		}
-		for (const Bead::Ptr& bead : necklace->beads)
+		for (const Bead::Ptr& bead : necklace->beads) {
 			bead->radius_base /= rescale;
+		}
 
 		const Number necklace_scale_factor = (*this)(necklace) / rescale;
 
-		for (const Bead::Ptr& bead : necklace->beads)
+		for (const Bead::Ptr& bead : necklace->beads) {
 			bead->radius_base *= rescale;
+		}
 
-		if (scale_factor < 0 || necklace_scale_factor < scale_factor)
+		if (scale_factor < 0 || necklace_scale_factor < scale_factor) {
 			scale_factor = necklace_scale_factor;
+		}
 	}
 	return std::max(scale_factor, Number(0));
 }

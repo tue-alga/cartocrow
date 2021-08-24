@@ -51,8 +51,9 @@ void ValidateFlags() {
 	PrintFlag(FLAGS_NAME_AND_VALUE(stderrthreshold));
 	PrintFlag(FLAGS_NAME_AND_VALUE(v));
 
-	if (!correct)
+	if (!correct) {
 		LOG(FATAL) << "Errors in flags; Terminating.";
+	}
 }
 
 bool ReadGeometry(std::vector<cartocrow::necklace_map::MapElement::Ptr>& elements,

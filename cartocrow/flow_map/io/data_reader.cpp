@@ -68,8 +68,9 @@ bool DataReader::ReadFile(const std::filesystem::path& filename, const std::stri
 	do {
 		try {
 			fin.open(filename);
-			if (fin)
+			if (fin) {
 				break;
+			}
 		} catch (const std::exception& e) {
 			LOG(ERROR) << e.what();
 		}
@@ -83,14 +84,16 @@ bool DataReader::ReadFile(const std::filesystem::path& filename, const std::stri
 	// Data files must start with four magic characters and the data file version.
 	char magic[4] = {'\0', '\0', '\0', '\0'};
 	fin.read(magic, 4);
-	if (!fin || std::strcmp(magic, kMagicCharacters) != 0)
+	if (!fin || std::strcmp(magic, kMagicCharacters) != 0) {
 		return false;
+	}
 
 	// Read the version.
 	std::string version;
 	fin >> version;
-	if (!fin)
+	if (!fin) {
 		return false;
+	}
 
 	return Parse(fin, value_name, places, index_root, version);
 }
@@ -126,8 +129,9 @@ bool DataReader::Parse(std::istream& in, const std::string& value_name,
                        const std::string& version /*= "1.0"*/
 ) {
 	// Parse the data.
-	if (!detail::TableParser::Parse(in))
+	if (!detail::TableParser::Parse(in)) {
 		return false;
+	}
 
 	// Find the ID and value columns and check that they are the correct types.
 	using ColumnString = detail::ValueColumn<std::string>;
@@ -136,21 +140,24 @@ bool DataReader::Parse(std::istream& in, const std::string& value_name,
 	const DataColumn* column_value = nullptr;
 
 	for (const detail::TableParser::ColumnPtr& column : table_) {
-		if (column->name == kNameId)
+		if (column->name == kNameId) {
 			column_id = dynamic_cast<const ColumnString*>(column.get());
-		else if (column->name == value_name)
+		} else if (column->name == value_name) {
 			column_value = column.get();
+		}
 	}
 	if (column_id == nullptr || column_value == nullptr ||
-	    column_id->values.size() != column_value->size())
+	    column_id->values.size() != column_value->size()) {
 		return false;
+	}
 
 	using ColumnDouble = detail::ValueColumn<double>;
 	using ColumnInteger = detail::ValueColumn<int>;
 	const ColumnDouble* column_double = dynamic_cast<const ColumnDouble*>(column_value);
 	const ColumnInteger* column_int = dynamic_cast<const ColumnInteger*>(column_value);
-	if (column_double == nullptr && column_int == nullptr)
+	if (column_double == nullptr && column_int == nullptr) {
 		return false;
+	}
 
 	// Create a lookup table for the elements.
 	// Additionally, determine the root node.
@@ -167,8 +174,9 @@ bool DataReader::Parse(std::istream& in, const std::string& value_name,
 		// Set the value to 0 in case the elements are reused.
 		place->flow_in = 0;
 
-		if (place->id == value_name)
+		if (place->id == value_name) {
 			index_root = index_place;
+		}
 	}
 	CHECK(index_root != places.size());
 
@@ -180,15 +188,17 @@ bool DataReader::Parse(std::istream& in, const std::string& value_name,
 		std::pair<LookupTable::iterator, bool> result =
 		    id_to_element_index.emplace(id, places.size());
 		const size_t n = result.first->second;
-		if (n == places.size())
+		if (n == places.size()) {
 			places.push_back(std::make_shared<Place>(id, PolarPoint()));
+		}
 		Place::Ptr& place = places[n];
 		CHECK_EQ(id, place->id);
 
-		if (column_double == nullptr)
+		if (column_double == nullptr) {
 			place->flow_in = column_int->values[v];
-		else
+		} else {
 			place->flow_in = column_double->values[v];
+		}
 	}
 
 	LOG(INFO) << "Successfully parsed flow map data for " << places.size() << " place(s).";

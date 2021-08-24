@@ -32,8 +32,9 @@ int main(int argc, char** argv) {
 	std::cout << "<h1>Externally generated content</h1>";
 	std::cout << "<p>This page is just to test running a server-side application using PHP.</p>";
 	std::cout << "<p>The following command line arguments were caught:<br>";
-	for (int i = 1; i < argc; ++i)
+	for (int i = 1; i < argc; ++i) {
 		std::cout << argv[i] << "<br>";
+	}
 	std::cout << "</p>";
 	std::cout << "</div>";
 

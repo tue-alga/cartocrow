@@ -56,8 +56,9 @@ int main(int argc, char** argv) {
 	// (depending on the implementation).
 
 	LOG(INFO) << "Args:";
-	for (int i = 1; i < argc; ++i)
+	for (int i = 1; i < argc; ++i) {
 		LOG(INFO) << "\t" << argv[i];
+	}
 
 	//LOG(INFO) << "Necklace map: " << cartocrow::proc_necklace_map();
 	//LOG(INFO) << "Flow Diagram: " << cartocrow::flow_map::proc_flow_map();
@@ -71,8 +72,9 @@ int main(int argc, char** argv) {
 	std::cout << "<h1>Application-based component</h1>";
 	std::cout << "<p>This page is just to test running a server-side application using PHP.</p>";
 	std::cout << "<p>The following command line arguments were caught:<br>";
-	for (int i = 1; i < argc; ++i)
+	for (int i = 1; i < argc; ++i) {
 		std::cout << argv[i] << "<br>";
+	}
 	std::cout << "</p>";
 	std::cout << "</div>";
 

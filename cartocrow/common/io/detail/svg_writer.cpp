@@ -113,8 +113,9 @@ std::string SpiralToPath(const Spiral& spiral, const Vector& offset, const Numbe
 	if (spiral.angle_rad() != 0) {
 		for (double t = t_min + kSpiralStep; t < kSpiralMax; t += kSpiralStep) {
 			const PolarPoint polar = spiral.Evaluate(t);
-			if (polar.R() <= R_min)
+			if (polar.R() <= R_min) {
 				break;
+			}
 
 			const Point point = polar.to_cartesian() + offset;
 			stream << " L " << point.x() << " " << point.y();

@@ -54,8 +54,9 @@ double Timer::Stamp() {
 	const clock_t time = clock();
 	const double difference = Compare(time);
 	times_.push_front(time);
-	if (memory_ < times_.size())
+	if (memory_ < times_.size()) {
 		times_.pop_back();
+	}
 	return difference;
 }
 

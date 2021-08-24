@@ -134,8 +134,9 @@ void ValidateFlags(cartocrow::flow_map::Parameters& parameters,
 	PrintFlag(FLAGS_NAME_AND_VALUE(stderrthreshold));
 	PrintFlag(FLAGS_NAME_AND_VALUE(v));
 
-	if (!correct)
+	if (!correct) {
 		LOG(FATAL) << "Errors in flags; Terminating.";
+	}
 }
 
 bool ReadGeometry(const std::string& filename, std::vector<cartocrow::Region>& context,
@@ -155,8 +156,9 @@ void WriteOutput(const std::vector<cartocrow::Region>& context,
                  const cartocrow::flow_map::FlowTree::Ptr& tree,
                  const cartocrow::flow_map::WriteOptions::Ptr& write_options) {
 	cartocrow::flow_map::SvgWriter writer;
-	if (FLAGS_out_website)
+	if (FLAGS_out_website) {
 		writer.Write(context, obstacles, tree, write_options, std::cout);
+	}
 
 	if (!FLAGS_out_filename.empty()) {
 		std::ofstream out(FLAGS_out_filename);

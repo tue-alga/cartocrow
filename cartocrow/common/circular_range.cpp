@@ -147,8 +147,9 @@ Number CircularRange::ComputeCentroid() const {
 /**@brief Reverse the orientation of the range.
  */
 void CircularRange::Reverse() {
-	if (IsFull())
+	if (IsFull()) {
 		return;
+	}
 
 	const Number from_rad_old = from_rad();
 	from_rad() = Modulo(to_rad());

@@ -144,21 +144,24 @@ std::string RegionToPath(const Region& region, const int precision) {
 	for (const Polygon_with_holes& polygon : region.shape) {
 		for (Polygon::Vertex_const_iterator point_iter = polygon.outer_boundary().vertices_begin();
 		     point_iter != polygon.outer_boundary().vertices_end(); ++point_iter) {
-			if (point_iter == polygon.outer_boundary().vertices_begin())
+			if (point_iter == polygon.outer_boundary().vertices_begin()) {
 				stream << " M ";
-			else
+			} else {
 				stream << " L ";
+			}
 
 			stream << point_iter->x() << " " << point_iter->y();
 		}
 
-		if (1 < polygon.outer_boundary().size() &&
-		    polygon.outer_boundary().vertices_begin() != --polygon.outer_boundary().vertices_end())
+		if (1 < polygon.outer_boundary().size() && polygon.outer_boundary().vertices_begin() !=
+		                                               --polygon.outer_boundary().vertices_end()) {
 			stream << " Z";
+		}
 	}
 
-	if (stream.str().empty())
+	if (stream.str().empty()) {
 		return "";
+	}
 	return stream.str().substr(1);
 }
 
@@ -173,8 +176,9 @@ std::string SpiralToPath(const Spiral& spiral, const Vector& offset, const int p
 	if (spiral.angle_rad() != 0) {
 		for (double t = kSpiralStep; t < kSpiralMax; t += kSpiralStep) {
 			const PolarPoint polar = spiral.Evaluate(t);
-			if (polar.R() <= parent.R())
+			if (polar.R() <= parent.R()) {
 				break;
+			}
 
 			const Point point = polar.to_cartesian() + offset;
 			stream << " L " << point.x() << " " << point.y();
@@ -231,13 +235,15 @@ void SvgWriter::DrawContext() {
 
 	{
 		for (const Region& region : context_) {
-			if (region.IsPoint())
+			if (region.IsPoint()) {
 				continue;
+			}
 
 			// Draw the region as a piecewise linear polygon with same style as the input, except the opacity may be adjusted and the color may be changed.
 			std::string style = region.style;
-			if (0 <= options_->region_opacity)
+			if (0 <= options_->region_opacity) {
 				style = ForceStyle(style, "fill-opacity:", options_->region_opacity);
+			}
 
 			printer_.OpenElement("path");
 			printer_.PushAttribute("style", style.c_str());
@@ -261,13 +267,15 @@ void SvgWriter::DrawObstacles() {
 	{
 		//for (const Region& obstacle : obstacles_)  // TODO(tvl) temporary replacement for debugging purposes. In the end, the original obstacles should be shown.
 		for (const Region& obstacle : tree_->obstacles_) {
-			if (obstacle.IsPoint())
+			if (obstacle.IsPoint()) {
 				continue;
+			}
 
 			// Draw the region as a piecewise linear polygon with same style as the input, except the opacity may be adjusted and the color may be changed.
 			std::string style = kObstacleStyle;
-			if (0 <= options_->region_opacity)
+			if (0 <= options_->region_opacity) {
 				style = ForceStyle(style, "fill-opacity:", options_->obstacle_opacity);
+			}
 
 			printer_.OpenElement("path");
 			printer_.PushAttribute("style", style.c_str());
@@ -398,9 +406,11 @@ void SvgWriter::CloseSvg() {
 
 void SvgWriter::ComputeBoundingBox() {
 	// Add the regions to the bounding box.
-	for (const Region& region : context_)
-		for (const Polygon_with_holes& polygon : region.shape)
+	for (const Region& region : context_) {
+		for (const Polygon_with_holes& polygon : region.shape) {
 			bounding_box_ += polygon.bbox();
+		}
+	}
 
 	const Vector offset = -tree_->root_translation_;
 
@@ -498,10 +508,11 @@ void SvgWriter::AddDropShadowFilter() {
 			// Merge the drop shadow and original.
 			printer_.OpenElement("feMerge");
 			printer_.OpenElement("feMergeNode");
-			if (force_opaque)
+			if (force_opaque) {
 				printer_.PushAttribute("in", "dropShadow");
-			else
+			} else {
 				printer_.PushAttribute("in", "dropShadowMasked");
+			}
 			printer_.CloseElement(); // feMergeNode
 			printer_.OpenElement("feMergeNode");
 			printer_.PushAttribute("in", "SourceGraphic");
@@ -517,12 +528,14 @@ void SvgWriter::AddDropShadowFilter() {
 void SvgWriter::DrawSpiral(const Spiral& spiral, const Vector& offset, const PolarPoint& parent) {
 	std::string style = kFlowStyle;
 
-	if (0 <= options_->flow_opacity)
+	if (0 <= options_->flow_opacity) {
 		style = ForceStyle(style, "fill-opacity:", options_->flow_opacity);
-	if (0 <= options_->flow_opacity && options_->flow_opacity < 1)
+	}
+	if (0 <= options_->flow_opacity && options_->flow_opacity < 1) {
 		style = ForceStyle(style, "stroke-width:", 0);
-	else
+	} else {
 		style = ForceStyle(style, "stroke-width:", kLineWidthPx * unit_px_);
+	}
 
 	if (false) {
 		const Number hue = spiral.ComputePhi(1);
@@ -542,18 +555,20 @@ void SvgWriter::DrawSpiral(const Spiral& spiral, const Vector& offset, const Pol
 
 void SvgWriter::DrawRoots() {
 	for (const Node::Ptr& node : tree_->nodes_) {
-		if (node->GetType() != Node::ConnectionType::kRoot)
+		if (node->GetType() != Node::ConnectionType::kRoot) {
 			continue;
+		}
 
 		printer_.OpenElement("path");
 
 		{
 			std::string style = kRootStyle;
 			style = ForceStyle(style, "fill-opacity:", options_->node_opacity);
-			if (0 <= options_->node_opacity && options_->node_opacity < 1)
+			if (0 <= options_->node_opacity && options_->node_opacity < 1) {
 				style = ForceStyle(style, "stroke-width:", 0);
-			else
+			} else {
 				style = ForceStyle(style, "stroke-width:", kLineWidthPx * unit_px_);
+			}
 
 			printer_.PushAttribute("style", style.c_str());
 		}
@@ -584,18 +599,20 @@ void SvgWriter::DrawRoots() {
 
 void SvgWriter::DrawLeaves() {
 	for (const Node::Ptr& node : tree_->nodes_) {
-		if (node->GetType() == Node::ConnectionType::kRoot || node->IsSteiner())
+		if (node->GetType() == Node::ConnectionType::kRoot || node->IsSteiner()) {
 			continue;
+		}
 
 		printer_.OpenElement("circle");
 
 		{
 			std::string style = kLeafStyle;
 			style = ForceStyle(style, "fill-opacity:", options_->node_opacity);
-			if (0 <= options_->node_opacity && options_->node_opacity < 1)
+			if (0 <= options_->node_opacity && options_->node_opacity < 1) {
 				style = ForceStyle(style, "stroke-width:", 0);
-			else
+			} else {
 				style = ForceStyle(style, "stroke-width:", kLineWidthPx * unit_px_);
+			}
 
 			printer_.PushAttribute("style", style.c_str());
 		}
@@ -620,18 +637,20 @@ void SvgWriter::DrawLeaves() {
 
 void SvgWriter::DrawJoinNodes() {
 	for (const Node::Ptr& node : tree_->nodes_) {
-		if (node->GetType() != Node::ConnectionType::kJoin || !node->IsSteiner())
+		if (node->GetType() != Node::ConnectionType::kJoin || !node->IsSteiner()) {
 			continue;
+		}
 
 		printer_.OpenElement("circle");
 
 		{
 			std::string style = kJoinStyle;
 			style = ForceStyle(style, "fill-opacity:", options_->node_opacity);
-			if (0 <= options_->node_opacity && options_->node_opacity < 1)
+			if (0 <= options_->node_opacity && options_->node_opacity < 1) {
 				style = ForceStyle(style, "stroke-width:", 0);
-			else
+			} else {
 				style = ForceStyle(style, "stroke-width:", kLineWidthPx * unit_px_);
+			}
 
 			printer_.PushAttribute("style", style.c_str());
 		}
@@ -656,18 +675,20 @@ void SvgWriter::DrawJoinNodes() {
 
 void SvgWriter::DrawSubdivisionNodes() {
 	for (const Node::Ptr& node : tree_->nodes_) {
-		if (node->GetType() != Node::ConnectionType::kSubdivision || !node->IsSteiner())
+		if (node->GetType() != Node::ConnectionType::kSubdivision || !node->IsSteiner()) {
 			continue;
+		}
 
 		printer_.OpenElement("circle");
 
 		{
 			std::string style = kSubdivisionStyle;
 			style = ForceStyle(style, "fill-opacity:", options_->node_opacity);
-			if (0 <= options_->node_opacity && options_->node_opacity < 1)
+			if (0 <= options_->node_opacity && options_->node_opacity < 1) {
 				style = ForceStyle(style, "stroke-width:", 0);
-			else
+			} else {
 				style = ForceStyle(style, "stroke-width:", kLineWidthPx * unit_px_);
+			}
 
 			printer_.PushAttribute("style", style.c_str());
 		}
@@ -695,8 +716,9 @@ void SvgWriter::DrawObstacleVertices(const Region& obstacle) {
 		DrawObstacleVertices(polygon.outer_boundary());
 
 		for (Polygon_with_holes::Hole_const_iterator hole_iter = polygon.holes_begin();
-		     hole_iter != polygon.holes_end(); ++hole_iter)
+		     hole_iter != polygon.holes_end(); ++hole_iter) {
 			DrawObstacleVertices(*hole_iter);
+		}
 	}
 }
 

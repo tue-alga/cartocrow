@@ -92,8 +92,9 @@ UNITTEST_SUITE(FlowMap) {
 		}
 
 		bool ReadValues(const std::string& in_value_name) {
-			if (in_value_name == value_name)
+			if (in_value_name == value_name) {
 				return true;
+			}
 			value_name = in_value_name;
 
 			cartocrow::flow_map::DataReader data_reader;
@@ -142,8 +143,9 @@ UNITTEST_SUITE(FlowMap) {
 		}
 
 		bool ReadValues(const std::string& in_value_name) {
-			if (in_value_name == value_name)
+			if (in_value_name == value_name) {
 				return true;
+			}
 			value_name = in_value_name;
 
 			cartocrow::flow_map::DataReader data_reader;

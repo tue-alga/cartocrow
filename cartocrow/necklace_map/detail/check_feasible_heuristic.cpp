@@ -37,8 +37,9 @@ CheckFeasibleHeuristic::CheckFeasibleHeuristic(NodeSet& nodes, const int heurist
     : CheckFeasible(nodes), heuristic_cycles_(heuristic_cycles) {}
 
 bool CheckFeasibleHeuristic::operator()() {
-	if (slices_.empty())
+	if (slices_.empty()) {
 		return true;
+	}
 
 	ResetContainer();
 
@@ -57,9 +58,11 @@ void CheckFeasibleHeuristic::InitializeSlices() {
 	slices_clone.swap(slices_);
 
 	slices_.reserve(num_slices * heuristic_cycles_);
-	for (int cycle = 0; cycle < heuristic_cycles_; ++cycle)
-		for (size_t j = 0; j < num_slices; ++j)
+	for (int cycle = 0; cycle < heuristic_cycles_; ++cycle) {
+		for (size_t j = 0; j < num_slices; ++j) {
 			slices_.emplace_back(slices_clone[j], slices_clone[0].coverage.from(), cycle);
+		}
+	}
 }
 
 void CheckFeasibleHeuristic::AssignAngle(const Number& angle_rad, Bead::Ptr& bead) {
@@ -71,8 +74,9 @@ bool CheckFeasibleHeuristic::Feasible() {
 	FillContainer(0, BitString(), BitString());
 
 	nodes_check_.clear();
-	if (!ProcessContainer(0, slices_.back().layer_sets.back()))
+	if (!ProcessContainer(0, slices_.back().layer_sets.back())) {
 		return false;
+	}
 
 	// Check whether any nodes overlap.
 	// Note that the nodes to check are in clockwise order.
@@ -80,11 +84,12 @@ bool CheckFeasibleHeuristic::Feasible() {
 	for (CheckSet::iterator left_iter = nodes_check_.begin(), right_iter = nodes_check_.begin();
 	     left_iter != nodes_check_.end() && right_iter != nodes_check_.end();) {
 		if ((*right_iter)->valid->from() + M_2xPI < (*left_iter)->valid->to()) {
-			if (--(*right_iter)->check == 0)
+			if (--(*right_iter)->check == 0) {
 				--count;
+			}
 			++right_iter;
 		} else {
-			if (++(*left_iter)->check == 1)
+			if (++(*left_iter)->check == 1) {
 				if (++count == nodes_check_.size()) {
 					// Feasible interval found; adjust the angles to use this interval.
 					for (CheckSet::iterator node_iter = left_iter; node_iter != right_iter;
@@ -94,6 +99,7 @@ bool CheckFeasibleHeuristic::Feasible() {
 					}
 					return true;
 				}
+			}
 			++left_iter;
 		}
 	}

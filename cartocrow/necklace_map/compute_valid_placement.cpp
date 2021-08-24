@@ -108,8 +108,9 @@ void ComputeValidPlacement::operator()(const Number& scale_factor,
 	detail::ValidateScaleFactor validate(scale_factor, buffer_rad, adjust_angle);
 	const bool valid = validate(necklace);
 
-	if (!valid || !adjust_angle)
+	if (!valid || !adjust_angle) {
 		return;
+	}
 
 	const double precision = 1e-7;
 	const Number centroid_ratio = 1;
@@ -169,12 +170,15 @@ void ComputeValidPlacement::operator()(const Number& scale_factor,
 				const Number x = Modulo(-w_0 / w_1 + prev->angle_rad);
 
 				if (!bead->feasible->Contains(x)) {
-					if (0 < 2 * offset_from_prev_rad - distance_from_prev_min + distance_from_prev_max)
+					if (0 < 2 * offset_from_prev_rad - distance_from_prev_min +
+					            distance_from_prev_max) {
 						bead->angle_rad = bead->feasible->from_rad();
-					else
+					} else {
 						bead->angle_rad = bead->feasible->to_rad();
-				} else
+					}
+				} else {
 					bead->angle_rad = x;
+				}
 			} else {
 				const double q = (3 * w_3 * w_1 - w_2 * w_2) / (9 * w_3 * w_3);
 				const double r = (9 * w_3 * w_2 * w_1 - 27 * w_3 * w_3 * w_0 - 2 * w_2 * w_2 * w_2) /
@@ -188,16 +192,17 @@ void ComputeValidPlacement::operator()(const Number& scale_factor,
 				const Number x = Modulo(prev->angle_rad - rho_3 * std::cos(theta_3) -
 				                        w_2 / (3 * w_3) + rho_3 * std::sqrt(3.0) * std::sin(theta_3));
 
-				if (bead->feasible->Contains(x))
+				if (bead->feasible->Contains(x)) {
 					bead->angle_rad = x;
-				else if (0 < aversion_ratio * (2 * offset_from_prev_rad -
-				                               (distance_from_prev_min + distance_from_prev_max)) +
-				                 centroid_ratio * (offset_prev_to_bubble - offset_from_prev_rad) *
-				                     (offset_from_prev_rad - distance_from_prev_min) *
-				                     (offset_from_prev_rad - distance_from_prev_max))
+				} else if (0 < aversion_ratio * (2 * offset_from_prev_rad -
+				                                 (distance_from_prev_min + distance_from_prev_max)) +
+				                   centroid_ratio * (offset_prev_to_bubble - offset_from_prev_rad) *
+				                       (offset_from_prev_rad - distance_from_prev_min) *
+				                       (offset_from_prev_rad - distance_from_prev_max)) {
 					bead->angle_rad = bead->feasible->from_rad();
-				else
+				} else {
 					bead->angle_rad = bead->feasible->to_rad();
+				}
 			}
 			bead->angle_rad = Modulo(bead->angle_rad);
 		}
@@ -224,8 +229,9 @@ void ComputeValidPlacement::operator()(const Number& scale_factor,
  */
 void ComputeValidPlacement::operator()(const Number& scale_factor,
                                        std::vector<Necklace::Ptr>& necklaces) const {
-	for (Necklace::Ptr& necklace : necklaces)
+	for (Necklace::Ptr& necklace : necklaces) {
 		(*this)(scale_factor, necklace);
+	}
 }
 
 /**@class ComputeValidPlacementFixedOrder

@@ -47,10 +47,12 @@ namespace necklace_map {
 Number ComputeScaleFactor(const Parameters& parameters, std::vector<MapElement::Ptr>& elements,
                           std::vector<Necklace::Ptr>& necklaces) {
 	// Create a bead per necklace that an element is part of.
-	for (Necklace::Ptr& necklace : necklaces)
+	for (Necklace::Ptr& necklace : necklaces) {
 		necklace->beads.clear();
-	for (MapElement::Ptr& element : elements)
+	}
+	for (MapElement::Ptr& element : elements) {
 		element->InitializeBead(parameters);
+	}
 
 	// Generate intervals based on the regions and necklaces.
 	(*ComputeFeasibleInterval::New(parameters))(elements);
@@ -78,8 +80,9 @@ Number ComputeScaleFactor(const Parameters& parameters, std::vector<MapElement::
 void ComputePlacement(const Parameters& parameters, const Number& scale_factor,
                       std::vector<MapElement::Ptr>& elements, std::vector<Necklace::Ptr>& necklaces) {
 	// Create a bead per necklace that an element is part of.
-	for (Necklace::Ptr& necklace : necklaces)
+	for (Necklace::Ptr& necklace : necklaces) {
 		necklace->beads.clear();
+	}
 	for (MapElement::Ptr& element : elements) {
 		element->InitializeBead(parameters);
 
