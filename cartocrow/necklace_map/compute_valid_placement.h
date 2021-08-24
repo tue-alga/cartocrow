@@ -35,6 +35,8 @@ namespace necklace_map {
 
 class ComputeValidPlacement {
   public:
+	virtual ~ComputeValidPlacement() = default;
+
 	using Ptr = std::unique_ptr<ComputeValidPlacement>;
 
 	static Ptr New(const Parameters& parameters);

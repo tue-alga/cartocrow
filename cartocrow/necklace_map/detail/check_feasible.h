@@ -39,6 +39,8 @@ namespace detail {
 // Note that the covering radii of the nodes must be pre-computed outside this functor.
 class CheckFeasible {
   public:
+	virtual ~CheckFeasible() = default;
+
 	using NodeSet = std::vector<CycleNodeLayered::Ptr>;
 	using Ptr = std::shared_ptr<CheckFeasible>;
 

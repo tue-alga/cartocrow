@@ -38,6 +38,8 @@ namespace necklace_map {
 
 class ComputeFeasibleInterval {
   public:
+	virtual ~ComputeFeasibleInterval() = default;
+
 	using Ptr = std::unique_ptr<ComputeFeasibleInterval>;
 
 	static Ptr New(const Parameters& parameters);

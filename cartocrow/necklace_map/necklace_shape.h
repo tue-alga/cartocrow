@@ -42,6 +42,8 @@ class NecklaceShapeVisitor {
 
 class NecklaceShape {
   public:
+	virtual ~NecklaceShape() = default;
+
 	using Ptr = std::shared_ptr<NecklaceShape>;
 
 	virtual const Point& kernel() const = 0;

@@ -34,6 +34,8 @@ namespace necklace_map {
 
 class ComputeScaleFactor {
   public:
+	virtual ~ComputeScaleFactor() = default;
+
 	using Ptr = std::unique_ptr<ComputeScaleFactor>;
 
 	static Ptr New(const Parameters& parameters);

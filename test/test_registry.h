@@ -30,7 +30,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 08-10-2020
 #include <glog/logging.h>
 
 
-template <typename T_, size_t P_, size_t V_> class DeallocNone;
+template <typename T_, size_t P_, size_t V_> struct DeallocNone;
 
 using ptr_t = void*;
 

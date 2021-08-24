@@ -34,6 +34,7 @@ class Range {
 
 	Range(const Number& from, const Number& to);
 	Range(const Range& range);
+	virtual ~Range() = default;
 
 	const Number& from() const;
 	Number& from();

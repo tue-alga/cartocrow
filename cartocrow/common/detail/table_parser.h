@@ -31,6 +31,7 @@ namespace detail {
 
 struct DataColumn {
 	DataColumn(const std::string& name);
+	virtual ~DataColumn() = default;
 	virtual void push_back(const std::string& value) = 0;
 	virtual size_t size() const = 0;
 	std::string name;
@@ -39,7 +40,7 @@ struct DataColumn {
 template <typename T_> struct ValueColumn : public DataColumn {
 	ValueColumn(const std::string& name, const size_t size);
 	void push_back(const std::string& value) override;
-	size_t size() const {
+	size_t size() const override {
 		return values.size();
 	}
 	std::vector<T_> values;
