@@ -26,7 +26,7 @@ On Windows systems, we recommend using [vcpkg](https://github.com/microsoft/vcpk
 
 * **MSVC.** Download MSVC 2019 from [Microsoft's website](https://docs.microsoft.com/en-us/visualstudio/releases/2019/release-notes) and install it.
 
-* **CMake.** Download CMake from [here](https://cmake.org/download/) and install it.
+* **CMake.** Download CMake from [here](https://cmake.org/download/) and install it. (Note: If you have a version of CMake installed in Cygwin, this does not seem to play well with vcpkg. Please install a native version of CMake.)
 
 * **vcpkg.** The standard procedure to setup vcpkg on Windows:
 
