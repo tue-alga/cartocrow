@@ -20,8 +20,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #ifndef CARTOCROW_GEOMETRY_RENDERER
 #define CARTOCROW_GEOMETRY_RENDERER
 
-#include <cartocrow/common/cgal_types.h>
 #include <QPainter>
+#include <cartocrow/common/cgal_types.h>
 
 namespace cartocrow {
 namespace renderer {
@@ -87,8 +87,7 @@ struct Color {
  */
 class GeometryRenderer {
 
-public:
-
+  public:
 	/**
 	 * Draws a single point with the currently set style.
 	 */

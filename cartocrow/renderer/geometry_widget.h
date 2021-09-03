@@ -20,7 +20,11 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #ifndef CARTOCROW_GEOMETRY_WIDGET
 #define CARTOCROW_GEOMETRY_WIDGET
 
+#include <QMouseEvent>
+#include <QPaintEvent>
 #include <QPainter>
+#include <QTransform>
+#include <QWheelEvent>
 #include <QWidget>
 
 #include "geometry_painting.h"
@@ -30,15 +34,12 @@ namespace cartocrow {
 namespace renderer {
 
 /**
- * QWidget specialization of the GeometryRenderer. This
+ * QWidget specialization of the GeometryRenderer.
  */
 class GeometryWidget : public QWidget, GeometryRenderer {
 
-public:
+  public:
 	GeometryWidget(GeometryPainting& painting);
-
-protected:
-	void paintEvent(QPaintEvent* event) override final;
 
 	void draw(Point p) override;
 	void pushStyle() override;
@@ -46,9 +47,34 @@ protected:
 	void setStroke(Color color, double width) override;
 	std::unique_ptr<QPainter> getQPainter() override;
 
-private:
+  public slots:
+	void setDrawBackground(bool drawBackground);
+	void zoomIn();
+	void zoomOut();
+	void limitMaxZoom();
+
+  protected:
+	void paintEvent(QPaintEvent* event) override final;
+	void mouseMoveEvent(QMouseEvent* event) override;
+	void mousePressEvent(QMouseEvent* event) override;
+	void mouseReleaseEvent(QMouseEvent* event) override;
+	void wheelEvent(QWheelEvent* event) override;
+	void leaveEvent(QEvent* event) override;
+
+  private:
+	QPointF convertPoint(Point p) const;
+	QPointF convertPoint(double x, double y) const;
+	QPointF inverseConvertPoint(QPointF p) const;
 	GeometryPainting& m_painting;
-	std::shared_ptr<QPainter> m_painter;  // only valid while painting
+	std::unique_ptr<QPainter> m_painter; // only valid while painting
+
+	// transform
+	QTransform m_transform;
+	double m_minZoom = 0.1;
+	double m_maxZoom = 30.0;
+	QPointF m_mousePos;
+	QPointF m_previousMousePos;
+	bool m_dragging = false;
 
 	// style
 	double m_pointSize = 10;
@@ -57,6 +83,9 @@ private:
 	double m_strokeWidth = 1;
 
 	QColor m_fillColor = QColor(0, 0, 0);
+
+	// other properties
+	bool m_drawBackground = true;
 };
 
 } // namespace renderer

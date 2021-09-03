@@ -35,7 +35,7 @@ namespace renderer {
  */
 class GeometryPainting {
 
-public:
+  public:
 	virtual void paint(GeometryRenderer& renderer) = 0;
 };
 
