@@ -94,6 +94,11 @@ class GeometryRenderer {
 	virtual void draw(cartocrow::Point p) = 0;
 
 	/**
+	 * Draws a single line segment with the currently set style.
+	 */
+	virtual void draw(cartocrow::Segment s) = 0;
+
+	/**
 	 * Stores the current style (stroke style, fill style, etc.) of this
 	 * renderer onto a stack, to be retrieved later by \link popStyle().
 	 */
