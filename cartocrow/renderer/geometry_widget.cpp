@@ -21,6 +21,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include <QPen>
 #include <QPoint>
+#include <QSlider>
+#include <QToolButton>
 #include <QtGlobal>
 
 namespace cartocrow {
@@ -28,6 +30,34 @@ namespace renderer {
 
 GeometryWidget::GeometryWidget(GeometryPainting& painting) : m_painting(painting) {
 	setMouseTracking(true);
+	m_transform.scale(1, -1);
+
+	m_zoomBar = new QToolBar(this);
+	m_zoomOutButton = new QToolButton(m_zoomBar);
+	m_zoomOutButton->setText("-");
+	connect(m_zoomOutButton, &QToolButton::clicked, this, &GeometryWidget::zoomOut);
+	m_zoomBar->addWidget(m_zoomOutButton);
+	m_zoomSlider = new QSlider(m_zoomBar);
+	m_zoomSlider->setOrientation(Qt::Horizontal);
+	m_zoomSlider->setMinimumWidth(200);
+	m_zoomSlider->setMaximumWidth(200);
+	m_zoomSlider->setMinimum(0);
+	m_zoomSlider->setMaximum(200);
+	m_zoomSlider->setEnabled(false);
+	m_zoomBar->addWidget(m_zoomSlider);
+	m_zoomInButton = new QToolButton(m_zoomBar);
+	m_zoomInButton->setText("+");
+	connect(m_zoomInButton, &QToolButton::clicked, this, &GeometryWidget::zoomIn);
+	m_zoomBar->addWidget(m_zoomInButton);
+}
+
+void GeometryWidget::resizeEvent(QResizeEvent* e) {
+	QWidget::resizeEvent(e);
+	QRect r = rect();
+	QSize zoomBarSize = m_zoomBar->sizeHint();
+	QRect zoomBarRect(QPoint{r.left(), r.bottom() - zoomBarSize.height()},
+	                  QPoint{r.left() + zoomBarSize.width(), r.bottom()});
+	m_zoomBar->setGeometry(zoomBarRect);
 }
 
 void GeometryWidget::paintEvent(QPaintEvent* event) {
@@ -75,6 +105,10 @@ void GeometryWidget::leaveEvent(QEvent* event) {
 	update();
 }
 
+QSize GeometryWidget::sizeHint() const {
+	return QSize(800, 450);
+}
+
 void GeometryWidget::wheelEvent(QWheelEvent* event) {
 	if (event->angleDelta().isNull()) {
 		return;
@@ -97,6 +131,8 @@ void GeometryWidget::wheelEvent(QWheelEvent* event) {
 	transform.scale(factor, factor);
 	transform.translate(-mousePos.x(), -mousePos.y());
 	m_transform *= transform;
+
+	updateZoomSlider();
 	update();
 }
 
@@ -137,7 +173,7 @@ void GeometryWidget::drawAxes() {
 		draw(Segment(Point(i * majorScale / 10, bounds.ymin()),
 		             Point(i * majorScale / 10, bounds.ymax())));
 	}
-	for (int i = floor(bounds.ymin() / (majorScale / 10)); i <= bounds.ymax() / (majorScale / 10);
+	for (int i = floor(bounds.ymax() / (majorScale / 10)); i <= bounds.ymin() / (majorScale / 10);
 	     ++i) {
 		draw(Segment(Point(bounds.xmin(), i * majorScale / 10),
 		             Point(bounds.xmax(), i * majorScale / 10)));
@@ -148,7 +184,7 @@ void GeometryWidget::drawAxes() {
 	for (int i = floor(bounds.xmin() / majorScale); i <= bounds.xmax() / majorScale; ++i) {
 		draw(Segment(Point(i * majorScale, bounds.ymin()), Point(i * majorScale, bounds.ymax())));
 	}
-	for (int i = floor(bounds.ymin() / majorScale); i <= bounds.ymax() / majorScale; ++i) {
+	for (int i = floor(bounds.ymax() / majorScale); i <= bounds.ymin() / majorScale; ++i) {
 		draw(Segment(Point(bounds.xmin(), i * majorScale), Point(bounds.xmax(), i * majorScale)));
 	}
 
@@ -175,7 +211,7 @@ void GeometryWidget::drawAxes() {
 		}
 	}
 	QFontMetricsF metrics(m_painter->font());
-	for (int i = floor(bounds.ymin() / majorScale); i <= bounds.ymax() / majorScale + 1; ++i) {
+	for (int i = floor(bounds.ymax() / majorScale); i <= bounds.ymin() / majorScale + 1; ++i) {
 		if (i != 0) {
 			origin = convertPoint(0, i * majorScale);
 			QString label = QString::number(i * majorScale);
@@ -191,6 +227,12 @@ void GeometryWidget::drawAxes() {
 	}
 
 	popStyle();
+}
+
+void GeometryWidget::updateZoomSlider() {
+	double zoom = m_transform.m11();
+	double fraction = log(zoom / m_minZoom) / log(m_maxZoom / m_minZoom);
+	m_zoomSlider->setValue(fraction * 200);
 }
 
 void GeometryWidget::draw(cartocrow::Point p) {
@@ -230,6 +272,32 @@ std::unique_ptr<QPainter> GeometryWidget::getQPainter() {
 
 void GeometryWidget::setDrawAxes(bool drawAxes) {
 	m_drawAxes = drawAxes;
+	update();
+}
+
+void GeometryWidget::setMinZoom(double minZoom) {
+	m_minZoom = minZoom;
+}
+
+void GeometryWidget::setMaxZoom(double maxZoom) {
+	m_maxZoom = maxZoom;
+}
+
+void GeometryWidget::zoomIn() {
+	m_transform *= 1.2;
+	if (m_transform.m11() > m_maxZoom) {
+		m_transform *= m_maxZoom / m_transform.m11();
+	}
+	updateZoomSlider();
+	update();
+}
+
+void GeometryWidget::zoomOut() {
+	m_transform /= 1.2;
+	if (m_transform.m11() < m_minZoom) {
+		m_transform /= m_minZoom / m_transform.m11();
+	}
+	updateZoomSlider();
 	update();
 }
 

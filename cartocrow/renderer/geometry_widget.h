@@ -23,6 +23,10 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <QMouseEvent>
 #include <QPaintEvent>
 #include <QPainter>
+#include <QResizeEvent>
+#include <QSlider>
+#include <QToolBar>
+#include <QToolButton>
 #include <QTransform>
 #include <QWheelEvent>
 #include <QWidget>
@@ -97,13 +101,25 @@ class GeometryWidget : public QWidget, GeometryRenderer {
 	 */
 	void setMaxZoom(double maxZoom);
 
+	/**
+	 * Increases the zoom level, taking the maximum zoom into account.
+	 */
+	void zoomIn();
+
+	/**
+	 * Decreases the zoom level, taking the minimum zoom into account.
+	 */
+	void zoomOut();
+
   protected:
-	void paintEvent(QPaintEvent* event) override final;
+	void resizeEvent(QResizeEvent* e) override;
+	void paintEvent(QPaintEvent* event) override;
 	void mouseMoveEvent(QMouseEvent* event) override;
 	void mousePressEvent(QMouseEvent* event) override;
 	void mouseReleaseEvent(QMouseEvent* event) override;
 	void wheelEvent(QWheelEvent* event) override;
 	void leaveEvent(QEvent* event) override;
+	QSize sizeHint() const override;
 
   private:
     /**
@@ -131,6 +147,8 @@ class GeometryWidget : public QWidget, GeometryRenderer {
 	 * current zoom level into account.
 	 */
 	void drawAxes();
+
+	void updateZoomSlider();
 
 	/**
 	 * The painting we're drawing.
@@ -188,6 +206,15 @@ class GeometryWidget : public QWidget, GeometryRenderer {
 	 * to store previously pushed styles.
 	 */
 	std::stack<GeometryWidgetStyle> m_styleStack;
+
+	/**
+	 * The toolbar containing the zoom buttons.
+	 */
+	QToolBar* m_zoomBar;
+
+	QToolButton* m_zoomInButton;
+	QSlider* m_zoomSlider;
+	QToolButton* m_zoomOutButton;
 };
 
 } // namespace renderer
