@@ -284,7 +284,7 @@ void GeometryWidget::setMaxZoom(double maxZoom) {
 }
 
 void GeometryWidget::zoomIn() {
-	m_transform *= 1.2;
+	m_transform *= 1.5;
 	if (m_transform.m11() > m_maxZoom) {
 		m_transform *= m_maxZoom / m_transform.m11();
 	}
@@ -293,7 +293,7 @@ void GeometryWidget::zoomIn() {
 }
 
 void GeometryWidget::zoomOut() {
-	m_transform /= 1.2;
+	m_transform /= 1.5;
 	if (m_transform.m11() < m_minZoom) {
 		m_transform /= m_minZoom / m_transform.m11();
 	}
