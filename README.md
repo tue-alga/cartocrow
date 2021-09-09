@@ -14,6 +14,7 @@ CartoCrow depends on the following projects:
 * CGAL (5.0)
 * gflags (2.2.2)
 * glog (0.5.0)
+* Qt (5.15)
 * tinyxml2 (9.0.0)
 * unittest-cpp (2.0.0)
 
@@ -36,7 +37,9 @@ On Windows systems, we recommend using [vcpkg](https://github.com/microsoft/vcpk
   .\bootstrap-vcpkg.bat
   ```
 
-  For more details, see [here](https://github.com/microsoft/vcpkg#quick-start-windows).
+  In our experience, vcpkg may misbehave when installed in a directory with a long path name, or a path name containing exotic characters. vcpkg itself recommends `C:\src\vcpkg`.
+
+  For more information on installing vcpkg, see [here](https://github.com/microsoft/vcpkg#quick-start-windows).
 
 * **CGAL.** As described [here](https://doc.cgal.org/latest/Manual/windows.html#title0):
 
@@ -44,16 +47,19 @@ On Windows systems, we recommend using [vcpkg](https://github.com/microsoft/vcpk
   vcpkg install cgal:x64-windows
   ```
 
-  Note that this step can take a very long time (20-30 minutes).
+  This step can take a long time (around 30 minutes).
 
 * **Other dependencies.**
 
   ```sh
+  vcpkg install qt5:x64-windows
   vcpkg install gflags:x64-windows
   vcpkg install glog:x64-windows
   vcpkg install tinyxml2:x64-windows
   vcpkg install unittest-cpp:x64-windows
   ```
+
+  This step, especially compiling Qt, can take a very long time (around 2 hours).
 
 
 ### Linux

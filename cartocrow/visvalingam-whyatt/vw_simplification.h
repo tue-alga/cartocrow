@@ -56,7 +56,6 @@ class VWSimplification {
 	std::vector<VWPoint*> current;
 }; // class VWSimplification
 
-
 } // namespace visvalingam_whyatt
 } // namespace cartocrow
 
