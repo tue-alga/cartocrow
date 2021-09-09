@@ -39,76 +39,52 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 namespace cartocrow {
 namespace renderer {
 
-/**
- * The style for a GeometryWidget.
- */
+/// The style for a GeometryWidget.
 struct GeometryWidgetStyle {
-
-	/**
-	 * The diameter of points.
-	 */
+	/// The draw mode.
+	GeometryRenderer::DrawMode m_mode = GeometryRenderer::stroke | GeometryRenderer::fill;
+	/// The diameter of points.
 	double m_pointSize = 10;
-
-	/**
-	 * The color of points and lines.
-	 */
+	/// The color of points and lines.
 	QColor m_strokeColor = QColor(0, 0, 0);
-
-	/**
-	 * The width of lines.
-	 */
+	/// The width of lines.
 	double m_strokeWidth = 1;
-
-	/**
-	 * The color of filled shapes.
-	 */
-	QColor m_fillColor = QColor(0, 0, 0);
+	/// The color of filled shapes.
+	QColor m_fillColor = QColor(0, 102, 203);
 };
 
-/**
- * QWidget specialization of the GeometryRenderer.
- */
+/// QWidget specialization of the GeometryRenderer.
 class GeometryWidget : public QWidget, GeometryRenderer {
 
   public:
-	/**
-	 * Constructs a GeometryWidget for the given painting.
-	 */
+	/// Constructs a GeometryWidget for the given painting.
 	GeometryWidget(GeometryPainting& painting);
 
 	void draw(Point p) override;
 	void draw(Segment s) override;
+	void draw(Polygon p) override;
+	void draw(Circle c) override;
+	void draw(Box b) override;
+
 	void pushStyle() override;
 	void popStyle() override;
+	void setMode(DrawMode mode) override;
 	void setStroke(Color color, double width) override;
+
 	std::unique_ptr<QPainter> getQPainter() override;
 
   public slots:
-	/**
-	 * Determines whether to draw the axes in the background.
-	 */
+	/// Determines whether to draw the axes in the background.
 	void setDrawAxes(bool drawAxes);
-
-	/**
-	 * Sets the minimum zoom level, in pixels per unit. If the current zoom
-	 * level violates the minimum, it is not automatically adjusted.
-	 */
+	/// Sets the minimum zoom level, in pixels per unit. If the current zoom
+	/// level violates the minimum, it is not automatically adjusted.
 	void setMinZoom(double minZoom);
-
-	/**
-	 * Sets the maximum zoom level, in pixels per unit. If the current zoom
-	 * level violates the maximum, it is not automatically adjusted.
-	 */
+	/// Sets the maximum zoom level, in pixels per unit. If the current zoom
+	/// level violates the maximum, it is not automatically adjusted.
 	void setMaxZoom(double maxZoom);
-
-	/**
-	 * Increases the zoom level, taking the maximum zoom into account.
-	 */
+	/// Increases the zoom level, taking the maximum zoom into account.
 	void zoomIn();
-
-	/**
-	 * Decreases the zoom level, taking the minimum zoom into account.
-	 */
+	/// Decreases the zoom level, taking the minimum zoom into account.
 	void zoomOut();
 
   protected:
@@ -122,99 +98,56 @@ class GeometryWidget : public QWidget, GeometryRenderer {
 	QSize sizeHint() const override;
 
   private:
-    /**
-	 * Converts a point in drawing coordinates to Qt coordinates.
-	 */
+	/// Converts a point in drawing coordinates to Qt coordinates.
 	QPointF convertPoint(Point p) const;
-
-    /**
-	 * Converts a point in drawing coordinates to Qt coordinates.
-	 */
-	QPointF convertPoint(double x, double y) const;
-
-    /**
-	 * Converts a point in Qt coordinates back to drawing coordinates.
-	 */
+	/// Converts a rectangle in drawing coordinates to Qt coordinates.
+	QRectF convertBox(Box r) const;
+	/// Converts a point in Qt coordinates back to drawing coordinates.
 	Point inverseConvertPoint(QPointF p) const;
-
-    /**
-	 * Converts a rectangle in Qt coordinates back to drawing coordinates.
-	 */
+	/// Converts a rectangle in Qt coordinates back to drawing coordinates.
 	Box inverseConvertBox(QRectF r) const;
 
-	/**
-	 * Draws the axes, grid, and axis labels in the background, taking the
-	 * current zoom level into account.
-	 */
+	/// Sets the pen and brush on \link m_painter corresponding to \link
+	/// m_style.
+	void setupPainter();
+
+	/// Draws the axes, grid, and axis labels in the background, taking the
+	/// current zoom level into account.
 	void drawAxes();
-
+	/// Moves the zoom slider knob to the currently set zoom level.
 	void updateZoomSlider();
-
-	/**
-	 * The painting we're drawing.
-	 */
+	/// The painting we're drawing.
 	GeometryPainting& m_painting;
-
-	/**
-	 * The QPainter we are drawing with. Only valid while painting.
-	 */
+	/// The QPainter we are drawing with. Only valid while painting.
 	std::unique_ptr<QPainter> m_painter;
-
-	/**
-	 * The transform from drawing coordinates to Qt coordinates.
-	 */
+	/// The transform from drawing coordinates to Qt coordinates.
 	QTransform m_transform;
-
-	/**
-	 * The zoom lower bound, in pixels per unit.
-	 */
+	/// The zoom lower bound, in pixels per unit.
 	double m_minZoom = 0.1;
-
-	/**
-	 * The zoom upper bound, in pixels per unit.
-	 */
+	/// The zoom upper bound, in pixels per unit.
 	double m_maxZoom = 300.0;
-
-	/**
-	 * The current mouse position, in Qt coordinates.
-	 */
+	/// The current mouse position, in Qt coordinates.
 	QPointF m_mousePos;
-
-	/**
-	 * The previous mouse position, in Qt coordinates. Used together with
-	 * \link m_mousePos to figure out how far the mouse was moved during a drag.
-	 */
+	/// The previous mouse position, in Qt coordinates. Used together with
+	/// \link m_mousePos to figure out how far the mouse was moved during a drag.
 	QPointF m_previousMousePos;
-
-	/**
-	 * Whether a dragging operation is in progress.
-	 */
+	/// Whether a dragging operation is in progress.
 	bool m_dragging = false;
-
-	/**
-	 * Whether to draw the background axes.
-	 */
+	/// Whether to draw the background axes.
 	bool m_drawAxes = true;
-
-	/**
-	 * The current drawing style.
-	 */
+	/// The current drawing style.
 	GeometryWidgetStyle m_style;
-	
-	/**
-	 * A stack of drawing styles, used by \link pushStyle() and \link popStyle()
-	 * to store previously pushed styles.
-	 */
+	/// A stack of drawing styles, used by \link pushStyle() and \link popStyle()
+	/// to store previously pushed styles.
 	std::stack<GeometryWidgetStyle> m_styleStack;
-
-	/**
-	 * The toolbar containing the zoom buttons.
-	 */
+	/// The toolbar containing the zoom buttons.
 	QToolBar* m_zoomBar;
-
-	QToolButton* m_zoomInButton;
-	QSlider* m_zoomSlider;
+	/// The zoom out button in the toolbar.
 	QToolButton* m_zoomOutButton;
+	/// The zoom slider.
+	QSlider* m_zoomSlider;
+	/// The zoom in button in the toolbar.
+	QToolButton* m_zoomInButton;
 };
 
 } // namespace renderer

@@ -18,12 +18,14 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include "geometry_widget.h"
+#include "cartocrow/renderer/geometry_renderer.h"
 
 #include <QPen>
 #include <QPoint>
 #include <QSlider>
 #include <QToolButton>
 #include <QtGlobal>
+#include <qpolygon.h>
 
 namespace cartocrow {
 namespace renderer {
@@ -137,12 +139,14 @@ void GeometryWidget::wheelEvent(QWheelEvent* event) {
 }
 
 QPointF GeometryWidget::convertPoint(Point p) const {
-	return convertPoint(p.x(), p.y());
+	QPointF mapped = m_transform.map(QPointF(p.x() + 0.5, p.y() + 0.5));
+	return mapped + QPointF(width(), height()) / 2.0;
 }
 
-QPointF GeometryWidget::convertPoint(double x, double y) const {
-	QPointF mapped = m_transform.map(QPointF(x + 0.5, y + 0.5));
-	return mapped + QPointF(width(), height()) / 2.0;
+QRectF GeometryWidget::convertBox(Box b) const {
+	QPointF topLeft = convertPoint(Point(b.xmin(), b.ymin()));
+	QPointF bottomRight = convertPoint(Point(b.xmax(), b.ymax()));
+	return QRectF(topLeft, bottomRight);
 }
 
 Point GeometryWidget::inverseConvertPoint(QPointF p) const {
@@ -167,6 +171,7 @@ void GeometryWidget::drawAxes() {
 	// minor grid lines
 	double minorTint = tickScale - floor(tickScale);
 	int minorColor = 255 - 64 * minorTint;
+	setMode({});
 	setStroke(Color{minorColor, minorColor, minorColor}, 1);
 	for (int i = floor(bounds.xmin() / (majorScale / 10)); i <= bounds.xmax() / (majorScale / 10);
 	     ++i) {
@@ -194,13 +199,13 @@ void GeometryWidget::drawAxes() {
 	draw(Segment(Point(0, bounds.ymin()), Point(0, bounds.ymax())));
 
 	// labels
-	QPointF origin = convertPoint(0, 0);
+	QPointF origin = convertPoint(Point(0, 0));
 	m_painter->drawText(QRectF(origin + QPointF{-100, 5}, origin + QPointF{-5, 100}),
 	                    Qt::AlignRight, "0");
 
 	for (int i = floor(bounds.xmin() / majorScale); i <= bounds.xmax() / majorScale + 1; ++i) {
 		if (i != 0) {
-			origin = convertPoint(i * majorScale, 0);
+			origin = convertPoint(Point(i * majorScale, 0));
 			if (origin.y() < 0) {
 				origin.setY(0);
 			} else if (origin.y() > rect().bottom() - 30) {
@@ -213,7 +218,7 @@ void GeometryWidget::drawAxes() {
 	QFontMetricsF metrics(m_painter->font());
 	for (int i = floor(bounds.ymax() / majorScale); i <= bounds.ymin() / majorScale + 1; ++i) {
 		if (i != 0) {
-			origin = convertPoint(0, i * majorScale);
+			origin = convertPoint(Point(0, i * majorScale));
 			QString label = QString::number(i * majorScale);
 			double length = metrics.width(label);
 			if (origin.x() < length + 10) {
@@ -235,7 +240,7 @@ void GeometryWidget::updateZoomSlider() {
 	m_zoomSlider->setValue(fraction * 200);
 }
 
-void GeometryWidget::draw(cartocrow::Point p) {
+void GeometryWidget::draw(Point p) {
 	m_painter->setPen(Qt::NoPen);
 	m_painter->setBrush(m_style.m_strokeColor);
 	QPointF p2 = convertPoint(p);
@@ -244,12 +249,51 @@ void GeometryWidget::draw(cartocrow::Point p) {
 	                              m_style.m_pointSize));
 }
 
-void GeometryWidget::draw(cartocrow::Segment s) {
+void GeometryWidget::draw(Segment s) {
 	m_painter->setPen(QPen(m_style.m_strokeColor, m_style.m_strokeWidth));
 	m_painter->setBrush(Qt::NoBrush);
 	QPointF p1 = convertPoint(s.start());
 	QPointF p2 = convertPoint(s.end());
 	m_painter->drawLine(p1, p2);
+
+	if (m_style.m_mode.testFlag(vertices)) {
+		draw(s.start());
+		draw(s.end());
+	}
+}
+
+void GeometryWidget::draw(Polygon p) {
+	setupPainter();
+	QPolygonF polygon;
+	for (auto vertex = p.vertices_begin(); vertex != p.vertices_end(); vertex++) {
+		polygon.append(convertPoint(*vertex));
+	}
+	m_painter->drawPolygon(polygon);
+}
+
+void GeometryWidget::draw(Circle c) {
+	setupPainter();
+	QRectF rect = convertBox(c.bbox());
+	m_painter->drawEllipse(rect);
+}
+
+void GeometryWidget::draw(Box b) {
+	setupPainter();
+	QRectF rect = convertBox(b);
+	m_painter->drawRect(rect);
+}
+
+void GeometryWidget::setupPainter() {
+	if (m_style.m_mode.testFlag(fill)) {
+		m_painter->setBrush(QBrush(m_style.m_fillColor));
+	} else {
+		m_painter->setBrush(Qt::NoBrush);
+	}
+	if (m_style.m_mode.testFlag(stroke)) {
+		m_painter->setPen(QPen(m_style.m_strokeColor, m_style.m_strokeWidth));
+	} else {
+		m_painter->setPen(Qt::NoPen);
+	}
 }
 
 void GeometryWidget::pushStyle() {
@@ -259,6 +303,10 @@ void GeometryWidget::pushStyle() {
 void GeometryWidget::popStyle() {
 	m_style = m_styleStack.top();
 	m_styleStack.pop();
+}
+
+void GeometryWidget::setMode(DrawMode mode) {
+	m_style.m_mode = mode;
 }
 
 void GeometryWidget::setStroke(Color color, double width) {

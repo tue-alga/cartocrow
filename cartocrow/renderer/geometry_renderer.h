@@ -21,32 +21,24 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #define CARTOCROW_GEOMETRY_RENDERER
 
 #include <QPainter>
+
 #include <cartocrow/common/cgal_types.h>
+#include <cartocrow/common/polygon.h>
 
 namespace cartocrow {
 namespace renderer {
 
-/**
- * An RGB color.
- */
+/// An RGB color.
 struct Color {
-
-	/**
-	 * Red component (integer 0-255).
-	 */
+	/// Red component (integer 0-255).
 	int r;
-
-	/**
-	 * Green component (integer 0-255).
-	 */
+	/// Green component (integer 0-255).
 	int g;
-
-	/**
-	 * Blue component (integer 0-255).
-	 */
+	/// Blue component (integer 0-255).
 	int b;
 };
 
+/// An interface for rendering geometric objects to a GUI or a file.
 /**
  * GeometryRenderer is a shared interface for all targets CartoCrow is able to
  * render to (currently a Qt panel, an Ipe file, or an SVG file). Subclasses of
@@ -88,36 +80,59 @@ struct Color {
 class GeometryRenderer {
 
   public:
-	/**
-	 * Draws a single point with the currently set style.
-	 */
-	virtual void draw(cartocrow::Point p) = 0;
+	/// Defines how shapes are drawn.
+	enum DrawModeFlag {
+		/// When drawing a non-linear shape, stroke its outline with the
+		/// current stroke. (Linear features such as lines and curves are
+		/// always stroked, regardless of whether this flag is set.)
+		stroke = 1 << 0,
+		/// When drawing a non-linear shape, stroke its inside with the current
+		/// fill.
+		fill = 1 << 1,
+		/// When drawing a segment, polyline, or polygon, draw its vertices
+		/// with the current point style.
+		vertices = 1 << 2
+	};
+	Q_DECLARE_FLAGS(DrawMode, DrawModeFlag);
 
-	/**
-	 * Draws a single line segment with the currently set style.
-	 */
-	virtual void draw(cartocrow::Segment s) = 0;
+	/// \name Drawing methods
+	/// @{
 
-	/**
-	 * Stores the current style (stroke style, fill style, etc.) of this
-	 * renderer onto a stack, to be retrieved later by \link popStyle().
-	 */
+	/// Draws a single point with the currently set style.
+	virtual void draw(Point p) = 0;
+	/// Draws a single line segment with the currently set style.
+	virtual void draw(Segment s) = 0;
+	/// Draws a polygon with the currently set style.
+	virtual void draw(Polygon p) = 0;
+	/// Draws a circle with the currently set style.
+	virtual void draw(Circle p) = 0;
+	/// Draws an axis-aligned bounding box with the currently set style.
+	virtual void draw(Box p) = 0;
+
+	/// @}
+
+	/// \name Style settings
+	/// @{
+
+	/// Stores the current style (stroke style, fill style, etc.) of this
+	/// renderer onto a stack, to be retrieved later by \link popStyle().
 	virtual void pushStyle() = 0;
-
-	/**
-	 * Restores a style stored previously by \link pushStyle().
-	 */
+	/// Restores a style stored previously by \link pushStyle().
 	virtual void popStyle() = 0;
 
-	/**
-	 * Sets the stroke style of the renderer.
-	 */
+	/// Sets the draw mode (whether shapes should be stroked, filled, etc.)
+	virtual void setMode(DrawMode mode) = 0;
+	/// Sets the stroke style of the renderer.
 	virtual void setStroke(Color color, double width) = 0;
 
+	/// @}
+
+	/// \name Underlying painter access
+	/// @{
+
+	/// Accesses the underlying QPainter, or returns an empty pointer if this
+	/// GeometryRenderer does not target a QPainter.
 	/**
-	 * Accesses the underlying QPainter, or returns an empty pointer if this
-	 * GeometryRenderer does not target a QPainter.
-	 *
 	 * The caller is free to do with the QPainter what they wish, to do any
 	 * custom rendering required. The QPainter does not need to be restored to
 	 * its original state.
@@ -125,7 +140,11 @@ class GeometryRenderer {
 	virtual std::unique_ptr<QPainter> getQPainter() {
 		return std::unique_ptr<QPainter>();
 	}
+
+	/// @}
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(GeometryRenderer::DrawMode)
 
 } // namespace renderer
 } // namespace cartocrow
