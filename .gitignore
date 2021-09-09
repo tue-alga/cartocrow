@@ -2,4 +2,7 @@ build/
 *.swp
 wwwroot/data/*/test_out*.xml
 wwwroot/data/*/test_out*.svg
-
+out/
+CMakeFiles
+.vs/
+CMakeSettings.json

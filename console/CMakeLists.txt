@@ -91,6 +91,7 @@ add_subdirectory(multi_library_app)
 add_subdirectory(necklace_map)
 add_subdirectory(map_regions)
 add_subdirectory(flow_map)
+add_subdirectory(visvalingam-whyatt)
 
 # Set the default executable to run in Visual Studio.
 if(MSVC)

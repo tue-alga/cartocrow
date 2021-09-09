@@ -6,6 +6,7 @@ project(CartoCrow
     HOMEPAGE_URL "https://github.com/tue-alga/cartocrow"
     LANGUAGES CXX)
 
+
 # CMake options.
 set(CMAKE_INSTALL_BINARY_DIR bin CACHE STRING "Installation subdirectory for compiled executables and shared libraries.")
 set(CMAKE_INSTALL_LIBRARY_DIR lib CACHE STRING "Installation subdirectory for compiled static libraries.")
@@ -64,9 +65,9 @@ find_package(CGAL REQUIRED)
 find_path(CGAL_INCLUDE_DIR CGAL/Exact_predicates_inexact_constructions_kernel.h)
 include_directories(${CGAL_INCLUDE_DIR})
 
-find_package(gflags REQUIRED)
 find_package(glog REQUIRED)
 find_package(tinyxml2 REQUIRED)
+find_package(gflags CONFIG REQUIRED)
 
 
 ### SOURCES ###

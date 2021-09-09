@@ -34,10 +34,12 @@ endmacro(cartocrow_add_library)
 add_subdirectory(common)
 add_subdirectory(necklace_map)
 add_subdirectory(flow_map)
+add_subdirectory(visvalingam-whyatt)
 
 set(CARTOCROW_COMMON_TARGET ${CARTOCROW_COMMON_TARGET} PARENT_SCOPE)
 set(NECKLACE_MAP_TARGET ${NECKLACE_MAP_TARGET} PARENT_SCOPE)
 set(FLOW_MAP_TARGET ${FLOW_MAP_TARGET} PARENT_SCOPE)
+set(VWSIMPLIFICATION_TARGET ${VWSIMPLIFICATION_TARGET} PARENT_SCOPE)
 
 
 # The CartoCrow library is an "interface" library:
@@ -49,6 +51,7 @@ target_link_libraries(
     ${CARTOCROW_COMMON_TARGET}
     ${NECKLACE_MAP_TARGET}
     ${FLOW_MAP_TARGET}
+    ${VWSIMPLIFICATION_TARGET}
 )
 
 install(
@@ -74,6 +77,7 @@ if(CARTOCROW_CREATE_ARCHIVE)
         $<TARGET_FILE:${CARTOCROW_COMMON_TARGET}>
         $<TARGET_FILE:${NECKLACE_MAP_TARGET}>
         $<TARGET_FILE:${FLOW_MAP_TARGET}>
+        $<TARGET_FILE:${VWSIMPLIFICATION_TARGET}>
     )
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${CARTOCROW_ARCHIVE} DESTINATION ${CMAKE_INSTALL_LIBRARY_DIR})
 endif(CARTOCROW_CREATE_ARCHIVE)
