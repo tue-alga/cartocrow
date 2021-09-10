@@ -20,6 +20,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "geometry_widget.h"
 #include "cartocrow/renderer/geometry_renderer.h"
 
+#include <QPainterPath>
 #include <QPen>
 #include <QPoint>
 #include <QSlider>
@@ -240,7 +241,7 @@ void GeometryWidget::updateZoomSlider() {
 	m_zoomSlider->setValue(fraction * 200);
 }
 
-void GeometryWidget::draw(Point p) {
+void GeometryWidget::draw(const Point& p) {
 	m_painter->setPen(Qt::NoPen);
 	m_painter->setBrush(m_style.m_strokeColor);
 	QPointF p2 = convertPoint(p);
@@ -249,47 +250,66 @@ void GeometryWidget::draw(Point p) {
 	                              m_style.m_pointSize));
 }
 
-void GeometryWidget::draw(Segment s) {
+void GeometryWidget::draw(const Segment& s) {
 	m_painter->setPen(QPen(m_style.m_strokeColor, m_style.m_strokeWidth));
 	m_painter->setBrush(Qt::NoBrush);
 	QPointF p1 = convertPoint(s.start());
 	QPointF p2 = convertPoint(s.end());
 	m_painter->drawLine(p1, p2);
 
-	if (m_style.m_mode.testFlag(vertices)) {
+	if (m_style.m_mode & vertices) {
 		draw(s.start());
 		draw(s.end());
 	}
 }
 
-void GeometryWidget::draw(Polygon p) {
+void GeometryWidget::draw(const Polygon& p) {
 	setupPainter();
-	QPolygonF polygon;
-	for (auto vertex = p.vertices_begin(); vertex != p.vertices_end(); vertex++) {
-		polygon.append(convertPoint(*vertex));
-	}
-	m_painter->drawPolygon(polygon);
+	QPainterPath path;
+	addPolygonToPath(path, p);
+	m_painter->drawPath(path);
 }
 
-void GeometryWidget::draw(Circle c) {
+void GeometryWidget::draw(const Polygon_with_holes& p) {
+	setupPainter();
+	QPainterPath path;
+	addPolygonToPath(path, p.outer_boundary());
+	for (auto hole : p.holes()) {
+		addPolygonToPath(path, hole);
+	}
+	m_painter->drawPath(path);
+}
+
+void GeometryWidget::addPolygonToPath(QPainterPath& path, const Polygon& p) {
+	for (auto vertex = p.vertices_begin(); vertex != p.vertices_end(); vertex++) {
+		if (vertex == p.vertices_begin()) {
+			path.moveTo(convertPoint(*vertex));
+		} else {
+			path.lineTo(convertPoint(*vertex));
+		}
+	}
+	path.closeSubpath();
+}
+
+void GeometryWidget::draw(const Circle& c) {
 	setupPainter();
 	QRectF rect = convertBox(c.bbox());
 	m_painter->drawEllipse(rect);
 }
 
-void GeometryWidget::draw(Box b) {
+void GeometryWidget::draw(const Box& b) {
 	setupPainter();
 	QRectF rect = convertBox(b);
 	m_painter->drawRect(rect);
 }
 
 void GeometryWidget::setupPainter() {
-	if (m_style.m_mode.testFlag(fill)) {
+	if (m_style.m_mode & GeometryRenderer::fill) {
 		m_painter->setBrush(QBrush(m_style.m_fillColor));
 	} else {
 		m_painter->setBrush(Qt::NoBrush);
 	}
-	if (m_style.m_mode.testFlag(stroke)) {
+	if (m_style.m_mode & GeometryRenderer::stroke) {
 		m_painter->setPen(QPen(m_style.m_strokeColor, m_style.m_strokeWidth));
 	} else {
 		m_painter->setPen(Qt::NoPen);
@@ -305,7 +325,7 @@ void GeometryWidget::popStyle() {
 	m_styleStack.pop();
 }
 
-void GeometryWidget::setMode(DrawMode mode) {
+void GeometryWidget::setMode(int mode) {
 	m_style.m_mode = mode;
 }
 
@@ -314,9 +334,13 @@ void GeometryWidget::setStroke(Color color, double width) {
 	m_style.m_strokeWidth = width;
 }
 
-std::unique_ptr<QPainter> GeometryWidget::getQPainter() {
-	return std::make_unique<QPainter>(this);
+void GeometryWidget::setFill(Color color) {
+	m_style.m_fillColor = QColor(color.r, color.g, color.b);
 }
+
+/*std::unique_ptr<QPainter> GeometryWidget::getQPainter() {
+	return std::make_unique<QPainter>(this);
+}*/
 
 void GeometryWidget::setDrawAxes(bool drawAxes) {
 	m_drawAxes = drawAxes;

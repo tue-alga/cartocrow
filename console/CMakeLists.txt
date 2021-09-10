@@ -43,7 +43,7 @@ macro(add_cla_exe_properties target)
 endmacro(add_cla_exe_properties)
 
 macro(cartocrow_add_cla NAME)
-    set(TARGET "${NAME}_cla")
+    set(TARGET "${NAME}")
     set(INSTALL_DIR ${INSTALL_CONSOLE_DIR}/${NAME})
 
     # - While CMake will try various file extensions when adding files,
@@ -81,17 +81,14 @@ add_subdirectory(common)
 set(COMMON_CLA_TARGET ${COMMON_CLA_TARGET} PARENT_SCOPE)
 
 ### EXECUTABLES ###
-# A few notes:
-# - The executables are named after the method they expose.
-# - The executable targets end in "_cla" for "command line application"
-
 add_subdirectory(print_arguments)
 add_subdirectory(draw_logo)
 add_subdirectory(multi_library_app)
-add_subdirectory(necklace_map)
+add_subdirectory(necklace_map_cla)
+add_subdirectory(necklace_map_gui)
 add_subdirectory(map_regions)
-add_subdirectory(flow_map)
-add_subdirectory(visvalingam-whyatt)
+add_subdirectory(flow_map_cla)
+add_subdirectory(visvalingam-whyatt_cla)
 
 # Set the default executable to run in Visual Studio.
 if(MSVC)

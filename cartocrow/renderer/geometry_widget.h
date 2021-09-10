@@ -42,7 +42,7 @@ namespace renderer {
 /// The style for a GeometryWidget.
 struct GeometryWidgetStyle {
 	/// The draw mode.
-	GeometryRenderer::DrawMode m_mode = GeometryRenderer::stroke | GeometryRenderer::fill;
+	int m_mode = GeometryRenderer::stroke | GeometryRenderer::fill;
 	/// The diameter of points.
 	double m_pointSize = 10;
 	/// The color of points and lines.
@@ -60,18 +60,20 @@ class GeometryWidget : public QWidget, GeometryRenderer {
 	/// Constructs a GeometryWidget for the given painting.
 	GeometryWidget(GeometryPainting& painting);
 
-	void draw(Point p) override;
-	void draw(Segment s) override;
-	void draw(Polygon p) override;
-	void draw(Circle c) override;
-	void draw(Box b) override;
+	void draw(const Point& p) override;
+	void draw(const Segment& s) override;
+	void draw(const Polygon& p) override;
+	void draw(const Polygon_with_holes& p) override;
+	void draw(const Circle& c) override;
+	void draw(const Box& b) override;
 
 	void pushStyle() override;
 	void popStyle() override;
-	void setMode(DrawMode mode) override;
+	void setMode(int mode) override;
 	void setStroke(Color color, double width) override;
+	void setFill(Color color) override;
 
-	std::unique_ptr<QPainter> getQPainter() override;
+	//std::unique_ptr<QPainter> getQPainter() override;
 
   public slots:
 	/// Determines whether to draw the axes in the background.
@@ -106,6 +108,8 @@ class GeometryWidget : public QWidget, GeometryRenderer {
 	Point inverseConvertPoint(QPointF p) const;
 	/// Converts a rectangle in Qt coordinates back to drawing coordinates.
 	Box inverseConvertBox(QRectF r) const;
+	/// Converts the polygon to Qt coordinates and adds it to the QPainterPath.
+	void addPolygonToPath(QPainterPath& path, const Polygon& p);
 
 	/// Sets the pen and brush on \link m_painter corresponding to \link
 	/// m_style.

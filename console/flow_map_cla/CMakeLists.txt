@@ -1,5 +1,5 @@
 # The flow_map_cla executable exposes the Flow Map geo-visualization method.
-cartocrow_add_cla(flow_map)
+cartocrow_add_cla(flow_map_cla)
 
 target_link_libraries(
     ${TARGET}

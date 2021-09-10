@@ -63,7 +63,6 @@ class CircleNecklace : public NecklaceShape {
 
 	virtual void Accept(NecklaceShapeVisitor& visitor) override;
 
-  protected:
 	Circle shape_;
 
   private:

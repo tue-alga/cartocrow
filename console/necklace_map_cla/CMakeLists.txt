@@ -1,5 +1,5 @@
 # The necklace_map_cla executable exposes the Necklace Map geo-visualization method.
-cartocrow_add_cla(necklace_map)
+cartocrow_add_cla(necklace_map_cla)
 
 target_link_libraries(
     ${TARGET}

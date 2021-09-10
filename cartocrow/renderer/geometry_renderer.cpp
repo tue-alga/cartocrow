@@ -17,29 +17,19 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef CARTOCROW_GEOMETRY_PAINTING
-#define CARTOCROW_GEOMETRY_PAINTING
-
 #include "geometry_renderer.h"
 
 namespace cartocrow {
 namespace renderer {
 
-/**
- * A GeometryPainting specifies what you want to draw using a \ref
- * GeometryRenderer.
- *
- * To use this, override the \ref paint() method, using the methods provided
- * by the \ref GeometryRenderer. Then, construct a specific renderer (e.g.,
- * a \ref GeometryWidget) with this painting.
- */
-class GeometryPainting {
-
-  public:
-	virtual void paint(GeometryRenderer& renderer) = 0;
-};
+void GeometryRenderer::draw(const Region& r) {
+	if (r.IsPoint()) {
+		draw(r.shape[0].outer_boundary()[0]);
+	}
+	for (const Polygon_with_holes& p : r.shape) {
+		draw(p);
+	}
+}
 
 } // namespace renderer
 } // namespace cartocrow
-
-#endif //CARTOCROW_GEOMETRY_PAINTING

@@ -1,5 +1,5 @@
 # The vwsimplification_cla executable exposes the method.
-cartocrow_add_cla(vwsimplification)
+cartocrow_add_cla(vwsimplification_cla)
 
 target_link_libraries(
     ${TARGET}
