@@ -21,7 +21,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-2019
 */
 
-#include "cartocrow/necklace_map/parameters.h"
 #include <fstream>
 #include <sstream>
 
@@ -46,10 +45,10 @@ int main(int argc, char* argv[]) {
 	std::vector<MapElement::Ptr> elements;
 	std::vector<Necklace::Ptr> necklaces;
 	cartocrow::Number scale_factor;
-	cartocrow::necklace_map::SvgReader svg_reader;
-	bool success_read_svg = svg_reader.ReadFile(map_filename, elements, necklaces, scale_factor);
-	if (!success_read_svg) {
-		std::cout << "Couldn't read data file\n";
+	cartocrow::necklace_map::IpeReader ipe_reader;
+	bool success_read_ipe = ipe_reader.readFile(map_filename, elements, necklaces, scale_factor);
+	if (!success_read_ipe) {
+		std::cout << "Couldn't read map file\n";
 		return 1;
 	}
 	cartocrow::necklace_map::DataReader data_reader;
