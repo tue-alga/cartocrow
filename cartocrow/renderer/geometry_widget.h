@@ -66,6 +66,7 @@ class GeometryWidget : public QWidget, GeometryRenderer {
 	void draw(const Polygon_with_holes& p) override;
 	void draw(const Circle& c) override;
 	void draw(const Box& b) override;
+	void drawText(const Point& p, const std::string& text) override;
 
 	void pushStyle() override;
 	void popStyle() override;

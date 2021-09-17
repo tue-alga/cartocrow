@@ -101,6 +101,10 @@ class GeometryRenderer {
 	/// Draws a map region with the currently set style.
 	virtual void draw(const Region& r);
 
+	/// Draws a string at a given location.
+	/// The string is drawn centered horizontally around the location given.
+	virtual void drawText(const Point& p, const std::string& text) = 0;
+
 	/// @}
 
 	/// \name Style settings

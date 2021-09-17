@@ -56,6 +56,7 @@ void Painting::paint(renderer::GeometryRenderer& renderer) {
 		Number radius = m_scale_factor * element->bead->radius_base;
 		renderer.setFill(element->color);
 		renderer.draw(Circle(position, radius * radius));
+		renderer.drawText(position, element->region.id);
 	}
 }
 
