@@ -59,7 +59,7 @@ int main(int argc, char* argv[]) {
 		return 1;
 	}
 	cartocrow::necklace_map::Parameters parameters;
-	parameters.buffer_rad = 0;
+	parameters.buffer_rad = 0.02 * M_PI;
 	parameters.wedge_interval_length_min_rad = 0.1 * M_PI;
 	parameters.centroid_interval_length_rad = 0.2 * M_PI;
 	parameters.order_type = cartocrow::necklace_map::OrderType::kAny;

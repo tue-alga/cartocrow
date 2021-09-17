@@ -28,7 +28,13 @@ void Painting::paint(renderer::GeometryRenderer& renderer) {
 	renderer.setStroke(Color{0, 0, 0}, 2);
 	for (const MapElement::Ptr& element : m_elements) {
 		const Region& region = element->region;
-		renderer.setFill(element->color);
+		if (!element->necklace) {
+			renderer.setFill(Color{255, 255, 255});
+		} else if (element->value <= 0) {
+			renderer.setFill(Color{230, 230, 230});
+		} else {
+			renderer.setFill(element->color);
+		}
 		renderer.draw(region);
 	}
 
@@ -41,17 +47,15 @@ void Painting::paint(renderer::GeometryRenderer& renderer) {
 
 	// beads
 	renderer.setMode(renderer::GeometryRenderer::fill | renderer::GeometryRenderer::stroke);
-	renderer.setFill(Color{150, 0, 50});
-	for (const Necklace::Ptr& necklace : m_necklaces) {
-		for (const Bead::Ptr& bead : necklace->beads) {
-			if (!bead->valid) {
-				continue;
-			}
-			Point position;
-			CHECK(necklace->shape->IntersectRay(bead->angle_rad, position));
-			Number radius = m_scale_factor * bead->radius_base;
-			renderer.draw(Circle(position, radius * radius));
+	for (const MapElement::Ptr& element : m_elements) {
+		if (!element->bead || !element->bead->valid) {
+			continue;
 		}
+		Point position;
+		CHECK(element->necklace->shape->IntersectRay(element->bead->angle_rad, position));
+		Number radius = m_scale_factor * element->bead->radius_base;
+		renderer.setFill(element->color);
+		renderer.draw(Circle(position, radius * radius));
 	}
 }
 
