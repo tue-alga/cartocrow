@@ -27,16 +27,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 namespace cartocrow {
 namespace renderer {
 
-/// An RGB color.
-struct Color {
-	/// Red component (integer 0-255).
-	int r;
-	/// Green component (integer 0-255).
-	int g;
-	/// Blue component (integer 0-255).
-	int b;
-};
-
 /// An interface for rendering geometric objects to a GUI or a file.
 /**
  * GeometryRenderer is a shared interface for all targets CartoCrow is able to

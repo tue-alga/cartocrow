@@ -21,6 +21,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-2019
 */
 
+#include "cartocrow/necklace_map/parameters.h"
 #include <fstream>
 #include <sstream>
 
@@ -58,10 +59,13 @@ int main(int argc, char* argv[]) {
 		return 1;
 	}
 	cartocrow::necklace_map::Parameters parameters;
-	parameters.buffer_rad = 0.1 * M_PI;
+	parameters.buffer_rad = 0;
+	parameters.wedge_interval_length_min_rad = 0.1 * M_PI;
+	parameters.centroid_interval_length_rad = 0.2 * M_PI;
+	parameters.order_type = cartocrow::necklace_map::OrderType::kAny;
+	parameters.aversion_ratio = 0;
 
 	scale_factor = cartocrow::necklace_map::ComputeScaleFactor(parameters, elements, necklaces);
-	//applyNecklaceDrawBounds(necklaces, "");
 
 	QApplication a(argc, argv);
 	a.setApplicationName("CartoCrow necklace map demo");

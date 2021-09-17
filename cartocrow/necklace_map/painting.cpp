@@ -25,15 +25,10 @@ void Painting::paint(renderer::GeometryRenderer& renderer) {
 
 	// regions
 	renderer.setMode(renderer::GeometryRenderer::fill | renderer::GeometryRenderer::stroke);
-	renderer.setStroke(renderer::Color{0, 0, 0}, 2);
-	renderer.setFill(renderer::Color{0, 102, 203});
+	renderer.setStroke(Color{0, 0, 0}, 2);
 	for (const MapElement::Ptr& element : m_elements) {
 		const Region& region = element->region;
-		//std::cout << region.style << std::endl;
-		// meh! it just stores the SVG style string
-		// should we parse that or what?
-		// nah, let's rewrite the input system to just use Ipe files
-		//renderer.setFill(renderer::Color{0, 0, 0});
+		renderer.setFill(element->color);
 		renderer.draw(region);
 	}
 
@@ -46,7 +41,7 @@ void Painting::paint(renderer::GeometryRenderer& renderer) {
 
 	// beads
 	renderer.setMode(renderer::GeometryRenderer::fill | renderer::GeometryRenderer::stroke);
-	renderer.setFill(renderer::Color{150, 0, 50});
+	renderer.setFill(Color{150, 0, 50});
 	for (const Necklace::Ptr& necklace : m_necklaces) {
 		for (const Bead::Ptr& bead : necklace->beads) {
 			if (!bead->valid) {

@@ -37,6 +37,16 @@ Number Modulo(const Number& value, const Number& start = 0, const Number& range 
 
 Number ModuloNonZero(const Number& value, const Number& start = 0, const Number& range = M_2xPI);
 
+/// An RGB color. Used for storing the color of elements to be drawn.
+struct Color {
+	/// Red component (integer 0-255).
+	int r;
+	/// Green component (integer 0-255).
+	int g;
+	/// Blue component (integer 0-255).
+	int b;
+};
+
 } // namespace cartocrow
 
 #endif //CARTOCROW_COMMON_CORE_TYPES_H
