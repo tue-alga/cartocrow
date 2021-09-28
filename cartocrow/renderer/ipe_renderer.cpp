@@ -24,9 +24,11 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <ipebase.h>
 #include <ipedoc.h>
 #include <ipeiml.h>
+#include <ipestyle.h>
 #include <ipetext.h>
 
 #include <fstream>
+#include <string>
 
 namespace cartocrow {
 namespace renderer {
@@ -65,10 +67,15 @@ void IpeRenderer::save(const std::filesystem::path& file) {
 	}
 	document.cascade()->insert(0, basicSheet);
 
-	ipe::StyleSheet* sheet = new ipe::StyleSheet();
-	sheet->setName("paper-size");
-	sheet->setLayout(layout);
-	document.cascade()->insert(1, sheet);
+	ipe::StyleSheet* sizeSheet = new ipe::StyleSheet();
+	sizeSheet->setName("paper-size");
+	sizeSheet->setLayout(layout);
+	document.cascade()->insert(1, sizeSheet);
+
+	m_alphaSheet = new ipe::StyleSheet();
+	m_alphaSheet->setName("alpha-values");
+	document.cascade()->insert(2, m_alphaSheet);
+	setFillOpacity(255); // add default alpha to style sheet
 
 	m_page = new ipe::Page();
 	m_page->addLayer("alpha");
@@ -169,9 +176,16 @@ void IpeRenderer::setFill(Color color) {
 }
 
 void IpeRenderer::setFillOpacity(int alpha) {
-	// TODO not currently supported by IpeRenderer
-	// would need to check if the opacity already exists; if not, make it in
-	// the stylesheet
+	// Ipe does not allow arbitrary opacity values; it only allows symbolic
+	// references to alpha values from the stylesheet.
+	// Therefore, we check if the requested opacity value already exists. If
+	// not, we add it to the stylesheet.
+	ipe::Attribute name = ipe::Attribute(true, std::to_string(alpha).data());
+	if (!m_alphaSheet->has(ipe::Kind::EOpacity, name)) {
+		m_alphaSheet->add(ipe::Kind::EOpacity, name,
+		                  ipe::Attribute(ipe::Fixed::fromDouble(alpha / 255.0)));
+	}
+	m_style.m_fillOpacity = name;
 }
 
 ipe::Curve* IpeRenderer::convertPolygonToCurve(const Polygon& p) const {
@@ -196,6 +210,7 @@ ipe::AllAttributes IpeRenderer::getAttributesForStyle() const {
 	attributes.iPen = ipe::Attribute(ipe::Fixed::fromDouble(m_style.m_strokeWidth));
 	attributes.iStroke = ipe::Attribute(ipe::Color(m_style.m_strokeColor));
 	attributes.iFill = ipe::Attribute(ipe::Color(m_style.m_fillColor));
+	attributes.iOpacity = m_style.m_fillOpacity;
 	return attributes;
 }
 

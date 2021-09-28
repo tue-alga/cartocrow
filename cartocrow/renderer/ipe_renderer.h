@@ -44,6 +44,8 @@ struct IpeRendererStyle {
 	double m_strokeWidth = 1;
 	/// The color of filled shapes.
 	ipe::Color m_fillColor = ipe::Color(0, 102, 203);
+	/// The opacity of filled shapes, as a symbolic Ipe attribute.
+	ipe::Attribute m_fillOpacity;
 };
 
 /// Ipe specialization of the GeometryRenderer.
@@ -102,6 +104,8 @@ class IpeRenderer : public GeometryRenderer {
      * avoid destructing pages ourselves.
      */
 	ipe::Page* m_page;
+	/// Ipe style sheet with the alpha values in this drawing.
+	ipe::StyleSheet* m_alphaSheet;
 };
 
 } // namespace renderer
