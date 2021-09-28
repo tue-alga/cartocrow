@@ -1,4 +1,5 @@
 #include "painting.h"
+#include "cartocrow/common/cgal_types.h"
 #include "cartocrow/necklace_map/bezier_necklace.h"
 #include "cartocrow/necklace_map/circle_necklace.h"
 
@@ -43,6 +44,20 @@ void Painting::paint(renderer::GeometryRenderer& renderer) {
 	DrawNecklaceShapeVisitor visitor(renderer);
 	for (const Necklace::Ptr& necklace : m_necklaces) {
 		necklace->shape->Accept(visitor);
+	}
+
+	// bead shadows
+	renderer.setMode(renderer::GeometryRenderer::fill);
+	for (const MapElement::Ptr& element : m_elements) {
+		if (!element->bead || !element->bead->valid) {
+			continue;
+		}
+		Point position;
+		CHECK(element->necklace->shape->IntersectRay(element->bead->angle_rad, position));
+		Number radius = m_scale_factor * element->bead->radius_base;
+		renderer.setFill(Color{0, 0, 0});
+		renderer.draw(Circle(position + Vector(5, -5), radius * radius));
+		renderer.drawText(position, element->region.id);
 	}
 
 	// beads

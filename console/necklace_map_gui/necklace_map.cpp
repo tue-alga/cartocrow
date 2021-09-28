@@ -30,6 +30,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-2019
 #include <cartocrow/necklace_map/necklace_map.h>
 #include <cartocrow/necklace_map/painting.h>
 #include <cartocrow/renderer/geometry_widget.h>
+#include <cartocrow/renderer/ipe_renderer.h>
 
 int main(int argc, char* argv[]) {
 	if (argc != 4) {
@@ -67,11 +68,13 @@ int main(int argc, char* argv[]) {
 
 	scale_factor = cartocrow::necklace_map::ComputeScaleFactor(parameters, elements, necklaces);
 
-	QApplication a(argc, argv);
-	a.setApplicationName("CartoCrow necklace map demo");
+	/*QApplication a(argc, argv);
+	a.setApplicationName("CartoCrow necklace map demo");*/
 	cartocrow::necklace_map::Painting painting(elements, necklaces, scale_factor);
-	cartocrow::renderer::GeometryWidget widget(painting);
-	widget.show();
+	cartocrow::renderer::IpeRenderer renderer(painting);
+	renderer.save("/tmp/test.ipe");
+	//cartocrow::renderer::GeometryWidget widget(painting);
+	//widget.show();
 
-	return a.exec();
+	//return a.exec();
 }
