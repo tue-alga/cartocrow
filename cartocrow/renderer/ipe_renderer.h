@@ -81,6 +81,7 @@ class IpeRenderer : public GeometryRenderer {
 	void setMode(int mode) override;
 	void setStroke(Color color, double width) override;
 	void setFill(Color color) override;
+	void setFillOpacity(int alpha) override;
 
   private:
 	/// Converts a polygon to an Ipe curve.

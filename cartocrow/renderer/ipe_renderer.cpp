@@ -137,10 +137,6 @@ void IpeRenderer::draw(const Box& b) {
 }
 
 void IpeRenderer::drawText(const Point& p, const std::string& text) {
-	/*setupPainter();
-	QPointF p2 = convertPoint(p);
-	m_painter->drawText(QRectF(p2 - QPointF{500, 250}, p2 + QPointF{500, 250}), Qt::AlignCenter,
-	                    QString::fromStdString(text));*/
 	ipe::Text* label = new ipe::Text(getAttributesForStyle(), text.data(),
 	                                 ipe::Vector(p.x(), p.y()), ipe::Text::TextType::ELabel);
 	label->setHorizontalAlignment(ipe::THorizontalAlignment::EAlignHCenter);
@@ -170,6 +166,12 @@ void IpeRenderer::setStroke(Color color, double width) {
 void IpeRenderer::setFill(Color color) {
 	const double factor = 1000.0 / 255.0;
 	m_style.m_fillColor = ipe::Color(color.r * factor, color.g * factor, color.b * factor);
+}
+
+void IpeRenderer::setFillOpacity(int alpha) {
+	// TODO not currently supported by IpeRenderer
+	// would need to check if the opacity already exists; if not, make it in
+	// the stylesheet
 }
 
 ipe::Curve* IpeRenderer::convertPolygonToCurve(const Polygon& p) const {

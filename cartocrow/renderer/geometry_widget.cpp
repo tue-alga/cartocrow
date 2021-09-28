@@ -342,7 +342,11 @@ void GeometryWidget::setStroke(Color color, double width) {
 }
 
 void GeometryWidget::setFill(Color color) {
-	m_style.m_fillColor = QColor(color.r, color.g, color.b);
+	m_style.m_fillColor.setRgb(color.r, color.g, color.b, m_style.m_fillColor.alpha());
+}
+
+void GeometryWidget::setFillOpacity(int alpha) {
+	m_style.m_fillColor.setAlpha(alpha);
 }
 
 /*std::unique_ptr<QPainter> GeometryWidget::getQPainter() {

@@ -68,13 +68,13 @@ int main(int argc, char* argv[]) {
 
 	scale_factor = cartocrow::necklace_map::ComputeScaleFactor(parameters, elements, necklaces);
 
-	/*QApplication a(argc, argv);
-	a.setApplicationName("CartoCrow necklace map demo");*/
+	QApplication a(argc, argv);
+	a.setApplicationName("CartoCrow necklace map demo");
 	cartocrow::necklace_map::Painting painting(elements, necklaces, scale_factor);
 	cartocrow::renderer::IpeRenderer renderer(painting);
 	renderer.save("/tmp/test.ipe");
-	//cartocrow::renderer::GeometryWidget widget(painting);
-	//widget.show();
 
-	//return a.exec();
+	cartocrow::renderer::GeometryWidget widget(painting);
+	widget.show();
+	return a.exec();
 }

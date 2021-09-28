@@ -48,6 +48,7 @@ void Painting::paint(renderer::GeometryRenderer& renderer) {
 
 	// bead shadows
 	renderer.setMode(renderer::GeometryRenderer::fill);
+	renderer.setFillOpacity(80);
 	for (const MapElement::Ptr& element : m_elements) {
 		if (!element->bead || !element->bead->valid) {
 			continue;
@@ -59,6 +60,7 @@ void Painting::paint(renderer::GeometryRenderer& renderer) {
 		renderer.draw(Circle(position + Vector(5, -5), radius * radius));
 		renderer.drawText(position, element->region.id);
 	}
+	renderer.setFillOpacity(255);
 
 	// beads
 	renderer.setMode(renderer::GeometryRenderer::fill | renderer::GeometryRenderer::stroke);

@@ -122,6 +122,8 @@ class GeometryRenderer {
 	virtual void setStroke(Color color, double width) = 0;
 	/// Sets the fill color of the renderer.
 	virtual void setFill(Color color) = 0;
+	/// Sets the fill opacity of the renderer (range 0-255).
+	virtual void setFillOpacity(int alpha) = 0;
 
 	/// @}
 
