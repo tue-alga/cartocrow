@@ -141,6 +141,11 @@ void IpeRenderer::drawText(const Point& p, const std::string& text) {
 	QPointF p2 = convertPoint(p);
 	m_painter->drawText(QRectF(p2 - QPointF{500, 250}, p2 + QPointF{500, 250}), Qt::AlignCenter,
 	                    QString::fromStdString(text));*/
+	ipe::Text* label = new ipe::Text(getAttributesForStyle(), text.data(),
+	                                 ipe::Vector(p.x(), p.y()), ipe::Text::TextType::ELabel);
+	label->setHorizontalAlignment(ipe::THorizontalAlignment::EAlignHCenter);
+	label->setVerticalAlignment(ipe::TVerticalAlignment::EAlignVCenter);
+	m_page->append(ipe::TSelect::ENotSelected, 0, label);
 }
 
 void IpeRenderer::pushStyle() {
