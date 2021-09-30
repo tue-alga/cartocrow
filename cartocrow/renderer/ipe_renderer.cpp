@@ -56,8 +56,6 @@ void IpeRenderer::save(const std::filesystem::path& file) {
 	} catch (const std::exception& e) {
 		std::cout << e.what() << std::endl;
 	}
-	//std::cout << input << std::endl;
-	//std::cout << input.size() << std::endl;
 	ipe::Buffer styleBuffer(input.data(), input.size());
 	ipe::BufferSource styleSource(styleBuffer);
 	ipe::ImlParser styleParser(styleSource);
@@ -138,9 +136,15 @@ void IpeRenderer::draw(const Circle& c) {
 }
 
 void IpeRenderer::draw(const Box& b) {
-	/*setupPainter();
-	QRectF rect = convertBox(b);
-	m_painter->drawRect(rect);*/
+	ipe::Curve* curve = new ipe::Curve();
+	curve->appendSegment(ipe::Vector(b.xmin(), b.ymin()), ipe::Vector(b.xmax(), b.ymin()));
+	curve->appendSegment(ipe::Vector(b.xmax(), b.ymin()), ipe::Vector(b.xmax(), b.ymax()));
+	curve->appendSegment(ipe::Vector(b.xmax(), b.ymax()), ipe::Vector(b.xmin(), b.ymax()));
+	curve->setClosed(true);
+	ipe::Shape* shape = new ipe::Shape();
+	shape->appendSubPath(curve);
+	ipe::Path* path = new ipe::Path(getAttributesForStyle(), *shape);
+	m_page->append(ipe::TSelect::ENotSelected, 0, path);
 }
 
 void IpeRenderer::drawText(const Point& p, const std::string& text) {
