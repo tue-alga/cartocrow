@@ -97,14 +97,11 @@ bool IpeReader::readFile(const std::filesystem::path& filename,
 		labels.push_back(Label{position, text, false});
 	}
 
-	for (Label label : labels) {
-		std::cout << "[" << label.text << "] " << label.position.x() << " " << label.position.y()
-		          << std::endl;
-	}
-
-	// step 2: find regions
+	// step 2: find necklaces
+	std::unordered_map<int, std::shared_ptr<Necklace>> necklaceForLayer;
 	for (int i = 0; i < page->count(); ++i) {
 		ipe::Object* object = page->object(i);
+		int layer = page->layerOf(i);
 		ipe::Object::Type type = object->type();
 		if (type != ipe::Object::Type::EPath) {
 			continue;
@@ -112,12 +109,11 @@ bool IpeReader::readFile(const std::filesystem::path& filename,
 		ipe::Path* path = object->asPath();
 		ipe::Matrix matrix = path->matrix();
 		ipe::Shape shape = path->shape();
-		// interpret stroked paths as necklaces; others are considered regions
+		// interpret non-filled paths as necklaces
 		if (path->pathMode() == ipe::TPathMode::EStrokedOnly) {
 			int pathCount = shape.countSubPaths();
 			if (pathCount > 1) {
-				LOG(ERROR) << "Unable to load Ipe file: found necklace with > 1 subpath";
-				return false;
+				throw std::runtime_error("Found necklace with > 1 subpath");
 			}
 			const ipe::SubPath* p = shape.subPath(0);
 			NecklaceShape::Ptr necklaceShape;
@@ -127,16 +123,30 @@ bool IpeReader::readFile(const std::filesystem::path& filename,
 				double size_squared = m.a[0] * m.a[0];
 				necklaceShape = std::make_shared<CircleNecklace>(
 				    Circle(Point(position.x, position.y), size_squared));
-				std::cout << position.x << " " << position.y << " " << size_squared << " bla"
-				          << std::endl;
 			}
+			// TODO read Bézier necklaces
 			if (!necklaceShape) {
-				LOG(ERROR) << "Unable to load Ipe file: found necklace with invalid shape";
-				return false;
+				throw std::runtime_error("Found necklace with invalid shape");
 			}
 			auto necklace = std::make_shared<Necklace>("necklace", necklaceShape);
 			necklaces.push_back(necklace);
-		} else {
+			necklaceForLayer[layer] = necklace;
+		}
+	}
+
+	// step 3: find regions
+	for (int i = 0; i < page->count(); ++i) {
+		ipe::Object* object = page->object(i);
+		int layer = page->layerOf(i);
+		ipe::Object::Type type = object->type();
+		if (type != ipe::Object::Type::EPath) {
+			continue;
+		}
+		ipe::Path* path = object->asPath();
+		ipe::Matrix matrix = path->matrix();
+		ipe::Shape shape = path->shape();
+		// interpret filled paths as regions
+		if (path->pathMode() == ipe::TPathMode::EStrokedAndFilled) {
 			Region::PolygonSet polygons = convertIpeShape(shape, matrix);
 			std::optional<size_t> labelId = findLabelInside(polygons, labels);
 			if (!labelId.has_value()) {
@@ -148,18 +158,14 @@ bool IpeReader::readFile(const std::filesystem::path& filename,
 			auto element = std::make_shared<necklace_map::MapElement>(name);
 			element->region.shape = polygons;
 			element->color = convertIpeColor(path->fill().color());
+			if (necklaceForLayer.find(layer) == necklaceForLayer.end()) {
+				std::string layerName(page->layer(layer).data(), page->layer(layer).size());
+				throw std::runtime_error("Encountered layer " + layerName + " without a necklace");
+			}
+			element->necklace = necklaceForLayer[layer];
 			elements.push_back(element);
 		}
 	}
-
-	// step 3: assign labels to polygons
-
-	// TODO: temporarily assign everything to the first necklace
-	for (auto element : elements) {
-		element->necklace = necklaces[0];
-	}
-
-	std::cout << "Done reading!" << std::endl;
 
 	return true;
 }
