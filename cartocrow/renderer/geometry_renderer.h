@@ -20,22 +20,13 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #ifndef CARTOCROW_GEOMETRY_RENDERER
 #define CARTOCROW_GEOMETRY_RENDERER
 
+#define _USE_MATH_DEFINES
 #include <cartocrow/common/cgal_types.h>
 #include <cartocrow/common/polygon.h>
 #include <cartocrow/common/region.h>
 
 namespace cartocrow {
 namespace renderer {
-
-/// An RGB color.
-struct Color {
-	/// Red component (integer 0-255).
-	int r;
-	/// Green component (integer 0-255).
-	int g;
-	/// Blue component (integer 0-255).
-	int b;
-};
 
 /// An interface for rendering geometric objects to a GUI or a file.
 /**
@@ -111,6 +102,10 @@ class GeometryRenderer {
 	/// Draws a map region with the currently set style.
 	virtual void draw(const Region& r);
 
+	/// Draws a string at a given location.
+	/// The string is drawn centered horizontally around the location given.
+	virtual void drawText(const Point& p, const std::string& text) = 0;
+
 	/// @}
 
 	/// \name Style settings
@@ -128,6 +123,8 @@ class GeometryRenderer {
 	virtual void setStroke(Color color, double width) = 0;
 	/// Sets the fill color of the renderer.
 	virtual void setFill(Color color) = 0;
+	/// Sets the fill opacity of the renderer (range 0-255).
+	virtual void setFillOpacity(int alpha) = 0;
 
 	/// @}
 

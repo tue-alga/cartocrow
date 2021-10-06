@@ -1,4 +1,5 @@
 #include "painting.h"
+#include "cartocrow/common/cgal_types.h"
 #include "cartocrow/necklace_map/bezier_necklace.h"
 #include "cartocrow/necklace_map/circle_necklace.h"
 
@@ -25,15 +26,16 @@ void Painting::paint(renderer::GeometryRenderer& renderer) {
 
 	// regions
 	renderer.setMode(renderer::GeometryRenderer::fill | renderer::GeometryRenderer::stroke);
-	renderer.setStroke(renderer::Color{0, 0, 0}, 2);
-	renderer.setFill(renderer::Color{0, 102, 203});
+	renderer.setStroke(Color{0, 0, 0}, 2);
 	for (const MapElement::Ptr& element : m_elements) {
 		const Region& region = element->region;
-		//std::cout << region.style << std::endl;
-		// meh! it just stores the SVG style string
-		// should we parse that or what?
-		// nah, let's rewrite the input system to just use Ipe files
-		//renderer.setFill(renderer::Color{0, 0, 0});
+		if (!element->necklace) {
+			renderer.setFill(Color{255, 255, 255});
+		} else if (element->value <= 0) {
+			renderer.setFill(Color{230, 230, 230});
+		} else {
+			renderer.setFill(element->color);
+		}
 		renderer.draw(region);
 	}
 
@@ -44,19 +46,34 @@ void Painting::paint(renderer::GeometryRenderer& renderer) {
 		necklace->shape->Accept(visitor);
 	}
 
+	// bead shadows
+	renderer.setMode(renderer::GeometryRenderer::fill);
+	renderer.setFillOpacity(80);
+	for (const MapElement::Ptr& element : m_elements) {
+		if (!element->bead || !element->bead->valid) {
+			continue;
+		}
+		Point position;
+		CHECK(element->necklace->shape->IntersectRay(element->bead->angle_rad, position));
+		Number radius = m_scale_factor * element->bead->radius_base;
+		renderer.setFill(Color{0, 0, 0});
+		renderer.draw(Circle(position + Vector(5, -5), radius * radius));
+		renderer.drawText(position, element->region.id);
+	}
+	renderer.setFillOpacity(255);
+
 	// beads
 	renderer.setMode(renderer::GeometryRenderer::fill | renderer::GeometryRenderer::stroke);
-	renderer.setFill(renderer::Color{150, 0, 50});
-	for (const Necklace::Ptr& necklace : m_necklaces) {
-		for (const Bead::Ptr& bead : necklace->beads) {
-			if (!bead->valid) {
-				continue;
-			}
-			Point position;
-			CHECK(necklace->shape->IntersectRay(bead->angle_rad, position));
-			Number radius = m_scale_factor * bead->radius_base;
-			renderer.draw(Circle(position, radius * radius));
+	for (const MapElement::Ptr& element : m_elements) {
+		if (!element->bead || !element->bead->valid) {
+			continue;
 		}
+		Point position;
+		CHECK(element->necklace->shape->IntersectRay(element->bead->angle_rad, position));
+		Number radius = m_scale_factor * element->bead->radius_base;
+		renderer.setFill(element->color);
+		renderer.draw(Circle(position, radius * radius));
+		renderer.drawText(position, element->region.id);
 	}
 }
 

@@ -55,6 +55,8 @@ struct MapElement {
 	// Computed values extracted from the input.
 	Number input_angle_rad;
 	CircularRange::Ptr input_feasible;
+
+	Color color;
 }; // struct MapElement
 
 } // namespace necklace_map

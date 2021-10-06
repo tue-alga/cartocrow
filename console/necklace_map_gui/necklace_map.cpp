@@ -30,6 +30,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-2019
 #include <cartocrow/necklace_map/necklace_map.h>
 #include <cartocrow/necklace_map/painting.h>
 #include <cartocrow/renderer/geometry_widget.h>
+#include <cartocrow/renderer/ipe_renderer.h>
 
 int main(int argc, char* argv[]) {
 	if (argc != 4) {
@@ -46,10 +47,10 @@ int main(int argc, char* argv[]) {
 	std::vector<MapElement::Ptr> elements;
 	std::vector<Necklace::Ptr> necklaces;
 	cartocrow::Number scale_factor;
-	cartocrow::necklace_map::SvgReader svg_reader;
-	bool success_read_svg = svg_reader.ReadFile(map_filename, elements, necklaces, scale_factor);
-	if (!success_read_svg) {
-		std::cout << "Couldn't read data file\n";
+	cartocrow::necklace_map::IpeReader ipe_reader;
+	bool success_read_ipe = ipe_reader.readFile(map_filename, elements, necklaces, scale_factor);
+	if (!success_read_ipe) {
+		std::cout << "Couldn't read map file\n";
 		return 1;
 	}
 	cartocrow::necklace_map::DataReader data_reader;
@@ -59,16 +60,21 @@ int main(int argc, char* argv[]) {
 		return 1;
 	}
 	cartocrow::necklace_map::Parameters parameters;
-	parameters.buffer_rad = 0.1 * M_PI;
+	parameters.buffer_rad = 0.02 * M_PI;
+	parameters.wedge_interval_length_min_rad = 0.1 * M_PI;
+	parameters.centroid_interval_length_rad = 0.2 * M_PI;
+	parameters.order_type = cartocrow::necklace_map::OrderType::kAny;
+	parameters.aversion_ratio = 0;
 
 	scale_factor = cartocrow::necklace_map::ComputeScaleFactor(parameters, elements, necklaces);
-	//applyNecklaceDrawBounds(necklaces, "");
 
 	QApplication a(argc, argv);
 	a.setApplicationName("CartoCrow necklace map demo");
 	cartocrow::necklace_map::Painting painting(elements, necklaces, scale_factor);
+	cartocrow::renderer::IpeRenderer renderer(painting);
+	renderer.save("/tmp/test.ipe");
+
 	cartocrow::renderer::GeometryWidget widget(painting);
 	widget.show();
-
 	return a.exec();
 }

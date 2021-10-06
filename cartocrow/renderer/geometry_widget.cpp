@@ -303,6 +303,13 @@ void GeometryWidget::draw(const Box& b) {
 	m_painter->drawRect(rect);
 }
 
+void GeometryWidget::drawText(const Point& p, const std::string& text) {
+	setupPainter();
+	QPointF p2 = convertPoint(p);
+	m_painter->drawText(QRectF(p2 - QPointF{500, 250}, p2 + QPointF{500, 250}), Qt::AlignCenter,
+	                    QString::fromStdString(text));
+}
+
 void GeometryWidget::setupPainter() {
 	if (m_style.m_mode & GeometryRenderer::fill) {
 		m_painter->setBrush(QBrush(m_style.m_fillColor));
@@ -335,7 +342,11 @@ void GeometryWidget::setStroke(Color color, double width) {
 }
 
 void GeometryWidget::setFill(Color color) {
-	m_style.m_fillColor = QColor(color.r, color.g, color.b);
+	m_style.m_fillColor.setRgb(color.r, color.g, color.b, m_style.m_fillColor.alpha());
+}
+
+void GeometryWidget::setFillOpacity(int alpha) {
+	m_style.m_fillColor.setAlpha(alpha);
 }
 
 /*std::unique_ptr<QPainter> GeometryWidget::getQPainter() {
