@@ -82,7 +82,7 @@ void IpeRenderer::save(const std::filesystem::path& file) {
 
 	std::cout << m_page->count() << std::endl;
 	document.push_back(m_page);
-	document.save(file.c_str(), ipe::FileFormat::Xml, 0);
+	document.save(file.string().c_str(), ipe::FileFormat::Xml, 0);
 }
 
 void IpeRenderer::draw(const Point& p) {

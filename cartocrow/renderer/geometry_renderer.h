@@ -20,6 +20,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #ifndef CARTOCROW_GEOMETRY_RENDERER
 #define CARTOCROW_GEOMETRY_RENDERER
 
+#define _USE_MATH_DEFINES
 #include <cartocrow/common/cgal_types.h>
 #include <cartocrow/common/polygon.h>
 #include <cartocrow/common/region.h>

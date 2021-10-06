@@ -1,6 +1,11 @@
 set(CARTOCROW_RENDERER_TARGET renderer)
 
 cartocrow_add_library(${CARTOCROW_RENDERER_TARGET} ${CARTOCROW_INSTALL_DIR}/${CARTOCROW_RENDERER_TARGET})
-target_link_libraries(${CARTOCROW_RENDERER_TARGET} Qt5::Widgets)
+target_link_libraries(${CARTOCROW_RENDERER_TARGET} Qt5::Widgets Ipe::Ipelib)
+if(WIN32)
+	target_link_libraries(${CARTOCROW_RENDERER_TARGET} gdiplus)
+	find_package(ZLIB REQUIRED)
+	target_link_libraries(${CARTOCROW_RENDERER_TARGET} ${ZLIB_LIBRARIES})
+endif()
 
 set(CARTOCROW_RENDERER_TARGET ${CARTOCROW_RENDERER_TARGET} PARENT_SCOPE)
