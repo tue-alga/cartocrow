@@ -44,28 +44,6 @@ void IpeRenderer::save(const std::filesystem::path& file) {
 	layout.iPaperSize = ipe::Vector(1000, 1000);
 	layout.iFrameSize = ipe::Vector(1000, 1000);
 
-	std::string input;
-	std::fstream fin("/usr/local/share/ipe/7.2.24/styles/basic.isy", std::ios_base::in);
-	if (!fin) {
-		std::cout << "???" << std::endl;
-	}
-	try {
-		if (fin) {
-			using Iterator = std::istreambuf_iterator<char>;
-			input.assign(Iterator(fin), Iterator());
-		}
-	} catch (const std::exception& e) {
-		std::cout << e.what() << std::endl;
-	}
-	ipe::Buffer styleBuffer(input.data(), input.size());
-	ipe::BufferSource styleSource(styleBuffer);
-	ipe::ImlParser styleParser(styleSource);
-	ipe::StyleSheet* basicSheet = styleParser.parseStyleSheet();
-	if (!basicSheet) {
-		std::cout << "oepsie" << std::endl;
-	}
-	document.cascade()->insert(0, basicSheet);
-
 	ipe::StyleSheet* sizeSheet = new ipe::StyleSheet();
 	sizeSheet->setName("paper-size");
 	sizeSheet->setLayout(layout);
