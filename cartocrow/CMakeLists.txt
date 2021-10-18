@@ -1,6 +1,3 @@
-# The CartoCrow library implements several methods for algorithmic geo-visualization developed at the AGA group of Eindhoven Technical University.
-set(CARTOCROW_TARGET cartocrow)
-set(CARTOCROW_TARGET ${CARTOCROW_TARGET} PARENT_SCOPE)
 set(CARTOCROW_INSTALL_DIR "${CMAKE_INSTALL_SOURCE_DIR}/cartocrow")
 set(CARTOCROW_EXPORT_TARGETS CartoCrowTargets)
 
@@ -23,7 +20,6 @@ macro(cartocrow_add_library TARGET INSTALL_DIR)
         INCLUDES DESTINATION ${CMAKE_INSTALL_SOURCE_DIR}
     )
     install_files_and_directories("${HDRS}" ${INSTALL_DIR})
-    install_files_and_directories("${SRCS}" ${INSTALL_DIR})
 endmacro(cartocrow_add_library)
 
 
@@ -37,28 +33,21 @@ add_subdirectory(necklace_map)
 add_subdirectory(flow_map)
 add_subdirectory(visvalingam-whyatt)
 
-set(CARTOCROW_CORE_TARGET ${CARTOCROW_CORE_TARGET} PARENT_SCOPE)
-set(CARTOCROW_RENDERER_TARGET ${CARTOCROW_RENDERER_TARGET} PARENT_SCOPE)
-set(NECKLACE_MAP_TARGET ${NECKLACE_MAP_TARGET} PARENT_SCOPE)
-set(FLOW_MAP_TARGET ${FLOW_MAP_TARGET} PARENT_SCOPE)
-set(VWSIMPLIFICATION_TARGET ${VWSIMPLIFICATION_TARGET} PARENT_SCOPE)
-
-
 # The CartoCrow library is an "interface" library:
 # it forwards linking to a collection of other libraries.
 # Note that this is generates a CMake construct, not a physical library.
-add_library(${CARTOCROW_TARGET} INTERFACE)
+add_library(cartocrow INTERFACE)
 target_link_libraries(
-    ${CARTOCROW_TARGET} INTERFACE
-    ${CARTOCROW_CORE_TARGET}
-    ${CARTOCROW_RENDERER_TARGET}
-    ${NECKLACE_MAP_TARGET}
-    ${FLOW_MAP_TARGET}
-    ${VWSIMPLIFICATION_TARGET}
+    cartocrow INTERFACE
+    core
+    renderer
+    necklace_map
+    flow_map
+    vw_simplification
 )
 
 install(
-    TARGETS ${CARTOCROW_TARGET}
+    TARGETS cartocrow
     EXPORT ${CARTOCROW_EXPORT_TARGETS}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBRARY_DIR}
     INCLUDES DESTINATION ${CMAKE_INSTALL_SOURCE_DIR}
@@ -77,11 +66,11 @@ if(CARTOCROW_CREATE_ARCHIVE)
     add_custom_target(
         archive_cartocrow ALL
         COMMAND ${CMAKE_AR} rc ${CARTOCROW_ARCHIVE}
-        $<TARGET_FILE:${CARTOCROW_CORE_TARGET}>
-        $<TARGET_FILE:${CARTOCROW_RENDERER_TARGET}>
-        $<TARGET_FILE:${NECKLACE_MAP_TARGET}>
-        $<TARGET_FILE:${FLOW_MAP_TARGET}>
-        $<TARGET_FILE:${VWSIMPLIFICATION_TARGET}>
+        $<TARGET_FILE:core>
+        $<TARGET_FILE:renderer>
+        $<TARGET_FILE:necklace_map>
+        $<TARGET_FILE:flow_map>
+        $<TARGET_FILE:vw_simplification>
     )
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${CARTOCROW_ARCHIVE} DESTINATION ${CMAKE_INSTALL_LIBRARY_DIR})
 endif(CARTOCROW_CREATE_ARCHIVE)

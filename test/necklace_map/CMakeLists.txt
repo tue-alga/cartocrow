@@ -3,8 +3,8 @@ cartocrow_add_test(necklace_map)
 
 test_link_libraries(
     ${COMMON_CLA_TARGET}
-    ${NECKLACE_MAP_TARGET}
-    ${CARTOCROW_CORE_TARGET}
+    necklace_map
+    core
     CGAL::CGAL
     tinyxml2::tinyxml2
     gflags

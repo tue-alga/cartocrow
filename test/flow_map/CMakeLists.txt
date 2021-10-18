@@ -3,8 +3,8 @@ cartocrow_add_test(flow_map)
 
 test_link_libraries(
     ${COMMON_CLA_TARGET}
-    ${FLOW_MAP_TARGET}
-    ${CARTOCROW_CORE_TARGET}
+    flow_map
+    core
     CGAL::CGAL
     tinyxml2::tinyxml2
     gflags

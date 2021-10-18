@@ -5,9 +5,9 @@ target_link_libraries(
     ${TARGET}
     PRIVATE
     ${COMMON_CLA_TARGET}
-    ${NECKLACE_MAP_TARGET}
-    ${CARTOCROW_CORE_TARGET}
-    ${CARTOCROW_RENDERER_TARGET}
+    necklace_map
+    core
+    renderer
     CGAL::CGAL
     tinyxml2::tinyxml2
     Qt5::Widgets

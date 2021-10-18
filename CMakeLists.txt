@@ -29,19 +29,11 @@ macro(install_files_and_directories FILE_LIST ROOT_DIR)
     endforeach(FILE)
 endmacro(install_files_and_directories)
 
-# Project version.
-set(VERSION_MAJOR 0)
-set(VERSION_MINOR 1)
-set(VERSION_FEATURE 5)
-set(VERSION_PATCH 0)
-set(VERSION_PROJECT "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_FEATURE}.${VERSION_PATCH}")
-message(STATUS "${PROJECT_NAME} version: ${VERSION_PROJECT}")
-
 # Indicate the version to CMake (for find_package)
 include(CMakePackageConfigHelpers)
 write_basic_package_version_file(
     CartoCrowConfigVersion.cmake
-    VERSION ${VERSION_PROJECT}
+    VERSION 0.1.5
     COMPATIBILITY AnyNewerVersion
 )
 
@@ -98,15 +90,3 @@ install(
     DESTINATION ${INSTALL_CONFIG_DIR}/CartoCrow
 )
 
-# Custom install target for IDE.
-# Removed, because the install prefix is not propagated to the dependencies,
-# meaning that they will always try to install to the system directory.
-# So far, I have not found a way to check whether the project was created by an IDE or from the console or the CMake GUI,
-# which could then be used to manually set the install prefix.
-#set(CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_SOURCE_DIR}")
-#add_custom_target(
-#    install_${PROJECT_NAME}
-#    "${CMAKE_COMMAND}" --build "${CMAKE_BINARY_DIR}" --target install
-#    DEPENDS ${CARTOCROW_TARGET}
-#    COMMENT "Installing ${PROJECT_NAME}"
-#)

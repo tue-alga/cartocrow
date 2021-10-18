@@ -5,8 +5,8 @@ target_link_libraries(
     ${TARGET}
     PRIVATE
     ${COMMON_CLA_TARGET}
-    ${FLOW_MAP_TARGET}
-    ${CARTOCROW_CORE_TARGET}
+    flow_map
+    core
     CGAL::CGAL
     tinyxml2::tinyxml2
 )
