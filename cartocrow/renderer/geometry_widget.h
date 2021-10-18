@@ -76,8 +76,6 @@ class GeometryWidget : public QWidget, GeometryRenderer {
 	void setFill(Color color) override;
 	void setFillOpacity(int alpha) override;
 
-	//std::unique_ptr<QPainter> getQPainter() override;
-
   public slots:
 	/// Determines whether to draw the axes in the background.
 	void setDrawAxes(bool drawAxes);

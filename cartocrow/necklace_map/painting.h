@@ -21,9 +21,12 @@ class DrawNecklaceShapeVisitor : public NecklaceShapeVisitor {
 	renderer::GeometryRenderer& m_renderer;
 };
 
+/// The \ref renderer::GeometryPainting "GeometryPainting" for a necklace map.
 class Painting : public renderer::GeometryPainting {
 
   public:
+	/// Creates a new painting with the given map elements, necklaces, and scale
+	/// factor.
 	Painting(std::vector<MapElement::Ptr>& elements, std::vector<Necklace::Ptr>& necklaces,
 	         Number scale_factor);
 

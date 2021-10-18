@@ -130,26 +130,6 @@ class GeometryRenderer {
 	virtual void setFillOpacity(int alpha) = 0;
 
 	/// @}
-
-	/// \name Native painter access
-	/// @{
-
-	/// Accesses the underlying QPainter, or returns an empty pointer if this
-	/// GeometryRenderer does not target a QPainter.
-	/**
-	 * The caller is free to do with the QPainter what they wish, to do any
-	 * custom rendering required. The QPainter does not need to be restored to
-	 * its original state.
-	 */
-	/*virtual std::unique_ptr<QPainter> getQPainter() {
-		return std::unique_ptr<QPainter>();
-	}*/
-	// TODO [ws] This method cannot work like this, because it would need
-	// #include <QPainter>
-	// and that would mean we need to link to Qt everywhere in CartoCrow,
-	// which is ugly.
-
-	/// @}
 };
 
 } // namespace renderer

@@ -43,7 +43,7 @@ IpeReader::IpeReader() {}
 bool IpeReader::readFile(const std::filesystem::path& filename,
                          std::vector<necklace_map::MapElement::Ptr>& elements,
                          std::vector<necklace_map::Necklace::Ptr>& necklaces, Number& scale_factor) {
-	std::shared_ptr<ipe::Document> document = cartocrow::common::IpeReader::loadIpeFile(filename);
+	std::shared_ptr<ipe::Document> document = cartocrow::IpeReader::loadIpeFile(filename);
 
 	if (document->countPages() > 1) {
 		LOG(INFO) << "Ipe file has more than one page; using the first page";
@@ -98,7 +98,7 @@ bool IpeReader::readFile(const std::filesystem::path& filename,
 			} else if (p->type() == ipe::SubPath::EClosedSpline) {
 				Point kernel(300, 300); // TODO read kernel somehow from the Ipe file?
 				necklaceShape = std::make_shared<BezierNecklace>(
-				    common::IpeReader::convertPathToSpline(*p, matrix), kernel);
+				    cartocrow::IpeReader::convertPathToSpline(*p, matrix), kernel);
 			}
 			if (!necklaceShape) {
 				throw std::runtime_error("Found necklace with invalid shape " +
@@ -124,7 +124,7 @@ bool IpeReader::readFile(const std::filesystem::path& filename,
 		// interpret filled paths as regions
 		if (path->pathMode() == ipe::TPathMode::EStrokedAndFilled) {
 			std::vector<Polygon_with_holes> polygons =
-			    common::IpeReader::convertShapeToPolygons(shape, matrix);
+			    cartocrow::IpeReader::convertShapeToPolygons(shape, matrix);
 			std::optional<size_t> labelId = findLabelInside(polygons, labels);
 			if (!labelId.has_value()) {
 				LOG(WARNING) << "Ignoring region without label";
@@ -134,7 +134,7 @@ bool IpeReader::readFile(const std::filesystem::path& filename,
 			std::string name = labels[labelId.value()].text;
 			auto element = std::make_shared<necklace_map::MapElement>(name);
 			element->region.shape = polygons;
-			element->color = common::IpeReader::convertIpeColor(path->fill().color());
+			element->color = cartocrow::IpeReader::convertIpeColor(path->fill().color());
 			if (necklaceForLayer.find(layer) == necklaceForLayer.end()) {
 				std::string layerName(page->layer(layer).data(), page->layer(layer).size());
 				throw std::runtime_error("Encountered layer " + layerName + " without a necklace");

@@ -31,29 +31,29 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <ipedoc.h>
 #include <ipeshape.h>
 
-namespace cartocrow::common {
+namespace cartocrow {
 
-//! Various utility methods for reading Ipe files.
+/// Various utility methods for reading Ipe files.
 class IpeReader {
   public:
-	//! Loads the given Ipe file into an Ipe document.
+	/// Loads the given Ipe file into an Ipe document.
 	/**
 	 * This encapsulates the things necessary in Ipelib to load from the file.
      * It throws an exception if the file could not be read correctly.
 	 */
 	static std::shared_ptr<ipe::Document> loadIpeFile(const std::filesystem::path& filename);
-	//! Converts an Ipe color to a CartoCrow color.
+	/// Converts an Ipe color to a CartoCrow color.
 	static Color convertIpeColor(ipe::Color color);
-	//! Converts an Ipe shape to a list of polygons.
+	/// Converts an Ipe shape to a list of polygons.
 	/**
 	 * Throws if the shape contains a non-polygonal boundary.
 	 */
 	static std::vector<Polygon_with_holes> convertShapeToPolygons(const ipe::Shape& shape,
 	                                                              const ipe::Matrix& matrix);
-	//! Converts an Ipe path to a Bézier spline.
+	/// Converts an Ipe path to a Bézier spline.
 	static BezierSpline convertPathToSpline(const ipe::SubPath& path, const ipe::Matrix& matrix);
 };
 
-} // namespace cartocrow::common
+} // namespace cartocrow
 
 #endif //CARTOCROW_COMMON_IO_IPE_READER_H

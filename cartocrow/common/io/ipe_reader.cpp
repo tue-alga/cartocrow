@@ -30,7 +30,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <stdexcept>
 #include <string>
 
-namespace cartocrow::common {
+namespace cartocrow {
 
 std::shared_ptr<ipe::Document> IpeReader::loadIpeFile(const std::filesystem::path& filename) {
 	std::fstream fin(filename);
@@ -111,4 +111,4 @@ BezierSpline IpeReader::convertPathToSpline(const ipe::SubPath& path, const ipe:
 	return spline;
 }
 
-} // namespace cartocrow::common
+} // namespace cartocrow
