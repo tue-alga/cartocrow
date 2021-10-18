@@ -25,6 +25,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <ipedoc.h>
 #include <ipegeo.h>
 #include <ipeiml.h>
+#include <ipereference.h>
 #include <ipestyle.h>
 #include <ipetext.h>
 
@@ -43,6 +44,20 @@ void IpeRenderer::save(const std::filesystem::path& file) {
 	layout.iOrigin = ipe::Vector(0, 0);
 	layout.iPaperSize = ipe::Vector(1000, 1000);
 	layout.iFrameSize = ipe::Vector(1000, 1000);
+
+	std::string diskMarkDefinition =
+	    "<ipestyle name=\"marks\">\n"
+	    "<symbol name=\"mark/disk(sx)\" transformations=\"translations\">\n"
+	    "<path fill=\"sym-stroke\">\n"
+	    "0.6 0 0 0.6 0 0 e\n"
+	    "</path>\n"
+	    "</symbol>\n"
+	    "</ipestyle>";
+	ipe::Buffer styleBuffer(diskMarkDefinition.data(), diskMarkDefinition.size());
+	ipe::BufferSource styleSource(styleBuffer);
+	ipe::ImlParser styleParser(styleSource);
+	ipe::StyleSheet* diskSheet = styleParser.parseStyleSheet();
+	document.cascade()->insert(0, diskSheet);
 
 	ipe::StyleSheet* sizeSheet = new ipe::StyleSheet();
 	sizeSheet->setName("paper-size");
@@ -65,12 +80,10 @@ void IpeRenderer::save(const std::filesystem::path& file) {
 }
 
 void IpeRenderer::draw(const Point& p) {
-	/*m_painter->setPen(Qt::NoPen);
-	m_painter->setBrush(m_style.m_strokeColor);
-	QPointF p2 = convertPoint(p);
-	m_painter->drawEllipse(QRectF(p2.x() - 0.5 * m_style.m_pointSize,
-	                              p2.y() - 0.5 * m_style.m_pointSize, m_style.m_pointSize,
-	                              m_style.m_pointSize));*/
+	ipe::Vector vector(p.x(), p.y());
+	ipe::Attribute name = ipe::Attribute(true, "mark/disk(sx)");
+	ipe::Reference* reference = new ipe::Reference(getAttributesForStyle(), name, vector);
+	m_page->append(ipe::TSelect::ENotSelected, 0, reference);
 }
 
 void IpeRenderer::draw(const Segment& s) {
