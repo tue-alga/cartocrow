@@ -23,6 +23,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <ipeattributes.h>
 #include <ipebase.h>
 #include <ipedoc.h>
+#include <ipegeo.h>
 #include <ipeiml.h>
 #include <ipestyle.h>
 #include <ipetext.h>
@@ -141,6 +142,22 @@ void IpeRenderer::draw(const Box& b) {
 	curve->appendSegment(ipe::Vector(b.xmax(), b.ymin()), ipe::Vector(b.xmax(), b.ymax()));
 	curve->appendSegment(ipe::Vector(b.xmax(), b.ymax()), ipe::Vector(b.xmin(), b.ymax()));
 	curve->setClosed(true);
+	ipe::Shape* shape = new ipe::Shape();
+	shape->appendSubPath(curve);
+	ipe::Path* path = new ipe::Path(getAttributesForStyle(), *shape);
+	m_page->append(ipe::TSelect::ENotSelected, 0, path);
+}
+
+void IpeRenderer::draw(const BezierSpline& s) {
+	ipe::Curve* curve = new ipe::Curve();
+	for (BezierCurve c : s.curves()) {
+		std::vector<ipe::Vector> coords;
+		coords.emplace_back(c.source().x(), c.source().y());
+		coords.emplace_back(c.source_control().x(), c.source_control().y());
+		coords.emplace_back(c.target_control().x(), c.target_control().y());
+		coords.emplace_back(c.target().x(), c.target().y());
+		curve->appendSpline(coords);
+	}
 	ipe::Shape* shape = new ipe::Shape();
 	shape->appendSubPath(curve);
 	ipe::Path* path = new ipe::Path(getAttributesForStyle(), *shape);

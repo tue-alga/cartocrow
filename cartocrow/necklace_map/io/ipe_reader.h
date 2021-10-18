@@ -31,9 +31,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <ipebase.h>
 #include <ipelib.h>
 
+#include "cartocrow/common/polygon.h"
 #include "cartocrow/necklace_map/map_element.h"
 #include "cartocrow/necklace_map/necklace.h"
-#include "install/include/cartocrow/common/polygon.h"
 
 namespace cartocrow::necklace_map {
 
@@ -43,8 +43,7 @@ class IpeReader {
 
 	bool readFile(const std::filesystem::path& filename,
 	              std::vector<necklace_map::MapElement::Ptr>& elements,
-	              std::vector<necklace_map::Necklace::Ptr>& necklaces, Number& scale_factor,
-	              int max_retries = 2);
+	              std::vector<necklace_map::Necklace::Ptr>& necklaces, Number& scale_factor);
 
   private:
 	struct Label {
@@ -52,9 +51,8 @@ class IpeReader {
 		std::string text;
 		bool matched;
 	};
-	Region::PolygonSet convertIpeShape(ipe::Shape shape, ipe::Matrix matrix);
-	Color convertIpeColor(ipe::Color color);
-	std::optional<size_t> findLabelInside(Region::PolygonSet& polygons, std::vector<Label>& labels);
+	std::optional<size_t> findLabelInside(std::vector<Polygon_with_holes>& polygons,
+	                                      std::vector<Label>& labels);
 };
 
 } // namespace cartocrow::necklace_map

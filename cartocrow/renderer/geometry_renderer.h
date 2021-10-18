@@ -21,6 +21,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #define CARTOCROW_GEOMETRY_RENDERER
 
 #define _USE_MATH_DEFINES
+#include <cartocrow/common/bezier_spline.h>
 #include <cartocrow/common/cgal_types.h>
 #include <cartocrow/common/polygon.h>
 #include <cartocrow/common/region.h>
@@ -96,9 +97,11 @@ class GeometryRenderer {
 	/// Draws a polygon with holes with the currently set style.
 	virtual void draw(const Polygon_with_holes& p) = 0;
 	/// Draws a circle with the currently set style.
-	virtual void draw(const Circle& p) = 0;
+	virtual void draw(const Circle& c) = 0;
 	/// Draws an axis-aligned bounding box with the currently set style.
-	virtual void draw(const Box& p) = 0;
+	virtual void draw(const Box& b) = 0;
+	/// Draws a Bézier spline with the currently set style.
+	virtual void draw(const BezierSpline& s) = 0;
 	/// Draws a map region with the currently set style.
 	virtual void draw(const Region& r);
 

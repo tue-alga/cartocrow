@@ -303,6 +303,17 @@ void GeometryWidget::draw(const Box& b) {
 	m_painter->drawRect(rect);
 }
 
+void GeometryWidget::draw(const BezierSpline& s) {
+	setupPainter();
+	QPainterPath path;
+	path.moveTo(convertPoint(s.curves()[0].source()));
+	for (BezierCurve c : s.curves()) {
+		path.cubicTo(convertPoint(c.source_control()), convertPoint(c.target_control()),
+		             convertPoint(c.target()));
+	}
+	m_painter->drawPath(path);
+}
+
 void GeometryWidget::drawText(const Point& p, const std::string& text) {
 	setupPainter();
 	QPointF p2 = convertPoint(p);

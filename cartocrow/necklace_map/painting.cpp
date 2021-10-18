@@ -14,8 +14,7 @@ void DrawNecklaceShapeVisitor::Visit(CircleNecklace& shape) {
 }
 
 void DrawNecklaceShapeVisitor::Visit(BezierNecklace& shape) {
-	// TODO
-	std::cout << "Cannot draw Bézier necklaces\n";
+	m_renderer.draw(shape.spline());
 }
 
 Painting::Painting(std::vector<MapElement::Ptr>& elements, std::vector<Necklace::Ptr>& necklaces,

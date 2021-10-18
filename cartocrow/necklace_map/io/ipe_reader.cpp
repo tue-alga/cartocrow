@@ -20,6 +20,10 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include "ipe_reader.h"
+
+#include "cartocrow/common/io/ipe_reader.h"
+#include "cartocrow/common/polygon.h"
+#include "cartocrow/necklace_map/bezier_necklace.h"
 #include "cartocrow/necklace_map/circle_necklace.h"
 #include "cartocrow/necklace_map/necklace_shape.h"
 
@@ -27,6 +31,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <glog/logging.h>
 
 #include <fstream>
+#include <ipeshape.h>
 #include <memory>
 #include <optional>
 #include <string>
@@ -37,42 +42,8 @@ IpeReader::IpeReader() {}
 
 bool IpeReader::readFile(const std::filesystem::path& filename,
                          std::vector<necklace_map::MapElement::Ptr>& elements,
-                         std::vector<necklace_map::Necklace::Ptr>& necklaces, Number& scale_factor,
-                         int max_retries) {
-	std::string input;
-	try {
-		std::fstream fin(filename);
-		if (fin) {
-			using Iterator = std::istreambuf_iterator<char>;
-			input.assign(Iterator(fin), Iterator());
-		}
-	} catch (const std::exception& e) {
-		LOG(ERROR) << e.what();
-	}
-
-	ipe::Platform::initLib(70224);
-	int load_reason = 0;
-	ipe::Buffer buffer(input.c_str(), input.size());
-	ipe::BufferSource bufferSource(buffer);
-	ipe::FileFormat format = ipe::Document::fileFormat(bufferSource);
-	ipe::Document* document = ipe::Document::load(bufferSource, format, load_reason);
-
-	if (load_reason > 0) {
-		LOG(ERROR) << "Unable to load Ipe file: parse error at position " << load_reason;
-		return false;
-	} else if (load_reason == ipe::Document::EVersionTooOld) {
-		LOG(ERROR) << "Unable to load Ipe file: the version of the file is too old";
-		return false;
-	} else if (load_reason == ipe::Document::EVersionTooRecent) {
-		LOG(ERROR) << "Unable to load Ipe file: the file version is newer than Ipelib";
-		return false;
-	} else if (load_reason == ipe::Document::EFileOpenError) {
-		LOG(ERROR) << "Unable to load Ipe file: error opening the file";
-		return false;
-	} else if (load_reason == ipe::Document::ENotAnIpeFile) {
-		LOG(ERROR) << "Unable to load Ipe file: the file was not created by Ipe";
-		return false;
-	}
+                         std::vector<necklace_map::Necklace::Ptr>& necklaces, Number& scale_factor) {
+	std::shared_ptr<ipe::Document> document = cartocrow::common::IpeReader::loadIpeFile(filename);
 
 	if (document->countPages() > 1) {
 		LOG(INFO) << "Ipe file has more than one page; using the first page";
@@ -118,15 +89,20 @@ bool IpeReader::readFile(const std::filesystem::path& filename,
 			const ipe::SubPath* p = shape.subPath(0);
 			NecklaceShape::Ptr necklaceShape;
 			if (p->type() == ipe::SubPath::EEllipse) {
+				// circle necklace
 				ipe::Matrix m = matrix * p->asEllipse()->matrix();
 				ipe::Vector position = m.translation();
 				double size_squared = m.a[0] * m.a[0];
 				necklaceShape = std::make_shared<CircleNecklace>(
 				    Circle(Point(position.x, position.y), size_squared));
+			} else if (p->type() == ipe::SubPath::EClosedSpline) {
+				Point kernel(300, 300); // TODO read kernel somehow from the Ipe file?
+				necklaceShape = std::make_shared<BezierNecklace>(
+				    common::IpeReader::convertPathToSpline(*p, matrix), kernel);
 			}
-			// TODO read Bézier necklaces
 			if (!necklaceShape) {
-				throw std::runtime_error("Found necklace with invalid shape");
+				throw std::runtime_error("Found necklace with invalid shape " +
+				                         std::to_string(p->type()));
 			}
 			auto necklace = std::make_shared<Necklace>("necklace", necklaceShape);
 			necklaces.push_back(necklace);
@@ -147,7 +123,8 @@ bool IpeReader::readFile(const std::filesystem::path& filename,
 		ipe::Shape shape = path->shape();
 		// interpret filled paths as regions
 		if (path->pathMode() == ipe::TPathMode::EStrokedAndFilled) {
-			Region::PolygonSet polygons = convertIpeShape(shape, matrix);
+			std::vector<Polygon_with_holes> polygons =
+			    common::IpeReader::convertShapeToPolygons(shape, matrix);
 			std::optional<size_t> labelId = findLabelInside(polygons, labels);
 			if (!labelId.has_value()) {
 				LOG(WARNING) << "Ignoring region without label";
@@ -157,7 +134,7 @@ bool IpeReader::readFile(const std::filesystem::path& filename,
 			std::string name = labels[labelId.value()].text;
 			auto element = std::make_shared<necklace_map::MapElement>(name);
 			element->region.shape = polygons;
-			element->color = convertIpeColor(path->fill().color());
+			element->color = common::IpeReader::convertIpeColor(path->fill().color());
 			if (necklaceForLayer.find(layer) == necklaceForLayer.end()) {
 				std::string layerName(page->layer(layer).data(), page->layer(layer).size());
 				throw std::runtime_error("Encountered layer " + layerName + " without a necklace");
@@ -170,35 +147,7 @@ bool IpeReader::readFile(const std::filesystem::path& filename,
 	return true;
 }
 
-Region::PolygonSet IpeReader::convertIpeShape(ipe::Shape shape, ipe::Matrix matrix) {
-	Region::PolygonSet polygons;
-	for (int i = 0; i < shape.countSubPaths(); i++) {
-		Polygon polygon;
-		const ipe::Curve* curve = shape.subPath(i)->asCurve();
-		for (int j = 0; j < curve->countSegments(); ++j) {
-			ipe::CurveSegment segment = curve->segment(j);
-			if (segment.type() != ipe::CurveSegment::ESegment) {
-				throw std::runtime_error("Encountered shape with a non-polygonal boundary");
-			}
-			if (j == 0) {
-				ipe::Vector v = matrix * segment.cp(0);
-				polygon.push_back(Point(v.x, v.y));
-			}
-			ipe::Vector v = matrix * segment.last();
-			polygon.push_back(Point(v.x, v.y));
-		}
-		polygons.push_back(Polygon_with_holes(polygon));
-	}
-	return polygons;
-}
-
-Color IpeReader::convertIpeColor(ipe::Color color) {
-	return Color{static_cast<int>(color.iRed.toDouble() * 255),
-	             static_cast<int>(color.iGreen.toDouble() * 255),
-	             static_cast<int>(color.iBlue.toDouble() * 255)};
-}
-
-std::optional<size_t> IpeReader::findLabelInside(Region::PolygonSet& polygons,
+std::optional<size_t> IpeReader::findLabelInside(std::vector<Polygon_with_holes>& polygons,
                                                  std::vector<Label>& labels) {
 	for (size_t i = 0; i < labels.size(); ++i) {
 		Label& label = labels[i];
