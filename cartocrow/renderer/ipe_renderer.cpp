@@ -94,6 +94,11 @@ void IpeRenderer::draw(const Segment& s) {
 	shape->appendSubPath(curve);
 	ipe::Path* path = new ipe::Path(getAttributesForStyle(), *shape);
 	m_page->append(ipe::TSelect::ENotSelected, 0, path);
+
+	if (m_style.m_mode & vertices) {
+		draw(s.start());
+		draw(s.end());
+	}
 }
 
 void IpeRenderer::draw(const Polygon& p) {
