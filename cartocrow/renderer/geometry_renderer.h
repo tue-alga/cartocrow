@@ -21,10 +21,10 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #define CARTOCROW_GEOMETRY_RENDERER
 
 #define _USE_MATH_DEFINES
-#include <cartocrow/common/bezier_spline.h>
-#include <cartocrow/common/cgal_types.h>
-#include <cartocrow/common/polygon.h>
-#include <cartocrow/common/region.h>
+#include <cartocrow/core/bezier_spline.h>
+#include <cartocrow/core/cgal_types.h>
+#include <cartocrow/core/polygon.h>
+#include <cartocrow/core/region.h>
 
 namespace cartocrow {
 namespace renderer {

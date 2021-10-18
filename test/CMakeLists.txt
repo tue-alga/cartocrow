@@ -87,7 +87,7 @@ target_compile_definitions(${TARGET} PUBLIC "CARTOCROW_DISABLE_SUITE_MAIN")
 # - The executables are named after the library they test.
 # - The executable targets start with "test_".
 
-add_subdirectory(common)
+add_subdirectory(core)
 add_subdirectory(necklace_map)
 add_subdirectory(flow_map)
 

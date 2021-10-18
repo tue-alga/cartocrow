@@ -27,7 +27,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 31-08-2020
 #include <gflags/gflags.h>
 #include <glog/logging.h>
 
-#include <cartocrow/common/timer.h>
+#include <cartocrow/core/timer.h>
 #include <cartocrow/flow_map/flow_map.h>
 #include <console/common/utils_cla.h>
 #include <console/common/utils_flags.h>

@@ -28,7 +28,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 29-01-2020
 #include <ostream>
 #include <vector>
 
-#include "cartocrow/common/core_types.h"
+#include "cartocrow/core/core_types.h"
 #include "cartocrow/necklace_map/io/write_options.h"
 #include "cartocrow/necklace_map/map_element.h"
 #include "cartocrow/necklace_map/necklace.h"

@@ -27,7 +27,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-2019
 #include <gflags/gflags.h>
 #include <glog/logging.h>
 
-#include <cartocrow/common/timer.h>
+#include <cartocrow/core/timer.h>
 #include <cartocrow/necklace_map/necklace_map.h>
 
 #include <console/common/utils_cla.h>

@@ -25,8 +25,8 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-2019
 
 #include <vector>
 
-#include <cartocrow/common/core_types.h>
-#include <cartocrow/common/region.h>
+#include <cartocrow/core/core_types.h>
+#include <cartocrow/core/region.h>
 
 #include "cartocrow/necklace_map/compute_feasible_interval.h"
 #include "cartocrow/necklace_map/compute_scale_factor.h"

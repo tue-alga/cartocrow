@@ -25,7 +25,7 @@ Created by Wouter Meulemans (w.meulemans@tue.nl) on 31-08-2021
 #include <queue>
 #include <vector>
 
-#include "cartocrow/common/core_types.h"
+#include "cartocrow/core/core_types.h"
 
 namespace cartocrow {
 namespace visvalingam_whyatt {

@@ -23,8 +23,8 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 01-04-2020
 #ifndef CARTOCROW_NECKLACE_MAP_NECKLACE_INTERVAL_H
 #define CARTOCROW_NECKLACE_MAP_NECKLACE_INTERVAL_H
 
-#include "cartocrow/common/circular_range.h"
-#include "cartocrow/common/core_types.h"
+#include "cartocrow/core/circular_range.h"
+#include "cartocrow/core/core_types.h"
 
 namespace cartocrow {
 namespace necklace_map {

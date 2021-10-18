@@ -25,8 +25,8 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 16-10-2020
 
 #include <glog/logging.h>
 
-#include "cartocrow/common/bounding_box.h"
-#include "cartocrow/common/spiral.h"
+#include "cartocrow/core/bounding_box.h"
+#include "cartocrow/core/spiral.h"
 
 namespace cartocrow {
 namespace {

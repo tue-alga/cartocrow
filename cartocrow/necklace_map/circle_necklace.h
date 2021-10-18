@@ -23,7 +23,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 25-02-2020
 #ifndef CARTOCROW_NECKLACE_MAP_CIRCLE_NECKLACE_H
 #define CARTOCROW_NECKLACE_MAP_CIRCLE_NECKLACE_H
 
-#include "cartocrow/common/core_types.h"
+#include "cartocrow/core/core_types.h"
 #include "cartocrow/necklace_map/necklace_shape.h"
 
 namespace cartocrow {

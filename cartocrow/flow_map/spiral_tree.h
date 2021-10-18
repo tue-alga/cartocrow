@@ -30,7 +30,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 28-10-2020
 #include <queue>
 #include <vector>
 
-#include "cartocrow/common/region.h"
+#include "cartocrow/core/region.h"
 #include "cartocrow/flow_map/place.h"
 
 namespace cartocrow {

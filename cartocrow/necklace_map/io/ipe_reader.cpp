@@ -21,8 +21,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "ipe_reader.h"
 
-#include "cartocrow/common/io/ipe_reader.h"
-#include "cartocrow/common/polygon.h"
+#include "cartocrow/core/io/ipe_reader.h"
+#include "cartocrow/core/polygon.h"
 #include "cartocrow/necklace_map/bezier_necklace.h"
 #include "cartocrow/necklace_map/circle_necklace.h"
 #include "cartocrow/necklace_map/necklace_shape.h"

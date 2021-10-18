@@ -27,11 +27,11 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 28-10-2020
 
 #include <glog/logging.h>
 
-#include "cartocrow/common/circular_range.h"
-#include "cartocrow/common/circulator.h"
-#include "cartocrow/common/intersections.h"
-#include "cartocrow/common/polar_segment.h"
-#include "cartocrow/common/spiral_segment.h"
+#include "cartocrow/core/circular_range.h"
+#include "cartocrow/core/circulator.h"
+#include "cartocrow/core/intersections.h"
+#include "cartocrow/core/polar_segment.h"
+#include "cartocrow/core/spiral_segment.h"
 
 namespace cartocrow {
 namespace flow_map {

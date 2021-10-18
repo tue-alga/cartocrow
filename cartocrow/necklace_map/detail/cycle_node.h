@@ -25,7 +25,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 23-01-2020
 
 #include <memory>
 
-#include "cartocrow/common/core_types.h"
+#include "cartocrow/core/core_types.h"
 #include "cartocrow/necklace_map/bead.h"
 
 namespace cartocrow {

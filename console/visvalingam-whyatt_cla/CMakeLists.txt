@@ -6,7 +6,7 @@ target_link_libraries(
     PRIVATE
     ${COMMON_CLA_TARGET}
     ${VWSIMPLIFICATION_TARGET}
-    ${CARTOCROW_COMMON_TARGET}
+    ${CARTOCROW_CORE_TARGET}
     CGAL::CGAL
     tinyxml2::tinyxml2
 )

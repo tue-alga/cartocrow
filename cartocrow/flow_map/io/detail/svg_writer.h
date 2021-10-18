@@ -30,9 +30,9 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 16-10-2020
 
 #include <tinyxml2.h>
 
-#include "cartocrow/common/core_types.h"
-#include "cartocrow/common/region.h"
-#include "cartocrow/common/spiral.h"
+#include "cartocrow/core/core_types.h"
+#include "cartocrow/core/region.h"
+#include "cartocrow/core/spiral.h"
 #include "cartocrow/flow_map/flow_tree.h"
 #include "cartocrow/flow_map/io/write_options.h"
 

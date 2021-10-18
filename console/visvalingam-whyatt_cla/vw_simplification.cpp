@@ -24,8 +24,8 @@ Created by Wouter Meulemans (w.meulemans@tue.nl) on 31-08-2021
 #include <gflags/gflags.h>
 #include <glog/logging.h>
 
-#include <cartocrow/common/core_types.h>
-#include <cartocrow/common/timer.h>
+#include <cartocrow/core/core_types.h>
+#include <cartocrow/core/timer.h>
 #include <cartocrow/visvalingam-whyatt/vw_simplification.h>
 
 #include <console/common/utils_cla.h>

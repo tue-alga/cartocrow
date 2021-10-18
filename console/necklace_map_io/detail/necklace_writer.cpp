@@ -27,7 +27,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 29-01-2020
 
 #include <glog/logging.h>
 
-#include "cartocrow/common/bounding_box.h"
+#include "cartocrow/core/bounding_box.h"
 
 namespace cartocrow {
 namespace {

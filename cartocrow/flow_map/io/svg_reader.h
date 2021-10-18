@@ -31,7 +31,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 04-09-2020
 
 #include <gflags/gflags.h>
 
-#include "cartocrow/common/region.h"
+#include "cartocrow/core/region.h"
 #include "cartocrow/flow_map/place.h"
 
 namespace cartocrow {

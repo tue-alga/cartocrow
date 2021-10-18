@@ -26,8 +26,8 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-2019
 
 #include <string>
 
-#include <cartocrow/common/core_types.h>
-#include <cartocrow/common/region.h>
+#include <cartocrow/core/core_types.h>
+#include <cartocrow/core/region.h>
 
 #include "cartocrow/flow_map/flow_tree.h"
 #include "cartocrow/flow_map/io/data_reader.h"

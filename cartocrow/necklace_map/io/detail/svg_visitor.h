@@ -30,8 +30,8 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 26-11-2019
 
 #include <tinyxml2.h>
 
-#include "cartocrow/common/core_types.h"
-#include "cartocrow/common/detail/svg_visitor.h"
+#include "cartocrow/core/core_types.h"
+#include "cartocrow/core/detail/svg_visitor.h"
 #include "cartocrow/necklace_map/bead.h"
 #include "cartocrow/necklace_map/map_element.h"
 #include "cartocrow/necklace_map/necklace.h"

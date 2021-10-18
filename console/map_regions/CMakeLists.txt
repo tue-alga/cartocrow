@@ -7,7 +7,7 @@ target_link_libraries(
     ${NECKLACE_MAP_IO_TARGET}
     ${COMMON_CLA_TARGET}
     ${NECKLACE_MAP_TARGET}
-    ${CARTOCROW_COMMON_TARGET}
+    ${CARTOCROW_CORE_TARGET}
     CGAL::CGAL
     tinyxml2::tinyxml2
 )

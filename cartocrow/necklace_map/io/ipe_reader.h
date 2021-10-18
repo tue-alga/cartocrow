@@ -31,7 +31,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <ipebase.h>
 #include <ipelib.h>
 
-#include "cartocrow/common/polygon.h"
+#include "cartocrow/core/polygon.h"
 #include "cartocrow/necklace_map/map_element.h"
 #include "cartocrow/necklace_map/necklace.h"
 

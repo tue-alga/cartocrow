@@ -30,7 +30,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 03-12-2019
 #include <unordered_map>
 #include <vector>
 
-#include "cartocrow/common/detail/table_parser.h"
+#include "cartocrow/core/detail/table_parser.h"
 #include "cartocrow/necklace_map/map_element.h"
 
 namespace cartocrow {

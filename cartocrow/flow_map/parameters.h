@@ -24,7 +24,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 02-09-2020
 #ifndef CARTOCROW_FLOW_MAP_PARAMETERS_H
 #define CARTOCROW_FLOW_MAP_PARAMETERS_H
 
-#include "cartocrow/common/core_types.h"
+#include "cartocrow/core/core_types.h"
 
 namespace cartocrow {
 namespace flow_map {

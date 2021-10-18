@@ -25,7 +25,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 02-04-2020
 
 #include <vector>
 
-#include "cartocrow/common/core_types.h"
+#include "cartocrow/core/core_types.h"
 #include "cartocrow/necklace_map/detail/check_feasible.h"
 #include "cartocrow/necklace_map/detail/cycle_node_layered.h"
 #include "cartocrow/necklace_map/necklace.h"

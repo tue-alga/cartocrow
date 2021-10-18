@@ -27,7 +27,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 16-10-2020
 #include <memory>
 #include <vector>
 
-#include "cartocrow/common/spiral.h"
+#include "cartocrow/core/spiral.h"
 #include "cartocrow/flow_map/place.h"
 #include "cartocrow/flow_map/spiral_tree.h"
 

@@ -1,5 +1,5 @@
 #include "painting.h"
-#include "cartocrow/common/cgal_types.h"
+#include "cartocrow/core/cgal_types.h"
 #include "cartocrow/necklace_map/bezier_necklace.h"
 #include "cartocrow/necklace_map/circle_necklace.h"
 

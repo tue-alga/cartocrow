@@ -30,9 +30,9 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 04-09-2020
 
 #include <tinyxml2.h>
 
-#include "cartocrow/common/core_types.h"
-#include "cartocrow/common/detail/svg_visitor.h"
-#include "cartocrow/common/region.h"
+#include "cartocrow/core/core_types.h"
+#include "cartocrow/core/detail/svg_visitor.h"
+#include "cartocrow/core/region.h"
 #include "cartocrow/flow_map/place.h"
 
 namespace cartocrow {

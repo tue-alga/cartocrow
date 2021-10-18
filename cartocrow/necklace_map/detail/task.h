@@ -25,9 +25,9 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 06-05-2020
 
 #include <vector>
 
-#include "cartocrow/common/bit_string.h"
-#include "cartocrow/common/core_types.h"
-#include "cartocrow/common/range.h"
+#include "cartocrow/core/bit_string.h"
+#include "cartocrow/core/core_types.h"
+#include "cartocrow/core/range.h"
 #include "cartocrow/necklace_map/detail/cycle_node_layered.h"
 
 namespace cartocrow {

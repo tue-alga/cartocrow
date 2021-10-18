@@ -28,7 +28,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 06-05-2020
 #include <memory>
 #include <vector>
 
-#include "cartocrow/common/range.h"
+#include "cartocrow/core/range.h"
 #include "cartocrow/necklace_map/bead.h"
 #include "cartocrow/necklace_map/detail/cycle_node.h"
 #include "cartocrow/necklace_map/detail/cycle_node_layered.h"

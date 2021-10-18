@@ -31,13 +31,13 @@ endmacro(cartocrow_add_library)
 
 # Add the individual libraries per geo-visualization method.
 # Note that each of these will have to be added to the CartoCrow interface target and the CartoCrow library archive.
-add_subdirectory(common)
+add_subdirectory(core)
 add_subdirectory(renderer)
 add_subdirectory(necklace_map)
 add_subdirectory(flow_map)
 add_subdirectory(visvalingam-whyatt)
 
-set(CARTOCROW_COMMON_TARGET ${CARTOCROW_COMMON_TARGET} PARENT_SCOPE)
+set(CARTOCROW_CORE_TARGET ${CARTOCROW_CORE_TARGET} PARENT_SCOPE)
 set(CARTOCROW_RENDERER_TARGET ${CARTOCROW_RENDERER_TARGET} PARENT_SCOPE)
 set(NECKLACE_MAP_TARGET ${NECKLACE_MAP_TARGET} PARENT_SCOPE)
 set(FLOW_MAP_TARGET ${FLOW_MAP_TARGET} PARENT_SCOPE)
@@ -50,7 +50,7 @@ set(VWSIMPLIFICATION_TARGET ${VWSIMPLIFICATION_TARGET} PARENT_SCOPE)
 add_library(${CARTOCROW_TARGET} INTERFACE)
 target_link_libraries(
     ${CARTOCROW_TARGET} INTERFACE
-    ${CARTOCROW_COMMON_TARGET}
+    ${CARTOCROW_CORE_TARGET}
     ${CARTOCROW_RENDERER_TARGET}
     ${NECKLACE_MAP_TARGET}
     ${FLOW_MAP_TARGET}
@@ -77,7 +77,7 @@ if(CARTOCROW_CREATE_ARCHIVE)
     add_custom_target(
         archive_cartocrow ALL
         COMMAND ${CMAKE_AR} rc ${CARTOCROW_ARCHIVE}
-        $<TARGET_FILE:${CARTOCROW_COMMON_TARGET}>
+        $<TARGET_FILE:${CARTOCROW_CORE_TARGET}>
         $<TARGET_FILE:${CARTOCROW_RENDERER_TARGET}>
         $<TARGET_FILE:${NECKLACE_MAP_TARGET}>
         $<TARGET_FILE:${FLOW_MAP_TARGET}>

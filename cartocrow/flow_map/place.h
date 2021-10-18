@@ -26,8 +26,8 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 04-09-2020
 
 #include <memory>
 
-#include "cartocrow/common/core_types.h"
-#include "cartocrow/common/polar_point.h"
+#include "cartocrow/core/core_types.h"
+#include "cartocrow/core/polar_point.h"
 
 namespace cartocrow {
 namespace flow_map {

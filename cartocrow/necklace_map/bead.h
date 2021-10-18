@@ -25,8 +25,8 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 15-01-2020
 
 #include <memory>
 
-#include "cartocrow/common/circular_range.h"
-#include "cartocrow/common/core_types.h"
+#include "cartocrow/core/circular_range.h"
+#include "cartocrow/core/core_types.h"
 
 namespace cartocrow {
 namespace necklace_map {

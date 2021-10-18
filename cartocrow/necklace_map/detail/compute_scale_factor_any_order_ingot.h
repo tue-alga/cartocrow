@@ -25,7 +25,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 06-05-2020
 
 #include "cartocrow/necklace_map/detail/compute_scale_factor_any_order.h"
 
-#include "cartocrow/common/core_types.h"
+#include "cartocrow/core/core_types.h"
 #include "cartocrow/necklace_map/necklace.h"
 
 namespace cartocrow {

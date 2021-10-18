@@ -29,7 +29,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-04-2020
 
 #include <glog/logging.h>
 
-#include <cartocrow/common/timer.h>
+#include <cartocrow/core/timer.h>
 #include <cartocrow/flow_map/flow_map.h>
 #include <cmake/cartocrow_test_config.h>
 

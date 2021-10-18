@@ -25,10 +25,10 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 04-09-2020
 
 #include <glog/logging.h>
 
-#include "cartocrow/common/detail/svg_bezier_parser.h"
-#include "cartocrow/common/detail/svg_path_parser.h"
-#include "cartocrow/common/detail/svg_point_parser.h"
-#include "cartocrow/common/detail/svg_polygon_parser.h"
+#include "cartocrow/core/detail/svg_bezier_parser.h"
+#include "cartocrow/core/detail/svg_path_parser.h"
+#include "cartocrow/core/detail/svg_point_parser.h"
+#include "cartocrow/core/detail/svg_polygon_parser.h"
 
 namespace cartocrow {
 namespace flow_map {
