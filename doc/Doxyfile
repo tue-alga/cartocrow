@@ -7,7 +7,6 @@ OUTPUT_DIRECTORY       = "doc/out"
 MULTILINE_CPP_IS_BRIEF = YES
 EXTENSION_MAPPING      = inc=C++
 AUTOLINK_SUPPORT       = NO
-BUILTIN_STL_SUPPORT    = YES
 
 EXTRACT_ALL            = YES
 EXTRACT_PRIVATE        = YES
@@ -42,6 +41,7 @@ TAGFILES              += ../qt5.15-tags/qtcore.tags=http://doc.qt.io/qt-5/
 TAGFILES              += ../qt5.15-tags/qtgui.tags=http://doc.qt.io/qt-5/
 TAGFILES              += ../qt5.15-tags/qtwidgets.tags=http://doc.qt.io/qt-5/
 TAGFILES              += ../ipe-upstream/ipe.tag=https://ipe.otfried.org/manual/
+TAGFILES              += ../cppreference-tags/cppreference-doxygen-web.tag=http://en.cppreference.com/w/
 
 DOT_FONTNAME           = "Segoe UI"
 DOT_FONTSIZE           = 11

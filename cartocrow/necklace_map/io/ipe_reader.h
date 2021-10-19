@@ -37,20 +37,41 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 namespace cartocrow::necklace_map {
 
+/// A reader for necklace map input in Ipe format.
+/**
+ * This reads regions and necklaces from the Ipe file as follows:
+ * * stroked (non-filled) paths are interpreted as necklaces;
+ * * stroked-and-filled paths are interpreted as regions;
+ * * each region is supposed to have one single text label in it, which
+ *   indicates the region's name;
+ * * to use more than one necklace, put each necklace on a separate layer, along
+ *   with the regions that should be mapped to that necklace.
+ */
 class IpeReader {
   public:
+	/// Constructs an Ipe reader.
 	IpeReader();
 
+	/// Reads data from the Ipe file with the given filename.
+	/**
+	 * Stores the data into output parameters \c elements and \c necklaces.
+	 */
 	bool readFile(const std::filesystem::path& filename,
 	              std::vector<necklace_map::MapElement::Ptr>& elements,
-	              std::vector<necklace_map::Necklace::Ptr>& necklaces, Number& scale_factor);
+	              std::vector<necklace_map::Necklace::Ptr>& necklaces);
 
   private:
+	/// Storage for a label in the input map.
 	struct Label {
+		/// Position of the label.
 		Point position;
+		/// The label text.
 		std::string text;
+		/// Whether we have already matched this label to a region.
 		bool matched;
 	};
+	/// Returns the label from \c labels inside the given region consisting of
+	/// \c polygons.
 	std::optional<size_t> findLabelInside(std::vector<Polygon_with_holes>& polygons,
 	                                      std::vector<Label>& labels);
 };

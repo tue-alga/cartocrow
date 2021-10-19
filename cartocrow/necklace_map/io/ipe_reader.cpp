@@ -42,7 +42,7 @@ IpeReader::IpeReader() {}
 
 bool IpeReader::readFile(const std::filesystem::path& filename,
                          std::vector<necklace_map::MapElement::Ptr>& elements,
-                         std::vector<necklace_map::Necklace::Ptr>& necklaces, Number& scale_factor) {
+                         std::vector<necklace_map::Necklace::Ptr>& necklaces) {
 	std::shared_ptr<ipe::Document> document = cartocrow::IpeReader::loadIpeFile(filename);
 
 	if (document->countPages() > 1) {

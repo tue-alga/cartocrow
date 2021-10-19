@@ -46,9 +46,8 @@ int main(int argc, char* argv[]) {
 	using Necklace = cartocrow::necklace_map::Necklace;
 	std::vector<MapElement::Ptr> elements;
 	std::vector<Necklace::Ptr> necklaces;
-	cartocrow::Number scale_factor;
 	cartocrow::necklace_map::IpeReader ipe_reader;
-	bool success_read_ipe = ipe_reader.readFile(map_filename, elements, necklaces, scale_factor);
+	bool success_read_ipe = ipe_reader.readFile(map_filename, elements, necklaces);
 	if (!success_read_ipe) {
 		std::cout << "Couldn't read map file\n";
 		return 1;
@@ -66,7 +65,8 @@ int main(int argc, char* argv[]) {
 	parameters.order_type = cartocrow::necklace_map::OrderType::kAny;
 	parameters.aversion_ratio = 0;
 
-	scale_factor = cartocrow::necklace_map::ComputeScaleFactor(parameters, elements, necklaces);
+	cartocrow::Number scale_factor =
+	    cartocrow::necklace_map::ComputeScaleFactor(parameters, elements, necklaces);
 
 	QApplication a(argc, argv);
 	a.setApplicationName("CartoCrow necklace map demo");
