@@ -4,7 +4,9 @@ PROJECT_BRIEF          = "A suite of algorithms for cartographic visualization"
 PROJECT_LOGO           = "doc/logo.png"
 OUTPUT_DIRECTORY       = "doc/out"
 
-MULTILINE_CPP_IS_BRIEF = YES
+#MULTILINE_CPP_IS_BRIEF = YES
+JAVADOC_AUTOBRIEF      = YES
+QT_AUTOBRIEF      = YES
 EXTENSION_MAPPING      = inc=C++
 AUTOLINK_SUPPORT       = NO
 
