@@ -1,9 +1,7 @@
 include(FindPackageHandleStandardArgs)
 
 find_path(Ipelib_INCLUDE_DIR NAMES ipelib.h)
-message(STATUS "1 ${Ipelib_INCLUDE_DIR}")
 find_library(Ipelib_LIBRARY NAMES ipe)
-message(STATUS "2 ${Ipelib_LIBRARY}")
 find_package_handle_standard_args(Ipelib
 	DEFAULT_MSG Ipelib_LIBRARY Ipelib_INCLUDE_DIR)
 

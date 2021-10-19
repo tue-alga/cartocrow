@@ -21,8 +21,6 @@ macro(cartocrow_add_console_library TARGET INSTALL_DIR)
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBRARY_DIR}
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBRARY_DIR}
     )
-    install_files_and_directories("${HDRS}" ${INSTALL_DIR})
-    install_files_and_directories("${SRCS}" ${INSTALL_DIR})
 endmacro(cartocrow_add_console_library)
 
 macro(add_cla_exe_properties target)
@@ -56,8 +54,6 @@ macro(cartocrow_add_cla NAME)
 
     # Install rules.
     install(TARGETS ${TARGET} DESTINATION ${INSTALL_BINARY_DIR})
-    install_files_and_directories("${HDRS}" ${INSTALL_DIR})
-    install_files_and_directories("${SRCS}" ${INSTALL_DIR})
 
     # PHP script to run the executable.
     # Note that the configure file uses the ${CURRENT_CLA} variable to determine the executable to run.
