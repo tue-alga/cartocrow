@@ -14,6 +14,7 @@ CartoCrow depends on the following projects:
 * CGAL (5.0)
 * gflags (2.2.2)
 * glog (0.5.0)
+* ipelib (7.2.24)
 * Qt (5.15)
 * tinyxml2 (9.0.0)
 * unittest-cpp (2.0.0)
@@ -22,6 +23,8 @@ The version numbers listed are indicative. Newer (and possibly somewhat older) v
 
 
 ### Windows
+
+
 
 On Windows systems, we recommend using [vcpkg](https://github.com/microsoft/vcpkg) to install and manage dependencies. The following steps install everything necessary to build CartoCrow.
 
@@ -41,17 +44,10 @@ On Windows systems, we recommend using [vcpkg](https://github.com/microsoft/vcpk
 
   For more information on installing vcpkg, see [here](https://github.com/microsoft/vcpkg#quick-start-windows).
 
-* **CGAL.** As described [here](https://doc.cgal.org/latest/Manual/windows.html#title0):
+* **Install dependencies.** As described [here](https://doc.cgal.org/latest/Manual/windows.html#title0):
 
   ```sh
   vcpkg install cgal:x64-windows
-  ```
-
-  This step can take a long time (around 30 minutes).
-
-* **Other dependencies.**
-
-  ```sh
   vcpkg install qt5:x64-windows
   vcpkg install gflags:x64-windows
   vcpkg install glog:x64-windows
@@ -59,7 +55,14 @@ On Windows systems, we recommend using [vcpkg](https://github.com/microsoft/vcpk
   vcpkg install unittest-cpp:x64-windows
   ```
 
-  This step, especially compiling Qt, can take a very long time (around 2 hours).
+  This step can take a very long time, especially compiling CGAL (around 30 minutes) and Qt (around 2 hours).
+
+* **Ipelib.** This library is not available in vcpkg, so we will have to build it ourselves. Unfortunately, the [upstream version](https://github.com/otfried/ipe/releases/download/v7.2.24/ipe-7.2.24-src.tar.gz) of ipelib does not compile cleanly with MSVC. We prepared a patched version *(to do: link coming soon)* that can be compiled and installed with
+```
+cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=install -DCMAKE_TOOLCHAIN_FILE=<path-to-vcpkg>\scripts\buildsystems\vcpkg.cmake -S . -B build
+cmake --build build
+sudo cmake --install build
+```
 
 
 ### Linux
@@ -94,6 +97,8 @@ The remaining dependencies need to be built manually.
   cmake --build build
   sudo cmake --install build
   ```
+
+* **Ipelib.** Download the [source archive](https://github.com/otfried/ipe/releases/download/v7.2.24/ipe-7.2.24-src.tar.gz), unpack it, and compile and install it using the instructions given in `install.txt`.
 
 
 ## Compiling
