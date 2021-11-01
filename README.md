@@ -24,6 +24,9 @@ The version numbers listed are indicative. Newer (and possibly somewhat older) v
 
 ### Windows
 
+<details>
+  <summary><b>Installing dependencies on Windows</b></summary>
+
 On Windows systems, we recommend using [vcpkg](https://github.com/microsoft/vcpkg) to install and manage dependencies. The following steps install everything necessary to build CartoCrow.
 
 * **MSVC.** Download MSVC 2019 from [Microsoft's website](https://docs.microsoft.com/en-us/visualstudio/releases/2019/release-notes) and install it.
@@ -62,9 +65,13 @@ On Windows systems, we recommend using [vcpkg](https://github.com/microsoft/vcpk
   cmake --build build
   sudo cmake --install build
   ```
+</details>
 
-
+  
 ### Linux
+  
+<details>
+  <summary><b>Installing dependencies on Linux</b></summary>
 
 On Ubuntu, most dependencies can be obtained from the repository:
 
@@ -98,6 +105,7 @@ The remaining dependencies need to be built manually.
   ```
 
 * **Ipelib.** Download the [source archive](https://github.com/otfried/ipe/releases/download/v7.2.24/ipe-7.2.24-src.tar.gz), unpack it, and compile and install it using the instructions given in `install.txt`.
+</details>
 
 
 ## Compiling
