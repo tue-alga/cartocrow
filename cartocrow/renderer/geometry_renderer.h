@@ -20,7 +20,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #ifndef CARTOCROW_GEOMETRY_RENDERER
 #define CARTOCROW_GEOMETRY_RENDERER
 
-#define _USE_MATH_DEFINES
 #include <cartocrow/core/bezier_spline.h>
 #include <cartocrow/core/cgal_types.h>
 #include <cartocrow/core/polygon.h>

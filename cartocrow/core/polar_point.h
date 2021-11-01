@@ -22,7 +22,6 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 04-09-2020
 #ifndef CARTOCROW_CORE_POLAR_POINT_H
 #define CARTOCROW_CORE_POLAR_POINT_H
 
-#define _USE_MATH_DEFINES
 #include <cmath>
 #include <ostream>
 

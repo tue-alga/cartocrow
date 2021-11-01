@@ -1,8 +1,6 @@
 #ifndef CARTOCROW_NECKLACE_MAP_PAINTING
 #define CARTOCROW_NECKLACE_MAP_PAINTING
 
-#define _USE_MATH_DEFINES
-
 #include <cartocrow/renderer/geometry_painting.h>
 #include <cartocrow/renderer/geometry_renderer.h>
 

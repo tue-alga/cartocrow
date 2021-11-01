@@ -37,6 +37,10 @@ write_basic_package_version_file(
     COMPATIBILITY AnyNewerVersion
 )
 
+if(MSVC)
+    add_compile_definitions(_USE_MATH_DEFINES)
+endif()
+
 # Configure a header file to pass CMake settings to the source code.
 configure_file(
     "${CMAKE_SOURCE_DIR}/cmake/cartocrow_config.h.in"

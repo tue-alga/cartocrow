@@ -4,6 +4,6 @@ cartocrow_add_cla(multi_library_app)
 target_link_libraries(
     ${TARGET}
     PRIVATE
-    ${CARTOCROW_TARGET}
+    core
     CGAL::CGAL
 )

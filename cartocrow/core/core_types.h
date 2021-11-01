@@ -22,7 +22,6 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 05-12-2019
 #ifndef CARTOCROW_CORE_CORE_TYPES_H
 #define CARTOCROW_CORE_CORE_TYPES_H
 
-#define _USE_MATH_DEFINES
 #include <cmath>
 
 #include "cartocrow/core/cgal_types.h"
