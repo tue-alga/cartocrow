@@ -25,18 +25,44 @@ class DrawNecklaceShapeVisitor : public NecklaceShapeVisitor {
 class Painting : public renderer::GeometryPainting {
 
   public:
+	/// Options that determine what to draw in the painting.
+	struct Options {
+		/// Opacity with which to draw the beads.
+		double m_beadOpacity = 1.0;
+		/// Whether to draw the necklaces themselves.
+		bool m_drawNecklaceCurve = true;
+		/// Whether do draw the kernel for each necklace.
+		bool m_drawNecklaceKernel = false;
+		/// Whether to draw a line between each region and its bead.
+		bool m_drawConnectors = false;
+	};
+
 	/// Creates a new painting with the given map elements, necklaces, and scale
 	/// factor.
-	Painting(std::vector<MapElement::Ptr>& elements, std::vector<Necklace::Ptr>& necklaces,
-	         Number scale_factor);
+	Painting(const std::vector<MapElement::Ptr>& elements,
+	         const std::vector<Necklace::Ptr>& necklaces, Number scaleFactor, Options options);
 
   protected:
 	void paint(renderer::GeometryRenderer& renderer) override;
 
   private:
-	std::vector<MapElement::Ptr>& m_elements;
-	std::vector<Necklace::Ptr>& m_necklaces;
-	Number m_scale_factor;
+	/// Paints the regions.
+	void paintRegions(renderer::GeometryRenderer& renderer);
+	/// Paints the necklaces.
+	void paintNecklaces(renderer::GeometryRenderer& renderer);
+	/// Paints the connectors.
+	void paintConnectors(renderer::GeometryRenderer& renderer);
+	/// Paints the beads.
+	/**
+	 * If \c shadow is \c true, this paints the bead's shadow instead of the
+	 * bead itself.
+	 */
+	void paintBeads(renderer::GeometryRenderer& renderer, bool shadow);
+
+	const std::vector<MapElement::Ptr>& m_elements;
+	const std::vector<Necklace::Ptr>& m_necklaces;
+	Number m_scaleFactor;
+	Options m_options;
 };
 
 } // namespace necklace_map

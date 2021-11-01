@@ -79,13 +79,13 @@ UNITTEST_SUITE(NecklaceMap) {
 				kRegistry.Register(&data, "NecklaceDataWesternEurope");
 
 				// Read the geometry.
-				cartocrow::necklace_map::SvgReader svg_reader;
-				const std::filesystem::path in_geometry_path = kDataDir / "wEU.svg";
+				cartocrow::necklace_map::IpeReader reader;
+				const std::filesystem::path in_geometry_path = kDataDir / "wEU.ipe";
 				std::cout << "map path: " << in_geometry_path << std::endl;
 
 				cartocrow::Timer time;
 				UNITTEST_REQUIRE UNITTEST_CHECK(
-				    svg_reader.ReadFile(in_geometry_path, data.elements, data.necklaces));
+				    reader.readFile(in_geometry_path, data.elements, data.necklaces));
 				kRegistry(&data, 0) = time.Stamp();
 			}
 		}
@@ -244,12 +244,12 @@ UNITTEST_SUITE(NecklaceMap) {
 				kRegistry.Register(&data, "NecklaceDataEastAsia");
 
 				// Read the geometry.
-				cartocrow::necklace_map::SvgReader svg_reader;
+				cartocrow::necklace_map::IpeReader reader;
 				const std::filesystem::path in_geometry_path = kDataDir / "eAsia.svg";
 
 				cartocrow::Timer time;
 				UNITTEST_REQUIRE UNITTEST_CHECK(
-				    svg_reader.ReadFile(in_geometry_path, data.elements, data.necklaces));
+				    reader.readFile(in_geometry_path, data.elements, data.necklaces));
 				kRegistry(&data, 0) = time.Stamp();
 			}
 		}

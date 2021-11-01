@@ -31,7 +31,6 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 16-11-2020
 
 #include <cartocrow/core/circulator.h>
 #include <cartocrow/core/detail/polar_intersections.h>
-#include <cartocrow/core/io/svg_writer.h>
 #include <cartocrow/core/polar_line.h>
 #include <cartocrow/core/polar_segment.h>
 #include <cartocrow/core/spiral.h>
@@ -467,44 +466,6 @@ UNITTEST_SUITE(Common) {
 		cartocrow::PolarPoint expected_intersection_line_3_spiral_5_0(0, 0);
 		cartocrow::PolarPoint expected_intersection_line_3_spiral_5_1(5, -0.6435);
 		cartocrow::PolarPoint expected_intersection_line_4_spiral_5_0(0, 0);
-
-		// TODO(tvl) TMP DEBUG
-		cartocrow::SvgWriter writer;
-		writer.Add(line_1);
-		writer.Add(line_2);
-		writer.Add(line_3);
-		writer.Add(line_4);
-		writer.Add(spiral_1);
-		writer.Add(spiral_2);
-		writer.Add(spiral_3);
-		writer.Add(spiral_4);
-		writer.Add(spiral_5);
-		writer.Add(line_segment_1);
-		writer.Add(line_segment_2);
-		writer.Add(spiral_segment_1);
-		writer.Add(spiral_segment_2);
-		writer.Add(spiral_segment_3);
-
-		writer.Add(expected_intersection_line_1_line_2);
-		writer.Add(expected_intersection_line_3_line_4);
-		writer.Add(expected_intersection_spiral_1_spiral_2_0);
-		writer.Add(expected_intersection_spiral_1_spiral_2_1);
-		writer.Add(expected_intersection_spiral_2_spiral_3_0);
-		writer.Add(expected_intersection_spiral_2_spiral_3_1);
-		writer.Add(expected_intersection_line_1_spiral_1_0);
-		writer.Add(expected_intersection_line_1_spiral_1_1);
-		writer.Add(expected_intersection_line_2_spiral_3_0);
-		writer.Add(expected_intersection_line_2_spiral_5_0);
-		writer.Add(expected_intersection_line_3_spiral_1_0);
-		writer.Add(expected_intersection_line_3_spiral_1_1);
-		writer.Add(expected_intersection_line_3_spiral_5_0);
-		writer.Add(expected_intersection_line_3_spiral_5_1);
-		writer.Add(expected_intersection_line_4_spiral_5_0);
-
-		cartocrow::WriteOptions::Ptr options = cartocrow::WriteOptions::Default();
-		std::ofstream out("/storage/CartoCrow/wwwroot/data/tmp/core_out.svg");
-		writer.Write(options, out);
-		out.close();
 
 		// Line - line.
 		num = cartocrow::ComputeIntersections(line_1, line_2, intersections);

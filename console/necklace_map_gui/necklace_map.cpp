@@ -65,14 +65,15 @@ int main(int argc, char* argv[]) {
 	parameters.order_type = cartocrow::necklace_map::OrderType::kAny;
 	parameters.aversion_ratio = 0;
 
-	cartocrow::Number scale_factor =
+	cartocrow::Number scaleFactor =
 	    cartocrow::necklace_map::ComputeScaleFactor(parameters, elements, necklaces);
 
 	QApplication a(argc, argv);
 	a.setApplicationName("CartoCrow necklace map demo");
-	cartocrow::necklace_map::Painting painting(elements, necklaces, scale_factor);
+	cartocrow::necklace_map::Painting::Options options;
+	cartocrow::necklace_map::Painting painting(elements, necklaces, scaleFactor, options);
 	cartocrow::renderer::IpeRenderer renderer(painting);
-	renderer.save("/tmp/test.ipe");
+	renderer.save("test.ipe");
 
 	cartocrow::renderer::GeometryWidget widget(painting);
 	widget.show();

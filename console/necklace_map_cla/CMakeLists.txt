@@ -7,6 +7,7 @@ target_link_libraries(
     ${COMMON_CLA_TARGET}
     necklace_map
     core
+    renderer
     CGAL::CGAL
     tinyxml2::tinyxml2
 )
