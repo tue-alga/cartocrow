@@ -24,8 +24,6 @@ The version numbers listed are indicative. Newer (and possibly somewhat older) v
 
 ### Windows
 
-
-
 On Windows systems, we recommend using [vcpkg](https://github.com/microsoft/vcpkg) to install and manage dependencies. The following steps install everything necessary to build CartoCrow.
 
 * **MSVC.** Download MSVC 2019 from [Microsoft's website](https://docs.microsoft.com/en-us/visualstudio/releases/2019/release-notes) and install it.
@@ -58,11 +56,12 @@ On Windows systems, we recommend using [vcpkg](https://github.com/microsoft/vcpk
   This step can take a very long time, especially compiling CGAL (around 30 minutes) and Qt (around 2 hours).
 
 * **Ipelib.** This library is not available in vcpkg, so we will have to build it ourselves. Unfortunately, the [upstream version](https://github.com/otfried/ipe/releases/download/v7.2.24/ipe-7.2.24-src.tar.gz) of ipelib does not compile cleanly with MSVC. We prepared a patched version *(to do: link coming soon)* that can be compiled and installed with
-```
-cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=install -DCMAKE_TOOLCHAIN_FILE=<path-to-vcpkg>\scripts\buildsystems\vcpkg.cmake -S . -B build
-cmake --build build
-sudo cmake --install build
-```
+
+  ```
+  cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=install -DCMAKE_TOOLCHAIN_FILE=<path-to-vcpkg>\scripts\buildsystems\vcpkg.cmake -S . -B build
+  cmake --build build
+  sudo cmake --install build
+  ```
 
 
 ### Linux
