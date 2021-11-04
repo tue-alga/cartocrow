@@ -31,19 +31,33 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 16-10-2020
 #include "cartocrow/flow_map/place.h"
 #include "cartocrow/flow_map/spiral_tree.h"
 
-namespace cartocrow {
-namespace flow_map {
+namespace cartocrow::flow_map {
 
+/// A tree where each arc is a smooth curve with a thickness indicating the
+/// flow.
+/**
+ * This tree is based on a spiral tree. Unlike a spiral tree, a flow tree is
+ * not necessarily a binary tree.
+ */
 class FlowTree {
   public:
+	/// The preferred pointer type for storing or sharing a flow tree.
 	using Ptr = std::shared_ptr<FlowTree>;
 
-	using FlowArc =
-	    std::pair<Spiral, PolarPoint>; // TODO(tvl) the second element should probably be the minimum R, instead of a full point. Replace by SpiralSegment? Is this one even needed once we add thickness to the arcs; replace by custom class?
+	/// The type for the initial arcs in the flow tree, before they are
+	/// assigned a thickness or pushed farther from obstacles.
+	// TODO(tvl) the second element should probably be the minimum R, instead
+	// of a full point. Replace by SpiralSegment? Is this one even needed once
+	// we add thickness to the arcs; replace by custom class?
+	using FlowArc = std::pair<Spiral, PolarPoint>;
 
+	/// Construct a flow tree.
+	/**
+	 * @param spiral_tree The spiral tree describing the initial arrangement of
+	 * the arcs of the tree.
+	 */
 	FlowTree(const SpiralTree& spiral_tree);
 
-	//private:
 	Vector root_translation_;
 
 	std::vector<Node::Ptr> nodes_; // Note that the positions of these nodes are offset by the position of the root.
@@ -53,7 +67,6 @@ class FlowTree {
 	std::vector<FlowArc> arcs_;
 }; // class FlowTree
 
-} // namespace flow_map
-} // namespace cartocrow
+} // namespace cartocrow::flow_map
 
 #endif //CARTOCROW_FLOW_MAP_FLOW_TREE_H

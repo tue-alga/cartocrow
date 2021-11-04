@@ -33,8 +33,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 28-10-2020
 #include "cartocrow/core/polar_segment.h"
 #include "cartocrow/core/spiral_segment.h"
 
-namespace cartocrow {
-namespace flow_map {
+namespace cartocrow::flow_map {
 namespace {
 
 struct Event {
@@ -62,63 +61,9 @@ using EventQueue = std::priority_queue<Event, std::deque<Event>, CompareEvents>;
 
 } // anonymous namespace
 
-/**@struct Node
- * @brief A node in a tree.
- *
- * This node type is used in both spiral tree and flow tree.
- */
+Node::Node(const Place::Ptr& place) : place(place) {}
 
-/**@fn Node::Ptr
- * @brief The preferred pointer type for storing or sharing a node.
- */
-
-/**@fn Node::ConnectionType
- * @brief The type of node, as defined by its connections.
- */
-
-/**@var Node::kRoot
- * @brief The type of the root node.
- *
- * This is the only node without a parent.
- */
-
-/**@var Node::kLeaf
- * @brief The type of a leaf node.
- *
- * This is a node without any children.
- */
-
-/**@var Node::kJoin
- * @brief The type of a join node.
- *
- * This is a node with at least two children.
- */
-
-/**@var Node::kSubdivision
- * @brief The type of a subdivision node.
- *
- * This is a node with exactly one child.
- */
-
-/**@brief Construct a new node.
- *
- * A node may be associated with a place on the map that either sends or receives flow. These nodes are the root and leaf nodes. Other nodes will have the same amount of incoming flow as the sum of the outgoing flow.
- * @param place the place associated with this node.
- */
-Node::Node(const Place::Ptr& place /*= nullptr*/) : place(place) {}
-
-/**@brief Determine the topological type of this node.
- *
- * Each node is either the root, a leaf, a join node, or a subdivision node.
- * * The root has no parent.
- * * Leaves have no children.
- * * Join nodes have multiple children.
- * * Subdivision nodes have exactly one child.
- *
- * Note that this type does not describe whether the node is associated with a place on the map. This can be determined using IsSteiner().
- * @return the node type.
- */
-Node::ConnectionType Node::GetType() const {
+Node::ConnectionType Node::getType() const {
 	if (parent == nullptr) {
 		return ConnectionType::kRoot;
 	} else {
@@ -133,157 +78,53 @@ Node::ConnectionType Node::GetType() const {
 	}
 }
 
-/**@brief Determine whether this node is a Steiner node.
- *
- * Steiner nodes are not part of the input places. They support the tree, either by splitting the flow, or by guiding the flow around obstacles.
- * @return whether this node is a Steiner node.
- */
-bool Node::IsSteiner() const {
+bool Node::isSteiner() const {
 	return place == nullptr || (place->flow_in <= 0 && parent != nullptr);
 }
 
-/**@fn Place::Ptr Node::place
- * @brief The place associated with this node.
- *
- * This may be null if no place is associated with this node.
- */
-
-/**@fn Ptr Node::parent
- * @brief The parent of the node.
- *
- * The tree path from this node to the root node must visit the parent node.
- */
-
-/**@fn std::vector<Ptr> Node::children
- * @brief The children of this node.
- *
- * Note that while generally the nodes of a tree without children are refered to as leaf nodes, a node with the leaf type may have children if it is located inside the spiral region of another node.
- */
-
-/**@class SpiralTree
- * @brief A binary tree where each arc is a logarithmic spiral.
- *
- * The spiral arcs are constructed based on a root node and a restricted angle. Logarithmic spirals have the property that the directions of the tangent at any point on the spiral and the line between that point and the root differ by a fixed angle. This angle is the restricted angle for all spiral arcs in the spiral tree.
- */
-
-/**@fn SpiralTree::Ptr
- * @brief The preferred pointer type for storing or sharing a spiral tree.
- */
-
-/**@fn SpiralTree::NodeIterator
- * @brief The iterator type that is used to iterate over all the nodes of the spiral tree.
- */
-
-/**@fn SpiralTree::NodeConstIterator
- * @brief The constant-value iterator type that is used to iterate over all the nodes of the spiral tree.
- */
-
-/**@brief Construct a spiral tree.
- *
- * A spiral tree must always have a root point and a positive restricting angle.
- * @param root the position of the root node. This point is used to determine the relative position of all the nodes in the tree and the shape of the spiral arcs.
- * @param restricting_angle_rad the restricting angle used to construct all the spiral arcs of the tree. This number must be strictly positive.
- */
-SpiralTree::SpiralTree(const Point& root, const Number& restricting_angle_rad)
-    : restricting_angle_rad_(restricting_angle_rad), root_translation_(Point(CGAL::ORIGIN) - root) {
-	CHECK_GT(restricting_angle_rad, 0);
-	CHECK_LE(restricting_angle_rad, M_PI_2);
+SpiralTree::SpiralTree(const Point& root, const Number& restricting_angle)
+    : m_restricting_angle(restricting_angle), m_root_translation(Point(CGAL::ORIGIN) - root) {
+	CHECK_GT(restricting_angle, 0);
+	CHECK_LE(restricting_angle, M_PI_2);
 }
 
-/**@fn Point SpiralTree::GetRoot() const
- * @brief Get the root position of the spiral tree.
- * @return the root position of the spiral tree (in cartesian coordinates).
- */
-
-/**@fn Number SpiralTree::GetRestrictingAngle() const
- * @brief Get the restricting angle of the spiral tree (in radians).
- * @param places the restricting angle of the spiral tree (in radians).
- */
-
-/**@fn NodeConstIterator SpiralTree::nodes_begin() const
- * @brief Get a constant-value iterator to the first node of the tree.
- * @return a constant-value iterator to the first node of the tree.
- */
-
-/**@fn NodeConstIterator SpiralTree::nodes_end() const
- * @brief Get a constant-value iterator to the past-the-end node of the tree.
- * @return a constant-value iterator to the past-the-end node of the tree.
- */
-
-/**@fn NodeIterator SpiralTree::nodes_begin()
- * @brief Get a iterator to the first node of the tree.
- * @return a iterator to the first node of the tree.
- */
-
-/**@fn NodeIterator SpiralTree::nodes_end()
- * @brief Get a iterator to the past-the-end node of the tree.
- * @return a iterator to the past-the-end node of the tree.
- */
-
-/**@brief Add a set of places to the spiral tree.
- *
- * Note that the spiral arcs are not automatically computed after adding the places. This requires manually calling the Compute() method.
- * @param places @parblock the set of places to add to the spiral tree.
- *
- * The root of the tree must be part of these places.
- *
- * Non-root places with a non-positive incoming flow will be ignored.
- * @endparblock
- */
-void SpiralTree::AddPlaces(const std::vector<Place::Ptr>& places) {
-	Clean();
+void SpiralTree::addPlaces(const std::vector<Place::Ptr>& places) {
+	clean();
 
 	for (const Place::Ptr& place : places) {
 		if (0 < place->flow_in) {
-			nodes_.push_back(std::make_shared<Node>(place));
+			m_nodes.push_back(std::make_shared<Node>(place));
 		}
 	}
 }
 
-/**@brief Add a set of obstacles to the spiral tree.
- *
- * Note that the spiral arcs are not automatically computed after adding the obstacles. This requires manually calling the Compute() method.
- * @param obstacles the set of obstacles to add to the spiral tree.
- */
-void SpiralTree::AddObstacles(const std::vector<Region>& obstacles) {
-	Clean();
+void SpiralTree::addObstacles(const std::vector<Region>& obstacles) {
+	clean();
 
 	for (const Region& obstacle : obstacles) {
 		for (const Polygon_with_holes& polygon : obstacle.shape) {
-			AddObstacle(polygon);
+			addObstacle(polygon);
 		}
 	}
 }
 
-/**@brief Compute the spiral tree arcs.
- *
- * These arcs are based on the position of the nodes, the restricting angle of the tree, and any obstacles that are present.
- *
- * Note that if no specific obstacles have been added, input nodes are not forced to be leaf nodes in the final tree. If this is desired, use ComputeObstructed() instead.
- */
-void SpiralTree::Compute() {
+void SpiralTree::compute() {
 	if (true) { //obstacles_.empty())  // TODO(tvl) commented out while code is not complete.
-		ComputeUnobstructed();
+		computeUnobstructed();
 	} else {
-		ComputeObstructed();
+		computeObstructed();
 	}
 }
 
-/**@brief Compute the spiral tree arcs, ignoring any obstacles.
- *
- * These arcs are based on the position of the nodes and the restricting angle of the tree.
- *
- * Note that input nodes are not forced to be leaf nodes in the final tree. If this is desired, use ComputeObstructed() instead.
- */
-void SpiralTree::ComputeUnobstructed() {
+void SpiralTree::computeUnobstructed() {
 	using Wavefront = std::map<Number, Event>;
 	Wavefront wavefront;
 
 	EventQueue events;
-	for (const Node::Ptr& node : nodes_) {
+	for (const Node::Ptr& node : m_nodes) {
 		CHECK_NOTNULL(node->place);
 
-		const PolarPoint relative_position(node->place->position, root_translation_);
+		const PolarPoint relative_position(node->place->position, m_root_translation);
 		events.push(Event(node, relative_position));
 	}
 
@@ -321,7 +162,7 @@ void SpiralTree::ComputeUnobstructed() {
 
 			// Add the join node to the wavefront and the collection of nodes.
 			node_iter = wavefront.emplace(order, event).first;
-			nodes_.push_back(event.node);
+			m_nodes.push_back(event.node);
 
 			VLOG(2) << "Added join node to wavefront: " << node_iter->second.node->place->id;
 
@@ -342,8 +183,8 @@ void SpiralTree::ComputeUnobstructed() {
 			if (!wavefront.empty()) {
 				Circulator<Wavefront> node_circ =
 				    make_circulator(wavefront.lower_bound(order), wavefront);
-				if (IsReachable(event.relative_position, node_circ->second.relative_position) ||
-				    IsReachable(event.relative_position, (--node_circ)->second.relative_position)) {
+				if (isReachable(event.relative_position, node_circ->second.relative_position) ||
+				    isReachable(event.relative_position, (--node_circ)->second.relative_position)) {
 					// A neighbor is reachable.
 					// Check whether the nodes overlap.
 					if (event.relative_position == node_circ->second.relative_position) {
@@ -380,8 +221,8 @@ void SpiralTree::ComputeUnobstructed() {
 			// Clockwise.
 			Circulator<Wavefront> cw_iter = --make_circulator(node_iter, wavefront);
 
-			const Spiral spiral_left(event.relative_position, -restricting_angle_rad_);
-			const Spiral spiral_right(cw_iter->second.relative_position, restricting_angle_rad_);
+			const Spiral spiral_left(event.relative_position, -m_restricting_angle);
+			const Spiral spiral_right(cw_iter->second.relative_position, m_restricting_angle);
 
 			PolarPoint intersections[2];
 			const int num = ComputeIntersections(spiral_left, spiral_right, intersections);
@@ -409,8 +250,8 @@ void SpiralTree::ComputeUnobstructed() {
 			// Counter-clockwise.
 			Circulator<Wavefront> ccw_iter = ++make_circulator(node_iter, wavefront);
 
-			const Spiral spiral_left(ccw_iter->second.relative_position, -restricting_angle_rad_);
-			const Spiral spiral_right(event.relative_position, restricting_angle_rad_);
+			const Spiral spiral_left(ccw_iter->second.relative_position, -m_restricting_angle);
+			const Spiral spiral_right(event.relative_position, m_restricting_angle);
 
 			PolarPoint intersections[2];
 			const int num = ComputeIntersections(spiral_left, spiral_right, intersections);
@@ -436,35 +277,23 @@ void SpiralTree::ComputeUnobstructed() {
 	}
 }
 
-/**@brief Change the root position.
- *
- * This removes all existing arcs of the tree. The new tree can be computed using Compute().
- * @param root the new root position.
- */
-void SpiralTree::SetRoot(const Point& root) {
-	root_translation_ = Point(CGAL::ORIGIN) - root;
-
-	Clean();
+void SpiralTree::setRoot(const Point& root) {
+	m_root_translation = Point(CGAL::ORIGIN) - root;
+	clean();
 }
 
-/**@brief Change the restricting angle.
- *
- * This removes all existing arcs of the tree. The new tree can be computed using Compute().
- * @param restricting_angle_rad the new restricting angle.
- */
-void SpiralTree::SetRestrictingAngle(const Number& restricting_angle_rad) {
-	CHECK_GT(restricting_angle_rad, 0);
-	CHECK_LT(restricting_angle_rad, M_PI_2);
-	restricting_angle_rad_ = restricting_angle_rad;
-
-	Clean();
+void SpiralTree::setRestrictingAngle(const Number& restricting_angle) {
+	CHECK_GT(restricting_angle, 0);
+	CHECK_LT(restricting_angle, M_PI_2);
+	m_restricting_angle = restricting_angle;
+	clean();
 }
 
-void SpiralTree::Clean() {
+void SpiralTree::clean() {
 	size_t num_places = 0;
 
 	// Clean the node connections.
-	for (Node::Ptr& node : nodes_) {
+	for (Node::Ptr& node : m_nodes) {
 		if (node->place == nullptr) {
 			break;
 		}
@@ -475,33 +304,33 @@ void SpiralTree::Clean() {
 	}
 
 	// Remove support nodes, e.g. join nodes.
-	nodes_.resize(num_places);
+	m_nodes.resize(num_places);
 }
 
-bool SpiralTree::IsReachable(const PolarPoint& parent_point, const PolarPoint& child_point) const {
+bool SpiralTree::isReachable(const PolarPoint& parent_point, const PolarPoint& child_point) const {
 	if (parent_point == child_point) {
 		return true;
 	}
 
 	const Spiral spiral(child_point, parent_point);
-	return std::abs(spiral.angle_rad()) <= restricting_angle_rad_;
+	return std::abs(spiral.angle_rad()) <= m_restricting_angle;
 }
 
-void SpiralTree::AddObstacle(const Polygon_with_holes& polygon) {
+void SpiralTree::addObstacle(const Polygon_with_holes& polygon) {
 	// Ignore the holes of the obstacle: flow cannot cross the obstacle boundary.
 	const Polygon& boundary = polygon.outer_boundary();
 	if (boundary.is_empty()) {
 		return;
 	}
 
-	CHECK_NE(boundary.oriented_side(GetRoot()), CGAL::ON_BOUNDED_SIDE)
+	CHECK_NE(boundary.oriented_side(getRoot()), CGAL::ON_BOUNDED_SIDE)
 	    << "Root inside an obstacle.";
 
-	obstacles_.emplace_back();
-	Obstacle& obstacle = obstacles_.back();
+	m_obstacles.emplace_back();
+	Obstacle& obstacle = m_obstacles.back();
 	for (Polygon::Vertex_const_iterator vertex_iter = boundary.vertices_begin();
 	     vertex_iter != boundary.vertices_end(); ++vertex_iter) {
-		obstacle.emplace_back(*vertex_iter, root_translation_);
+		obstacle.emplace_back(*vertex_iter, m_root_translation);
 	}
 
 	// Enforce counter-clockwise obstacles for a canonical arrangement.
@@ -512,7 +341,7 @@ void SpiralTree::AddObstacle(const Polygon_with_holes& polygon) {
 
 	// Add vertices for the points closest to the root as well as spiral points.
 	// The wedge with the root as apex and boundaries through a closest point and a spiral point (on the same edge) has a fixed angle.
-	const Number phi_offset = M_PI_2 - restricting_angle_rad_;
+	const Number phi_offset = M_PI_2 - m_restricting_angle;
 	CHECK_LT(0, phi_offset);
 
 	Obstacle::iterator vertex_prev = --obstacle.end();
@@ -522,7 +351,7 @@ void SpiralTree::AddObstacle(const Polygon_with_holes& polygon) {
 		const PolarPoint closest = edge.SupportingLine().foot();
 
 		// The spiral points have fixed R and their phi is offset from the phi of the closest by +/- phi_offset.
-		const Number R_s = closest.R() / std::sin(restricting_angle_rad_);
+		const Number R_s = closest.R() / std::sin(m_restricting_angle);
 
 		const int sign = vertex_prev->phi() < vertex_iter->phi() ? -1 : 1;
 		const Number phi_s_prev = closest.phi() - sign * phi_offset;
@@ -541,7 +370,7 @@ void SpiralTree::AddObstacle(const Polygon_with_holes& polygon) {
 	}
 }
 
-// Note, the following code has been commented out when the CartoCrow implementation project had to be cut short.
+// Note, the following code has been commented out when the GeoViz implementation project had to be cut short.
 // This may be used as a starting point to continue implementation at some later date.
 
 /*
@@ -1457,9 +1286,8 @@ void SpiralTree::ComputeObstructed()
   //ComputeUnobstructed();
 }
 */
-void SpiralTree::ComputeObstructed() {
+void SpiralTree::computeObstructed() {
 	CHECK(false) << "Not implemented yet.";
 }
 
-} // namespace flow_map
-} // namespace cartocrow
+} // namespace cartocrow::flow_map

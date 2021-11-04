@@ -25,39 +25,9 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 04-09-2020
 
 #include <glog/logging.h>
 
-namespace cartocrow {
-namespace flow_map {
+namespace cartocrow::flow_map {
 
-/**@struct Place
- * @brief A place on the flow map.
- *
- * This named place has a position and a numeric value indicating flow that enters this place.
- */
-
-/**@fn Place::Ptr
- * @brief The preferred pointer type for storing or sharing a place.
- */
-
-/**@brief Construct a new flow map place.
- * @param id @parblock the ID of the place.
- *
- * See Region::id for details on this ID.
- * @endparblock
- */
 Place::Place(const std::string& id, const PolarPoint& position)
     : id(id), position(position), flow_in(0) {}
 
-/**@fn Region Place::id;
- * @brief The ID of this place.
- */
-
-/**@fn Region Place::position;
- * @brief The position of this place in polar coordinates.
- */
-
-/**@fn Number Place::flow_in;
- * @brief The amount of flow that enters this place.
- */
-
-} // namespace flow_map
-} // namespace cartocrow
+} // namespace cartocrow::flow_map

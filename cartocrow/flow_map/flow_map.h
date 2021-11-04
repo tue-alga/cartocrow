@@ -36,14 +36,26 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-2019
 #include "cartocrow/flow_map/parameters.h"
 #include "cartocrow/flow_map/place.h"
 
-namespace cartocrow {
-namespace flow_map {
+namespace cartocrow::flow_map {
 
-void ComputeFlowMap(const Parameters& parameters, const std::vector<Place::Ptr>& places,
+/// Compute the flow map.
+/**
+ * This consists of three major steps: computing the spiral tree, subdividing
+ * and thickening the tree, and improving the smoothness and clarity of the
+ * tree.
+ *
+ * @param parameters The parameter settings to apply to the computations.
+ * @param places The places (e.g. root and leaf nodes) on the flow map.
+ * @param index_root The index of the root node of the flow map.
+ * @param obstacles The polygonal obstacles that must be avoided by the flow
+ * tree.
+ * @param[out] tree The flow tree that shows the flow from the root to the
+ * leaf nodes.
+ */
+void computeFlowMap(const Parameters& parameters, const std::vector<Place::Ptr>& places,
                     const size_t index_root, const std::vector<Region>& obstacles,
                     FlowTree::Ptr& tree);
 
-} // namespace flow_map
-} // namespace cartocrow
+} // namespace cartocrow::flow_map
 
 #endif //CARTOCROW_FLOW_MAP_FLOW_MAP_H

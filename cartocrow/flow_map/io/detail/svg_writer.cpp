@@ -555,7 +555,7 @@ void SvgWriter::DrawSpiral(const Spiral& spiral, const Vector& offset, const Pol
 
 void SvgWriter::DrawRoots() {
 	for (const Node::Ptr& node : tree_->nodes_) {
-		if (node->GetType() != Node::ConnectionType::kRoot) {
+		if (node->getType() != Node::ConnectionType::kRoot) {
 			continue;
 		}
 
@@ -599,7 +599,7 @@ void SvgWriter::DrawRoots() {
 
 void SvgWriter::DrawLeaves() {
 	for (const Node::Ptr& node : tree_->nodes_) {
-		if (node->GetType() == Node::ConnectionType::kRoot || node->IsSteiner()) {
+		if (node->getType() == Node::ConnectionType::kRoot || node->isSteiner()) {
 			continue;
 		}
 
@@ -637,7 +637,7 @@ void SvgWriter::DrawLeaves() {
 
 void SvgWriter::DrawJoinNodes() {
 	for (const Node::Ptr& node : tree_->nodes_) {
-		if (node->GetType() != Node::ConnectionType::kJoin || !node->IsSteiner()) {
+		if (node->getType() != Node::ConnectionType::kJoin || !node->isSteiner()) {
 			continue;
 		}
 
@@ -675,7 +675,7 @@ void SvgWriter::DrawJoinNodes() {
 
 void SvgWriter::DrawSubdivisionNodes() {
 	for (const Node::Ptr& node : tree_->nodes_) {
-		if (node->GetType() != Node::ConnectionType::kSubdivision || !node->IsSteiner()) {
+		if (node->getType() != Node::ConnectionType::kSubdivision || !node->isSteiner()) {
 			continue;
 		}
 

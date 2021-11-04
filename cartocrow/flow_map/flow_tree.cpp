@@ -25,28 +25,10 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 16-10-2020
 
 #include <glog/logging.h>
 
-namespace cartocrow {
-namespace flow_map {
+namespace cartocrow::flow_map {
 
-/**@class FlowTree
- * @brief A tree where each arc is a smooth curve with a thickness indicating the flow.
- *
- * This tree is based on a spiral tree. Unlike a spiral tree, a flow tree is not necessarily a binary tree.
- */
-
-/**@fn FlowTree::Ptr
- * @brief The preferred pointer type for storing or sharing a flow tree.
- */
-
-/**@fn FlowTree::FlowArc
- * @brief The type for the initial arcs in the flow tree, before they are assigned a thickness or pushed farther from obstacles.
- */
-
-/**@brief Construct a flow tree.
- * @param spiral_tree the spiral tree describing the initial arrangement of the arcs of the tree.
- */
 FlowTree::FlowTree(const SpiralTree& spiral_tree)
-    : root_translation_(Point(CGAL::ORIGIN) - spiral_tree.GetRoot()),
+    : root_translation_(Point(CGAL::ORIGIN) - spiral_tree.getRoot()),
       nodes_(spiral_tree.nodes_begin(), spiral_tree.nodes_end()) {
 	// Clone the nodes.
 	//  for (SpiralTree::NodeConstIterator node_iter = spiral_tree.nodes_begin(); node_iter != spiral_tree.nodes_end(); ++node_iter)
@@ -90,5 +72,4 @@ FlowTree::FlowTree(const SpiralTree& spiral_tree)
   }*/
 }
 
-} // namespace flow_map
-} // namespace cartocrow
+} // namespace cartocrow::flow_map

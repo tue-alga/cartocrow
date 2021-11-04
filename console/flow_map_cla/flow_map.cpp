@@ -101,7 +101,7 @@ void ValidateFlags(cartocrow::flow_map::Parameters& parameters,
 	{
 		correct &= CheckAndPrintFlag(FLAGS_NAME_AND_VALUE(restricting_angle_rad),
 		                             MakeRangeCheck<Closure::kOpen>(0.0, M_PI_2));
-		parameters.restricting_angle_rad = FLAGS_restricting_angle_rad;
+		parameters.restricting_angle = FLAGS_restricting_angle_rad;
 	}
 
 	// Output parameters.
@@ -201,7 +201,7 @@ int main(int argc, char** argv) {
 
 	// Compute flow map.
 	cartocrow::flow_map::FlowTree::Ptr tree;
-	ComputeFlowMap(parameters, places, index_root, obstacles, tree);
+	computeFlowMap(parameters, places, index_root, obstacles, tree);
 	LOG(INFO) << "Computed flow map";
 	const double time_compute = time.Stamp();
 

@@ -25,19 +25,9 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-2019
 
 #include "cartocrow/flow_map/spiral_tree.h"
 
-namespace cartocrow {
-namespace flow_map {
+namespace cartocrow::flow_map {
 
-/**@brief Compute the flow map.
- *
- * Computing the flow map composes three major steps: computing the spiral tree, subdividing and thickening the tree, and improving the smoothness and clarity of the tree.
- * @param parameters the parameter settings to apply to the computations.
- * @param places the places (e.g. root and leaf nodes) on the flow map.
- * @param index_root the index of the root node of the flow map.
- * @param obstacles the polygonal obstacles that must be avoided by the flow tree.
- * @param tree the flow tree that shows the flow from the root to the leaf nodes.
- */
-void ComputeFlowMap(const Parameters& parameters, const std::vector<Place::Ptr>& places,
+void computeFlowMap(const Parameters& parameters, const std::vector<Place::Ptr>& places,
                     const size_t index_root, const std::vector<Region>& obstacles,
                     FlowTree::Ptr& tree) {
 	// Computing Spiral tree: 2015 paper / Journal article.
@@ -124,13 +114,12 @@ void ComputeFlowMap(const Parameters& parameters, const std::vector<Place::Ptr>&
 	CHECK_LT(index_root, places.size());
 	const Point root = places[index_root]->position.to_cartesian();
 
-	SpiralTree spiral_tree(root, parameters.restricting_angle_rad);
-	spiral_tree.AddPlaces(places);
-	//  spiral_tree.AddObstacles(obstacles);  // TODO(tvl) disabled until computing the tree with obstructions is implemented.
-	spiral_tree.Compute();
+	SpiralTree spiral_tree(root, parameters.restricting_angle);
+	spiral_tree.addPlaces(places);
+	//  spiral_tree.addObstacles(obstacles);  // TODO(tvl) disabled until computing the tree with obstructions is implemented.
+	spiral_tree.compute();
 
 	tree = std::make_shared<FlowTree>(spiral_tree);
 }
 
-} // namespace flow_map
-} // namespace cartocrow
+} // namespace cartocrow::flow_map

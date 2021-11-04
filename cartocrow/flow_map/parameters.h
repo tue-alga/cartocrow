@@ -26,16 +26,33 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 02-09-2020
 
 #include "cartocrow/core/core_types.h"
 
-namespace cartocrow {
-namespace flow_map {
+namespace cartocrow::flow_map {
 
+/// A struct to collect the parameters used for computing a flow map.
 struct Parameters {
+	/// Construct a collection of parameters.
+	/// All parameters are initialized as valid values.
 	Parameters();
 
-	Number restricting_angle_rad;
-}; // struct Parameters
+	/// The maximum angle between the line connecting the root and any point on
+	/// a tree arc and arc's tangent line at that point.
+	/**
+	 * This angle must be in the range \f$(0, \pi / 2)\f$.
+	 *
+	 * In practice, all arcs of a spiral tree are either straight lines or
+	 * \f$\alpha\f$-spirals, where \f$\alpha\f$ is this restriction angle.
+	 * These spirals can be expressed as polar coordinates around the root node
+	 * \f[ p(t) = (R(t), \phi(t)), \f]
+	 * where \f$R(t) = R(0) \cdot e^{-t}\f$ and \f$\phi(t) = \phi(0) +
+	 * \tan(\alpha) \cdot t\f$.
+	 *
+	 * Note that generally \f$p(0)\f$ is the polar coordinates of a node of a
+	 * spiral arc, positive \f$t\f$ values are closer to the root, and negative
+	 * \f$t\f$ values are farther from the root.
+	 */
+	Number restricting_angle;
+};
 
-} // namespace flow_map
-} // namespace cartocrow
+} // namespace cartocrow::flow_map
 
 #endif //CARTOCROW_FLOW_MAP_PARAMETERS_H
