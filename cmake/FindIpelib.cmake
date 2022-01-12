@@ -11,7 +11,12 @@ if(Ipelib_FOUND)
 		IMPORTED_LOCATION "${Ipelib_LIBRARY}"
 		INTERFACE_INCLUDE_DIRECTORIES "${Ipelib_INCLUDE_DIR}"
 	)
+	target_link_libraries(Ipe::ipelib INTERFACE JPEG::JPEG)
+	target_link_libraries(Ipe::ipelib INTERFACE ZLIB::ZLIB)
+	target_link_libraries(Ipe::ipelib INTERFACE PNG::PNG)
+	if(WIN32)
+		target_link_libraries(Ipe::ipelib INTERFACE gdiplus)
+	endif()
 endif()
 
 mark_as_advanced(Ipelib_LIBRARY Ipelib_INCLUDE_DIR)
-

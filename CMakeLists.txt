@@ -66,6 +66,10 @@ find_package(glog REQUIRED)
 find_package(tinyxml2 REQUIRED)
 find_package(gflags CONFIG REQUIRED)
 find_package(Ipelib REQUIRED)
+# Dependencies of ipelib:
+find_package(ZLIB REQUIRED)
+find_package(JPEG REQUIRED)
+find_package(PNG REQUIRED)
 
 
 ### SOURCES ###
