@@ -85,12 +85,14 @@ The remaining dependencies need to be built manually.
 * **glog and tinyxml2.** These are built manually because Ubuntu's packaging apparently does not include the CMake files we need.
 
   ```sh
-  git clone git clone https://github.com/google/glog.git
+  git clone https://github.com/google/glog.git
+  cd glog
   cmake -S . -B build
   cmake --build build
   sudo cmake --install build
 
-  git clone git@github.com:leethomason/tinyxml2.git
+  git clone https://github.com/leethomason/tinyxml2.git
+  cd tinyxml2
   cmake -S . -B build
   cmake --build build
   sudo cmake --install build
@@ -99,6 +101,7 @@ The remaining dependencies need to be built manually.
 * **unittest-cpp.** Also needs to be built manually, because it defines several macros that overlap with macros defined by glog. This causes issues when also compiling the unit tests of `unittest-cpp`, hence we turn these off.
   ```sh
   git clone -b v2.0.0 https://github.com/unittest-cpp/unittest-cpp
+  cd unittest-cpp
   cmake -S . -B build -DUTPP_INCLUDE_TESTS_IN_BUILD=OFF
   cmake --build build
   sudo cmake --install build
