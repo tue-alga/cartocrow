@@ -1,5 +1,6 @@
 cartocrow_add_library(renderer ${CARTOCROW_INSTALL_DIR}/renderer)
 target_link_libraries(renderer PUBLIC Qt5::Widgets Ipe::ipelib)
+target_link_libraries(renderer PUBLIC core)
 if(WIN32)
 	target_link_libraries(renderer PUBLIC gdiplus)
 	find_package(ZLIB REQUIRED)

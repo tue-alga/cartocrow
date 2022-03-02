@@ -6,6 +6,10 @@ find_package_handle_standard_args(Ipelib
 	DEFAULT_MSG Ipelib_LIBRARY Ipelib_INCLUDE_DIR)
 
 if(Ipelib_FOUND)
+	find_package(ZLIB REQUIRED)
+	find_package(JPEG REQUIRED)
+	find_package(PNG REQUIRED)
+
 	add_library(Ipe::ipelib UNKNOWN IMPORTED)
 	set_target_properties(Ipe::ipelib PROPERTIES
 		IMPORTED_LOCATION "${Ipelib_LIBRARY}"

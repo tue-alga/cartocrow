@@ -60,16 +60,14 @@ configure_file(
 find_package(CGAL REQUIRED)
 find_path(CGAL_INCLUDE_DIR CGAL/Exact_predicates_inexact_constructions_kernel.h)
 include_directories(${CGAL_INCLUDE_DIR})
+link_libraries(${CGAL_LIBRARIES})
+find_package(GMP REQUIRED)
 
 find_package(Qt5Widgets REQUIRED)
 find_package(glog REQUIRED)
 find_package(tinyxml2 REQUIRED)
 find_package(gflags CONFIG REQUIRED)
 find_package(Ipelib REQUIRED)
-# Dependencies of ipelib:
-find_package(ZLIB REQUIRED)
-find_package(JPEG REQUIRED)
-find_package(PNG REQUIRED)
 
 
 ### SOURCES ###
@@ -94,6 +92,7 @@ add_subdirectory(test)
 install(
     FILES
     "${CMAKE_SOURCE_DIR}/cmake/CartoCrowConfig.cmake"
+    "${CMAKE_SOURCE_DIR}/cmake/FindIpelib.cmake"
     "${CMAKE_CURRENT_BINARY_DIR}/CartoCrowConfigVersion.cmake"
     DESTINATION ${INSTALL_CONFIG_DIR}/CartoCrow
 )
