@@ -100,7 +100,6 @@ class GeometryWidget : public QWidget, GeometryRenderer {
 	void leaveEvent(QEvent* event) override;
 	QSize sizeHint() const override;
 
-  private:
 	/// Converts a point in drawing coordinates to Qt coordinates.
 	QPointF convertPoint(Point p) const;
 	/// Converts a rectangle in drawing coordinates to Qt coordinates.
@@ -109,6 +108,8 @@ class GeometryWidget : public QWidget, GeometryRenderer {
 	Point inverseConvertPoint(QPointF p) const;
 	/// Converts a rectangle in Qt coordinates back to drawing coordinates.
 	Box inverseConvertBox(QRectF r) const;
+
+  private:
 	/// Converts the polygon to Qt coordinates and adds it to the QPainterPath.
 	void addPolygonToPath(QPainterPath& path, const Polygon& p);
 

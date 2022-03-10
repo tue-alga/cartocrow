@@ -85,27 +85,32 @@ void GeometryWidget::mouseMoveEvent(QMouseEvent* event) {
 		QTransform translation;
 		translation.translate(delta.x(), delta.y());
 		m_transform = m_transform * translation;
+		update();
 	}
 
 	m_previousMousePos = event->pos();
-	update();
 }
 
 void GeometryWidget::mousePressEvent(QMouseEvent* event) {
-	m_dragging = true;
-	setCursor(Qt::ClosedHandCursor);
+	if (event->button() & Qt::RightButton) {	
+		m_dragging = true;
+		setCursor(Qt::ClosedHandCursor);
+		update();
+	}
 	m_previousMousePos = event->pos();
-	update();
 }
 
 void GeometryWidget::mouseReleaseEvent(QMouseEvent* event) {
-	m_dragging = false;
-	setCursor(Qt::ArrowCursor);
+	if (m_dragging) {
+		m_dragging = false;
+		setCursor(Qt::ArrowCursor);
+		update();
+	}
 }
 
 void GeometryWidget::leaveEvent(QEvent* event) {
 	// TODO?
-	update();
+	//update();
 }
 
 QSize GeometryWidget::sizeHint() const {
