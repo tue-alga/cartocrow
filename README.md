@@ -96,7 +96,7 @@ The remaining dependencies need to be built manually.
   A few changes are necessary to make Ipelib compile correctly: in `common.mak`, set
   ```make
   # line 158
-  IPEDEPS       :?= /mingw64
+  IPEDEPS       := /mingw64
 
   # line 167-168
   LUA_CFLAGS    := -I$(IPEDEPS)/lua54/include
