@@ -36,6 +36,7 @@ class Region {
 	using PolygonSet = std::vector<Polygon_with_holes>;
 
   public:
+	explicit Region();
 	explicit Region(const std::string& id);
 
 	bool IsPoint() const;

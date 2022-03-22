@@ -30,10 +30,7 @@ namespace cartocrow::flow_map {
 FlowTree::FlowTree(const SpiralTree& spiral_tree)
     : root_translation_(Point(CGAL::ORIGIN) - spiral_tree.getRoot()),
       nodes_(spiral_tree.nodes_begin(), spiral_tree.nodes_end()) {
-	// Clone the nodes.
-	//  for (SpiralTree::NodeConstIterator node_iter = spiral_tree.nodes_begin(); node_iter != spiral_tree.nodes_end(); ++node_iter)
-	//    if ((*node_iter)->GetType() == Node::Type::kRoot)
-	//      nodes_.push_back(*node_iter);
+
 	for (const Node::Ptr& node : nodes_) {
 		if (node->parent == nullptr) {
 			continue;

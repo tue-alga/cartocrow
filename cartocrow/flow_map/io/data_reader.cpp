@@ -82,9 +82,10 @@ bool DataReader::ReadFile(const std::filesystem::path& filename, const std::stri
 	} while (true);
 
 	// Data files must start with four magic characters and the data file version.
-	char magic[4] = {'\0', '\0', '\0', '\0'};
+	char magic[5] = {'\0', '\0', '\0', '\0', '\0'};
 	fin.read(magic, 4);
 	if (!fin || std::strcmp(magic, kMagicCharacters) != 0) {
+		LOG(INFO) << "Data file did not start with magic characters: " << filename;
 		return false;
 	}
 
@@ -92,6 +93,7 @@ bool DataReader::ReadFile(const std::filesystem::path& filename, const std::stri
 	std::string version;
 	fin >> version;
 	if (!fin) {
+		LOG(INFO) << "Data file did not start with a version: " << filename;
 		return false;
 	}
 
@@ -130,6 +132,7 @@ bool DataReader::Parse(std::istream& in, const std::string& value_name,
 ) {
 	// Parse the data.
 	if (!detail::TableParser::Parse(in)) {
+		std::cout << "Data file could not be parsed correctly" << std::endl;
 		return false;
 	}
 
@@ -148,6 +151,7 @@ bool DataReader::Parse(std::istream& in, const std::string& value_name,
 	}
 	if (column_id == nullptr || column_value == nullptr ||
 	    column_id->values.size() != column_value->size()) {
+		std::cout << "Data file did not contain a column named \"" << value_name << "\"" << std::endl;
 		return false;
 	}
 
@@ -156,6 +160,7 @@ bool DataReader::Parse(std::istream& in, const std::string& value_name,
 	const ColumnDouble* column_double = dynamic_cast<const ColumnDouble*>(column_value);
 	const ColumnInteger* column_int = dynamic_cast<const ColumnInteger*>(column_value);
 	if (column_double == nullptr && column_int == nullptr) {
+		std::cout << "hmm 3" << std::endl;
 		return false;
 	}
 
@@ -178,7 +183,11 @@ bool DataReader::Parse(std::istream& in, const std::string& value_name,
 			index_root = index_place;
 		}
 	}
-	CHECK(index_root != places.size());
+	if (index_root == places.size()) {
+		std::cout << "The map does not contain a place with name \"" << value_name << "\""
+		          << std::endl;
+		return false;
+	}
 
 	// Add the values to their associated element.
 	for (size_t v = 0; v < column_id->values.size(); ++v) {

@@ -41,6 +41,10 @@ namespace cartocrow {
  */
 
 /**@brief Construct a region.
+ */
+Region::Region() : id(""), shape(), style("") {}
+
+/**@brief Construct a region.
  * @param id @parblock the ID of the region.
  *
  * See Region::id for more details on this ID.

@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <!DOCTYPE ipe SYSTEM "ipe.dtd">
-<ipe version="70212" creator="Ipe 7.2.13">
-<info created="D:20100326194222" modified="D:20200831150405"/>
+<ipe version="70218" creator="Ipe 7.2.24">
+<info created="D:20100326194222" modified="D:20220321120522"/>
 <preamble>\renewcommand{\familydefault}{\sfdefault}</preamble>
 <ipestyle>
 <symbol name="mark/fdisk(sfx)" transformations="translations">
@@ -38,18 +38,18 @@ h
 </path>
 </group>
 </symbol>
-<pen name="normal" value="0.2"/>
-<pen name="fat" value="1.2"/>
-<symbolsize name="large" value="5"/>
-<color name="white" value="1"/>
 <color name="blue" value="0 0 1"/>
-<color name="gray" value="0.5"/>
 <color name="darkgray" value="0.25"/>
-<color name="lightgray" value="0.75"/>
+<color name="edgeColor" value="0.831 0.306 0"/>
+<color name="gray" value="0.5"/>
 <color name="greenish" value="0.1 0.8 0.2"/>
 <color name="lightergray" value="0.9"/>
+<color name="lightgray" value="0.75"/>
 <color name="nodeColor" value="0.694 0.137 0.023"/>
-<color name="edgeColor" value="0.831 0.306 0"/>
+<color name="white" value="1"/>
+<pen name="fat" value="1.2"/>
+<pen name="normal" value="0.2"/>
+<symbolsize name="large" value="5"/>
 </ipestyle>
 <page>
 <layer name="alpha"/>

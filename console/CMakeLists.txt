@@ -83,7 +83,8 @@ add_subdirectory(multi_library_app)
 add_subdirectory(necklace_map_cla)
 add_subdirectory(necklace_map_gui)
 add_subdirectory(map_regions)
-add_subdirectory(flow_map_cla)
+#add_subdirectory(flow_map_cla)
+add_subdirectory(flow_map_gui)
 add_subdirectory(visvalingam-whyatt_cla)
 
 # Set the default executable to run in Visual Studio.

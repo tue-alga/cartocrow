@@ -84,5 +84,4 @@ target_compile_definitions(${TARGET} PUBLIC "CARTOCROW_DISABLE_SUITE_MAIN")
 
 add_subdirectory(core)
 add_subdirectory(necklace_map)
-add_subdirectory(flow_map)
-
+#add_subdirectory(flow_map)
