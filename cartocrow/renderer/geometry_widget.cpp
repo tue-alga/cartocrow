@@ -20,16 +20,16 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "geometry_widget.h"
 #include "cartocrow/renderer/geometry_renderer.h"
 
+#include <QGuiApplication>
 #include <QPainterPath>
 #include <QPen>
 #include <QPoint>
+#include <QPolygon>
 #include <QSlider>
 #include <QToolButton>
 #include <QtGlobal>
-#include <qpolygon.h>
 
-namespace cartocrow {
-namespace renderer {
+namespace cartocrow::renderer {
 
 GeometryWidget::GeometryWidget(GeometryPainting& painting) : m_painting(painting) {
 	setMouseTracking(true);
@@ -71,6 +71,10 @@ void GeometryWidget::paintEvent(QPaintEvent* event) {
 		drawAxes();
 	}
 	m_painting.paint(*this);
+	m_painter->setPen(QPen(QColor(0, 0, 0)));
+	m_painter->drawText(rect().marginsRemoved(QMargins(10, 10, 10, 10)),
+	                    Qt::AlignRight | Qt::AlignBottom,
+	                    QString::number(m_mousePos.x()) + ", " + QString::number(m_mousePos.y()));
 	m_painter->end();
 }
 
@@ -85,14 +89,17 @@ void GeometryWidget::mouseMoveEvent(QMouseEvent* event) {
 		QTransform translation;
 		translation.translate(delta.x(), delta.y());
 		m_transform = m_transform * translation;
-		update();
 	}
-
 	m_previousMousePos = event->pos();
+
+	update();
 }
 
 void GeometryWidget::mousePressEvent(QMouseEvent* event) {
-	if (event->button() & Qt::RightButton) {	
+	// initiate canvas panning when dragging with the right mouse button
+	// or when holding Ctrl while dragging
+	if ((event->button() & Qt::RightButton) ||
+	    QGuiApplication::keyboardModifiers().testFlag(Qt::KeyboardModifier::ControlModifier)) {
 		m_dragging = true;
 		setCursor(Qt::ClosedHandCursor);
 		update();
@@ -400,5 +407,4 @@ void GeometryWidget::zoomOut() {
 	update();
 }
 
-} // namespace renderer
-} // namespace cartocrow
+} // namespace cartocrow::renderer
