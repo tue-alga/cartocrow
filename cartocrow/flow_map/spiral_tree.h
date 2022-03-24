@@ -110,6 +110,29 @@ class SpiralTree {
 	using Obstacle = std::list<PolarPoint>;
 	using ObstacleSet = std::vector<Obstacle>;
 
+	struct Event {
+		Event(const Node::Ptr& node, const PolarPoint& relative_position)
+		    : node(node), relative_position(relative_position) {}
+
+		Event(const Event& event) : node(event.node), relative_position(event.relative_position) {}
+
+		Node::Ptr node;
+		PolarPoint relative_position;
+	};
+	struct CompareEvents {
+		bool operator()(const Event& a, const Event& b) const {
+			// Join nodes are conceptually farther from the root than other nodes.
+			if (a.relative_position.R() == b.relative_position.R()) {
+				return 1 < b.node->children.size();
+			}
+
+			return a.relative_position.R() < b.relative_position.R();
+		}
+	};
+	using EventQueue = std::priority_queue<Event, std::deque<Event>, CompareEvents>;
+
+	using Wavefront = std::map<Number, Event>;
+
   public:
 	/// The preferred pointer type for storing or sharing a spiral tree.
 	using Ptr = std::shared_ptr<SpiralTree>;
@@ -214,6 +237,42 @@ class SpiralTree {
   private: // TODO(tvl) made private until computing the tree with obstructions is implemented.
 	/// Compute the spiral tree arcs, ignoring any obstacles.
 	void computeUnobstructed();
+
+	/// Handles a root event in the spiral tree computation algorithm.
+	/**
+	 * This finalizes the algorithm: it connects the remaining wavefront node to
+	 * the root and empties the wavefront.
+	 */
+	void handleRootEvent(const Event& event, Wavefront& wavefront);
+
+	/// Handles a join event in the spiral tree computation algorithm.
+	/**
+	 * This first checks if the event is invalid (which happens if the children
+	 * of the join node are not both active anymore). If the event is valid, we
+	 * remove the children from the wavefront, connect them to the join node,
+	 * and add the join node to the wavefront.
+	 *
+	 * Returns the position of the newly inserted join node in the wavefront,
+	 * or \c std::nullopt if the event was invalid.
+	 */
+	std::optional<Wavefront::iterator> handleJoinEvent(const Event& event, Wavefront& wavefront);
+
+	/// Handles a leaf event in the spiral tree computation algorithm.
+	/**
+	 * This checks if the new leaf node is reachable from one of its neighbors
+	 * in the wavefront. (It cannot be reachable from both neighbors, because
+	 * then the reachable regions from these neighbors would overlap, resulting
+	 * in a join event that should have been handled before this leaf event,
+	 * which removes the neighbors from the wavefront.)
+	 *
+	 * If indeed the leaf node is reachable from a neighbor \f$ v \f$, then
+	 * \f$ v \f$ becomes the child of the new node and hence gets removed from
+	 * the wavefront. Else, the leaf node is simply inserted into the wavefront
+	 * without children.
+	 *
+	 * Returns the position of the newly inserted leaf node in the wavefront.
+	 */
+	Wavefront::iterator handleLeafEvent(Event& event, Wavefront& wavefront);
 
 	/// Compute the spiral tree arcs, taking obstacles into account.
 	/**

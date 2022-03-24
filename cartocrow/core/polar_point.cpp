@@ -109,7 +109,7 @@ bool operator!=(const PolarPoint& p, const PolarPoint& q) {
 }
 
 std::ostream& operator<<(std::ostream& os, const PolarPoint& point) {
-	os << "p(R= " << point.R() << ", phi= " << point.phi() << ")";
+	os << "(R=" << point.R() << ", φ=" << point.phi() << ")";
 	return os;
 }
 
