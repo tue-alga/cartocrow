@@ -274,6 +274,8 @@ class SpiralTree {
 	 */
 	Wavefront::iterator handleLeafEvent(Event& event, Wavefront& wavefront);
 
+	void insertJoinEvent(const Event& first, const Event& second, EventQueue& events);
+
 	/// Compute the spiral tree arcs, taking obstacles into account.
 	/**
 	 * \warning Currently not implemented.

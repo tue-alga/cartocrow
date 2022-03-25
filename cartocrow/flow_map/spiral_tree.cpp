@@ -193,84 +193,51 @@ void SpiralTree::computeUnobstructed() {
 		Event event = events.top();
 		events.pop();
 
-		// are we looking at the root?
+		// if we have reached the root, handle that and stop
 		if (event.relative_position.R() == 0) {
 			handleRootEvent(event, wavefront);
 			break;
 		}
 
-		std::optional<Wavefront::iterator> node_iter;
-
-		// are we looking at a join node?
+		// handle join and leaf events
+		std::optional<Wavefront::iterator> new_node;
 		if (event.node->children.size() > 1) {
-			node_iter = handleJoinEvent(event, wavefront);
+			new_node = handleJoinEvent(event, wavefront);
 		} else {
-			node_iter = handleLeafEvent(event, wavefront);
+			new_node = handleLeafEvent(event, wavefront);
 		}
 
-		if (!node_iter || wavefront.size() < 2) {
-			continue;
-		}
-
-		// Add join nodes with the neighbors to the event queue.
-		{
-			// Clockwise.
-			Circulator<Wavefront> cw_iter = --make_circulator(*node_iter, wavefront);
-
-			const Spiral spiral_left(event.relative_position, -m_restricting_angle);
-			const Spiral spiral_right(cw_iter->second.relative_position, m_restricting_angle);
-
-			PolarPoint intersections[2];
-			const int num = ComputeIntersections(spiral_left, spiral_right, intersections);
-			CHECK_LT(0, num);
-
-			// Note that the intersections should be the two closest to the anchor of the first spiral.
-			const PolarPoint& intersection = intersections[0];
-			CHECK_LE(intersection.R(), event.relative_position.R());
-			CHECK_LE(intersection.R(), cw_iter->second.relative_position.R());
-
-			Node::Ptr join = std::make_shared<Node>();
-			join->children = {event.node, cw_iter->second.node};
-
-			events.push(Event(join, intersection));
-
-#ifndef NDEBUG
-			const std::string id =
-			    "[" + cw_iter->second.node->place->id + "+" + event.node->place->id + "]";
-			PolarPoint absolute_position(intersection, -m_root_translation);
-			join->place = std::make_shared<Place>(id, absolute_position);
-#endif // NDEBUG
-		}
-
-		{
-			// Counter-clockwise.
-			Circulator<Wavefront> ccw_iter = ++make_circulator(*node_iter, wavefront);
-
-			const Spiral spiral_left(ccw_iter->second.relative_position, -m_restricting_angle);
-			const Spiral spiral_right(event.relative_position, m_restricting_angle);
-
-			PolarPoint intersections[2];
-			const int num = ComputeIntersections(spiral_left, spiral_right, intersections);
-			CHECK_LT(0, num);
-
-			// Note that the intersections should be the two closest to the anchor of the first spiral.
-			const PolarPoint& intersection = intersections[0];
-			CHECK_LE(intersection.R(), ccw_iter->second.relative_position.R());
-			CHECK_LE(intersection.R(), event.relative_position.R());
-
-			Node::Ptr join = std::make_shared<Node>();
-			join->children = {ccw_iter->second.node, event.node};
-
-			events.push(Event(join, intersection));
-
-#ifndef NDEBUG
-			const std::string id =
-			    "[" + event.node->place->id + "+" + ccw_iter->second.node->place->id + "]";
-			PolarPoint absolute_position(intersection, -m_root_translation);
-			join->place = std::make_shared<Place>(id, absolute_position);
-#endif // NDEBUG
+		// insert join events involving the node that was newly added to the
+		// wavefront, with its two neighbors in the wavefront
+		if (new_node && wavefront.size() >= 2) {
+			Circulator<Wavefront> cw_iter = --make_circulator(*new_node, wavefront);
+			insertJoinEvent(event, cw_iter->second, events);
+			Circulator<Wavefront> ccw_iter = ++make_circulator(*new_node, wavefront);
+			insertJoinEvent(ccw_iter->second, event, events);
 		}
 	}
+}
+
+void SpiralTree::insertJoinEvent(const Event& first, const Event& second, EventQueue& events) {
+	const Spiral spiral_left(first.relative_position, -m_restricting_angle);
+	const Spiral spiral_right(second.relative_position, m_restricting_angle);
+
+	PolarPoint intersections[2];
+	const int num = ComputeIntersections(spiral_left, spiral_right, intersections);
+	CHECK_LT(0, num);
+
+	// the intersections should be the two closest to the anchor of the first spiral
+	const PolarPoint& intersection = intersections[0];
+	CHECK_LE(intersection.R(), first.relative_position.R());
+	CHECK_LE(intersection.R(), second.relative_position.R());
+
+	Node::Ptr join = std::make_shared<Node>();
+	join->children = {first.node, second.node};
+	const std::string id = "[" + first.node->place->id + "+" + second.node->place->id + "]";
+	PolarPoint absolute_position(intersection, -m_root_translation);
+	join->place = std::make_shared<Place>(id, absolute_position);
+
+	events.push(Event(join, intersection));
 }
 
 void SpiralTree::setRoot(const Point& root) {
