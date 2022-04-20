@@ -21,26 +21,27 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 04-09-2020
 
 #include "polar_point.h"
 
+#include <glog/logging.h>
+
 namespace cartocrow {
 
-/**@class PolarPoint
- * A 2D point with polar coordinates.
- */
+PolarPoint::PolarPoint() : m_r(0), m_phi(0) {}
 
-/**@brief Construct a polar point.
- */
-PolarPoint::PolarPoint() {}
+PolarPoint::PolarPoint(const CGAL::Origin& o) : m_r(0), m_phi(0) {}
 
-/**@brief Construct a polar point at the origin.
- * @param o the origin.
- */
-PolarPoint::PolarPoint(const CGAL::Origin& o) : R_(0), phi_(0) {}
+PolarPoint::PolarPoint(const Number& r, const Number& phi) : m_r(r), m_phi(phi) {
+	CHECK_LE(0, r);
 
-/**@brief Construct a clone of a polar point.
- *
- * @param p the point to clone.
- */
-PolarPoint::PolarPoint(const PolarPoint& p) : R_(p.R()), phi_(p.phi()) {}
+	// TODO [ws] this is stupid
+	while (m_phi < -M_PI) {
+		m_phi += M_2xPI;
+	}
+	while (M_PI <= m_phi) {
+		m_phi -= M_2xPI;
+	}
+}
+
+PolarPoint::PolarPoint(const PolarPoint& p) : m_r(p.R()), m_phi(p.phi()) {}
 
 /**@brief Construct a polar point from a polar point with a different pole.
  *
@@ -49,10 +50,6 @@ PolarPoint::PolarPoint(const PolarPoint& p) : R_(p.R()), phi_(p.phi()) {}
  */
 PolarPoint::PolarPoint(const PolarPoint& p, const Vector& t) : PolarPoint(translate_pole(p, t)) {}
 
-/**@brief Construct a polar point.
- *
- * @param p the Cartesian coordinates of the polar point.
- */
 PolarPoint::PolarPoint(const Point& p) : PolarPoint(to_polar(p)) {}
 
 /**@brief Construct a polar point with a different pole.
@@ -62,38 +59,28 @@ PolarPoint::PolarPoint(const Point& p) : PolarPoint(to_polar(p)) {}
  */
 PolarPoint::PolarPoint(const Point& p, const Vector& t) : PolarPoint(to_polar(p + t)) {}
 
-/**@brief Return the distance to the pole.
- * @return the distance to the pole.
- */
 const Number& PolarPoint::R() const {
-	return R_;
+	return m_r;
 }
 
-/**@brief Return the angle from the pole.
- * @return the angle from the pole.
- */
 const Number& PolarPoint::phi() const {
-	return phi_;
+	return m_phi;
 }
 
-/**@brief Convert to a point with Cartesian coordinates.
- * @return the point with its coordinates converted to Cartesian.
- */
 Point PolarPoint::to_cartesian() const {
 	const Vector d = Vector(std::cos(phi()), std::sin(phi()));
 	return Point(CGAL::ORIGIN) + R() * d;
 }
 
 PolarPoint PolarPoint::to_polar(const Point& p) {
-	// Positive by construction.
-	const Number R = CGAL::sqrt((p - Point(CGAL::ORIGIN)).squared_length());
+	const Number r = CGAL::sqrt((p - Point(CGAL::ORIGIN)).squared_length());
 
 	if (p.x() == 0 && p.y() == 0) {
-		return PolarPoint(R, 0);
+		return PolarPoint(r, 0);
 	}
 
 	const Number phi = std::atan2(CGAL::to_double(p.y()), CGAL::to_double(p.x()));
-	return PolarPoint(R, phi);
+	return PolarPoint(r, phi);
 }
 
 PolarPoint PolarPoint::translate_pole(const PolarPoint& p, const Vector& t) {

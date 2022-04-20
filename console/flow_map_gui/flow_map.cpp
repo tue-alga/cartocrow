@@ -18,11 +18,12 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include <QApplication>
 
-#include "cartocrow/flow_map/flow_map.h"
+#include "cartocrow/flow_map/io/data_reader.h"
 #include "cartocrow/flow_map/io/ipe_reader.h"
 #include "cartocrow/flow_map/painting.h"
 #include "cartocrow/flow_map/parameters.h"
 #include "cartocrow/flow_map/place.h"
+#include "cartocrow/flow_map/spiral_tree.h"
 #include "cartocrow/renderer/geometry_widget.h"
 #include "cartocrow/renderer/ipe_renderer.h"
 
@@ -40,8 +41,8 @@ int main(int argc, char* argv[]) {
 	using Place = cartocrow::flow_map::Place;
 	std::vector<Region> regions;
 	std::vector<Region> obstacles;
-	std::vector<Place::Ptr> places;
-	//std::vector<Place::Ptr> waypoints;
+	std::vector<std::shared_ptr<Place>> places;
+	//std::vector<std::shared_ptr<Place>> waypoints;
 	cartocrow::flow_map::IpeReader ipe_reader;
 	bool success_read_ipe = ipe_reader.readFile(map_filename, regions, obstacles, places);
 	if (!success_read_ipe) {
@@ -51,22 +52,32 @@ int main(int argc, char* argv[]) {
 
 	size_t index_root;
 	cartocrow::flow_map::DataReader data_reader;
-	bool success_read_data = data_reader.ReadFile(data_filename, value_name, places, index_root);
+	bool success_read_data = data_reader.readFile(data_filename, value_name, places, index_root);
 	if (!success_read_data) {
 		std::cout << "Couldn't read data file\n";
 		return 1;
 	}
 	cartocrow::flow_map::Parameters parameters;
 
-	cartocrow::flow_map::FlowTree::Ptr tree;
-	cartocrow::flow_map::computeFlowMap(parameters, places, index_root, obstacles, tree);
+	const cartocrow::Point root = places[index_root]->position.to_cartesian();
+	cartocrow::flow_map::SpiralTree spiral_tree(root, parameters.restricting_angle);
+	for (const auto& place : places) {
+		if (place->flow_in > 0) {
+			spiral_tree.addPlace(*place);
+		}
+	}
+	for (const auto& obstacle : obstacles) {
+		for (const auto& polygon : obstacle.shape) {
+			spiral_tree.addObstacle(polygon.outer_boundary());
+		}
+	}
+	spiral_tree.computeUnobstructed();
 
 	QApplication a(argc, argv);
 	a.setApplicationName("CartoCrow flow map demo");
 	cartocrow::flow_map::Painting::Options options;
-	cartocrow::flow_map::Painting painting(tree, regions, obstacles, options);
+	cartocrow::flow_map::Painting painting(spiral_tree, regions, obstacles, options);
 	cartocrow::renderer::IpeRenderer renderer(painting);
-	renderer.save("test.ipe");
 
 	cartocrow::renderer::GeometryWidget widget(painting);
 	widget.show();

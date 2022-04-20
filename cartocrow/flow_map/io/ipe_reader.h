@@ -58,7 +58,7 @@ class IpeReader {
 	 * Stores the data into output parameters \c regions, \c obstacles, and \c places.
 	 */
 	bool readFile(const std::filesystem::path& filename, std::vector<Region>& regions,
-	              std::vector<Region>& obstacles, std::vector<Place::Ptr>& places);
+	              std::vector<Region>& obstacles, std::vector<std::shared_ptr<Place>>& places);
 };
 
 } // namespace cartocrow::flow_map

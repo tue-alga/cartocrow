@@ -31,63 +31,10 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 28-10-2020
 #include <vector>
 
 #include "cartocrow/core/region.h"
-#include "cartocrow/flow_map/place.h"
+#include "node.h"
+#include "place.h"
 
 namespace cartocrow::flow_map {
-
-/// A node in a spiral or flow tree.
-struct Node {
-	/// The preferred pointer type for storing or sharing a node.
-	using Ptr = std::shared_ptr<Node>;
-
-	/// The type of node, as defined by its connections.
-	enum class ConnectionType {
-		/// The root node, the only node without a parent.
-		kRoot,
-		/// A leaf node, a node without any children.
-		kLeaf,
-		/// A join node, a node with at least two children.
-		kJoin,
-		/// A subdivision node, a node with exactly one child.
-		kSubdivision
-	};
-
-	/// Construct a new node.
-	/**
-	 * A node may be associated with a place (\c place) on the map that either
-	 * sends or receives flow. These nodes are the root and leaf nodes. Other
-	 * nodes will have the same amount of incoming flow as the sum of the
-	 * outgoing flow.
-	 */
-	explicit Node(const Place::Ptr& place = nullptr);
-
-	/// Determine the type of this node, based on its number of children.
-	/**
-	 * Each node is either the root, a leaf, a join node, or a subdivision node
-	 * (see \ref ConnectionType).
-	 */
-	ConnectionType getType() const;
-
-	/// Determine whether this node is a Steiner node.
-	/**
-	 * Steiner nodes are not part of the input places. They support the tree,
-	 * either by splitting the flow, or by guiding the flow around obstacles.
-	 */
-	bool isSteiner() const;
-
-	/// The place associated with this node, or \c nullptr if no place is
-	/// associated with this node.
-	Place::Ptr place;
-	/// The parent of this node.
-	Ptr parent;
-	/// The children of this node.
-	/**
-	 * While generally the nodes of a tree without children are refered to as
-	 * leaf nodes, a node with the leaf type may have children if it is located
-	 * inside the spiral region of another node.
-	 */
-	std::vector<Ptr> children;
-};
 
 /// A binary tree where each arc is a logarithmic spiral.
 /**
@@ -104,48 +51,11 @@ struct Node {
  * \warning Obstacle avoidance is not currently implemented.
  */
 class SpiralTree {
-  private:
-	using NodeSet = std::vector<Node::Ptr>;
 
+  public:
+	/// An obstacle is made up of a list of polar points in clockwise order.
 	using Obstacle = std::list<PolarPoint>;
-	using ObstacleSet = std::vector<Obstacle>;
 
-	struct Event {
-		Event(const Node::Ptr& node, const PolarPoint& relative_position)
-		    : node(node), relative_position(relative_position) {}
-
-		Event(const Event& event) : node(event.node), relative_position(event.relative_position) {}
-
-		Node::Ptr node;
-		PolarPoint relative_position;
-	};
-	struct CompareEvents {
-		bool operator()(const Event& a, const Event& b) const {
-			// Join nodes are conceptually farther from the root than other nodes.
-			if (a.relative_position.R() == b.relative_position.R()) {
-				return 1 < b.node->children.size();
-			}
-
-			return a.relative_position.R() < b.relative_position.R();
-		}
-	};
-	using EventQueue = std::priority_queue<Event, std::deque<Event>, CompareEvents>;
-
-	using Wavefront = std::map<Number, Event>;
-
-  public:
-	/// The preferred pointer type for storing or sharing a spiral tree.
-	using Ptr = std::shared_ptr<SpiralTree>;
-	/// The iterator type that is used to iterate over all the nodes of the spiral tree.
-	using NodeIterator = NodeSet::iterator;
-	/// The constant-value iterator type that is used to iterate over all the nodes of the spiral tree.
-	using NodeConstIterator = NodeSet::const_iterator;
-
-  private: // TODO(tvl) made private until computing the tree with obstructions is implemented.
-	using ObstacleIterator = ObstacleSet::iterator;
-	using ObstacleConstIterator = ObstacleSet::const_iterator;
-
-  public:
 	/// Constructs a spiral tree.
 	/**
 	 * A spiral tree must always have a root point and a positive restricting
@@ -158,85 +68,89 @@ class SpiralTree {
 	 */
 	SpiralTree(const Point& root, const Number& restricting_angle);
 
+	/// Changes the root position.
+	/**
+	 * This removes all existing arcs of the tree. The new tree can be computed
+	 * using \ref compute().
+	 */
+	void setRoot(const Point& root);
+
 	/// Gets the root position of the spiral tree.
-	inline Point getRoot() const {
-		return Point(CGAL::ORIGIN) - m_root_translation;
-	}
+	Point root() const;
+
+	/// Changes the restricting angle.
+	/**
+	 * This removes all existing arcs of the tree. The new tree can be computed
+	 * using \ref compute().
+	 */
+	void setRestrictingAngle(const Number& restricting_angle);
 
 	/// Gets the restricting angle of the spiral tree (in radians).
-	inline Number getRestrictingAngle() const {
-		return m_restricting_angle;
-	}
+	Number restrictingAngle() const;
 
-	/// Gets a constant-value iterator to the first node of the tree.
-	NodeConstIterator nodes_begin() const {
-		return m_nodes.begin();
-	}
-	/// Gets a constant-value iterator to the past-the-end node of the tree.
-	NodeConstIterator nodes_end() const {
-		return m_nodes.end();
-	}
-	/// Gets a iterator to the first node of the tree.
-	NodeIterator nodes_begin() {
-		return m_nodes.begin();
-	}
-	/// Gets a iterator to the past-the-end node of the tree.
-	NodeIterator nodes_end() {
-		return m_nodes.end();
-	}
+	/// Returns a list of the places in this spiral tree.
+	const std::vector<std::shared_ptr<Place>>& places() const;
 
-  private: // TODO(tvl) made private until computing the tree with obstructions is implemented.
-	ObstacleConstIterator obstacles_begin() const {
-		return m_obstacles.begin();
-	}
-	ObstacleConstIterator obstacles_end() const {
-		return m_obstacles.end();
-	}
+	/// Returns a list of the nodes in this spiral tree.
+	const std::vector<std::shared_ptr<Node>>& nodes() const;
 
-	ObstacleIterator obstacles_begin() {
-		return m_obstacles.begin();
-	}
-	ObstacleIterator obstacles_end() {
-		return m_obstacles.end();
-	}
+	/// Returns a list of the obstacles in this spiral tree.
+	const std::vector<Obstacle>& obstacles() const;
 
-  public:
-	/// Adds a set of places to the spiral tree.
-	/**
-	 * The spiral arcs are not automatically computed after adding the places;
-	 * this requires manually calling \ref compute().
-	 * @param places The set of places to add to the spiral tree. This must
-	 * contain the root of the tree. Non-root places with a non-positive
-	 * incoming flow will be ignored.
-	 */
-	void addPlaces(const std::vector<Place::Ptr>& places);
+	/// Adds a place to the spiral tree.
+	void addPlace(const Place& place);
 
-  private: // TODO(tvl) made private until computing the tree with obstructions is implemented.
-	/// Adds a set of obstacles to the spiral tree.
-	/**
-	 * The spiral arcs are not automatically computed after adding the places;
-	 * this requires manually calling \ref compute().
-	 * @param places The set of places to add to the spiral tree. This must
-	 * contain the root of the tree. Non-root places with a non-positive
-	 * incoming flow will be ignored.
-	 */
-	void addObstacles(const std::vector<Region>& obstacles);
+	/// Adds an obstacle to the spiral tree.
+	void addObstacle(const Polygon& obstacle);
 
-  public:
-	/// Computes the spiral tree arcs.
+	/// Adds a shield obstacle to each place to make sure that these nodes in
+	/// the tree become leaves.
+	void addShields();
+
+	/// Compute the spiral tree arcs, ignoring any obstacles.
 	/**
 	 * These arcs are based on the position of the nodes, the restricting angle
 	 * of the tree, and any obstacles that are present.
 	 *
-	 * If no specific obstacles have been added, input nodes are not forced to
-	 * be leaf nodes in the final tree. If this is desired, use \ref
-	 * computeObstructed() instead.
+	 * To compute the tree while taking obstacles into account, use
+	 * \ref computeObstructed() instead.
 	 */
-	void compute();
-
-  private: // TODO(tvl) made private until computing the tree with obstructions is implemented.
-	/// Compute the spiral tree arcs, ignoring any obstacles.
 	void computeUnobstructed();
+
+	/// Compute the spiral tree arcs, taking obstacles into account.
+	/**
+	 * \warning Currently not implemented.
+	 */
+	void computeObstructed();
+
+	/// Removes all the arcs and nodes from the tree, so only the manually
+	/// added nodes and obstacles remain.
+	void clean();
+
+  private:
+	struct Event {
+		Event(std::shared_ptr<Node> node, const PolarPoint& relative_position)
+		    : m_node(node), m_relative_position(relative_position) {}
+
+		Event(const Event& event)
+		    : m_node(event.m_node), m_relative_position(event.m_relative_position) {}
+
+		std::shared_ptr<Node> m_node;
+		PolarPoint m_relative_position;
+	};
+	struct CompareEvents {
+		bool operator()(const Event& a, const Event& b) const {
+			// join nodes are conceptually farther from the root than other nodes
+			if (a.m_relative_position.R() == b.m_relative_position.R()) {
+				return 1 < b.m_node->m_children.size();
+			}
+
+			return a.m_relative_position.R() < b.m_relative_position.R();
+		}
+	};
+	using EventQueue = std::priority_queue<Event, std::deque<Event>, CompareEvents>;
+
+	using Wavefront = std::map<Number, Event>;
 
 	/// Handles a root event in the spiral tree computation algorithm.
 	/**
@@ -276,39 +190,14 @@ class SpiralTree {
 
 	void insertJoinEvent(const Event& first, const Event& second, EventQueue& events);
 
-	/// Compute the spiral tree arcs, taking obstacles into account.
-	/**
-	 * \warning Currently not implemented.
-	 */
-	void computeObstructed();
-
-  public:
-	/// Changes the root position.
-	/**
-	 * This removes all existing arcs of the tree. The new tree can be computed
-	 * using \ref compute().
-	 */
-	void setRoot(const Point& root);
-
-	/// Changes the restricting angle.
-	/**
-	 * This removes all existing arcs of the tree. The new tree can be computed
-	 * using \ref compute().
-	 */
-	void setRestrictingAngle(const Number& restricting_angle);
-
-  private:
-	void clean();
-
 	bool isReachable(const PolarPoint& parent_point, const PolarPoint& child_point) const;
-
-	void addObstacle(const Polygon_with_holes& polygon);
 
 	Number m_restricting_angle;
 	Vector m_root_translation;
 
-	NodeSet m_nodes; // Note that the positions of these nodes are offset by the position of the root.
-	ObstacleSet m_obstacles;
+	std::vector<std::shared_ptr<Place>> m_places;
+	std::vector<std::shared_ptr<Node>> m_nodes;
+	std::vector<Obstacle> m_obstacles;
 };
 
 } // namespace cartocrow::flow_map

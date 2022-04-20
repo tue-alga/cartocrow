@@ -1,14 +1,15 @@
 #ifndef CARTOCROW_NECKLACE_MAP_PAINTING
 #define CARTOCROW_NECKLACE_MAP_PAINTING
 
+#include <cartocrow/core/spiral.h>
 #include <cartocrow/renderer/geometry_painting.h>
 #include <cartocrow/renderer/geometry_renderer.h>
 
-#include "flow_map.h"
+#include "spiral_tree.h"
 
 namespace cartocrow::flow_map {
 
-/// The \ref renderer::GeometryPainting "GeometryPainting" for a flow map.
+/// The \ref renderer::GeometryPainting "GeometryPainting" for a spiral tree.
 class Painting : public renderer::GeometryPainting {
 
   public:
@@ -19,8 +20,7 @@ class Painting : public renderer::GeometryPainting {
 	};
 
 	/// Creates a new painting with the given tree, regions, and obstacles.
-	/// factor.
-	Painting(const FlowTree::Ptr& tree, const std::vector<Region>& regions,
+	Painting(const SpiralTree& tree, const std::vector<Region>& regions,
 	         const std::vector<Region>& obstacles, const Options options);
 
   protected:
@@ -33,9 +33,9 @@ class Painting : public renderer::GeometryPainting {
 	void paintFlow(renderer::GeometryRenderer& renderer);
 
 	void paintSpiral(renderer::GeometryRenderer& renderer, const Spiral& spiral,
-	                 const Vector& offset, const PolarPoint& parent);
+	                 const Point& offset, const PolarPoint& parent);
 
-	const FlowTree::Ptr& m_tree;
+	const SpiralTree& m_tree;
 	const std::vector<Region>& m_regions;
 	const std::vector<Region>& m_obstacles;
 	Options m_options;

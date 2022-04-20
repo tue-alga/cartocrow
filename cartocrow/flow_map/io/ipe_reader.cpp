@@ -38,7 +38,7 @@ namespace cartocrow::flow_map {
 IpeReader::IpeReader() {}
 
 bool IpeReader::readFile(const std::filesystem::path& filename, std::vector<Region>& regions,
-                         std::vector<Region>& obstacles, std::vector<Place::Ptr>& places) {
+                         std::vector<Region>& obstacles, std::vector<std::shared_ptr<Place>>& places) {
 	std::shared_ptr<ipe::Document> document = cartocrow::IpeReader::loadIpeFile(filename);
 
 	if (document->countPages() > 1) {

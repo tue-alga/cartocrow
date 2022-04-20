@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <!DOCTYPE ipe SYSTEM "ipe.dtd">
 <ipe version="70218" creator="Ipe 7.2.24">
-<info created="D:20100326194222" modified="D:20220321142423"/>
+<info created="D:20100326194222" modified="D:20220413122052"/>
 <ipestyle name="basic">
 <symbol name="arrow/arc(spx)">
 <path stroke="sym-stroke" fill="sym-stroke" pen="sym-pen">
@@ -313,7 +313,7 @@ h
 <layer name="regions"/>
 <layer name="obstacles"/>
 <layer name="places"/>
-<view layers="regions obstacles places" active="places"/>
+<view layers="regions obstacles places" active="obstacles"/>
 <path layer="regions" stroke="black" fill="lightgray">
 312.37 215.059 m
 311.976 214.034 l
@@ -3287,5 +3287,20 @@ h
 <text layer="places" matrix="1 0 0 1 -8.12892 -207.901" transformations="translations" pos="317.435 341.426" stroke="black" type="label" width="23.385" height="6.808" depth="0" halign="center" valign="center">MNE</text>
 <text matrix="1 0 0 1 -0.642029 -207.246" transformations="translations" pos="317.435 341.426" stroke="black" type="label" width="20.756" height="6.808" depth="0" halign="center" valign="center">KOS</text>
 <text matrix="1 0 0 1 -71.9661 -162.308" transformations="translations" pos="317.435 341.426" stroke="black" type="label" width="21.171" height="6.808" depth="0" halign="center" valign="center">LUX</text>
+<path layer="obstacles" stroke="darkred" dash="dotted" pen="heavier" cap="1">
+246.956 229.978 m
+239.174 244.431 l
+270.859 248.878 l
+269.377 239.428 l
+h
+</path>
+<path stroke="darkred" dash="dotted" pen="heavier" cap="1">
+243.357 184.972 m
+241.19 188.551 l
+244.869 190.365 l
+249.304 189.609 l
+249.254 185.275 l
+h
+</path>
 </page>
 </ipe>

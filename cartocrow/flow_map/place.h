@@ -37,9 +37,7 @@ namespace cartocrow::flow_map {
  * enters this place.
  */
 struct Place {
-	/// The preferred pointer type for storing or sharing a place.
-	using Ptr = std::shared_ptr<Place>;
-	/// Construct a new flow map place.
+	/// Constructs a new flow map place.
 	Place(const std::string& id, const PolarPoint& position);
 	/// The ID of this place.
 	std::string id;

@@ -60,8 +60,9 @@ DataReader::DataReader() : detail::TableParser() {}
  * @param max_retries the maximum number of times to retry reading after an error.
  * @return whether the element values could be read successfully.
  */
-bool DataReader::ReadFile(const std::filesystem::path& filename, const std::string& value_name,
-                          std::vector<Place::Ptr>& places, size_t& index_root, int max_retries /*= 2*/
+bool DataReader::readFile(const std::filesystem::path& filename, const std::string& value_name,
+                          std::vector<std::shared_ptr<Place>>& places, size_t& index_root,
+                          int max_retries /*= 2*/
 ) {
 	std::fstream fin;
 	int retry = 0;
@@ -97,7 +98,7 @@ bool DataReader::ReadFile(const std::filesystem::path& filename, const std::stri
 		return false;
 	}
 
-	return Parse(fin, value_name, places, index_root, version);
+	return parse(fin, value_name, places, index_root, version);
 }
 
 /**@brief Parse a flow map data string.
@@ -126,8 +127,8 @@ bool DataReader::ReadFile(const std::filesystem::path& filename, const std::stri
  * @param version the data format version.
  * @return whether the element values could be read successfully.
  */
-bool DataReader::Parse(std::istream& in, const std::string& value_name,
-                       std::vector<Place::Ptr>& places, size_t& index_root,
+bool DataReader::parse(std::istream& in, const std::string& value_name,
+                       std::vector<std::shared_ptr<Place>>& places, size_t& index_root,
                        const std::string& version /*= "1.0"*/
 ) {
 	// Parse the data.
@@ -170,7 +171,7 @@ bool DataReader::Parse(std::istream& in, const std::string& value_name,
 	LookupTable id_to_element_index;
 	index_root = places.size();
 	for (size_t index_place = 0; index_place < places.size(); ++index_place) {
-		Place::Ptr& place = places[index_place];
+		std::shared_ptr<Place> place = places[index_place];
 
 		const size_t next_index = id_to_element_index.size();
 		const size_t n = id_to_element_index.insert({place->id, next_index}).first->second;
@@ -200,7 +201,7 @@ bool DataReader::Parse(std::istream& in, const std::string& value_name,
 		if (n == places.size()) {
 			places.push_back(std::make_shared<Place>(id, PolarPoint()));
 		}
-		Place::Ptr& place = places[n];
+		std::shared_ptr<Place> place = places[n];
 		CHECK_EQ(id, place->id);
 
 		if (column_double == nullptr) {
