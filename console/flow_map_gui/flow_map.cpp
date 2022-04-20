@@ -24,6 +24,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "cartocrow/flow_map/parameters.h"
 #include "cartocrow/flow_map/place.h"
 #include "cartocrow/flow_map/spiral_tree.h"
+#include "cartocrow/flow_map/spiral_tree_unobstructed_algorithm.h"
 #include "cartocrow/renderer/geometry_widget.h"
 #include "cartocrow/renderer/ipe_renderer.h"
 
@@ -71,7 +72,8 @@ int main(int argc, char* argv[]) {
 			spiral_tree.addObstacle(polygon.outer_boundary());
 		}
 	}
-	spiral_tree.computeUnobstructed();
+	cartocrow::flow_map::SpiralTreeUnobstructedAlgorithm algorithm(spiral_tree);
+	algorithm.run();
 
 	QApplication a(argc, argv);
 	a.setApplicationName("CartoCrow flow map demo");

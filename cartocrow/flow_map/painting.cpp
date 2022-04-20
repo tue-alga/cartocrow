@@ -63,9 +63,9 @@ void Painting::paintFlow(renderer::GeometryRenderer& renderer) {
 		                                          CGAL::ORIGIN - m_tree.root());
 
 		const Spiral spiral(node_relative_position, parent_relative_position);
-		std::cout << "painting spiral " << node->m_place->id << " at " << node_relative_position
+		/*std::cout << "painting spiral " << node->m_place->id << " at " << node_relative_position
 		          << " to " << node->m_parent->m_place->id << " at " << parent_relative_position
-		          << std::endl;
+		          << std::endl;*/
 		paintSpiral(renderer, spiral, m_tree.root(), parent_relative_position);
 	}
 }
@@ -102,11 +102,11 @@ void Painting::paintSpiral(renderer::GeometryRenderer& renderer, const Spiral& s
 	points.push_back(parent);
 
 	Vector offset = root - CGAL::ORIGIN;
-	std::cout << points.size() << "spiral coordinates ";
-	for (int i = 0; i < points.size(); ++i) {
-		std::cout << points[i] << " ";
-	}
-	std::cout << std::endl;
+	//std::cout << points.size() << "spiral coordinates ";
+	//for (int i = 0; i < points.size(); ++i) {
+	//	std::cout << points[i] << " ";
+	//}
+	//std::cout << std::endl;
 	for (int i = 0; i + 1 < points.size(); ++i) {
 		renderer.draw(
 		    Segment(points[i].to_cartesian() + offset, points[i + 1].to_cartesian() + offset));
