@@ -72,6 +72,7 @@ int main(int argc, char* argv[]) {
 			spiral_tree.addObstacle(polygon.outer_boundary());
 		}
 	}
+	spiral_tree.addShields();
 	cartocrow::flow_map::SpiralTreeUnobstructedAlgorithm algorithm(spiral_tree);
 	algorithm.run();
 

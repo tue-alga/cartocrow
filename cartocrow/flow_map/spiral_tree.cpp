@@ -23,6 +23,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 28-10-2020
 
 #include "spiral_tree.h"
 
+#include <cmath>
 #include <optional>
 #include <ostream>
 
@@ -67,7 +68,12 @@ void SpiralTree::addPlace(const Place& place) {
 void SpiralTree::addObstacle(const Polygon& obstacle) {
 	//CHECK_NE(obstacle.oriented_side(root()), CGAL::ON_BOUNDED_SIDE) << "Root inside an obstacle.";
 
+	std::cout << "adding obstacle with vertex count " << obstacle.size() << std::endl;
 	Obstacle& addedObstacle = m_obstacles.emplace_back();
+	for (const auto& vertex : obstacle) {
+		PolarPoint p(vertex, CGAL::ORIGIN - root());
+		addedObstacle.push_back(p);
+	}
 
 	// enforce clockwise vertex order
 	if (!obstacle.is_counterclockwise_oriented()) {
@@ -89,8 +95,8 @@ void SpiralTree::addObstacle(const Polygon& obstacle) {
 		const Number r_spiral = closest.R() / std::sin(m_restricting_angle);
 
 		const int sign = vertex_prev->phi() < vertex_iter->phi() ? -1 : 1;
-		const Number phi_spiral_prev = closest.phi() - sign * phi_offset;
-		const Number phi_spiral_next = closest.phi() + sign * phi_offset;
+		const Number phi_spiral_prev = closest.phi() + sign * phi_offset;
+		const Number phi_spiral_next = closest.phi() - sign * phi_offset;
 
 		// the closest point and spiral points must be added ordered from p to q and only if they are on the edge
 		if (edge.ContainsPhi(phi_spiral_prev)) {
@@ -106,13 +112,23 @@ void SpiralTree::addObstacle(const Polygon& obstacle) {
 }
 
 void SpiralTree::addShields() {
-	/*for (const Place place : places()) {
-		for (const Polygon_with_holes& polygon : obstacle.shape) {
-			addObstacle(polygon);
+	for (const std::shared_ptr<Place>& place : places()) {
+		PolarPoint position(place->position, CGAL::ORIGIN - root());
+		std::cout << position << std::endl;
+		if (position.R() == 0) {
+			continue;
 		}
-	}*/
-	// TODO implement
-	std::cout << "addShields() unimplemented" << std::endl;
+		Point p = position.to_cartesian() + (root() - CGAL::ORIGIN);
+		const Number shieldWidth = 2;
+		Vector v1 = PolarPoint(shieldWidth, position.phi() + M_PI_2).to_cartesian() - CGAL::ORIGIN;
+		const Number shieldThickness = 2;
+		Vector v2 = PolarPoint(shieldThickness, position.phi()).to_cartesian() - CGAL::ORIGIN;
+		Polygon polygon;
+		polygon.push_back(p + 0.5 * v2 + v1);
+		polygon.push_back(p + 0.5 * v2 - v1);
+		polygon.push_back(p + v2);
+		addObstacle(polygon);
+	}
 }
 
 void SpiralTree::setRoot(const Point& root) {

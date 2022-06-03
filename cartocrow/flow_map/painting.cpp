@@ -32,19 +32,23 @@ void Painting::paintObstacles(renderer::GeometryRenderer& renderer) {
 	renderer.setFill(Color{230, 190, 170});
 	renderer.setFillOpacity(60);
 
-	for (const Region& region : m_obstacles) {
+	/*for (const Region& region : m_obstacles) {
 		renderer.draw(region);
-	}
+	}*/
 
 	// TODO for debugging purposes
 	for (const SpiralTree::Obstacle& obstacle : m_tree.obstacles()) {
 		std::vector<Point> vertices;
 		vertices.reserve(obstacle.size());
 		for (const PolarPoint& p : obstacle) {
-			vertices.push_back(p.to_cartesian());
+			vertices.push_back(p.to_cartesian() + (m_tree.root() - CGAL::ORIGIN));
 		}
 		Polygon polygon(vertices.begin(), vertices.end());
 		renderer.draw(polygon);
+		for (size_t i = 0; i < vertices.size(); i++) {
+			//renderer.draw(vertices[i]);
+			renderer.drawText(vertices[i], std::to_string(i));
+		}
 	}
 
 	renderer.setFillOpacity(255);

@@ -35,8 +35,7 @@ class SpiralTreeUnobstructedAlgorithm {
 	/// Constructs this class to run the algorithm for the given spiral tree.
 	SpiralTreeUnobstructedAlgorithm(SpiralTree& tree);
 
-	/// Runs the algorithm, computing the spiral tree arcs ignoring any
-	/// obstacles.
+	/// Runs the algorithm.
 	void run();
 
   private:

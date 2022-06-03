@@ -45,11 +45,9 @@ namespace cartocrow::flow_map {
  * the spiral tree.
  *
  * To make a spiral tree, first construct it (\ref SpiralTree()), then add
- * places for the tree to reach (\ref addPlaces()), possibly add some obstacles
- * for the tree to avoid (\ref addObstacles()), and then use
+ * places for the tree to reach (\ref addPlace()), possibly add some obstacles
+ * for the tree to avoid (\ref addObstacle()), and then use
  * \ref SpiralTreeUnobstructedAlgorithm or \ref SpiralTreeObstructedAlgorithm.
- *
- * \warning Obstacle avoidance is not currently implemented.
  */
 class SpiralTree {
 
