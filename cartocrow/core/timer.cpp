@@ -21,71 +21,54 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 04-02-2020
 
 #include "timer.h"
 
+#include <iostream>
+
 namespace cartocrow {
 
-/**@class Timer
- * @brief A simple timer that keeps track of a fixed number of timestamps.
- *
- * When a large amount of timestamps are collected, the oldest one(s) get discarded.
- *
- * The last time the timer was constructed or reset is kept track of separately.
- */
-
-/**@brief Construct a new timer and set the memory size limit.
- * @param memory the maximum number of timestamps that the timer remembers.
- */
-Timer::Timer(const size_t memory /*= 10*/) : memory_(memory) {
-	Reset();
+Timer::Timer() {
+	reset();
 }
 
-/**@brief Reset the timer.
- * This clears the memory and sets the current time as starting time and as the first timestamp.
- */
-void Timer::Reset() {
-	start_ = clock();
-	times_.clear();
-	times_.push_front(start_);
+void Timer::reset() {
+	m_stamps.clear();
+	m_descriptions.clear();
+	m_stamps.push_back(clock());
 }
 
-/**@brief Add a timestamp.
- * @return The time since the previous timestamp.
+/// Returns the <code>i</code>-th step.
+/**
+ * \return A pair containing the description and the duration.
  */
-double Timer::Stamp() {
-	const clock_t time = clock();
-	const double difference = Compare(time);
-	times_.push_front(time);
-	if (memory_ < times_.size()) {
-		times_.pop_back();
+std::pair<std::string, double> Timer::operator[](const size_t& i) const {
+	return std::make_pair(m_descriptions[i], toSeconds(m_stamps[i + 1] - m_stamps[i]));
+}
+
+double Timer::stamp(const std::string& description) {
+	m_stamps.push_back(clock());
+	m_descriptions.push_back(description);
+	return toSeconds(m_stamps.back() - m_stamps[m_stamps.size() - 1]);
+}
+
+double Timer::peek() const {
+	return toSeconds(clock() - m_stamps[m_stamps.size() - 1]);
+}
+
+double Timer::span() const {
+	return double(m_stamps.back() - m_stamps.front()) / CLOCKS_PER_SEC;
+}
+
+size_t Timer::size() const {
+	return m_descriptions.size();
+}
+
+void Timer::output() const {
+	for (size_t i = 0; i < size(); ++i) {
+		std::cout << this->operator[](i).first << ": " << this->operator[](i).second << " s\n";
 	}
-	return difference;
 }
 
-/**@brief Compute the time since some earlier timestamp.
- *
- * Note that this does not insert a new timestamp.
- * @param skip @parblock how far to peek back in the list of timestamps.
- *
- * For skip = 0, the most recent timestamp is considered. If skip exceeds the memory size, the starting time is considered.
- * @endparblock
- * @return the time difference between the current time and the considered timestamp.
- */
-double Timer::Peek(const size_t skip /*= 0*/) const {
-	const clock_t time = clock();
-	return Compare(time, skip);
-}
-
-/**@brief Compute the total time recorded by the timer.
- *
- * Note that this does not consider the current time, only time stamps in the memory of the timer and the time since its last reset.
- * @return the time difference between the starting time and the most recent timestamp.
- */
-double Timer::Span() const {
-	return double(times_.front() - start_) / CLOCKS_PER_SEC;
-}
-
-double Timer::Compare(const clock_t time, const size_t skip /*= 0*/) const {
-	const clock_t& stamp = skip < times_.size() ? times_.at(skip) : start_;
-	return double(time - stamp) / CLOCKS_PER_SEC;
+double Timer::toSeconds(clock_t time) {
+	return double(time) / CLOCKS_PER_SEC;
 }
 
 } // namespace cartocrow

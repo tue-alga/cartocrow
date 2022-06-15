@@ -22,12 +22,27 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 07-11-2019
 #ifndef CARTOCROW_CORE_CGAL_TYPES_H
 #define CARTOCROW_CORE_CGAL_TYPES_H
 
+// TODO TEMPORARY
+#define CARTOCROW_EXACT_MODE
+
+#if (!defined CARTOCROW_EXACT_MODE && !defined CARTOCROW_INEXACT_MODE)
+#error CARTOCROW_EXACT_MODE nor CARTOCROW_INEXACT_MODE was defined. The CartoCrow core has to be built with either one of these defines, to select the CGAL exact or inexact computation mode, respectively. See the CartoCrow documentation for details.
+#endif
+
+#ifdef CARTOCROW_EXACT_MODE
+#include <CGAL/Exact_predicates_exact_constructions_kernel.h>
+#else
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
+#endif
 
 namespace cartocrow {
 
-// The geometric data types are taken from the CGAL library where possible.
+#ifdef CARTOCROW_EXACT_MODE
+using Kernel = CGAL::Exact_predicates_exact_constructions_kernel;
+#else
 using Kernel = CGAL::Exact_predicates_inexact_constructions_kernel;
+#endif
+
 using Number = Kernel::FT;
 
 using Point = CGAL::Point_2<Kernel>;
@@ -38,7 +53,7 @@ using Circle = CGAL::Circle_2<Kernel>;
 using Line = CGAL::Line_2<Kernel>;
 using Segment = CGAL::Segment_2<Kernel>;
 
-constexpr const Number kEpsilon = 0.0000001;
+//constexpr const Number kEpsilon = 0.0000001;
 
 } // namespace cartocrow
 

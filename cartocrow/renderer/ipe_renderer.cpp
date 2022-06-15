@@ -149,8 +149,8 @@ void IpeRenderer::draw(const BezierSpline& s) {
 	for (BezierCurve c : s.curves()) {
 		std::vector<ipe::Vector> coords;
 		coords.emplace_back(c.source().x(), c.source().y());
-		coords.emplace_back(c.source_control().x(), c.source_control().y());
-		coords.emplace_back(c.target_control().x(), c.target_control().y());
+		coords.emplace_back(c.sourceControl().x(), c.sourceControl().y());
+		coords.emplace_back(c.targetControl().x(), c.targetControl().y());
 		coords.emplace_back(c.target().x(), c.target().y());
 		curve->appendSpline(coords);
 	}

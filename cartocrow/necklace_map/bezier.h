@@ -29,28 +29,37 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 08-09-2020
 
 namespace cartocrow {
 
+/// A cubic Bezier curve.
+/**
+ * A Bezier curve is defined by four points: the source, the target, and two
+ * control points.
+ */
 class BezierCurve {
   public:
-	BezierCurve(const Point& source, const Point& control, const Point& target);
+	/// Constructs a cubic Bezier curve based on four control points.
 	BezierCurve(const Point& source, const Point& source_control, const Point& target_control,
 	            const Point& target);
 
+	/// Returns the source of this curve.
 	Point source() const;
-	Point source_control() const;
-	Point target_control() const;
+	/// Returns the control point on the source side of this curve.
+	Point sourceControl() const;
+	/// Returns the control point on the target side of this curve.
+	Point targetControl() const;
+	/// Returns the target of this curve.
 	Point target() const;
 
-	Point Evaluate(const Number& t) const;
+	/// Evaluates the curve at time \c t.
+	Point evaluate(const Number& t) const;
 
-	// There can be up to three intersections.
-	size_t IntersectRay(const Point& source, const Point& target, Point* intersections,
+	/// There can be up to three intersections.
+	size_t intersectRay(const Point& source, const Point& target, Point* intersections,
 	                    Number* intersection_t) const;
 
   protected:
-	// Note that the control points are stored as vectors, because this simplifies most operations.
-	std::array<Vector, 4> control_points_;
-	std::array<Vector, 4> coefficients_;
-}; // class BezierCurve
+	std::array<Point, 4> m_controlPoints;
+	std::array<Point, 4> m_coefficients;
+};
 
 class BezierSpline {
   public:

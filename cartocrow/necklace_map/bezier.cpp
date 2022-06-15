@@ -19,7 +19,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Created by tvl (t.vanlankveld@esciencecenter.nl) on 08-09-2020
 */
 
-#include "bezier_spline.h"
+#include "bezier.h"
 
 #include <cmath>
 
@@ -27,33 +27,15 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 08-09-2020
 
 namespace cartocrow {
 
-/**@class BezierCurve
- * @brief A cubic Bezier curve.
- */
-
-/**@brief Construct a quadratic Bezier curve based on three control points.
- * @param source the first control point and starting point of the curve.
- * @param control the second control point.
- * @param target the third control point and terminating point of the curve.
- */
-BezierCurve::BezierCurve(const Point& source, const Point& control, const Point& target)
-    : BezierCurve(source, control, control, target) {}
-
-/**@brief Construct a cubic Bezier curve based on four control points.
- * @param source the first control point and starting point of the curve.
- * @param source_control the second control point.
- * @param target_control the third control point.
- * @param target the fourth control point and terminating point of the curve.
- */
 BezierCurve::BezierCurve(const Point& source, const Point& source_control,
                          const Point& target_control, const Point& target)
-    : control_points_({source - Point(CGAL::ORIGIN), source_control - Point(CGAL::ORIGIN),
-                       target_control - Point(CGAL::ORIGIN), target - Point(CGAL::ORIGIN)}) {
-	coefficients_ = {
-	    control_points_[3] - control_points_[0] + 3 * (control_points_[1] - control_points_[2]), // t^3
-	    3 * (control_points_[0] + control_points_[2] - 2 * control_points_[1]), // t^2
-	    3 * (control_points_[1] - control_points_[0]), // t
-	    control_points_[0] // 1
+    : m_controlPoints({source - CGAL::ORIGIN, source_control - CGAL::ORIGIN,
+                       target_control - CGAL::ORIGIN, target - CGAL::ORIGIN}) {
+	m_coefficients = {
+	    m_controlPoints[3] - m_controlPoints[0] + 3 * (m_controlPoints[1] - m_controlPoints[2]), // t^3
+	    3 * (m_controlPoints[0] + m_controlPoints[2] - 2 * m_controlPoints[1]), // t^2
+	    3 * (m_controlPoints[1] - m_controlPoints[0]), // t
+	    m_controlPoints[0] // 1
 	};
 }
 
@@ -61,7 +43,7 @@ BezierCurve::BezierCurve(const Point& source, const Point& source_control,
  * @return the starting point of the curve.
  */
 Point BezierCurve::source() const {
-	return Point(CGAL::ORIGIN) + control_points_[0];
+	return Point(CGAL::ORIGIN) + m_controlPoints[0];
 }
 
 /**@brief Give the second control point.
@@ -69,8 +51,8 @@ Point BezierCurve::source() const {
  * The curve at the source is tangent to the line connecting the source and this control point.
  * @return the second control point.
  */
-Point BezierCurve::source_control() const {
-	return Point(CGAL::ORIGIN) + control_points_[1];
+Point BezierCurve::sourceControl() const {
+	return Point(CGAL::ORIGIN) + m_controlPoints[1];
 }
 
 /**@brief Give the third control point.
@@ -78,15 +60,15 @@ Point BezierCurve::source_control() const {
  * The curve at the target is tangent to the line connecting the target and this control point.
  * @return the third control point.
  */
-Point BezierCurve::target_control() const {
-	return Point(CGAL::ORIGIN) + control_points_[2];
+Point BezierCurve::targetControl() const {
+	return Point(CGAL::ORIGIN) + m_controlPoints[2];
 }
 
 /**@brief Give the terminating point of the curve.
  * @return the terminating point of the curve.
  */
 Point BezierCurve::target() const {
-	return Point(CGAL::ORIGIN) + control_points_[3];
+	return Point(CGAL::ORIGIN) + m_controlPoints[3];
 }
 
 /**@brief Evaluate the Bezier curve's function after traversing some ratio of the curve.
@@ -99,7 +81,7 @@ Point BezierCurve::target() const {
  * @endparblock
  * @return the point on the curve at t.
  */
-Point BezierCurve::Evaluate(const Number& t) const {
+Point BezierCurve::evaluate(const Number& t) const {
 	CHECK_GE(t, 0);
 	CHECK_LE(t, 1);
 	if (t == 0) {
@@ -114,24 +96,11 @@ Point BezierCurve::Evaluate(const Number& t) const {
 	const Number c = 3 * t * t * t_;
 	const Number d = t * t * t;
 
-	return Point(CGAL::ORIGIN) + a * control_points_[0] + b * control_points_[1] +
-	       c * control_points_[2] + d * control_points_[3];
+	return CGAL::ORIGIN + a * m_controlPoints[0] + b * m_controlPoints[1] + c * m_controlPoints[2] +
+	       d * m_controlPoints[3];
 }
 
-/**@brief Compute the intersection of the curve with a ray.
- * @param source the source of the ray.
- * @param target the target of the ray.
- * @param intersections @parblock the intersections of the ray and the curve.
- *
- * There may be up to three intersections, so this variable must be a container that can hold at least three values.
- * @endparblock
- * @param intersection_t @parblock the t-values of the intersections.
- *
- * There may be up to three intersections, so this variable must be a container that can hold at least three values.
- * @endparblock
- * @return whether the ray intersects the curve in at least one point.
- */
-size_t BezierCurve::IntersectRay(const Point& source, const Point& target, Point* intersections,
+size_t BezierCurve::intersectRay(const Point& source, const Point& target, Point* intersections,
                                  Number* intersection_t) const {
 	CHECK_NE(source, target);
 
@@ -148,10 +117,10 @@ size_t BezierCurve::IntersectRay(const Point& source, const Point& target, Point
 	std::array<Number, 3> roots;
 	{
 		// Compute the roots of the cubic function based on AB and the coefficients.
-		const Number f_3 = AB * coefficients_[0]; // t^3
-		const Number f_2 = AB * coefficients_[1]; // t^2
-		const Number f_1 = AB * coefficients_[2]; // t
-		const Number f_0 = AB * coefficients_[3] + C; // 1
+		const Number f_3 = AB * m_coefficients[0]; // t^3
+		const Number f_2 = AB * m_coefficients[1]; // t^2
+		const Number f_1 = AB * m_coefficients[2]; // t
+		const Number f_0 = AB * m_coefficients[3] + C; // 1
 
 		CHECK_NE(f_3, 0);
 		const Number A = f_2 / f_3;
@@ -201,7 +170,7 @@ size_t BezierCurve::IntersectRay(const Point& source, const Point& target, Point
 		/*const Number t_3 = t * t * t;
     const Number t_2 = t * t;
     const Point intersection = Point(CGAL::ORIGIN) + t_3 * coefficients_[0] + t_2 * coefficients_[1] + t * coefficients_[2] + coefficients_[3];*/
-		const Point intersection = Evaluate(t);
+		const Point intersection = evaluate(t);
 
 		// Verify the intersection is on the ray by using the inner product.
 		const Number s = (intersection.x() - source.x()) * (target.x() - source.x());
@@ -292,7 +261,7 @@ bool BezierSpline::IsClosed() const {
 bool BezierSpline::ToCircle(Circle& circle, const Number& epsilon /*= 0.01*/) const {
 	Vector sum(0, 0);
 	for (const BezierCurve& curve : curves_) {
-		const Point center = CGAL::circumcenter(curve.source(), curve.Evaluate(0.5), curve.target());
+		const Point center = CGAL::circumcenter(curve.source(), curve.evaluate(0.5), curve.target());
 		sum += center - Point(CGAL::ORIGIN);
 	}
 	const Point kernel = Point(CGAL::ORIGIN) + (sum / curves_.size());
@@ -327,7 +296,7 @@ bool BezierSpline::ToCircle(Circle& circle, const Number& epsilon /*= 0.01*/) co
 		// Note that we do not check the source: this will be checked as the target of the previous curve.
 		const Number denom = 4;
 		for (int e = 1; e < denom; ++e) {
-			squared_distance(curve.Evaluate(e / denom));
+			squared_distance(curve.evaluate(e / denom));
 		}
 
 		squared_distance(curve.target());
@@ -386,8 +355,8 @@ void BezierSpline::Reverse() {
 	CurveSet reverse;
 	for (CurveSet::reverse_iterator curve_iter = curves_.rbegin(); curve_iter != curves_.rend();
 	     ++curve_iter) {
-		reverse.emplace_back(curve_iter->target(), curve_iter->target_control(),
-		                     curve_iter->source_control(), curve_iter->source());
+		reverse.emplace_back(curve_iter->target(), curve_iter->targetControl(),
+		                     curve_iter->sourceControl(), curve_iter->source());
 	}
 	curves_.swap(reverse);
 }
@@ -408,8 +377,8 @@ Box BezierSpline::ComputeBoundingBox() const {
 		// We choose the last approach, because overestimating the bounding box is more desirable than underestimating it.
 		Kernel::Construct_bbox_2 bbox = Kernel().construct_bbox_2_object();
 		for (const BezierCurve& curve : curves_) {
-			bounding_box_ += bbox(curve.source()) + bbox(curve.source_control()) +
-			                 bbox(curve.target_control()) + bbox(curve.target());
+			bounding_box_ += bbox(curve.source()) + bbox(curve.sourceControl()) +
+			                 bbox(curve.targetControl()) + bbox(curve.target());
 		}
 	}
 

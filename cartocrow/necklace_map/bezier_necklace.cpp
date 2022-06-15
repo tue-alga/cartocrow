@@ -75,7 +75,7 @@ BezierNecklace::BezierNecklace(const BezierSpline spline, const Point& kernel)
     : spline_(spline), kernel_(kernel) {
 	// Clockwise curves are reversed.
 	if (CGAL::orientation(spline_.curves().begin()->source(),
-	                      spline_.curves().begin()->source_control(), kernel_) == CGAL::CLOCKWISE) {
+	                      spline_.curves().begin()->sourceControl(), kernel_) == CGAL::CLOCKWISE) {
 		spline_.Reverse();
 	}
 
@@ -103,10 +103,9 @@ bool BezierNecklace::IsValid() const {
 
 	bool valid = spline_.IsValid();
 	for (const BezierCurve& curve : spline_.curves()) {
-		valid &= curve.source() != curve.source_control() &&
-		         curve.target() != curve.target_control() &&
-		         !CGAL::right_turn(curve.source(), curve.source_control(), kernel()) &&
-		         !CGAL::left_turn(curve.target(), curve.target_control(), kernel());
+		valid &= curve.source() != curve.sourceControl() && curve.target() != curve.targetControl() &&
+		         !CGAL::right_turn(curve.source(), curve.sourceControl(), kernel()) &&
+		         !CGAL::left_turn(curve.target(), curve.targetControl(), kernel());
 	}
 
 	return valid;

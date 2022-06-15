@@ -320,7 +320,7 @@ void GeometryWidget::draw(const BezierSpline& s) {
 	QPainterPath path;
 	path.moveTo(convertPoint(s.curves()[0].source()));
 	for (BezierCurve c : s.curves()) {
-		path.cubicTo(convertPoint(c.source_control()), convertPoint(c.target_control()),
+		path.cubicTo(convertPoint(c.sourceControl()), convertPoint(c.targetControl()),
 		             convertPoint(c.target()));
 	}
 	m_painter->drawPath(path);

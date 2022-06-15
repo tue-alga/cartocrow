@@ -29,13 +29,6 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 05-12-2019
 
 namespace cartocrow {
 
-/// The value 2*PI, defined for convenience.
-constexpr const Number M_2xPI = 2 * M_PI;
-
-Number Modulo(const Number& value, const Number& start = 0, const Number& range = M_2xPI);
-
-Number ModuloNonZero(const Number& value, const Number& start = 0, const Number& range = M_2xPI);
-
 /// An RGB color. Used for storing the color of elements to be drawn.
 struct Color {
 	/// Red component (integer 0-255).
