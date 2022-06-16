@@ -95,7 +95,8 @@ std::vector<Polygon_with_holes> IpeReader::convertShapeToPolygons(const ipe::Sha
 	return polygons;
 }
 
-BezierSpline IpeReader::convertPathToSpline(const ipe::SubPath& path, const ipe::Matrix& matrix) {
+// TODO
+/*BezierSpline IpeReader::convertPathToSpline(const ipe::SubPath& path, const ipe::Matrix& matrix) {
 	BezierSpline spline;
 	if (path.type() == ipe::SubPath::EClosedSpline) {
 		std::vector<ipe::Bezier> beziers;
@@ -109,6 +110,6 @@ BezierSpline IpeReader::convertPathToSpline(const ipe::SubPath& path, const ipe:
 		throw std::runtime_error("Only closed splines are supported for spline conversion");
 	}
 	return spline;
-}
+}*/
 
 } // namespace cartocrow

@@ -23,9 +23,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <filesystem>
 #include <memory>
 
-#include "cartocrow/core/bezier_spline.h"
-#include "cartocrow/core/core_types.h"
-#include "cartocrow/core/polygon.h"
+//#include "cartocrow/core/bezier_spline.h"
+#include "../core_types.h"
+#include "../polygon.h"
 
 #include <ipeattributes.h>
 #include <ipedoc.h>
@@ -51,7 +51,8 @@ class IpeReader {
 	static std::vector<Polygon_with_holes> convertShapeToPolygons(const ipe::Shape& shape,
 	                                                              const ipe::Matrix& matrix);
 	/// Converts an Ipe path to a Bézier spline.
-	static BezierSpline convertPathToSpline(const ipe::SubPath& path, const ipe::Matrix& matrix);
+	// TODO
+	//static BezierSpline convertPathToSpline(const ipe::SubPath& path, const ipe::Matrix& matrix);
 };
 
 } // namespace cartocrow

@@ -24,8 +24,8 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 05-12-2019
 
 #include <cmath>
 
-#include "cartocrow/core/cgal_types.h"
-#include "cartocrow/core/polygon.h"
+#include "cgal_types.h"
+#include "polygon.h"
 
 namespace cartocrow {
 

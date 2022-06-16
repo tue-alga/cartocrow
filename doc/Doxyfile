@@ -16,7 +16,7 @@ EXTRACT_PRIVATE        = YES
 EXTRACT_PACKAGE        = YES
 EXTRACT_STATIC         = YES
 
-INPUT                  = "cartocrow"
+INPUT                  = "cartocrow/core"
 FILE_PATTERNS          = *.cpp *.h *.inc *.md
 RECURSIVE              = YES
 
@@ -51,3 +51,5 @@ DOT_FONTSIZE           = 11
 DOT_IMAGE_FORMAT       = svg
 DOT_TRANSPARENT        = YES
 
+CLANG_ASSISTED_PARSING = YES
+CLANG_DATABASE_PATH    = "compile_commands.json"

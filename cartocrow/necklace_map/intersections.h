@@ -1,8 +1,6 @@
 /*
-The Necklace Map console application implements the algorithmic
-geo-visualization method by the same name, developed by
-Bettina Speckmann and Kevin Verbeek at TU Eindhoven
-(DOI: 10.1109/TVCG.2010.180 & 10.1142/S021819591550003X).
+The CartoCrow library implements algorithmic geo-visualization methods,
+developed at TU Eindhoven.
 Copyright (C) 2021  Netherlands eScience Center and TU Eindhoven
 
 This program is free software: you can redistribute it and/or modify
@@ -18,12 +16,12 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-04-2020
+Created by tvl (t.vanlankveld@esciencecenter.nl) on 26-02-2021
 */
 
-#include "test/test.h"
+#ifndef CARTOCROW_CORE_INTERSECTIONS_H
+#define CARTOCROW_CORE_INTERSECTIONS_H
 
-int main()
-{
-  return UnitTest::RunAllTests();
-}
+#include "detail/polar_intersections.h"
+
+#endif //CARTOCROW_CORE_INTERSECTIONS_H
