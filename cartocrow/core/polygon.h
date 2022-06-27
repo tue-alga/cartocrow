@@ -22,20 +22,19 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 05-12-2019
 #ifndef CARTOCROW_CORE_POLYGON_H
 #define CARTOCROW_CORE_POLYGON_H
 
-#include <CGAL/Polygon_with_holes_2.h>
-
-#include "cartocrow/core/cgal_types.h"
+#include "core.h"
 
 namespace cartocrow {
 
-using Polygon = CGAL::Polygon_2<Kernel>;
-using Polygon_with_holes = CGAL::Polygon_with_holes_2<Kernel>;
+/// Computes the centroid of the given polygon.
+/**
+ * This method throws if the polygon has area 0, in which case the centroid
+ * would be ill-defined.
+ */
+Point<Exact> centroid(const Polygon<Exact>& polygon);
 
-class ComputeCentroid {
-  public:
-	Point operator()(const Polygon& shape) const;
-	Point operator()(const Polygon_with_holes& shape) const;
-}; // class ComputeCentroid
+/// Computes the centroid of the given polygon with holes.
+Point<Exact> centroid(const PolygonWithHoles<Exact>& polygon);
 
 } // namespace cartocrow
 

@@ -21,66 +21,46 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 05-12-2019
 
 #include "polygon.h"
 
+#include <CGAL/Kernel/global_functions_2.h>
+#include <CGAL/Origin.h>
 #include <glog/logging.h>
+#include <stdexcept>
 
 namespace cartocrow {
-namespace detail {
 
-Vector ComputeCentroid(const Polygon& shape, Number& area) {
-	if (shape.size() == 1) {
-		return shape[0] - Point(CGAL::ORIGIN);
+Point<Exact> centroid(const Polygon<Exact>& polygon) {
+	if (polygon.size() == 1) {
+		return polygon[0];
 	}
 
-	Vector sum(0, 0);
-	for (Polygon::Edge_const_iterator edge_iter = shape.edges_begin();
-	     edge_iter != shape.edges_end(); ++edge_iter) {
-		const Number weight = edge_iter->source().x() * edge_iter->target().y() -
-		                      edge_iter->target().x() * edge_iter->source().y();
-		sum += weight * (edge_iter->source() - Point(CGAL::ORIGIN));
-		sum += weight * (edge_iter->target() - Point(CGAL::ORIGIN));
+	Number<Exact> area = polygon.area();
+	if (area == 0) {
+		throw std::runtime_error("Centroid cannot be computed for polygons of area 0");
 	}
 
-	area += shape.area();
-	return sum / (Number(6) * area);
-}
-
-Vector ComputeCentroid(const Polygon_with_holes& shape, Number& area) {
-	Vector sum = ComputeCentroid(shape.outer_boundary(), area);
-	for (Polygon_with_holes::Hole_const_iterator hole_iter = shape.holes_begin();
-	     hole_iter != shape.holes_end(); ++hole_iter) {
-		// Note that because the hole is clockwise, its area is negative.
-		CHECK(hole_iter->is_clockwise_oriented());
-		sum += ComputeCentroid(*hole_iter, area);
+	Vector<Exact> sum(0, 0);
+	for (Polygon<Exact>::Edge_const_iterator edge_iter = polygon.edges_begin();
+	     edge_iter != polygon.edges_end(); ++edge_iter) {
+		const Number<Exact> weight = edge_iter->source().x() * edge_iter->target().y() -
+		                             edge_iter->target().x() * edge_iter->source().y();
+		sum += weight * (edge_iter->source() - CGAL::ORIGIN);
+		sum += weight * (edge_iter->target() - CGAL::ORIGIN);
 	}
-	return sum / area;
+
+	return CGAL::ORIGIN + sum / (6 * area);
 }
 
-} // namespace detail
-
-/**@class ComputeCentroid
- * @brief Compute the centroid of a 2D shape.
- *
- * Note that while CGAL provides functionality for computing the centroid of a point set, the centroid of a shape depends on the space it covers, not just its boundary.
- */
-
-/**@brief Compute the centroid of a straight-line polygon.
- * @param shape the polygon.
- * @return the centroid of the polygon.
- */
-Point ComputeCentroid::operator()(const Polygon& shape) const {
-	Number area = 0;
-	return Point(CGAL::ORIGIN) + detail::ComputeCentroid(shape, area);
-}
-
-/**@brief Compute the centroid of a straight-line polygon with holes.
- *
- * Note that all holes must have clockwise orientation.
- * @param shape the polygon with holes.
- * @return the centroid of the polygon with holes.
- */
-Point ComputeCentroid::operator()(const Polygon_with_holes& shape) const {
-	Number area = 0;
-	return Point(CGAL::ORIGIN) + detail::ComputeCentroid(shape, area);
+Point<Exact> centroid(const PolygonWithHoles<Exact>& polygon) {
+	Number<Exact> area = CGAL::abs(polygon.outer_boundary().area());
+	Vector<Exact> sum = area * (centroid(polygon.outer_boundary()) - CGAL::ORIGIN);
+	Number<Exact> areaSum = area;
+	for (PolygonWithHoles<Exact>::Hole_const_iterator hole_iter = polygon.holes_begin();
+	     hole_iter != polygon.holes_end(); ++hole_iter) {
+		Number<Exact> area = CGAL::abs(hole_iter->area());
+		sum -= area * (centroid(*hole_iter) - CGAL::ORIGIN);
+		areaSum -= area;
+	}
+	return CGAL::ORIGIN + sum / areaSum;
 }
 
 } // namespace cartocrow

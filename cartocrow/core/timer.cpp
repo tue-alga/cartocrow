@@ -35,10 +35,6 @@ void Timer::reset() {
 	m_stamps.push_back(clock());
 }
 
-/// Returns the <code>i</code>-th step.
-/**
- * \return A pair containing the description and the duration.
- */
 std::pair<std::string, double> Timer::operator[](const size_t& i) const {
 	return std::make_pair(m_descriptions[i], toSeconds(m_stamps[i + 1] - m_stamps[i]));
 }

@@ -68,8 +68,8 @@ bool Region::IsPoint() const {
  */
 bool Region::IsValid() const {
 	bool correct = true;
-	for (const Polygon_with_holes& polygon : shape) {
-		const Polygon& outer = polygon.outer_boundary();
+	for (const PolygonWithHoles<Exact>& polygon : shape) {
+		const Polygon<Exact>& outer = polygon.outer_boundary();
 
 		// Degenerate polygons are considered correct.
 		if (outer.size() == 1) {
@@ -90,8 +90,8 @@ bool Region::IsValid() const {
  */
 bool Region::MakeValid() {
 	bool correct = true;
-	for (Polygon_with_holes& polygon : shape) {
-		Polygon& outer = polygon.outer_boundary();
+	for (PolygonWithHoles<Exact>& polygon : shape) {
+		Polygon<Exact>& outer = polygon.outer_boundary();
 
 		// Degenerate polygons are considered correct.
 		if (outer.size() == 1) {
@@ -114,16 +114,16 @@ bool Region::MakeValid() {
  * Otherwise, the simple polygon is the convex hull of the set of polygons.
  * @param simple the simple polygon describing the region.
  */
-void Region::MakeSimple(Polygon& simple) {
+void Region::MakeSimple(Polygon<Exact>& simple) {
 	if (shape.size() == 1) {
 		simple = shape[0].outer_boundary();
 		return;
 	}
 
 	// Collect the outer boundary points.
-	std::vector<Point> points;
+	std::vector<Point<Exact>> points;
 	points.reserve(256); // Reserve for a reasonable point set.
-	for (const Polygon_with_holes& part : shape) {
+	for (const PolygonWithHoles<Exact>& part : shape) {
 		points.insert(points.end(), part.outer_boundary().vertices_begin(),
 		              part.outer_boundary().vertices_end());
 	}

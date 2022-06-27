@@ -47,15 +47,15 @@ namespace cartocrow {
  * ```
  * The call to \ref output() then outputs something like:
  * ```
- * Demolish Earth: 120 s
- * Build hyperspace bypass: 70 s
+ * Demolish Earth: 120.0 s
+ * Build hyperspace bypass: 70.0 s
  * ```
  *
  * Information about the steps stored by the timer can also be obtained
  * programmatically by using \ref operator[]:
  * ```
  * std::cout << timer[0].first << "\n";  // "Demolish Earth"
- * std::cout << timer[0].second << "\n";  // "120"
+ * std::cout << timer[0].second << "\n";  // "120.0"
  * ```
  * Any methods returning \c double return times in seconds.
  */
@@ -67,8 +67,10 @@ class Timer {
 	/// Drops all existing steps and restarts the timer.
 	void reset();
 
-	/// Returns the <code>i</code>-th step.
+	/// Returns the <code>i</code>-th step stored by the timer.
 	/**
+	 * If <code>i < 0</code> or <code>i >= size()</code>, behavior is undefined.
+	 *
 	 * \return A pair containing the description and the duration.
 	 */
 	std::pair<std::string, double> operator[](const size_t& i) const;

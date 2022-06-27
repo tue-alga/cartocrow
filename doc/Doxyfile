@@ -51,5 +51,5 @@ DOT_FONTSIZE           = 11
 DOT_IMAGE_FORMAT       = svg
 DOT_TRANSPARENT        = YES
 
-CLANG_ASSISTED_PARSING = YES
-CLANG_DATABASE_PATH    = "compile_commands.json"
+#CLANG_ASSISTED_PARSING = YES
+#CLANG_DATABASE_PATH    = "compile_commands.json"

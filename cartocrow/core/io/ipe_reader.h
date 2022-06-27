@@ -24,7 +24,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <memory>
 
 //#include "cartocrow/core/bezier_spline.h"
-#include "../core_types.h"
+#include "../core.h"
 #include "../polygon.h"
 
 #include <ipeattributes.h>
@@ -48,8 +48,8 @@ class IpeReader {
 	/**
 	 * Throws if the shape contains a non-polygonal boundary.
 	 */
-	static std::vector<Polygon_with_holes> convertShapeToPolygons(const ipe::Shape& shape,
-	                                                              const ipe::Matrix& matrix);
+	static std::vector<PolygonWithHoles<Exact>> convertShapeToPolygons(const ipe::Shape& shape,
+	                                                                   const ipe::Matrix& matrix);
 	/// Converts an Ipe path to a Bézier spline.
 	// TODO
 	//static BezierSpline convertPathToSpline(const ipe::SubPath& path, const ipe::Matrix& matrix);

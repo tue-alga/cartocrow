@@ -25,7 +25,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 07-11-2019
 #include <string>
 #include <vector>
 
-#include "cartocrow/core/core_types.h"
+#include "core.h"
 
 namespace cartocrow {
 
@@ -33,7 +33,7 @@ namespace cartocrow {
 class Region {
   public:
 	//using PolygonSet = CGAL::Polygon_set_2<Kernel>; // Polygon_set_2 fails to initialize with the EPIC kernel: using simple list instead.
-	using PolygonSet = std::vector<Polygon_with_holes>;
+	using PolygonSet = std::vector<PolygonWithHoles<Exact>>;
 
   public:
 	explicit Region();
@@ -45,7 +45,7 @@ class Region {
 
 	bool MakeValid();
 
-	void MakeSimple(Polygon& simple);
+	void MakeSimple(Polygon<Exact>& simple);
 
 	std::string id;
 	PolygonSet shape;

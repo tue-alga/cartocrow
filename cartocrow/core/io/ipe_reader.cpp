@@ -69,11 +69,11 @@ Color IpeReader::convertIpeColor(ipe::Color color) {
 	             static_cast<int>(color.iBlue.toDouble() * 255)};
 }
 
-std::vector<Polygon_with_holes> IpeReader::convertShapeToPolygons(const ipe::Shape& shape,
-                                                                  const ipe::Matrix& matrix) {
-	std::vector<Polygon_with_holes> polygons;
+std::vector<PolygonWithHoles<Exact>> IpeReader::convertShapeToPolygons(const ipe::Shape& shape,
+                                                                       const ipe::Matrix& matrix) {
+	std::vector<PolygonWithHoles<Exact>> polygons;
 	for (int i = 0; i < shape.countSubPaths(); ++i) {
-		Polygon polygon;
+		Polygon<Exact> polygon;
 		if (shape.subPath(i)->type() != ipe::SubPath::ECurve) {
 			throw std::runtime_error("Encountered shape with a non-polygonal boundary");
 		}
@@ -85,12 +85,12 @@ std::vector<Polygon_with_holes> IpeReader::convertShapeToPolygons(const ipe::Sha
 			}
 			if (j == 0) {
 				ipe::Vector v = matrix * segment.cp(0);
-				polygon.push_back(Point(v.x, v.y));
+				polygon.push_back(Point<Exact>(v.x, v.y));
 			}
 			ipe::Vector v = matrix * segment.last();
-			polygon.push_back(Point(v.x, v.y));
+			polygon.push_back(Point<Exact>(v.x, v.y));
 		}
-		polygons.push_back(Polygon_with_holes(polygon));
+		polygons.push_back(PolygonWithHoles<Exact>(polygon));
 	}
 	return polygons;
 }
