@@ -1,5 +1,6 @@
 #include "../catch.hpp"
 
+#include <CGAL/Arr_walk_along_line_point_location.h>
 #include <CGAL/enum.h>
 #include <ctime>
 
@@ -133,6 +134,79 @@ TEST_CASE("Creating polygons with holes") {
 	hole.push_back(Point<Exact>(0.75, 0.25));
 	hole.push_back(Point<Exact>(0.25, 0.75));
 	PolygonWithHoles<Exact> p1(outside);
+	CHECK(p1.number_of_holes() == 0);
 	p1.add_hole(hole);
 	CHECK(p1.number_of_holes() == 1);
+}
+
+TEST_CASE("Map") {
+	Map<Exact> map;
+	CHECK(map.number_of_vertices() == 0);
+	CHECK(map.number_of_edges() == 0);
+	CHECK(map.number_of_faces() == 1);
+
+	// manually inserting elements
+	Map<Exact>::Vertex_handle v1 =
+	    map.insert_in_face_interior(Point<Exact>(0, 0), map.unbounded_face());
+	CHECK(map.number_of_vertices() == 1);
+	CHECK(map.number_of_edges() == 0);
+	CHECK(map.number_of_faces() == 1);
+
+	Map<Exact>::Vertex_handle v2 =
+	    map.insert_in_face_interior(Point<Exact>(1, 0), map.unbounded_face());
+	CHECK(map.number_of_vertices() == 2);
+	CHECK(map.number_of_edges() == 0);
+	CHECK(map.number_of_faces() == 1);
+
+	map.insert_at_vertices(Segment<Exact>(Point<Exact>(0, 0), Point<Exact>(1, 0)), v1, v2);
+	CHECK(map.number_of_vertices() == 2);
+	CHECK(map.number_of_edges() == 1);
+	CHECK(map.number_of_faces() == 1);
+
+	// free functions (allow inserting arbitrary segments, even crossing ones)
+	CGAL::insert<>(map, Segment<Exact>(Point<Exact>(0, -1), Point<Exact>(1, 1)));
+	CHECK(map.number_of_vertices() == 5);
+	CHECK(map.number_of_edges() == 4);
+	CHECK(map.number_of_faces() == 1);
+
+	CGAL::insert<>(map, Segment<Exact>(Point<Exact>(1, 0), Point<Exact>(1, 1)));
+	CHECK(map.number_of_vertices() == 5);
+	CHECK(map.number_of_edges() == 5);
+	CHECK(map.number_of_faces() == 2);
+
+	CGAL::insert<>(map, Segment<Exact>(Point<Exact>(0, 0.5), Point<Exact>(1, 0)));
+	CHECK(map.number_of_vertices() == 7);
+	CHECK(map.number_of_edges() == 8);
+	CHECK(map.number_of_faces() == 3);
+
+	// point location queries
+	CGAL::Arr_walk_along_line_point_location<Map<Exact>> locator(map);
+	auto l1 = locator.locate(Point<Exact>(0.6, 0.1));
+	REQUIRE(l1.type() == typeid(Map<Exact>::Face_const_handle));
+	auto f1 = boost::get<Map<Exact>::Face_const_handle>(l1);
+	auto l2 = locator.locate(Point<Exact>(0.7, 0.1));
+	REQUIRE(l2.type() == typeid(Map<Exact>::Face_const_handle));
+	auto f2 = boost::get<Map<Exact>::Face_const_handle>(l2);
+	auto l3 = locator.locate(Point<Exact>(0.9, 0.5));
+	REQUIRE(l3.type() == typeid(Map<Exact>::Face_const_handle));
+	auto f3 = boost::get<Map<Exact>::Face_const_handle>(l3);
+	auto l4 = locator.locate(Point<Exact>(0, 1));
+	REQUIRE(l4.type() == typeid(Map<Exact>::Face_const_handle));
+	auto f4 = boost::get<Map<Exact>::Face_const_handle>(l4);
+	CHECK(f1 == f2);
+	CHECK(f1 != f3);
+	CHECK(f1 != f4);
+	CHECK(f2 != f4);
+	CHECK(f3 != f4);
+	CHECK(f4 == map.unbounded_face());
+
+	auto l5 = locator.locate(Point<Exact>(0.25, 0));
+	REQUIRE(l5.type() == typeid(Map<Exact>::Halfedge_const_handle));
+	auto e5 = boost::get<Map<Exact>::Halfedge_const_handle>(l5);
+	CHECK(e5->curve().line().has_on(Point<Exact>(0.125, 0)));
+
+	auto l6 = locator.locate(Point<Exact>(0.5, 0));
+	REQUIRE(l6.type() == typeid(Map<Exact>::Vertex_const_handle));
+	auto v6 = boost::get<Map<Exact>::Vertex_const_handle>(l6);
+	CHECK(v6->point() == Point<Exact>(0.5, 0));
 }
