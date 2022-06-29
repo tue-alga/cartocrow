@@ -32,8 +32,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <fstream>
 #include <string>
 
-namespace cartocrow {
-namespace renderer {
+namespace cartocrow::renderer {
 
 IpeRenderer::IpeRenderer(GeometryPainting& painting) : m_painting(painting) {}
 
@@ -79,14 +78,14 @@ void IpeRenderer::save(const std::filesystem::path& file) {
 	document.save(file.string().c_str(), ipe::FileFormat::Xml, 0);
 }
 
-void IpeRenderer::draw(const Point& p) {
+void IpeRenderer::draw(const Point<Inexact>& p) {
 	ipe::Vector vector(p.x(), p.y());
 	ipe::Attribute name = ipe::Attribute(true, "mark/disk(sx)");
 	ipe::Reference* reference = new ipe::Reference(getAttributesForStyle(), name, vector);
 	m_page->append(ipe::TSelect::ENotSelected, 0, reference);
 }
 
-void IpeRenderer::draw(const Segment& s) {
+void IpeRenderer::draw(const Segment<Inexact>& s) {
 	ipe::Curve* curve = new ipe::Curve();
 	curve->appendSegment(ipe::Vector(s.start().x(), s.start().y()),
 	                     ipe::Vector(s.end().x(), s.end().y()));
@@ -101,7 +100,7 @@ void IpeRenderer::draw(const Segment& s) {
 	}
 }
 
-void IpeRenderer::draw(const Polygon& p) {
+void IpeRenderer::draw(const Polygon<Inexact>& p) {
 	ipe::Curve* curve = convertPolygonToCurve(p);
 	ipe::Shape* shape = new ipe::Shape();
 	shape->appendSubPath(curve);
@@ -109,7 +108,7 @@ void IpeRenderer::draw(const Polygon& p) {
 	m_page->append(ipe::TSelect::ENotSelected, 0, path);
 }
 
-void IpeRenderer::draw(const Polygon_with_holes& p) {
+void IpeRenderer::draw(const PolygonWithHoles<Inexact>& p) {
 	ipe::Curve* curve = convertPolygonToCurve(p.outer_boundary());
 	ipe::Shape* shape = new ipe::Shape();
 	shape->appendSubPath(curve);
@@ -121,7 +120,7 @@ void IpeRenderer::draw(const Polygon_with_holes& p) {
 	m_page->append(ipe::TSelect::ENotSelected, 0, path);
 }
 
-void IpeRenderer::draw(const Circle& c) {
+void IpeRenderer::draw(const Circle<Inexact>& c) {
 	double r = sqrt(c.squared_radius());
 	ipe::Matrix matrix =
 	    ipe::Matrix(ipe::Vector(c.center().x(), c.center().y())) * ipe::Linear(r, 0, 0, r);
@@ -132,19 +131,7 @@ void IpeRenderer::draw(const Circle& c) {
 	m_page->append(ipe::TSelect::ENotSelected, 0, path);
 }
 
-void IpeRenderer::draw(const Box& b) {
-	ipe::Curve* curve = new ipe::Curve();
-	curve->appendSegment(ipe::Vector(b.xmin(), b.ymin()), ipe::Vector(b.xmax(), b.ymin()));
-	curve->appendSegment(ipe::Vector(b.xmax(), b.ymin()), ipe::Vector(b.xmax(), b.ymax()));
-	curve->appendSegment(ipe::Vector(b.xmax(), b.ymax()), ipe::Vector(b.xmin(), b.ymax()));
-	curve->setClosed(true);
-	ipe::Shape* shape = new ipe::Shape();
-	shape->appendSubPath(curve);
-	ipe::Path* path = new ipe::Path(getAttributesForStyle(), *shape);
-	m_page->append(ipe::TSelect::ENotSelected, 0, path);
-}
-
-void IpeRenderer::draw(const BezierSpline& s) {
+/*void IpeRenderer::draw(const BezierSpline& s) {
 	ipe::Curve* curve = new ipe::Curve();
 	for (BezierCurve c : s.curves()) {
 		std::vector<ipe::Vector> coords;
@@ -158,9 +145,9 @@ void IpeRenderer::draw(const BezierSpline& s) {
 	shape->appendSubPath(curve);
 	ipe::Path* path = new ipe::Path(getAttributesForStyle(), *shape);
 	m_page->append(ipe::TSelect::ENotSelected, 0, path);
-}
+}*/
 
-void IpeRenderer::drawText(const Point& p, const std::string& text) {
+void IpeRenderer::drawText(const Point<Inexact>& p, const std::string& text) {
 	ipe::Text* label = new ipe::Text(getAttributesForStyle(), text.data(),
 	                                 ipe::Vector(p.x(), p.y()), ipe::Text::TextType::ELabel);
 	label->setHorizontalAlignment(ipe::THorizontalAlignment::EAlignHCenter);
@@ -205,7 +192,7 @@ void IpeRenderer::setFillOpacity(int alpha) {
 	m_style.m_fillOpacity = name;
 }
 
-ipe::Curve* IpeRenderer::convertPolygonToCurve(const Polygon& p) const {
+ipe::Curve* IpeRenderer::convertPolygonToCurve(const Polygon<Inexact>& p) const {
 	ipe::Curve* curve = new ipe::Curve();
 	for (auto edge = p.edges_begin(); edge != p.edges_end(); edge++) {
 		curve->appendSegment(ipe::Vector(edge->start().x(), edge->start().y()),
@@ -231,5 +218,4 @@ ipe::AllAttributes IpeRenderer::getAttributesForStyle() const {
 	return attributes;
 }
 
-} // namespace renderer
-} // namespace cartocrow
+} // namespace cartocrow::renderer

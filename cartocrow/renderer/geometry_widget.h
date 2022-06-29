@@ -36,8 +36,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "geometry_painting.h"
 #include "geometry_renderer.h"
 
-namespace cartocrow {
-namespace renderer {
+namespace cartocrow::renderer {
 
 /// The style for a GeometryWidget.
 struct GeometryWidgetStyle {
@@ -60,14 +59,13 @@ class GeometryWidget : public QWidget, GeometryRenderer {
 	/// Constructs a GeometryWidget for the given painting.
 	GeometryWidget(GeometryPainting& painting);
 
-	void draw(const Point& p) override;
-	void draw(const Segment& s) override;
-	void draw(const Polygon& p) override;
-	void draw(const Polygon_with_holes& p) override;
-	void draw(const Circle& c) override;
-	void draw(const Box& b) override;
-	void draw(const BezierSpline& s) override;
-	void drawText(const Point& p, const std::string& text) override;
+	void draw(const Point<Inexact>& p) override;
+	void draw(const Segment<Inexact>& s) override;
+	void draw(const Polygon<Inexact>& p) override;
+	void draw(const PolygonWithHoles<Inexact>& p) override;
+	void draw(const Circle<Inexact>& c) override;
+	//void draw(const BezierSpline& s) override;
+	void drawText(const Point<Inexact>& p, const std::string& text) override;
 
 	void pushStyle() override;
 	void popStyle() override;
@@ -101,17 +99,17 @@ class GeometryWidget : public QWidget, GeometryRenderer {
 	QSize sizeHint() const override;
 
 	/// Converts a point in drawing coordinates to Qt coordinates.
-	QPointF convertPoint(Point p) const;
+	QPointF convertPoint(Point<Inexact> p) const;
 	/// Converts a rectangle in drawing coordinates to Qt coordinates.
-	QRectF convertBox(Box r) const;
+	QRectF convertBox(Box b) const;
 	/// Converts a point in Qt coordinates back to drawing coordinates.
-	Point inverseConvertPoint(QPointF p) const;
+	Point<Inexact> inverseConvertPoint(QPointF p) const;
 	/// Converts a rectangle in Qt coordinates back to drawing coordinates.
 	Box inverseConvertBox(QRectF r) const;
 
   private:
 	/// Converts the polygon to Qt coordinates and adds it to the QPainterPath.
-	void addPolygonToPath(QPainterPath& path, const Polygon& p);
+	void addPolygonToPath(QPainterPath& path, const Polygon<Inexact>& p);
 
 	/// Sets the pen and brush on \link m_painter corresponding to \link
 	/// m_style.
@@ -156,7 +154,6 @@ class GeometryWidget : public QWidget, GeometryRenderer {
 	QToolButton* m_zoomInButton;
 };
 
-} // namespace renderer
-} // namespace cartocrow
+} // namespace cartocrow::renderer
 
 #endif //CARTOCROW_GEOMETRY_WIDGET

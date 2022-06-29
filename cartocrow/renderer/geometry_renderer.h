@@ -20,13 +20,13 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #ifndef CARTOCROW_GEOMETRY_RENDERER
 #define CARTOCROW_GEOMETRY_RENDERER
 
-#include <cartocrow/core/bezier_spline.h>
-#include <cartocrow/core/cgal_types.h>
-#include <cartocrow/core/polygon.h>
-#include <cartocrow/core/region.h>
+// TODO
+//#include "../core/bezier_spline.h"
+#include "../core/core.h"
+#include "../core/polygon.h"
+#include "../core/region.h"
 
-namespace cartocrow {
-namespace renderer {
+namespace cartocrow::renderer {
 
 /// An interface for rendering geometric objects to a GUI or a file.
 /**
@@ -88,25 +88,33 @@ class GeometryRenderer {
 	/// @{
 
 	/// Draws a single point with the currently set style.
-	virtual void draw(const Point& p) = 0;
+	virtual void draw(const Point<Inexact>& p) = 0;
+	/// Draws a single point with the currently set style.
+	virtual void draw(const Point<Exact>& p);
 	/// Draws a single line segment with the currently set style.
-	virtual void draw(const Segment& s) = 0;
+	virtual void draw(const Segment<Inexact>& s) = 0;
+	/// Draws a single line segment with the currently set style.
+	virtual void draw(const Segment<Exact>& s);
 	/// Draws a simple polygon with the currently set style.
-	virtual void draw(const Polygon& p) = 0;
+	virtual void draw(const Polygon<Inexact>& p) = 0;
+	/// Draws a simple polygon with the currently set style.
+	virtual void draw(const Polygon<Exact>& p);
 	/// Draws a polygon with holes with the currently set style.
-	virtual void draw(const Polygon_with_holes& p) = 0;
+	virtual void draw(const PolygonWithHoles<Inexact>& p) = 0;
+	/// Draws a polygon with holes with the currently set style.
+	virtual void draw(const PolygonWithHoles<Exact>& p);
 	/// Draws a circle with the currently set style.
-	virtual void draw(const Circle& c) = 0;
-	/// Draws an axis-aligned bounding box with the currently set style.
-	virtual void draw(const Box& b) = 0;
+	virtual void draw(const Circle<Inexact>& c) = 0;
+	/// Draws a circle with the currently set style.
+	virtual void draw(const Circle<Exact>& c);
 	/// Draws a Bézier spline with the currently set style.
-	virtual void draw(const BezierSpline& s) = 0;
+	//virtual void draw(const BezierSpline<Inexact>& s) = 0; // TODO
 	/// Draws a map region with the currently set style.
 	virtual void draw(const Region& r);
 
 	/// Draws a string at a given location.
 	/// The string is drawn centered horizontally around the location given.
-	virtual void drawText(const Point& p, const std::string& text) = 0;
+	virtual void drawText(const Point<Inexact>& p, const std::string& text) = 0;
 
 	/// @}
 
@@ -131,7 +139,6 @@ class GeometryRenderer {
 	/// @}
 };
 
-} // namespace renderer
-} // namespace cartocrow
+} // namespace cartocrow::renderer
 
 #endif //CARTOCROW_GEOMETRY_RENDERER

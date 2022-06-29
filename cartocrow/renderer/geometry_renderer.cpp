@@ -18,18 +18,37 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include "geometry_renderer.h"
+#include <CGAL/number_utils.h>
 
-namespace cartocrow {
-namespace renderer {
+namespace cartocrow::renderer {
+
+void GeometryRenderer::draw(const Point<Exact>& p) {
+	draw(toInexact(p));
+}
+
+void GeometryRenderer::draw(const Segment<Exact>& s) {
+	draw(toInexact(s));
+}
+
+void GeometryRenderer::draw(const Polygon<Exact>& p) {
+	draw(toInexact(p));
+}
+
+void GeometryRenderer::draw(const PolygonWithHoles<Exact>& p) {
+	draw(toInexact(p));
+}
+
+void GeometryRenderer::draw(const Circle<Exact>& c) {
+	draw(toInexact(c));
+}
 
 void GeometryRenderer::draw(const Region& r) {
 	if (r.IsPoint()) {
 		draw(r.shape[0].outer_boundary()[0]);
 	}
-	for (const Polygon_with_holes& p : r.shape) {
+	for (const PolygonWithHoles<Exact>& p : r.shape) {
 		draw(p);
 	}
 }
 
-} // namespace renderer
-} // namespace cartocrow
+} // namespace cartocrow::renderer

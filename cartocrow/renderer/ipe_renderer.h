@@ -70,14 +70,13 @@ class IpeRenderer : public GeometryRenderer {
 	/// Saves the painting to an Ipe file with the given name.
 	void save(const std::filesystem::path& file);
 
-	void draw(const Point& p) override;
-	void draw(const Segment& s) override;
-	void draw(const Polygon& p) override;
-	void draw(const Polygon_with_holes& p) override;
-	void draw(const Circle& c) override;
-	void draw(const Box& b) override;
-	void draw(const BezierSpline& s) override;
-	void drawText(const Point& p, const std::string& text) override;
+	void draw(const Point<Inexact>& p) override;
+	void draw(const Segment<Inexact>& s) override;
+	void draw(const Polygon<Inexact>& p) override;
+	void draw(const PolygonWithHoles<Inexact>& p) override;
+	void draw(const Circle<Inexact>& c) override;
+	//void draw(const BezierSpline& s) override;
+	void drawText(const Point<Inexact>& p, const std::string& text) override;
 
 	void pushStyle() override;
 	void popStyle() override;
@@ -88,7 +87,7 @@ class IpeRenderer : public GeometryRenderer {
 
   private:
 	/// Converts a polygon to an Ipe curve.
-	ipe::Curve* convertPolygonToCurve(const Polygon& p) const;
+	ipe::Curve* convertPolygonToCurve(const Polygon<Inexact>& p) const;
 	/// Returns Ipe attributes to style an Ipe path with the current style.
 	ipe::AllAttributes getAttributesForStyle() const;
 

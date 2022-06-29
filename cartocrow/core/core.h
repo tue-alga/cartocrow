@@ -25,6 +25,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 07-11-2019
 #include <CGAL/Arr_extended_dcel.h>
 #include <CGAL/Arr_segment_traits_2.h>
 #include <CGAL/Arrangement_2.h>
+#include <CGAL/Bbox_2.h>
 #include <CGAL/Circle_2.h>
 #include <CGAL/Exact_predicates_exact_constructions_kernel.h>
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
@@ -61,6 +62,10 @@ template <class K> using Polygon = CGAL::Polygon_2<K>;
 /// A polygon with holes in the plane. See \ref CGAL::Polygon_2.
 template <class K> using PolygonWithHoles = CGAL::Polygon_with_holes_2<K>;
 
+/// Axis-aligned bounding box with inexact coordinates. See \ref
+/// CGAL::Polygon_2.
+using Box = CGAL::Bbox_2;
+
 namespace detail {
 template <class K> using DCELTraits = CGAL::Arr_segment_traits_2<K>;
 
@@ -80,6 +85,28 @@ template <class K> using Map = detail::MapArrangement<K, int, int, int>;
  * `Number<Exact>`.
  */
 constexpr const Number<Inexact> EPSILON = 0.0000001;
+
+/// Converts a point from exact representation to an approximation in inexact
+/// representation.
+Point<Inexact> toInexact(const Point<Exact>& p);
+/// Converts a vector from exact representation to an approximation in inexact
+/// representation.
+Vector<Inexact> toInexact(const Vector<Exact>& p);
+/// Converts a circle from exact representation to an approximation in inexact
+/// representation.
+Circle<Inexact> toInexact(const Circle<Exact>& p);
+/// Converts a line from exact representation to an approximation in inexact
+/// representation.
+Line<Inexact> toInexact(const Line<Exact>& p);
+/// Converts a line segment from exact representation to an approximation in
+/// inexact representation.
+Segment<Inexact> toInexact(const Segment<Exact>& p);
+/// Converts a polygon from exact representation to an approximation in inexact
+/// representation.
+Polygon<Inexact> toInexact(const Polygon<Exact>& p);
+/// Converts a polygon with holes from exact representation to an approximation
+/// in inexact representation.
+PolygonWithHoles<Inexact> toInexact(const PolygonWithHoles<Exact>& p);
 
 /// An RGB color. Used for storing the color of elements to be drawn.
 struct Color {
