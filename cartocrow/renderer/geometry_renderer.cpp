@@ -23,23 +23,23 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 namespace cartocrow::renderer {
 
 void GeometryRenderer::draw(const Point<Exact>& p) {
-	draw(toInexact(p));
+	draw(approximate(p));
 }
 
 void GeometryRenderer::draw(const Segment<Exact>& s) {
-	draw(toInexact(s));
+	draw(approximate(s));
 }
 
 void GeometryRenderer::draw(const Polygon<Exact>& p) {
-	draw(toInexact(p));
+	draw(approximate(p));
 }
 
 void GeometryRenderer::draw(const PolygonWithHoles<Exact>& p) {
-	draw(toInexact(p));
+	draw(approximate(p));
 }
 
 void GeometryRenderer::draw(const Circle<Exact>& c) {
-	draw(toInexact(c));
+	draw(approximate(c));
 }
 
 void GeometryRenderer::draw(const Region& r) {

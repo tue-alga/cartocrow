@@ -24,38 +24,38 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 05-12-2019
 
 namespace cartocrow {
 
-Point<Inexact> toInexact(const Point<Exact>& p) {
+Point<Inexact> approximate(const Point<Exact>& p) {
 	return Point<Inexact>(CGAL::to_double(p.x()), CGAL::to_double(p.y()));
 }
 
-Vector<Inexact> toInexact(const Vector<Exact>& v) {
+Vector<Inexact> approximate(const Vector<Exact>& v) {
 	return Vector<Inexact>(CGAL::to_double(v.x()), CGAL::to_double(v.y()));
 }
 
-Circle<Inexact> toInexact(const Circle<Exact>& c) {
-	return Circle<Inexact>(toInexact(c.center()), CGAL::to_double(c.squared_radius()));
+Circle<Inexact> approximate(const Circle<Exact>& c) {
+	return Circle<Inexact>(approximate(c.center()), CGAL::to_double(c.squared_radius()));
 }
 
-Line<Inexact> toInexact(const Line<Exact>& l) {
+Line<Inexact> approximate(const Line<Exact>& l) {
 	return Line<Inexact>(CGAL::to_double(l.a()), CGAL::to_double(l.b()), CGAL::to_double(l.c()));
 }
 
-Segment<Inexact> toInexact(const Segment<Exact>& s) {
-	return Segment<Inexact>(toInexact(s.start()), toInexact(s.end()));
+Segment<Inexact> approximate(const Segment<Exact>& s) {
+	return Segment<Inexact>(approximate(s.start()), approximate(s.end()));
 }
 
-Polygon<Inexact> toInexact(const Polygon<Exact>& p) {
+Polygon<Inexact> approximate(const Polygon<Exact>& p) {
 	Polygon<Inexact> result;
 	for (auto v = p.vertices_begin(); v < p.vertices_end(); ++v) {
-		result.push_back(toInexact(*v));
+		result.push_back(approximate(*v));
 	}
 	return result;
 }
 
-PolygonWithHoles<Inexact> toInexact(const PolygonWithHoles<Exact>& p) {
-	PolygonWithHoles<Inexact> result(toInexact(p.outer_boundary()));
+PolygonWithHoles<Inexact> approximate(const PolygonWithHoles<Exact>& p) {
+	PolygonWithHoles<Inexact> result(approximate(p.outer_boundary()));
 	for (auto hole = p.holes_begin(); hole < p.holes_end(); ++hole) {
-		result.add_hole(toInexact(*hole));
+		result.add_hole(approximate(*hole));
 	}
 	return result;
 }

@@ -2,6 +2,7 @@
 
 #include <CGAL/Arr_walk_along_line_point_location.h>
 #include <CGAL/enum.h>
+#include <CGAL/number_utils.h>
 #include <ctime>
 
 #include "../../cartocrow/core/core.h"
@@ -139,74 +140,114 @@ TEST_CASE("Creating polygons with holes") {
 	CHECK(p1.number_of_holes() == 1);
 }
 
-TEST_CASE("Map") {
-	Map<Exact> map;
-	CHECK(map.number_of_vertices() == 0);
-	CHECK(map.number_of_edges() == 0);
-	CHECK(map.number_of_faces() == 1);
+TEST_CASE("Creating an arrangement") {
+	Arrangement<Exact> arrangement;
+	CHECK(arrangement.number_of_vertices() == 0);
+	CHECK(arrangement.number_of_edges() == 0);
+	CHECK(arrangement.number_of_faces() == 1);
 
 	// manually inserting elements
-	Map<Exact>::Vertex_handle v1 =
-	    map.insert_in_face_interior(Point<Exact>(0, 0), map.unbounded_face());
-	CHECK(map.number_of_vertices() == 1);
-	CHECK(map.number_of_edges() == 0);
-	CHECK(map.number_of_faces() == 1);
+	Arrangement<Exact>::Vertex_handle v1 =
+	    arrangement.insert_in_face_interior(Point<Exact>(0, 0), arrangement.unbounded_face());
+	CHECK(arrangement.number_of_vertices() == 1);
+	CHECK(arrangement.number_of_edges() == 0);
+	CHECK(arrangement.number_of_faces() == 1);
 
-	Map<Exact>::Vertex_handle v2 =
-	    map.insert_in_face_interior(Point<Exact>(1, 0), map.unbounded_face());
-	CHECK(map.number_of_vertices() == 2);
-	CHECK(map.number_of_edges() == 0);
-	CHECK(map.number_of_faces() == 1);
+	Arrangement<Exact>::Vertex_handle v2 =
+	    arrangement.insert_in_face_interior(Point<Exact>(1, 0), arrangement.unbounded_face());
+	CHECK(arrangement.number_of_vertices() == 2);
+	CHECK(arrangement.number_of_edges() == 0);
+	CHECK(arrangement.number_of_faces() == 1);
 
-	map.insert_at_vertices(Segment<Exact>(Point<Exact>(0, 0), Point<Exact>(1, 0)), v1, v2);
-	CHECK(map.number_of_vertices() == 2);
-	CHECK(map.number_of_edges() == 1);
-	CHECK(map.number_of_faces() == 1);
+	arrangement.insert_at_vertices(Segment<Exact>(Point<Exact>(0, 0), Point<Exact>(1, 0)), v1, v2);
+	CHECK(arrangement.number_of_vertices() == 2);
+	CHECK(arrangement.number_of_edges() == 1);
+	CHECK(arrangement.number_of_faces() == 1);
 
-	// free functions (allow inserting arbitrary segments, even crossing ones)
-	CGAL::insert<>(map, Segment<Exact>(Point<Exact>(0, -1), Point<Exact>(1, 1)));
-	CHECK(map.number_of_vertices() == 5);
-	CHECK(map.number_of_edges() == 4);
-	CHECK(map.number_of_faces() == 1);
+	// inserting arbitrary segments, even crossing ones
+	CGAL::insert<>(arrangement, Segment<Exact>(Point<Exact>(0, -1), Point<Exact>(1, 1)));
+	CHECK(arrangement.number_of_vertices() == 5);
+	CHECK(arrangement.number_of_edges() == 4);
+	CHECK(arrangement.number_of_faces() == 1);
 
-	CGAL::insert<>(map, Segment<Exact>(Point<Exact>(1, 0), Point<Exact>(1, 1)));
-	CHECK(map.number_of_vertices() == 5);
-	CHECK(map.number_of_edges() == 5);
-	CHECK(map.number_of_faces() == 2);
+	CGAL::insert<>(arrangement, Segment<Exact>(Point<Exact>(1, 0), Point<Exact>(1, 1)));
+	CHECK(arrangement.number_of_vertices() == 5);
+	CHECK(arrangement.number_of_edges() == 5);
+	CHECK(arrangement.number_of_faces() == 2);
 
-	CGAL::insert<>(map, Segment<Exact>(Point<Exact>(0, 0.5), Point<Exact>(1, 0)));
-	CHECK(map.number_of_vertices() == 7);
-	CHECK(map.number_of_edges() == 8);
-	CHECK(map.number_of_faces() == 3);
+	CGAL::insert<>(arrangement, Segment<Exact>(Point<Exact>(0, 0.5), Point<Exact>(1, 0)));
+	CHECK(arrangement.number_of_vertices() == 7);
+	CHECK(arrangement.number_of_edges() == 8);
+	CHECK(arrangement.number_of_faces() == 3);
 
 	// point location queries
-	CGAL::Arr_walk_along_line_point_location<Map<Exact>> locator(map);
+	CGAL::Arr_walk_along_line_point_location<Arrangement<Exact>> locator(arrangement);
 	auto l1 = locator.locate(Point<Exact>(0.6, 0.1));
-	REQUIRE(l1.type() == typeid(Map<Exact>::Face_const_handle));
-	auto f1 = boost::get<Map<Exact>::Face_const_handle>(l1);
+	REQUIRE(l1.type() == typeid(Arrangement<Exact>::Face_const_handle));
+	auto f1 = boost::get<Arrangement<Exact>::Face_const_handle>(l1);
 	auto l2 = locator.locate(Point<Exact>(0.7, 0.1));
-	REQUIRE(l2.type() == typeid(Map<Exact>::Face_const_handle));
-	auto f2 = boost::get<Map<Exact>::Face_const_handle>(l2);
+	REQUIRE(l2.type() == typeid(Arrangement<Exact>::Face_const_handle));
+	auto f2 = boost::get<Arrangement<Exact>::Face_const_handle>(l2);
 	auto l3 = locator.locate(Point<Exact>(0.9, 0.5));
-	REQUIRE(l3.type() == typeid(Map<Exact>::Face_const_handle));
-	auto f3 = boost::get<Map<Exact>::Face_const_handle>(l3);
+	REQUIRE(l3.type() == typeid(Arrangement<Exact>::Face_const_handle));
+	auto f3 = boost::get<Arrangement<Exact>::Face_const_handle>(l3);
 	auto l4 = locator.locate(Point<Exact>(0, 1));
-	REQUIRE(l4.type() == typeid(Map<Exact>::Face_const_handle));
-	auto f4 = boost::get<Map<Exact>::Face_const_handle>(l4);
+	REQUIRE(l4.type() == typeid(Arrangement<Exact>::Face_const_handle));
+	auto f4 = boost::get<Arrangement<Exact>::Face_const_handle>(l4);
 	CHECK(f1 == f2);
 	CHECK(f1 != f3);
 	CHECK(f1 != f4);
 	CHECK(f2 != f4);
 	CHECK(f3 != f4);
-	CHECK(f4 == map.unbounded_face());
+	CHECK(f4 == arrangement.unbounded_face());
 
 	auto l5 = locator.locate(Point<Exact>(0.25, 0));
-	REQUIRE(l5.type() == typeid(Map<Exact>::Halfedge_const_handle));
-	auto e5 = boost::get<Map<Exact>::Halfedge_const_handle>(l5);
+	REQUIRE(l5.type() == typeid(Arrangement<Exact>::Halfedge_const_handle));
+	auto e5 = boost::get<Arrangement<Exact>::Halfedge_const_handle>(l5);
 	CHECK(e5->curve().line().has_on(Point<Exact>(0.125, 0)));
 
 	auto l6 = locator.locate(Point<Exact>(0.5, 0));
-	REQUIRE(l6.type() == typeid(Map<Exact>::Vertex_const_handle));
-	auto v6 = boost::get<Map<Exact>::Vertex_const_handle>(l6);
+	REQUIRE(l6.type() == typeid(Arrangement<Exact>::Vertex_const_handle));
+	auto v6 = boost::get<Arrangement<Exact>::Vertex_const_handle>(l6);
 	CHECK(v6->point() == Point<Exact>(0.5, 0));
+}
+
+TEST_CASE("Approximating exact primitives by inexact ones") {
+	Point<Exact> p1(2, 3);
+	Point<Inexact> p2 = approximate(p1);
+	CHECK(p2.x() == Approx(2));
+	CHECK(p2.y() == Approx(3));
+
+	Vector<Exact> v1(-2, 3);
+	Vector<Inexact> v2 = approximate(v1);
+	CHECK(v2.x() == Approx(-2));
+	CHECK(v2.y() == Approx(3));
+
+	Circle<Exact> c1(p1, 5);
+	Circle<Inexact> c2 = approximate(c1);
+	CHECK(c2.center().x() == Approx(2));
+	CHECK(c2.center().y() == Approx(3));
+	CHECK(c2.squared_radius() == Approx(5));
+
+	Line<Exact> l1(p1, v1);
+	Line<Inexact> l2 = approximate(l1);
+	CHECK(l2.a() == Approx(CGAL::to_double(l1.a())));
+	CHECK(l2.b() == Approx(CGAL::to_double(l1.b())));
+	CHECK(l2.c() == Approx(CGAL::to_double(l1.c())));
+
+	Segment<Exact> s1(p1, p1 + v1);
+	Segment<Inexact> s2 = approximate(s1);
+	CHECK(s2.start().x() == Approx(2));
+	CHECK(s2.start().y() == Approx(3));
+	CHECK(s2.end().x() == Approx(0));
+	CHECK(s2.end().y() == Approx(6));
+}
+
+TEST_CASE("Approximating exact polygons by inexact ones") {
+	Polygon<Exact> p1;
+	p1.push_back(Point<Exact>(2, 4));
+	p1.push_back(Point<Exact>(3, 5));
+	p1.push_back(Point<Exact>(4, 2));
+	Polygon<Inexact> p2 = approximate(p1);
+	CHECK(p2.area() == Approx(CGAL::to_double(p1.area())));
 }

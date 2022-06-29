@@ -76,7 +76,7 @@ using MapArrangement =
 } // namespace detail
 
 /// A map consisting of polygonal regions. See \ref CGAL::Polygon_2.
-template <class K> using Map = detail::MapArrangement<K, int, int, int>;
+template <class K> using Arrangement = detail::MapArrangement<K, int, int, int>;
 
 /// An epsilon value.
 /**
@@ -88,25 +88,25 @@ constexpr const Number<Inexact> EPSILON = 0.0000001;
 
 /// Converts a point from exact representation to an approximation in inexact
 /// representation.
-Point<Inexact> toInexact(const Point<Exact>& p);
+Point<Inexact> approximate(const Point<Exact>& p);
 /// Converts a vector from exact representation to an approximation in inexact
 /// representation.
-Vector<Inexact> toInexact(const Vector<Exact>& p);
+Vector<Inexact> approximate(const Vector<Exact>& p);
 /// Converts a circle from exact representation to an approximation in inexact
 /// representation.
-Circle<Inexact> toInexact(const Circle<Exact>& p);
+Circle<Inexact> approximate(const Circle<Exact>& p);
 /// Converts a line from exact representation to an approximation in inexact
 /// representation.
-Line<Inexact> toInexact(const Line<Exact>& p);
+Line<Inexact> approximate(const Line<Exact>& p);
 /// Converts a line segment from exact representation to an approximation in
 /// inexact representation.
-Segment<Inexact> toInexact(const Segment<Exact>& p);
+Segment<Inexact> approximate(const Segment<Exact>& p);
 /// Converts a polygon from exact representation to an approximation in inexact
 /// representation.
-Polygon<Inexact> toInexact(const Polygon<Exact>& p);
+Polygon<Inexact> approximate(const Polygon<Exact>& p);
 /// Converts a polygon with holes from exact representation to an approximation
 /// in inexact representation.
-PolygonWithHoles<Inexact> toInexact(const PolygonWithHoles<Exact>& p);
+PolygonWithHoles<Inexact> approximate(const PolygonWithHoles<Exact>& p);
 
 /// An RGB color. Used for storing the color of elements to be drawn.
 struct Color {
