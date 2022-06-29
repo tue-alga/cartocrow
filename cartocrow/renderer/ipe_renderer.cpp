@@ -73,7 +73,6 @@ void IpeRenderer::save(const std::filesystem::path& file) {
 
 	m_painting.paint(*this);
 
-	std::cout << m_page->count() << std::endl;
 	document.push_back(m_page);
 	document.save(file.string().c_str(), ipe::FileFormat::Xml, 0);
 }
