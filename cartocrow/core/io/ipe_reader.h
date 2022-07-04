@@ -44,12 +44,12 @@ class IpeReader {
 	static std::shared_ptr<ipe::Document> loadIpeFile(const std::filesystem::path& filename);
 	/// Converts an Ipe color to a CartoCrow color.
 	static Color convertIpeColor(ipe::Color color);
-	/// Converts an Ipe shape to a list of polygons.
+	/// Converts an Ipe shape to a polygon set.
 	/**
 	 * Throws if the shape contains a non-polygonal boundary.
 	 */
-	static std::vector<PolygonWithHoles<Exact>> convertShapeToPolygons(const ipe::Shape& shape,
-	                                                                   const ipe::Matrix& matrix);
+	static PolygonSet<Exact> convertShapeToPolygonSet(const ipe::Shape& shape,
+	                                                  const ipe::Matrix& matrix);
 	/// Converts an Ipe path to a Bézier spline.
 	// TODO
 	//static BezierSpline convertPathToSpline(const ipe::SubPath& path, const ipe::Matrix& matrix);

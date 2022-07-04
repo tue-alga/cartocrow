@@ -20,6 +20,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "ipe_reader.h"
 #include "cartocrow/core/polygon.h"
 
+#include <CGAL/Boolean_set_operations_2/Gps_polygon_validation.h>
 #include <ipebase.h>
 #include <ipegeo.h>
 #include <ipeshape.h>
@@ -57,7 +58,8 @@ std::shared_ptr<ipe::Document> IpeReader::loadIpeFile(const std::filesystem::pat
 	} else if (load_reason == ipe::Document::EFileOpenError) {
 		throw std::runtime_error("Unable to load Ipe file: error opening the file");
 	} else if (load_reason == ipe::Document::ENotAnIpeFile) {
-		throw std::runtime_error("Unable to load Ipe file: the file was not created by Ipe");
+		throw std::runtime_error(
+		    "Unable to load Ipe file: the file does not exist or was not created by Ipe");
 	}
 
 	return std::shared_ptr<ipe::Document>(document);
@@ -69,9 +71,9 @@ Color IpeReader::convertIpeColor(ipe::Color color) {
 	             static_cast<int>(color.iBlue.toDouble() * 255)};
 }
 
-std::vector<PolygonWithHoles<Exact>> IpeReader::convertShapeToPolygons(const ipe::Shape& shape,
-                                                                       const ipe::Matrix& matrix) {
-	std::vector<PolygonWithHoles<Exact>> polygons;
+PolygonSet<Exact> IpeReader::convertShapeToPolygonSet(const ipe::Shape& shape,
+                                                      const ipe::Matrix& matrix) {
+	PolygonSet<Exact> set;
 	for (int i = 0; i < shape.countSubPaths(); ++i) {
 		Polygon<Exact> polygon;
 		if (shape.subPath(i)->type() != ipe::SubPath::ECurve) {
@@ -90,9 +92,15 @@ std::vector<PolygonWithHoles<Exact>> IpeReader::convertShapeToPolygons(const ipe
 			ipe::Vector v = matrix * segment.last();
 			polygon.push_back(Point<Exact>(v.x, v.y));
 		}
-		polygons.push_back(PolygonWithHoles<Exact>(polygon));
+		if (!polygon.is_simple()) {
+			throw std::runtime_error("Encountered non-simple polygon");
+		}
+		if (polygon.is_clockwise_oriented()) {
+			polygon.reverse_orientation();
+		}
+		set.symmetric_difference(PolygonWithHoles<Exact>(polygon));
 	}
-	return polygons;
+	return set;
 }
 
 // TODO

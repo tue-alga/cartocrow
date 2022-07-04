@@ -43,10 +43,9 @@ void GeometryRenderer::draw(const Circle<Exact>& c) {
 }
 
 void GeometryRenderer::draw(const Region& r) {
-	if (r.IsPoint()) {
-		draw(r.shape[0].outer_boundary()[0]);
-	}
-	for (const PolygonWithHoles<Exact>& p : r.shape) {
+	std::vector<PolygonWithHoles<Exact>> polygons;
+	r.shape.polygons_with_holes(std::back_inserter(polygons));
+	for (const PolygonWithHoles<Exact>& p : polygons) {
 		draw(p);
 	}
 }

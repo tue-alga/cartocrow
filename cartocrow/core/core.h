@@ -22,7 +22,6 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 07-11-2019
 #ifndef CARTOCROW_CORE_CGAL_TYPES_H
 #define CARTOCROW_CORE_CGAL_TYPES_H
 
-#include <CGAL/Arr_extended_dcel.h>
 #include <CGAL/Arr_segment_traits_2.h>
 #include <CGAL/Arrangement_2.h>
 #include <CGAL/Bbox_2.h>
@@ -32,6 +31,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 07-11-2019
 #include <CGAL/Line_2.h>
 #include <CGAL/Point_2.h>
 #include <CGAL/Polygon_2.h>
+#include <CGAL/Polygon_set_2.h>
 #include <CGAL/Polygon_with_holes_2.h>
 #include <CGAL/Segment_2.h>
 #include <CGAL/Vector_2.h>
@@ -61,22 +61,15 @@ template <class K> using Segment = CGAL::Segment_2<K>;
 template <class K> using Polygon = CGAL::Polygon_2<K>;
 /// A polygon with holes in the plane. See \ref CGAL::Polygon_2.
 template <class K> using PolygonWithHoles = CGAL::Polygon_with_holes_2<K>;
+/// A point set with polygonal boundaries. See \ref CGAL::Polygon_set_2.
+template <class K> using PolygonSet = CGAL::Polygon_set_2<K>;
 
 /// Axis-aligned bounding box with inexact coordinates. See \ref
 /// CGAL::Polygon_2.
 using Box = CGAL::Bbox_2;
 
-namespace detail {
-template <class K> using DCELTraits = CGAL::Arr_segment_traits_2<K>;
-
-template <class K, typename TVertexData, typename TEdgeData, typename TFaceData>
-using MapArrangement =
-    CGAL::Arrangement_2<DCELTraits<K>,
-                        CGAL::Arr_extended_dcel<DCELTraits<K>, TVertexData, TEdgeData, TFaceData>>;
-} // namespace detail
-
-/// A map consisting of polygonal regions. See \ref CGAL::Polygon_2.
-template <class K> using Arrangement = detail::MapArrangement<K, int, int, int>;
+/// An arrangement of objects in the plane.
+template <class K> using Arrangement = CGAL::Arrangement_2<CGAL::Arr_segment_traits_2<K>>;
 
 /// An epsilon value.
 /**
