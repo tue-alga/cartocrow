@@ -80,7 +80,12 @@ RegionList ipeToRegionList(const std::filesystem::path& file) {
 		std::string name = labels[labelId.value()].text;
 		Region region;
 		region.name = name;
-		region.color = IpeReader::convertIpeColor(path->fill().color());
+		if (path->fill().isSymbolic()) {
+			region.color = IpeReader::convertIpeColor(
+			    document->cascade()->find(ipe::Kind::EColor, path->fill()).color());
+		} else {
+			region.color = IpeReader::convertIpeColor(path->fill().color());
+		}
 		region.shape = shape;
 		regions.push_back(region);
 	}

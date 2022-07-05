@@ -47,8 +47,7 @@ TEST_CASE("Reading a region with a hole from an Ipe file") {
 	       (polygons[0].number_of_holes() == 0 && polygons[1].number_of_holes() == 1)));
 }
 
-TEST_CASE("Reading a region with a symbolic color from an Ipe file",
-          "[.]") { // TODO temporarily disabled, this aborts in Ipelib?
+TEST_CASE("Reading a region with a symbolic color from an Ipe file") {
 	RegionList regions =
 	    ipeToRegionList(std::filesystem::path("data/test_region_map_symbolic_color.ipe"));
 	REQUIRE(regions.size() == 1);
