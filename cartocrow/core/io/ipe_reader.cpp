@@ -90,7 +90,14 @@ PolygonSet<Exact> IpeReader::convertShapeToPolygonSet(const ipe::Shape& shape,
 				polygon.push_back(Point<Exact>(v.x, v.y));
 			}
 			ipe::Vector v = matrix * segment.last();
-			polygon.push_back(Point<Exact>(v.x, v.y));
+			Point<Exact> p(v.x, v.y);
+			if (p != polygon.container().back()) {
+				polygon.push_back(Point<Exact>(v.x, v.y));
+			}
+		}
+		// if the begin and end vertices are equal, remove one of them
+		if (polygon.container().front() == polygon.container().back()) {
+			polygon.container().pop_back();
 		}
 		if (!polygon.is_simple()) {
 			throw std::runtime_error("Encountered non-simple polygon");
