@@ -17,8 +17,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef CARTOCROW_GEOMETRY_PAINTING
-#define CARTOCROW_GEOMETRY_PAINTING
+#ifndef CARTOCROW_RENDERER_GEOMETRY_PAINTING_H
+#define CARTOCROW_RENDERER_GEOMETRY_PAINTING_H
 
 #include "geometry_renderer.h"
 
@@ -61,4 +61,4 @@ class GeometryPainting {
 
 } // namespace cartocrow::renderer
 
-#endif //CARTOCROW_GEOMETRY_PAINTING
+#endif //CARTOCROW_RENDERER_GEOMETRY_PAINTING_H

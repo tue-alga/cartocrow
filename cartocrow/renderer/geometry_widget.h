@@ -17,8 +17,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef CARTOCROW_GEOMETRY_WIDGET
-#define CARTOCROW_GEOMETRY_WIDGET
+#ifndef CARTOCROW_RENDERER_GEOMETRY_WIDGET_H
+#define CARTOCROW_RENDERER_GEOMETRY_WIDGET_H
 
 #include <QMouseEvent>
 #include <QPaintEvent>
@@ -156,4 +156,4 @@ class GeometryWidget : public QWidget, GeometryRenderer {
 
 } // namespace cartocrow::renderer
 
-#endif //CARTOCROW_GEOMETRY_WIDGET
+#endif //CARTOCROW_RENDERER_GEOMETRY_WIDGET_H

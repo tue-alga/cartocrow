@@ -19,8 +19,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Created by tvl (t.vanlankveld@esciencecenter.nl) on 07-11-2019
 */
 
-#ifndef CARTOCROW_CORE_CGAL_TYPES_H
-#define CARTOCROW_CORE_CGAL_TYPES_H
+#ifndef CARTOCROW_CORE_CORE_H
+#define CARTOCROW_CORE_CORE_H
 
 #include <CGAL/Arr_segment_traits_2.h>
 #include <CGAL/Arrangement_2.h>
@@ -113,4 +113,4 @@ struct Color {
 
 } // namespace cartocrow
 
-#endif //CARTOCROW_CORE_CGAL_TYPES_H
+#endif //CARTOCROW_CORE_CORE_H

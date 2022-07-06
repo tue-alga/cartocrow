@@ -17,8 +17,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef CARTOCROW_GEOMETRY_RENDERER
-#define CARTOCROW_GEOMETRY_RENDERER
+#ifndef CARTOCROW_RENDERER_GEOMETRY_RENDERER_H
+#define CARTOCROW_RENDERER_GEOMETRY_RENDERER_H
 
 // TODO
 //#include "../core/bezier_spline.h"
@@ -141,4 +141,4 @@ class GeometryRenderer {
 
 } // namespace cartocrow::renderer
 
-#endif //CARTOCROW_GEOMETRY_RENDERER
+#endif //CARTOCROW_RENDERER_GEOMETRY_RENDERER_H

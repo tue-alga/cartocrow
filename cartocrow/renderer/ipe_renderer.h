@@ -17,8 +17,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef CARTOCROW_IPE_RENDERER
-#define CARTOCROW_IPE_RENDERER
+#ifndef CARTOCROW_RENDERER_IPE_RENDERER_H
+#define CARTOCROW_RENDERER_IPE_RENDERER_H
 
 #include <ipeattributes.h>
 #include <ipelib.h>
@@ -29,8 +29,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "geometry_painting.h"
 #include "geometry_renderer.h"
 
-namespace cartocrow {
-namespace renderer {
+namespace cartocrow::renderer {
 
 /// The style for the Ipe renderer.
 struct IpeRendererStyle {
@@ -108,7 +107,6 @@ class IpeRenderer : public GeometryRenderer {
 	ipe::StyleSheet* m_alphaSheet;
 };
 
-} // namespace renderer
-} // namespace cartocrow
+} // namespace cartocrow::renderer
 
-#endif //CARTOCROW_IPE_RENDERER
+#endif //CARTOCROW_RENDERER_IPE_RENDERER_H
