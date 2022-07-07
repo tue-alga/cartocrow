@@ -6,26 +6,21 @@ project(cartocrow
     HOMEPAGE_URL "https://github.com/tue-alga/cartocrow"
     LANGUAGES CXX)
 
-
-# CMake options.
 set(CMAKE_INSTALL_BINARY_DIR bin CACHE STRING "Installation subdirectory for compiled executables and shared libraries.")
 set(CMAKE_INSTALL_LIBRARY_DIR lib CACHE STRING "Installation subdirectory for compiled static libraries.")
 set(CMAKE_INSTALL_SOURCE_DIR include CACHE STRING "Installation subdirectory for source code.")
 set(CMAKE_INSTALL_SCRIPT_DIR script CACHE STRING "Installation subdirectory for scripts.")
-
-option(CARTOCROW_CREATE_ARCHIVE "Create an archive CartoCrow library, collecting all Geo-visualization methods." OFF)
 
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 set(INSTALL_CONFIG_DIR ${CMAKE_INSTALL_LIBRARY_DIR}/cmake)
 set(INSTALL_BINARY_DIR ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINARY_DIR})
 set(INSTALL_SCRIPT_DIR ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_SCRIPT_DIR})
 
-# Macros.
 macro(install_files_and_directories FILE_LIST ROOT_DIR)
     foreach(FILE ${FILE_LIST})
         get_filename_component(DIR ${FILE} DIRECTORY)
         string(REGEX REPLACE "^${CMAKE_CURRENT_SOURCE_DIR}" "" DIR ${DIR})
-        INSTALL(FILES ${FILE} DESTINATION "${ROOT_DIR}/${DIR}")
+        install(FILES ${FILE} DESTINATION "${ROOT_DIR}/${DIR}")
     endforeach(FILE)
 endmacro(install_files_and_directories)
 
@@ -54,9 +49,7 @@ configure_file(
     "Doxyfile"
 )
 
-
-### DEPENDENCIES ###
-
+# ## DEPENDENCIES ###
 find_package(CGAL REQUIRED)
 find_path(CGAL_INCLUDE_DIR CGAL/Exact_predicates_inexact_constructions_kernel.h)
 include_directories(${CGAL_INCLUDE_DIR})
@@ -69,8 +62,7 @@ find_package(tinyxml2 REQUIRED)
 find_package(gflags CONFIG REQUIRED)
 find_package(Ipelib REQUIRED)
 
-
-### SOURCES ###
+# ## SOURCES ###
 
 # All source files should use include paths relative to the source root
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
@@ -87,7 +79,6 @@ add_subdirectory(console)
 # Unit tests of the CartoCrow library
 add_subdirectory(test)
 
-
 # Install rules
 install(
     FILES
@@ -96,4 +87,3 @@ install(
     "${CMAKE_CURRENT_BINARY_DIR}/CartoCrowConfigVersion.cmake"
     DESTINATION ${INSTALL_CONFIG_DIR}/CartoCrow
 )
-

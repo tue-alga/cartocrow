@@ -19,14 +19,13 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "region_map.h"
 
-#include "ipedoc.h"
-#include "ipepath.h"
+#include <ipedoc.h>
+#include <ipepath.h>
 
-#include "cartocrow/core/io/ipe_reader.h"
-#include "io/ipe_reader.h"
 #include <CGAL/enum.h>
 #include <stdexcept>
 
+#include "ipe_reader.h"
 namespace cartocrow {
 
 RegionList ipeToRegionList(const std::filesystem::path& file) {

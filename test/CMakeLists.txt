@@ -7,4 +7,6 @@ set(TEST_SOURCES "cartocrow_test.cpp"
 )
 
 add_executable(cartocrow_test cartocrow_test.cpp ${TEST_SOURCES})
-target_link_libraries(cartocrow_test core renderer)
+target_link_libraries(cartocrow_test
+	PRIVATE core renderer
+)

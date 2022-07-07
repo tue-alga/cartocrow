@@ -24,8 +24,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <memory>
 
 //#include "cartocrow/core/bezier_spline.h"
-#include "../core.h"
-#include "../polygon.h"
+#include "core.h"
+#include "polygon.h"
 
 #include <ipeattributes.h>
 #include <ipedoc.h>
