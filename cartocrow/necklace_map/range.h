@@ -24,7 +24,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 09-12-2019
 
 #include <memory>
 
-#include "cartocrow/core/core_types.h"
+#include "../core/core.h"
 
 namespace cartocrow {
 

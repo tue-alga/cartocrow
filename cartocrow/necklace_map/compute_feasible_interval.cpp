@@ -26,9 +26,9 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 05-12-2019
 
 #include <glog/logging.h>
 
-#include "cartocrow/necklace_map/bead.h"
-#include "cartocrow/necklace_map/compute_feasible_interval_centroid.h"
-#include "cartocrow/necklace_map/compute_feasible_interval_wedge.h"
+#include "bead.h"
+#include "compute_feasible_interval_centroid.h"
+#include "compute_feasible_interval_wedge.h"
 
 namespace cartocrow {
 namespace necklace_map {

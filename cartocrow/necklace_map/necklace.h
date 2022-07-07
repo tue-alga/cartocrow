@@ -26,11 +26,11 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 07-11-2019
 #include <memory>
 #include <vector>
 
-#include "cartocrow/core/core_types.h"
-#include "cartocrow/necklace_map/bead.h"
-#include "cartocrow/necklace_map/bezier_necklace.h"
-#include "cartocrow/necklace_map/circle_necklace.h"
-#include "cartocrow/necklace_map/necklace_shape.h"
+#include "../core/core.h"
+#include "bead.h"
+#include "bezier_necklace.h"
+#include "circle_necklace.h"
+#include "necklace_shape.h"
 
 namespace cartocrow {
 namespace necklace_map {

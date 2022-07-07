@@ -23,9 +23,9 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 03-03-2020
 #ifndef CARTOCROW_NECKLACE_MAP_COMPUTE_SCALE_FACTOR_ANY_ORDER_H
 #define CARTOCROW_NECKLACE_MAP_COMPUTE_SCALE_FACTOR_ANY_ORDER_H
 
-#include "cartocrow/core/core_types.h"
-#include "cartocrow/necklace_map/compute_scale_factor.h"
-#include "cartocrow/necklace_map/necklace.h"
+#include "../core/core.h"
+#include "compute_scale_factor.h"
+#include "necklace.h"
 
 namespace cartocrow {
 namespace necklace_map {

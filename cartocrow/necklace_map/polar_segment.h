@@ -24,10 +24,10 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 19-02-2021
 
 #include <ostream>
 
-#include "cartocrow/core/circular_range.h"
-#include "cartocrow/core/core_types.h"
-#include "cartocrow/core/polar_line.h"
-#include "cartocrow/core/polar_point.h"
+#include "../core/core.h"
+#include "circular_range.h"
+#include "polar_line.h"
+#include "polar_point.h"
 
 namespace cartocrow {
 

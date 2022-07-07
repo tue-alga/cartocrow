@@ -24,8 +24,8 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 28-11-2019
 
 #include <glog/logging.h>
 
-#include "cartocrow/necklace_map/compute_scale_factor_any_order.h"
-#include "cartocrow/necklace_map/compute_scale_factor_fixed_order.h"
+#include "compute_scale_factor_any_order.h"
+#include "compute_scale_factor_fixed_order.h"
 
 namespace cartocrow {
 namespace necklace_map {

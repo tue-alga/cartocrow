@@ -27,11 +27,11 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 05-12-2019
 #include <set>
 #include <vector>
 
-#include "cartocrow/core/circular_range.h"
-#include "cartocrow/core/core_types.h"
-#include "cartocrow/necklace_map/map_element.h"
-#include "cartocrow/necklace_map/necklace.h"
-#include "cartocrow/necklace_map/parameters.h"
+#include "../core/core.h"
+#include "circular_range.h"
+#include "map_element.h"
+#include "necklace.h"
+#include "parameters.h"
 
 namespace cartocrow {
 namespace necklace_map {

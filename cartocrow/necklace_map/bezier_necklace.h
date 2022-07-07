@@ -23,10 +23,9 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 25-02-2020
 #ifndef CARTOCROW_NECKLACE_MAP_BEZIER_NECKLACE_H
 #define CARTOCROW_NECKLACE_MAP_BEZIER_NECKLACE_H
 
-#include <cartocrow/core/bezier_spline.h>
-#include <cartocrow/core/core_types.h>
-
-#include "cartocrow/necklace_map/necklace_shape.h"
+#include "../core/core.h"
+#include "bezier_spline.h"
+#include "necklace_shape.h"
 
 namespace cartocrow {
 namespace necklace_map {

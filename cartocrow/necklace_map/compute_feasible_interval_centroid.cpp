@@ -24,7 +24,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 03-03-2020
 
 #include <glog/logging.h>
 
-#include "cartocrow/necklace_map/necklace_interval.h"
+#include "necklace_interval.h"
 
 namespace cartocrow {
 namespace necklace_map {

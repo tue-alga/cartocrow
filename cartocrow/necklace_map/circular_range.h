@@ -24,8 +24,8 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 06-05-2020
 
 #include <memory>
 
-#include "cartocrow/core/core_types.h"
-#include "cartocrow/core/range.h"
+#include "../core/core.h"
+#include "range.h"
 
 namespace cartocrow {
 

@@ -26,7 +26,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 20-01-2020
 
 #include <glog/logging.h>
 
-#include "cartocrow/necklace_map/detail/cycle_node.h"
+#include "cycle_node.h"
 
 namespace cartocrow {
 namespace necklace_map {

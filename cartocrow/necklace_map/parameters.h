@@ -23,7 +23,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 28-01-2020
 #ifndef CARTOCROW_NECKLACE_MAP_PARAMETERS_H
 #define CARTOCROW_NECKLACE_MAP_PARAMETERS_H
 
-#include "cartocrow/core/core_types.h"
+#include "../core/core.h"
 
 namespace cartocrow {
 namespace necklace_map {

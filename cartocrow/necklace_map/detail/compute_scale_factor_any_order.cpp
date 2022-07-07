@@ -26,7 +26,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 02-04-2020
 #include <list>
 #include <memory>
 
-#include "cartocrow/necklace_map/bead.h"
+#include "../bead.h"
 
 namespace cartocrow {
 namespace necklace_map {

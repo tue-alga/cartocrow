@@ -22,7 +22,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 03-03-2020
 
 #include "compute_scale_factor_any_order.h"
 
-#include "cartocrow/necklace_map/detail/compute_scale_factor_any_order.h"
+#include "detail/compute_scale_factor_any_order.h"
 
 namespace cartocrow {
 namespace necklace_map {

@@ -24,8 +24,8 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 19-02-2021
 
 #include <ostream>
 
-#include "cartocrow/core/core_types.h"
-#include "cartocrow/core/polar_point.h"
+#include "../core/core.h"
+#include "polar_point.h"
 
 namespace cartocrow {
 

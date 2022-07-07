@@ -25,10 +25,10 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 06-05-2020
 
 #include <vector>
 
-#include "cartocrow/core/bit_string.h"
-#include "cartocrow/core/core_types.h"
-#include "cartocrow/core/range.h"
-#include "cartocrow/necklace_map/detail/cycle_node_layered.h"
+#include "../../core/core.h"
+#include "../bit_string.h"
+#include "../range.h"
+#include "cycle_node_layered.h"
 
 namespace cartocrow {
 namespace necklace_map {

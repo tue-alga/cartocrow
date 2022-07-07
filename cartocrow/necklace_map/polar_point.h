@@ -25,8 +25,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 04-09-2020
 #include <cmath>
 #include <ostream>
 
-#include "cartocrow/core/cgal_types.h"
-#include "cartocrow/core/core_types.h"
+#include "../core/core.h"
 
 namespace cartocrow {
 

@@ -1,8 +1,9 @@
 #include "painting.h"
-#include "cartocrow/core/cgal_types.h"
-#include "cartocrow/necklace_map/bezier_necklace.h"
-#include "cartocrow/necklace_map/circle_necklace.h"
-#include "cartocrow/renderer/geometry_renderer.h"
+
+#include "../core/core.h"
+#include "../renderer/geometry_renderer.h"
+#include "bezier_necklace.h"
+#include "circle_necklace.h"
 
 namespace cartocrow {
 namespace necklace_map {

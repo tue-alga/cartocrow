@@ -22,12 +22,12 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 26-02-2021
 #ifndef CARTOCROW_CORE_DETAIL_POLAR_INTERSECTIONS_H
 #define CARTOCROW_CORE_DETAIL_POLAR_INTERSECTIONS_H
 
-#include "cartocrow/core/core_types.h"
-#include "cartocrow/core/polar_line.h"
-#include "cartocrow/core/polar_point.h"
-#include "cartocrow/core/polar_segment.h"
-#include "cartocrow/core/spiral.h"
-#include "cartocrow/core/spiral_segment.h"
+#include "../../core/core.h"
+#include "../polar_line.h"
+#include "../polar_point.h"
+#include "../polar_segment.h"
+#include "../spiral.h"
+#include "../spiral_segment.h"
 
 namespace cartocrow {
 

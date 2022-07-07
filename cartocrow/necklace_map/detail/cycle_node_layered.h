@@ -23,7 +23,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 06-05-2020
 #ifndef CARTOCROW_NECKLACE_MAP_DETAIL_CYCLE_NODE_LAYERED_H
 #define CARTOCROW_NECKLACE_MAP_DETAIL_CYCLE_NODE_LAYERED_H
 
-#include "cartocrow/necklace_map/detail/cycle_node.h"
+#include "cycle_node.h"
 
 namespace cartocrow {
 namespace necklace_map {

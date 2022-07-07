@@ -28,15 +28,15 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-2019
 #include <cartocrow/core/core_types.h>
 #include <cartocrow/core/region.h>
 
-#include "cartocrow/necklace_map/compute_feasible_interval.h"
-#include "cartocrow/necklace_map/compute_scale_factor.h"
-#include "cartocrow/necklace_map/compute_valid_placement.h"
-#include "cartocrow/necklace_map/io/data_reader.h"
-#include "cartocrow/necklace_map/io/ipe_reader.h"
-#include "cartocrow/necklace_map/io/type_parsers.h"
-#include "cartocrow/necklace_map/map_element.h"
-#include "cartocrow/necklace_map/necklace.h"
-#include "cartocrow/necklace_map/parameters.h"
+#include "compute_feasible_interval.h"
+#include "compute_scale_factor.h"
+#include "compute_valid_placement.h"
+#include "io/data_reader.h"
+#include "io/ipe_reader.h"
+#include "io/type_parsers.h"
+#include "map_element.h"
+#include "necklace.h"
+#include "parameters.h"
 
 namespace cartocrow {
 namespace necklace_map {

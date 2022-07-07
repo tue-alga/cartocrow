@@ -23,11 +23,11 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 03-03-2020
 #ifndef CARTOCROW_NECKLACE_MAP_COMPUTE_FEASIBLE_CENTROID_INTERVAL_H
 #define CARTOCROW_NECKLACE_MAP_COMPUTE_FEASIBLE_CENTROID_INTERVAL_H
 
-#include "cartocrow/core/core_types.h"
-#include "cartocrow/core/range.h"
-#include "cartocrow/necklace_map/compute_feasible_interval.h"
-#include "cartocrow/necklace_map/necklace.h"
-#include "cartocrow/necklace_map/parameters.h"
+#include "../core/core.h"
+#include "compute_feasible_interval.h"
+#include "necklace.h"
+#include "parameters.h"
+#include "range.h"
 
 namespace cartocrow {
 namespace necklace_map {

@@ -25,7 +25,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 08-09-2020
 #include <array>
 #include <vector>
 
-#include "cartocrow/core/core_types.h"
+#include "../core/core.h"
 
 namespace cartocrow {
 
