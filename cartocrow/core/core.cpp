@@ -60,4 +60,12 @@ PolygonWithHoles<Inexact> approximate(const PolygonWithHoles<Exact>& p) {
 	return result;
 }
 
+Number<Inexact> wrapAngle(Number<Inexact> alpha, Number<Inexact> beta) {
+	return wrap<Inexact>(alpha, beta, beta + M_2xPI);
+}
+
+Number<Inexact> wrapAngleUpper(Number<Inexact> alpha, Number<Inexact> beta) {
+	return wrapUpper<Inexact>(alpha, beta, beta + M_2xPI);
+}
+
 } // namespace cartocrow

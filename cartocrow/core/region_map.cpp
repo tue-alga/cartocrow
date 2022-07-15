@@ -28,8 +28,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "ipe_reader.h"
 namespace cartocrow {
 
-RegionList ipeToRegionList(const std::filesystem::path& file) {
-	RegionList regions;
+RegionMap ipeToRegionMap(const std::filesystem::path& file) {
+	RegionMap regions;
 
 	std::shared_ptr<ipe::Document> document = IpeReader::loadIpeFile(file);
 
@@ -86,7 +86,7 @@ RegionList ipeToRegionList(const std::filesystem::path& file) {
 			region.color = IpeReader::convertIpeColor(path->fill().color());
 		}
 		region.shape = shape;
-		regions.push_back(region);
+		regions[name] = region;
 	}
 
 	return regions;

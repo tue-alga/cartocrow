@@ -52,9 +52,9 @@ class Region {
 
 /// A map consisting of polygonal regions.
 /**
- * A RegionList can be read from an Ipe file by using \ref ipeToRegionList().
+ * A RegionMap can be read from an Ipe file by using \ref ipeToRegionMap().
  */
-using RegionList = std::vector<Region>;
+using RegionMap = std::unordered_map<std::string, Region>;
 
 namespace detail {
 /// Storage for a label in the input map.
@@ -72,8 +72,8 @@ std::optional<size_t> findLabelInside(const PolygonSet<Exact>& shape,
                                       const std::vector<RegionLabel>& labels);
 } // namespace detail
 
-/// Creates a \ref RegionList from a region map in Ipe format.
-RegionList ipeToRegionList(const std::filesystem::path& file);
+/// Creates a \ref RegionMap from a region map in Ipe format.
+RegionMap ipeToRegionMap(const std::filesystem::path& file);
 
 class Empty {};
 

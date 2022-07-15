@@ -19,10 +19,10 @@ target_link_libraries(core
 	PRIVATE glog::glog
 )
 
-install(
-	TARGETS core
+install(TARGETS core
 	EXPORT ${CARTOCROW_EXPORT_TARGETS}
 	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBRARY_DIR}
 	INCLUDES DESTINATION ${CMAKE_INSTALL_SOURCE_DIR}
 )
-install_files_and_directories("${HDRS}" ${CARTOCROW_INSTALL_DIR}/core)
+
+# install_files_and_directories("${HDRS}" ${CARTOCROW_INSTALL_DIR}/core)
