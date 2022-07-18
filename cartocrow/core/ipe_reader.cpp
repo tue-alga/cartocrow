@@ -18,7 +18,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include "ipe_reader.h"
-#include "cartocrow/core/polygon.h"
 
 #include <CGAL/Boolean_set_operations_2/Gps_polygon_validation.h>
 #include <ipebase.h>

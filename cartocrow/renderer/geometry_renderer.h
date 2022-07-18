@@ -23,7 +23,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 // TODO
 //#include "../core/bezier_spline.h"
 #include "../core/core.h"
-#include "../core/polygon.h"
 #include "../core/region_map.h"
 
 namespace cartocrow::renderer {

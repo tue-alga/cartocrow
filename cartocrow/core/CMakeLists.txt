@@ -1,14 +1,13 @@
 set(SOURCES
 	core.cpp
 	ipe_reader.cpp
-	polygon.cpp
 	region_map.cpp
 	timer.cpp
 )
 set(HEADERS
+	centroid.h
 	core.h
 	ipe_reader.h
-	polygon.h
 	region_map.h
 	timer.h
 )

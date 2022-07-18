@@ -1,6 +1,6 @@
 #include "../catch.hpp"
 
-#include "../../cartocrow/core/polygon.h"
+#include "../../cartocrow/core/centroid.h"
 
 using namespace cartocrow;
 
@@ -28,6 +28,7 @@ TEST_CASE("Computing the centroid of a polygon") {
 	CHECK(c.x() == 0.5);
 	CHECK(c.y() == 0.5);
 }
+
 TEST_CASE("Computing the centroid of a zero-area polygon (should throw)") {
 	Polygon<Exact> p;
 	SECTION("polygon with two vertices") {
@@ -45,6 +46,18 @@ TEST_CASE("Computing the centroid of a zero-area polygon (should throw)") {
 		CHECK(p.area() == 0);
 	}
 	CHECK_THROWS_WITH(centroid(p), "Centroid cannot be computed for polygons of area 0");
+}
+
+TEST_CASE("Computing the centroid of an inexact polygon") {
+	Polygon<Inexact> p;
+	p.push_back(Point<Inexact>(0, 0));
+	p.push_back(Point<Inexact>(1, 0));
+	p.push_back(Point<Inexact>(1, 1));
+	p.push_back(Point<Inexact>(0, 1));
+	CHECK(p.area() == Approx(1));
+	Point<Inexact> c = centroid(p);
+	CHECK(c.x() == Approx(0.5));
+	CHECK(c.y() == Approx(0.5));
 }
 
 TEST_CASE("Computing the centroid of a polygon with holes") {
