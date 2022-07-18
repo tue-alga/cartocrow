@@ -20,8 +20,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Created by tvl (t.vanlankveld@esciencecenter.nl) on 25-02-2020
 */
 
-#ifndef CARTOCROW_NECKLACE_MAP_CIRCLE_NECKLACE_H
-#define CARTOCROW_NECKLACE_MAP_CIRCLE_NECKLACE_H
+#ifndef CARTOCROW_NECKLACEMAP_CIRCLE_NECKLACE_H
+#define CARTOCROW_NECKLACEMAP_CIRCLE_NECKLACE_H
 
 #include "../core/core.h"
 #include "necklace_shape.h"
@@ -33,45 +33,47 @@ class CircleNecklace : public NecklaceShape {
   public:
 	using Ptr = std::shared_ptr<CircleNecklace>;
 
-	explicit CircleNecklace(const Circle& shape);
+	explicit CircleNecklace(const Circle<Inexact>& shape);
 
-	const Point& kernel() const override;
+	const Point<Inexact>& kernel() const override;
 
-	const Number& draw_bounds_cw_rad() const;
-	Number& draw_bounds_cw_rad();
+	const Number<Inexact>& draw_bounds_cw_rad() const;
+	Number<Inexact>& draw_bounds_cw_rad();
 
-	const Number& draw_bounds_ccw_rad() const;
-	Number& draw_bounds_ccw_rad();
+	const Number<Inexact>& draw_bounds_ccw_rad() const;
+	Number<Inexact>& draw_bounds_ccw_rad();
 
-	bool IsValid() const override;
+	bool isValid() const override;
 
-	/*bool IsEmpty() const override;
+	/*bool isEmpty() const override;
 
-  bool IsClosed() const override;*/
+  bool isClosed() const override;*/
 
-	bool IntersectRay(const Number& angle_rad, Point& intersection) const override;
+	bool intersectRay(const Number<Inexact>& angle_rad, Point<Inexact>& intersection) const override;
 
-	Box ComputeBoundingBox() const override;
+	Box computeBoundingBox() const override;
 
-	Number ComputeRadius() const;
+	Number<Inexact> computeRadius() const;
 
-	Number ComputeCoveringRadiusRad(const Range::Ptr& range, const Number& radius) const override;
+	Number<Inexact> computeCoveringRadiusRad(const Range& range,
+	                                         const Number<Inexact>& radius) const override;
 
-	Number ComputeDistanceToKernel(const Range::Ptr& range) const override;
+	Number<Inexact> computeDistanceToKernel(const Range& range) const override;
 
-	Number ComputeAngleAtDistanceRad(const Number& angle_rad, const Number& distance) const override;
+	Number<Inexact> computeAngleAtDistanceRad(const Number<Inexact>& angle_rad,
+	                                          const Number<Inexact>& distance) const override;
 
-	virtual void Accept(NecklaceShapeVisitor& visitor) override;
+	virtual void accept(NecklaceShapeVisitor& visitor) override;
 
-	Circle shape_;
+	Circle<Inexact> shape_;
 
   private:
-	Number radius_;
+	Number<Inexact> radius_;
 
-	Number draw_bounds_cw_rad_, draw_bounds_ccw_rad_;
-}; // class CircleNecklace
+	Number<Inexact> draw_bounds_cw_rad_, draw_bounds_ccw_rad_;
+};
 
 } // namespace necklace_map
 } // namespace cartocrow
 
-#endif //CARTOCROW_NECKLACE_MAP_CIRCLE_NECKLACE_H
+#endif //CARTOCROW_NECKLACEMAP_CIRCLE_NECKLACE_H

@@ -17,38 +17,34 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-Created by tvl (t.vanlankveld@esciencecenter.nl) on 07-11-2019
+Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-2019
 */
 
 #ifndef CARTOCROW_NECKLACE_MAP_NECKLACE_H
 #define CARTOCROW_NECKLACE_MAP_NECKLACE_H
 
-#include <memory>
 #include <vector>
 
-#include "../core/core.h"
 #include "bead.h"
-#include "bezier_necklace.h"
-#include "circle_necklace.h"
 #include "necklace_shape.h"
 
-namespace cartocrow {
-namespace necklace_map {
+namespace cartocrow::necklace_map {
 
-struct Necklace {
-	using Ptr = std::shared_ptr<Necklace>;
+class Necklace {
+  public:
+	/// Constructs a new necklace with the given shape.
+	Necklace(std::shared_ptr<NecklaceShape> shape);
 
-	Necklace(const std::string& id, const NecklaceShape::Ptr& shape);
+	/// Sorts the beads of the necklace by the clockwise extremes of their
+	/// feasible interval.
+	void sortBeads();
 
-	void SortBeads();
+	/// The shape of the necklace.
+	std::shared_ptr<NecklaceShape> shape;
+	/// A list of the beads on this necklace.
+	std::vector<std::shared_ptr<Bead>> beads;
+};
 
-	std::string id;
-
-	NecklaceShape::Ptr shape;
-	std::vector<Bead::Ptr> beads;
-}; // struct Necklace
-
-} // namespace necklace_map
-} // namespace cartocrow
+} // namespace cartocrow::necklace_map
 
 #endif //CARTOCROW_NECKLACE_MAP_NECKLACE_H

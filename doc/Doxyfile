@@ -16,7 +16,7 @@ EXTRACT_PRIVATE        = YES
 EXTRACT_PACKAGE        = YES
 EXTRACT_STATIC         = YES
 
-INPUT                  = "cartocrow/core"
+INPUT                  = "cartocrow/core" "cartocrow/renderer" "cartocrow/necklace_map" "cartocrow/flow_map" "doc/pages"
 FILE_PATTERNS          = *.cpp *.h *.inc *.md
 RECURSIVE              = YES
 
@@ -50,6 +50,9 @@ DOT_FONTNAME           = "Segoe UI"
 DOT_FONTSIZE           = 11
 DOT_IMAGE_FORMAT       = svg
 DOT_TRANSPARENT        = YES
+
+CITE_BIB_FILES         = doc/references.bib
+IMAGE_PATH             = doc/images
 
 #CLANG_ASSISTED_PARSING = YES
 #CLANG_DATABASE_PATH    = "compile_commands.json"

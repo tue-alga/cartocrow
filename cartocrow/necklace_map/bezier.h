@@ -19,15 +19,15 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Created by tvl (t.vanlankveld@esciencecenter.nl) on 08-09-2020
 */
 
-#ifndef CARTOCROW_CORE_BEZIER_SPLINE_H
-#define CARTOCROW_CORE_BEZIER_SPLINE_H
+#ifndef CARTOCROW_NECKLACEMAP_BEZIER_H
+#define CARTOCROW_NECKLACEMAP_BEZIER_H
 
 #include <array>
 #include <vector>
 
 #include "../core/core.h"
 
-namespace cartocrow {
+namespace cartocrow::necklace_map {
 
 /// A cubic Bezier curve.
 /**
@@ -37,28 +37,30 @@ namespace cartocrow {
 class BezierCurve {
   public:
 	/// Constructs a cubic Bezier curve based on four control points.
-	BezierCurve(const Point& source, const Point& source_control, const Point& target_control,
-	            const Point& target);
+	BezierCurve(const Point<Inexact>& source, const Point<Inexact>& source_control,
+	            const Point<Inexact>& target_control, const Point<Inexact>& target);
 
 	/// Returns the source of this curve.
-	Point source() const;
+	Point<Inexact> source() const;
 	/// Returns the control point on the source side of this curve.
-	Point sourceControl() const;
+	Point<Inexact> sourceControl() const;
 	/// Returns the control point on the target side of this curve.
-	Point targetControl() const;
+	Point<Inexact> targetControl() const;
 	/// Returns the target of this curve.
-	Point target() const;
+	Point<Inexact> target() const;
 
 	/// Evaluates the curve at time \c t.
-	Point evaluate(const Number& t) const;
+	Point<Inexact> evaluate(const Number<Inexact>& t) const;
 
-	/// There can be up to three intersections.
-	size_t intersectRay(const Point& source, const Point& target, Point* intersections,
-	                    Number* intersection_t) const;
+	/// TODO document
+	// There can be up to three intersections.
+	size_t intersectRay(const Point<Inexact>& source, const Point<Inexact>& target,
+	                    Point<Inexact>* intersections, Number<Inexact>* intersection_t) const;
 
   protected:
-	std::array<Point, 4> m_controlPoints;
-	std::array<Point, 4> m_coefficients;
+	// TODO control points stored as Vectors instead of Points
+	std::array<Vector<Inexact>, 4> m_controlPoints;
+	std::array<Vector<Inexact>, 4> m_coefficients;
 };
 
 class BezierSpline {
@@ -75,16 +77,17 @@ class BezierSpline {
 
 	bool IsClosed() const;
 
-	bool ToCircle(Circle& circle, const Number& epsilon = 0.01) const;
+	bool ToCircle(Circle<Inexact>& circle, const Number<Inexact>& epsilon = 0.01) const;
 
 	const CurveSet& curves() const;
 
 	CurveSet& curves();
 
-	void AppendCurve(const Point& source, const Point& source_control, const Point& target_control,
-	                 const Point& target);
+	void AppendCurve(const Point<Inexact>& source, const Point<Inexact>& source_control,
+	                 const Point<Inexact>& target_control, const Point<Inexact>& target);
 
-	void AppendCurve(const Point& source_control, const Point& target_control, const Point& target);
+	void AppendCurve(const Point<Inexact>& source_control, const Point<Inexact>& target_control,
+	                 const Point<Inexact>& target);
 
 	void Reverse();
 
@@ -94,8 +97,8 @@ class BezierSpline {
 	CurveSet curves_;
 
 	mutable Box bounding_box_;
-}; // class BezierSpline
+};
 
-} // namespace cartocrow
+} // namespace cartocrow::necklace_map
 
-#endif //CARTOCROW_CORE_BEZIER_SPLINE_H
+#endif //CARTOCROW_NECKLACEMAP_BEZIER_SPLINE_H

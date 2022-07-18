@@ -24,60 +24,62 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 25-02-2020
 #define CARTOCROW_NECKLACE_MAP_BEZIER_NECKLACE_H
 
 #include "../core/core.h"
-#include "bezier_spline.h"
+#include "bezier.h"
 #include "necklace_shape.h"
 
-namespace cartocrow {
-namespace necklace_map {
+namespace cartocrow::necklace_map {
 
 class BezierNecklace : public NecklaceShape {
   public:
 	using Ptr = std::shared_ptr<BezierNecklace>;
 
-	static constexpr const Number kDistanceRatioEpsilon = 1.001;
+	static constexpr const Number<Inexact> kDistanceRatioEpsilon = 1.001;
 
-	BezierNecklace(const BezierSpline spline, const Point& kernel);
+	BezierNecklace(const BezierSpline spline, const Point<Inexact>& kernel);
 
-	const Point& kernel() const override;
+	const Point<Inexact>& kernel() const override;
 
 	const BezierSpline& spline() const;
 
-	bool IsValid() const override;
+	bool isValid() const override;
 
-	bool IntersectRay(const Number& angle_rad, Point& intersection) const override;
+	bool intersectRay(const Number<Inexact>& angle_rad, Point<Inexact>& intersection) const override;
 
-	Box ComputeBoundingBox() const override;
+	Box computeBoundingBox() const override;
 
-	Number ComputeCoveringRadiusRad(const Range::Ptr& range, const Number& radius) const override;
+	Number<Inexact> computeCoveringRadiusRad(const Range& range,
+	                                         const Number<Inexact>& radius) const override;
 
-	Number ComputeDistanceToKernel(const Range::Ptr& range) const override;
+	Number<Inexact> computeDistanceToKernel(const Range& range) const override;
 
-	Number ComputeAngleAtDistanceRad(const Number& angle_rad, const Number& distance) const override;
+	Number<Inexact> computeAngleAtDistanceRad(const Number<Inexact>& angle_rad,
+	                                          const Number<Inexact>& distance) const override;
 
-	void Accept(NecklaceShapeVisitor& visitor) override;
+	void accept(NecklaceShapeVisitor& visitor) override;
 
   private:
-	BezierSpline::CurveSet::const_iterator FindCurveContainingAngle(const Number& angle_rad) const;
+	BezierSpline::CurveSet::const_iterator
+	findCurveContainingAngle(const Number<Inexact>& angle_rad) const;
 
-	bool IntersectRay(const Number& angle_rad,
-	                  const BezierSpline::CurveSet::const_iterator& curve_iter, Point& intersection,
-	                  Number& t) const;
+	bool intersectRay(const Number<Inexact>& angle_rad,
+	                  const BezierSpline::CurveSet::const_iterator& curve_iter,
+	                  Point<Inexact>& intersection, Number<Inexact>& t) const;
 
-	bool ComputeAngleAtDistanceRad(const Point& point, const Number& distance,
+	bool computeAngleAtDistanceRad(const Point<Inexact>& point, const Number<Inexact>& distance,
 	                               const BezierSpline::CurveSet::const_iterator& curve_point,
-	                               const Number& t_point, Number& angle_rad) const;
+	                               const Number<Inexact>& t_point, Number<Inexact>& angle_rad) const;
 
-	Number SearchCurveForAngleAtDistanceRad(const Point& point, const BezierCurve& curve,
-	                                        const Number& squared_distance,
-	                                        const CGAL::Orientation& orientation,
-	                                        const Number& t_start) const;
+	Number<Inexact> searchCurveForAngleAtDistanceRad(const Point<Inexact>& point,
+	                                                 const BezierCurve& curve,
+	                                                 const Number<Inexact>& squared_distance,
+	                                                 const CGAL::Orientation& orientation,
+	                                                 const Number<Inexact>& t_start) const;
 
 	BezierSpline spline_;
 
-	Point kernel_;
-}; // class BezierNecklace
+	Point<Inexact> kernel_;
+};
 
-} // namespace necklace_map
-} // namespace cartocrow
+} // namespace cartocrow::necklace_map
 
 #endif //CARTOCROW_NECKLACE_MAP_BEZIER_NECKLACE_H

@@ -25,30 +25,141 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-2019
 
 #include <vector>
 
-#include <cartocrow/core/core_types.h>
-#include <cartocrow/core/region.h>
-
-#include "compute_feasible_interval.h"
-#include "compute_scale_factor.h"
-#include "compute_valid_placement.h"
-#include "io/data_reader.h"
-#include "io/ipe_reader.h"
-#include "io/type_parsers.h"
-#include "map_element.h"
+#include "../core/core.h"
+#include "../core/region_map.h"
+#include "bead.h"
+#include "feasible_interval/compute_feasible_interval.h"
 #include "necklace.h"
+#include "necklace_shape.h"
 #include "parameters.h"
+#include "scale_factor/compute_scale_factor.h"
+#include "valid_placement/compute_valid_placement.h"
 
-namespace cartocrow {
-namespace necklace_map {
+namespace cartocrow::necklace_map {
 
-Number ComputeScaleFactor(const Parameters& parameters, std::vector<MapElement::Ptr>& elements,
-                          std::vector<Necklace::Ptr>& necklaces);
+/// Representation of a necklace map for a set of regions and a set of
+/// necklaces.
+///
+/// A *necklace map* is a type of proportional symbol map in which the symbols
+/// displaying the data values for each region (here called *beads*) are moved
+/// away from the regions themselves and instead placed on one or more curves
+/// surrounding the map called *necklaces*:
+///
+/// \image html necklace-map-example.png
+///
+/// The intent of this drawing style is to reduce the clutter caused by symbols
+/// covering up their regions. Necklace maps were introduced by Speckmann and
+/// Verbeek \cite necklace_maps_tvcg. This class implements the algorithm for
+/// the construction of necklace maps described in the companion paper
+/// \cite necklace_maps_ijcga.
+///
+/// ## Algorithm description
+///
+/// A necklace map consists of one or more regions and one or more necklaces,
+/// where each region is mapped to a necklace. Necklaces can be circles (\ref
+/// CircleNecklace) or Bézier splines (\ref BezierNecklace). To compute the
+/// map, each region is assigned a _feasible region_ on its necklace (see \ref
+/// IntervalType). The beads are then placed inside their feasible regions using
+/// an attraction/repulsion force model. All beads can be uniformly scaled; the
+/// algorithm returns the optimal scale factor for the beads (\ref
+/// scaleFactor()), such that they can all be placed on their necklace without
+/// any overlap.
+///
+/// ## Example
+///
+/// The intended way to compute a necklace map is like this:
+/// ```
+/// necklace_map::NecklaceMap map(regions);
+///
+/// // add necklaces
+/// auto n1 = map.addNecklace(
+/// 	std::make_unique<CircleNecklace>(Circle<Inexact>(Point<Inexact>(0, 0), 100)));
+/// auto n2 = map.addNecklace(
+/// 	std::make_unique<CircleNecklace>(Circle<Inexact>(Point<Inexact>(200, 0), 150)));
+///
+/// // add beads
+/// map.addBead("NL", 17'000'000, n1);
+/// map.addBead("BE", 12'000'000, n1);
+/// // ...
+/// map.addBead("DE", 83'000'000, n1);
+/// // ...
+///
+/// // set parameters (optional)
+/// map.parameters().buffer_rad = 0.1;
+/// map.parameters().interval_type = necklace_map::IntervalType::kCentroid;
+///
+/// // run computation
+/// map.compute();
+/// ```
+///
+/// The necklace map can be viewed or exported by creating a \ref
+/// necklace_map::Painting "Painting" and passing it to the desired \ref
+/// renderer::GeometryRenderer "GeometryRenderer":
+/// ```
+/// necklace_map::Painting painting(map);
+///
+/// cartocrow::renderer::GeometryWidget widget(painting);
+/// widget.show();
+/// // or
+/// renderer::IpeRenderer renderer(painting);
+/// renderer.save("some_filename.ipe");
+/// ```
+class NecklaceMap {
 
-void ComputePlacement(const Parameters& parameters, const Number& scale_factor,
-                      std::vector<MapElement::Ptr>& elements, std::vector<Necklace::Ptr>& necklaces);
+	/// Handle pointing at a necklace, used for referring to a necklace in a
+	/// \ref NecklaceMap.
+	struct NecklaceHandle {
+	  private:
+		NecklaceHandle(Necklace* necklace);
+		Necklace* m_necklace;
+		friend NecklaceMap;
+	};
 
-} // namespace necklace_map
+  public:
+	/// Constructs a necklace map with the given regions and no necklaces.
+	///
+	/// This does not compute the necklace map: use \ref compute() to run the
+	/// computation. Modifying the RegionList passed here after the necklace
+	/// map has been constructed results in undefined behavior.
+	NecklaceMap(const std::shared_ptr<RegionMap> map);
 
-} // namespace cartocrow
+	/// Adds a necklace with the given shape. Returns a handle to pass to
+	/// \ref addBead() to be able to add beads to the necklace.
+	NecklaceHandle addNecklace(std::unique_ptr<NecklaceShape> shape);
+
+	/// Adds a bead to this necklace map.
+	/// \param regionName The \ref Region::name "name" of the region this bead
+	/// represents. Throws if a region of this name is not present in the map.
+	/// \param value The data value to be displayed by the bead.
+	/// \param necklace The handle of the necklace (added by \ref addNecklace())
+	/// to place this bead on.
+	void addBead(std::string regionName, Number<Inexact> value, NecklaceHandle& necklace);
+
+	/// Returns the computation parameters for this necklace.
+	Parameters& parameters();
+
+	/// Computes the necklace map.
+	///
+	/// This method can be used more than once on the same object (for example
+	/// after changing the parameters) to recompute the map.
+	void compute();
+
+	/// Returns the scale factor of this necklace map, or `0` if the map has
+	/// not yet been computed.
+	Number<Inexact> scaleFactor();
+
+  private:
+	/// The list of regions that this necklace map is computed for.
+	const std::shared_ptr<RegionMap> m_map;
+	/// The list of necklaces.
+	std::vector<std::unique_ptr<Necklace>> m_necklaces;
+	/// The computed scale factor (or 0 if the necklace map has not been
+	/// computed yet).
+	Number<Inexact> m_scaleFactor;
+	/// The computation parameters.
+	Parameters m_parameters;
+};
+
+} // namespace cartocrow::necklace_map
 
 #endif //CARTOCROW_NECKLACE_MAP_NECKLACE_MAP_H

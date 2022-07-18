@@ -25,10 +25,10 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 08-09-2020
 
 #include <glog/logging.h>
 
-namespace cartocrow {
+namespace cartocrow::necklace_map {
 
-BezierCurve::BezierCurve(const Point& source, const Point& source_control,
-                         const Point& target_control, const Point& target)
+BezierCurve::BezierCurve(const Point<Inexact>& source, const Point<Inexact>& source_control,
+                         const Point<Inexact>& target_control, const Point<Inexact>& target)
     : m_controlPoints({source - CGAL::ORIGIN, source_control - CGAL::ORIGIN,
                        target_control - CGAL::ORIGIN, target - CGAL::ORIGIN}) {
 	m_coefficients = {
@@ -42,8 +42,8 @@ BezierCurve::BezierCurve(const Point& source, const Point& source_control,
 /**@brief Give the starting point of the curve.
  * @return the starting point of the curve.
  */
-Point BezierCurve::source() const {
-	return Point(CGAL::ORIGIN) + m_controlPoints[0];
+Point<Inexact> BezierCurve::source() const {
+	return Point<Inexact>(CGAL::ORIGIN) + m_controlPoints[0];
 }
 
 /**@brief Give the second control point.
@@ -51,8 +51,8 @@ Point BezierCurve::source() const {
  * The curve at the source is tangent to the line connecting the source and this control point.
  * @return the second control point.
  */
-Point BezierCurve::sourceControl() const {
-	return Point(CGAL::ORIGIN) + m_controlPoints[1];
+Point<Inexact> BezierCurve::sourceControl() const {
+	return Point<Inexact>(CGAL::ORIGIN) + m_controlPoints[1];
 }
 
 /**@brief Give the third control point.
@@ -60,15 +60,15 @@ Point BezierCurve::sourceControl() const {
  * The curve at the target is tangent to the line connecting the target and this control point.
  * @return the third control point.
  */
-Point BezierCurve::targetControl() const {
-	return Point(CGAL::ORIGIN) + m_controlPoints[2];
+Point<Inexact> BezierCurve::targetControl() const {
+	return Point<Inexact>(CGAL::ORIGIN) + m_controlPoints[2];
 }
 
 /**@brief Give the terminating point of the curve.
  * @return the terminating point of the curve.
  */
-Point BezierCurve::target() const {
-	return Point(CGAL::ORIGIN) + m_controlPoints[3];
+Point<Inexact> BezierCurve::target() const {
+	return Point<Inexact>(CGAL::ORIGIN) + m_controlPoints[3];
 }
 
 /**@brief Evaluate the Bezier curve's function after traversing some ratio of the curve.
@@ -81,7 +81,7 @@ Point BezierCurve::target() const {
  * @endparblock
  * @return the point on the curve at t.
  */
-Point BezierCurve::evaluate(const Number& t) const {
+Point<Inexact> BezierCurve::evaluate(const Number<Inexact>& t) const {
 	CHECK_GE(t, 0);
 	CHECK_LE(t, 1);
 	if (t == 0) {
@@ -90,60 +90,61 @@ Point BezierCurve::evaluate(const Number& t) const {
 		return target();
 	}
 
-	const Number t_ = 1 - t;
-	const Number a = t_ * t_ * t_;
-	const Number b = 3 * t * t_ * t_;
-	const Number c = 3 * t * t * t_;
-	const Number d = t * t * t;
+	const Number<Inexact> t_ = 1 - t;
+	const Number<Inexact> a = t_ * t_ * t_;
+	const Number<Inexact> b = 3 * t * t_ * t_;
+	const Number<Inexact> c = 3 * t * t * t_;
+	const Number<Inexact> d = t * t * t;
 
 	return CGAL::ORIGIN + a * m_controlPoints[0] + b * m_controlPoints[1] + c * m_controlPoints[2] +
 	       d * m_controlPoints[3];
 }
 
-size_t BezierCurve::intersectRay(const Point& source, const Point& target, Point* intersections,
-                                 Number* intersection_t) const {
+size_t BezierCurve::intersectRay(const Point<Inexact>& source, const Point<Inexact>& target,
+                                 Point<Inexact>* intersections,
+                                 Number<Inexact>* intersection_t) const {
 	CHECK_NE(source, target);
 
 	// Computing the intersection(s) of a line with a cubic Bezier curve,
 	// based on the Particle In Cell javascript implementation (https://www.particleincell.com/2013/cubic-line-intersection/),
 	// which is based on Stephen Schmitt's algorithm (http://mysite.verizon.net/res148h4j/javascript/script_exact_cubic.html).
 
-	const Vector AB(target.y() - source.y(), // A = y2-y1
-	                source.x() - target.x() // B = x1-x2
+	const Vector<Inexact> AB(target.y() - source.y(), // A = y2-y1
+	                         source.x() - target.x() // B = x1-x2
 	);
-	const Number C = source.x() * (source.y() - target.y()) +
-	                 source.y() * (target.x() - source.x()); // C = x1*(y1-y2)+y1*(x2-x1)
+	const Number<Inexact> C = source.x() * (source.y() - target.y()) +
+	                          source.y() * (target.x() - source.x()); // C = x1*(y1-y2)+y1*(x2-x1)
 
-	std::array<Number, 3> roots;
+	std::array<Number<Inexact>, 3> roots;
 	{
 		// Compute the roots of the cubic function based on AB and the coefficients.
-		const Number f_3 = AB * m_coefficients[0]; // t^3
-		const Number f_2 = AB * m_coefficients[1]; // t^2
-		const Number f_1 = AB * m_coefficients[2]; // t
-		const Number f_0 = AB * m_coefficients[3] + C; // 1
+		const Number<Inexact> f_3 = AB * m_coefficients[0]; // t^3
+		const Number<Inexact> f_2 = AB * m_coefficients[1]; // t^2
+		const Number<Inexact> f_1 = AB * m_coefficients[2]; // t
+		const Number<Inexact> f_0 = AB * m_coefficients[3] + C; // 1
 
 		CHECK_NE(f_3, 0);
-		const Number A = f_2 / f_3;
-		const Number B = f_1 / f_3;
-		const Number C = f_0 / f_3;
+		const Number<Inexact> A = f_2 / f_3;
+		const Number<Inexact> B = f_1 / f_3;
+		const Number<Inexact> C = f_0 / f_3;
 
-		const Number Q = (3 * B - A * A) / 9;
-		const Number R = (9 * A * B - 27 * C - 2 * A * A * A) / 54;
-		const Number D = Q * Q * Q + R * R; // Polynomial discriminant.
+		const Number<Inexact> Q = (3 * B - A * A) / 9;
+		const Number<Inexact> R = (9 * A * B - 27 * C - 2 * A * A * A) / 54;
+		const Number<Inexact> D = Q * Q * Q + R * R; // Polynomial discriminant.
 
 		if (D >= 0) // Complex or duplicate roots.
 		{
-			const Number sqrt_D = CGAL::sqrt(D);
-			constexpr const Number third = Number(1) / 3;
-			const Number S = CGAL::sign(R + sqrt_D) * std::pow(std::abs(R + sqrt_D), third);
-			const Number T = CGAL::sign(R - sqrt_D) * std::pow(std::abs(R - sqrt_D), third);
+			const Number<Inexact> sqrt_D = CGAL::sqrt(D);
+			constexpr const Number<Inexact> third = Number<Inexact>(1) / 3;
+			const Number<Inexact> S = CGAL::sign(R + sqrt_D) * std::pow(std::abs(R + sqrt_D), third);
+			const Number<Inexact> T = CGAL::sign(R - sqrt_D) * std::pow(std::abs(R - sqrt_D), third);
 
 			roots[0] = -A / 3 + (S + T); // Real root.
 			roots[1] = -A / 3 - (S + T) / 2; // Real part of complex root.
 			roots[2] = -A / 3 - (S + T) / 2; // Real part of complex root.
 
-			const Number sqrt_3 = CGAL::sqrt(Number(3));
-			const Number I = std::abs(sqrt_3 * (S - T) / 2); // Complex part of root pair
+			const Number<Inexact> sqrt_3 = CGAL::sqrt(Number<Inexact>(3));
+			const Number<Inexact> I = std::abs(sqrt_3 * (S - T) / 2); // Complex part of root pair
 
 			// Discard complex roots.
 			if (I != 0) {
@@ -152,7 +153,7 @@ size_t BezierCurve::intersectRay(const Point& source, const Point& target, Point
 			}
 		} else // Distinct real roots.
 		{
-			const Number th = std::acos(R / CGAL::sqrt(-std::pow(Q, 3)));
+			const Number<Inexact> th = std::acos(R / CGAL::sqrt(-std::pow(Q, 3)));
 
 			roots[0] = 2 * CGAL::sqrt(-Q) * std::cos(th / 3) - A / 3;
 			roots[1] = 2 * CGAL::sqrt(-Q) * std::cos((th + 2 * M_PI) / 3) - A / 3;
@@ -161,19 +162,19 @@ size_t BezierCurve::intersectRay(const Point& source, const Point& target, Point
 	}
 
 	size_t num = 0;
-	for (const Number& t : roots) {
+	for (const Number<Inexact>& t : roots) {
 		// Ignore roots outside the range of the curve.
 		if (t < 0 || 1 < t) {
 			continue;
 		}
 
-		/*const Number t_3 = t * t * t;
-    const Number t_2 = t * t;
-    const Point intersection = Point(CGAL::ORIGIN) + t_3 * coefficients_[0] + t_2 * coefficients_[1] + t * coefficients_[2] + coefficients_[3];*/
-		const Point intersection = evaluate(t);
+		/*const Number<Inexact> t_3 = t * t * t;
+    const Number<Inexact> t_2 = t * t;
+    const Point<Inexact> intersection = Point(CGAL::ORIGIN) + t_3 * coefficients_[0] + t_2 * coefficients_[1] + t * coefficients_[2] + coefficients_[3];*/
+		const Point<Inexact> intersection = evaluate(t);
 
 		// Verify the intersection is on the ray by using the inner product.
-		const Number s = (intersection.x() - source.x()) * (target.x() - source.x());
+		const Number<Inexact> s = (intersection.x() - source.x()) * (target.x() - source.x());
 		if (s < 0) {
 			continue;
 		}
@@ -209,7 +210,7 @@ bool BezierSpline::IsValid() const {
 	}
 
 	bool valid = true;
-	Point current = curves_.front().source();
+	Point<Inexact> current = curves_.front().source();
 	for (const BezierCurve& curve : curves_) {
 		valid &= curve.source() == current;
 		current = curve.target();
@@ -231,9 +232,9 @@ bool BezierSpline::IsEmpty() const {
  * @return whether the spline is continuous.
  */
 bool BezierSpline::IsContinuous() const {
-	Point prev = curves_.front().source();
+	Point<Inexact> prev = curves_.front().source();
 	for (const BezierCurve& curve : curves_) {
-		const Point next = curve.source();
+		const Point<Inexact> next = curve.source();
 		if (prev != next) {
 			return false;
 		}
@@ -258,50 +259,51 @@ bool BezierSpline::IsClosed() const {
  * @param epsilon the maximum allowed ratio between distances to the circumcenter.
  * @return whether the circle is appropriate.
  */
-bool BezierSpline::ToCircle(Circle& circle, const Number& epsilon /*= 0.01*/) const {
-	Vector sum(0, 0);
+bool BezierSpline::ToCircle(Circle<Inexact>& circle, const Number<Inexact>& epsilon /*= 0.01*/) const {
+	Vector<Inexact> sum(0, 0);
 	for (const BezierCurve& curve : curves_) {
-		const Point center = CGAL::circumcenter(curve.source(), curve.evaluate(0.5), curve.target());
-		sum += center - Point(CGAL::ORIGIN);
+		const Point<Inexact> center =
+		    CGAL::circumcenter(curve.source(), curve.evaluate(0.5), curve.target());
+		sum += center - Point<Inexact>(CGAL::ORIGIN);
 	}
-	const Point kernel = Point(CGAL::ORIGIN) + (sum / curves_.size());
+	const Point<Inexact> kernel = Point<Inexact>(CGAL::ORIGIN) + (sum / curves_.size());
 
 	struct SquaredDistance {
-		SquaredDistance(const Point& kernel)
+		SquaredDistance(const Point<Inexact>& kernel)
 		    : kernel(kernel), squared_distance_min(-1), squared_distance_max(0) {}
 
-		void operator()(const Point& point) {
-			const Number squared_distance = CGAL::squared_distance(kernel, point);
+		void operator()(const Point<Inexact>& point) {
+			const Number<Inexact> squared_distance = CGAL::squared_distance(kernel, point);
 			squared_distance_min = squared_distance_min < 0
 			                           ? squared_distance
 			                           : std::min(squared_distance_min, squared_distance);
 			squared_distance_max = std::max(squared_distance_max, squared_distance);
 		}
 
-		inline Number SquaredRadius() const {
+		inline Number<Inexact> SquaredRadius() const {
 			return (squared_distance_min + squared_distance_max) / 2.0;
 		}
-		inline Number DistanceRatio() const {
+		inline Number<Inexact> DistanceRatio() const {
 			return squared_distance_max / squared_distance_min;
 		}
 
-		const Point& kernel;
-		Number squared_distance_min, squared_distance_max;
-	}; // struct SquaredDistance
+		const Point<Inexact>& kernel;
+		Number<Inexact> squared_distance_min, squared_distance_max;
+	};
 
 	SquaredDistance squared_distance(kernel);
 	squared_distance(curves_.front().source());
 
 	for (const BezierCurve& curve : curves_) {
 		// Note that we do not check the source: this will be checked as the target of the previous curve.
-		const Number denom = 4;
+		const Number<Inexact> denom = 4;
 		for (int e = 1; e < denom; ++e) {
 			squared_distance(curve.evaluate(e / denom));
 		}
 
 		squared_distance(curve.target());
 	}
-	circle = Circle(kernel, squared_distance.SquaredRadius());
+	circle = Circle<Inexact>(kernel, squared_distance.SquaredRadius());
 
 	return squared_distance.DistanceRatio() <= (1 + epsilon);
 }
@@ -326,8 +328,8 @@ BezierSpline::CurveSet& BezierSpline::curves() {
  * @param target_control the second control point of the curve.
  * @param target the target point of the curve.
  */
-void BezierSpline::AppendCurve(const Point& source, const Point& source_control,
-                               const Point& target_control, const Point& target) {
+void BezierSpline::AppendCurve(const Point<Inexact>& source, const Point<Inexact>& source_control,
+                               const Point<Inexact>& target_control, const Point<Inexact>& target) {
 	curves_.emplace_back(source, source_control, target_control, target);
 }
 
@@ -340,10 +342,10 @@ void BezierSpline::AppendCurve(const Point& source, const Point& source_control,
  * @param target_control the second control point of the curve.
  * @param target the target point of the curve.
  */
-void BezierSpline::AppendCurve(const Point& source_control, const Point& target_control,
-                               const Point& target) {
+void BezierSpline::AppendCurve(const Point<Inexact>& source_control,
+                               const Point<Inexact>& target_control, const Point<Inexact>& target) {
 	CHECK(!curves_.empty());
-	const Point& source = curves_.back().target();
+	const Point<Inexact>& source = curves_.back().target();
 	AppendCurve(source, source_control, target_control, target);
 }
 
@@ -375,7 +377,7 @@ Box BezierSpline::ComputeBoundingBox() const {
 		// * sampling angles around the kernel (may miss small curves, expensive/complex curve selection),
 		// * taking the bounding box of the set of control points (approximation may be very rough).
 		// We choose the last approach, because overestimating the bounding box is more desirable than underestimating it.
-		Kernel::Construct_bbox_2 bbox = Kernel().construct_bbox_2_object();
+		Inexact::Construct_bbox_2 bbox = Inexact().construct_bbox_2_object();
 		for (const BezierCurve& curve : curves_) {
 			bounding_box_ += bbox(curve.source()) + bbox(curve.sourceControl()) +
 			                 bbox(curve.targetControl()) + bbox(curve.target());
@@ -385,4 +387,4 @@ Box BezierSpline::ComputeBoundingBox() const {
 	return bounding_box_;
 }
 
-} // namespace cartocrow
+} // namespace cartocrow::necklace_map

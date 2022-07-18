@@ -29,4 +29,5 @@ install(
 	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBRARY_DIR}
 	INCLUDES DESTINATION ${CMAKE_INSTALL_SOURCE_DIR}
 )
-install_files_and_directories("${HDRS}" ${CARTOCROW_INSTALL_DIR}/renderer)
+
+# install_files_and_directories(${HEADERS} ${CARTOCROW_INSTALL_DIR}/renderer)

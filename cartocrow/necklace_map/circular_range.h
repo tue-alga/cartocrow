@@ -27,46 +27,48 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 06-05-2020
 #include "../core/core.h"
 #include "range.h"
 
-namespace cartocrow {
+namespace cartocrow::necklace_map {
 
+/// An angular interval \f$[\alpha, \beta]\f$.
+/**
+ * A valid circular range maintains the invariant that \f$a \in [0, 2 \pi)\f$
+ * and \f$b \in [a, a + 2 \pi)\f$, or \f$a = 0\f$ and \f$b = 2 \pi\f$ (this
+ * represents the full interval.
+ *
+ * The range is considered to be specified counterclockwise, for example, the
+ * circular range \f$[0, \pi / 2]\f$ covers one quarter of the circle, while
+ * \f$[\pi / 2, 2 \pi]\f$ covers three quarters of the circle.
+ */
 class CircularRange : public Range {
   public:
-	using Ptr = std::shared_ptr<CircularRange>;
+	/// Constructs a circular range between the two given angles.
+	/**
+     * If the given angles are outside the range $[0, 2 \pi)$ they are
+	 * normalized to fall within this range.
+     */
+	CircularRange(const Number<Inexact>& from_angle, const Number<Inexact>& to_angle);
 
-	CircularRange(const Number& from_rad, const Number& to_rad);
-
+	/// Constructs a circular range from a regular range.
+	/**
+     * If the given angles are outside the range $[0, 2 \pi)$ they are
+	 * normalized to fall within this range.
+	 */
 	explicit CircularRange(const Range& range);
 
-	inline const Number& from_rad() const {
-		return from();
-	}
-	inline Number& from_rad() {
-		return from();
-	}
-	inline const Number& to_rad() const {
-		return to();
-	}
-	inline Number& to_rad() {
-		return to();
-	}
+	bool isValid() const override;
 
-	bool IsValid() const override;
+	/// Checks whether this circular range covers the full circle.
+	bool isFull() const;
 
-	bool IsFull() const;
+	virtual bool contains(const Number<Inexact>& value) const override;
+	virtual bool containsInterior(const Number<Inexact>& value) const override;
+	virtual bool intersects(const Range& range) const override;
+	virtual bool intersectsInterior(const Range& range) const override;
 
-	virtual bool Contains(const Number& value) const override;
+	/// Computes the midpoint angle of this circular range.
+	Number<Inexact> midpoint() const;
+};
 
-	virtual bool ContainsOpen(const Number& value) const override;
-
-	virtual bool Intersects(const Range::Ptr& range) const override;
-
-	virtual bool IntersectsOpen(const Range::Ptr& range) const override;
-
-	Number ComputeCentroid() const;
-
-	void Reverse();
-}; // class CircularRange
-
-} // namespace cartocrow
+} // namespace cartocrow::necklace_map
 
 #endif //CARTOCROW_CORE_CIRCULAR_RANGE_H

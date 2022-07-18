@@ -53,14 +53,14 @@ void validateFlags() {
 	}
 }
 
-bool readGeometry(std::vector<cartocrow::necklace_map::MapElement::Ptr>& elements,
+bool readGeometry(std::vector<cartocrow::necklace_map::NecklaceMapElement::Ptr>& elements,
                   std::vector<cartocrow::necklace_map::Necklace::Ptr>& necklaces,
                   cartocrow::Number& scale_factor) {
 	cartocrow::necklace_map::IpeReader reader;
 	return reader.readFile(FLAGS_in_geometry_filename, elements, necklaces);
 }
 
-void writeOutput(const std::vector<cartocrow::necklace_map::MapElement::Ptr>& elements,
+void writeOutput(const std::vector<cartocrow::necklace_map::NecklaceMapElement::Ptr>& elements,
                  const std::vector<cartocrow::necklace_map::Necklace::Ptr>& necklaces) {
 	for (auto element : elements) {
 		std::cout << element->region.id << "\n";
@@ -74,7 +74,7 @@ int main(int argc, char** argv) {
 	// Validate the settings.
 	validateFlags();
 
-	using MapElement = cartocrow::necklace_map::MapElement;
+	using MapElement = cartocrow::necklace_map::NecklaceMapElement;
 	using Necklace = cartocrow::necklace_map::Necklace;
 	std::vector<MapElement::Ptr> elements;
 	std::vector<Necklace::Ptr> necklaces;

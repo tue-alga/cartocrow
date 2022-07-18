@@ -27,7 +27,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 04-09-2020
 
 #include "../core/core.h"
 
-namespace cartocrow {
+namespace cartocrow::necklace_map {
 
 /// A 2D point with polar coordinates.
 /**
@@ -47,35 +47,35 @@ class PolarPoint {
 	[[deprecated]] PolarPoint(const CGAL::Origin& o);
 
 	/// Constructs a polar point with given \f$r\f$ and \f$\phi\f$.
-	PolarPoint(const Number& R, const Number& phi);
+	PolarPoint(const Number<Inexact>& R, const Number<Inexact>& phi);
 
 	/// Copy constructor.
 	PolarPoint(const PolarPoint& p);
 
-	PolarPoint(const PolarPoint& p, const Vector& t);
+	PolarPoint(const PolarPoint& p, const Vector<Inexact>& t);
 
 	/// Constructs a polar point from a point in Cartesian coordinates.
-	explicit PolarPoint(const Point& p);
+	explicit PolarPoint(const Point<Inexact>& p);
 
-	PolarPoint(const Point& p, const Vector& t);
+	PolarPoint(const Point<Inexact>& p, const Vector<Inexact>& t);
 
 	/// Returns the distance from the origin.
-	const Number& R() const;
+	const Number<Inexact>& R() const;
 	/// Returns the angle relative to the origin.
-	const Number& phi() const;
+	const Number<Inexact>& phi() const;
 
 	/// Returns the point in Cartesian coordinates corresponding to this polar
 	/// point.
-	Point to_cartesian() const;
+	Point<Inexact> to_cartesian() const;
 
   private:
-	static PolarPoint to_polar(const Point& p);
-	static PolarPoint translate_pole(const PolarPoint& p, const Vector& t);
+	static PolarPoint to_polar(const Point<Inexact>& p);
+	static PolarPoint translate_pole(const PolarPoint& p, const Vector<Inexact>& t);
 
 	/// The distance from the origin.
-	Number m_r;
+	Number<Inexact> m_r;
 	/// The angle relative to the origin.
-	Number m_phi;
+	Number<Inexact> m_phi;
 };
 
 /// Checks if two polar points are equal.
@@ -91,6 +91,6 @@ bool operator!=(const PolarPoint& p, const PolarPoint& q);
 /// Outputs a polar point to an output stream.
 std::ostream& operator<<(std::ostream& os, const PolarPoint& point);
 
-} // namespace cartocrow
+} // namespace cartocrow::necklace_map
 
 #endif //CARTOCROW_CORE_POLAR_POINT_H

@@ -23,7 +23,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 19-02-2021
 
 #include <glog/logging.h>
 
-namespace cartocrow {
+namespace cartocrow::necklace_map {
 
 /**@class PolarSegment
  * @brief A straight line segment with polar point coordinates.
@@ -46,7 +46,7 @@ PolarSegment::PolarSegment(const PolarPoint& point_1, const PolarPoint& point_2)
  * The point evaluated at this time is an endpoint of the line segment.
  * @return the smallest time on the line segment.
  */
-Number PolarSegment::FromT() const {
+Number<Inexact> PolarSegment::FromT() const {
 	return ToDistance(0);
 }
 
@@ -56,14 +56,14 @@ Number PolarSegment::FromT() const {
  * The point evaluated at this time is an endpoint of the line segment.
  * @return the largest time on the line segment.
  */
-Number PolarSegment::ToT() const {
+Number<Inexact> PolarSegment::ToT() const {
 	return ToDistance(1);
 }
 
 /**@brief Compute the smallest distance to the pole of any point on the line segment.
  * @return the distance between the pole and the point on the line segment closest to the pole.
  */
-Number PolarSegment::R_min() const {
+Number<Inexact> PolarSegment::R_min() const {
 	// Note that the closest point on the supporting line may not lie inside the segment.
 	if (ContainsPhi(foot().phi())) {
 		return foot().R();
@@ -77,7 +77,7 @@ Number PolarSegment::R_min() const {
  * Note that this point must be an endpoint of the line segment.
  * @return the distance between the pole and the point on the line segment farthest from the pole.
  */
-Number PolarSegment::R_max() const {
+Number<Inexact> PolarSegment::R_max() const {
 	return std::max(EvaluateR(0), EvaluateR(1));
 }
 
@@ -119,7 +119,7 @@ bool PolarSegment::ContainsFoot() const {
  * @param t the time to evaluate the line segment.
  * @return whether the line segment contains a point at the desired time.
  */
-bool PolarSegment::ContainsT(const Number& t) const {
+bool PolarSegment::ContainsT(const Number<Inexact>& t) const {
 	return 0 <= t && t <= 1;
 }
 
@@ -127,7 +127,7 @@ bool PolarSegment::ContainsT(const Number& t) const {
  * @param R the given distance from the pole.
  * @return whether the line segment contains any point within the desired distance from the pole.
  */
-bool PolarSegment::ContainsR(const Number& R) const {
+bool PolarSegment::ContainsR(const Number<Inexact>& R) const {
 	return R_min() <= R && R <= R_max();
 }
 
@@ -135,12 +135,12 @@ bool PolarSegment::ContainsR(const Number& R) const {
  * @param phi the desired phi coordinate.
  * @return whether the line segment contains any point with the given phi coordinate.
  */
-bool PolarSegment::ContainsPhi(const Number& phi) const {
+bool PolarSegment::ContainsPhi(const Number<Inexact>& phi) const {
 	if (!PolarLine::ContainsPhi(phi)) {
 		return false;
 	}
 
-	const Number t = ComputeT(phi);
+	const Number<Inexact> t = ComputeT(phi);
 	return ContainsT(t);
 }
 
@@ -148,8 +148,8 @@ bool PolarSegment::ContainsPhi(const Number& phi) const {
  * @param t the time value of the point on the line segment.
  * @return the distance from the pole at the evaluated point.
  */
-Number PolarSegment::EvaluateR(const Number& t) const {
-	const Number distance = ToDistance(t);
+Number<Inexact> PolarSegment::EvaluateR(const Number<Inexact>& t) const {
+	const Number<Inexact> distance = ToDistance(t);
 	return PolarLine::EvaluateR(distance);
 }
 
@@ -157,8 +157,8 @@ Number PolarSegment::EvaluateR(const Number& t) const {
  * @param t the time value of the point on the line segment.
  * @return the phi of the evaluated point.
  */
-Number PolarSegment::EvaluatePhi(const Number& t) const {
-	const Number distance = ToDistance(t);
+Number<Inexact> PolarSegment::EvaluatePhi(const Number<Inexact>& t) const {
+	const Number<Inexact> distance = ToDistance(t);
 	return PolarLine::EvaluatePhi(distance);
 }
 
@@ -166,8 +166,8 @@ Number PolarSegment::EvaluatePhi(const Number& t) const {
  * @param t the time value of the point on the line segment.
  * @return the evaluated point.
  */
-PolarPoint PolarSegment::Evaluate(const Number& t) const {
-	const Number distance = ToDistance(t);
+PolarPoint PolarSegment::Evaluate(const Number<Inexact>& t) const {
+	const Number<Inexact> distance = ToDistance(t);
 	return PolarLine::Evaluate(distance);
 }
 
@@ -177,8 +177,8 @@ PolarPoint PolarSegment::Evaluate(const Number& t) const {
  * @param phi the phi of the point.
  * @return the time value of the point on the line. Points on the line segment have t between 0 and 1 (inclusive).
  */
-Number PolarSegment::ComputeT(const Number& phi) const {
-	const Number distance = PolarLine::ComputeT(phi);
+Number<Inexact> PolarSegment::ComputeT(const Number<Inexact>& phi) const {
+	const Number<Inexact> distance = PolarLine::ComputeT(phi);
 	return ToT(distance);
 }
 
@@ -205,11 +205,11 @@ const PolarLine& PolarSegment::SupportingLine() const {
 	return *this;
 }
 
-Number PolarSegment::ToDistance(const Number& t) const {
+Number<Inexact> PolarSegment::ToDistance(const Number<Inexact>& t) const {
 	return multiplier_ * t - offset_;
 }
 
-Number PolarSegment::ToT(const Number& distance) const {
+Number<Inexact> PolarSegment::ToT(const Number<Inexact>& distance) const {
 	return (distance + offset_) / multiplier_;
 }
 
@@ -218,4 +218,4 @@ std::ostream& operator<<(std::ostream& os, const PolarSegment& line) {
 	return os;
 }
 
-} // namespace cartocrow
+} // namespace cartocrow::necklace_map

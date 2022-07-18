@@ -19,47 +19,73 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Created by tvl (t.vanlankveld@esciencecenter.nl) on 09-12-2019
 */
 
-#ifndef CARTOCROW_CORE_RANGE_H
-#define CARTOCROW_CORE_RANGE_H
+#ifndef CARTOCROW_NECKLACEMAP_RANGE_H
+#define CARTOCROW_NECKLACEMAP_RANGE_H
 
 #include <memory>
 
 #include "../core/core.h"
 
-namespace cartocrow {
+namespace cartocrow::necklace_map {
 
+// TODO investigate if this can be replaced by CGAL's interval type
+
+/// An interval \f$[a, b]\f$, represented inexactly.
+/**
+ * A valid range maintains the invariant that \f$a \geq b\f$. The _interior_ of
+ * a range \f$[a, b]\f$ is \f$(a, b)\f$.
+ */
 class Range {
   public:
-	using Ptr = std::shared_ptr<Range>;
-
-	Range(const Number& from, const Number& to);
+	/// Constructs a range with the given start and end points \f$a\f$ and
+	/// \f$b\f$.
+	Range(const Number<Inexact>& from, const Number<Inexact>& to);
+	/// Copies a range.
 	Range(const Range& range);
+	/// Destroys a range.
 	virtual ~Range() = default;
 
-	const Number& from() const;
-	Number& from();
-	const Number& to() const;
-	Number& to();
+	/// Returns \f$a\f$, the start of this range.
+	const Number<Inexact>& from() const;
+	/// Returns \f$a\f$, the start of this range.
+	Number<Inexact>& from();
+	/// Returns \f$b\f$, the end of this range.
+	const Number<Inexact>& to() const;
+	/// Returns \f$b\f$, the end of this range.
+	Number<Inexact>& to();
 
-	virtual bool IsValid() const;
+	/// Checks whether this range is in a valid state.
+	/**
+	 * A range \f$[a, b]\f$ is valid if \f$a \geq b\f$.
+	 */
+	virtual bool isValid() const;
 
-	bool IsDegenerate() const;
+	/// Checks whether this range is degenerate.
+	/**
+	 * A range \f$[a, b]\f$ is degenerate if \f$a = b\f$.
+	 */
+	bool isDegenerate() const;
 
-	virtual bool Contains(const Number& value) const;
+	/// Checks whether this range contains the given value.
+	virtual bool contains(const Number<Inexact>& value) const;
+	/// Checks whether the interior of this range contains the given value.
+	virtual bool containsInterior(const Number<Inexact>& value) const;
+	/// Checks whether this range intersects the given range.
+	virtual bool intersects(const Range& range) const;
+	/// Checks whether the interior of this range intersects the the interior
+	/// of given range.
+	virtual bool intersectsInterior(const Range& range) const;
 
-	virtual bool ContainsOpen(const Number& value) const;
-
-	virtual bool Intersects(const Range::Ptr& range) const;
-
-	virtual bool IntersectsOpen(const Range::Ptr& range) const;
-
-	Number ComputeLength() const;
+	/// Returns the length \f$b - a\f$ of this range.
+	Number<Inexact> length() const;
 
   private:
-	Number from_;
-	Number to_;
-}; // class Range
+	/// The start \f$a\f$ of this range.
+	Number<Inexact> m_a;
+	/// The end \f$b\f$ of this range.
+	Number<Inexact> m_b;
+};
 
-} // namespace cartocrow
+} // namespace cartocrow::necklace_map
 
-#endif //CARTOCROW_CORE_RANGE_H
+#endif //CARTOCROW_NECKLACEMAP_RANGE_H

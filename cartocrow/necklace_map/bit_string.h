@@ -22,113 +22,148 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 06-05-2020
 #ifndef CARTOCROW_CORE_BIT_STRING_H
 #define CARTOCROW_CORE_BIT_STRING_H
 
+#include <cstdint>
 #include <limits>
 
-namespace cartocrow {
+namespace cartocrow::necklace_map {
 
+namespace detail {
+
+/// An index-accessible string (or array) of bits.
+/**
+ * @tparam bits_t The bit string storage type. This must be an integer type.
+ * @tparam bit_size_t The type used to access the bits.
+ */
 template <typename bits_t, typename bit_size_t = int> class BitStr {
   public:
-	static bool CheckFit(const bit_size_t& bit) {
+	/// Checks whether the bit string is large enough to fit a specific bit.
+	static bool checkFit(const bit_size_t& bit) {
 		return bit < std::numeric_limits<bits_t>::digits;
 	}
 
-	inline static BitStr FromBit(const bit_size_t& bit) {
-		return BitStr(ToString(bit));
+	/// Constructs a new bit string in which only the bit at the given index is
+	/// `1`.
+	inline static BitStr fromBit(const bit_size_t& bit) {
+		return BitStr(toString(bit));
 	}
 
-	inline static BitStr FromString(const bits_t& string) {
+	/// Constructs a bit string from the given string of bits.
+	inline static BitStr fromString(const bits_t& string) {
 		return BitStr(string);
 	}
 
-	BitStr() : bits(0) {}
+	/// Constructs a new bit string in which all bits are set to `0`.
+	BitStr() : m_bits(0) {}
 
-	inline bool IsEmpty() const {
-		return bits == 0;
+	/// Checks if all bits in this bit string are `0`.
+	inline bool isEmpty() const {
+		return m_bits == 0;
 	}
 
-	inline bool Overlaps(const BitStr& string) const {
-		return (string.bits & bits) != 0;
+	/// Checks if this bit string shares any `1` bits with the given bit string.
+	inline bool overlaps(const BitStr& string) const {
+		return (string.m_bits & m_bits) != 0;
 	}
 
-	inline const bits_t& Get() const {
-		return bits;
+	/// Returns the string of bits represented by this bit string.
+	inline const bits_t& get() const {
+		return m_bits;
 	}
 
+	/// Returns the value of the bit with the given index.
 	inline bool operator[](const bit_size_t& bit) const {
-		return (ToString(bit) & bits) != 0;
+		return (toString(bit) & m_bits) != 0;
 	}
 
+	/// Returns a copy of this bit string with the bit at the given index set
+	/// to `1`.
 	inline BitStr operator+(const bit_size_t& bit) const {
-		return BitStr(bits | ToString(bit));
+		return BitStr(m_bits | toString(bit));
 	}
 
+	/// Returns a copy of this bit string with the bit at the given index set
+	/// to `0`.
 	inline BitStr operator-(const bit_size_t& bit) const {
-		return BitStr(bits & ~ToString(bit));
+		return BitStr(m_bits & ~toString(bit));
 	}
 
+	/// Sets the bit at the given index to `1` and returns the result.
 	inline BitStr& operator+=(const bit_size_t& bit) {
-		bits |= ToString(bit);
+		m_bits |= toString(bit);
 		return *this;
 	}
 
+	/// Sets the bit at the given index to `0` and returns the result.
 	inline BitStr& operator-=(const bit_size_t& bit) {
-		bits &= ~ToString(bit);
+		m_bits &= ~toString(bit);
 		return *this;
 	}
 
+	/// Performs a logical OR with the given bit string.
 	inline BitStr operator+(const BitStr& string) const {
-		return BitStr(bits | string.bits);
+		return BitStr(m_bits | string.m_bits);
 	}
 
+	/// Performs a logical AND with the negation of the given bit string (i.e.,
+	/// sets the bits to `0` that are `1` in the given bit string).
 	inline BitStr operator-(const BitStr& string) const {
-		return BitStr(bits & ~string.bits);
+		return BitStr(m_bits & ~string.m_bits);
 	}
 
+	/// Performs a logical AND with the given bit string.
 	inline BitStr operator&(const BitStr& string) const {
-		return BitStr(bits & string.bits);
+		return BitStr(m_bits & string.m_bits);
 	}
 
+	/// Performs a logical XOR with the given bit string.
 	inline BitStr operator^(const BitStr& string) const {
-		return BitStr(bits ^ string.bits);
+		return BitStr(m_bits ^ string.m_bits);
 	}
 
+	/// Performs a logical OR in-place with the given bit string.
 	inline BitStr& operator+=(const BitStr& string) {
-		bits |= string.bits;
+		m_bits |= string.m_bits;
 		return *this;
 	}
 
+	/// Performs a logical AND in-place with the negation of the given bit
+	/// string (i.e., sets the bits to `0` that are `1` in the given bit
+	/// string).
 	inline BitStr& operator-=(const BitStr& string) {
-		bits &= ~string.bits;
+		m_bits &= ~string.m_bits;
 		return *this;
 	}
 
+	/// Performs a logical AND in-place with the given bit string.
 	inline BitStr& operator&=(const BitStr& string) {
-		bits &= string.bits;
+		m_bits &= string.m_bits;
 		return *this;
 	}
 
+	/// Performs a logical XOR in-place with the given bit string.
 	inline BitStr& operator^=(const BitStr& string) {
-		bits ^= string.bits;
+		m_bits ^= string.m_bits;
 		return *this;
 	}
 
   private:
-	inline static bits_t ToString(const bit_size_t& bit) {
+	/// Constructs a string `000...010...000` where the `bit`-th bit is `1`.
+	inline static bits_t toString(const bit_size_t& bit) {
 		return 1 << bit;
 	}
 
-	explicit BitStr(const bits_t& string) : bits(string) {}
+	/// Constructs a new bit string in which only the bit at the given index is
+	/// `1`.
+	explicit BitStr(const bits_t& string) : m_bits(string) {}
 
-	bits_t bits;
-}; // class BitStr
+	/// The bit string.
+	bits_t m_bits;
+};
+} // namespace detail
 
-using BitString_16 = BitStr<unsigned short>;
-using BitString_32 = BitStr<unsigned int>;
-using BitString_64 = BitStr<unsigned long>;
-using BitString_128 = BitStr<unsigned long long>;
+/// A \ref BitStr containing 32 bits.
+using BitString = detail::BitStr<uint32_t>;
 
-using BitString = BitString_32;
-
-} // namespace cartocrow
+} // namespace cartocrow::necklace_map
 
 #endif //CARTOCROW_CORE_BIT_STRING_H

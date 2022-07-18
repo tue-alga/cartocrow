@@ -60,6 +60,16 @@ PolygonWithHoles<Inexact> approximate(const PolygonWithHoles<Exact>& p) {
 	return result;
 }
 
+PolygonSet<Inexact> approximate(const PolygonSet<Exact>& p) {
+	PolygonSet<Inexact> result;
+	std::vector<PolygonWithHoles<Exact>> polygons;
+	p.polygons_with_holes(std::back_inserter(polygons));
+	for (auto polygon : polygons) {
+		result.insert(approximate(polygon));
+	}
+	return result;
+}
+
 Number<Inexact> wrapAngle(Number<Inexact> alpha, Number<Inexact> beta) {
 	return wrap<Inexact>(alpha, beta, beta + M_2xPI);
 }

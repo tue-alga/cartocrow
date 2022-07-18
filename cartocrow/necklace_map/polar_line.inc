@@ -26,7 +26,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 19-02-2021
 
 #include <glog/logging.h>
 
-namespace cartocrow {
+namespace cartocrow::necklace_map {
 
 /**@brief Collect the t at a given distance from the pole.
  * @tparam OutputIterator the type of output iterator to which to send the output.
@@ -34,7 +34,7 @@ namespace cartocrow {
  * @param t the t values of the points on the line at the desired distance.
  * @return the number of points on the line at the given distance. This can be either 0, 1, or 2.
  */
-template <class OutputIterator> int PolarLine::CollectT(const Number& R, OutputIterator t) const {
+template <class OutputIterator> int PolarLine::CollectT(const Number<Inexact>& R, OutputIterator t) const {
 	CHECK_LE(0, R);
 
 	// The point at a given distance from the pole could be computed using the sine law.
@@ -54,7 +54,7 @@ template <class OutputIterator> int PolarLine::CollectT(const Number& R, OutputI
 	}
 
 	// Note that R = 0 would have been caught by the previous conditions.
-	const Number offset = std::sqrt((R * R) - (foot().R() * foot().R()));
+	const Number<Inexact> offset = std::sqrt((R * R) - (foot().R() * foot().R()));
 	*t++ = -offset;
 	*t++ = offset;
 	return 2;
@@ -67,8 +67,8 @@ template <class OutputIterator> int PolarLine::CollectT(const Number& R, OutputI
  * @return the number of points on the line at the given distance. This can be either 0, 1, or 2.
  */
 template <class OutputIterator>
-int PolarLine::CollectPhi(const Number& R, OutputIterator phi) const {
-	Number t[2];
+int PolarLine::CollectPhi(const Number<Inexact>& R, OutputIterator phi) const {
+	Number<Inexact> t[2];
 	const int num = CollectT(R, t);
 
 	for (int i = 0; i < num; ++i)
@@ -77,6 +77,6 @@ int PolarLine::CollectPhi(const Number& R, OutputIterator phi) const {
 	return num;
 }
 
-} // namespace cartocrow
+} // namespace cartocrow::necklace_map
 
 #endif //CARTOCROW_CORE_POLAR_LINE_INC

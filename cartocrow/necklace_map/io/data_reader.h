@@ -41,10 +41,10 @@ class DataReader : public cartocrow::detail::TableParser {
 	DataReader();
 
 	bool ReadFile(const std::filesystem::path& filename, const std::string& value_name,
-	              std::vector<MapElement::Ptr>& elements, int max_retries = 2);
+	              std::vector<NecklaceMapElement::Ptr>& elements, int max_retries = 2);
 
 	bool Parse(std::istream& in, const std::string& value_name,
-	           std::vector<MapElement::Ptr>& elements, const std::string& version = "1.0");
+	           std::vector<NecklaceMapElement::Ptr>& elements, const std::string& version = "1.0");
 }; // class DataReader
 
 } // namespace necklace_map

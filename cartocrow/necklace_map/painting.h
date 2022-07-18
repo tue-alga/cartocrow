@@ -6,8 +6,7 @@
 
 #include "necklace_map.h"
 
-namespace cartocrow {
-namespace necklace_map {
+namespace cartocrow::necklace_map {
 
 class DrawNecklaceShapeVisitor : public NecklaceShapeVisitor {
   public:
@@ -63,7 +62,6 @@ class Painting : public renderer::GeometryPainting {
 	Options m_options;
 };
 
-} // namespace necklace_map
-} // namespace cartocrow
+} // namespace cartocrow::necklace_map
 
 #endif //CARTOCROW_NECKLACE_MAP_PAINTING

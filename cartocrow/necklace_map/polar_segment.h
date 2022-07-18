@@ -29,19 +29,19 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 19-02-2021
 #include "polar_line.h"
 #include "polar_point.h"
 
-namespace cartocrow {
+namespace cartocrow::necklace_map {
 
 class PolarSegment : public PolarLine {
   public:
 	PolarSegment(const PolarPoint& point_1, const PolarPoint& point_2);
 
-	Number FromT() const;
+	Number<Inexact> FromT() const;
 
-	Number ToT() const;
+	Number<Inexact> ToT() const;
 
-	Number R_min() const;
+	Number<Inexact> R_min() const;
 
-	Number R_max() const;
+	Number<Inexact> R_max() const;
 
 	bool IsLeft() const;
 	bool IsRight() const;
@@ -49,25 +49,26 @@ class PolarSegment : public PolarLine {
 
 	bool ContainsFoot() const;
 
-	bool ContainsT(const Number& t) const;
+	bool ContainsT(const Number<Inexact>& t) const;
 
 	// Note that the following methods shadow the methods of PolarLine, which are not virtual.
 
-	bool ContainsR(const Number& R) const;
+	bool ContainsR(const Number<Inexact>& R) const;
 
-	bool ContainsPhi(const Number& phi) const;
+	bool ContainsPhi(const Number<Inexact>& phi) const;
 
-	Number EvaluateR(const Number& t) const;
+	Number<Inexact> EvaluateR(const Number<Inexact>& t) const;
 
-	Number EvaluatePhi(const Number& t) const;
+	Number<Inexact> EvaluatePhi(const Number<Inexact>& t) const;
 
-	PolarPoint Evaluate(const Number& t) const;
+	PolarPoint Evaluate(const Number<Inexact>& t) const;
 
-	Number ComputeT(const Number& phi) const;
+	Number<Inexact> ComputeT(const Number<Inexact>& phi) const;
 
-	template <class OutputIterator> int CollectT(const Number& R, OutputIterator t) const;
+	template <class OutputIterator> int CollectT(const Number<Inexact>& R, OutputIterator t) const;
 
-	template <class OutputIterator> int CollectPhi(const Number& R, OutputIterator phi) const;
+	template <class OutputIterator>
+	int CollectPhi(const Number<Inexact>& R, OutputIterator phi) const;
 
 	PolarPoint ComputeClosestToPole() const;
 
@@ -75,15 +76,15 @@ class PolarSegment : public PolarLine {
 
   private:
 	// We will call the 't' value of the base PolarLine the 'distance'.
-	Number ToDistance(const Number& t) const;
-	Number ToT(const Number& distance) const;
+	Number<Inexact> ToDistance(const Number<Inexact>& t) const;
+	Number<Inexact> ToT(const Number<Inexact>& distance) const;
 
-	Number offset_, multiplier_;
+	Number<Inexact> offset_, multiplier_;
 }; // class PolarSegment
 
 std::ostream& operator<<(std::ostream& os, const PolarSegment& line);
 
-} // namespace cartocrow
+} // namespace cartocrow::necklace_map
 
 #include "polar_segment.inc"
 

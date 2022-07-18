@@ -21,16 +21,16 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-2019
 */
 
-#include "cartocrow/necklace_map/parameters.h"
 #include <fstream>
 #include <sstream>
 
 #include <QApplication>
 
-#include <cartocrow/necklace_map/necklace_map.h>
-#include <cartocrow/necklace_map/painting.h>
-#include <cartocrow/renderer/geometry_widget.h>
-#include <cartocrow/renderer/ipe_renderer.h>
+#include "cartocrow/necklace_map/necklace_map.h"
+#include "cartocrow/necklace_map/painting.h"
+#include "cartocrow/necklace_map/parameters.h"
+#include "cartocrow/renderer/geometry_widget.h"
+#include "cartocrow/renderer/ipe_renderer.h"
 
 int main(int argc, char* argv[]) {
 	if (argc != 4) {
@@ -42,7 +42,7 @@ int main(int argc, char* argv[]) {
 	const std::string data_filename = argv[2];
 	const std::string value_name = argv[3];
 
-	using MapElement = cartocrow::necklace_map::MapElement;
+	using MapElement = cartocrow::necklace_map::NecklaceMapElement;
 	using Necklace = cartocrow::necklace_map::Necklace;
 	std::vector<MapElement::Ptr> elements;
 	std::vector<Necklace::Ptr> necklaces;
@@ -66,14 +66,14 @@ int main(int argc, char* argv[]) {
 	parameters.aversion_ratio = 0;
 
 	cartocrow::Number scaleFactor =
-	    cartocrow::necklace_map::ComputeScaleFactor(parameters, elements, necklaces);
+	    cartocrow::necklace_map::computeScaleFactor(parameters, elements, necklaces);
 
 	QApplication a(argc, argv);
 	a.setApplicationName("CartoCrow necklace map demo");
 	cartocrow::necklace_map::Painting::Options options;
 	cartocrow::necklace_map::Painting painting(elements, necklaces, scaleFactor, options);
-	cartocrow::renderer::IpeRenderer renderer(painting);
-	renderer.save("test.ipe");
+	//cartocrow::renderer::IpeRenderer renderer(painting);
+	//renderer.save("test.ipe");
 
 	cartocrow::renderer::GeometryWidget widget(painting);
 	widget.show();

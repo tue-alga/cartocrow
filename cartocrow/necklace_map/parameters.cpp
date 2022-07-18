@@ -22,13 +22,11 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 28-01-2020
 
 #include "parameters.h"
 
-namespace cartocrow {
-namespace necklace_map {
+namespace cartocrow::necklace_map {
 
 Parameters::Parameters()
     : interval_type(IntervalType::kCentroid), centroid_interval_length_rad(1),
       ignore_point_regions(false), order_type(OrderType::kFixed), buffer_rad(0),
       binary_search_depth(10), heuristic_cycles(5), placement_cycles(30), aversion_ratio(0) {}
 
-} // namespace necklace_map
-} // namespace cartocrow
+} // namespace cartocrow::necklace_map

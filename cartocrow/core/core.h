@@ -101,6 +101,9 @@ Polygon<Inexact> approximate(const Polygon<Exact>& p);
 /// Converts a polygon with holes from exact representation to an approximation
 /// in inexact representation.
 PolygonWithHoles<Inexact> approximate(const PolygonWithHoles<Exact>& p);
+/// Converts a polygon set from exact representation to an approximation in
+/// inexact representation.
+PolygonSet<Inexact> approximate(const PolygonSet<Exact>& p);
 
 /// An RGB color. Used for storing the color of elements to be drawn.
 struct Color {

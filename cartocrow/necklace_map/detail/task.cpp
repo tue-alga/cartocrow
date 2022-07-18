@@ -21,19 +21,20 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 06-05-2020
 */
 
 #include "task.h"
+#include "cartocrow/core/core.h"
 
 #include <algorithm>
 #include <cmath>
 
 #include <glog/logging.h>
 
-namespace cartocrow {
-namespace necklace_map {
+namespace cartocrow::necklace_map {
 namespace detail {
 
 TaskEvent::TaskEvent() {}
 
-TaskEvent::TaskEvent(const CycleNodeLayered::Ptr& node, const Number& angle_rad, const Type& type)
+TaskEvent::TaskEvent(const CycleNodeLayered::Ptr& node, const Number<Inexact>& angle_rad,
+                     const Type& type)
     : node(node), angle_rad(angle_rad), type(type) {}
 
 bool CompareTaskEvent::operator()(const TaskEvent& a, const TaskEvent& b) const {
@@ -56,21 +57,21 @@ TaskSlice::TaskSlice() : event_from(), event_to(), coverage(0, 0), tasks(), laye
 
 TaskSlice::TaskSlice(const TaskEvent& event_from, const TaskEvent& event_to, const int num_layers)
     : event_from(event_from), event_to(event_to),
-      coverage(event_from.angle_rad, Modulo(event_to.angle_rad, event_from.angle_rad)) {
-	CHECK(BitString::CheckFit(num_layers));
+      coverage(event_from.angle_rad, wrapAngle(event_to.angle_rad, event_from.angle_rad)) {
+	CHECK(BitString::checkFit(num_layers));
 	tasks.resize(num_layers);
 }
 
-TaskSlice::TaskSlice(const TaskSlice& slice, const Number& angle_start, const int cycle)
+TaskSlice::TaskSlice(const TaskSlice& slice, const Number<Inexact>& angle_start, const int cycle)
     : event_from(slice.event_from), event_to(slice.event_to), coverage(0, 0),
       layer_sets(slice.layer_sets) {
 	CHECK_LE(0, cycle);
 
 	// Determine the part of the necklace covered by this slice.
-	const Number cycle_start = cycle * M_2xPI;
-	const Number offset = cycle_start - angle_start;
-	coverage.from() = Modulo(event_from.angle_rad + offset, cycle_start);
-	coverage.to() = Modulo(event_to.angle_rad + offset, coverage.from());
+	const Number<Inexact> cycle_start = cycle * M_2xPI;
+	const Number<Inexact> offset = cycle_start - angle_start;
+	coverage.from() = wrapAngle(event_from.angle_rad + offset, cycle_start);
+	coverage.to() = wrapAngle(event_to.angle_rad + offset, coverage.from());
 
 	// Copy the tasks.
 	tasks.reserve(slice.tasks.size());
@@ -82,7 +83,7 @@ TaskSlice::TaskSlice(const TaskSlice& slice, const Number& angle_start, const in
 
 		// Skip tasks that have started before the first cycle.
 		if (cycle == 0 && coverage.to() <= task->valid->from() + offset &&
-		    task->valid->Contains(M_2xPI + angle_start)) {
+		    task->valid->contains(M_2xPI + angle_start)) {
 			continue;
 		}
 
@@ -102,16 +103,16 @@ void TaskSlice::Reset() {
 			continue;
 		}
 
-		task->valid = std::make_shared<CircularRange>(*task->bead->feasible);
+		task->valid = std::make_shared<CircularRange>(task->bead->feasible);
 		task->disabled = false;
 	}
 }
 
 void TaskSlice::Rotate(const TaskSlice& first_slice, const BitString& layer_set) {
 	// Rotate this slice such that the origin is aligned with the start of the other slice.
-	const Number& angle_rad = first_slice.event_from.angle_rad;
+	const Number<Inexact>& angle_rad = first_slice.event_from.angle_rad;
 	coverage = CircularRange(coverage.from() - angle_rad, coverage.to() - angle_rad);
-	if (coverage.to() < kEpsilon) {
+	if (coverage.to() < EPSILON) { // TODO why are we using epsilon here? (and later)
 		coverage.to() = M_2xPI;
 	}
 
@@ -127,18 +128,18 @@ void TaskSlice::Rotate(const TaskSlice& first_slice, const BitString& layer_set)
 			// Disable tasks that start before the first slice, except when that task's bead caused the event to start the first slice.
 			if (layer_set[task->layer]) {
 				if (task->bead != first_slice.event_from.node->bead &&
-				    task->valid->to() <= coverage.from() + kEpsilon) {
+				    task->valid->to() <= coverage.from() + EPSILON) {
 					task->disabled = true;
 				}
 				task->valid->from() = 0;
 			} else {
-				if (coverage.to() - kEpsilon <= task->valid->from()) {
+				if (coverage.to() - EPSILON <= task->valid->from()) {
 					task->disabled = true;
 				}
 				task->valid->to() = M_2xPI;
 			}
 		} else {
-			if (task->valid->to() < kEpsilon) {
+			if (task->valid->to() < EPSILON) {
 				task->valid->to() = M_2xPI;
 			}
 		}
@@ -162,11 +163,10 @@ void TaskSlice::Finalize() {
 
 		std::transform(layer_sets.begin(), layer_sets.end(), std::back_inserter(layer_sets),
 		               [task](const BitString& string) -> BitString {
-			               return string + BitString::FromBit(task->layer);
+			               return string + BitString::fromBit(task->layer);
 		               });
 	}
 }
 
 } // namespace detail
-} // namespace necklace_map
-} // namespace cartocrow
+} // namespace cartocrow::necklace_map

@@ -57,7 +57,7 @@ class IpeReader {
 	 * Stores the data into output parameters \c elements and \c necklaces.
 	 */
 	bool readFile(const std::filesystem::path& filename,
-	              std::vector<necklace_map::MapElement::Ptr>& elements,
+	              std::vector<necklace_map::NecklaceMapElement::Ptr>& elements,
 	              std::vector<necklace_map::Necklace::Ptr>& necklaces);
 
   private:

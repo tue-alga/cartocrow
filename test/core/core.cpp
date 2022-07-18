@@ -252,6 +252,23 @@ TEST_CASE("Approximating exact polygons by inexact ones") {
 	CHECK(p2.area() == Approx(CGAL::to_double(p1.area())));
 }
 
+TEST_CASE("Approximating exact polygon sets by inexact ones") {
+	Polygon<Exact> p1;
+	p1.push_back(Point<Exact>(0, 0));
+	p1.push_back(Point<Exact>(-1, 1));
+	p1.push_back(Point<Exact>(1, 2));
+	Polygon<Exact> p2;
+	p2.push_back(Point<Exact>(2, 4));
+	p2.push_back(Point<Exact>(3, 5));
+	p2.push_back(Point<Exact>(4, 2));
+	PolygonSet<Exact> set;
+	set.insert(p1);
+	set.insert(p2);
+	CHECK(set.number_of_polygons_with_holes() == 2);
+	PolygonSet<Inexact> setInexact = approximate(set);
+	CHECK(setInexact.number_of_polygons_with_holes() == 2);
+}
+
 TEST_CASE("Wrapping numbers to intervals") {
 	CHECK(cartocrow::wrap<Inexact>(0, 0, 3) == Approx(0));
 	CHECK(cartocrow::wrap<Exact>(0, 0, 3) == 0);

@@ -25,8 +25,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 06-05-2020
 
 #include "cycle_node.h"
 
-namespace cartocrow {
-namespace necklace_map {
+namespace cartocrow::necklace_map {
 namespace detail {
 
 // A cycle node that can be assigned a layer.
@@ -35,7 +34,7 @@ struct CycleNodeLayered : public CycleNode {
 
 	CycleNodeLayered();
 
-	explicit CycleNodeLayered(const Bead::Ptr& bead);
+	explicit CycleNodeLayered(const std::shared_ptr<Bead>& bead);
 
 	CycleNodeLayered(const CycleNodeLayered::Ptr& node);
 
@@ -49,7 +48,6 @@ class CompareCycleNodeLayered {
 }; // class CompareCycleNodeLayered
 
 } // namespace detail
-} // namespace necklace_map
-} // namespace cartocrow
+} // namespace cartocrow::necklace_map
 
 #endif //CARTOCROW_NECKLACE_MAP_DETAIL_CYCLE_NODE_LAYERED_H

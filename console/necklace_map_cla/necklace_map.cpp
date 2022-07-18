@@ -173,7 +173,7 @@ void validateFlags(cartocrow::necklace_map::Parameters& parameters,
 	}
 }
 
-void writeOutput(const std::vector<cartocrow::necklace_map::MapElement::Ptr>& elements,
+void writeOutput(const std::vector<cartocrow::necklace_map::NecklaceMapElement::Ptr>& elements,
                  const std::vector<cartocrow::necklace_map::Necklace::Ptr>& necklaces,
                  const cartocrow::Number& scale_factor,
                  const cartocrow::necklace_map::Painting::Options& options) {
@@ -192,7 +192,7 @@ int main(int argc, char** argv) {
 
 	cartocrow::Timer time;
 
-	using MapElement = cartocrow::necklace_map::MapElement;
+	using MapElement = cartocrow::necklace_map::NecklaceMapElement;
 	using Necklace = cartocrow::necklace_map::Necklace;
 	std::vector<MapElement::Ptr> elements;
 	std::vector<Necklace::Ptr> necklaces;

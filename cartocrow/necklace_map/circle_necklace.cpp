@@ -40,12 +40,12 @@ namespace necklace_map {
  * The necklace kernel is the circle center.
  * @param shape the circle covered by the necklace.
  */
-CircleNecklace::CircleNecklace(const Circle& shape)
+CircleNecklace::CircleNecklace(const Circle<Inexact>& shape)
     : NecklaceShape(), shape_(shape), draw_bounds_cw_rad_(0), draw_bounds_ccw_rad_(0) {
 	radius_ = CGAL::sqrt(shape_.squared_radius());
 }
 
-const Point& CircleNecklace::kernel() const {
+const Point<Inexact>& CircleNecklace::kernel() const {
 	return shape_.center();
 }
 
@@ -54,7 +54,7 @@ const Point& CircleNecklace::kernel() const {
  * If this is equal to the counterclockwise endpoint, the full circle is drawn.
  * @return the clockwise endpoint for drawing the necklace.
  */
-const Number& CircleNecklace::draw_bounds_cw_rad() const {
+const Number<Inexact>& CircleNecklace::draw_bounds_cw_rad() const {
 	return draw_bounds_cw_rad_;
 }
 
@@ -63,7 +63,7 @@ const Number& CircleNecklace::draw_bounds_cw_rad() const {
  * If this is equal to the counterclockwise endpoint, the full circle is drawn.
  * @return the clockwise endpoint for drawing the necklace.
  */
-Number& CircleNecklace::draw_bounds_cw_rad() {
+Number<Inexact>& CircleNecklace::draw_bounds_cw_rad() {
 	return draw_bounds_cw_rad_;
 }
 
@@ -72,7 +72,7 @@ Number& CircleNecklace::draw_bounds_cw_rad() {
  * If this is equal to the clockwise endpoint, the full circle is drawn.
  * @return the counterclockwise endpoint for drawing the necklace.
  */
-const Number& CircleNecklace::draw_bounds_ccw_rad() const {
+const Number<Inexact>& CircleNecklace::draw_bounds_ccw_rad() const {
 	return draw_bounds_ccw_rad_;
 }
 
@@ -81,11 +81,11 @@ const Number& CircleNecklace::draw_bounds_ccw_rad() const {
  * If this is equal to the clockwise endpoint, the full circle is drawn.
  * @return the counterclockwise endpoint for drawing the necklace.
  */
-Number& CircleNecklace::draw_bounds_ccw_rad() {
+Number<Inexact>& CircleNecklace::draw_bounds_ccw_rad() {
 	return draw_bounds_ccw_rad_;
 }
 
-bool CircleNecklace::IsValid() const {
+bool CircleNecklace::isValid() const {
 	return 0 < radius_;
 }
 
@@ -99,45 +99,47 @@ bool CircleNecklace::IsClosed() const
   return true;
 }*/
 
-bool CircleNecklace::IntersectRay(const Number& angle_rad, Point& intersection) const {
-	const Vector relative =
-	    CGAL::sqrt(shape_.squared_radius()) * Vector(std::cos(angle_rad), std::sin(angle_rad));
+bool CircleNecklace::intersectRay(const Number<Inexact>& angle_rad,
+                                  Point<Inexact>& intersection) const {
+	const Vector<Inexact> relative = CGAL::sqrt(shape_.squared_radius()) *
+	                                 Vector<Inexact>(std::cos(angle_rad), std::sin(angle_rad));
 	intersection = kernel() + relative;
 	return true;
 }
 
-Box CircleNecklace::ComputeBoundingBox() const {
+Box CircleNecklace::computeBoundingBox() const {
 	return shape_.bbox();
 }
 
 /**@brief Compute the radius of the circle covered by this necklace.
  * @return the radius.
  */
-Number CircleNecklace::ComputeRadius() const {
+Number<Inexact> CircleNecklace::computeRadius() const {
 	return radius_;
 }
 
-Number CircleNecklace::ComputeCoveringRadiusRad(const Range::Ptr& range, const Number& radius) const {
+Number<Inexact> CircleNecklace::computeCoveringRadiusRad(const Range& range,
+                                                         const Number<Inexact>& radius) const {
 	return std::asin(radius / radius_);
 }
 
-Number CircleNecklace::ComputeDistanceToKernel(const Range::Ptr& range) const {
+Number<Inexact> CircleNecklace::computeDistanceToKernel(const Range& range) const {
 	return radius_;
 }
 
-Number CircleNecklace::ComputeAngleAtDistanceRad(const Number& angle_rad,
-                                                 const Number& distance) const {
-	const Number distance_abs = std::abs(distance);
+Number<Inexact> CircleNecklace::computeAngleAtDistanceRad(const Number<Inexact>& angle_rad,
+                                                          const Number<Inexact>& distance) const {
+	const Number<Inexact> distance_abs = std::abs(distance);
 	CHECK_LE(distance_abs, 2 * radius_);
 	if (distance_abs == 2 * radius_) {
 		return angle_rad + M_PI;
 	}
 
-	const Number angle_diff = 2 * std::asin(distance_abs / (2 * radius_));
+	const Number<Inexact> angle_diff = 2 * std::asin(distance_abs / (2 * radius_));
 	return 0 < distance ? angle_rad + angle_diff : angle_rad - angle_diff;
 }
 
-void CircleNecklace::Accept(NecklaceShapeVisitor& visitor) {
+void CircleNecklace::accept(NecklaceShapeVisitor& visitor) {
 	visitor.Visit(*this);
 }
 

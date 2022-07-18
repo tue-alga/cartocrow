@@ -31,13 +31,13 @@ namespace necklace_map {
 
 class IntervalCentroid : public CircularRange {
   public:
-	IntervalCentroid(const Number& from_rad, const Number& to_rad);
-}; // class IntervalCentroid
+	IntervalCentroid(const Number<Inexact>& from_rad, const Number<Inexact>& to_rad);
+};
 
 class IntervalWedge : public CircularRange {
   public:
-	IntervalWedge(const Number& from_rad, const Number& to_rad);
-}; // class IntervalWedge
+	IntervalWedge(const Number<Inexact>& from_rad, const Number<Inexact>& to_rad);
+};
 
 } // namespace necklace_map
 } // namespace cartocrow

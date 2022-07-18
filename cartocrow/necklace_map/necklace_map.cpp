@@ -22,31 +22,51 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-2019
 
 #include "necklace_map.h"
 
-#include <glog/logging.h>
+#include <stdexcept>
 
-/**@file
- * Global functions for computing necklace maps.
- */
+namespace cartocrow::necklace_map {
 
-namespace cartocrow {
-namespace necklace_map {
+NecklaceMap::NecklaceHandle::NecklaceHandle(Necklace* necklace) : m_necklace(necklace) {}
 
-/**@anchor necklace_scale_factor
- * @brief Compute a feasible interval per bead, the optimal scale factor for the necklaces, and a valid placement for the scaled beads.
- *
- * A feasible interval describes a continuous part of the necklace where the association between a bead and its region is clear.
- *
- * The optimal scale factor is the largest factor by which the beads can be scaled such that they can all be placed on their necklace without any overlap.
- *
- * A valid placement defines a position for each scaled bead such that it is inside its feasible interval and no two beads overlap in their interior.
- * @param parameters the parameter settings to apply to the computations.
- * @param elements the map elements involved.
- * @param necklaces the necklaces involved.
- * @return the optimal scale factor.
- */
-Number ComputeScaleFactor(const Parameters& parameters, std::vector<MapElement::Ptr>& elements,
-                          std::vector<Necklace::Ptr>& necklaces) {
-	// Create a bead per necklace that an element is part of.
+NecklaceMap::NecklaceMap(const std::shared_ptr<RegionMap> map) : m_map(map) {}
+
+NecklaceMap::NecklaceHandle NecklaceMap::addNecklace(std::unique_ptr<NecklaceShape> shape) {
+	m_necklaces.push_back(std::make_unique<Necklace>(std::move(shape)));
+	return NecklaceHandle{m_necklaces.back().get()};
+}
+
+void NecklaceMap::addBead(std::string regionName, Number<Inexact> value, NecklaceHandle& necklace) {
+	if (!m_map->contains(regionName)) {
+		throw std::runtime_error("Tried to add bead for non-existing region \"" + regionName + "\"");
+	}
+	necklace.m_necklace->beads.push_back(
+	    std::make_shared<Bead>(&(m_map->at(regionName)), value, necklace.m_necklace));
+}
+
+Parameters& NecklaceMap::parameters() {
+	return m_parameters;
+}
+
+void NecklaceMap::compute() {
+	for (auto& necklace : m_necklaces) {
+		necklace->beads.clear();
+		for (auto& bead : necklace->beads) {
+			(*ComputeFeasibleInterval::construct(m_parameters))(bead);
+		}
+	}
+	// TODO TODO TODO
+}
+
+Number<Inexact> NecklaceMap::scaleFactor() {
+	return m_scaleFactor;
+}
+
+// TODO remove the following methods, kept for now for reference
+
+/*Number<Inexact> computeScaleFactor(const Parameters& parameters,
+                                   std::vector<MapElement::Ptr>& elements,
+                                   std::vector<Necklace::Ptr>& necklaces) {
+	// create a bead per necklace that an element is part of
 	for (Necklace::Ptr& necklace : necklaces) {
 		necklace->beads.clear();
 	}
@@ -54,32 +74,21 @@ Number ComputeScaleFactor(const Parameters& parameters, std::vector<MapElement::
 		element->InitializeBead(parameters);
 	}
 
-	// Generate intervals based on the regions and necklaces.
+	// generate intervals based on the regions and necklaces
 	(*ComputeFeasibleInterval::New(parameters))(elements);
 
-	// Compute the scaling factor.
+	// compute the scaling factor
 	const Number scale_factor = (*ComputeScaleFactor::New(parameters))(necklaces);
 
-	// Compute valid placement.
+	// compute valid placement
 	(*ComputeValidPlacement::New(parameters))(scale_factor, necklaces);
 
 	return scale_factor;
-}
+}*/
 
-/**@anchor necklace_placement
- * @brief Compute a valid placement for the scaled beads.
- *
- * A valid placement defines a position for each scaled bead such that it is inside its feasible interval and no two beads overlap in their interior.
- *
- * Note that this placement will be stored in Bead::angle_rad for each bead involved.
- * @param parameters the parameter settings to apply to the computations.
- * @param scale_factor the factor by which to scale the beads.
- * @param elements the map elements involved.
- * @param necklaces the necklaces involved.
- */
-void ComputePlacement(const Parameters& parameters, const Number& scale_factor,
+/*void computePlacement(const Parameters& parameters, const Number<Inexact>& scale_factor,
                       std::vector<MapElement::Ptr>& elements, std::vector<Necklace::Ptr>& necklaces) {
-	// Create a bead per necklace that an element is part of.
+	// create a bead per necklace that an element is part of
 	for (Necklace::Ptr& necklace : necklaces) {
 		necklace->beads.clear();
 	}
@@ -94,10 +103,8 @@ void ComputePlacement(const Parameters& parameters, const Number& scale_factor,
 		}
 	}
 
-	// Compute valid placement.
+	// compute valid placement
 	(*ComputeValidPlacement::New(parameters))(scale_factor, necklaces);
-}
+}*/
 
-} // namespace necklace_map
-
-} // namespace cartocrow
+} // namespace cartocrow::necklace_map

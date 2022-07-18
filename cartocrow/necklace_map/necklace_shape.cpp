@@ -22,8 +22,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 15-01-2020
 
 #include "necklace_shape.h"
 
-namespace cartocrow {
-namespace necklace_map {
+namespace cartocrow::necklace_map {
 
 /**@class NecklaceShapeVisitor
  * @brief The base class to visit the different necklace shape types.
@@ -112,11 +111,11 @@ void NecklaceShapeVisitor::Visit(BezierNecklace& shape) {}
  * @param point the point on the necklace shape.
  * @return the angle of the point in radians.
  */
-Number NecklaceShape::ComputeAngleRad(const Point& point) const {
-	const Vector offset = point - kernel();
+Number<Inexact> NecklaceShape::computeAngleRad(const Point<Inexact>& point) const {
+	const Vector<Inexact> offset = point - kernel();
 
 	// Note the special case where the centroid overlaps the necklace kernel.
-	return offset.squared_length() == 0 ? 0 : Modulo(std::atan2(offset.y(), offset.x()));
+	return offset.squared_length() == 0 ? 0 : wrapAngle(std::atan2(offset.y(), offset.x()));
 }
 
 /**@fn virtual Number NecklaceShape::ComputeAngleAtDistanceRad(const Number& angle_rad, const Number& distance) const = 0
@@ -133,5 +132,4 @@ Number NecklaceShape::ComputeAngleRad(const Point& point) const {
  * @param visitor the visitor to apply to the shape.
  */
 
-} // namespace necklace_map
-} // namespace cartocrow
+} // namespace cartocrow::necklace_map

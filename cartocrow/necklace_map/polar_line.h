@@ -27,7 +27,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 19-02-2021
 #include "../core/core.h"
 #include "polar_point.h"
 
-namespace cartocrow {
+namespace cartocrow::necklace_map {
 
 class PolarLine {
   public:
@@ -39,31 +39,32 @@ class PolarLine {
 
 	PolarPoint& foot();
 
-	bool ContainsR(const Number& R) const;
+	bool ContainsR(const Number<Inexact>& R) const;
 
-	bool ContainsPhi(const Number& phi) const;
+	bool ContainsPhi(const Number<Inexact>& phi) const;
 
-	Number EvaluateR(const Number& t) const;
+	Number<Inexact> EvaluateR(const Number<Inexact>& t) const;
 
-	Number EvaluatePhi(const Number& t) const;
+	Number<Inexact> EvaluatePhi(const Number<Inexact>& t) const;
 
-	PolarPoint Evaluate(const Number& t) const;
+	PolarPoint Evaluate(const Number<Inexact>& t) const;
 
-	Number ComputeT(const Number& phi) const;
+	Number<Inexact> ComputeT(const Number<Inexact>& phi) const;
 
-	template <class OutputIterator> int CollectT(const Number& R, OutputIterator t) const;
+	template <class OutputIterator> int CollectT(const Number<Inexact>& R, OutputIterator t) const;
 
-	Number ComputeR(const Number& phi) const;
+	Number<Inexact> ComputeR(const Number<Inexact>& phi) const;
 
-	template <class OutputIterator> int CollectPhi(const Number& R, OutputIterator phi) const;
+	template <class OutputIterator>
+	int CollectPhi(const Number<Inexact>& R, OutputIterator phi) const;
 
-	bool ComputeAngle(const Number& R, Number& angle_rad) const;
+	bool ComputeAngle(const Number<Inexact>& R, Number<Inexact>& angle_rad) const;
 
   protected:
 	PolarLine() {}
 
 	// Returns the signed distance from point 1 to point 2.
-	Number SetFoot(const PolarPoint& point_1, const PolarPoint& point_2);
+	Number<Inexact> SetFoot(const PolarPoint& point_1, const PolarPoint& point_2);
 
   private:
 	PolarPoint foot_;
@@ -71,7 +72,7 @@ class PolarLine {
 
 std::ostream& operator<<(std::ostream& os, const PolarLine& line);
 
-} //namespace cartocrow
+} // namespace cartocrow::necklace_map
 
 #include "polar_line.inc"
 

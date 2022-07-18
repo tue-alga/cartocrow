@@ -21,139 +21,55 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 06-05-2020
 
 #include "circular_range.h"
 
-namespace cartocrow {
+namespace cartocrow::necklace_map {
 
-/**@class CircularRange
- * @brief The interface for a necklace interval.
- *
- * A necklace interval is a continuous interval on a circle.
- */
-
-/**@fn CircularRange::Ptr
- * @brief The preferred pointer type for storing or sharing a circular range.
- */
-
-/**@brief Construct an interval.
- *
- * The interval covers the intersection of the necklace and a wedge with its apex at the necklace kernel. This wedge is bounded by two rays from the center, which are described by their angle relative to the positive x axis in counterclockwise direction.
- *
- * The order of these rays is important: the interval is used that lies counterclockwise relative to the first angle.
- *
- * If the rays are identical, the interval covers a single point. If to_rad is at least 2*pi larger than from_rad, the interval covers the full circle.
- * @param from_rad the clockwise endpoint of the interval.
- * @param to_rad the counterclockwise endpoint of the interval.
- */
-CircularRange::CircularRange(const Number& from_rad, const Number& to_rad)
-    : Range(from_rad, to_rad) {
-	if (M_2xPI <= to_rad - from_rad) {
+CircularRange::CircularRange(const Number<Inexact>& from_angle, const Number<Inexact>& to_angle)
+    : Range(from_angle, to_angle) {
+	if (M_2xPI <= to_angle - from_angle) {
 		from() = 0;
 		to() = M_2xPI;
 	} else {
-		from() = Modulo(from_rad);
-		to() = Modulo(to_rad, from());
+		from() = wrapAngle(from_angle);
+		to() = wrapAngle(to_angle, from());
 	}
 }
 
-/**@brief Construct a circular range from a regular range.
- *
- * The circular range covers the same interval on the circle as the given range.
- * @param range the range to base the circular range on.
- */
 CircularRange::CircularRange(const Range& range) : CircularRange(range.from(), range.to()) {}
 
-/**@fn const Number& CircularRange::from_rad() const;
- * @brief The angle where the interval starts.
- *
- * This is the clockwise extreme of the interval.
- * @return the clockwise extreme.
- */
-
-/**@fn Number& CircularRange::from_rad();
- * @brief The angle where the interval starts.
- *
- * This is the clockwise extreme of the interval.
- * @return the clockwise extreme.
- */
-
-/**@fn const Number& CircularRange::to_rad() const;
- * @brief The angle where the interval ends.
- *
- * This is the counterclockwise extreme of the interval.
- * @return the counterclockwise extreme.
- */
-
-/**@fn Number& CircularRange::to_rad();
- * @brief The angle where the interval ends.
- *
- * This is the counterclockwise extreme of the interval.
- * @return the counterclockwise extreme.
- */
-
-/**@brief Check whether the interval is in a valid state.
- *
- * The interval is in a valid state if from() is in the range [0, 2*pi) and to() is in the range [from(), from() + 2*pi).
- * @return whether the interval is valid.
- */
-bool CircularRange::IsValid() const {
-	return 0 <= from_rad() && from_rad() < M_2xPI && from_rad() <= to_rad() &&
-	       to_rad() < from_rad() + M_2xPI;
-}
-
-/**@brief Check whether the interval covers the full circle.
- * @return true if and only if the interval covers the full circle.
- */
-bool CircularRange::IsFull() const {
-	return from_rad() == 0 && to_rad() == M_2xPI;
-}
-
-bool CircularRange::Contains(const Number& value) const {
-	const Number value_mod = Modulo(value, from_rad());
-	return from_rad() <= value_mod && value_mod <= to_rad();
-}
-
-bool CircularRange::ContainsOpen(const Number& value) const {
-	const Number value_mod = Modulo(value, from_rad());
-	return from_rad() < value_mod && value_mod < to_rad();
-}
-
-bool CircularRange::Intersects(const Range::Ptr& range) const {
-	CircularRange interval(*range);
-	return Contains(interval.from_rad()) || interval.Contains(from_rad());
-}
-
-bool CircularRange::IntersectsOpen(const Range::Ptr& range) const {
-	CircularRange interval(*range);
-	return (Contains(interval.from_rad()) && Modulo(interval.from_rad(), from_rad()) != to_rad()) ||
-	       (interval.Contains(from_rad()) && Modulo(from_rad(), interval.from_rad()) != interval.to());
-}
-
-/**@brief Compute a metric to order intervals on a necklace.
- *
- * This value can be compared to the ordering value of other intervals on the same necklace to imply a weak strict ordering of the ranges.
- * @return the ordering metric.
- */
-//Number CircularRange::ComputeOrder() const
-//{
-//  return 0;
-//}
-
-/**@brief Compute the angle of the centroid of the interval.
- * @return the centroid angle in radians.
- */
-Number CircularRange::ComputeCentroid() const {
-	return Modulo(.5 * (from() + to()));
-}
-
-/**@brief Reverse the orientation of the range.
- */
-void CircularRange::Reverse() {
-	if (IsFull()) {
-		return;
+bool CircularRange::isValid() const {
+	if (isFull()) {
+		return true;
 	}
-
-	const Number from_rad_old = from_rad();
-	from_rad() = Modulo(to_rad());
-	to_rad() = Modulo(from_rad_old, from_rad());
+	return 0 <= from() && from() < M_2xPI && from() <= to() && to() < from() + M_2xPI;
 }
 
-} // namespace cartocrow
+bool CircularRange::isFull() const {
+	return from() == 0 && to() == M_2xPI;
+}
+
+bool CircularRange::contains(const Number<Inexact>& value) const {
+	const Number<Inexact> value_mod = wrapAngle(value, from());
+	return from() <= value_mod && value_mod <= to();
+}
+
+bool CircularRange::containsInterior(const Number<Inexact>& value) const {
+	const Number<Inexact> value_mod = wrapAngle(value, from());
+	return from() < value_mod && value_mod < to();
+}
+
+bool CircularRange::intersects(const Range& range) const {
+	CircularRange interval(range);
+	return contains(interval.from()) || interval.contains(from());
+}
+
+bool CircularRange::intersectsInterior(const Range& range) const {
+	CircularRange interval(range);
+	return (contains(interval.from()) && wrapAngle(interval.from(), from()) != to()) ||
+	       (interval.contains(from()) && wrapAngle(from(), interval.from()) != interval.to());
+}
+
+Number<Inexact> CircularRange::midpoint() const {
+	return wrapAngle(.5 * (from() + to()));
+}
+
+} // namespace cartocrow::necklace_map
