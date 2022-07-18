@@ -255,12 +255,12 @@ TEST_CASE("Approximating exact polygons by inexact ones") {
 TEST_CASE("Approximating exact polygon sets by inexact ones") {
 	Polygon<Exact> p1;
 	p1.push_back(Point<Exact>(0, 0));
-	p1.push_back(Point<Exact>(-1, 1));
 	p1.push_back(Point<Exact>(1, 2));
+	p1.push_back(Point<Exact>(-1, 1));
 	Polygon<Exact> p2;
 	p2.push_back(Point<Exact>(2, 4));
-	p2.push_back(Point<Exact>(3, 5));
 	p2.push_back(Point<Exact>(4, 2));
+	p2.push_back(Point<Exact>(3, 5));
 	PolygonSet<Exact> set;
 	set.insert(p1);
 	set.insert(p2);
