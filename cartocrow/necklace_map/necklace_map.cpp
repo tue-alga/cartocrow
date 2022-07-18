@@ -26,21 +26,21 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-2019
 
 namespace cartocrow::necklace_map {
 
-NecklaceMap::NecklaceHandle::NecklaceHandle(Necklace* necklace) : m_necklace(necklace) {}
+NecklaceMap::NecklaceHandle::NecklaceHandle(size_t index) : m_index(index) {}
 
 NecklaceMap::NecklaceMap(const std::shared_ptr<RegionMap> map) : m_map(map) {}
 
 NecklaceMap::NecklaceHandle NecklaceMap::addNecklace(std::unique_ptr<NecklaceShape> shape) {
-	m_necklaces.push_back(std::make_unique<Necklace>(std::move(shape)));
-	return NecklaceHandle{m_necklaces.back().get()};
+	m_necklaces.emplace_back(std::move(shape));
+	return NecklaceHandle{m_necklaces.size() - 1};
 }
 
-void NecklaceMap::addBead(std::string regionName, Number<Inexact> value, NecklaceHandle& necklace) {
+void NecklaceMap::addBead(std::string regionName, Number<Inexact> value, NecklaceHandle& handle) {
 	if (!m_map->contains(regionName)) {
 		throw std::runtime_error("Tried to add bead for non-existing region \"" + regionName + "\"");
 	}
-	necklace.m_necklace->beads.push_back(
-	    std::make_shared<Bead>(&(m_map->at(regionName)), value, necklace.m_necklace));
+	Necklace& necklace = m_necklaces[handle.m_index];
+	necklace.beads.push_back(std::make_shared<Bead>(&(m_map->at(regionName)), value, handle.m_index));
 }
 
 Parameters& NecklaceMap::parameters() {
@@ -48,13 +48,19 @@ Parameters& NecklaceMap::parameters() {
 }
 
 void NecklaceMap::compute() {
+	// compute the feasible region for each bead
 	for (auto& necklace : m_necklaces) {
-		necklace->beads.clear();
-		for (auto& bead : necklace->beads) {
-			(*ComputeFeasibleInterval::construct(m_parameters))(bead);
+		std::cout << "Necklace" << std::endl;
+		for (auto& bead : necklace.beads) {
+			(*ComputeFeasibleInterval::construct(m_parameters))(bead, necklace);
 		}
 	}
-	// TODO TODO TODO
+
+	// compute the scaling factor
+	m_scaleFactor = (*ComputeScaleFactor::construct(m_parameters))(m_necklaces);
+
+	// compute valid placement
+	(*ComputeValidPlacement::construct(m_parameters))(m_scaleFactor, m_necklaces);
 }
 
 Number<Inexact> NecklaceMap::scaleFactor() {

@@ -9,6 +9,12 @@ set(SOURCES
 	feasible_interval/compute_feasible_interval_centroid.cpp
 	feasible_interval/compute_feasible_interval_wedge.cpp
 	feasible_interval/compute_feasible_interval.cpp
+	scale_factor/detail/compute_scale_factor_any_order.cpp
+	scale_factor/detail/compute_scale_factor_fixed_order.cpp
+	scale_factor/compute_scale_factor_any_order.cpp
+	scale_factor/compute_scale_factor_fixed_order.cpp
+	scale_factor/compute_scale_factor.cpp
+	valid_placement/compute_valid_placement.cpp
 	bead.cpp
 	bezier.cpp
 	bezier_necklace.cpp
@@ -35,6 +41,12 @@ set(HEADERS
 	feasible_interval/compute_feasible_interval_centroid.h
 	feasible_interval/compute_feasible_interval_wedge.h
 	feasible_interval/compute_feasible_interval.h
+	scale_factor/detail/compute_scale_factor_any_order.h
+	scale_factor/detail/compute_scale_factor_fixed_order.h
+	scale_factor/compute_scale_factor_any_order.h
+	scale_factor/compute_scale_factor_fixed_order.h
+	scale_factor/compute_scale_factor.h
+	valid_placement/compute_valid_placement.h
 	bead.h
 	bezier.h
 	bezier_necklace.h

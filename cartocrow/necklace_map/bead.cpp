@@ -24,8 +24,8 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-2019
 
 namespace cartocrow::necklace_map {
 
-Bead::Bead(const Region* region, const Number<Inexact>& value, Necklace* necklace)
+Bead::Bead(const Region* region, const Number<Inexact>& value, size_t necklace_index)
     : region(region), radius_base(std::sqrt(value)), covering_radius_rad(-1), angle_rad(0),
-      necklace(necklace) {}
+      necklace_index(necklace_index) {}
 
 } // namespace cartocrow::necklace_map

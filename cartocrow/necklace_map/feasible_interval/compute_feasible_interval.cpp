@@ -59,9 +59,9 @@ ComputeFeasibleInterval::construct(const Parameters& parameters) {
 	}
 }
 
-void ComputeFeasibleInterval::operator()(std::shared_ptr<Bead>& bead) const {
+void ComputeFeasibleInterval::operator()(std::shared_ptr<Bead>& bead, const Necklace& necklace) const {
 	// TODO possibly want to do this approximation beforehand?
-	bead->feasible = (*this)(approximate(bead->region->shape), *(bead->necklace));
+	bead->feasible = (*this)(approximate(bead->region->shape), necklace);
 }
 
 /*void ComputeFeasibleInterval::operator()(std::vector<MapElement::Ptr>& elements) const {

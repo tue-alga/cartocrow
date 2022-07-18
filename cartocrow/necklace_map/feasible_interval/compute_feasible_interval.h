@@ -49,7 +49,7 @@ class ComputeFeasibleInterval {
 	                                 const Necklace& necklace) const = 0;
 
 	/// Applies the functor to a map element.
-	void operator()(std::shared_ptr<Bead>& bead) const;
+	void operator()(std::shared_ptr<Bead>& bead, const Necklace& necklace) const;
 
 	/// Applies the functor to a collection of map elements.
 	// TODO

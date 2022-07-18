@@ -51,15 +51,6 @@ Number<Inexact> ComputeScaleFactor::operator()(std::vector<Necklace>& necklaces)
 	// the global optimum is the smallest of these
 	Number<Inexact> scale_factor = -1;
 	for (Necklace& necklace : necklaces) {
-		// clean beads without a feasible interval
-		std::vector<std::shared_ptr<Bead>> keep_beads;
-		for (const std::shared_ptr<Bead>& bead : necklace.beads) {
-			if (bead->feasible) {
-				keep_beads.push_back(bead);
-			}
-		}
-		necklace.beads.swap(keep_beads);
-
 		if (necklace.beads.empty()) {
 			continue;
 		}
@@ -68,8 +59,7 @@ Number<Inexact> ComputeScaleFactor::operator()(std::vector<Necklace>& necklaces)
 		Number<Inexact> rescale = 1;
 		for (const std::shared_ptr<Bead>& bead : necklace.beads) {
 			CHECK_GT(bead->radius_base, 0);
-			const Number<Inexact> distance =
-			    necklace.shape->computeDistanceToKernel(*(bead->feasible));
+			const Number<Inexact> distance = necklace.shape->computeDistanceToKernel(bead->feasible);
 			const Number<Inexact> bead_rescale = bead->radius_base / distance;
 			rescale = std::max(rescale, bead_rescale);
 		}

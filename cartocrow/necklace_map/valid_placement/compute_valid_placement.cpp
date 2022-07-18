@@ -95,7 +95,7 @@ void ComputeValidPlacement::operator()(const Number<Inexact>& scale_factor,
 	for (const std::shared_ptr<Bead>& bead : necklace.beads) {
 		// Compute the scaled covering radius.
 		CHECK_NOTNULL(bead);
-		bead->angle_rad = scale_factor == 0 ? bead->feasible->from() : wrapAngle(bead->angle_rad);
+		bead->angle_rad = scale_factor == 0 ? bead->feasible.from() : wrapAngle(bead->angle_rad);
 	}
 
 	// Sort the necklace beads by their current angle.
@@ -131,7 +131,7 @@ void ComputeValidPlacement::operator()(const Number<Inexact>& scale_factor,
 			const Number<Inexact> offset_from_prev_rad =
 			    CircularRange(prev->angle_rad, bead->angle_rad).length();
 			const Number<Inexact> offset_from_centroid_rad =
-			    CircularRange(bead->feasible->midpoint(), bead->angle_rad).length();
+			    CircularRange(bead->feasible.midpoint(), bead->angle_rad).length();
 
 			const Number<Inexact>& radius_bead = scale_factor * bead->radius_base;
 			const Number<Inexact>& radius_prev = scale_factor * prev->radius_base;
@@ -170,12 +170,12 @@ void ComputeValidPlacement::operator()(const Number<Inexact>& scale_factor,
 			if (std::abs(w_3) < precision && std::abs(w_2) < precision) {
 				const Number<Inexact> x = wrapAngle(-w_0 / w_1 + prev->angle_rad);
 
-				if (!bead->feasible->contains(x)) {
+				if (!bead->feasible.contains(x)) {
 					if (0 < 2 * offset_from_prev_rad - distance_from_prev_min +
 					            distance_from_prev_max) {
-						bead->angle_rad = bead->feasible->from();
+						bead->angle_rad = bead->feasible.from();
 					} else {
-						bead->angle_rad = bead->feasible->to();
+						bead->angle_rad = bead->feasible.to();
 					}
 				} else {
 					bead->angle_rad = x;
@@ -194,16 +194,16 @@ void ComputeValidPlacement::operator()(const Number<Inexact>& scale_factor,
 				    wrapAngle(prev->angle_rad - rho_3 * std::cos(theta_3) - w_2 / (3 * w_3) +
 				              rho_3 * std::sqrt(3.0) * std::sin(theta_3));
 
-				if (bead->feasible->contains(x)) {
+				if (bead->feasible.contains(x)) {
 					bead->angle_rad = x;
 				} else if (0 < aversion_ratio * (2 * offset_from_prev_rad -
 				                                 (distance_from_prev_min + distance_from_prev_max)) +
 				                   centroid_ratio * (offset_prev_to_bubble - offset_from_prev_rad) *
 				                       (offset_from_prev_rad - distance_from_prev_min) *
 				                       (offset_from_prev_rad - distance_from_prev_max)) {
-					bead->angle_rad = bead->feasible->from();
+					bead->angle_rad = bead->feasible.from();
 				} else {
-					bead->angle_rad = bead->feasible->to();
+					bead->angle_rad = bead->feasible.to();
 				}
 			}
 			bead->angle_rad = wrapAngle(bead->angle_rad);
@@ -304,10 +304,10 @@ void ComputeValidPlacementAnyOrder::SwapBeads(Necklace& necklace) const {
 		const Number<Inexact> swapped_angle_next_rad =
 		    wrapAngle(bead->angle_rad - radius_bead + radius_next);
 
-		if (bead->feasible->contains(swapped_angle_bead_rad) &&
-		    next->feasible->contains(swapped_angle_next_rad)) {
-			const Number<Inexact> centroid_bead_rad = bead->feasible->midpoint();
-			const Number<Inexact> centroid_next_rad = next->feasible->midpoint();
+		if (bead->feasible.contains(swapped_angle_bead_rad) &&
+		    next->feasible.contains(swapped_angle_next_rad)) {
+			const Number<Inexact> centroid_bead_rad = bead->feasible.midpoint();
+			const Number<Inexact> centroid_next_rad = next->feasible.midpoint();
 
 			const Number<Inexact> dist_original_bead =
 			    detail::DistanceOnCircle(bead->angle_rad, centroid_bead_rad);

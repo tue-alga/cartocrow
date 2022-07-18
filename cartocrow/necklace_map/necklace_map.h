@@ -110,8 +110,9 @@ class NecklaceMap {
 	/// \ref NecklaceMap.
 	struct NecklaceHandle {
 	  private:
-		NecklaceHandle(Necklace* necklace);
-		Necklace* m_necklace;
+		NecklaceHandle(size_t index);
+		/// The index in \ref NecklaceMap::m_necklaces.
+		size_t m_index;
 		friend NecklaceMap;
 	};
 
@@ -152,7 +153,7 @@ class NecklaceMap {
 	/// The list of regions that this necklace map is computed for.
 	const std::shared_ptr<RegionMap> m_map;
 	/// The list of necklaces.
-	std::vector<std::unique_ptr<Necklace>> m_necklaces;
+	std::vector<Necklace> m_necklaces;
 	/// The computed scale factor (or 0 if the necklace map has not been
 	/// computed yet).
 	Number<Inexact> m_scaleFactor;

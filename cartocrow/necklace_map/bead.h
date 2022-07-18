@@ -40,7 +40,7 @@ class Bead {
   public:
 	/// Constructs a bead for the given region, displaying the given value
 	/// \f$v_b\f$.
-	Bead(const Region* region, const Number<Inexact>& value, Necklace* necklace);
+	Bead(const Region* region, const Number<Inexact>& value, size_t necklace_index);
 
 	/// The region this bead displays the data value of.
 	const Region* region;
@@ -68,7 +68,9 @@ class Bead {
 	/// The angle in radians of the final position of the bead.
 	Number<Inexact> angle_rad;
 
-	Necklace* necklace;
+	/// Index of the necklace in \ref NecklaceMap::m_necklaces that this bead
+	/// is on.
+	size_t necklace_index;
 };
 
 } // namespace cartocrow::necklace_map

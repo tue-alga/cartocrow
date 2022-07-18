@@ -63,12 +63,12 @@ ComputeScaleFactorFixedOrder::ComputeScaleFactorFixedOrder(Necklace& necklace,
 		// We should probably solve this by using non-overlapping wedges as opposed to the part of the necklace covered by the bead...
 
 		bead->covering_radius_rad =
-		    necklace.shape->computeCoveringRadiusRad(*(bead->feasible), bead->radius_base);
+		    necklace.shape->computeCoveringRadiusRad(bead->feasible, bead->radius_base);
 		// Note that for an exact computation, the scaling factor should be inside this arcsine function.
 		// This can be solved by performing a bisection search on the scale factors using a feasibility check to see if the scaled beads fit.
 		// Note that this correction is performed after estimating the scale factor, in CorrectScaleFactor().
 
-		bead->angle_rad = bead->feasible->from();
+		bead->angle_rad = bead->feasible.from();
 
 		nodes_.emplace_back(bead);
 	}
