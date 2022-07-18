@@ -159,6 +159,8 @@ class NecklaceMap {
 	Number<Inexact> m_scaleFactor;
 	/// The computation parameters.
 	Parameters m_parameters;
+
+	friend class Painting;
 };
 
 } // namespace cartocrow::necklace_map

@@ -3,6 +3,8 @@
 #include "../../cartocrow/core/region_map.h"
 #include "../../cartocrow/necklace_map/circle_necklace.h"
 #include "../../cartocrow/necklace_map/necklace_map.h"
+#include "cartocrow/necklace_map/painting.h"
+#include "cartocrow/renderer/ipe_renderer.h"
 
 using namespace cartocrow;
 using namespace cartocrow::necklace_map;
@@ -17,5 +19,7 @@ TEST_CASE("Computing a necklace map") {
 	map.addBead("R2", 1, necklace);
 	map.parameters().centroid_interval_length_rad = M_PI;
 	map.compute();
+	Painting painting(map);
+	renderer::IpeRenderer r(painting);
 	CHECK(map.scaleFactor() == Approx(32.0));
 }

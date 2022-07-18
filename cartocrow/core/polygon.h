@@ -27,10 +27,9 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 05-12-2019
 namespace cartocrow {
 
 /// Computes the centroid of the given polygon.
-/**
- * This method throws if the polygon has area 0, in which case the centroid
- * would be ill-defined.
- */
+///
+/// This method throws if the polygon has area 0, in which case the centroid
+/// would be ill-defined.
 Point<Exact> centroid(const Polygon<Exact>& polygon);
 
 /// Computes the centroid of the given polygon with holes.

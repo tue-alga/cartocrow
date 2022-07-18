@@ -42,12 +42,16 @@ void GeometryRenderer::draw(const Circle<Exact>& c) {
 	draw(approximate(c));
 }
 
-void GeometryRenderer::draw(const Region& r) {
-	std::vector<PolygonWithHoles<Exact>> polygons;
-	r.shape.polygons_with_holes(std::back_inserter(polygons));
-	for (const PolygonWithHoles<Exact>& p : polygons) {
+void GeometryRenderer::draw(const PolygonSet<Inexact>& ps) {
+	std::vector<PolygonWithHoles<Inexact>> polygons;
+	ps.polygons_with_holes(std::back_inserter(polygons));
+	for (const PolygonWithHoles<Inexact>& p : polygons) {
 		draw(p);
 	}
+}
+
+void GeometryRenderer::draw(const PolygonSet<Exact>& ps) {
+	draw(approximate(ps));
 }
 
 } // namespace cartocrow::renderer

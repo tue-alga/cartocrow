@@ -24,6 +24,7 @@ set(SOURCES
 	necklace_interval.cpp
 	necklace_map.cpp
 	necklace_shape.cpp
+	painting.cpp
 	parameters.cpp
 	polar_line.cpp
 	polar_point.cpp
@@ -57,6 +58,7 @@ set(HEADERS
 	necklace_interval.h
 	necklace_map.h
 	necklace_shape.h
+	painting.h
 	parameters.h
 	polar_line.h
 	polar_point.h

@@ -90,27 +90,29 @@ class GeometryRenderer {
 	/// Draws a single point with the currently set style.
 	virtual void draw(const Point<Inexact>& p) = 0;
 	/// Draws a single point with the currently set style.
-	virtual void draw(const Point<Exact>& p);
+	void draw(const Point<Exact>& p);
 	/// Draws a single line segment with the currently set style.
 	virtual void draw(const Segment<Inexact>& s) = 0;
 	/// Draws a single line segment with the currently set style.
-	virtual void draw(const Segment<Exact>& s);
+	void draw(const Segment<Exact>& s);
 	/// Draws a simple polygon with the currently set style.
 	virtual void draw(const Polygon<Inexact>& p) = 0;
 	/// Draws a simple polygon with the currently set style.
-	virtual void draw(const Polygon<Exact>& p);
+	void draw(const Polygon<Exact>& p);
 	/// Draws a polygon with holes with the currently set style.
 	virtual void draw(const PolygonWithHoles<Inexact>& p) = 0;
 	/// Draws a polygon with holes with the currently set style.
-	virtual void draw(const PolygonWithHoles<Exact>& p);
+	void draw(const PolygonWithHoles<Exact>& p);
 	/// Draws a circle with the currently set style.
 	virtual void draw(const Circle<Inexact>& c) = 0;
 	/// Draws a circle with the currently set style.
-	virtual void draw(const Circle<Exact>& c);
+	void draw(const Circle<Exact>& c);
 	/// Draws a Bézier spline with the currently set style.
 	//virtual void draw(const BezierSpline<Inexact>& s) = 0; // TODO
-	/// Draws a map region with the currently set style.
-	virtual void draw(const Region& r);
+	/// Draws a polygon set with the currently set style.
+	virtual void draw(const PolygonSet<Inexact>& p);
+	/// Draws a polygon set with the currently set style.
+	void draw(const PolygonSet<Exact>& p);
 
 	/// Draws a string at a given location.
 	/// The string is drawn centered horizontally around the location given.

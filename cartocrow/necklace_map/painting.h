@@ -8,6 +8,7 @@
 
 namespace cartocrow::necklace_map {
 
+namespace detail {
 class DrawNecklaceShapeVisitor : public NecklaceShapeVisitor {
   public:
 	DrawNecklaceShapeVisitor(renderer::GeometryRenderer& renderer);
@@ -17,13 +18,17 @@ class DrawNecklaceShapeVisitor : public NecklaceShapeVisitor {
   private:
 	renderer::GeometryRenderer& m_renderer;
 };
+} // namespace detail
 
-/// The \ref renderer::GeometryPainting "GeometryPainting" for a necklace map.
+/// The \ref renderer::GeometryPainting "GeometryPainting" for a \ref
+/// NecklaceMap.
 class Painting : public renderer::GeometryPainting {
 
   public:
 	/// Options that determine what to draw in the painting.
 	struct Options {
+		/// Default constructor.
+		Options();
 		/// Opacity with which to draw the beads.
 		double m_beadOpacity = 1.0;
 		/// Whether to draw the necklaces themselves.
@@ -34,10 +39,8 @@ class Painting : public renderer::GeometryPainting {
 		bool m_drawConnectors = false;
 	};
 
-	/// Creates a new painting with the given map elements, necklaces, and scale
-	/// factor.
-	Painting(const std::vector<MapElement::Ptr>& elements,
-	         const std::vector<Necklace::Ptr>& necklaces, Number scaleFactor, Options options);
+	/// Creates a new painting for the given necklace map.
+	Painting(const NecklaceMap& necklaceMap, Options options = {});
 
   protected:
 	void paint(renderer::GeometryRenderer& renderer) override;
@@ -49,16 +52,13 @@ class Painting : public renderer::GeometryPainting {
 	void paintNecklaces(renderer::GeometryRenderer& renderer);
 	/// Paints the connectors.
 	void paintConnectors(renderer::GeometryRenderer& renderer);
-	/// Paints the beads.
-	/**
-	 * If \c shadow is \c true, this paints the bead's shadow instead of the
-	 * bead itself.
-	 */
+	/// Paints the beads. If \c shadow is \c true, this paints the bead's
+	/// shadow instead of the bead itself.
 	void paintBeads(renderer::GeometryRenderer& renderer, bool shadow);
 
-	const std::vector<MapElement::Ptr>& m_elements;
-	const std::vector<Necklace::Ptr>& m_necklaces;
-	Number m_scaleFactor;
+	/// The necklace map we are drawing.
+	const NecklaceMap& m_necklaceMap;
+	/// The drawing options.
 	Options m_options;
 };
 

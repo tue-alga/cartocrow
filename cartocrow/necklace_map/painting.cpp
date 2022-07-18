@@ -4,10 +4,11 @@
 #include "../renderer/geometry_renderer.h"
 #include "bezier_necklace.h"
 #include "circle_necklace.h"
+#include <stdexcept>
 
-namespace cartocrow {
-namespace necklace_map {
+namespace cartocrow::necklace_map {
 
+namespace detail {
 DrawNecklaceShapeVisitor::DrawNecklaceShapeVisitor(renderer::GeometryRenderer& renderer)
     : m_renderer(renderer) {}
 
@@ -16,12 +17,15 @@ void DrawNecklaceShapeVisitor::Visit(CircleNecklace& shape) {
 }
 
 void DrawNecklaceShapeVisitor::Visit(BezierNecklace& shape) {
-	m_renderer.draw(shape.spline());
+	// TODO
+	//m_renderer.draw(shape.spline());
 }
+} // namespace detail
 
-Painting::Painting(const std::vector<MapElement::Ptr>& elements,
-                   const std::vector<Necklace::Ptr>& necklaces, Number scaleFactor, Options options)
-    : m_elements(elements), m_necklaces(necklaces), m_scaleFactor(scaleFactor), m_options(options) {}
+Painting::Options::Options() {}
+
+Painting::Painting(const NecklaceMap& necklaceMap, Options options)
+    : m_necklaceMap(necklaceMap), m_options(options) {}
 
 void Painting::paint(renderer::GeometryRenderer& renderer) {
 	paintRegions(renderer);
@@ -34,34 +38,38 @@ void Painting::paint(renderer::GeometryRenderer& renderer) {
 void Painting::paintRegions(renderer::GeometryRenderer& renderer) {
 	renderer.setMode(renderer::GeometryRenderer::fill | renderer::GeometryRenderer::stroke);
 	renderer.setStroke(Color{0, 0, 0}, 2);
-	for (const MapElement::Ptr& element : m_elements) {
-		const Region& region = element->region;
-		if (!element->necklace) {
-			renderer.setFill(Color{255, 255, 255});
-		} else if (element->value <= 0) {
-			renderer.setFill(Color{230, 230, 230});
-		} else {
-			renderer.setFill(element->color);
+	for (const Necklace& necklace : m_necklaceMap.m_necklaces) {
+		for (const std::shared_ptr<Bead>& bead : necklace.beads) {
+			const Region* region = bead->region;
+			/*if (!region->necklace) {
+				renderer.setFill(Color{255, 255, 255});
+			} else if (element->value <= 0) {
+				renderer.setFill(Color{230, 230, 230});
+			} else {*/
+			renderer.setFill(region->color);
+			/*}*/
+			renderer.draw(region->shape);
 		}
-		renderer.draw(region);
 	}
 }
 
 void Painting::paintNecklaces(renderer::GeometryRenderer& renderer) {
 	renderer.setMode(renderer::GeometryRenderer::stroke);
-	DrawNecklaceShapeVisitor visitor(renderer);
-	for (const Necklace::Ptr& necklace : m_necklaces) {
+	detail::DrawNecklaceShapeVisitor visitor(renderer);
+	for (const Necklace& necklace : m_necklaceMap.m_necklaces) {
 		if (m_options.m_drawNecklaceCurve) {
-			necklace->shape->Accept(visitor);
+			necklace.shape->accept(visitor);
 		}
 		if (m_options.m_drawNecklaceKernel) {
-			renderer.draw(necklace->shape->kernel());
+			renderer.draw(necklace.shape->kernel());
 		}
 	}
 }
 
 void Painting::paintConnectors(renderer::GeometryRenderer& renderer) {
-	if (!m_options.m_drawConnectors) {
+	// TODO
+
+	/*if (!m_options.m_drawConnectors) {
 		return;
 	}
 
@@ -78,7 +86,7 @@ void Painting::paintConnectors(renderer::GeometryRenderer& renderer) {
 		CHECK(element->necklace->shape->IntersectRay(element->bead->angle_rad, bead_position));
 		renderer.draw(centroid);
 		renderer.draw(Segment(centroid, bead_position));
-	}
+	}*/
 }
 
 void Painting::paintBeads(renderer::GeometryRenderer& renderer, bool shadow) {
@@ -90,23 +98,24 @@ void Painting::paintBeads(renderer::GeometryRenderer& renderer, bool shadow) {
 		renderer.setMode(renderer::GeometryRenderer::fill | renderer::GeometryRenderer::stroke);
 		renderer.setFillOpacity(static_cast<int>(m_options.m_beadOpacity * 255));
 	}
-	for (const MapElement::Ptr& element : m_elements) {
-		if (!element->bead || !element->bead->valid) {
-			continue;
+	for (const Necklace& necklace : m_necklaceMap.m_necklaces) {
+		for (const std::shared_ptr<Bead>& bead : necklace.beads) {
+			Point<Inexact> position;
+			if (!necklace.shape->intersectRay(bead->angle_rad, position)) {
+				throw new std::runtime_error("Ray to bead \"" + bead->region->name +
+				                             "\" does not intersect necklace");
+			}
+			Number<Inexact> radius = m_necklaceMap.m_scaleFactor * bead->radius_base;
+			if (shadow) {
+				renderer.draw(Circle<Inexact>(position + Vector<Inexact>(5, -5), radius * radius));
+			} else {
+				renderer.setFill(bead->region->color);
+				renderer.draw(Circle<Inexact>(position, radius * radius));
+				renderer.drawText(position, bead->region->name);
+			}
 		}
-		Point position;
-		CHECK(element->necklace->shape->IntersectRay(element->bead->angle_rad, position));
-		Number radius = m_scaleFactor * element->bead->radius_base;
-		if (shadow) {
-			renderer.draw(Circle(position + Vector(5, -5), radius * radius));
-		} else {
-			renderer.setFill(element->color);
-			renderer.draw(Circle(position, radius * radius));
-			renderer.drawText(position, element->region.id);
-		}
+		renderer.setFillOpacity(255);
 	}
-	renderer.setFillOpacity(255);
 }
 
-} // namespace necklace_map
-} // namespace cartocrow
+} // namespace cartocrow::necklace_map
