@@ -107,7 +107,7 @@ void Painting::paintBeads(renderer::GeometryRenderer& renderer, bool shadow) con
 			}
 			Number<Inexact> radius = m_necklaceMap.m_scaleFactor * bead->radius_base;
 			if (shadow) {
-				renderer.draw(Circle<Inexact>(position + Vector<Inexact>(5, -5), radius * radius));
+				renderer.draw(Circle<Inexact>(position + Vector<Inexact>(2, -2), radius * radius));
 			} else {
 				renderer.setFill(bead->region->color);
 				renderer.draw(Circle<Inexact>(position, radius * radius));
