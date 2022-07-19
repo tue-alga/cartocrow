@@ -78,7 +78,7 @@ template <class K> using Arrangement = CGAL::Arrangement_2<CGAL::Arr_segment_tra
  * reason we provide only a definition for `Number<Inexact>` and not for
  * `Number<Exact>`.
  */
-constexpr const Number<Inexact> EPSILON = 0.0000001;
+constexpr const Number<Inexact> M_EPSILON = 0.0000001;
 
 /// Converts a point from exact representation to an approximation in inexact
 /// representation.

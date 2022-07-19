@@ -112,7 +112,7 @@ void TaskSlice::Rotate(const TaskSlice& first_slice, const BitString& layer_set)
 	// Rotate this slice such that the origin is aligned with the start of the other slice.
 	const Number<Inexact>& angle_rad = first_slice.event_from.angle_rad;
 	coverage = CircularRange(coverage.from() - angle_rad, coverage.to() - angle_rad);
-	if (coverage.to() < EPSILON) { // TODO why are we using epsilon here? (and later)
+	if (coverage.to() < M_EPSILON) { // TODO why are we using epsilon here? (and later)
 		coverage.to() = M_2xPI;
 	}
 
@@ -128,18 +128,18 @@ void TaskSlice::Rotate(const TaskSlice& first_slice, const BitString& layer_set)
 			// Disable tasks that start before the first slice, except when that task's bead caused the event to start the first slice.
 			if (layer_set[task->layer]) {
 				if (task->bead != first_slice.event_from.node->bead &&
-				    task->valid->to() <= coverage.from() + EPSILON) {
+				    task->valid->to() <= coverage.from() + M_EPSILON) {
 					task->disabled = true;
 				}
 				task->valid->from() = 0;
 			} else {
-				if (coverage.to() - EPSILON <= task->valid->from()) {
+				if (coverage.to() - M_EPSILON <= task->valid->from()) {
 					task->disabled = true;
 				}
 				task->valid->to() = M_2xPI;
 			}
 		} else {
-			if (task->valid->to() < EPSILON) {
+			if (task->valid->to() < M_EPSILON) {
 				task->valid->to() = M_2xPI;
 			}
 		}

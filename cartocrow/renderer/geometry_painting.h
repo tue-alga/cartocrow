@@ -56,7 +56,7 @@ class GeometryPainting {
 	 * This is a pure virtual method; implement it to define what should be
 	 * rendered by the painting.
 	 */
-	virtual void paint(GeometryRenderer& renderer) = 0;
+	virtual void paint(GeometryRenderer& renderer) const = 0;
 };
 
 } // namespace cartocrow::renderer

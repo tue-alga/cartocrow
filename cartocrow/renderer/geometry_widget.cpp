@@ -31,7 +31,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 namespace cartocrow::renderer {
 
-GeometryWidget::GeometryWidget(GeometryPainting& painting) : m_painting(painting) {
+GeometryWidget::GeometryWidget(const GeometryPainting& painting) : m_painting(painting) {
 	setMouseTracking(true);
 	m_transform.scale(1, -1);
 

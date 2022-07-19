@@ -254,8 +254,8 @@ bool CheckFeasible::ProcessContainer(const size_t first_slice_index,
 		TaskSlice& value_slice = slices_[value_slice_index];
 
 		const CycleNodeLayered::Ptr& task = value.task;
-		if (value.angle_rad + EPSILON < value_slice.coverage.from() ||
-		    (value.angle_rad < value_slice.coverage.from() + EPSILON &&
+		if (value.angle_rad + M_EPSILON < value_slice.coverage.from() ||
+		    (value.angle_rad < value_slice.coverage.from() + M_EPSILON &&
 		     !(task && layer_set[task->layer]))) {
 			// Move to the previous slice.
 			const size_t prev_slice_index = (value_slice_index + num_slices - 1) % num_slices;

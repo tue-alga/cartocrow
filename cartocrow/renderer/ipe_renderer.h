@@ -64,7 +64,7 @@ class IpeRenderer : public GeometryRenderer {
 
   public:
 	/// Constructs a IpeRenderer for the given painting.
-	IpeRenderer(GeometryPainting& painting);
+	IpeRenderer(const GeometryPainting& painting);
 
 	/// Saves the painting to an Ipe file with the given name.
 	void save(const std::filesystem::path& file);
@@ -91,7 +91,7 @@ class IpeRenderer : public GeometryRenderer {
 	ipe::AllAttributes getAttributesForStyle() const;
 
 	/// The painting we're drawing.
-	GeometryPainting& m_painting;
+	const GeometryPainting& m_painting;
 	/// The current drawing style.
 	IpeRendererStyle m_style;
 	/// A stack of drawing styles, used by \ref pushStyle() and \ref popStyle()

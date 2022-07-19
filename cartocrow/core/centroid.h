@@ -27,6 +27,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 05-12-2019
 #include <CGAL/Kernel/global_functions_2.h>
 #include <CGAL/Origin.h>
 #include <glog/logging.h>
+#include <numeric>
 #include <stdexcept>
 
 namespace cartocrow {
@@ -49,7 +50,7 @@ template <class K> Point<K> centroid(const Polygon<K>& polygon) {
 	for (typename Polygon<K>::Edge_const_iterator edge_iter = polygon.edges_begin();
 	     edge_iter != polygon.edges_end(); ++edge_iter) {
 		const Number<K> weight = edge_iter->source().x() * edge_iter->target().y() -
-		                             edge_iter->target().x() * edge_iter->source().y();
+		                         edge_iter->target().x() * edge_iter->source().y();
 		sum += weight * (edge_iter->source() - CGAL::ORIGIN);
 		sum += weight * (edge_iter->target() - CGAL::ORIGIN);
 	}
@@ -67,6 +68,24 @@ template <class K> Point<K> centroid(const PolygonWithHoles<K>& polygon) {
 		Number<K> area = CGAL::abs(hole_iter->area());
 		sum -= area * (centroid(*hole_iter) - CGAL::ORIGIN);
 		areaSum -= area;
+	}
+	return CGAL::ORIGIN + sum / areaSum;
+}
+
+/// Computes the centroid of the given polygon set.
+template <class K> Point<K> centroid(const PolygonSet<K>& polygon) {
+	std::vector<PolygonWithHoles<K>> polygons;
+	polygon.polygons_with_holes(std::back_inserter(polygons));
+	Vector<K> sum(0, 0);
+	Number<K> areaSum = 0;
+	for (const PolygonWithHoles<K>& p : polygons) {
+		Number<K> area = CGAL::abs(p.outer_boundary().area());
+		for (typename PolygonWithHoles<K>::Hole_const_iterator hole_iter = p.holes_begin();
+		     hole_iter != p.holes_end(); ++hole_iter) {
+			area -= CGAL::abs(hole_iter->area());
+		}
+		sum += area * (centroid(p) - CGAL::ORIGIN);
+		areaSum += area;
 	}
 	return CGAL::ORIGIN + sum / areaSum;
 }

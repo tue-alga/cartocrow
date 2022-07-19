@@ -109,3 +109,22 @@ TEST_CASE("Computing the centroid of a polygon with holes") {
 	CHECK(c.x() == Number<Exact>(29) / Number<Exact>(56));
 	CHECK(c.y() == 0.5);
 }
+
+TEST_CASE("Computing the centroid of a polygon set") {
+	Polygon<Exact> p1;
+	p1.push_back(Point<Exact>(0, 0));
+	p1.push_back(Point<Exact>(1, 0));
+	p1.push_back(Point<Exact>(0, 1));
+	CHECK(p1.area() == 0.5);
+	Polygon<Exact> p2;
+	p2.push_back(Point<Exact>(1, 1));
+	p2.push_back(Point<Exact>(2, 0));
+	p2.push_back(Point<Exact>(2, 1));
+	CHECK(p2.area() == 0.5);
+	PolygonSet<Exact> set;
+	set.insert(p1);
+	set.insert(p2);
+	Point<Exact> c = centroid(set);
+	CHECK(c.x() == 1);
+	CHECK(c.y() == 0.5);
+}

@@ -43,18 +43,18 @@ class Painting : public renderer::GeometryPainting {
 	Painting(const NecklaceMap& necklaceMap, Options options = {});
 
   protected:
-	void paint(renderer::GeometryRenderer& renderer) override;
+	void paint(renderer::GeometryRenderer& renderer) const override;
 
   private:
 	/// Paints the regions.
-	void paintRegions(renderer::GeometryRenderer& renderer);
+	void paintRegions(renderer::GeometryRenderer& renderer) const;
 	/// Paints the necklaces.
-	void paintNecklaces(renderer::GeometryRenderer& renderer);
+	void paintNecklaces(renderer::GeometryRenderer& renderer) const;
 	/// Paints the connectors.
-	void paintConnectors(renderer::GeometryRenderer& renderer);
+	void paintConnectors(renderer::GeometryRenderer& renderer) const;
 	/// Paints the beads. If \c shadow is \c true, this paints the bead's
 	/// shadow instead of the bead itself.
-	void paintBeads(renderer::GeometryRenderer& renderer, bool shadow);
+	void paintBeads(renderer::GeometryRenderer& renderer, bool shadow) const;
 
 	/// The necklace map we are drawing.
 	const NecklaceMap& m_necklaceMap;

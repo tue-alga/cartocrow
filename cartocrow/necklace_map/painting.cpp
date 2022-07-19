@@ -27,7 +27,7 @@ Painting::Options::Options() {}
 Painting::Painting(const NecklaceMap& necklaceMap, Options options)
     : m_necklaceMap(necklaceMap), m_options(options) {}
 
-void Painting::paint(renderer::GeometryRenderer& renderer) {
+void Painting::paint(renderer::GeometryRenderer& renderer) const {
 	paintRegions(renderer);
 	paintNecklaces(renderer);
 	paintConnectors(renderer);
@@ -35,7 +35,7 @@ void Painting::paint(renderer::GeometryRenderer& renderer) {
 	paintBeads(renderer, false);
 }
 
-void Painting::paintRegions(renderer::GeometryRenderer& renderer) {
+void Painting::paintRegions(renderer::GeometryRenderer& renderer) const {
 	renderer.setMode(renderer::GeometryRenderer::fill | renderer::GeometryRenderer::stroke);
 	renderer.setStroke(Color{0, 0, 0}, 2);
 	for (const Necklace& necklace : m_necklaceMap.m_necklaces) {
@@ -53,7 +53,7 @@ void Painting::paintRegions(renderer::GeometryRenderer& renderer) {
 	}
 }
 
-void Painting::paintNecklaces(renderer::GeometryRenderer& renderer) {
+void Painting::paintNecklaces(renderer::GeometryRenderer& renderer) const {
 	renderer.setMode(renderer::GeometryRenderer::stroke);
 	detail::DrawNecklaceShapeVisitor visitor(renderer);
 	for (const Necklace& necklace : m_necklaceMap.m_necklaces) {
@@ -66,7 +66,7 @@ void Painting::paintNecklaces(renderer::GeometryRenderer& renderer) {
 	}
 }
 
-void Painting::paintConnectors(renderer::GeometryRenderer& renderer) {
+void Painting::paintConnectors(renderer::GeometryRenderer& renderer) const {
 	// TODO
 
 	/*if (!m_options.m_drawConnectors) {
@@ -89,7 +89,7 @@ void Painting::paintConnectors(renderer::GeometryRenderer& renderer) {
 	}*/
 }
 
-void Painting::paintBeads(renderer::GeometryRenderer& renderer, bool shadow) {
+void Painting::paintBeads(renderer::GeometryRenderer& renderer, bool shadow) const {
 	if (shadow) {
 		renderer.setMode(renderer::GeometryRenderer::fill);
 		renderer.setFillOpacity(80);

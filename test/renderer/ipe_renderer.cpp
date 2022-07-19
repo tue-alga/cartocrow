@@ -13,7 +13,7 @@ using namespace cartocrow;
 
 TEST_CASE("Exporting marks to Ipe") {
 	class TestPainting : public renderer::GeometryPainting {
-		void paint(renderer::GeometryRenderer& renderer) {
+		void paint(renderer::GeometryRenderer& renderer) const override {
 			renderer.draw(Point<Exact>(0, 0));
 			renderer.draw(Point<Exact>(2, 1));
 		}
@@ -34,7 +34,7 @@ TEST_CASE("Exporting marks to Ipe") {
 
 TEST_CASE("Exporting a line segment to Ipe") {
 	class TestPainting : public renderer::GeometryPainting {
-		void paint(renderer::GeometryRenderer& renderer) {
+		void paint(renderer::GeometryRenderer& renderer) const override {
 			renderer.draw(Segment<Exact>(Point<Exact>(2, 3), Point<Exact>(1, 4)));
 		}
 	};

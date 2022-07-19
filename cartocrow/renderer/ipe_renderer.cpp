@@ -34,7 +34,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 namespace cartocrow::renderer {
 
-IpeRenderer::IpeRenderer(GeometryPainting& painting) : m_painting(painting) {}
+IpeRenderer::IpeRenderer(const GeometryPainting& painting) : m_painting(painting) {}
 
 void IpeRenderer::save(const std::filesystem::path& file) {
 	ipe::Platform::initLib(70224);

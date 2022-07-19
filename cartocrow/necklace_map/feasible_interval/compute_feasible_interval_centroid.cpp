@@ -24,6 +24,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 03-03-2020
 
 #include <glog/logging.h>
 
+#include "../../core/centroid.h"
 #include "../necklace_interval.h"
 
 namespace cartocrow::necklace_map {
@@ -38,10 +39,8 @@ namespace cartocrow::necklace_map {
 
 CircularRange ComputeFeasibleCentroidInterval::operator()(const PolygonSet<Inexact>& shape,
                                                           const Necklace& necklace) const {
-	// TODO TODO TODO the next line is for debugging only, ComputeCentroid should be implemented instead!
-	const Point<Inexact> centroid(0, 0);
-	//const Point<Inexact> centroid = ComputeCentroid()(shape);
-	const Number<Inexact> angle_rad = necklace.shape->computeAngleRad(centroid);
+	const Point<Inexact> c = cartocrow::centroid(shape);
+	const Number<Inexact> angle_rad = necklace.shape->computeAngleRad(c);
 
 	return IntervalCentroid(angle_rad - half_length_rad_, angle_rad + half_length_rad_);
 }

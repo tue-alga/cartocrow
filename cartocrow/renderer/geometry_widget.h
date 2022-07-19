@@ -57,7 +57,7 @@ class GeometryWidget : public QWidget, GeometryRenderer {
 
   public:
 	/// Constructs a GeometryWidget for the given painting.
-	GeometryWidget(GeometryPainting& painting);
+	GeometryWidget(const GeometryPainting& painting);
 
 	void draw(const Point<Inexact>& p) override;
 	void draw(const Segment<Inexact>& s) override;
@@ -121,7 +121,7 @@ class GeometryWidget : public QWidget, GeometryRenderer {
 	/// Moves the zoom slider knob to the currently set zoom level.
 	void updateZoomSlider();
 	/// The painting we're drawing.
-	GeometryPainting& m_painting;
+	const GeometryPainting& m_painting;
 	/// The QPainter we are drawing with. Only valid while painting.
 	std::unique_ptr<QPainter> m_painter;
 	/// The transform from drawing coordinates to Qt coordinates.
