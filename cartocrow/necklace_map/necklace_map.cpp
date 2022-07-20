@@ -50,7 +50,6 @@ Parameters& NecklaceMap::parameters() {
 void NecklaceMap::compute() {
 	// compute the feasible region for each bead
 	for (auto& necklace : m_necklaces) {
-		std::cout << "Necklace" << std::endl;
 		for (auto& bead : necklace.beads) {
 			(*ComputeFeasibleInterval::construct(m_parameters))(bead, necklace);
 		}
@@ -66,51 +65,5 @@ void NecklaceMap::compute() {
 Number<Inexact> NecklaceMap::scaleFactor() {
 	return m_scaleFactor;
 }
-
-// TODO remove the following methods, kept for now for reference
-
-/*Number<Inexact> computeScaleFactor(const Parameters& parameters,
-                                   std::vector<MapElement::Ptr>& elements,
-                                   std::vector<Necklace::Ptr>& necklaces) {
-	// create a bead per necklace that an element is part of
-	for (Necklace::Ptr& necklace : necklaces) {
-		necklace->beads.clear();
-	}
-	for (MapElement::Ptr& element : elements) {
-		element->InitializeBead(parameters);
-	}
-
-	// generate intervals based on the regions and necklaces
-	(*ComputeFeasibleInterval::New(parameters))(elements);
-
-	// compute the scaling factor
-	const Number scale_factor = (*ComputeScaleFactor::New(parameters))(necklaces);
-
-	// compute valid placement
-	(*ComputeValidPlacement::New(parameters))(scale_factor, necklaces);
-
-	return scale_factor;
-}*/
-
-/*void computePlacement(const Parameters& parameters, const Number<Inexact>& scale_factor,
-                      std::vector<MapElement::Ptr>& elements, std::vector<Necklace::Ptr>& necklaces) {
-	// create a bead per necklace that an element is part of
-	for (Necklace::Ptr& necklace : necklaces) {
-		necklace->beads.clear();
-	}
-	for (MapElement::Ptr& element : elements) {
-		element->InitializeBead(parameters);
-
-		if (element->bead) {
-			CHECK_NOTNULL(element->input_feasible);
-
-			element->bead->angle_rad = element->input_angle_rad;
-			element->bead->feasible = element->input_feasible;
-		}
-	}
-
-	// compute valid placement
-	(*ComputeValidPlacement::New(parameters))(scale_factor, necklaces);
-}*/
 
 } // namespace cartocrow::necklace_map
