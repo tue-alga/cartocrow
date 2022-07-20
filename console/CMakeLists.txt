@@ -67,6 +67,8 @@ endmacro(cartocrow_add_cla)
 # Most command-line applications use gflags to parse command-line arguments.
 find_package(gflags REQUIRED)
 
+find_package(nlohmann_json REQUIRED)
+
 # ## LIBRARIES ###
 add_subdirectory(common)
 
@@ -74,14 +76,15 @@ add_subdirectory(common)
 set(COMMON_CLA_TARGET ${COMMON_CLA_TARGET} PARENT_SCOPE)
 
 # ## EXECUTABLES ###
-add_subdirectory(print_arguments)
-add_subdirectory(multi_library_app)
-add_subdirectory(necklace_map_cla)
-add_subdirectory(necklace_map_gui)
-add_subdirectory(map_regions)
-#add_subdirectory(flow_map_cla)
-add_subdirectory(flow_map_gui)
-add_subdirectory(visvalingam-whyatt_cla)
+add_subdirectory(cartocrow)
+
+# add_subdirectory(print_arguments)
+# add_subdirectory(multi_library_app)
+# add_subdirectory(necklace_map_cla)
+# add_subdirectory(map_regions)
+# add_subdirectory(flow_map_cla)
+# add_subdirectory(flow_map_gui)
+# add_subdirectory(visvalingam-whyatt_cla)
 
 # Set the default executable to run in Visual Studio.
 if(MSVC)

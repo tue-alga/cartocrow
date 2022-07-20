@@ -58,7 +58,6 @@ find_package(GMP REQUIRED)
 
 find_package(Qt5Widgets REQUIRED)
 find_package(glog REQUIRED)
-find_package(tinyxml2 REQUIRED)
 find_package(gflags CONFIG REQUIRED)
 find_package(Ipelib REQUIRED)
 

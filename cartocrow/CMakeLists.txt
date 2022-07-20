@@ -25,9 +25,9 @@ add_subdirectory(necklace_map)
 add_subdirectory(flow_map)
 add_subdirectory(visvalingam-whyatt)
 
-add_library(cartocrow INTERFACE)
+add_library(cartocrow_lib INTERFACE)
 target_link_libraries(
-    cartocrow INTERFACE
+    cartocrow_lib INTERFACE
     core
     renderer
     necklace_map
@@ -36,7 +36,7 @@ target_link_libraries(
 )
 
 install(
-    TARGETS cartocrow
+    TARGETS cartocrow_lib
     EXPORT ${CARTOCROW_EXPORT_TARGETS}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBRARY_DIR}
     INCLUDES DESTINATION ${CMAKE_INSTALL_SOURCE_DIR}
