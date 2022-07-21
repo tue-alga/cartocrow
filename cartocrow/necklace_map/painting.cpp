@@ -102,8 +102,8 @@ void Painting::paintBeads(renderer::GeometryRenderer& renderer, bool shadow) con
 		for (const std::shared_ptr<Bead>& bead : necklace.beads) {
 			Point<Inexact> position;
 			if (!necklace.shape->intersectRay(bead->angle_rad, position)) {
-				throw new std::runtime_error("Ray to bead \"" + bead->region->name +
-				                             "\" does not intersect necklace");
+				throw std::runtime_error("Ray to bead \"" + bead->region->name +
+				                         "\" does not intersect necklace");
 			}
 			Number<Inexact> radius = m_necklaceMap.m_scaleFactor * bead->radius_base;
 			if (shadow) {

@@ -29,6 +29,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-2019
 
 #include <nlohmann/json.hpp>
 
+#include "cartocrow/core/region_arrangement.h"
 #include "cartocrow/core/region_map.h"
 #include "cartocrow/necklace_map/circle_necklace.h"
 #include "cartocrow/necklace_map/necklace_map.h"

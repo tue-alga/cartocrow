@@ -52,18 +52,18 @@ TEST_CASE("Reading a region with a symbolic color from an Ipe file") {
 	CHECK(r1.color.b == 0);
 }
 
-TEST_CASE("Reading an Ipe file with a non-simple polygon") {
+TEST_CASE("Reading an Ipe file with a non-simple polygon (should throw)") {
 	CHECK_THROWS_WITH(ipeToRegionMap(std::filesystem::path("data/test_region_map_non_simple.ipe")),
 	                  "Encountered non-simple polygon");
 }
 
-TEST_CASE("Reading an Ipe file with a region containing no label") {
+TEST_CASE("Reading an Ipe file with a region containing no label (should throw)") {
 	CHECK_THROWS_WITH(
 	    ipeToRegionMap(std::filesystem::path("data/test_region_map_missing_label.ipe")),
 	    "Encountered region without a label");
 }
 
-TEST_CASE("Reading an Ipe file with a region containing two labels") {
+TEST_CASE("Reading an Ipe file with a region containing two labels (should throw)") {
 	CHECK_THROWS_WITH(ipeToRegionMap(std::filesystem::path("data/test_region_map_two_labels.ipe")),
 	                  "Encountered region with more than one label");
 }

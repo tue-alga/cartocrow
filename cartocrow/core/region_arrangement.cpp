@@ -19,23 +19,49 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "region_arrangement.h"
 
+#include <CGAL/Arr_overlay_2.h>
+#include <CGAL/Surface_sweep_2/Arr_default_overlay_traits_base.h>
+#include <CGAL/draw_polygon_set_2.h>
+#include <CGAL/number_utils.h>
+
 namespace cartocrow {
+
+namespace detail {
+struct RegionOverlayTraits
+    : public CGAL::_Arr_default_overlay_traits_base<RegionArrangement, PolygonSet<Exact>::Arrangement_2,
+                                                    RegionArrangement> {
+
+	RegionOverlayTraits(std::string newId) : m_newId(newId) {}
+
+	virtual void create_face(Face_handle_A f1, Face_handle_B f2, Face_handle_R f) {
+		if (f2->contained()) {
+			std::string id = f1->data();
+			if (f1->data() != "") {
+				Point<Exact> p = f->outer_ccb()->source()->point();
+				throw std::runtime_error("Found overlapping regions \"" + f1->data() + "\" and \"" +
+				                         m_newId + "\" (at " + std::to_string(CGAL::to_double(p.x())) +
+				                         ", " + std::to_string(CGAL::to_double(p.y())) + ")");
+			}
+			f->set_data(m_newId);
+		} else {
+			f->set_data(f1->data());
+		}
+	}
+
+  private:
+	std::string m_newId;
+};
+} // namespace detail
 
 RegionArrangement regionMapToArrangement(const RegionMap& map) {
 	RegionArrangement arrangement;
 
 	for (const auto& [id, region] : map) {
-		std::vector<PolygonWithHoles<Exact>> polygons;
-		region.shape.polygons_with_holes(std::back_inserter(polygons));
-		Vector<Exact> sum(0, 0);
-		Number<Exact> areaSum = 0;
-		for (const PolygonWithHoles<Exact>& p : polygons) {
-			const Polygon<Exact>& outside = p.outer_boundary();
-			for (auto e = outside.edges_begin(); e < outside.edges_end(); ++e) {
-				CGAL::insert(arrangement, Segment<Exact>(e->source(), e->target()));
-			}
-			// TODO handle holes, insert id
-		}
+		const auto& regionArrangement = region.shape.arrangement();
+		RegionArrangement result;
+		detail::RegionOverlayTraits overlayTraits(id);
+		CGAL::overlay(arrangement, region.shape.arrangement(), result, overlayTraits);
+		arrangement = result;
 	}
 
 	return arrangement;
