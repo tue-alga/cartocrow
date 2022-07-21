@@ -25,38 +25,39 @@ Created by Wouter Meulemans (w.meulemans@tue.nl) on 31-08-2021
 #include <queue>
 #include <vector>
 
-#include "cartocrow/core/core_types.h"
+#include "../core/core.h"
 
-namespace cartocrow {
-namespace visvalingam_whyatt {
+namespace cartocrow::vw_simplification {
 
 struct VWPoint {
 
-	VWPoint(const Point& pt);
+	VWPoint(const Point<Exact>& pt);
 
-	Point pt;
+	Point<Exact> pt;
 	int removedAt;
-	Number cost;
-}; // struct VWPoint
+	Number<Exact> cost;
+};
 
+/// A class to perform Visvalingam-Whyatt simplification.
 class VWSimplification {
 
   public:
-	VWSimplification(std::vector<Point>* pts);
+	/// Constructs a simplification for a sequence of points.
+	/// \param pts The sequence of 2D points.
+	VWSimplification(std::shared_ptr<std::vector<Point<Exact>>> pts);
 	~VWSimplification();
 
-	Number ConstructAtComplexity(const int k);
+	Number<Exact> constructAtComplexity(const int k);
 
   private:
-	void ContinueToComplexity(const int k);
-	void RecomputeCost(const int i);
+	void continueToComplexity(const int k);
+	void recomputeCost(const int i);
 
-	std::vector<Point>* input;
-	std::vector<VWPoint*> complete;
-	std::vector<VWPoint*> current;
-}; // class VWSimplification
+	std::shared_ptr<std::vector<Point<Exact>>> m_input;
+	std::vector<VWPoint*> m_complete;
+	std::vector<VWPoint*> m_current;
+};
 
-} // namespace visvalingam_whyatt
-} // namespace cartocrow
+} // namespace cartocrow::vw_simplification
 
 #endif //CARTOCROW_VWSIMPL_VW_H

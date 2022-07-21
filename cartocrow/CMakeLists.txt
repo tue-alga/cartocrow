@@ -22,9 +22,9 @@ endmacro(cartocrow_add_library)
 add_subdirectory(core)
 add_subdirectory(renderer)
 add_subdirectory(necklace_map)
+add_subdirectory(vw_simplification)
 
 # add_subdirectory(flow_map)
-# add_subdirectory(visvalingam-whyatt)
 add_library(cartocrow_lib INTERFACE)
 target_link_libraries(
     cartocrow_lib INTERFACE

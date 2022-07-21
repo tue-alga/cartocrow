@@ -39,5 +39,5 @@ TEST_CASE("Converting overlapping regions to an arrangement (should throw)") {
 	CHECK(map.size() == 2);
 	CHECK(map.contains("R1"));
 	CHECK(map.contains("R2"));
-	CHECK_THROWS_WITH(regionMapToArrangement(map), "Found overlapping regions \"R1\" and \"R2\"");
+	CHECK_THROWS_WITH(regionMapToArrangement(map), Catch::StartsWith("Found overlapping regions "));
 }
