@@ -31,14 +31,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 namespace cartocrow {
 
-namespace detail {
-using DCELTraits = CGAL::Arr_segment_traits_2<Exact>;
-
-template <typename TVertexData, typename TEdgeData, typename TFaceData>
-using MapArrangement =
-    CGAL::Arrangement_2<CGAL::Arr_extended_dcel<DCELTraits, TVertexData, TEdgeData, TFaceData>>;
-} // namespace detail
-
 /// The data describing a single region in a region map.
 class Region {
   public:
@@ -82,16 +74,6 @@ std::optional<size_t> findLabelInside(const PolygonSet<Exact>& shape,
 /// Throws if the file could not be read, if the file is not a valid Ipe file,
 /// or if the file does not contain regions like specified above.
 RegionMap ipeToRegionMap(const std::filesystem::path& file);
-
-class Empty {};
-
-/// A map consisting of polygonal regions.
-/**
- * This is an \ref Arrangement where each face has \ref RegionData.
- *
- * A RegionMap can be read from an Ipe file by using \ref readIpeRegionMap().
- */
-using RegionArrangement = detail::MapArrangement<Empty, Empty, Region>;
 
 } // namespace cartocrow
 
