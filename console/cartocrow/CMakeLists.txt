@@ -4,12 +4,15 @@ set(SOURCES
 
 add_executable(cartocrow ${SOURCES})
 
+find_package(nlohmann_json REQUIRED)
+
 target_link_libraries(
     cartocrow
     PRIVATE
     ${COMMON_CLA_TARGET}
-    necklace_map
     core
+    flow_map
+    necklace_map
     renderer
     CGAL::CGAL
     Qt5::Widgets

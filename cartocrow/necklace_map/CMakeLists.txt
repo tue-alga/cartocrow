@@ -26,9 +26,6 @@ set(SOURCES
 	necklace_shape.cpp
 	painting.cpp
 	parameters.cpp
-	polar_line.cpp
-	polar_point.cpp
-	polar_segment.cpp
 	range.cpp
 )
 set(HEADERS
@@ -60,9 +57,6 @@ set(HEADERS
 	necklace_shape.h
 	painting.h
 	parameters.h
-	polar_line.h
-	polar_point.h
-	polar_segment.h
 	range.h
 )
 
@@ -76,5 +70,3 @@ install(TARGETS necklace_map
 	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBRARY_DIR}
 	INCLUDES DESTINATION ${CMAKE_INSTALL_SOURCE_DIR}
 )
-
-# install_files_and_directories("${HEADERS}" ${CARTOCROW_INSTALL_DIR}/necklace_map)

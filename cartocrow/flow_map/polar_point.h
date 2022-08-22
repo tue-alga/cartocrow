@@ -27,17 +27,16 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 04-09-2020
 
 #include "../core/core.h"
 
-namespace cartocrow::necklace_map {
+namespace cartocrow::flow_map {
 
 /// A 2D point with polar coordinates.
-/**
- * A polar point stores a distance \f$r \geq 0\f$ to the origin \f$(0, 0)\f$
- * and a counter-clockwise angle \f$\phi \in [-\pi, \pi)\f$. It corresponds to
- * a point with Cartesian coordinates
- * \f[
- * (r \cdot \cos \phi, r \cdot \sin \phi) \text{.}
- * \f]
- */
+///
+/// A polar point stores a distance \f$r \geq 0\f$ to the origin \f$(0, 0)\f$
+/// and a counter-clockwise angle \f$\phi \in [-\pi, \pi)\f$. It corresponds to
+/// a point with Cartesian coordinates
+/// \f[
+/// (r \cdot \cos \phi, r \cdot \sin \phi) \text{.}
+/// \f]
 class PolarPoint {
   public:
 	/// Constructs a polar point at the origin.
@@ -52,6 +51,8 @@ class PolarPoint {
 	/// Copy constructor.
 	PolarPoint(const PolarPoint& p);
 
+	/// Constructs a polar point that corresponds to \f$p + t\f$, where \f$p\f$
+	/// is a polar point and \f$t\f$ is a vector in Cartesian coordinates.
 	PolarPoint(const PolarPoint& p, const Vector<Inexact>& t);
 
 	/// Constructs a polar point from a point in Cartesian coordinates.
@@ -59,18 +60,24 @@ class PolarPoint {
 
 	PolarPoint(const Point<Inexact>& p, const Vector<Inexact>& t);
 
-	/// Returns the distance from the origin.
-	const Number<Inexact>& R() const;
-	/// Returns the angle relative to the origin.
-	const Number<Inexact>& phi() const;
+	/// Returns the distance \f$r\f$ from the origin.
+	const Number<Inexact> r() const;
+	/// Returns the distance \f$r^2\f$ from the origin.
+	const Number<Inexact> rSquared() const;
+	/// Returns the angle \f$\phi\f$ relative to the origin.
+	const Number<Inexact> phi() const;
 
 	/// Returns the point in Cartesian coordinates corresponding to this polar
 	/// point.
-	Point<Inexact> to_cartesian() const;
+	Point<Inexact> toCartesian() const;
 
   private:
-	static PolarPoint to_polar(const Point<Inexact>& p);
-	static PolarPoint translate_pole(const PolarPoint& p, const Vector<Inexact>& t);
+	/// Returns a polar point corresponding to the given point in Cartesian
+	/// coordinates.
+	static PolarPoint toPolar(const Point<Inexact>& p);
+	/// Returns a polar point that corresponds to \f$p + t\f$, where \f$p\f$
+	/// is a polar point and \f$t\f$ is a vector in Cartesian coordinates.
+	static PolarPoint translate(const PolarPoint& p, const Vector<Inexact>& t);
 
 	/// The distance from the origin.
 	Number<Inexact> m_r;
@@ -79,10 +86,9 @@ class PolarPoint {
 };
 
 /// Checks if two polar points are equal.
-/**
- * Two polar points \f$(r_1, \phi_1)\f$ and \f$(r_2, \phi_2)\f$ are equal if
- * \f$r_1 = r_2\f$ and \f$\phi_1 = \phi_2\f$, or if \f$r_1 = r_2 = 0\f$.
- */
+///
+/// Two polar points \f$(r_1, \phi_1)\f$ and \f$(r_2, \phi_2)\f$ are equal if
+/// \f$r_1 = r_2\f$ and \f$\phi_1 = \phi_2\f$, or if \f$r_1 = r_2 = 0\f$.
 bool operator==(const PolarPoint& p, const PolarPoint& q);
 
 /// Checks if two polar points are not equal.
@@ -91,6 +97,6 @@ bool operator!=(const PolarPoint& p, const PolarPoint& q);
 /// Outputs a polar point to an output stream.
 std::ostream& operator<<(std::ostream& os, const PolarPoint& point);
 
-} // namespace cartocrow::necklace_map
+} // namespace cartocrow::flow_map
 
 #endif //CARTOCROW_CORE_POLAR_POINT_H

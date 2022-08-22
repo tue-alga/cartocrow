@@ -40,7 +40,7 @@ class Painting : public renderer::GeometryPainting {
 	};
 
 	/// Creates a new painting for the given necklace map.
-	Painting(const NecklaceMap& necklaceMap, Options options = {});
+	Painting(std::shared_ptr<NecklaceMap> necklaceMap, Options options = {});
 
   protected:
 	void paint(renderer::GeometryRenderer& renderer) const override;
@@ -57,7 +57,7 @@ class Painting : public renderer::GeometryPainting {
 	void paintBeads(renderer::GeometryRenderer& renderer, bool shadow) const;
 
 	/// The necklace map we are drawing.
-	const NecklaceMap& m_necklaceMap;
+	std::shared_ptr<NecklaceMap> m_necklaceMap;
 	/// The drawing options.
 	Options m_options;
 };

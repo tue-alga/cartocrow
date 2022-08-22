@@ -29,17 +29,23 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-2019
 
 #include <nlohmann/json.hpp>
 
+#include "cartocrow/core/centroid.h"
 #include "cartocrow/core/region_arrangement.h"
 #include "cartocrow/core/region_map.h"
+#include "cartocrow/flow_map/painting.h"
+#include "cartocrow/flow_map/parameters.h"
+#include "cartocrow/flow_map/place.h"
+#include "cartocrow/flow_map/spiral_tree.h"
+#include "cartocrow/flow_map/spiral_tree_unobstructed_algorithm.h"
 #include "cartocrow/necklace_map/circle_necklace.h"
 #include "cartocrow/necklace_map/necklace_map.h"
 #include "cartocrow/necklace_map/painting.h"
 #include "cartocrow/necklace_map/parameters.h"
+#include "cartocrow/renderer/geometry_painting.h"
 #include "cartocrow/renderer/geometry_widget.h"
 #include "cartocrow/renderer/ipe_renderer.h"
 
 using namespace cartocrow;
-using namespace cartocrow::necklace_map;
 using json = nlohmann::json;
 
 int main(int argc, char* argv[]) {
@@ -59,34 +65,71 @@ int main(int argc, char* argv[]) {
 	std::ifstream f(projectFilename);
 	json projectData = json::parse(f);
 
-	std::cout << projectFilename.parent_path() / projectData["map"] << std::endl;
 	RegionMap map = ipeToRegionMap(projectFilename.parent_path() / projectData["map"]);
 	auto map_ptr = std::make_shared<RegionMap>(map);
 
-	NecklaceMap necklaceMap(map_ptr);
-	Parameters& parameters = necklaceMap.parameters();
-	parameters.wedge_interval_length_min_rad = 0.1 * M_PI;
-	parameters.centroid_interval_length_rad = 0.2 * M_PI;
-	parameters.order_type = cartocrow::necklace_map::OrderType::kAny;
-	parameters.aversion_ratio = 0.5;
+	std::shared_ptr<renderer::GeometryPainting> painting;
+	std::shared_ptr<renderer::GeometryPainting> debugPainting;
 
-	for (json& n : projectData["necklaces"]) {
-		auto necklace = necklaceMap.addNecklace(std::make_unique<CircleNecklace>(
-		    Circle<Inexact>(Point<Inexact>(n["shape"]["center"][0], n["shape"]["center"][1]),
-		                    std::pow(n["shape"]["radius"].get<double>(), 2))));
-		for (std::string b : n["beads"]) {
-			necklaceMap.addBead(b, projectData["data"][b], necklace);
+	if (projectData["type"] == "necklace_map") {
+		std::shared_ptr<necklace_map::NecklaceMap> necklaceMap =
+		    std::make_shared<necklace_map::NecklaceMap>(map_ptr);
+		necklace_map::Parameters& parameters = necklaceMap->parameters();
+		parameters.wedge_interval_length_min_rad = 0.1 * M_PI;
+		parameters.centroid_interval_length_rad = 0.2 * M_PI;
+		parameters.order_type = cartocrow::necklace_map::OrderType::kAny;
+		parameters.aversion_ratio = 0.5;
+
+		for (json& n : projectData["necklaces"]) {
+			auto necklace = necklaceMap->addNecklace(std::make_unique<necklace_map::CircleNecklace>(
+			    Circle<Inexact>(Point<Inexact>(n["shape"]["center"][0], n["shape"]["center"][1]),
+			                    std::pow(n["shape"]["radius"].get<double>(), 2))));
+			for (std::string b : n["beads"]) {
+				necklaceMap->addBead(b, projectData["data"][b], necklace);
+			}
 		}
+		necklaceMap->compute();
+
+		necklace_map::Painting::Options options;
+		painting = std::make_shared<necklace_map::Painting>(necklaceMap, options);
+
+	} else if (projectData["type"] == "flow_map") {
+		// TODO [ws] this is temporary: draw the spiral tree until the flow map
+		// is implemented
+		Region& root = (*map_ptr)[projectData["root"]];
+		std::shared_ptr<flow_map::SpiralTree> tree = std::make_shared<flow_map::SpiralTree>(
+		    approximate(centroid(root.shape)), projectData["parameters"]["angle"].get<double>());
+		for (auto it = projectData["data"].begin(); it != projectData["data"].end(); ++it) {
+			tree->addPlace(it.key(), approximate(centroid((*map_ptr)[it.key()].shape)),
+			               it.value().get<double>());
+		}
+		tree->addShields();
+
+		flow_map::SpiralTreeUnobstructedAlgorithm algorithm(*tree);
+		algorithm.run();
+		debugPainting = algorithm.debugPainting();
+
+		flow_map::Painting::Options options;
+		painting = std::make_shared<flow_map::Painting>(map_ptr, tree, options);
+
+	} else {
+		std::cerr << "Unknown type \"" << projectData["type"] << "\" specified\n";
 	}
 
-	necklaceMap.compute();
+	if (outputFilename == "") {
+		QApplication a(argc, argv);
+		a.setApplicationName("CartoCrow GUI");
 
-	QApplication a(argc, argv);
-	a.setApplicationName("CartoCrow necklace map demo");
-	cartocrow::necklace_map::Painting::Options options;
-	cartocrow::necklace_map::Painting painting(necklaceMap, options);
+		cartocrow::renderer::GeometryWidget widget(painting);
+		if (debugPainting) {
+			widget.addPainting(debugPainting);
+		}
+		widget.show();
+		return a.exec();
 
-	cartocrow::renderer::GeometryWidget widget(painting);
-	widget.show();
-	return a.exec();
+	} else {
+		cartocrow::renderer::IpeRenderer renderer(*painting);
+		renderer.save(outputFilename);
+		return 0;
+	}
 }

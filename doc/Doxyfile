@@ -32,6 +32,7 @@ HTML_OUTPUT            = .
 HTML_EXTRA_STYLESHEET  = "doc/doxygen-awesome-css/doxygen-awesome.css" "doc/doxygen-awesome-css/doxygen-awesome-sidebar-only.css"
 HTML_DYNAMIC_SECTIONS  = YES
 GENERATE_TREEVIEW      = YES
+LAYOUT_FILE            = "doc/layout.xml"
 
 MACRO_EXPANSION        = YES
 EXPAND_ONLY_PREDEF     = YES

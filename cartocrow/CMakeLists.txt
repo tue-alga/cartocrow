@@ -23,17 +23,16 @@ add_subdirectory(core)
 add_subdirectory(renderer)
 add_subdirectory(necklace_map)
 add_subdirectory(vw_simplification)
+add_subdirectory(flow_map)
 
-# add_subdirectory(flow_map)
 add_library(cartocrow_lib INTERFACE)
 target_link_libraries(
     cartocrow_lib INTERFACE
     core
     renderer
     necklace_map
-
-    # flow_map
-    # vw_simplification
+    flow_map
+    vw_simplification
 )
 
 install(

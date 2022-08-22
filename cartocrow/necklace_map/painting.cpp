@@ -24,7 +24,7 @@ void DrawNecklaceShapeVisitor::Visit(BezierNecklace& shape) {
 
 Painting::Options::Options() {}
 
-Painting::Painting(const NecklaceMap& necklaceMap, Options options)
+Painting::Painting(std::shared_ptr<NecklaceMap> necklaceMap, Options options)
     : m_necklaceMap(necklaceMap), m_options(options) {}
 
 void Painting::paint(renderer::GeometryRenderer& renderer) const {
@@ -38,7 +38,7 @@ void Painting::paint(renderer::GeometryRenderer& renderer) const {
 void Painting::paintRegions(renderer::GeometryRenderer& renderer) const {
 	renderer.setMode(renderer::GeometryRenderer::fill | renderer::GeometryRenderer::stroke);
 	renderer.setStroke(Color{0, 0, 0}, 2);
-	for (const Necklace& necklace : m_necklaceMap.m_necklaces) {
+	for (const Necklace& necklace : m_necklaceMap->m_necklaces) {
 		for (const std::shared_ptr<Bead>& bead : necklace.beads) {
 			const Region* region = bead->region;
 			/*if (!region->necklace) {
@@ -56,7 +56,7 @@ void Painting::paintRegions(renderer::GeometryRenderer& renderer) const {
 void Painting::paintNecklaces(renderer::GeometryRenderer& renderer) const {
 	renderer.setMode(renderer::GeometryRenderer::stroke);
 	detail::DrawNecklaceShapeVisitor visitor(renderer);
-	for (const Necklace& necklace : m_necklaceMap.m_necklaces) {
+	for (const Necklace& necklace : m_necklaceMap->m_necklaces) {
 		if (m_options.m_drawNecklaceCurve) {
 			necklace.shape->accept(visitor);
 		}
@@ -98,14 +98,14 @@ void Painting::paintBeads(renderer::GeometryRenderer& renderer, bool shadow) con
 		renderer.setMode(renderer::GeometryRenderer::fill | renderer::GeometryRenderer::stroke);
 		renderer.setFillOpacity(static_cast<int>(m_options.m_beadOpacity * 255));
 	}
-	for (const Necklace& necklace : m_necklaceMap.m_necklaces) {
+	for (const Necklace& necklace : m_necklaceMap->m_necklaces) {
 		for (const std::shared_ptr<Bead>& bead : necklace.beads) {
 			Point<Inexact> position;
 			if (!necklace.shape->intersectRay(bead->angle_rad, position)) {
 				throw std::runtime_error("Ray to bead \"" + bead->region->name +
 				                         "\" does not intersect necklace");
 			}
-			Number<Inexact> radius = m_necklaceMap.m_scaleFactor * bead->radius_base;
+			Number<Inexact> radius = m_necklaceMap->m_scaleFactor * bead->radius_base;
 			if (shadow) {
 				renderer.draw(Circle<Inexact>(position + Vector<Inexact>(2, -2), radius * radius));
 			} else {

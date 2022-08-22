@@ -20,61 +20,51 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 04-09-2020
 */
 
 #include "polar_point.h"
+#include "cartocrow/core/core.h"
 
 #include <glog/logging.h>
 
-namespace cartocrow::necklace_map {
+namespace cartocrow::flow_map {
 
 PolarPoint::PolarPoint() : m_r(0), m_phi(0) {}
 
 PolarPoint::PolarPoint(const CGAL::Origin& o) : m_r(0), m_phi(0) {}
 
 PolarPoint::PolarPoint(const Number<Inexact>& r, const Number<Inexact>& phi) : m_r(r), m_phi(phi) {
-	CHECK_LE(0, r);
-
-	// TODO [ws] this is stupid
-	while (m_phi < -M_PI) {
-		m_phi += M_2xPI;
+	if (r < 0) {
+		throw std::runtime_error("Tried to construct a polar point with r < 0");
 	}
-	while (M_PI <= m_phi) {
-		m_phi -= M_2xPI;
-	}
+	m_phi = wrapAngle(m_phi, -M_PI);
 }
 
-PolarPoint::PolarPoint(const PolarPoint& p) : m_r(p.R()), m_phi(p.phi()) {}
+PolarPoint::PolarPoint(const PolarPoint& p) : m_r(p.r()), m_phi(p.phi()) {}
 
-/**@brief Construct a polar point from a polar point with a different pole.
- *
- * @param p the reference polar point.
- * @param t the Cartesian coordinates of p's pole (relative to the pole of the point to construct)
- */
 PolarPoint::PolarPoint(const PolarPoint& p, const Vector<Inexact>& t)
-    : PolarPoint(translate_pole(p, t)) {}
+    : PolarPoint(translate(p, t)) {}
 
-PolarPoint::PolarPoint(const Point<Inexact>& p) : PolarPoint(to_polar(p)) {}
+PolarPoint::PolarPoint(const Point<Inexact>& p) : PolarPoint(toPolar(p)) {}
 
-/**@brief Construct a polar point with a different pole.
- *
- * @param p the Cartesian coordinates of the polar point.
- * @param t the Cartesian coordinates of p's pole (relative to the pole of the point to construct)
- */
 PolarPoint::PolarPoint(const Point<Inexact>& p, const Vector<Inexact>& t)
-    : PolarPoint(to_polar(p + t)) {}
+    : PolarPoint(toPolar(p + t)) {}
 
-const Number<Inexact>& PolarPoint::R() const {
+const Number<Inexact> PolarPoint::r() const {
 	return m_r;
 }
 
-const Number<Inexact>& PolarPoint::phi() const {
+const Number<Inexact> PolarPoint::rSquared() const {
+	return m_r * m_r;
+}
+
+const Number<Inexact> PolarPoint::phi() const {
 	return m_phi;
 }
 
-Point<Inexact> PolarPoint::to_cartesian() const {
+Point<Inexact> PolarPoint::toCartesian() const {
 	const Vector<Inexact> d = Vector<Inexact>(std::cos(phi()), std::sin(phi()));
-	return Point<Inexact>(CGAL::ORIGIN) + R() * d;
+	return Point<Inexact>(CGAL::ORIGIN) + r() * d;
 }
 
-PolarPoint PolarPoint::to_polar(const Point<Inexact>& p) {
+PolarPoint PolarPoint::toPolar(const Point<Inexact>& p) {
 	const Number<Inexact> r = CGAL::sqrt((p - Point<Inexact>(CGAL::ORIGIN)).squared_length());
 
 	if (p.x() == 0 && p.y() == 0) {
@@ -85,12 +75,12 @@ PolarPoint PolarPoint::to_polar(const Point<Inexact>& p) {
 	return PolarPoint(r, phi);
 }
 
-PolarPoint PolarPoint::translate_pole(const PolarPoint& p, const Vector<Inexact>& t) {
-	return to_polar(p.to_cartesian() + t);
+PolarPoint PolarPoint::translate(const PolarPoint& p, const Vector<Inexact>& t) {
+	return toPolar(p.toCartesian() + t);
 }
 
 bool operator==(const PolarPoint& p, const PolarPoint& q) {
-	return p.R() == q.R() && (p.R() == 0 || p.phi() == q.phi());
+	return p.r() == q.r() && (p.r() == 0 || p.phi() == q.phi());
 }
 
 bool operator!=(const PolarPoint& p, const PolarPoint& q) {
@@ -98,8 +88,8 @@ bool operator!=(const PolarPoint& p, const PolarPoint& q) {
 }
 
 std::ostream& operator<<(std::ostream& os, const PolarPoint& point) {
-	os << "(R=" << point.R() << ", φ=" << point.phi() << ")";
+	os << "(R=" << point.r() << ", φ=" << point.phi() << ")";
 	return os;
 }
 
-} // namespace cartocrow::necklace_map
+} // namespace cartocrow::flow_map

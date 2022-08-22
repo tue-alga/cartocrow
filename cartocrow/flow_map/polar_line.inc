@@ -24,9 +24,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 19-02-2021
 #ifndef CARTOCROW_CORE_POLAR_LINE_INC
 #define CARTOCROW_CORE_POLAR_LINE_INC
 
-#include <glog/logging.h>
-
-namespace cartocrow::necklace_map {
+namespace cartocrow::flow_map {
 
 /**@brief Collect the t at a given distance from the pole.
  * @tparam OutputIterator the type of output iterator to which to send the output.
@@ -34,9 +32,7 @@ namespace cartocrow::necklace_map {
  * @param t the t values of the points on the line at the desired distance.
  * @return the number of points on the line at the given distance. This can be either 0, 1, or 2.
  */
-template <class OutputIterator> int PolarLine::CollectT(const Number<Inexact>& R, OutputIterator t) const {
-	CHECK_LE(0, R);
-
+template <class OutputIterator> int PolarLine::collectT(const Number<Inexact>& R, OutputIterator t) const {
 	// The point at a given distance from the pole could be computed using the sine law.
 	// However, we instead base it on the point on the segment closest to the pole for two reasons.
 	// Firstly, the segment is not guaranteed to come close enough to the pole.
@@ -45,16 +41,16 @@ template <class OutputIterator> int PolarLine::CollectT(const Number<Inexact>& R
 	// * inside or outside the segment (sin(a) versus sin(pi-a) of the angle at the segment endpoint).
 	// Both issues are easier to resolve when basing the point at distance R on the point closest to the pole.
 
-	if (R < foot().R())
+	if (R < foot().r())
 		return 0;
 
-	if (R == foot().R()) {
+	if (R == foot().r()) {
 		*t++ = 0;
 		return 1;
 	}
 
 	// Note that R = 0 would have been caught by the previous conditions.
-	const Number<Inexact> offset = std::sqrt((R * R) - (foot().R() * foot().R()));
+	const Number<Inexact> offset = std::sqrt((R * R) - (foot().r() * foot().r()));
 	*t++ = -offset;
 	*t++ = offset;
 	return 2;
@@ -67,12 +63,13 @@ template <class OutputIterator> int PolarLine::CollectT(const Number<Inexact>& R
  * @return the number of points on the line at the given distance. This can be either 0, 1, or 2.
  */
 template <class OutputIterator>
-int PolarLine::CollectPhi(const Number<Inexact>& R, OutputIterator phi) const {
+int PolarLine::collectPhi(const Number<Inexact>& R, OutputIterator phi) const {
 	Number<Inexact> t[2];
-	const int num = CollectT(R, t);
+	const int num = collectT(R, t);
 
-	for (int i = 0; i < num; ++i)
-		*phi++ = EvaluatePhi(t[i]);
+	for (int i = 0; i < num; ++i) {
+		*phi++ = pointAlongLine(t[i]).phi();
+	}
 
 	return num;
 }

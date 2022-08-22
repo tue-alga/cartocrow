@@ -25,7 +25,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 26-02-2021
 
 #include <glog/logging.h>
 
-namespace cartocrow {
+namespace cartocrow::flow_map {
 
 Box ConstructBoundingBox(const PolarSegment& segment) {
 	Kernel::Construct_bbox_2 bbox = Kernel().construct_bbox_2_object();
@@ -112,4 +112,4 @@ Box ConstructBoundingBox(const SpiralSegment& segment) {
 	return bounding_box;
 }
 
-} // namespace cartocrow
+} // namespace cartocrow::flow_map

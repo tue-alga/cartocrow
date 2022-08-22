@@ -2,12 +2,14 @@ set(SOURCES
 	geometry_renderer.cpp
 	geometry_widget.cpp
 	ipe_renderer.cpp
+	painting_renderer.cpp
 )
 set(HEADERS
 	geometry_painting.h
 	geometry_renderer.h
 	geometry_widget.h
 	ipe_renderer.h
+	painting_renderer.h
 )
 
 add_library(renderer ${SOURCES})

@@ -27,7 +27,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 26-02-2021
 #include "../spiral.h"
 #include "../spiral_segment.h"
 
-namespace cartocrow {
+namespace cartocrow::flow_map {
 
 Box ConstructBoundingBox(const PolarSegment& segment);
 
@@ -35,6 +35,6 @@ Box ConstructBoundingBox(const Spiral& spiral);
 
 Box ConstructBoundingBox(const SpiralSegment& segment);
 
-} // namespace cartocrow
+} // namespace cartocrow::flow_map
 
 #endif //CARTOCROW_CORE_DETAIL_POLAR_BOUNDS_H

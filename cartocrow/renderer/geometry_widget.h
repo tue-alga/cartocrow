@@ -41,7 +41,7 @@ namespace cartocrow::renderer {
 /// The style for a GeometryWidget.
 struct GeometryWidgetStyle {
 	/// The draw mode.
-	int m_mode = GeometryRenderer::stroke | GeometryRenderer::fill;
+	int m_mode = GeometryRenderer::stroke;
 	/// The diameter of points.
 	double m_pointSize = 10;
 	/// The color of points and lines.
@@ -57,7 +57,7 @@ class GeometryWidget : public QWidget, GeometryRenderer {
 
   public:
 	/// Constructs a GeometryWidget for the given painting.
-	GeometryWidget(const GeometryPainting& painting);
+	GeometryWidget(std::shared_ptr<GeometryPainting> painting);
 
 	void draw(const Point<Inexact>& p) override;
 	void draw(const Segment<Inexact>& s) override;
@@ -73,6 +73,8 @@ class GeometryWidget : public QWidget, GeometryRenderer {
 	void setStroke(Color color, double width) override;
 	void setFill(Color color) override;
 	void setFillOpacity(int alpha) override;
+
+	void addPainting(std::shared_ptr<GeometryPainting> painting);
 
   public slots:
 	/// Determines whether to draw the axes in the background.
@@ -120,8 +122,8 @@ class GeometryWidget : public QWidget, GeometryRenderer {
 	void drawAxes();
 	/// Moves the zoom slider knob to the currently set zoom level.
 	void updateZoomSlider();
-	/// The painting we're drawing.
-	const GeometryPainting& m_painting;
+	/// The paintings we're drawing.
+	std::vector<std::shared_ptr<GeometryPainting>> m_paintings;
 	/// The QPainter we are drawing with. Only valid while painting.
 	std::unique_ptr<QPainter> m_painter;
 	/// The transform from drawing coordinates to Qt coordinates.

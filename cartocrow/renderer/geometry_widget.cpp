@@ -31,7 +31,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 namespace cartocrow::renderer {
 
-GeometryWidget::GeometryWidget(const GeometryPainting& painting) : m_painting(painting) {
+GeometryWidget::GeometryWidget(std::shared_ptr<GeometryPainting> painting) {
+	m_paintings.push_back(painting);
+
 	setMouseTracking(true);
 	m_transform.scale(1, -1);
 
@@ -70,7 +72,11 @@ void GeometryWidget::paintEvent(QPaintEvent* event) {
 	if (m_drawAxes) {
 		drawAxes();
 	}
-	m_painting.paint(*this);
+	for (auto painting : m_paintings) {
+		pushStyle();
+		painting->paint(*this);
+		popStyle();
+	}
 	m_painter->setPen(QPen(QColor(0, 0, 0)));
 	m_painter->drawText(rect().marginsRemoved(QMargins(10, 10, 10, 10)),
 	                    Qt::AlignRight | Qt::AlignBottom,
@@ -371,6 +377,10 @@ void GeometryWidget::setFillOpacity(int alpha) {
 /*std::unique_ptr<QPainter> GeometryWidget::getQPainter() {
 	return std::make_unique<QPainter>(this);
 }*/
+
+void GeometryWidget::addPainting(std::shared_ptr<GeometryPainting> painting) {
+	m_paintings.push_back(painting);
+}
 
 void GeometryWidget::setDrawAxes(bool drawAxes) {
 	m_drawAxes = drawAxes;

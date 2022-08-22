@@ -4,6 +4,9 @@ set(TEST_SOURCES "cartocrow_test.cpp"
 	"core/region_arrangement.cpp"
 	"core/region_map.cpp"
 	"core/timer.cpp"
+	"flow_map/intersections.cpp"
+	"flow_map/polar_line.cpp"
+	"flow_map/polar_point.cpp"
 	"necklace_map/bit_string.cpp"
 	"necklace_map/circular_range.cpp"
 	"necklace_map/necklace_map.cpp"
@@ -16,6 +19,7 @@ add_executable(cartocrow_test cartocrow_test.cpp ${TEST_SOURCES})
 target_link_libraries(cartocrow_test
 	PRIVATE
 	core
+	flow_map
 	necklace_map
 	renderer
 	vw_simplification

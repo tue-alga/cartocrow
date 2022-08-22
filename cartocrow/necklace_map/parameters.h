@@ -51,15 +51,12 @@ enum class OrderType {
 };
 
 /// A struct to collect the parameters used for computing the necklace map.
-/**
- * These parameters include those needed for computing the feasible intervals,
- * the optimal scale factor, and a valid placement for the necklace beads.
- */
+///
+/// These parameters include those needed for computing the feasible intervals,
+/// the optimal scale factor, and a valid placement for the necklace beads.
 struct Parameters {
-	/// Constructs a collection of parameters.
-	/**
- 	 * All parameters are initialized to valid values.
-	 */
+	/// Constructs a collection of parameters. All parameters are initialized
+	/// to valid values.
 	Parameters();
 
 	/// The type of feasible intervals to use.

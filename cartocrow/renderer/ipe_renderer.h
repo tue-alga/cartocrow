@@ -34,7 +34,7 @@ namespace cartocrow::renderer {
 /// The style for the Ipe renderer.
 struct IpeRendererStyle {
 	/// The draw mode.
-	int m_mode = GeometryRenderer::stroke | GeometryRenderer::fill;
+	int m_mode = GeometryRenderer::stroke;
 	/// The diameter of points.
 	double m_pointSize = 10;
 	/// The color of points and lines.

@@ -4,7 +4,8 @@
 
 namespace cartocrow::flow_map {
 
-Node::Node(std::shared_ptr<Place> place) : m_place(place) {}
+Node::Node(const PolarPoint& position, const std::shared_ptr<Place> place)
+    : m_position(position), m_place(place) {}
 
 Node::ConnectionType Node::getType() const {
 	if (m_parent == nullptr) {
@@ -22,7 +23,7 @@ Node::ConnectionType Node::getType() const {
 }
 
 bool Node::isSteiner() const {
-	return m_place == nullptr || (m_place->flow_in <= 0 && m_parent != nullptr);
+	return m_place == nullptr || (m_place->m_flow <= 0 && m_parent != nullptr);
 }
 
 } // namespace cartocrow::flow_map
