@@ -23,21 +23,21 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 01-04-2020
 #ifndef CARTOCROW_NECKLACE_MAP_NECKLACE_INTERVAL_H
 #define CARTOCROW_NECKLACE_MAP_NECKLACE_INTERVAL_H
 
-#include "cartocrow/core/circular_range.h"
-#include "cartocrow/core/core_types.h"
+#include "../core/core.h"
+#include "circular_range.h"
 
 namespace cartocrow {
 namespace necklace_map {
 
 class IntervalCentroid : public CircularRange {
   public:
-	IntervalCentroid(const Number& from_rad, const Number& to_rad);
-}; // class IntervalCentroid
+	IntervalCentroid(const Number<Inexact>& from_rad, const Number<Inexact>& to_rad);
+};
 
 class IntervalWedge : public CircularRange {
   public:
-	IntervalWedge(const Number& from_rad, const Number& to_rad);
-}; // class IntervalWedge
+	IntervalWedge(const Number<Inexact>& from_rad, const Number<Inexact>& to_rad);
+};
 
 } // namespace necklace_map
 } // namespace cartocrow

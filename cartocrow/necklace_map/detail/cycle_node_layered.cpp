@@ -22,13 +22,12 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 06-05-2020
 
 #include "cycle_node_layered.h"
 
-namespace cartocrow {
-namespace necklace_map {
+namespace cartocrow::necklace_map {
 namespace detail {
 
 CycleNodeLayered::CycleNodeLayered() : CycleNode(), layer(-1), disabled(true) {}
 
-CycleNodeLayered::CycleNodeLayered(const Bead::Ptr& bead)
+CycleNodeLayered::CycleNodeLayered(const std::shared_ptr<Bead>& bead)
     : CycleNode(bead), layer(-1), disabled(!bead) {}
 
 CycleNodeLayered::CycleNodeLayered(const CycleNodeLayered::Ptr& node)
@@ -46,5 +45,4 @@ bool CompareCycleNodeLayered::operator()(const CycleNodeLayered::Ptr& a,
 }
 
 } // namespace detail
-} // namespace necklace_map
-} // namespace cartocrow
+} // namespace cartocrow::necklace_map

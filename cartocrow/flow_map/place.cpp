@@ -27,7 +27,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 04-09-2020
 
 namespace cartocrow::flow_map {
 
-Place::Place(const std::string& id, const PolarPoint& position)
-    : id(id), position(position), flow_in(0) {}
+Place::Place(const std::string& name, const Point<Inexact>& position, Number<Inexact> flow)
+    : m_name(name), m_position(position), m_flow(flow) {}
 
 } // namespace cartocrow::flow_map

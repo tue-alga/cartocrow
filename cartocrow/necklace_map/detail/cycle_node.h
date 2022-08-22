@@ -25,11 +25,10 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 23-01-2020
 
 #include <memory>
 
-#include "cartocrow/core/core_types.h"
-#include "cartocrow/necklace_map/bead.h"
+#include "../../core/core.h"
+#include "../bead.h"
 
-namespace cartocrow {
-namespace necklace_map {
+namespace cartocrow::necklace_map {
 namespace detail {
 
 // A bead with valid interval.
@@ -39,21 +38,20 @@ struct CycleNode {
 
 	CycleNode(const CycleNode& node);
 
-	explicit CycleNode(const Bead::Ptr& bead);
+	explicit CycleNode(const std::shared_ptr<Bead>& bead);
 
-	CycleNode(const Bead::Ptr& bead, const Range::Ptr& valid);
+	CycleNode(const std::shared_ptr<Bead>& bead, const std::shared_ptr<Range>& valid);
 
-	Bead::Ptr bead;
+	std::shared_ptr<Bead> bead;
 
 	// Note that unlike the bead's feasible interval, the valid interval may go outside the [0, 2pi) range.
-	Range::Ptr valid;
+	std::shared_ptr<Range> valid;
 
   protected:
 	CycleNode();
-}; // struct CycleNode
+};
 
 } // namespace detail
-} // namespace necklace_map
-} // namespace cartocrow
+} // namespace cartocrow::necklace_map
 
 #endif //CARTOCROW_NECKLACE_MAP_DETAIL_CYCLE_NODE_H

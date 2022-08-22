@@ -26,25 +26,24 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 04-09-2020
 
 #include <memory>
 
-#include "cartocrow/core/core_types.h"
-#include "cartocrow/core/polar_point.h"
+#include "../core/core.h"
 
 namespace cartocrow::flow_map {
 
 /// A place on the flow map.
-/**
- * A place has a name, a position, and a numeric value indicating flow that
- * enters this place.
- */
+///
+/// A place has an ID, a position, and a numeric value indicating flow that
+/// enters this place.
 struct Place {
-	/// Constructs a new flow map place.
-	Place(const std::string& id, const PolarPoint& position);
-	/// The ID of this place.
-	std::string id;
-	/// The position of this place in polar coordinates.
-	PolarPoint position;
+	/// Constructs a new flow map place with the given name, position, and flow.
+	Place(const std::string& name, const Point<Inexact>& position, Number<Inexact> flow);
+
+	/// The name of this place.
+	std::string m_name;
+	/// The position of this place.
+	Point<Inexact> m_position;
 	/// The amount of flow that enters this place.
-	Number flow_in;
+	Number<Inexact> m_flow;
 };
 
 } // namespace cartocrow::flow_map

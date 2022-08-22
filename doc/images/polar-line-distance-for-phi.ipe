@@ -1,0 +1,359 @@
+<?xml version="1.0"?>
+<!DOCTYPE ipe SYSTEM "ipe.dtd">
+<ipe version="70218" creator="Ipe 7.2.24">
+<info created="D:20220722114322" modified="D:20220722121857" tex="xetex"/>
+<ipestyle name="cartocrow-doc-figure">
+<color name="black" value="0.173 0.243 0.314"/>
+<color name="blue" value="0 0.635 0.871"/>
+<dashstyle name="dashed" value="[2 3] 0"/>
+<preamble>\usepackage{fontspec}
+\setmainfont{Segoe UI}
+\usepackage[italic, eulergreek]{mathastext}</preamble>
+</ipestyle>
+<ipestyle name="arrows">
+<symbol name="arrow/circle(spx)" transformations="translations">
+<path stroke="sym-stroke" pen="sym-pen">
+0.5 0 0 0.5 0 0 e
+</path>
+</symbol>
+<symbol name="arrow/disk(spx)" transformations="translations">
+<group>
+<path fill="sym-stroke">
+0.5 0 0 0.5 0 0 e
+</path>
+<path stroke="sym-stroke" pen="sym-pen">
+0.5 0 0 0.5 0 0 e
+</path>
+</group>
+</symbol>
+<symbol name="arrow/fdisk(spx)" transformations="translations">
+<group>
+<path fill="white">
+0.5 0 0 0.5 0 0 e
+</path>
+<path stroke="sym-stroke" pen="sym-pen">
+0.5 0 0 0.5 0 0 e
+</path>
+</group>
+</symbol>
+<symbol name="arrow/box(spx)" transformations="translations">
+<path stroke="sym-stroke" pen="sym-pen">
+-0.5 -0.5 m
+0.5 -0.5 l
+0.5 0.5 l
+-0.5 0.5 l
+h
+</path>
+</symbol>
+<symbol name="arrow/square(spx)" transformations="translations">
+<path fill="sym-stroke">
+-0.5 -0.5 m
+0.5 -0.5 l
+0.5 0.5 l
+-0.5 0.5 l
+h
+</path>
+</symbol>
+<symbol name="arrow/fsquare(spx)" transformations="translations">
+<group>
+<path fill="white">
+-0.5 -0.5 m
+0.5 -0.5 l
+0.5 0.5 l
+-0.5 0.5 l
+h
+</path>
+<path stroke="sym-stroke" pen="sym-pen">
+-0.5 -0.5 m
+0.5 -0.5 l
+0.5 0.5 l
+-0.5 0.5 l
+h
+</path>
+</group>
+</symbol>
+<symbol name="arrow/cross(spx)" transformations="translations">
+<group>
+<path stroke="sym-stroke" pen="sym-pen">
+-0.5 -0.5 m
+0.5 0.5 l
+h
+</path>
+<path stroke="sym-stroke" pen="sym-pen">
+-0.5 0.5 m
+0.5 -0.5 l
+h
+</path>
+</group>
+</symbol>
+<symbol name="arrow/whiskers(spx)" transformations="translations">
+<path stroke="sym-stroke" pen="sym-pen">
+0 -0.5 m
+0 0.5 l
+h
+</path>
+</symbol>
+</ipestyle>
+<ipestyle name="grids">
+<anglesize name="10 deg" value="10"/>
+<anglesize name="22.5 deg" value="22.5"/>
+<anglesize name="30 deg" value="30"/>
+<anglesize name="45 deg" value="45"/>
+<anglesize name="5 deg" value="5"/>
+<anglesize name="60 deg" value="60"/>
+<anglesize name="90 deg" value="90"/>
+<gridsize name="1 pt" value="1"/>
+<gridsize name="10 pts (~3.5 mm)" value="10"/>
+<gridsize name="14 pts (~5 mm)" value="14"/>
+<gridsize name="16 pts (~6 mm)" value="16"/>
+<gridsize name="2 pts" value="2"/>
+<gridsize name="20 pts (~7 mm)" value="20"/>
+<gridsize name="28 pts (~10 mm)" value="28"/>
+<gridsize name="32 pts (~12 mm)" value="32"/>
+<gridsize name="4 pts" value="4"/>
+<gridsize name="56 pts (~20 mm)" value="56"/>
+<gridsize name="8 pts (~3 mm)" value="8"/>
+</ipestyle>
+<ipestyle name="sizes">
+<arrowsize name="large" value="10"/>
+<arrowsize name="small" value="5"/>
+<arrowsize name="tiny" value="3"/>
+<pen name="fat" value="1.2"/>
+<pen name="heavier" value="0.8"/>
+<pen name="ultrafat" value="2"/>
+<symbolsize name="large" value="5"/>
+<symbolsize name="small" value="2"/>
+<symbolsize name="tiny" value="1.1"/>
+</ipestyle>
+<ipestyle name="text">
+<textsize name="Huge" value="\Huge"/>
+<textsize name="LARGE" value="\LARGE"/>
+<textsize name="Large" value="\Large"/>
+<textsize name="footnote" value="\footnotesize"/>
+<textsize name="huge" value="\huge"/>
+<textsize name="large" value="\large"/>
+<textsize name="small" value="\small"/>
+<textsize name="tiny" value="\tiny"/>
+<textstyle name="center" begin="\begin{center}" end="\end{center}"/>
+<textstyle name="item" begin="\begin{itemize}\item{}" end="\end{itemize}"/>
+<textstyle name="itemize" begin="\begin{itemize}" end="\end{itemize}"/>
+</ipestyle>
+<ipestyle name="transparency">
+<opacity name="10%" value="0.1"/>
+<opacity name="20%" value="0.2"/>
+<opacity name="30%" value="0.3"/>
+<opacity name="40%" value="0.4"/>
+<opacity name="50%" value="0.5"/>
+<opacity name="60%" value="0.6"/>
+<opacity name="70%" value="0.7"/>
+<opacity name="80%" value="0.8"/>
+<opacity name="90%" value="0.9"/>
+</ipestyle>
+<ipestyle name="trimmed">
+<symbol name="arrow/arc(spx)">
+<path stroke="sym-stroke" fill="sym-stroke" pen="sym-pen">
+0 0 m
+-1 0.333 l
+-1 -0.333 l
+h
+</path>
+</symbol>
+<symbol name="arrow/farc(spx)">
+<path stroke="sym-stroke" fill="white" pen="sym-pen">
+0 0 m
+-1 0.333 l
+-1 -0.333 l
+h
+</path>
+</symbol>
+<symbol name="arrow/ptarc(spx)">
+<path stroke="sym-stroke" fill="sym-stroke" pen="sym-pen">
+0 0 m
+-1 0.333 l
+-0.8 0 l
+-1 -0.333 l
+h
+</path>
+</symbol>
+<symbol name="arrow/fptarc(spx)">
+<path stroke="sym-stroke" fill="white" pen="sym-pen">
+0 0 m
+-1 0.333 l
+-0.8 0 l
+-1 -0.333 l
+h
+</path>
+</symbol>
+<symbol name="mark/circle(sx)" transformations="translations">
+<path fill="sym-stroke">
+0.6 0 0 0.6 0 0 e
+0.4 0 0 0.4 0 0 e
+</path>
+</symbol>
+<symbol name="mark/disk(sx)" transformations="translations">
+<path fill="sym-stroke">
+0.6 0 0 0.6 0 0 e
+</path>
+</symbol>
+<symbol name="mark/fdisk(sfx)" transformations="translations">
+<group>
+<path fill="sym-fill">
+0.5 0 0 0.5 0 0 e
+</path>
+<path fill="sym-stroke" fillrule="eofill">
+0.6 0 0 0.6 0 0 e
+0.4 0 0 0.4 0 0 e
+</path>
+</group>
+</symbol>
+<symbol name="mark/box(sx)" transformations="translations">
+<path fill="sym-stroke" fillrule="eofill">
+-0.6 -0.6 m
+0.6 -0.6 l
+0.6 0.6 l
+-0.6 0.6 l
+h
+-0.4 -0.4 m
+0.4 -0.4 l
+0.4 0.4 l
+-0.4 0.4 l
+h
+</path>
+</symbol>
+<symbol name="mark/square(sx)" transformations="translations">
+<path fill="sym-stroke">
+-0.6 -0.6 m
+0.6 -0.6 l
+0.6 0.6 l
+-0.6 0.6 l
+h
+</path>
+</symbol>
+<symbol name="mark/fsquare(sfx)" transformations="translations">
+<group>
+<path fill="sym-fill">
+-0.5 -0.5 m
+0.5 -0.5 l
+0.5 0.5 l
+-0.5 0.5 l
+h
+</path>
+<path fill="sym-stroke" fillrule="eofill">
+-0.6 -0.6 m
+0.6 -0.6 l
+0.6 0.6 l
+-0.6 0.6 l
+h
+-0.4 -0.4 m
+0.4 -0.4 l
+0.4 0.4 l
+-0.4 0.4 l
+h
+</path>
+</group>
+</symbol>
+<symbol name="mark/cross(sx)" transformations="translations">
+<group>
+<path fill="sym-stroke">
+-0.43 -0.57 m
+0.57 0.43 l
+0.43 0.57 l
+-0.57 -0.43 l
+h
+</path>
+<path fill="sym-stroke">
+-0.43 0.57 m
+0.57 -0.43 l
+0.43 -0.57 l
+-0.57 0.43 l
+h
+</path>
+</group>
+</symbol>
+<symbol name="arrow/fnormal(spx)">
+<path stroke="sym-stroke" fill="white" pen="sym-pen">
+0 0 m
+-1 0.333 l
+-1 -0.333 l
+h
+</path>
+</symbol>
+<symbol name="arrow/pointed(spx)">
+<path stroke="sym-stroke" fill="sym-stroke" pen="sym-pen">
+0 0 m
+-1 0.333 l
+-0.8 0 l
+-1 -0.333 l
+h
+</path>
+</symbol>
+<symbol name="arrow/fpointed(spx)">
+<path stroke="sym-stroke" fill="white" pen="sym-pen">
+0 0 m
+-1 0.333 l
+-0.8 0 l
+-1 -0.333 l
+h
+</path>
+</symbol>
+<symbol name="arrow/linear(spx)">
+<path stroke="sym-stroke" pen="sym-pen">
+-1 0.333 m
+0 0 l
+-1 -0.333 l
+</path>
+</symbol>
+<symbol name="arrow/fdouble(spx)">
+<path stroke="sym-stroke" fill="white" pen="sym-pen">
+0 0 m
+-1 0.333 l
+-1 -0.333 l
+h
+-1 0 m
+-2 0.333 l
+-2 -0.333 l
+h
+</path>
+</symbol>
+<symbol name="arrow/double(spx)">
+<path stroke="sym-stroke" fill="sym-stroke" pen="sym-pen">
+0 0 m
+-1 0.333 l
+-1 -0.333 l
+h
+-1 0 m
+-2 0.333 l
+-2 -0.333 l
+h
+</path>
+</symbol>
+<tiling name="falling" angle="-60" step="4" width="1"/>
+<tiling name="rising" angle="30" step="4" width="1"/>
+</ipestyle>
+<page>
+<layer name="alpha"/>
+<view layers="alpha" active="alpha"/>
+<use layer="alpha" matrix="0.975 0 0 0.975 4.8 16" name="mark/disk(sx)" pos="192 640" size="normal" stroke="black"/>
+<text matrix="1.17 0 0 1.17 -44.1946 -121.718" pos="192 640" stroke="black" type="label" width="7.511" height="7.095" depth="0.12" valign="baseline" style="math">O</text>
+<path matrix="0 4.3875 -4.3875 0 3098.23 -209.469" stroke="blue" pen="fat" cap="1" join="1">
+192 640 m
+211.309 676.195 l
+</path>
+<text matrix="1.17 0 0 1.17 38.3801 -166.457" pos="216.491 687.01" stroke="blue" type="label" width="2.579" height="7.388" depth="0.06" valign="baseline" style="math">l</text>
+<use name="mark/disk(sx)" pos="159.792 702.516" size="normal" stroke="black"/>
+<path stroke="black" pen="heavier" cap="1" join="1" arrow="normal/tiny" rarrow="normal/tiny">
+161.67 698.871 m
+190.122 643.645 l
+</path>
+<text matrix="1.17 0 0 1.17 -57.5357 -83.9654" pos="192 640" stroke="black" type="label" width="3.536" height="5.103" depth="0" valign="baseline" style="math">r</text>
+<text matrix="1.17 0 0 1.17 -27.013 -95.2062" pos="192 640" stroke="black" type="label" width="7.253" height="6.887" depth="1.88" valign="baseline" style="math">\phi</text>
+<path stroke="black" dash="dashed" pen="heavier" cap="1" join="1">
+192 640 m
+216 640 l
+</path>
+<path stroke="black" pen="heavier" cap="1" join="1">
+202.043 640 m
+10.043 0 0 10.043 192 640 187.4 648.928 a
+</path>
+</page>
+</ipe>

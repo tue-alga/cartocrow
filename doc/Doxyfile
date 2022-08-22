@@ -16,7 +16,7 @@ EXTRACT_PRIVATE        = YES
 EXTRACT_PACKAGE        = YES
 EXTRACT_STATIC         = YES
 
-INPUT                  = "cartocrow"
+INPUT                  = "cartocrow/core" "cartocrow/renderer" "cartocrow/necklace_map" "cartocrow/flow_map" "doc/pages"
 FILE_PATTERNS          = *.cpp *.h *.inc *.md
 RECURSIVE              = YES
 
@@ -32,6 +32,7 @@ HTML_OUTPUT            = .
 HTML_EXTRA_STYLESHEET  = "doc/doxygen-awesome-css/doxygen-awesome.css" "doc/doxygen-awesome-css/doxygen-awesome-sidebar-only.css"
 HTML_DYNAMIC_SECTIONS  = YES
 GENERATE_TREEVIEW      = YES
+LAYOUT_FILE            = "doc/layout.xml"
 
 MACRO_EXPANSION        = YES
 EXPAND_ONLY_PREDEF     = YES
@@ -51,3 +52,8 @@ DOT_FONTSIZE           = 11
 DOT_IMAGE_FORMAT       = svg
 DOT_TRANSPARENT        = YES
 
+CITE_BIB_FILES         = doc/references.bib
+IMAGE_PATH             = doc/images
+
+#CLANG_ASSISTED_PARSING = YES
+#CLANG_DATABASE_PATH    = "compile_commands.json"

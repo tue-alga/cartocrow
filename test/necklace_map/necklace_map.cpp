@@ -1,25 +1,39 @@
-/*
-The Necklace Map library implements the algorithmic geo-visualization
-method by the same name, developed by Bettina Speckmann and Kevin Verbeek
-at TU Eindhoven (DOI: 10.1109/TVCG.2010.180 & 10.1142/S021819591550003X).
-Copyright (C) 2021  Netherlands eScience Center and TU Eindhoven
+#include "../catch.hpp"
 
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
+#include "../../cartocrow/core/core.h"
+#include "../../cartocrow/core/region_map.h"
+#include "../../cartocrow/necklace_map/circle_necklace.h"
+#include "../../cartocrow/necklace_map/necklace_map.h"
+#include "../../cartocrow/necklace_map/painting.h"
+#include "../../cartocrow/renderer/ipe_renderer.h"
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+using namespace cartocrow;
+using namespace cartocrow::necklace_map;
 
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+TEST_CASE("Computing a necklace map") {
+	std::shared_ptr<RegionMap> regions = std::make_shared<RegionMap>(
+	    ipeToRegionMap(std::filesystem::path("data/test_region_map.ipe")));
+	NecklaceMap map(regions);
+	auto necklace = map.addNecklace(
+	    std::make_unique<CircleNecklace>(Circle<Inexact>(Point<Inexact>(64, 32), 32 * 32)));
+	map.parameters().centroid_interval_length_rad = M_PI;
+	map.parameters().order_type = cartocrow::necklace_map::OrderType::kAny;
+	map.parameters().heuristic_cycles = 0;
+	map.parameters().placement_cycles = 10;
 
-Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-04-2020
-*/
+	SECTION("unit-sized beads") {
+		map.addBead("R1", 1, necklace);
+		map.addBead("R2", 1, necklace);
+		map.compute();
+		CHECK(map.scaleFactor() == Approx(32.0).epsilon(0.01));
+	}
+	SECTION("larger sized beads") {
+		map.addBead("R1", 2, necklace);
+		map.addBead("R2", 2, necklace);
+		map.compute();
+		renderer::IpeRenderer r((Painting(map)));
+		r.save("/tmp/bla.ipe");
 
-#include "necklace_map.h"
-
-CARTOCROW_RUN_TESTS(TestNecklaceMap)
+		CHECK(map.scaleFactor() == Approx(32.0 / std::sqrt(2)).epsilon(0.01));
+	}
+}

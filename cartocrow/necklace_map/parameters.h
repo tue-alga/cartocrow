@@ -23,37 +23,52 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 28-01-2020
 #ifndef CARTOCROW_NECKLACE_MAP_PARAMETERS_H
 #define CARTOCROW_NECKLACE_MAP_PARAMETERS_H
 
-#include "cartocrow/core/core_types.h"
+#include "../core/core.h"
 
-namespace cartocrow {
-namespace necklace_map {
+namespace cartocrow::necklace_map {
 
-/// A type of feasible interval on a necklace.
-enum class IntervalType { kCentroid, kWedge };
+/// The ways to determine the feasible where a bead may be placed on the
+/// necklace.
+enum class IntervalType {
+	/// The feasible interval is determined by drawing a ray through the region
+	/// centroid and taking a fixed-size interval (of angle \ref
+	/// Parameters::centroid_interval_length_rad) around it.
+	/// \image html bead-placement-centroid.svg
+	kCentroid,
+	/// The feasible interval is determined by drawing rays surrounding the
+	/// region and taking the interval between them.
+	/// \image html bead-placement-wedge.svg
+	kWedge
+};
 
-/// A type of ordering to apply when computing the optimal scale factor and bead placement.
-enum class OrderType { kFixed, kAny };
+/// A type of ordering to apply when computing the optimal scale factor and
+/// bead placement.
+enum class OrderType {
+	/// The ordering is fixed.
+	kFixed,
+	/// Any ordering is allowed.
+	kAny
+};
 
 /// A struct to collect the parameters used for computing the necklace map.
-/**
- * These parameters include those needed for computing the feasible intervals,
- * the optimal scale factor, and a valid placement for the necklace beads.
- */
+///
+/// These parameters include those needed for computing the feasible intervals,
+/// the optimal scale factor, and a valid placement for the necklace beads.
 struct Parameters {
-	/// Construct a collection of parameters.
-	/// All parameters are initialized as valid values.
+	/// Constructs a collection of parameters. All parameters are initialized
+	/// to valid values.
 	Parameters();
 
-	/// The type of feasible intervals to compute.
+	/// The type of feasible intervals to use.
 	IntervalType interval_type;
 	/// The length of any centroid intervals generated when computing the
 	/// feasible intervals.
-	Number centroid_interval_length_rad;
+	Number<Inexact> centroid_interval_length_rad;
 	/// The minimum length of any wedge interval generated when computing the
 	/// feasible intervals.
 	/// If a generated wedge interval is shorter than this length, it is
 	/// replaced by a centroid interval with this length.
-	Number wedge_interval_length_min_rad;
+	Number<Inexact> wedge_interval_length_min_rad;
 	/// Whether to ignore degenerate (point) regions.
 	/// Non-ignored point regions are always assigned a centroid region.
 	bool ignore_point_regions;
@@ -65,7 +80,7 @@ struct Parameters {
 	/// necklace beads that has the necklace kernel as apex.
 	/// This buffer is used when computing the optimal scale factor and when
 	/// computing a valid placement.
-	Number buffer_rad;
+	Number<Inexact> buffer_rad;
 	/// The depth of the binary search tree used for the any-order decision
 	/// problem.
 	/// A larger depth will produce higher precision at the cost of processing
@@ -84,10 +99,9 @@ struct Parameters {
 	/// The ratio between attraction to the interval center (0) and repulsion
 	/// from the neighboring beads (1).
 	/// This ratio must be in the range (0, 1].
-	Number aversion_ratio;
-}; // struct Parameters
+	Number<Inexact> aversion_ratio;
+};
 
-} // namespace necklace_map
-} // namespace cartocrow
+} // namespace cartocrow::necklace_map
 
 #endif //CARTOCROW_NECKLACE_MAP_PARAMETERS_H

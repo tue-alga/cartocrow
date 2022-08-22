@@ -24,33 +24,32 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 02-09-2020
 #ifndef CARTOCROW_FLOW_MAP_PARAMETERS_H
 #define CARTOCROW_FLOW_MAP_PARAMETERS_H
 
-#include "cartocrow/core/core_types.h"
+#include "../core/core.h"
 
 namespace cartocrow::flow_map {
 
 /// A struct to collect the parameters used for computing a flow map.
 struct Parameters {
-	/// Construct a collection of parameters.
-	/// All parameters are initialized as valid values.
+	/// Constructs a collection of parameters. All parameters are initialized to
+	/// valid values.
 	Parameters();
 
 	/// The maximum angle between the line connecting the root and any point on
 	/// a tree arc and arc's tangent line at that point.
-	/**
-	 * This angle must be in the range \f$(0, \pi / 2)\f$.
-	 *
-	 * In practice, all arcs of a spiral tree are either straight lines or
-	 * \f$\alpha\f$-spirals, where \f$\alpha\f$ is this restriction angle.
-	 * These spirals can be expressed as polar coordinates around the root node
-	 * \f[ p(t) = (R(t), \phi(t)), \f]
-	 * where \f$R(t) = R(0) \cdot e^{-t}\f$ and \f$\phi(t) = \phi(0) +
-	 * \tan(\alpha) \cdot t\f$.
-	 *
-	 * Note that generally \f$p(0)\f$ is the polar coordinates of a node of a
-	 * spiral arc, positive \f$t\f$ values are closer to the root, and negative
-	 * \f$t\f$ values are farther from the root.
-	 */
-	Number restricting_angle;
+	///
+	/// This angle must be in the range \f$(0, \pi / 2)\f$.
+	///
+	/// In practice, all arcs of a spiral tree are either straight lines or
+	/// \f$\alpha\f$-spirals, where \f$\alpha\f$ is this restriction angle.
+	/// These spirals can be expressed as polar coordinates around the root node
+	/// \f[ p(t) = (R(t), \phi(t)), \f]
+	/// where \f$R(t) = R(0) \cdot e^{-t}\f$ and \f$\phi(t) = \phi(0) +
+	/// \tan(\alpha) \cdot t\f$.
+	///
+	/// Note that generally \f$p(0)\f$ is the polar coordinates of a node of a
+	/// spiral arc, positive \f$t\f$ values are closer to the root, and negative
+	/// \f$t\f$ values are farther from the root.
+	Number<Inexact> restricting_angle;
 };
 
 } // namespace cartocrow::flow_map

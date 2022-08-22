@@ -17,8 +17,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef CARTOCROW_GEOMETRY_WIDGET
-#define CARTOCROW_GEOMETRY_WIDGET
+#ifndef CARTOCROW_RENDERER_GEOMETRY_WIDGET_H
+#define CARTOCROW_RENDERER_GEOMETRY_WIDGET_H
 
 #include <QMouseEvent>
 #include <QPaintEvent>
@@ -36,13 +36,12 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "geometry_painting.h"
 #include "geometry_renderer.h"
 
-namespace cartocrow {
-namespace renderer {
+namespace cartocrow::renderer {
 
 /// The style for a GeometryWidget.
 struct GeometryWidgetStyle {
 	/// The draw mode.
-	int m_mode = GeometryRenderer::stroke | GeometryRenderer::fill;
+	int m_mode = GeometryRenderer::stroke;
 	/// The diameter of points.
 	double m_pointSize = 10;
 	/// The color of points and lines.
@@ -58,16 +57,15 @@ class GeometryWidget : public QWidget, GeometryRenderer {
 
   public:
 	/// Constructs a GeometryWidget for the given painting.
-	GeometryWidget(GeometryPainting& painting);
+	GeometryWidget(std::shared_ptr<GeometryPainting> painting);
 
-	void draw(const Point& p) override;
-	void draw(const Segment& s) override;
-	void draw(const Polygon& p) override;
-	void draw(const Polygon_with_holes& p) override;
-	void draw(const Circle& c) override;
-	void draw(const Box& b) override;
-	void draw(const BezierSpline& s) override;
-	void drawText(const Point& p, const std::string& text) override;
+	void draw(const Point<Inexact>& p) override;
+	void draw(const Segment<Inexact>& s) override;
+	void draw(const Polygon<Inexact>& p) override;
+	void draw(const PolygonWithHoles<Inexact>& p) override;
+	void draw(const Circle<Inexact>& c) override;
+	//void draw(const BezierSpline& s) override;
+	void drawText(const Point<Inexact>& p, const std::string& text) override;
 
 	void pushStyle() override;
 	void popStyle() override;
@@ -75,6 +73,8 @@ class GeometryWidget : public QWidget, GeometryRenderer {
 	void setStroke(Color color, double width) override;
 	void setFill(Color color) override;
 	void setFillOpacity(int alpha) override;
+
+	void addPainting(std::shared_ptr<GeometryPainting> painting);
 
   public slots:
 	/// Determines whether to draw the axes in the background.
@@ -101,17 +101,17 @@ class GeometryWidget : public QWidget, GeometryRenderer {
 	QSize sizeHint() const override;
 
 	/// Converts a point in drawing coordinates to Qt coordinates.
-	QPointF convertPoint(Point p) const;
+	QPointF convertPoint(Point<Inexact> p) const;
 	/// Converts a rectangle in drawing coordinates to Qt coordinates.
-	QRectF convertBox(Box r) const;
+	QRectF convertBox(Box b) const;
 	/// Converts a point in Qt coordinates back to drawing coordinates.
-	Point inverseConvertPoint(QPointF p) const;
+	Point<Inexact> inverseConvertPoint(QPointF p) const;
 	/// Converts a rectangle in Qt coordinates back to drawing coordinates.
 	Box inverseConvertBox(QRectF r) const;
 
   private:
 	/// Converts the polygon to Qt coordinates and adds it to the QPainterPath.
-	void addPolygonToPath(QPainterPath& path, const Polygon& p);
+	void addPolygonToPath(QPainterPath& path, const Polygon<Inexact>& p);
 
 	/// Sets the pen and brush on \link m_painter corresponding to \link
 	/// m_style.
@@ -122,8 +122,8 @@ class GeometryWidget : public QWidget, GeometryRenderer {
 	void drawAxes();
 	/// Moves the zoom slider knob to the currently set zoom level.
 	void updateZoomSlider();
-	/// The painting we're drawing.
-	GeometryPainting& m_painting;
+	/// The paintings we're drawing.
+	std::vector<std::shared_ptr<GeometryPainting>> m_paintings;
 	/// The QPainter we are drawing with. Only valid while painting.
 	std::unique_ptr<QPainter> m_painter;
 	/// The transform from drawing coordinates to Qt coordinates.
@@ -156,7 +156,6 @@ class GeometryWidget : public QWidget, GeometryRenderer {
 	QToolButton* m_zoomInButton;
 };
 
-} // namespace renderer
-} // namespace cartocrow
+} // namespace cartocrow::renderer
 
-#endif //CARTOCROW_GEOMETRY_WIDGET
+#endif //CARTOCROW_RENDERER_GEOMETRY_WIDGET_H

@@ -29,18 +29,24 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 28-10-2020
 
 #include <glog/logging.h>
 
-#include "cartocrow/core/circular_range.h"
-#include "cartocrow/core/circulator.h"
-#include "cartocrow/core/intersections.h"
-#include "cartocrow/core/polar_segment.h"
-#include "cartocrow/core/spiral_segment.h"
+//#include "circular_range.h"
+#include "circulator.h"
+#include "intersections.h"
+#include "polar_segment.h"
+#include "spiral_segment.h"
 
 namespace cartocrow::flow_map {
 
-SpiralTree::SpiralTree(const Point& root, const Number& restricting_angle)
-    : m_restricting_angle(restricting_angle), m_root_translation(Point(CGAL::ORIGIN) - root) {
-	CHECK_GT(restricting_angle, 0);
-	CHECK_LE(restricting_angle, M_PI_2);
+SpiralTree::SpiralTree(const Point<Inexact> rootPosition, const Number<Inexact> restrictingAngle)
+    : m_restrictingAngle(restrictingAngle), m_rootPosition(rootPosition) {
+	if (restrictingAngle < 0 || restrictingAngle > M_PI_2) {
+		throw std::runtime_error("Restricting angle outside [0, 2 * pi]");
+	}
+
+	auto root = std::make_shared<Place>("root", rootPosition, 0);
+	m_places.push_back(root);
+	m_root = std::make_shared<Node>(PolarPoint(0, 0), root);
+	m_nodes.push_back(m_root);
 }
 
 const std::vector<std::shared_ptr<Place>>& SpiralTree::places() const {
@@ -55,23 +61,21 @@ const std::vector<SpiralTree::Obstacle>& SpiralTree::obstacles() const {
 	return m_obstacles;
 }
 
-void SpiralTree::addNode(std::shared_ptr<Node> node) {
-	m_nodes.push_back(node);
-}
-
-void SpiralTree::addPlace(const Place& place) {
-	auto newPlace = std::make_shared<Place>(place);
+void SpiralTree::addPlace(const std::string& name, const Point<Inexact>& position,
+                          Number<Inexact> flow) {
+	auto newPlace = std::make_shared<Place>(name, position, flow);
 	m_places.push_back(newPlace);
-	m_nodes.push_back(std::make_shared<Node>(newPlace));
+	PolarPoint polarPosition(position - (m_rootPosition - CGAL::ORIGIN));
+	m_nodes.push_back(std::make_shared<Node>(polarPosition, newPlace));
 }
 
-void SpiralTree::addObstacle(const Polygon& obstacle) {
+void SpiralTree::addObstacle(const Polygon<Inexact>& obstacle) {
 	//CHECK_NE(obstacle.oriented_side(root()), CGAL::ON_BOUNDED_SIDE) << "Root inside an obstacle.";
 
 	std::cout << "adding obstacle with vertex count " << obstacle.size() << std::endl;
 	Obstacle& addedObstacle = m_obstacles.emplace_back();
 	for (const auto& vertex : obstacle) {
-		PolarPoint p(vertex, CGAL::ORIGIN - root());
+		PolarPoint p(vertex, CGAL::ORIGIN - rootPosition());
 		addedObstacle.push_back(p);
 	}
 
@@ -82,30 +86,30 @@ void SpiralTree::addObstacle(const Polygon& obstacle) {
 
 	// subdivide each edge as necessary to include the closest point to the root
 	// and spiral points
-	const Number phi_offset = M_PI_2 - m_restricting_angle;
+	const Number<Inexact> phi_offset = M_PI_2 - m_restrictingAngle;
 	CHECK_LT(0, phi_offset);
 
 	Obstacle::iterator vertex_prev = --addedObstacle.end();
 	for (Obstacle::iterator vertex_iter = addedObstacle.begin(); vertex_iter != addedObstacle.end();
 	     vertex_prev = vertex_iter++) {
 		const PolarSegment edge{*vertex_prev, *vertex_iter};
-		const PolarPoint closest = edge.SupportingLine().foot();
+		const PolarPoint closest = edge.supportingLine().foot();
 
 		// the spiral points have fixed R and their phi is offset from the phi of the closest by +/- phi_offset
-		const Number r_spiral = closest.R() / std::sin(m_restricting_angle);
+		const Number<Inexact> r_spiral = closest.r() / std::sin(m_restrictingAngle);
 
 		const int sign = vertex_prev->phi() < vertex_iter->phi() ? -1 : 1;
-		const Number phi_spiral_prev = closest.phi() + sign * phi_offset;
-		const Number phi_spiral_next = closest.phi() - sign * phi_offset;
+		const Number<Inexact> phi_spiral_prev = closest.phi() + sign * phi_offset;
+		const Number<Inexact> phi_spiral_next = closest.phi() - sign * phi_offset;
 
 		// the closest point and spiral points must be added ordered from p to q and only if they are on the edge
-		if (edge.ContainsPhi(phi_spiral_prev)) {
+		if (edge.containsPhi(phi_spiral_prev)) {
 			addedObstacle.insert(vertex_iter, PolarPoint(r_spiral, phi_spiral_prev));
 		}
-		if (edge.ContainsPhi(closest.phi())) {
+		if (edge.containsPhi(closest.phi())) {
 			addedObstacle.insert(vertex_iter, closest);
 		}
-		if (edge.ContainsPhi(phi_spiral_next)) {
+		if (edge.containsPhi(phi_spiral_next)) {
 			addedObstacle.insert(vertex_iter, PolarPoint(r_spiral, phi_spiral_next));
 		}
 	}
@@ -113,17 +117,18 @@ void SpiralTree::addObstacle(const Polygon& obstacle) {
 
 void SpiralTree::addShields() {
 	for (const std::shared_ptr<Place>& place : places()) {
-		PolarPoint position(place->position, CGAL::ORIGIN - root());
+		PolarPoint position(place->m_position, CGAL::ORIGIN - rootPosition());
 		std::cout << position << std::endl;
-		if (position.R() == 0) {
+		if (position.r() == 0) {
 			continue;
 		}
-		Point p = position.to_cartesian() + (root() - CGAL::ORIGIN);
-		const Number shieldWidth = 2;
-		Vector v1 = PolarPoint(shieldWidth, position.phi() + M_PI_2).to_cartesian() - CGAL::ORIGIN;
-		const Number shieldThickness = 2;
-		Vector v2 = PolarPoint(shieldThickness, position.phi()).to_cartesian() - CGAL::ORIGIN;
-		Polygon polygon;
+		Point<Inexact> p = position.toCartesian() + (rootPosition() - CGAL::ORIGIN);
+		const Number<Inexact> shieldWidth = 2;
+		Vector<Inexact> v1 =
+		    PolarPoint(shieldWidth, position.phi() + M_PI_2).toCartesian() - CGAL::ORIGIN;
+		const Number<Inexact> shieldThickness = 2;
+		Vector<Inexact> v2 = PolarPoint(shieldThickness, position.phi()).toCartesian() - CGAL::ORIGIN;
+		Polygon<Inexact> polygon;
 		polygon.push_back(p + 0.5 * v2 + v1);
 		polygon.push_back(p + 0.5 * v2 - v1);
 		polygon.push_back(p + v2);
@@ -131,30 +136,30 @@ void SpiralTree::addShields() {
 	}
 }
 
-void SpiralTree::setRoot(const Point& root) {
-	m_root_translation = Point(CGAL::ORIGIN) - root;
+/*void SpiralTree::setRoot(const Point<Inexact>& root) {
+	m_root_translation = Point<Inexact>(CGAL::ORIGIN) - root;
 	clean();
+}*/
+
+Point<Inexact> SpiralTree::rootPosition() const {
+	return m_rootPosition;
 }
 
-Point SpiralTree::root() const {
-	return Point(CGAL::ORIGIN) - m_root_translation;
-}
-
-void SpiralTree::setRestrictingAngle(const Number& restricting_angle) {
+/*void SpiralTree::setRestrictingAngle(const Number<Inexact>& restricting_angle) {
 	CHECK_GT(restricting_angle, 0);
 	CHECK_LT(restricting_angle, M_PI_2);
 	m_restricting_angle = restricting_angle;
 	clean();
-}
+}*/
 
-Number SpiralTree::restrictingAngle() const {
-	return m_restricting_angle;
+Number<Inexact> SpiralTree::restrictingAngle() const {
+	return m_restrictingAngle;
 }
 
 void SpiralTree::clean() {
 	size_t num_places = 0;
 
-	// Clean the node connections.
+	// clean the node connections
 	for (std::shared_ptr<Node>& node : m_nodes) {
 		if (node->m_place == nullptr) {
 			break;
@@ -165,7 +170,7 @@ void SpiralTree::clean() {
 		node->m_children.clear();
 	}
 
-	// Remove support nodes, e.g. join nodes.
+	// remove support nodes, e.g. join nodes
 	m_nodes.resize(num_places);
 }
 
@@ -175,7 +180,7 @@ bool SpiralTree::isReachable(const PolarPoint& parent_point, const PolarPoint& c
 	}
 
 	const Spiral spiral(child_point, parent_point);
-	return std::abs(spiral.angle_rad()) <= m_restricting_angle;
+	return std::abs(spiral.angle()) <= m_restrictingAngle;
 }
 
 } // namespace cartocrow::flow_map

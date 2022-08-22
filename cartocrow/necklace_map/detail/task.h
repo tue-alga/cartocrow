@@ -25,13 +25,12 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 06-05-2020
 
 #include <vector>
 
-#include "cartocrow/core/bit_string.h"
-#include "cartocrow/core/core_types.h"
-#include "cartocrow/core/range.h"
-#include "cartocrow/necklace_map/detail/cycle_node_layered.h"
+#include "../../core/core.h"
+#include "../bit_string.h"
+#include "../range.h"
+#include "cycle_node_layered.h"
 
-namespace cartocrow {
-namespace necklace_map {
+namespace cartocrow::necklace_map {
 namespace detail {
 
 // The beads will be processed by moving from event to event.
@@ -41,10 +40,10 @@ struct TaskEvent {
 
 	TaskEvent();
 
-	TaskEvent(const CycleNodeLayered::Ptr& node, const Number& angle_rad, const Type& type);
+	TaskEvent(const CycleNodeLayered::Ptr& node, const Number<Inexact>& angle_rad, const Type& type);
 
 	CycleNodeLayered::Ptr node;
-	Number angle_rad;
+	Number<Inexact> angle_rad;
 	Type type;
 }; // class TaskEvent
 
@@ -61,7 +60,7 @@ class TaskSlice {
 
 	TaskSlice(const TaskEvent& event_from, const TaskEvent& event_to, const int num_layers);
 
-	TaskSlice(const TaskSlice& slice, const Number& angle_start, const int cycle);
+	TaskSlice(const TaskSlice& slice, const Number<Inexact>& angle_start, const int cycle);
 
 	void Reset();
 
@@ -79,7 +78,6 @@ class TaskSlice {
 }; // class TaskSlice
 
 } // namespace detail
-} // namespace necklace_map
-} // namespace cartocrow
+} // namespace cartocrow::necklace_map
 
 #endif //CARTOCROW_NECKLACE_MAP_DETAIL_TASK_H

@@ -23,30 +23,86 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 04-02-2020
 #define CARTOCROW_CORE_TIMER_H
 
 #include "time.h"
-#include <deque>
+
+#include <string>
+#include <vector>
 
 namespace cartocrow {
 
+/// A simple timer that keeps track of the duration of a number of events.
+/**
+ * This is meant for reporting running times of steps of an algorithm for
+ * logging purposes. The timer starts running on construction, and steps can
+ * be added using \ref stamp(). The intended use is like this:
+ * ```
+ * cartocrow::Timer timer;
+ *
+ * // ... code to demolish Earth
+ * timer.stamp("Demolish Earth");
+ *
+ * // ... code to build hyperspace bypass
+ * timer.stamp("Build hyperspace bypass");
+ *
+ * timer.output();
+ * ```
+ * The call to \ref output() then outputs something like:
+ * ```
+ * Demolish Earth: 120.0 s
+ * Build hyperspace bypass: 70.0 s
+ * ```
+ *
+ * Information about the steps stored by the timer can also be obtained
+ * programmatically by using \ref operator[]:
+ * ```
+ * std::cout << timer[0].first << "\n";  // "Demolish Earth"
+ * std::cout << timer[0].second << "\n";  // "120.0"
+ * ```
+ * Any methods returning \c double return times in seconds.
+ */
 class Timer {
   public:
-	Timer(const size_t memory = 10);
+	/// Constructs a timer and starts it.
+	Timer();
 
-	void Reset();
+	/// Drops all existing steps and restarts the timer.
+	void reset();
 
-	double Stamp();
+	/// Returns the <code>i</code>-th step stored by the timer.
+	/**
+	 * If <code>i < 0</code> or <code>i >= size()</code>, behavior is undefined.
+	 *
+	 * \return A pair containing the description and the duration.
+	 */
+	std::pair<std::string, double> operator[](const size_t& i) const;
 
-	double Peek(const size_t skip = 0) const;
+	/// Adds a step ending at the current time with the given description.
+	/**
+	 * \return The duration of the added step, that is, the time that passed
+	 * since the last timestamp.
+	 */
+	double stamp(const std::string& description);
 
-	double Span() const;
+	/// Returns the time that has passed since the last timestamp (without
+	/// making a new timestamp).
+	[[nodiscard]] double peek() const;
+
+	/// Returns the total time that has passed since the timer has been started.
+	double span() const;
+
+	/// Returns the number of steps stored in this timer.
+	size_t size() const;
+
+	/// Outputs the steps to \ref std::cout in a human-readable format.
+	void output() const;
 
   private:
-	// If skip is too large, the starting time is used.
-	double Compare(const clock_t time, const size_t skip = 0) const;
-
-	clock_t start_;
-	std::deque<clock_t> times_;
-	size_t memory_;
-}; // class Timer
+	/// Converts a time in clock ticks to seconds.
+	static double toSeconds(clock_t time);
+	/// The event descriptions for each step.
+	std::vector<std::string> m_descriptions;
+	/// The timestamps (one more than contained in \ref m_descriptions).
+	std::vector<clock_t> m_stamps;
+};
 
 } // namespace cartocrow
 

@@ -25,29 +25,27 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 20-01-2020
 
 #include <vector>
 
-#include "cartocrow/core/core_types.h"
-#include "cartocrow/necklace_map/necklace.h"
+#include "../../core/core.h"
+#include "../necklace.h"
 
-namespace cartocrow {
-namespace necklace_map {
+namespace cartocrow::necklace_map {
 namespace detail {
 
 class ValidateScaleFactor {
   public:
-	ValidateScaleFactor(const Number& scale_factor, const Number& buffer_rad = 0,
+	ValidateScaleFactor(const Number<Inexact>& scale_factor, const Number<Inexact>& buffer_rad = 0,
 	                    const bool adjust_angle = true);
 
-	bool operator()(Necklace::Ptr& necklace) const;
+	bool operator()(Necklace& necklace) const;
 
-	bool operator()(std::vector<Necklace::Ptr>& necklaces) const;
+	bool operator()(std::vector<Necklace>& necklaces) const;
 
-	Number scale_factor;
-	Number buffer_rad;
+	Number<Inexact> scale_factor;
+	Number<Inexact> buffer_rad;
 	bool adjust_angle;
 }; // class ValidateScaleFactor
 
 } // namespace detail
-} // namespace necklace_map
-} // namespace cartocrow
+} // namespace cartocrow::necklace_map
 
 #endif //CARTOCROW_NECKLACE_MAP_DETAIL_VALIDATE_SCALE_FACTOR_H

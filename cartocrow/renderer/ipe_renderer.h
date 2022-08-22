@@ -17,8 +17,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef CARTOCROW_IPE_RENDERER
-#define CARTOCROW_IPE_RENDERER
+#ifndef CARTOCROW_RENDERER_IPE_RENDERER_H
+#define CARTOCROW_RENDERER_IPE_RENDERER_H
 
 #include <ipeattributes.h>
 #include <ipelib.h>
@@ -29,13 +29,12 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "geometry_painting.h"
 #include "geometry_renderer.h"
 
-namespace cartocrow {
-namespace renderer {
+namespace cartocrow::renderer {
 
 /// The style for the Ipe renderer.
 struct IpeRendererStyle {
 	/// The draw mode.
-	int m_mode = GeometryRenderer::stroke | GeometryRenderer::fill;
+	int m_mode = GeometryRenderer::stroke;
 	/// The diameter of points.
 	double m_pointSize = 10;
 	/// The color of points and lines.
@@ -65,19 +64,18 @@ class IpeRenderer : public GeometryRenderer {
 
   public:
 	/// Constructs a IpeRenderer for the given painting.
-	IpeRenderer(GeometryPainting& painting);
+	IpeRenderer(const GeometryPainting& painting);
 
 	/// Saves the painting to an Ipe file with the given name.
 	void save(const std::filesystem::path& file);
 
-	void draw(const Point& p) override;
-	void draw(const Segment& s) override;
-	void draw(const Polygon& p) override;
-	void draw(const Polygon_with_holes& p) override;
-	void draw(const Circle& c) override;
-	void draw(const Box& b) override;
-	void draw(const BezierSpline& s) override;
-	void drawText(const Point& p, const std::string& text) override;
+	void draw(const Point<Inexact>& p) override;
+	void draw(const Segment<Inexact>& s) override;
+	void draw(const Polygon<Inexact>& p) override;
+	void draw(const PolygonWithHoles<Inexact>& p) override;
+	void draw(const Circle<Inexact>& c) override;
+	//void draw(const BezierSpline& s) override;
+	void drawText(const Point<Inexact>& p, const std::string& text) override;
 
 	void pushStyle() override;
 	void popStyle() override;
@@ -88,12 +86,12 @@ class IpeRenderer : public GeometryRenderer {
 
   private:
 	/// Converts a polygon to an Ipe curve.
-	ipe::Curve* convertPolygonToCurve(const Polygon& p) const;
+	ipe::Curve* convertPolygonToCurve(const Polygon<Inexact>& p) const;
 	/// Returns Ipe attributes to style an Ipe path with the current style.
 	ipe::AllAttributes getAttributesForStyle() const;
 
 	/// The painting we're drawing.
-	GeometryPainting& m_painting;
+	const GeometryPainting& m_painting;
 	/// The current drawing style.
 	IpeRendererStyle m_style;
 	/// A stack of drawing styles, used by \ref pushStyle() and \ref popStyle()
@@ -109,7 +107,6 @@ class IpeRenderer : public GeometryRenderer {
 	ipe::StyleSheet* m_alphaSheet;
 };
 
-} // namespace renderer
-} // namespace cartocrow
+} // namespace cartocrow::renderer
 
-#endif //CARTOCROW_IPE_RENDERER
+#endif //CARTOCROW_RENDERER_IPE_RENDERER_H

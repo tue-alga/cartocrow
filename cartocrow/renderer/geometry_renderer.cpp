@@ -18,18 +18,40 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include "geometry_renderer.h"
+#include <CGAL/number_utils.h>
 
-namespace cartocrow {
-namespace renderer {
+namespace cartocrow::renderer {
 
-void GeometryRenderer::draw(const Region& r) {
-	if (r.IsPoint()) {
-		draw(r.shape[0].outer_boundary()[0]);
-	}
-	for (const Polygon_with_holes& p : r.shape) {
+void GeometryRenderer::draw(const Point<Exact>& p) {
+	draw(approximate(p));
+}
+
+void GeometryRenderer::draw(const Segment<Exact>& s) {
+	draw(approximate(s));
+}
+
+void GeometryRenderer::draw(const Polygon<Exact>& p) {
+	draw(approximate(p));
+}
+
+void GeometryRenderer::draw(const PolygonWithHoles<Exact>& p) {
+	draw(approximate(p));
+}
+
+void GeometryRenderer::draw(const Circle<Exact>& c) {
+	draw(approximate(c));
+}
+
+void GeometryRenderer::draw(const PolygonSet<Inexact>& ps) {
+	std::vector<PolygonWithHoles<Inexact>> polygons;
+	ps.polygons_with_holes(std::back_inserter(polygons));
+	for (const PolygonWithHoles<Inexact>& p : polygons) {
 		draw(p);
 	}
 }
 
-} // namespace renderer
-} // namespace cartocrow
+void GeometryRenderer::draw(const PolygonSet<Exact>& ps) {
+	draw(approximate(ps));
+}
+
+} // namespace cartocrow::renderer

@@ -17,8 +17,6 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
-Created by tvl (t.vanlankveld@esciencecenter.nl) on 28-10-2020
 */
 
 #include "spiral_tree_unobstructed_algorithm.h"
@@ -28,15 +26,17 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 28-10-2020
 
 #include <glog/logging.h>
 
-#include "cartocrow/core/circular_range.h"
-#include "cartocrow/core/circulator.h"
-#include "cartocrow/core/intersections.h"
-#include "cartocrow/core/polar_segment.h"
-#include "cartocrow/core/spiral_segment.h"
+#include "../core/core.h"
+#include "../necklace_map/circular_range.h"
+#include "circulator.h"
+#include "intersections.h"
+#include "polar_segment.h"
+#include "spiral_segment.h"
 
 namespace cartocrow::flow_map {
 
-SpiralTreeUnobstructedAlgorithm::SpiralTreeUnobstructedAlgorithm(SpiralTree& tree) : m_tree(tree) {}
+SpiralTreeUnobstructedAlgorithm::SpiralTreeUnobstructedAlgorithm(SpiralTree& tree)
+    : m_tree(tree), m_debugPainting(std::make_shared<renderer::PaintingRenderer>()) {}
 
 void SpiralTreeUnobstructedAlgorithm::run() {
 
@@ -47,10 +47,7 @@ void SpiralTreeUnobstructedAlgorithm::run() {
 	// insert all terminals into the event queue
 	EventQueue events;
 	for (const std::shared_ptr<Node>& node : m_tree.nodes()) {
-		CHECK_NOTNULL(node->m_place);
-		const PolarPoint relative_position(node->m_place->position, CGAL::ORIGIN - m_tree.root());
-		std::cout << node->m_place->id << " " << relative_position << std::endl;
-		events.push(Event(node, relative_position));
+		events.push(Event(node, node->m_position));
 	}
 
 	// main loop, handle all events
@@ -59,7 +56,7 @@ void SpiralTreeUnobstructedAlgorithm::run() {
 		events.pop();
 
 		// if we have reached the root, handle that and stop
-		if (event.m_relative_position.R() == 0) {
+		if (event.m_relative_position.r() == 0) {
 			handleRootEvent(event, wavefront);
 			break;
 		}
@@ -96,8 +93,8 @@ void SpiralTreeUnobstructedAlgorithm::handleRootEvent(const Event& event, Wavefr
 	root->m_children.push_back(node);
 	node->m_parent = root;
 
-	std::cout << "root node " << root->m_place->id << ": connected to " << node->m_place->id
-	          << std::endl;
+	//std::cout << "root node " << root->m_place->m_name << ": connected to " << node->m_place->m_name
+	//          << std::endl;
 
 	wavefront.clear();
 }
@@ -112,14 +109,19 @@ SpiralTreeUnobstructedAlgorithm::handleJoinEvent(const Event& event, Wavefront& 
 		return std::nullopt;
 	}
 
-	// add the join node to the wavefront and the collection of nodes
-	const Number angle = event.m_relative_position.phi();
-	Wavefront::iterator node_iter = wavefront.emplace(angle, event).first;
-	m_tree.addNode(event.m_node);
+	m_debugPainting->setStroke(Color{0, 120, 240}, 1);
+	m_debugPainting->draw(Circle<Inexact>(m_tree.rootPosition(), event.m_node->m_position.rSquared()));
+	m_debugPainting->drawText(
+	    m_tree.rootPosition() + (event.m_node->m_position.toCartesian() - CGAL::ORIGIN), "join");
 
-	std::cout << "join node " << event.m_node->m_place->id << ": connected to "
-	          << event.m_node->m_children[0]->m_place->id << " and "
-	          << event.m_node->m_children[1]->m_place->id << std::endl;
+	// add the join node to the wavefront and the collection of nodes
+	const Number<Inexact> angle = event.m_relative_position.phi();
+	Wavefront::iterator node_iter = wavefront.emplace(angle, event).first;
+	m_tree.m_nodes.push_back(event.m_node);
+
+	//std::cout << "join node " << event.m_node->m_place->m_name << ": connected to "
+	//<< event.m_node->m_children[0]->m_place->m_name << " and "
+	//<< event.m_node->m_children[1]->m_place->m_name << std::endl;
 
 	// connect the children to the join node
 	event.m_node->m_children[0]->m_parent = event.m_node;
@@ -136,7 +138,12 @@ SpiralTreeUnobstructedAlgorithm::handleJoinEvent(const Event& event, Wavefront& 
 SpiralTreeUnobstructedAlgorithm::Wavefront::iterator
 SpiralTreeUnobstructedAlgorithm::handleLeafEvent(Event& event, Wavefront& wavefront) {
 
-	const Number angle = event.m_relative_position.phi();
+	m_debugPainting->setStroke(Color{120, 0, 240}, 1);
+	m_debugPainting->draw(Circle<Inexact>(m_tree.rootPosition(), event.m_node->m_position.rSquared()));
+	m_debugPainting->drawText(
+	    m_tree.rootPosition() + (event.m_node->m_position.toCartesian() - CGAL::ORIGIN), "leaf");
+
+	const Number<Inexact> angle = event.m_relative_position.phi();
 
 	if (!wavefront.empty()) {
 
@@ -164,7 +171,7 @@ SpiralTreeUnobstructedAlgorithm::handleLeafEvent(Event& event, Wavefront& wavefr
 		}
 	}
 
-	std::cout << "leaf node " << event.m_node->m_place->id << ": added" << std::endl;
+	//std::cout << "leaf node " << event.m_node->m_place->m_name << ": added" << std::endl;
 
 	return wavefront.emplace(angle, event).first;
 }
@@ -174,22 +181,26 @@ void SpiralTreeUnobstructedAlgorithm::insertJoinEvent(const Event& first, const 
 	const Spiral spiral_left(first.m_relative_position, -m_tree.restrictingAngle());
 	const Spiral spiral_right(second.m_relative_position, m_tree.restrictingAngle());
 
-	PolarPoint intersections[2];
-	const int num = ComputeIntersections(spiral_left, spiral_right, intersections);
-	CHECK_LT(0, num);
+	std::vector<PolarPoint> intersections;
+	intersect(spiral_left, spiral_right, intersections);
+	CHECK(intersections.size() > 0);
 
 	// the intersections should be the two closest to the anchor of the first spiral
 	const PolarPoint& intersection = intersections[0];
-	CHECK_LE(intersection.R(), first.m_relative_position.R());
-	CHECK_LE(intersection.R(), second.m_relative_position.R());
+	CHECK_LE(intersection.r(), first.m_relative_position.r());
+	CHECK_LE(intersection.r(), second.m_relative_position.r());
 
-	std::shared_ptr<Node> join = std::make_shared<Node>();
+	std::shared_ptr<Node> join = std::make_shared<Node>(intersection);
 	join->m_children = {first.m_node, second.m_node};
-	const std::string id = "[" + first.m_node->m_place->id + "+" + second.m_node->m_place->id + "]";
-	PolarPoint absolute_position(intersection, m_tree.root() - CGAL::ORIGIN);
-	join->m_place = std::make_shared<Place>(id, absolute_position);
+	//const std::string name =
+	//    "[" + first.m_node->m_place->m_name + "+" + second.m_node->m_place->m_name + "]";
+	// create place -- removed
 
 	events.push(Event(join, intersection));
+}
+
+std::shared_ptr<renderer::GeometryPainting> SpiralTreeUnobstructedAlgorithm::debugPainting() {
+	return m_debugPainting;
 }
 
 } // namespace cartocrow::flow_map

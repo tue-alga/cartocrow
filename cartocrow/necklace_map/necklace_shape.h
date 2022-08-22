@@ -25,11 +25,10 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 15-01-2020
 
 #include <memory>
 
-#include "cartocrow/core/circular_range.h"
-#include "cartocrow/core/core_types.h"
+#include "../core/core.h"
+#include "circular_range.h"
 
-namespace cartocrow {
-namespace necklace_map {
+namespace cartocrow::necklace_map {
 
 class CircleNecklace;
 class BezierNecklace;
@@ -46,32 +45,33 @@ class NecklaceShape {
 
 	using Ptr = std::shared_ptr<NecklaceShape>;
 
-	virtual const Point& kernel() const = 0;
+	virtual const Point<Inexact>& kernel() const = 0;
 
-	virtual bool IsValid() const = 0;
+	virtual bool isValid() const = 0;
 
-	virtual bool IntersectRay(const Number& angle_rad, Point& intersection) const = 0;
+	virtual bool intersectRay(const Number<Inexact>& angle_rad,
+	                          Point<Inexact>& intersection) const = 0;
 
-	virtual Box ComputeBoundingBox() const = 0;
+	virtual Box computeBoundingBox() const = 0;
 
-	virtual Number ComputeCoveringRadiusRad(const Range::Ptr& range, const Number& radius) const = 0;
+	virtual Number<Inexact> computeCoveringRadiusRad(const Range& range,
+	                                                 const Number<Inexact>& radius) const = 0;
 
-	virtual Number ComputeDistanceToKernel(const Range::Ptr& range) const = 0;
+	virtual Number<Inexact> computeDistanceToKernel(const Range& range) const = 0;
 
-	Number ComputeAngleRad(const Point& point) const;
+	Number<Inexact> computeAngleRad(const Point<Inexact>& point) const;
 
-	virtual Number ComputeAngleAtDistanceRad(const Number& angle_rad,
-	                                         const Number& distance) const = 0;
+	virtual Number<Inexact> computeAngleAtDistanceRad(const Number<Inexact>& angle_rad,
+	                                                  const Number<Inexact>& distance) const = 0;
 
-	virtual void Accept(NecklaceShapeVisitor& visitor) = 0;
+	virtual void accept(NecklaceShapeVisitor& visitor) = 0;
 	// TODO(tvl) should the necklace contain methods for adapting the 1D solution to the 2D solution?
 	// This would mainly come into play for Bezier necklaces. For impl: check the 30x for loop in the Java prototype code.
 	// Another case would be when a bead contains the necklace center;
 	// in this case, the scale factor should be reduced such that the bead does not contain the necklace center
 	// (could this cause recursive failure and if so, in which cases? This *may* actually prove scientifically interesting).
-}; // class NecklaceShape
+};
 
-} // namespace necklace_map
-} // namespace cartocrow
+} // namespace cartocrow::necklace_map
 
 #endif //CARTOCROW_NECKLACE_MAP_NECKLACE_SHAPE_H

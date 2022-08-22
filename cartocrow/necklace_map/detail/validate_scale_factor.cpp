@@ -26,10 +26,9 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 20-01-2020
 
 #include <glog/logging.h>
 
-#include "cartocrow/necklace_map/detail/cycle_node.h"
+#include "cycle_node.h"
 
-namespace cartocrow {
-namespace necklace_map {
+namespace cartocrow::necklace_map {
 namespace detail {
 
 /**@class ValidateScaleFactor
@@ -40,7 +39,8 @@ namespace detail {
  * @param scale_factor the scale factor for which to validate the necklace map.
  * @param buffer_rad the buffer angle in radians for which to validate the necklace map.
  */
-ValidateScaleFactor::ValidateScaleFactor(const Number& scale_factor, const Number& buffer_rad /*= 0*/,
+ValidateScaleFactor::ValidateScaleFactor(const Number<Inexact>& scale_factor,
+                                         const Number<Inexact>& buffer_rad /*= 0*/,
                                          const bool adjust_angle /*= true*/
                                          )
     : scale_factor(scale_factor), buffer_rad(buffer_rad), adjust_angle(adjust_angle) {}
@@ -49,14 +49,14 @@ ValidateScaleFactor::ValidateScaleFactor(const Number& scale_factor, const Numbe
  * @param necklace the necklace to validate.
  * @return whether there exists a valid placement of the necklace beads, given the scale factor and buffer angle of the validator.
  */
-bool ValidateScaleFactor::operator()(Necklace::Ptr& necklace) const {
-	const Number num_beads = necklace->beads.size();
+bool ValidateScaleFactor::operator()(Necklace& necklace) const {
+	const Number<Inexact> num_beads = necklace.beads.size();
 	if (num_beads < 2) {
 		// Place the elements in a valid position.
-		for (Bead::Ptr& bead : necklace->beads) {
-			bead->valid = std::make_shared<CircularRange>(*bead->feasible);
+		for (std::shared_ptr<Bead>& bead : necklace.beads) {
+			bead->valid = bead->feasible;
 			if (bead->angle_rad == 0) {
-				bead->angle_rad = bead->valid->from_rad();
+				bead->angle_rad = bead->valid.from();
 			}
 		}
 
@@ -70,11 +70,12 @@ bool ValidateScaleFactor::operator()(Necklace::Ptr& necklace) const {
 	nodes.reserve(2 * num_beads);
 
 	// Create a sorted cycle based on the feasible intervals of the necklace beads and compute the scaled covering radii.
-	for (const Bead::Ptr& bead : necklace->beads) {
+	for (const std::shared_ptr<Bead>& bead : necklace.beads) {
 		// In case of the any-order algorithm, the current angle limits the valid interval.
 		CHECK_NOTNULL(bead);
-		nodes.emplace_back(bead, std::make_shared<Range>(
-		                             bead->angle_rad, Modulo(bead->feasible->to(), bead->angle_rad)));
+		nodes.emplace_back(bead,
+		                   std::make_shared<Range>(bead->angle_rad,
+		                                           wrapAngle(bead->feasible.to(), bead->angle_rad)));
 	}
 
 	// Each node is duplicated with an offset to its interval to force cyclic validity.
@@ -94,12 +95,12 @@ bool ValidateScaleFactor::operator()(Necklace::Ptr& necklace) const {
 		detail::CycleNode& current = nodes[n];
 
 		// The bead must not overlap the previous one.
-		const Number min_distance =
+		const Number<Inexact> min_distance =
 		    scale_factor * (current.bead->radius_base + previous.bead->radius_base);
-		const Number min_angle_rad =
-		    Modulo(necklace->shape->ComputeAngleAtDistanceRad(previous.valid->from(), min_distance) +
-		               buffer_rad,
-		           previous.valid->from());
+		const Number<Inexact> min_angle_rad = wrapAngle(
+		    necklace.shape->computeAngleAtDistanceRad(previous.valid->from(), min_distance) +
+		        buffer_rad,
+		    previous.valid->from());
 
 		if (current.valid->from() < min_angle_rad) {
 			current.valid->from() = min_angle_rad;
@@ -116,12 +117,11 @@ bool ValidateScaleFactor::operator()(Necklace::Ptr& necklace) const {
 		detail::CycleNode& current = nodes[n];
 
 		// The bead must not overlap the next one.
-		const Number min_distance =
+		const Number<Inexact> min_distance =
 		    scale_factor * (next.bead->radius_base + current.bead->radius_base);
-		const Number min_angle_rad =
-		    Modulo(necklace->shape->ComputeAngleAtDistanceRad(current.valid->to(), min_distance) +
-		               buffer_rad,
-		           current.valid->to());
+		const Number<Inexact> min_angle_rad = wrapAngle(
+		    necklace.shape->computeAngleAtDistanceRad(current.valid->to(), min_distance) + buffer_rad,
+		    current.valid->to());
 
 		if (next.valid->to() < min_angle_rad) {
 			current.valid->to() += next.valid->to() - min_angle_rad;
@@ -133,17 +133,17 @@ bool ValidateScaleFactor::operator()(Necklace::Ptr& necklace) const {
 
 	// Store the valid intervals and place each bead inside its valid interval.
 	for (size_t n = 0; n < num_beads; ++n) {
-		Bead::Ptr& bead = necklace->beads[n];
+		std::shared_ptr<Bead>& bead = necklace.beads[n];
 
 		// The second half of the nodes have the correct clockwise extreme.
-		const Number& from_rad = Modulo(nodes[num_beads + n].valid->from());
+		const Number<Inexact>& from_rad = wrapAngle(nodes[num_beads + n].valid->from());
 
 		// The first half of the nodes have the correct counterclockwise extreme.
-		const Number& to_rad = Modulo(nodes[n].valid->to(), from_rad);
+		const Number<Inexact>& to_rad = wrapAngle(nodes[n].valid->to(), from_rad);
 
-		bead->valid = std::make_shared<CircularRange>(from_rad, to_rad);
+		bead->valid = CircularRange(from_rad, to_rad);
 		if (adjust_angle) {
-			bead->angle_rad = bead->valid->from_rad();
+			bead->angle_rad = bead->valid.from();
 		}
 	}
 
@@ -154,9 +154,9 @@ bool ValidateScaleFactor::operator()(Necklace::Ptr& necklace) const {
  * @param necklace the necklaces to validate.
  * @return whether for each necklace there exists a valid placement of the necklace beads, given the scale factor and buffer angle of the validator.
  */
-bool ValidateScaleFactor::operator()(std::vector<Necklace::Ptr>& necklaces) const {
+bool ValidateScaleFactor::operator()(std::vector<Necklace>& necklaces) const {
 	bool valid = true;
-	for (Necklace::Ptr& necklace : necklaces) {
+	for (Necklace& necklace : necklaces) {
 		valid &= (*this)(necklace);
 	}
 	return valid;
@@ -171,5 +171,4 @@ bool ValidateScaleFactor::operator()(std::vector<Necklace::Ptr>& necklaces) cons
  */
 
 } // namespace detail
-} // namespace necklace_map
-} // namespace cartocrow
+} // namespace cartocrow::necklace_map

@@ -17,57 +17,25 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-Created by tvl (t.vanlankveld@esciencecenter.nl) on 07-11-2019
+Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-2019
 */
 
 #include "necklace.h"
 
-#include <glog/logging.h>
+namespace cartocrow::necklace_map {
 
-namespace cartocrow {
-namespace necklace_map {
+Necklace::Necklace(std::shared_ptr<NecklaceShape> shape) : shape(std::move(shape)), beads() {}
 
-/**@struct Necklace
- * @brief A collection of visualization symbols that are organized on a curve.
- */
+void Necklace::sortBeads() {
+	// TODO
+	//for (const std::shared_ptr<Bead>& bead : beads) {
+	//CHECK_NOTNULL(bead);
+	//}
 
-/**@fn Necklace::Ptr
- * @brief The preferred pointer type for storing or sharing a necklace.
- */
-
-/**@brief Construct a necklace from a shape.
- * @param id the necklace ID.
- * @param shape the shape of the necklace.
- */
-Necklace::Necklace(const std::string& id, const NecklaceShape::Ptr& shape)
-    : id(id), shape(shape), beads() {}
-
-/**@brief Sort the beads of the necklace by the clockwise extremes of their feasible interval.
- */
-void Necklace::SortBeads() {
-	for (const Bead::Ptr& bead : beads) {
-		CHECK_NOTNULL(bead);
-	}
-
-	// Sort the beads by the clockwise extreme of their feasible interval.
-	std::sort(beads.begin(), beads.end(), [](const Bead::Ptr& a, const Bead::Ptr& b) {
-		return a->feasible->from_rad() < b->feasible->from_rad();
-	});
+	std::sort(beads.begin(), beads.end(),
+	          [](const std::shared_ptr<Bead>& a, const std::shared_ptr<Bead>& b) {
+		          return a->feasible.from() < b->feasible.from();
+	          });
 }
 
-/**@fn std::vector<Bead::Ptr> Necklace::id;
- * @brief The identifier of the necklace.
- *
- * Regions can be linked to a necklace by specifying this identifier in the geometry input.
- */
-
-/**@fn NecklaceShape::Ptr Necklace::shape;
- * @brief The shape of the necklace.
- */
-
-/**@fn std::vector<Bead::Ptr> Necklace::beads;
- * @brief The beads on the necklace.
- */
-
-} // namespace necklace_map
-} // namespace cartocrow
+} // namespace cartocrow::necklace_map

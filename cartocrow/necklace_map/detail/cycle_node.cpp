@@ -22,8 +22,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 23-01-2020
 
 #include "cycle_node.h"
 
-namespace cartocrow {
-namespace necklace_map {
+namespace cartocrow::necklace_map {
 namespace detail {
 
 /**@struct CycleNode
@@ -44,14 +43,15 @@ CycleNode::CycleNode(const CycleNode& node)
  * The valid interval is set to a copy of the feasible interval of the bead.
  * @param bead the bead to add to the cycle.
  */
-CycleNode::CycleNode(const Bead::Ptr& bead)
-    : bead(bead), valid(std::make_shared<Range>(*bead->feasible)) {}
+CycleNode::CycleNode(const std::shared_ptr<Bead>& bead)
+    : bead(bead), valid(std::make_shared<Range>(bead->feasible)) {}
 
 /**@brief Construct a node for a particular bead.
  * @param bead the bead to add to the cycle.
  * @param valid the valid interval of the bead.
  */
-CycleNode::CycleNode(const Bead::Ptr& bead, const Range::Ptr& valid) : bead(bead), valid(valid) {}
+CycleNode::CycleNode(const std::shared_ptr<Bead>& bead, const std::shared_ptr<Range>& valid)
+    : bead(bead), valid(valid) {}
 
 /**@fn Bead::Ptr CycleNode::bead;
  * @brief The bead.
@@ -72,5 +72,4 @@ CycleNode::CycleNode(const Bead::Ptr& bead, const Range::Ptr& valid) : bead(bead
 CycleNode::CycleNode() : bead(), valid() {}
 
 } // namespace detail
-} // namespace necklace_map
-} // namespace cartocrow
+} // namespace cartocrow::necklace_map

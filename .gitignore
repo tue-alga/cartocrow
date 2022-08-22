@@ -6,3 +6,4 @@ out/
 CMakeFiles
 .vs/
 CMakeSettings.json
+doc/tags/

@@ -17,13 +17,12 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef CARTOCROW_GEOMETRY_PAINTING
-#define CARTOCROW_GEOMETRY_PAINTING
+#ifndef CARTOCROW_RENDERER_GEOMETRY_PAINTING_H
+#define CARTOCROW_RENDERER_GEOMETRY_PAINTING_H
 
 #include "geometry_renderer.h"
 
-namespace cartocrow {
-namespace renderer {
+namespace cartocrow::renderer {
 
 /// A description of a drawing using a \ref GeometryRenderer.
 /**
@@ -34,7 +33,7 @@ namespace renderer {
  * from the abstract class \ref GeometryRenderer, which provides a set of
  * standard rendering methods, such that the API for rendering to each target is
  * identical.
- * 
+ *
  * A painting is simply a list of calls to rendering methods (provided by the
  * GeometryRenderer) that make up a drawing. This is implemented in a
  * straightforward manner by the \ref paint() method, which gets the \ref
@@ -42,7 +41,7 @@ namespace renderer {
  * rendering system, create a new subclass of \ref GeometryPainting, implement
  * its \ref paint() method, and finally construct a specific renderer with this
  * painting.
- * 
+ *
  * Many objects in CartoCrow already provide a painting. For example, a necklace
  * map can be rendered by using the \ref cartocrow::necklace_map::Painting. To
  * add additional objects to an existing painting (for example, to add a legend
@@ -52,15 +51,14 @@ namespace renderer {
 class GeometryPainting {
 
   public:
-    /// Performs the rendering for this painting.
+	/// Performs the rendering for this painting.
 	/**
-	 * This is a pure virtual method; implement it define what should be
+	 * This is a pure virtual method; implement it to define what should be
 	 * rendered by the painting.
 	 */
-	virtual void paint(GeometryRenderer& renderer) = 0;
+	virtual void paint(GeometryRenderer& renderer) const = 0;
 };
 
-} // namespace renderer
-} // namespace cartocrow
+} // namespace cartocrow::renderer
 
-#endif //CARTOCROW_GEOMETRY_PAINTING
+#endif //CARTOCROW_RENDERER_GEOMETRY_PAINTING_H
