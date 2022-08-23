@@ -10,6 +10,7 @@ set(SOURCES
 	spiral.cpp
 	spiral_segment.cpp
 	spiral_tree.cpp
+	spiral_tree_obstructed_algorithm.cpp
 	spiral_tree_unobstructed_algorithm.cpp
 )
 set(HEADERS
@@ -25,6 +26,7 @@ set(HEADERS
 	spiral.h
 	spiral_segment.h
 	spiral_tree.h
+	spiral_tree_obstructed_algorithm.h
 	spiral_tree_unobstructed_algorithm.h
 )
 

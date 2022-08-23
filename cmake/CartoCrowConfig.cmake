@@ -10,8 +10,6 @@ find_dependency(GMP REQUIRED)
 
 find_dependency(Qt5Widgets REQUIRED)
 find_dependency(glog REQUIRED)
-find_dependency(tinyxml2 REQUIRED)
-find_dependency(gflags CONFIG REQUIRED)
 find_dependency(Ipelib REQUIRED)
 
 # Add the targets file

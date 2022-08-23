@@ -15,12 +15,9 @@ CartoCrow depends on the following build tools:
 And it depends on the following libraries:
 
 * CGAL (5.0) -- for implementations of computational geometry algorithms we need
-* gflags (2.2.2) -- for command-line flag handling
 * glog (0.5.0) -- for logging
 * ipelib (7.2.24) -- for [Ipe](https://ipe.otfried.org) input and SVG/Ipe output
 * Qt (5.15) -- for the interactive GUI
-* tinyxml2 (9.0.0) -- for XML parsing, used when reading SVG files
-* unittest-cpp (2.0.0) -- for running unit tests
 
 The version numbers listed are indicative. Newer (and possibly somewhat older) versions will most likely work as well.
 
@@ -53,10 +50,7 @@ On Windows systems, we recommend using [vcpkg](https://github.com/microsoft/vcpk
   ```sh
   vcpkg install cgal:x64-windows
   vcpkg install qt5:x64-windows
-  vcpkg install gflags:x64-windows
   vcpkg install glog:x64-windows
-  vcpkg install tinyxml2:x64-windows
-  vcpkg install unittest-cpp:x64-windows
   ```
 
   This step can take a very long time, especially compiling CGAL (around 30 minutes) and Qt (around 2 hours).
@@ -70,9 +64,9 @@ On Windows systems, we recommend using [vcpkg](https://github.com/microsoft/vcpk
   ```
 </details>
 
-  
+
 ### Windows (MSYS2 / MINGW64)
-  
+
 <details>
   <summary><b>Installing dependencies on Windows (MSYS2 / MINGW64)</b></summary>
 
@@ -82,7 +76,7 @@ Most dependencies can be obtained from the repository:
 
 ```sh
 pacman -S base-devel mingw-w64-x86_64-toolchain mingw-w64-x86_64-cmake mingw-w64-x86_64-ninja
-pacman -S mingw-w64-x86_64-cgal mingw-w64-x86_64-gflags mingw-w64-x86_64-glog mingw-w64-x86_64-tinyxml2 mingw-w64-x86_64-unittest-cpp mingw-w64-x86_64-qt5
+pacman -S mingw-w64-x86_64-cgal mingw-w64-x86_64-glog mingw-w64-x86_64-qt5
 ```
 
 The remaining dependencies need to be built manually.
@@ -110,9 +104,9 @@ The remaining dependencies need to be built manually.
   The compiled library `ipe.lib` ends up in `mingw64/bin`.
 </details>
 
-  
+
 ### Linux
-  
+
 <details>
   <summary><b>Installing dependencies on Linux</b></summary>
 
@@ -120,32 +114,17 @@ On Ubuntu, most dependencies can be obtained from the repository:
 
 ```sh
 sudo apt install build-essential cmake
-sudo apt install libcgal-dev libgflags-dev
+sudo apt install libcgal-dev
 ```
 
 The remaining dependencies need to be built manually.
 
-* **glog and tinyxml2.** These are built manually because Ubuntu's packaging apparently does not include the CMake files we need.
+* **glog.** This dependency is built manually because Ubuntu's packaging apparently does not include the CMake files we need.
 
   ```sh
   git clone https://github.com/google/glog.git
   cd glog
   cmake -S . -B build
-  cmake --build build
-  sudo cmake --install build
-
-  git clone https://github.com/leethomason/tinyxml2.git
-  cd tinyxml2
-  cmake -S . -B build
-  cmake --build build
-  sudo cmake --install build
-  ```
-
-* **unittest-cpp.** Also needs to be built manually, because it defines several macros that overlap with macros defined by glog. This causes issues when also compiling the unit tests of `unittest-cpp`, hence we turn these off.
-  ```sh
-  git clone -b v2.0.0 https://github.com/unittest-cpp/unittest-cpp
-  cd unittest-cpp
-  cmake -S . -B build -DUTPP_INCLUDE_TESTS_IN_BUILD=OFF
   cmake --build build
   sudo cmake --install build
   ```
@@ -186,23 +165,20 @@ If you want to use [cartocrow-web](https://github.com/tue-alga/cartocrow-web), c
 
 ## Usage
 
-### Necklace map
-
-To generate a necklace map, you need a map (in SVG format) and a data file:
+Cartocrow provides a command-line application, simply called `cartocrow`, which can be used to generate maps. To use it, you need a JSON file describing the map to generate, which can then be passed to `cartocrow`:
 
 ```bash
-build/console/necklace_map/necklace_map_cla --in_geometry_filename=<map_file> --in_data_filename=<data_file> --in_value_name=<column_name> --out_filename=<output_file>
+build/console/cartocrow/cartocrow <json-file>
 ```
 
-We provide some sample input data to experiment with:
+We provide some sample input data to generate a necklace map depicting the population of all countries in Europe:
 
 ```bash
-build/console/necklace_map/necklace_map_cla --in_geometry_filename=data/necklace_map/wEU.svg --in_data_filename=data/necklace_map/wEU.txt --in_value_name=value --out_filename=test.svg
+build/console/cartocrow/cartocrow data/europe-population-necklace.json
 ```
 
 
 ## License
 
-Copyright (c) 2019-2021 Netherlands eScience Center and TU Eindhoven
+Copyright (c) 2019-2022 Netherlands eScience Center and TU Eindhoven
 Licensed under the GPLv3.0 license. See LICENSE for details.
-
