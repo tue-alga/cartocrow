@@ -97,8 +97,8 @@ class SpiralTreeUnobstructedAlgorithm {
 	/// in a join event that should have been handled before this leaf event,
 	/// which removes the neighbors from the wavefront.)
 	///
-	/// If indeed the leaf node is reachable from a neighbor \f$ v \f$, then
-	/// \f$ v \f$ becomes the child of the new node and hence gets removed from
+	/// If indeed the leaf node is reachable from a neighbor \f$v\f$, then
+	/// \f$v\f$ becomes the child of the new node and hence gets removed from
 	/// the wavefront. Else, the leaf node is simply inserted into the wavefront
 	/// without children.
 	///

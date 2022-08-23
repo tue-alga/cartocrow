@@ -83,6 +83,10 @@ void SpiralTreeUnobstructedAlgorithm::run() {
 void SpiralTreeUnobstructedAlgorithm::handleRootEvent(const Event& event, Wavefront& wavefront) {
 	std::shared_ptr<Node> root = event.m_node;
 
+	m_debugPainting->setStroke(Color{240, 120, 0}, 1);
+	m_debugPainting->draw(m_tree.rootPosition());
+	m_debugPainting->drawText(m_tree.rootPosition(), "root");
+
 	// if we reached the root, then the wavefront should have only one
 	// node left
 	CHECK_EQ(wavefront.size(), 1);
@@ -92,9 +96,6 @@ void SpiralTreeUnobstructedAlgorithm::handleRootEvent(const Event& event, Wavefr
 	// connect the remaining node to the root
 	root->m_children.push_back(node);
 	node->m_parent = root;
-
-	//std::cout << "root node " << root->m_place->m_name << ": connected to " << node->m_place->m_name
-	//          << std::endl;
 
 	wavefront.clear();
 }
@@ -118,10 +119,6 @@ SpiralTreeUnobstructedAlgorithm::handleJoinEvent(const Event& event, Wavefront& 
 	const Number<Inexact> angle = event.m_relative_position.phi();
 	Wavefront::iterator node_iter = wavefront.emplace(angle, event).first;
 	m_tree.m_nodes.push_back(event.m_node);
-
-	//std::cout << "join node " << event.m_node->m_place->m_name << ": connected to "
-	//<< event.m_node->m_children[0]->m_place->m_name << " and "
-	//<< event.m_node->m_children[1]->m_place->m_name << std::endl;
 
 	// connect the children to the join node
 	event.m_node->m_children[0]->m_parent = event.m_node;
@@ -171,8 +168,6 @@ SpiralTreeUnobstructedAlgorithm::handleLeafEvent(Event& event, Wavefront& wavefr
 		}
 	}
 
-	//std::cout << "leaf node " << event.m_node->m_place->m_name << ": added" << std::endl;
-
 	return wavefront.emplace(angle, event).first;
 }
 
@@ -192,9 +187,6 @@ void SpiralTreeUnobstructedAlgorithm::insertJoinEvent(const Event& first, const 
 
 	std::shared_ptr<Node> join = std::make_shared<Node>(intersection);
 	join->m_children = {first.m_node, second.m_node};
-	//const std::string name =
-	//    "[" + first.m_node->m_place->m_name + "+" + second.m_node->m_place->m_name + "]";
-	// create place -- removed
 
 	events.push(Event(join, intersection));
 }
