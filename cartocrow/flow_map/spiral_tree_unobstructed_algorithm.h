@@ -30,6 +30,12 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 namespace cartocrow::flow_map {
 
 /// Implementation of the algorithm to compute a spiral tree without obstacles.
+///
+/// This is a ‘sweep-circle’ algorithm which works by sweeping a circle inwards
+/// towards the root of the tree. During this process, we handle leaf events
+/// (the circle sweeps over a leaf), join events (the circle sweeps over the
+/// intersection of the boundaries of two reachable regions), and finally, a
+/// root event (the circle reaches the root).
 class SpiralTreeUnobstructedAlgorithm {
 
   public:

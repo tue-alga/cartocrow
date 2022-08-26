@@ -12,6 +12,7 @@ set(SOURCES
 	spiral_tree.cpp
 	spiral_tree_obstructed_algorithm.cpp
 	spiral_tree_unobstructed_algorithm.cpp
+	sweep_circle.cpp
 )
 set(HEADERS
 	circulator.h
@@ -28,6 +29,7 @@ set(HEADERS
 	spiral_tree.h
 	spiral_tree_obstructed_algorithm.h
 	spiral_tree_unobstructed_algorithm.h
+	sweep_circle.h
 )
 
 add_library(flow_map ${SOURCES})

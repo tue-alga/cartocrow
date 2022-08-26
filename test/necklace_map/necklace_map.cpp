@@ -31,9 +31,6 @@ TEST_CASE("Computing a necklace map") {
 		map.addBead("R1", 2, necklace);
 		map.addBead("R2", 2, necklace);
 		map.compute();
-		renderer::IpeRenderer r((Painting(map)));
-		r.save("/tmp/bla.ipe");
-
 		CHECK(map.scaleFactor() == Approx(32.0 / std::sqrt(2)).epsilon(0.01));
 	}
 }
