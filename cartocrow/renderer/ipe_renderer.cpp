@@ -34,7 +34,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 namespace cartocrow::renderer {
 
-IpeRenderer::IpeRenderer(const GeometryPainting& painting) : m_painting(painting) {}
+IpeRenderer::IpeRenderer(std::shared_ptr<GeometryPainting> painting) {
+	m_paintings.push_back(painting);
+}
 
 void IpeRenderer::save(const std::filesystem::path& file) {
 	ipe::Platform::initLib(70224);
@@ -69,9 +71,13 @@ void IpeRenderer::save(const std::filesystem::path& file) {
 	setFillOpacity(255); // add default alpha to style sheet
 
 	m_page = new ipe::Page();
-	m_page->addLayer("alpha");
-
-	m_painting.paint(*this);
+	for (auto painting : m_paintings) {
+		pushStyle();
+		m_page->addLayer();
+		m_layer = m_page->countLayers() - 1;
+		painting->paint(*this);
+		popStyle();
+	}
 
 	document.push_back(m_page);
 	document.save(file.string().c_str(), ipe::FileFormat::Xml, 0);
@@ -81,7 +87,7 @@ void IpeRenderer::draw(const Point<Inexact>& p) {
 	ipe::Vector vector(p.x(), p.y());
 	ipe::Attribute name = ipe::Attribute(true, "mark/disk(sx)");
 	ipe::Reference* reference = new ipe::Reference(getAttributesForStyle(), name, vector);
-	m_page->append(ipe::TSelect::ENotSelected, 0, reference);
+	m_page->append(ipe::TSelect::ENotSelected, m_layer, reference);
 }
 
 void IpeRenderer::draw(const Segment<Inexact>& s) {
@@ -91,7 +97,7 @@ void IpeRenderer::draw(const Segment<Inexact>& s) {
 	ipe::Shape* shape = new ipe::Shape();
 	shape->appendSubPath(curve);
 	ipe::Path* path = new ipe::Path(getAttributesForStyle(), *shape);
-	m_page->append(ipe::TSelect::ENotSelected, 0, path);
+	m_page->append(ipe::TSelect::ENotSelected, m_layer, path);
 
 	if (m_style.m_mode & vertices) {
 		draw(s.start());
@@ -104,7 +110,7 @@ void IpeRenderer::draw(const Polygon<Inexact>& p) {
 	ipe::Shape* shape = new ipe::Shape();
 	shape->appendSubPath(curve);
 	ipe::Path* path = new ipe::Path(getAttributesForStyle(), *shape);
-	m_page->append(ipe::TSelect::ENotSelected, 0, path);
+	m_page->append(ipe::TSelect::ENotSelected, m_layer, path);
 }
 
 void IpeRenderer::draw(const PolygonWithHoles<Inexact>& p) {
@@ -116,7 +122,7 @@ void IpeRenderer::draw(const PolygonWithHoles<Inexact>& p) {
 		shape->appendSubPath(holeCurve);
 	}
 	ipe::Path* path = new ipe::Path(getAttributesForStyle(), *shape);
-	m_page->append(ipe::TSelect::ENotSelected, 0, path);
+	m_page->append(ipe::TSelect::ENotSelected, m_layer, path);
 }
 
 void IpeRenderer::draw(const Circle<Inexact>& c) {
@@ -127,7 +133,7 @@ void IpeRenderer::draw(const Circle<Inexact>& c) {
 	ipe::Shape* shape = new ipe::Shape();
 	shape->appendSubPath(ellipse);
 	ipe::Path* path = new ipe::Path(getAttributesForStyle(), *shape);
-	m_page->append(ipe::TSelect::ENotSelected, 0, path);
+	m_page->append(ipe::TSelect::ENotSelected, m_layer, path);
 }
 
 /*void IpeRenderer::draw(const BezierSpline& s) {
@@ -143,7 +149,7 @@ void IpeRenderer::draw(const Circle<Inexact>& c) {
 	ipe::Shape* shape = new ipe::Shape();
 	shape->appendSubPath(curve);
 	ipe::Path* path = new ipe::Path(getAttributesForStyle(), *shape);
-	m_page->append(ipe::TSelect::ENotSelected, 0, path);
+	m_page->append(ipe::TSelect::ENotSelected, m_layer, path);
 }*/
 
 void IpeRenderer::drawText(const Point<Inexact>& p, const std::string& text) {
@@ -151,7 +157,7 @@ void IpeRenderer::drawText(const Point<Inexact>& p, const std::string& text) {
 	                                 ipe::Vector(p.x(), p.y()), ipe::Text::TextType::ELabel);
 	label->setHorizontalAlignment(ipe::THorizontalAlignment::EAlignHCenter);
 	label->setVerticalAlignment(ipe::TVerticalAlignment::EAlignVCenter);
-	m_page->append(ipe::TSelect::ENotSelected, 0, label);
+	m_page->append(ipe::TSelect::ENotSelected, m_layer, label);
 }
 
 void IpeRenderer::pushStyle() {
@@ -215,6 +221,10 @@ ipe::AllAttributes IpeRenderer::getAttributesForStyle() const {
 	attributes.iFill = ipe::Attribute(ipe::Color(m_style.m_fillColor));
 	attributes.iOpacity = m_style.m_fillOpacity;
 	return attributes;
+}
+
+void IpeRenderer::addPainting(std::shared_ptr<GeometryPainting> painting) {
+	m_paintings.push_back(painting);
 }
 
 } // namespace cartocrow::renderer

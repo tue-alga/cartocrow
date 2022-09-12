@@ -11,7 +11,9 @@ Painting::Painting(std::shared_ptr<RegionMap> map, std::shared_ptr<SpiralTree> t
     : m_tree(tree), m_map(map), m_options(options) {}
 
 void Painting::paint(renderer::GeometryRenderer& renderer) const {
-	paintRegions(renderer);
+	if (m_map) {
+		paintRegions(renderer);
+	}
 	paintObstacles(renderer);
 	paintFlow(renderer);
 	paintNodes(renderer);
@@ -29,7 +31,7 @@ void Painting::paintRegions(renderer::GeometryRenderer& renderer) const {
 }
 
 void Painting::paintObstacles(renderer::GeometryRenderer& renderer) const {
-	renderer.setMode(renderer::GeometryRenderer::fill | renderer::GeometryRenderer::stroke);
+	renderer.setMode(/*renderer::GeometryRenderer::fill |*/ renderer::GeometryRenderer::stroke);
 	renderer.setStroke(Color{170, 50, 20}, 2);
 	renderer.setFill(Color{230, 190, 170});
 	renderer.setFillOpacity(60);
@@ -37,8 +39,9 @@ void Painting::paintObstacles(renderer::GeometryRenderer& renderer) const {
 	for (const SpiralTree::Obstacle& obstacle : m_tree->obstacles()) {
 		std::vector<Point<Inexact>> vertices;
 		vertices.reserve(obstacle.size());
-		for (const PolarPoint& p : obstacle) {
-			vertices.push_back(p.toCartesian() + (m_tree->rootPosition() - CGAL::ORIGIN));
+		for (auto e : obstacle) {
+			vertices.push_back(e->shape().start().toCartesian() +
+			                   (m_tree->rootPosition() - CGAL::ORIGIN));
 		}
 		Polygon<Inexact> polygon(vertices.begin(), vertices.end());
 		renderer.draw(polygon);

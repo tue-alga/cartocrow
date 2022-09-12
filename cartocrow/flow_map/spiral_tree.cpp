@@ -57,7 +57,7 @@ const std::vector<std::shared_ptr<Node>>& SpiralTree::nodes() const {
 	return m_nodes;
 }
 
-const std::vector<SpiralTree::Obstacle>& SpiralTree::obstacles() const {
+std::vector<SpiralTree::Obstacle>& SpiralTree::obstacles() {
 	return m_obstacles;
 }
 
@@ -69,50 +69,10 @@ void SpiralTree::addPlace(const std::string& name, const Point<Inexact>& positio
 	m_nodes.push_back(std::make_shared<Node>(polarPosition, newPlace));
 }
 
-void SpiralTree::addObstacle(const Polygon<Inexact>& obstacle) {
-	//CHECK_NE(obstacle.oriented_side(root()), CGAL::ON_BOUNDED_SIDE) << "Root inside an obstacle.";
-
-	std::cout << "adding obstacle with vertex count " << obstacle.size() << std::endl;
-	Obstacle& addedObstacle = m_obstacles.emplace_back();
-	for (const auto& vertex : obstacle) {
-		PolarPoint p(vertex, CGAL::ORIGIN - rootPosition());
-		addedObstacle.push_back(p);
-	}
-
-	// enforce clockwise vertex order
-	if (!obstacle.is_counterclockwise_oriented()) {
-		addedObstacle.reverse();
-	}
-
-	// subdivide each edge as necessary to include the closest point to the root
-	// and spiral points
-	const Number<Inexact> phi_offset = M_PI_2 - m_restrictingAngle;
-	CHECK_LT(0, phi_offset);
-
-	Obstacle::iterator vertex_prev = --addedObstacle.end();
-	for (Obstacle::iterator vertex_iter = addedObstacle.begin(); vertex_iter != addedObstacle.end();
-	     vertex_prev = vertex_iter++) {
-		const PolarSegment edge{*vertex_prev, *vertex_iter};
-		const PolarPoint closest = edge.supportingLine().foot();
-
-		// the spiral points have fixed R and their phi is offset from the phi of the closest by +/- phi_offset
-		const Number<Inexact> r_spiral = closest.r() / std::sin(m_restrictingAngle);
-
-		const int sign = vertex_prev->phi() < vertex_iter->phi() ? -1 : 1;
-		const Number<Inexact> phi_spiral_prev = closest.phi() + sign * phi_offset;
-		const Number<Inexact> phi_spiral_next = closest.phi() - sign * phi_offset;
-
-		// the closest point and spiral points must be added ordered from p to q and only if they are on the edge
-		if (edge.containsPhi(phi_spiral_prev)) {
-			addedObstacle.insert(vertex_iter, PolarPoint(r_spiral, phi_spiral_prev));
-		}
-		if (edge.containsPhi(closest.phi())) {
-			addedObstacle.insert(vertex_iter, closest);
-		}
-		if (edge.containsPhi(phi_spiral_next)) {
-			addedObstacle.insert(vertex_iter, PolarPoint(r_spiral, phi_spiral_next));
-		}
-	}
+void SpiralTree::addObstacle(const Polygon<Inexact>& shape) {
+	Obstacle obstacle = makeObstacle(shape);
+	subdivideClosestAndSpiral(obstacle);
+	m_obstacles.push_back(obstacle);
 }
 
 void SpiralTree::addShields() {
@@ -183,4 +143,66 @@ bool SpiralTree::isReachable(const PolarPoint& parent_point, const PolarPoint& c
 	return std::abs(spiral.angle()) <= m_restrictingAngle;
 }
 
+SpiralTree::Obstacle SpiralTree::makeObstacle(const Polygon<Inexact>& shape) {
+
+	Obstacle obstacle;
+
+	for (auto edge = shape.edges_begin(); edge != shape.edges_end(); ++edge) {
+		PolarPoint p1(edge->start(), CGAL::ORIGIN - rootPosition());
+		PolarPoint p2(edge->end(), CGAL::ORIGIN - rootPosition());
+		obstacle.push_back(std::make_shared<SweepEdge>(SweepEdgeShape(p1, p2)));
+	}
+
+	// enforce clockwise vertex order
+	if (!shape.is_counterclockwise_oriented()) {
+		obstacle.reverse();
+	}
+
+	return obstacle;
+}
+
+void SpiralTree::subdivideClosestAndSpiral(Obstacle& obstacle) {
+	const Number<Inexact> phi_offset = M_PI_2 - m_restrictingAngle;
+	assert(phi_offset > 0);
+	for (auto edge = obstacle.begin(); edge != obstacle.end(); ++edge) {
+		PolarPoint start = (*edge)->shape().start();
+		PolarPoint end = *(*edge)->shape().end();
+		PolarSegment segment(start, end);
+		const PolarPoint closest = segment.supportingLine().foot();
+
+		// compute R and phi of the spiral points
+		const Number<Inexact> rSpiral = closest.r() / std::sin(m_restrictingAngle);
+		const int sign = start.phi() < end.phi() ? -1 : 1;
+		const Number<Inexact> phiStartSideSpiral = closest.phi() + sign * phi_offset;
+		const Number<Inexact> phiEndSideSpiral = closest.phi() - sign * phi_offset;
+
+		// the closest point and spiral points must be added ordered from p to q
+		// and only if they are on the edge
+		PolarPoint current = start;
+		if (segment.containsPhi(phiStartSideSpiral)) {
+			edge = obstacle.erase(edge);
+			PolarPoint startSideSpiral(rSpiral, phiStartSideSpiral);
+			edge = ++obstacle.insert(
+			    edge, std::make_shared<SweepEdge>(SweepEdgeShape(current, startSideSpiral)));
+			edge = obstacle.insert(
+			    edge, std::make_shared<SweepEdge>(SweepEdgeShape(startSideSpiral, end)));
+			current = startSideSpiral;
+		}
+		if (segment.containsPhi(closest.phi())) {
+			edge = obstacle.erase(edge);
+			edge = ++obstacle.insert(edge,
+			                         std::make_shared<SweepEdge>(SweepEdgeShape(current, closest)));
+			edge = obstacle.insert(edge, std::make_shared<SweepEdge>(SweepEdgeShape(closest, end)));
+			current = closest;
+		}
+		if (segment.containsPhi(phiEndSideSpiral)) {
+			edge = obstacle.erase(edge);
+			PolarPoint endSideSpiral(rSpiral, phiEndSideSpiral);
+			edge = ++obstacle.insert(
+			    edge, std::make_shared<SweepEdge>(SweepEdgeShape(current, endSideSpiral)));
+			edge = obstacle.insert(edge,
+			                       std::make_shared<SweepEdge>(SweepEdgeShape(endSideSpiral, end)));
+		}
+	}
+}
 } // namespace cartocrow::flow_map

@@ -128,7 +128,7 @@ int main(int argc, char* argv[]) {
 		return a.exec();
 
 	} else {
-		cartocrow::renderer::IpeRenderer renderer(*painting);
+		cartocrow::renderer::IpeRenderer renderer(painting);
 		renderer.save(outputFilename);
 		return 0;
 	}

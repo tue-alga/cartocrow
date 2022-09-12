@@ -28,7 +28,7 @@ namespace cartocrow::renderer {
 /// Renderer that does not actually render, but instead serves as a painting
 /// that stores the render commands executed, so that they can later be rendered
 /// by another renderer. This is meant to be used for debug drawing and so on.
-class PaintingRenderer : public GeometryPainting, GeometryRenderer {
+class PaintingRenderer : public GeometryPainting, public GeometryRenderer {
 
   public:
 	/// Creates a new painting renderer.
@@ -63,8 +63,8 @@ class PaintingRenderer : public GeometryPainting, GeometryRenderer {
 		double m_strokeWidth = 1;
 		/// The color of filled shapes.
 		Color m_fillColor = Color{0, 102, 203};
-		/// The opacity of filled shapes, as a symbolic Ipe attribute.
-		double m_fillOpacity = 0;
+		/// The opacity of filled shapes.
+		double m_fillOpacity = 255;
 	};
 	using Label = std::pair<Point<Inexact>, std::string>;
 	using DrawableObject = std::variant<Point<Inexact>, Segment<Inexact>, Polygon<Inexact>,

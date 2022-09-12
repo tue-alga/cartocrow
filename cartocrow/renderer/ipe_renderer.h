@@ -64,7 +64,7 @@ class IpeRenderer : public GeometryRenderer {
 
   public:
 	/// Constructs a IpeRenderer for the given painting.
-	IpeRenderer(const GeometryPainting& painting);
+	IpeRenderer(std::shared_ptr<GeometryPainting> painting);
 
 	/// Saves the painting to an Ipe file with the given name.
 	void save(const std::filesystem::path& file);
@@ -84,14 +84,16 @@ class IpeRenderer : public GeometryRenderer {
 	void setFill(Color color) override;
 	void setFillOpacity(int alpha) override;
 
+	void addPainting(std::shared_ptr<GeometryPainting> painting);
+
   private:
 	/// Converts a polygon to an Ipe curve.
 	ipe::Curve* convertPolygonToCurve(const Polygon<Inexact>& p) const;
 	/// Returns Ipe attributes to style an Ipe path with the current style.
 	ipe::AllAttributes getAttributesForStyle() const;
 
-	/// The painting we're drawing.
-	const GeometryPainting& m_painting;
+	/// The paintings we're drawing.
+	std::vector<std::shared_ptr<GeometryPainting>> m_paintings;
 	/// The current drawing style.
 	IpeRendererStyle m_style;
 	/// A stack of drawing styles, used by \ref pushStyle() and \ref popStyle()
@@ -105,6 +107,8 @@ class IpeRenderer : public GeometryRenderer {
 	ipe::Page* m_page;
 	/// Ipe style sheet with the alpha values in this drawing.
 	ipe::StyleSheet* m_alphaSheet;
+	/// The index of the Ipe layer we are currently drawing to.
+	int m_layer;
 };
 
 } // namespace cartocrow::renderer

@@ -19,7 +19,7 @@ class Painting : public renderer::GeometryPainting {
 		double spiralMax = 6.0;
 	};
 
-	/// Creates a new painting with the given map, tree, and obstacles.
+	/// Creates a new painting with the given map and tree.
 	Painting(std::shared_ptr<RegionMap> map, std::shared_ptr<SpiralTree> tree, const Options options);
 
   protected:

@@ -18,7 +18,7 @@ TEST_CASE("Exporting marks to Ipe") {
 			renderer.draw(Point<Exact>(2, 1));
 		}
 	};
-	TestPainting painting;
+	auto painting = std::make_shared<TestPainting>();
 	renderer::IpeRenderer renderer(painting);
 	std::filesystem::path path = std::filesystem::temp_directory_path() / "test.ipe";
 	renderer.save(path);
@@ -38,7 +38,7 @@ TEST_CASE("Exporting a line segment to Ipe") {
 			renderer.draw(Segment<Exact>(Point<Exact>(2, 3), Point<Exact>(1, 4)));
 		}
 	};
-	TestPainting painting;
+	auto painting = std::make_shared<TestPainting>();
 	renderer::IpeRenderer renderer(painting);
 	std::filesystem::path path = std::filesystem::temp_directory_path() / "test.ipe";
 	renderer.save(path);

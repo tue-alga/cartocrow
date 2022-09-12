@@ -33,6 +33,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 28-10-2020
 #include "../core/region_map.h"
 #include "node.h"
 #include "place.h"
+#include "sweep_edge.h"
 
 namespace cartocrow::flow_map {
 
@@ -62,7 +63,7 @@ namespace cartocrow::flow_map {
 /// tree.addPlace("FR", Point<Inexact>(70, -30), 150);
 ///
 /// // add obstacle
-/// Region obstacle = ...;
+/// Polygon<Inexact> obstacle = ...;
 /// tree.addObstacle(obstacle);
 ///
 /// // run computation
@@ -72,8 +73,8 @@ namespace cartocrow::flow_map {
 class SpiralTree {
 
   public:
-	/// An obstacle is made up of a list of polar points in clockwise order.
-	using Obstacle = std::list<PolarPoint>;
+	/// An obstacle is made up of a list of segments in clockwise order.
+	using Obstacle = std::list<std::shared_ptr<SweepEdge>>;
 
 	/// Constructs a spiral tree.
 	///
@@ -84,41 +85,25 @@ class SpiralTree {
 	/// the spiral arcs of the tree. This number must be strictly positive.
 	SpiralTree(const Point<Inexact> rootPosition, const Number<Inexact> restrictingAngle);
 
-	/// Changes the root position.
-	///
-	/// This removes all existing arcs of the tree. The new tree can be computed
-	/// using \ref compute().
-	//void setRootPosition(const Point<Inexact>& rootPosition);
-
-	/// Gets the root position of the spiral tree.
+	/// Gets the root position of this spiral tree.
 	Point<Inexact> rootPosition() const;
-
-	/// Changes the restricting angle.
-	///
-	/// This removes all existing arcs of the tree. The new tree can be computed
-	/// using \ref compute().
-	//void setRestrictingAngle(const Number<Inexact> restrictingAngle);
-
-	/// Gets the restricting angle of the spiral tree (in radians).
+	/// Gets the restricting angle of this spiral tree (in radians).
 	Number<Inexact> restrictingAngle() const;
 
 	/// Returns a list of the places in this spiral tree.
 	const std::vector<std::shared_ptr<Place>>& places() const;
-
 	/// Returns a list of the nodes in this spiral tree.
 	const std::vector<std::shared_ptr<Node>>& nodes() const;
-
 	/// Returns a list of the obstacles in this spiral tree.
-	const std::vector<Obstacle>& obstacles() const;
+	std::vector<Obstacle>& obstacles();
 
 	/// Adds a node to the spiral tree.
 	//void addNode(std::shared_ptr<Node> node);
 
 	/// Adds a place with the given name, position, and flow to the spiral tree.
 	void addPlace(const std::string& name, const Point<Inexact>& position, Number<Inexact> flow);
-
 	/// Adds an obstacle to the spiral tree.
-	void addObstacle(const Polygon<Inexact>& obstacle);
+	void addObstacle(const Polygon<Inexact>& shape);
 
 	/// Adds a shield obstacle to each place to make sure that these nodes in
 	/// the tree become leaves.
@@ -128,9 +113,21 @@ class SpiralTree {
 	/// added nodes and obstacles remain.
 	void clean();
 
+	/// \todo document
 	bool isReachable(const PolarPoint& parent_point, const PolarPoint& child_point) const;
 
   private:
+	/// Generates an obstacle of the given shape.
+	Obstacle makeObstacle(const Polygon<Inexact>& shape);
+	/// Subdivides edges of the given obstacle at every closest point (to the
+	/// root) and spiral point (relative to the root).
+	///
+	/// A point \f$p\f$ on an edge \f$e\f$ is a *spiral point* if the angle at
+	/// \f$p\f$ between \f$e\f$ and the line segment to the origin is exactly
+	/// \f$\alpha\f$.
+	/// \image html spiral-tree-obstacle-points.svg
+	void subdivideClosestAndSpiral(Obstacle& obstacle);
+
 	/// The restricting angle of this tree.
 	Number<Inexact> m_restrictingAngle;
 	/// The position of the root node.
