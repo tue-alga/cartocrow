@@ -17,6 +17,7 @@ And it depends on the following libraries:
 * CGAL (5.0) -- for implementations of computational geometry algorithms we need
 * glog (0.5.0) -- for logging
 * ipelib (7.2.24) -- for [Ipe](https://ipe.otfried.org) input and SVG/Ipe output
+* nlohmann-json (3.10.5) -- for JSON parsing
 * Qt (5.15) -- for the interactive GUI
 
 The version numbers listed are indicative. Newer (and possibly somewhat older) versions will most likely work as well.
@@ -76,7 +77,7 @@ Most dependencies can be obtained from the repository:
 
 ```sh
 pacman -S base-devel mingw-w64-x86_64-toolchain mingw-w64-x86_64-cmake mingw-w64-x86_64-ninja
-pacman -S mingw-w64-x86_64-cgal mingw-w64-x86_64-glog mingw-w64-x86_64-qt5
+pacman -S mingw-w64-x86_64-cgal mingw-w64-x86_64-glog mingw-w64-x86_64-qt5 mingw-w64-x86_64-nlohmann-json
 ```
 
 The remaining dependencies need to be built manually.
