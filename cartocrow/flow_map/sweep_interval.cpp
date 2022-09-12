@@ -109,7 +109,7 @@ void SweepInterval::paintSweepShape(renderer::GeometryRenderer& renderer, Number
 	} else if (m_type == Type::REACHABLE) {
 		renderer.setFill(Color{162, 255, 128});
 	} else if (m_type == Type::OBSTACLE) {
-		renderer.setFill(Color{230, 190, 170});
+		renderer.setFill(Color{220, 160, 130});
 	}
 	renderer.draw(sweepShape(rFrom, rTo));
 	renderer.popStyle();

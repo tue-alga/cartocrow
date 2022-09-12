@@ -76,22 +76,23 @@ class SpiralTreeObstructedAlgorithm {
 			SWITCH,
 		};
 
-		Event(PolarPoint position, Type type);
+		Event(PolarPoint position, Type type, SpiralTreeObstructedAlgorithm* alg);
 		Number<Inexact> r() const;
 		Number<Inexact> phi() const;
 		Type type() const;
 		/// Handles this event.
-		virtual void handle(SpiralTreeObstructedAlgorithm& alg) = 0;
+		virtual void handle() = 0;
 
 	  protected:
 		PolarPoint m_position;
 		Type m_type;
+		SpiralTreeObstructedAlgorithm* m_alg;
 	};
 
 	class NodeEvent : public Event {
 	  public:
-		NodeEvent(PolarPoint position);
-		void handle(SpiralTreeObstructedAlgorithm& alg) override;
+		NodeEvent(PolarPoint position, SpiralTreeObstructedAlgorithm* alg);
+		void handle() override;
 	};
 
 	/// The sweep circle hits an obstacle vertex.
@@ -101,7 +102,7 @@ class SpiralTreeObstructedAlgorithm {
 		/// incident obstacle edges \f$e_1\f$ and \f$e_2\f$ (in
 		/// counter-clockwise order).
 		VertexEvent(PolarPoint position, std::shared_ptr<SweepEdge> e1,
-		            std::shared_ptr<SweepEdge> e2);
+		            std::shared_ptr<SweepEdge> e2, SpiralTreeObstructedAlgorithm* alg);
 
 		/// Possible vertex event types.
 		enum class Side {
@@ -111,12 +112,22 @@ class SpiralTreeObstructedAlgorithm {
 			FAR,
 		};
 
-		void handle(SpiralTreeObstructedAlgorithm& alg) override;
+		void handle() override;
 
 	  private:
 		Side determineSide();
 
-		std::shared_ptr<Node> m_node;
+		/// Handles a left vertex event.
+		void handleLeft();
+		/// Handles a right vertex event.
+		void handleRight();
+		/// Handles a near vertex event.
+		void handleNear();
+		/// Handles a far vertex event.
+		void handleFar();
+
+		/// Inserts join events for all edges starting at the event position.
+		void insertJoinEvents();
 
 		/// The first edge (in counter-clockwise order around the obstacle,
 		/// coming before \ref m_e2).
@@ -131,8 +142,8 @@ class SpiralTreeObstructedAlgorithm {
 
 	class JoinEvent : public Event {
 	  public:
-		JoinEvent(PolarPoint position);
-		void handle(SpiralTreeObstructedAlgorithm& alg) override;
+		JoinEvent(PolarPoint position, SpiralTreeObstructedAlgorithm* alg);
+		void handle() override;
 	};
 
 	struct CompareEvents {

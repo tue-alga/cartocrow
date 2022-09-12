@@ -35,10 +35,11 @@ TEST_CASE("Computing a spiral tree with one obstacle") {
 
 	int argc = 0;
 	QApplication app(argc, nullptr);
+	renderer::IpeRenderer ipeRenderer(painting);
+	ipeRenderer.addPainting(algorithm.debugPainting());
+	ipeRenderer.save("/tmp/spiral-tree-test.ipe");
 	renderer::GeometryWidget renderer(painting);
-	//renderer::IpeRenderer renderer(painting);
 	renderer.addPainting(algorithm.debugPainting());
-	//renderer.save("/tmp/spiral-tree-test.ipe");
 	renderer.show();
 	app.exec();
 }

@@ -38,8 +38,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 namespace cartocrow::flow_map {
 
-SpiralTreeObstructedAlgorithm::Event::Event(PolarPoint position, Type type)
-    : m_position(position), m_type(type) {}
+SpiralTreeObstructedAlgorithm::Event::Event(PolarPoint position, Type type,
+                                            SpiralTreeObstructedAlgorithm* alg)
+    : m_position(position), m_type(type), m_alg(alg) {}
 
 Number<Inexact> SpiralTreeObstructedAlgorithm::Event::r() const {
 	return m_position.r();
@@ -53,25 +54,30 @@ SpiralTreeObstructedAlgorithm::Event::Type SpiralTreeObstructedAlgorithm::Event:
 	return m_type;
 }
 
-SpiralTreeObstructedAlgorithm::NodeEvent::NodeEvent(PolarPoint position)
-    : Event(position, Type::NODE) {}
+SpiralTreeObstructedAlgorithm::NodeEvent::NodeEvent(PolarPoint position,
+                                                    SpiralTreeObstructedAlgorithm* alg)
+    : Event(position, Type::NODE, alg) {}
 
-void SpiralTreeObstructedAlgorithm::NodeEvent::handle(SpiralTreeObstructedAlgorithm& alg) {
+void SpiralTreeObstructedAlgorithm::NodeEvent::handle() {
 	// TODO
 	std::cout << "> handling node event" << std::endl;
-	alg.m_debugPainting->setMode(renderer::GeometryRenderer::stroke);
-	alg.m_debugPainting->setStroke(Color{240, 120, 0}, 1);
-	alg.m_debugPainting->draw(alg.m_tree->rootPosition() + (m_position.toCartesian() - CGAL::ORIGIN));
-	alg.m_debugPainting->drawText(
-	    alg.m_tree->rootPosition() + (m_position.toCartesian() - CGAL::ORIGIN), "node");
+	m_alg->m_debugPainting->setMode(renderer::GeometryRenderer::stroke);
+	m_alg->m_debugPainting->setStroke(Color{240, 120, 0}, 1);
+	m_alg->m_debugPainting->draw(m_alg->m_tree->rootPosition() +
+	                             (m_position.toCartesian() - CGAL::ORIGIN));
+	m_alg->m_debugPainting->drawText(
+	    m_alg->m_tree->rootPosition() + (m_position.toCartesian() - CGAL::ORIGIN), "node");
 }
 
 SpiralTreeObstructedAlgorithm::VertexEvent::VertexEvent(PolarPoint position,
                                                         std::shared_ptr<SweepEdge> e1,
-                                                        std::shared_ptr<SweepEdge> e2)
-    : Event(position, Type::VERTEX), m_e1(e1), m_e2(e2), m_side(determineSide()) {}
+                                                        std::shared_ptr<SweepEdge> e2,
+                                                        SpiralTreeObstructedAlgorithm* alg)
+    : Event(position, Type::VERTEX, alg), m_e1(e1), m_e2(e2), m_side(determineSide()) {}
 
-void SpiralTreeObstructedAlgorithm::VertexEvent::handle(SpiralTreeObstructedAlgorithm& alg) {
+void SpiralTreeObstructedAlgorithm::VertexEvent::handle() {
+	using enum SweepInterval::Type;
+
 	std::string side = "";
 	switch (m_side) {
 	case Side::LEFT:
@@ -87,66 +93,115 @@ void SpiralTreeObstructedAlgorithm::VertexEvent::handle(SpiralTreeObstructedAlgo
 		side = "far";
 	}
 	std::cout << "> handling " << side << " vertex event" << std::endl;
-	alg.m_debugPainting->setMode(renderer::GeometryRenderer::stroke);
-	alg.m_debugPainting->setStroke(Color{150, 150, 150}, 0.5);
-	alg.m_debugPainting->draw(alg.m_tree->rootPosition() + (m_position.toCartesian() - CGAL::ORIGIN));
-	alg.m_debugPainting->drawText(
-	    alg.m_tree->rootPosition() + (m_position.toCartesian() - CGAL::ORIGIN), side);
+	m_alg->m_debugPainting->setMode(renderer::GeometryRenderer::stroke);
+	m_alg->m_debugPainting->setStroke(Color{150, 150, 150}, 0.5);
+	m_alg->m_debugPainting->draw(m_alg->m_tree->rootPosition() +
+	                             (m_position.toCartesian() - CGAL::ORIGIN));
+	m_alg->m_debugPainting->drawText(
+	    m_alg->m_tree->rootPosition() + (m_position.toCartesian() - CGAL::ORIGIN), side);
 
-	if (m_side == Side::NEAR) {
-		SweepInterval* interval = alg.m_circle.intervalAt(phi());
-		if (interval->type() == SweepInterval::Type::REACHABLE) {
-			SweepCircle::SplitResult result = alg.m_circle.splitFromInterval(m_e2, m_e1);
-			result.middleInterval->setType(SweepInterval::Type::OBSTACLE);
-		} else if (interval->type() == SweepInterval::Type::OBSTACLE) {
-			SweepCircle::SplitResult result = alg.m_circle.splitFromInterval(m_e1, m_e2);
-			result.middleInterval->setType(SweepInterval::Type::REACHABLE); // ???
-		} else if (interval->type() == SweepInterval::Type::SHADOW) {
-			// ???
-		}
-
-	} else if (m_side == Side::FAR) {
-		SweepInterval* interval = m_e1->nextInterval();
-		SweepCircle::MergeResult result = alg.m_circle.mergeToInterval(m_e1, m_e2);
-		if (interval->type() == SweepInterval::Type::REACHABLE) {
-			result.mergedInterval->setType(SweepInterval::Type::OBSTACLE);
-		} else if (interval->type() == SweepInterval::Type::OBSTACLE) {
-			result.mergedInterval->setType(SweepInterval::Type::REACHABLE);
-		} else if (interval->type() == SweepInterval::Type::SHADOW) {
-			// ???
-		}
-
-	} else if (m_side == Side::LEFT) {
-		SweepInterval* i = m_e2->nextInterval();
-		if (i->type() == SweepInterval::Type::SHADOW) {
-			SweepCircle::SwitchResult result = alg.m_circle.switchEdge(m_e2, m_e1);
-			// TODO
-		} else if (i->type() == SweepInterval::Type::REACHABLE) {
-			auto spiral = std::make_shared<SweepEdge>(SweepEdgeShape(
-			    SweepEdgeShape::Type::RIGHT_SPIRAL, m_position, alg.m_tree->restrictingAngle()));
-			if (spiral->shape().departsToLeftOf(m_e1->shape())) {
-				SweepCircle::SplitResult result = alg.m_circle.splitFromEdge(m_e2, m_e1, spiral);
-				result.middleInterval->setType(SweepInterval::Type::SHADOW);
-			} else {
-				SweepCircle::SwitchResult result = alg.m_circle.switchEdge(m_e2, m_e1);
-			}
-			// TODO
-		} else if (i->type() == SweepInterval::Type::OBSTACLE) {
-			// a vertex event cannot have an obstacle interval on the outside
-			assert(false);
-		}
-
+	if (m_side == Side::LEFT) {
+		handleLeft();
 	} else if (m_side == Side::RIGHT) {
-		SweepInterval* i = m_e1->previousInterval();
-		SweepCircle::SwitchResult result = alg.m_circle.switchEdge(m_e1, m_e2);
-		if (i->type() == SweepInterval::Type::SHADOW) {
-			// ...
-		} else if (i->type() == SweepInterval::Type::REACHABLE) {
-			// ...
-		} else if (i->type() == SweepInterval::Type::OBSTACLE) {
-			// a vertex event cannot have an obstacle interval on the outside
-			assert(false);
+		handleRight();
+	} else if (m_side == Side::NEAR) {
+		handleNear();
+	} else if (m_side == Side::FAR) {
+		handleFar();
+	}
+
+	insertJoinEvents();
+}
+
+void SpiralTreeObstructedAlgorithm::VertexEvent::handleLeft() {
+	using enum SweepInterval::Type;
+	using enum SweepEdgeShape::Type;
+	SweepInterval* i = m_e2->nextInterval();
+	if (i->type() == SHADOW) {
+		auto result = m_alg->m_circle.switchEdge(m_e2, m_e1);
+		// TODO
+	} else if (i->type() == REACHABLE) {
+		auto spiral = std::make_shared<SweepEdge>(
+		    SweepEdgeShape(RIGHT_SPIRAL, m_position, m_alg->m_tree->restrictingAngle()));
+		if (spiral->shape().departsToLeftOf(m_e1->shape())) {
+			auto result = m_alg->m_circle.splitFromEdge(m_e2, m_e1, spiral);
+			result.middleInterval->setType(SHADOW);
+		} else {
+			auto result = m_alg->m_circle.switchEdge(m_e2, m_e1);
 		}
+		// TODO
+	} else if (i->type() == OBSTACLE) {
+		// a vertex event cannot have an obstacle interval on the outside
+		assert(false);
+	}
+}
+
+void SpiralTreeObstructedAlgorithm::VertexEvent::handleRight() {
+	using enum SweepInterval::Type;
+	using enum SweepEdgeShape::Type;
+	SweepInterval* i = m_e1->previousInterval();
+	if (i->type() == SHADOW) {
+		auto result = m_alg->m_circle.switchEdge(m_e1, m_e2);
+		// TODO
+	} else if (i->type() == REACHABLE) {
+		auto spiral = std::make_shared<SweepEdge>(
+		    SweepEdgeShape(LEFT_SPIRAL, m_position, m_alg->m_tree->restrictingAngle()));
+		if (m_e2->shape().departsToLeftOf(spiral->shape())) {
+			auto result = m_alg->m_circle.splitFromEdge(m_e1, m_e2, spiral);
+			result.middleInterval->setType(SHADOW);
+		} else {
+			auto result = m_alg->m_circle.switchEdge(m_e1, m_e2);
+		}
+		// TODO
+	} else if (i->type() == OBSTACLE) {
+		// a vertex event cannot have an obstacle interval on the outside
+		assert(false);
+	}
+}
+
+void SpiralTreeObstructedAlgorithm::VertexEvent::handleNear() {
+	using enum SweepInterval::Type;
+	using enum SweepEdgeShape::Type;
+	SweepInterval* interval = m_alg->m_circle.intervalAt(phi());
+	if (interval->type() == REACHABLE) {
+		auto result = m_alg->m_circle.splitFromInterval(m_e2, m_e1);
+		result.middleInterval->setType(OBSTACLE);
+	} else if (interval->type() == OBSTACLE) {
+		auto result = m_alg->m_circle.splitFromInterval(m_e1, m_e2);
+		result.middleInterval->setType(SHADOW);
+	} else if (interval->type() == SHADOW) {
+		// ???
+	}
+}
+
+void SpiralTreeObstructedAlgorithm::VertexEvent::handleFar() {
+	using enum SweepInterval::Type;
+	using enum SweepEdgeShape::Type;
+	auto intervalType = m_e1->nextInterval()->type();
+	auto previousIntervalType = m_e1->previousInterval()->type();
+	auto nextIntervalType = m_e2->nextInterval()->type();
+
+	if (intervalType == OBSTACLE) {
+		// case 1: convex corner of an obstacle
+
+		if (previousIntervalType == nextIntervalType) {
+			// if both sides are SHADOW or both sides are REACHABLE, the entire
+			// merged interval simply becomes that type, too
+			auto result = m_alg->m_circle.mergeToInterval(m_e1, m_e2);
+			result.mergedInterval->setType(previousIntervalType);
+		} else {
+			// else only one side is REACHABLE, we need to add a spiral to
+			// separate them
+			SweepEdgeShape::Type spiralType =
+			    previousIntervalType == REACHABLE ? LEFT_SPIRAL : RIGHT_SPIRAL;
+			auto spiral = std::make_shared<SweepEdge>(
+			    SweepEdgeShape(spiralType, m_position, m_alg->m_tree->restrictingAngle()));
+			auto result = m_alg->m_circle.mergeToEdge(m_e1, m_e2, spiral);
+		}
+	} else {
+		// case 2: concave corner of an obstacle
+		auto result = m_alg->m_circle.mergeToInterval(m_e1, m_e2);
+		result.mergedInterval->setType(OBSTACLE);
 	}
 }
 
@@ -164,17 +219,23 @@ SpiralTreeObstructedAlgorithm::VertexEvent::determineSide() {
 	assert(false); // near or far r (of both m_e1 and m_e2) needs to be equal to r() of event
 }
 
-SpiralTreeObstructedAlgorithm::JoinEvent::JoinEvent(PolarPoint position)
-    : Event(position, Type::JOIN) {}
+void SpiralTreeObstructedAlgorithm::VertexEvent::insertJoinEvents() {
+	std::shared_ptr<SweepEdge> e = m_alg->m_circle.edgeAt(phi());
+}
 
-void SpiralTreeObstructedAlgorithm::JoinEvent::handle(SpiralTreeObstructedAlgorithm& alg) {
+SpiralTreeObstructedAlgorithm::JoinEvent::JoinEvent(PolarPoint position,
+                                                    SpiralTreeObstructedAlgorithm* alg)
+    : Event(position, Type::JOIN, alg) {}
+
+void SpiralTreeObstructedAlgorithm::JoinEvent::handle() {
 	// TODO
 	std::cout << "> handling join event" << std::endl;
-	alg.m_debugPainting->setMode(renderer::GeometryRenderer::stroke);
-	alg.m_debugPainting->setStroke(Color{0, 120, 240}, 1);
-	alg.m_debugPainting->draw(alg.m_tree->rootPosition() + (m_position.toCartesian() - CGAL::ORIGIN));
-	alg.m_debugPainting->drawText(
-	    alg.m_tree->rootPosition() + (m_position.toCartesian() - CGAL::ORIGIN), "join");
+	m_alg->m_debugPainting->setMode(renderer::GeometryRenderer::stroke);
+	m_alg->m_debugPainting->setStroke(Color{0, 120, 240}, 1);
+	m_alg->m_debugPainting->draw(m_alg->m_tree->rootPosition() +
+	                             (m_position.toCartesian() - CGAL::ORIGIN));
+	m_alg->m_debugPainting->drawText(
+	    m_alg->m_tree->rootPosition() + (m_position.toCartesian() - CGAL::ORIGIN), "join");
 }
 
 SpiralTreeObstructedAlgorithm::SpiralTreeObstructedAlgorithm(std::shared_ptr<SpiralTree> tree)
@@ -186,14 +247,14 @@ void SpiralTreeObstructedAlgorithm::run() {
 	EventQueue events;
 	for (const std::shared_ptr<Node>& node : m_tree->nodes()) {
 		if (node->m_position.r() > 0) {
-			events.push(std::make_shared<NodeEvent>(node->m_position));
+			events.push(std::make_shared<NodeEvent>(node->m_position, this));
 		}
 	}
 	for (SpiralTree::Obstacle& obstacle : m_tree->obstacles()) {
 		for (auto e = obstacle.begin(); e != obstacle.end(); e++) {
 			std::shared_ptr<SweepEdge> e1 = *e;
 			std::shared_ptr<SweepEdge> e2 = ++e == obstacle.end() ? *obstacle.begin() : *e;
-			events.push(std::make_shared<VertexEvent>(e2->shape().start(), e1, e2));
+			events.push(std::make_shared<VertexEvent>(e2->shape().start(), e1, e2, this));
 			e--;
 		}
 	}
@@ -209,7 +270,7 @@ void SpiralTreeObstructedAlgorithm::run() {
 			edge.second->nextInterval()->paintSweepShape(*m_debugPainting, m_circle.r(), event->r());
 		}
 		m_circle.grow(event->r());
-		event->handle(*this);
+		event->handle();
 		m_circle.print();
 	}
 }
