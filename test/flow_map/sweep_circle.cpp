@@ -77,7 +77,7 @@ TEST_CASE("Splitting, switching and merging in a sweep circle") {
 
 	auto e3 = std::make_shared<SweepEdge>(
 	    SweepEdgeShape(PolarPoint(2, M_PI / 4), PolarPoint(3, 3 * M_PI / 4)));
-	SweepCircle::SwitchResult switchResult = circle.switchEdge(e1, e3);
+	SweepCircle::SwitchResult switchResult = circle.switchEdge(*e1, e3);
 	CHECK(circle.isValid());
 	CHECK(circle.intervalCount() == 3);
 
@@ -89,7 +89,7 @@ TEST_CASE("Splitting, switching and merging in a sweep circle") {
 	CHECK(circle.isValid());
 	CHECK(circle.intervalCount() == 3);
 
-	SweepCircle::MergeResult mergeResult = circle.mergeToInterval(e3, e2);
+	SweepCircle::MergeResult mergeResult = circle.mergeToInterval(*e3, *e2);
 	mergeResult.mergedInterval->setType(SweepInterval::Type::REACHABLE);
 	CHECK(circle.isValid());
 	CHECK(circle.intervalCount() == 1);

@@ -100,19 +100,13 @@ std::shared_ptr<SweepEdge> SweepCircle::edgeAt(Number<Inexact> phi) {
 	return edgeIterator->second;
 }
 
-SweepCircle::SplitResult SweepCircle::splitFromEdge(std::shared_ptr<SweepEdge> oldEdge,
+SweepCircle::SplitResult SweepCircle::splitFromEdge(SweepEdge& oldEdge,
                                                     std::shared_ptr<SweepEdge> newRightEdge,
                                                     std::shared_ptr<SweepEdge> newLeftEdge) {
-	// sanity checks: the new edge shapes start where the old edge ends
-	assert(oldEdge->shape().farR() == m_r);
-	assert(newRightEdge->shape().nearR() == m_r);
-	assert(newLeftEdge->shape().nearR() == m_r);
-	assert(oldEdge->shape().phiForR(m_r) == newRightEdge->shape().phiForR(m_r));
-	assert(oldEdge->shape().phiForR(m_r) == newLeftEdge->shape().phiForR(m_r));
-	SweepInterval* previousInterval = oldEdge->previousInterval();
-	SweepInterval* nextInterval = oldEdge->nextInterval();
+	SweepInterval* previousInterval = oldEdge.previousInterval();
+	SweepInterval* nextInterval = oldEdge.nextInterval();
 
-	m_edges.erase(oldEdge->shape());
+	m_edges.erase(oldEdge.shape());
 	m_edges.insert(std::make_pair(newRightEdge->shape(), newRightEdge));
 	m_edges.insert(std::make_pair(newLeftEdge->shape(), newLeftEdge));
 
@@ -130,11 +124,7 @@ SweepCircle::SplitResult SweepCircle::splitFromEdge(std::shared_ptr<SweepEdge> o
 
 SweepCircle::SplitResult SweepCircle::splitFromInterval(std::shared_ptr<SweepEdge> newRightEdge,
                                                         std::shared_ptr<SweepEdge> newLeftEdge) {
-	// sanity checks: the edges to split start at the same phi
-	assert(newLeftEdge->shape().nearR() == m_r);
-	assert(newLeftEdge->shape().nearR() == newRightEdge->shape().nearR());
 	Number<Inexact> phi = newLeftEdge->shape().phiForR(m_r);
-	assert(phi == newRightEdge->shape().phiForR(m_r));
 	SweepInterval* interval = intervalAt(phi);
 	SweepEdge* previousEdge = interval->previousBoundary();
 	SweepEdge* nextEdge = interval->nextBoundary();
@@ -164,14 +154,9 @@ SweepCircle::SplitResult SweepCircle::splitFromInterval(std::shared_ptr<SweepEdg
 	                   newLeftEdge->nextInterval()};
 }
 
-SweepCircle::SwitchResult SweepCircle::switchEdge(std::shared_ptr<SweepEdge> e,
-                                                  std::shared_ptr<SweepEdge> newEdge) {
-	// sanity checks: the new edge shape starts where the current edge ends
-	assert(e->shape().farR() == m_r);
-	assert(newEdge->shape().nearR() == m_r);
-	assert(newEdge->shape().phiForR(m_r) == e->m_shape.phiForR(m_r));
-	SweepEdge* previousEdge = e->previousEdge();
-	SweepEdge* nextEdge = e->nextEdge();
+SweepCircle::SwitchResult SweepCircle::switchEdge(SweepEdge& e, std::shared_ptr<SweepEdge> newEdge) {
+	SweepEdge* previousEdge = e.previousEdge();
+	SweepEdge* nextEdge = e.nextEdge();
 
 	if (previousEdge) {
 		previousEdge->m_nextInterval =
@@ -181,9 +166,9 @@ SweepCircle::SwitchResult SweepCircle::switchEdge(std::shared_ptr<SweepEdge> e,
 		m_firstInterval = SweepInterval(m_firstInterval.type(), nullptr, newEdge.get());
 		newEdge->m_previousInterval = &m_firstInterval;
 	}
-	newEdge->m_nextInterval = SweepInterval(e->m_nextInterval.type(), newEdge.get(), nextEdge);
+	newEdge->m_nextInterval = SweepInterval(e.m_nextInterval.type(), newEdge.get(), nextEdge);
 
-	m_edges.erase(e->shape());
+	m_edges.erase(e.shape());
 	m_edges.insert(std::make_pair(newEdge->shape(), newEdge));
 
 	if (nextEdge) {
@@ -193,61 +178,46 @@ SweepCircle::SwitchResult SweepCircle::switchEdge(std::shared_ptr<SweepEdge> e,
 	return SwitchResult{newEdge->previousInterval(), newEdge->nextInterval()};
 }
 
-SweepCircle::SwitchResult SweepCircle::mergeToEdge(std::shared_ptr<SweepEdge> rightEdge,
-                                                   std::shared_ptr<SweepEdge> leftEdge,
+SweepCircle::SwitchResult SweepCircle::mergeToEdge(SweepEdge& rightEdge, SweepEdge& leftEdge,
                                                    std::shared_ptr<SweepEdge> newEdge) {
-	// sanity checks: the new edge shape starts where the old edges end
-	assert(leftEdge->shape().farR() == m_r);
-	assert(rightEdge->shape().farR() == m_r);
-	assert(newEdge->shape().nearR() == m_r);
-	assert(leftEdge->shape().phiForR(m_r) == newEdge->shape().phiForR(m_r));
-	assert(rightEdge->shape().phiForR(m_r) == newEdge->shape().phiForR(m_r));
-
-	SweepEdge* previousEdge = rightEdge->previousEdge();
-	SweepEdge* nextEdge = leftEdge->nextEdge();
+	SweepEdge* previousEdge = rightEdge.previousEdge();
+	SweepEdge* nextEdge = leftEdge.nextEdge();
 	if (previousEdge) {
 		previousEdge->m_nextInterval =
-		    SweepInterval(rightEdge->m_previousInterval->type(), previousEdge, newEdge.get());
+		    SweepInterval(rightEdge.m_previousInterval->type(), previousEdge, newEdge.get());
 		newEdge->m_previousInterval = &previousEdge->m_nextInterval;
 	} else {
-		m_firstInterval =
-		    SweepInterval(rightEdge->m_previousInterval->type(), nullptr, newEdge.get());
+		m_firstInterval = SweepInterval(rightEdge.m_previousInterval->type(), nullptr, newEdge.get());
 		newEdge->m_previousInterval = &m_firstInterval;
 	}
-	newEdge->m_nextInterval = SweepInterval(leftEdge->m_nextInterval.type(), newEdge.get(), nextEdge);
+	newEdge->m_nextInterval = SweepInterval(leftEdge.m_nextInterval.type(), newEdge.get(), nextEdge);
 
 	if (nextEdge) {
 		nextEdge->m_previousInterval = &newEdge->m_nextInterval;
 	}
 
 	// this erases both edges as they have the same phi
-	m_edges.erase(leftEdge->shape());
+	m_edges.erase(leftEdge.shape());
 	m_edges.insert(std::make_pair(newEdge->shape(), newEdge));
 
 	return SwitchResult{newEdge->previousInterval(), newEdge->nextInterval()};
 }
 
-SweepCircle::MergeResult SweepCircle::mergeToInterval(std::shared_ptr<SweepEdge> rightEdge,
-                                                      std::shared_ptr<SweepEdge> leftEdge) {
-	// sanity checks: the edges to merge end at the same phi
-	assert(leftEdge->shape().farR() == m_r);
-	assert(rightEdge->shape().farR() == m_r);
-	assert(leftEdge->shape().phiForR(m_r) == rightEdge->shape().phiForR(m_r));
-
-	SweepEdge* previousEdge = rightEdge->previousEdge();
-	SweepEdge* nextEdge = leftEdge->nextEdge();
+SweepCircle::MergeResult SweepCircle::mergeToInterval(SweepEdge& rightEdge, SweepEdge& leftEdge) {
+	SweepEdge* previousEdge = rightEdge.previousEdge();
+	SweepEdge* nextEdge = leftEdge.nextEdge();
 	if (previousEdge) {
 		previousEdge->m_nextInterval =
-		    SweepInterval(rightEdge->m_nextInterval.type(), previousEdge, nextEdge);
+		    SweepInterval(rightEdge.m_nextInterval.type(), previousEdge, nextEdge);
 	} else {
-		m_firstInterval = SweepInterval(rightEdge->m_nextInterval.type(), nullptr, nextEdge);
+		m_firstInterval = SweepInterval(rightEdge.m_nextInterval.type(), nullptr, nextEdge);
 	}
 	if (nextEdge) {
 		nextEdge->m_previousInterval = &previousEdge->m_nextInterval;
 	}
 
 	// this erases both edges as they have the same phi
-	m_edges.erase(leftEdge->shape());
+	m_edges.erase(leftEdge.shape());
 
 	if (previousEdge) {
 		return MergeResult{previousEdge->nextInterval()};

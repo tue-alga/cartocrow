@@ -88,8 +88,7 @@ class SweepCircle {
 	/// Assumes that the far endpoint of \f$e\f$ is currently on this sweep
 	/// circle, and the newly inserted edges have their near endpoints at the
 	/// same point on this sweep circle.
-	SplitResult splitFromEdge(std::shared_ptr<SweepEdge> oldEdge,
-	                          std::shared_ptr<SweepEdge> newRightEdge,
+	SplitResult splitFromEdge(SweepEdge& oldEdge, std::shared_ptr<SweepEdge> newRightEdge,
 	                          std::shared_ptr<SweepEdge> newLeftEdge);
 	/// Splits the given interval \f$i\f$ into two, with a new interval in
 	/// between. Assumes that the newly inserted edges have their near endpoints
@@ -107,7 +106,7 @@ class SweepCircle {
 	/// Replaces one edge \f$e\f$ by another. Assumes that the far endpoint of
 	/// \f$e\f$ is currently on this sweep circle and coincides with the near
 	/// endpoint of the new edge.
-	SwitchResult switchEdge(std::shared_ptr<SweepEdge> e, std::shared_ptr<SweepEdge> newEdge);
+	SwitchResult switchEdge(SweepEdge& e, std::shared_ptr<SweepEdge> newEdge);
 
 	/// The elements (intervals and edges) resulting from a merge operation, in
 	/// order in increasing angle over the circle.
@@ -118,13 +117,12 @@ class SweepCircle {
 	/// Removes two edges and replaces them by a single new edge. Assumes that
 	/// the far endpoints of both edges coincides and lies currently on this
 	/// sweep circle.
-	SwitchResult mergeToEdge(std::shared_ptr<SweepEdge> rightEdge,
-	                         std::shared_ptr<SweepEdge> leftEdge, std::shared_ptr<SweepEdge> newEdge);
+	SwitchResult mergeToEdge(SweepEdge& rightEdge, SweepEdge& leftEdge,
+	                         std::shared_ptr<SweepEdge> newEdge);
 	/// Removes two edges and replaces them by a new interval. Assumes that the
 	/// far endpoints of both edges coincides and lies currently on this sweep
 	/// circle.
-	MergeResult mergeToInterval(std::shared_ptr<SweepEdge> rightEdge,
-	                            std::shared_ptr<SweepEdge> leftEdge);
+	MergeResult mergeToInterval(SweepEdge& rightEdge, SweepEdge& leftEdge);
 
   private:
 	/// Comparator that compares sweep edges by their phi value at the current

@@ -118,16 +118,16 @@ void SpiralTreeObstructedAlgorithm::VertexEvent::handleLeft() {
 	using enum SweepEdgeShape::Type;
 	SweepInterval* i = m_e2->nextInterval();
 	if (i->type() == SHADOW) {
-		auto result = m_alg->m_circle.switchEdge(m_e2, m_e1);
+		auto result = m_alg->m_circle.switchEdge(*m_e2, m_e1);
 		// TODO
 	} else if (i->type() == REACHABLE) {
 		auto spiral = std::make_shared<SweepEdge>(
 		    SweepEdgeShape(RIGHT_SPIRAL, m_position, m_alg->m_tree->restrictingAngle()));
 		if (spiral->shape().departsToLeftOf(m_e1->shape())) {
-			auto result = m_alg->m_circle.splitFromEdge(m_e2, m_e1, spiral);
+			auto result = m_alg->m_circle.splitFromEdge(*m_e2, m_e1, spiral);
 			result.middleInterval->setType(SHADOW);
 		} else {
-			auto result = m_alg->m_circle.switchEdge(m_e2, m_e1);
+			auto result = m_alg->m_circle.switchEdge(*m_e2, m_e1);
 		}
 		// TODO
 	} else if (i->type() == OBSTACLE) {
@@ -141,16 +141,16 @@ void SpiralTreeObstructedAlgorithm::VertexEvent::handleRight() {
 	using enum SweepEdgeShape::Type;
 	SweepInterval* i = m_e1->previousInterval();
 	if (i->type() == SHADOW) {
-		auto result = m_alg->m_circle.switchEdge(m_e1, m_e2);
+		auto result = m_alg->m_circle.switchEdge(*m_e1, m_e2);
 		// TODO
 	} else if (i->type() == REACHABLE) {
 		auto spiral = std::make_shared<SweepEdge>(
 		    SweepEdgeShape(LEFT_SPIRAL, m_position, m_alg->m_tree->restrictingAngle()));
 		if (m_e2->shape().departsToLeftOf(spiral->shape())) {
-			auto result = m_alg->m_circle.splitFromEdge(m_e1, m_e2, spiral);
+			auto result = m_alg->m_circle.splitFromEdge(*m_e1, m_e2, spiral);
 			result.middleInterval->setType(SHADOW);
 		} else {
-			auto result = m_alg->m_circle.switchEdge(m_e1, m_e2);
+			auto result = m_alg->m_circle.switchEdge(*m_e1, m_e2);
 		}
 		// TODO
 	} else if (i->type() == OBSTACLE) {
@@ -187,7 +187,7 @@ void SpiralTreeObstructedAlgorithm::VertexEvent::handleFar() {
 		if (previousIntervalType == nextIntervalType) {
 			// if both sides are SHADOW or both sides are REACHABLE, the entire
 			// merged interval simply becomes that type, too
-			auto result = m_alg->m_circle.mergeToInterval(m_e1, m_e2);
+			auto result = m_alg->m_circle.mergeToInterval(*m_e1, *m_e2);
 			result.mergedInterval->setType(previousIntervalType);
 		} else {
 			// else only one side is REACHABLE, we need to add a spiral to
@@ -196,11 +196,11 @@ void SpiralTreeObstructedAlgorithm::VertexEvent::handleFar() {
 			    previousIntervalType == REACHABLE ? LEFT_SPIRAL : RIGHT_SPIRAL;
 			auto spiral = std::make_shared<SweepEdge>(
 			    SweepEdgeShape(spiralType, m_position, m_alg->m_tree->restrictingAngle()));
-			auto result = m_alg->m_circle.mergeToEdge(m_e1, m_e2, spiral);
+			auto result = m_alg->m_circle.mergeToEdge(*m_e1, *m_e2, spiral);
 		}
 	} else {
 		// case 2: concave corner of an obstacle
-		auto result = m_alg->m_circle.mergeToInterval(m_e1, m_e2);
+		auto result = m_alg->m_circle.mergeToInterval(*m_e1, *m_e2);
 		result.mergedInterval->setType(OBSTACLE);
 	}
 }
@@ -254,9 +254,9 @@ void SpiralTreeObstructedAlgorithm::JoinEvent::handle() {
 	m_alg->m_debugPainting->drawText(
 	    m_alg->m_tree->rootPosition() + (m_position.toCartesian() - CGAL::ORIGIN), "join");
 
-	auto result =
-	    m_alg->m_circle.mergeToInterval(m_interval->previousBoundary(), m_interval->nextBoundary());
-	result.mergedInterval->setType(previousIntervalType);
+	auto result = m_alg->m_circle.mergeToInterval(*m_interval->previousBoundary(),
+	                                              *m_interval->nextBoundary());
+	//result.mergedInterval->setType(previousIntervalType);
 }
 
 SpiralTreeObstructedAlgorithm::SpiralTreeObstructedAlgorithm(std::shared_ptr<SpiralTree> tree)
