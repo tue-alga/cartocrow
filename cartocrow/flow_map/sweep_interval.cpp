@@ -19,7 +19,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "sweep_interval.h"
 
-#include "cartocrow/renderer/geometry_renderer.h"
+#include "../renderer/geometry_renderer.h"
+#include "intersections.h"
 #include "polar_segment.h"
 #include "spiral_segment.h"
 #include "sweep_edge.h"
@@ -46,6 +47,22 @@ void SweepInterval::setType(Type type) {
 
 SweepInterval::Type SweepInterval::type() const {
 	return m_type;
+}
+
+std::optional<PolarPoint> SweepInterval::vanishingPoint() const {
+	if (m_previousBoundary == nullptr || m_nextBoundary == nullptr) {
+		return std::nullopt;
+	}
+	if (m_previousBoundary->shape().type() != SweepEdgeShape::Type::SEGMENT &&
+	    m_nextBoundary->shape().type() != SweepEdgeShape::Type::SEGMENT) {
+		std::vector<PolarPoint> intersections;
+		intersect(m_previousBoundary->shape().toSpiralSegment(),
+		          m_nextBoundary->shape().toSpiralSegment(), intersections);
+		if (intersections.size() > 0) {
+			return intersections[0]; // ???
+		}
+	}
+	return std::nullopt;
 }
 
 Polygon<Inexact> SweepInterval::sweepShape(Number<Inexact> rFrom, Number<Inexact> rTo) const {

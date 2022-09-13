@@ -22,6 +22,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "../core/core.h"
 #include "polar_point.h"
+#include "spiral_segment.h"
 #include "sweep_interval.h"
 
 namespace cartocrow::flow_map {
@@ -76,6 +77,8 @@ class SweepEdgeShape {
 	/// and the given shape, this shape is to the left of the given shape.
 	/// Assumes that \c shape has the same \ref nearEndpoint() as this shape.
 	bool departsToLeftOf(const SweepEdgeShape& shape) const;
+
+	SpiralSegment toSpiralSegment() const;
 
 	bool operator==(const SweepEdgeShape& s) const = default;
 

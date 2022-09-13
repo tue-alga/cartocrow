@@ -128,6 +128,10 @@ class SpiralTreeObstructedAlgorithm {
 
 		/// Inserts join events for all edges starting at the event position.
 		void insertJoinEvents();
+		/// Inserts a join event for the given interval vanishing. If the
+		/// provided interval never vanishes, or the interval consists of two
+		/// segment edges, no join event is inserted.
+		void insertJoinEventFor(SweepInterval* interval);
 
 		/// The first edge (in counter-clockwise order around the obstacle,
 		/// coming before \ref m_e2).
@@ -140,10 +144,16 @@ class SpiralTreeObstructedAlgorithm {
 		Side m_side;
 	};
 
+	/// The sweep circle hits a point where an interval vanishes. This excludes
+	/// vanishing obstacle intervals, as these are handled by a vertex event
+	/// instead.
 	class JoinEvent : public Event {
 	  public:
-		JoinEvent(PolarPoint position, SpiralTreeObstructedAlgorithm* alg);
+		JoinEvent(PolarPoint position, SweepInterval* interval, SpiralTreeObstructedAlgorithm* alg);
 		void handle() override;
+
+	  private:
+		SweepInterval* m_interval;
 	};
 
 	struct CompareEvents {

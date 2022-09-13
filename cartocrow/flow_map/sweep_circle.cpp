@@ -93,7 +93,7 @@ SweepInterval* SweepCircle::intervalAt(Number<Inexact> phi) {
 }
 
 std::shared_ptr<SweepEdge> SweepCircle::edgeAt(Number<Inexact> phi) {
-	auto edgeIterator = m_edges.find(phi);
+	auto edgeIterator = m_edges.lower_bound(phi);
 	if (edgeIterator == m_edges.end()) {
 		return nullptr;
 	}
@@ -208,9 +208,11 @@ SweepCircle::SwitchResult SweepCircle::mergeToEdge(std::shared_ptr<SweepEdge> ri
 	if (previousEdge) {
 		previousEdge->m_nextInterval =
 		    SweepInterval(rightEdge->m_previousInterval->type(), previousEdge, newEdge.get());
+		newEdge->m_previousInterval = &previousEdge->m_nextInterval;
 	} else {
 		m_firstInterval =
 		    SweepInterval(rightEdge->m_previousInterval->type(), nullptr, newEdge.get());
+		newEdge->m_previousInterval = &m_firstInterval;
 	}
 	newEdge->m_nextInterval = SweepInterval(leftEdge->m_nextInterval.type(), newEdge.get(), nextEdge);
 

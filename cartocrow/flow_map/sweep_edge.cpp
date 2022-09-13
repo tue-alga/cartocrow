@@ -109,6 +109,11 @@ bool SweepEdgeShape::departsToLeftOf(const SweepEdgeShape& shape) const {
 	return PolarSegment(this->evalForR(r + 0.00001), shape.evalForR(r + 0.00001)).isLeftLine();
 }
 
+SpiralSegment SweepEdgeShape::toSpiralSegment() const {
+	return SpiralSegment(m_start, m_type == Type::LEFT_SPIRAL ? -m_alpha : m_alpha, nearR(),
+	                     nearR() * 100); // TODO
+}
+
 SweepEdge::SweepEdge(SweepEdgeShape shape)
     : m_shape(shape), m_previousInterval(nullptr),
       m_nextInterval(SweepInterval(SweepInterval::Type::REACHABLE)) {}

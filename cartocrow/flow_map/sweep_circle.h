@@ -71,7 +71,9 @@ class SweepCircle {
 
 	/// Returns the edge at the given angle \f$\phi\f$. If there is no edge at
 	/// this \f$\phi\f$, returns \c nullptr. If there is more than one edge at
-	/// the given angle, an arbitrary one is returned.
+	/// the given angle, the rightmost one is returned, such that the other ones
+	/// can be retrieved by iteratively calling
+	/// `e.nextInterval()->nextBoundary()`.
 	std::shared_ptr<SweepEdge> edgeAt(Number<Inexact> phi);
 
 	/// The elements (intervals and edges) resulting from a split operation, in
