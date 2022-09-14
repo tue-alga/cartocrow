@@ -22,7 +22,7 @@ endmacro(cartocrow_add_library)
 add_subdirectory(core)
 add_subdirectory(renderer)
 add_subdirectory(necklace_map)
-add_subdirectory(vw_simplification)
+add_subdirectory(simplification)
 add_subdirectory(flow_map)
 
 add_library(cartocrow_lib INTERFACE)
@@ -32,7 +32,7 @@ target_link_libraries(
     renderer
     necklace_map
     flow_map
-    vw_simplification
+    simplification
 )
 
 install(

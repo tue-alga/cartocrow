@@ -56,6 +56,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_subdirectory(cartocrow)
+add_subdirectory(demos)
 add_subdirectory(frontend)
 add_subdirectory(test)
 

@@ -7,6 +7,14 @@ CartoCrow is a framework that simplifies the implementation of algorithms in car
 > :warning: CartoCrow is still a **work in progress**  and should not be considered stable yet.
 
 
+This repository consists of the following subdirectories:
+
+* `cartocrow`: the library itself, with subdirectories for each module
+* `test`: unit tests for each module
+* `frontend`: the command-line frontend
+* `demos`: a collection of GUI applications serving as a demonstration of various parts of the algorithms implemented
+
+
 ## Dependencies
 
 CartoCrow depends on the following build tools:
@@ -171,13 +179,13 @@ If you want to use [cartocrow-web](https://github.com/tue-alga/cartocrow-web), c
 Cartocrow provides a command-line application, simply called `cartocrow`, which can be used to generate maps. To use it, you need a JSON file describing the map to generate, which can then be passed to `cartocrow`:
 
 ```bash
-build/console/cartocrow/cartocrow <json-file>
+build/frontend/cartocrow <json-file>
 ```
 
 We provide some sample input data to generate a necklace map depicting the population of all countries in Europe:
 
 ```bash
-build/console/cartocrow/cartocrow data/europe-population-necklace.json
+build/frontend/cartocrow data/europe-population-necklace.json
 ```
 
 

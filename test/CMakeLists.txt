@@ -15,7 +15,7 @@ set(TEST_SOURCES "cartocrow_test.cpp"
 	"necklace_map/necklace_map.cpp"
 	"necklace_map/range.cpp"
 	"renderer/ipe_renderer.cpp"
-	"vw_simplification/vw_simplification.cpp"
+	"simplification/vw_simplification.cpp"
 )
 
 add_executable(cartocrow_test cartocrow_test.cpp ${TEST_SOURCES})
@@ -25,5 +25,5 @@ target_link_libraries(cartocrow_test
 	flow_map
 	necklace_map
 	renderer
-	vw_simplification
+	simplification
 )

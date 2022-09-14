@@ -29,17 +29,5 @@ TEST_CASE("Computing a spiral tree with one obstacle") {
 	SpiralTreeObstructedAlgorithm algorithm(tree);
 	algorithm.run();
 
-	Painting::Options options;
-	Painting p(nullptr, tree, options);
-	auto painting = std::make_shared<Painting>(nullptr, tree, options);
-
-	int argc = 0;
-	QApplication app(argc, nullptr);
-	renderer::IpeRenderer ipeRenderer(painting);
-	ipeRenderer.addPainting(algorithm.debugPainting());
-	ipeRenderer.save("/tmp/spiral-tree-test.ipe");
-	renderer::GeometryWidget renderer(painting);
-	renderer.addPainting(algorithm.debugPainting());
-	renderer.show();
-	app.exec();
+	// TODO add assertions
 }

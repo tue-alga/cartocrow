@@ -1,6 +1,6 @@
 #include "../catch.hpp"
 
-#include "../../cartocrow/vw_simplification/vw_simplification.h"
+#include "../../cartocrow/simplification/vw_simplification.h"
 
 using namespace cartocrow;
 using namespace cartocrow::vw_simplification;
