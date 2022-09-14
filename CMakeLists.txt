@@ -36,19 +36,6 @@ if(MSVC)
     add_compile_definitions(_USE_MATH_DEFINES)
 endif()
 
-# Configure a header file to pass CMake settings to the source code.
-configure_file(
-    "${CMAKE_SOURCE_DIR}/cmake/cartocrow_config.h.in"
-    "${CMAKE_SOURCE_DIR}/cmake/cartocrow_config.h"
-)
-install(FILES "${CMAKE_SOURCE_DIR}/cmake/cartocrow_config.h" DESTINATION "${CMAKE_INSTALL_SOURCE_DIR}/cmake")
-
-# Configure the doxygen configuration file to pass CMake settings to the doxygen.
-configure_file(
-    "${CMAKE_SOURCE_DIR}/cmake/Doxyfile.in"
-    "Doxyfile"
-)
-
 # ## DEPENDENCIES ###
 find_package(CGAL REQUIRED)
 find_path(CGAL_INCLUDE_DIR CGAL/Exact_predicates_inexact_constructions_kernel.h)
@@ -68,13 +55,8 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# The CartoCrow library
 add_subdirectory(cartocrow)
-
-# Executables that use or expose CartoCrow
-add_subdirectory(console)
-
-# Unit tests of the CartoCrow library
+add_subdirectory(frontend)
 add_subdirectory(test)
 
 # Install rules

@@ -106,11 +106,18 @@ TEST_CASE("Querying a sweep circle for intervals and edges") {
 	SECTION("sweep circle with a single interval") {
 		SweepInterval* i1 = circle.intervalAt(0);
 		CHECK(i1 != nullptr);
-		CHECK(circle.edgeAt(0) == nullptr);
+
+		auto e1 = circle.edgesAt(0);
+		CHECK(e1.first == circle.end());
+		CHECK(e1.second == circle.end());
+
 		SweepInterval* i2 = circle.intervalAt(M_PI);
 		CHECK(i2 != nullptr);
 		CHECK(i1 == i2);
-		CHECK(circle.edgeAt(M_PI) == nullptr);
+
+		auto e2 = circle.edgesAt(M_PI);
+		CHECK(e2.first == circle.end());
+		CHECK(e2.second == circle.end());
 	}
 
 	SECTION("sweep circle with three intervals") {

@@ -1,9 +1,10 @@
-build/
-*.swp
-wwwroot/data/*/test_out*.xml
-wwwroot/data/*/test_out*.svg
-out/
-CMakeFiles
+.cache/
 .vs/
-CMakeSettings.json
+.vscode/
+build*/
+data/
+dev_notes/
+doc/out/
 doc/tags/
+*.code-workspace
+compile_commands.json

@@ -69,12 +69,35 @@ class SweepCircle {
 	/// any structural changes to the sweep circle occur.
 	SweepInterval* intervalAt(Number<Inexact> phi);
 
-	/// Returns the edge at the given angle \f$\phi\f$. If there is no edge at
-	/// this \f$\phi\f$, returns \c nullptr. If there is more than one edge at
-	/// the given angle, the rightmost one is returned, such that the other ones
-	/// can be retrieved by iteratively calling
-	/// `e.nextInterval()->nextBoundary()`.
-	std::shared_ptr<SweepEdge> edgeAt(Number<Inexact> phi);
+	/// Comparator that compares sweep edges by their phi value at the current
+	/// radius of the sweep circle.
+	struct SweepEdgeShapeComparator {
+		SweepEdgeShapeComparator(SweepCircle* owner) : m_owner(owner) {}
+		SweepCircle* m_owner;
+		bool operator()(SweepEdgeShape e1, SweepEdgeShape e2) const {
+			return e1.phiForR(m_owner->m_r) < e2.phiForR(m_owner->m_r);
+		}
+		bool operator()(Number<Inexact> phi1, SweepEdgeShape e2) const {
+			return phi1 < e2.phiForR(m_owner->m_r);
+		}
+		bool operator()(SweepEdgeShape e1, Number<Inexact> phi2) const {
+			return e1.phiForR(m_owner->m_r) < phi2;
+		}
+		struct is_transparent {};
+	};
+	using EdgeMap =
+	    std::multimap<SweepEdgeShape, std::shared_ptr<SweepEdge>, SweepEdgeShapeComparator>;
+
+	/// Returns an iterator pointing at the first edge on the sweep circle.
+	EdgeMap::iterator begin();
+
+	/// Returns a pair of iterators representing the range of edges at the given
+	/// angle \f$\phi\f$, like \ref std::multimap::equal_range().
+	std::pair<EdgeMap::iterator, EdgeMap::iterator> edgesAt(Number<Inexact> phi);
+
+	/// Returns a past-the-end iterator, pointing past the last edge on the
+	/// sweep circle.
+	EdgeMap::iterator end();
 
 	/// The elements (intervals and edges) resulting from a split operation, in
 	/// order in increasing angle over the circle.
@@ -124,25 +147,6 @@ class SweepCircle {
 	/// circle.
 	MergeResult mergeToInterval(SweepEdge& rightEdge, SweepEdge& leftEdge);
 
-  private:
-	/// Comparator that compares sweep edges by their phi value at the current
-	/// radius of the sweep circle.
-	struct SweepEdgeShapeComparator {
-		SweepEdgeShapeComparator(SweepCircle* owner) : m_owner(owner) {}
-		SweepCircle* m_owner;
-		bool operator()(SweepEdgeShape e1, SweepEdgeShape e2) const {
-			return e1.phiForR(m_owner->m_r) < e2.phiForR(m_owner->m_r);
-		}
-		bool operator()(Number<Inexact> phi1, SweepEdgeShape e2) const {
-			return phi1 < e2.phiForR(m_owner->m_r);
-		}
-		bool operator()(SweepEdgeShape e1, Number<Inexact> phi2) const {
-			return e1.phiForR(m_owner->m_r) < phi2;
-		}
-		struct is_transparent {};
-	};
-	using EdgeMap =
-	    std::multimap<SweepEdgeShape, std::shared_ptr<SweepEdge>, SweepEdgeShapeComparator>;
 	/// A map containing the sweep edges separating the intervals, indexed by
 	/// their edge shapes.
 	EdgeMap m_edges{SweepEdgeShapeComparator(this)};

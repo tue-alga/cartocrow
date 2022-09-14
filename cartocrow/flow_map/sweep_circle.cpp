@@ -92,12 +92,17 @@ SweepInterval* SweepCircle::intervalAt(Number<Inexact> phi) {
 	return edge->previousInterval();
 }
 
-std::shared_ptr<SweepEdge> SweepCircle::edgeAt(Number<Inexact> phi) {
-	auto edgeIterator = m_edges.lower_bound(phi);
-	if (edgeIterator == m_edges.end()) {
-		return nullptr;
-	}
-	return edgeIterator->second;
+SweepCircle::EdgeMap::iterator SweepCircle::begin() {
+	return m_edges.begin();
+}
+
+std::pair<SweepCircle::EdgeMap::iterator, SweepCircle::EdgeMap::iterator>
+SweepCircle::edgesAt(Number<Inexact> phi) {
+	return m_edges.equal_range(phi);
+}
+
+SweepCircle::EdgeMap::iterator SweepCircle::end() {
+	return m_edges.end();
 }
 
 SweepCircle::SplitResult SweepCircle::splitFromEdge(SweepEdge& oldEdge,
@@ -115,6 +120,7 @@ SweepCircle::SplitResult SweepCircle::splitFromEdge(SweepEdge& oldEdge,
 	newRightEdge->m_nextInterval =
 	    SweepInterval(previousInterval->type(), newRightEdge.get(), newLeftEdge.get());
 	nextInterval->m_previousBoundary = newLeftEdge.get();
+	newLeftEdge->m_previousInterval = &newRightEdge->m_nextInterval;
 	newLeftEdge->m_nextInterval = *nextInterval;
 	newLeftEdge->m_nextInterval.m_previousBoundary = newLeftEdge.get();
 
