@@ -54,8 +54,11 @@ struct GeometryWidgetStyle {
 
 /// QWidget specialization of the GeometryRenderer.
 class GeometryWidget : public QWidget, GeometryRenderer {
+	Q_OBJECT;
 
   public:
+	/// Constructs a GeometryWidget without a painting.
+	GeometryWidget();
 	/// Constructs a GeometryWidget for the given painting.
 	GeometryWidget(std::shared_ptr<GeometryPainting> painting);
 
@@ -74,7 +77,13 @@ class GeometryWidget : public QWidget, GeometryRenderer {
 	void setFill(Color color) override;
 	void setFillOpacity(int alpha) override;
 
+	/// Adds a new painting to this widget.
 	void addPainting(std::shared_ptr<GeometryPainting> painting);
+	/// Removes all paintings from this widget.
+	void clear();
+
+	/// Returns the current zoom factor, in pixels per unit.
+	Number<Inexact> zoomFactor() const;
 
   public slots:
 	/// Determines whether to draw the axes in the background.
@@ -89,6 +98,17 @@ class GeometryWidget : public QWidget, GeometryRenderer {
 	void zoomIn();
 	/// Decreases the zoom level, taking the minimum zoom into account.
 	void zoomOut();
+
+  signals:
+	/// Emitted when the user clicks on the widget.
+	void clicked(Point<Inexact> location);
+	/// Emitted when the user started dragging with the mouse.
+	void dragStarted(Point<Inexact> location);
+	/// Emitted when the user moved the mouse over the widget while holding the
+	/// mouse button.
+	void dragMoved(Point<Inexact> location);
+	/// Emitted when the user stopped dragging with the mouse.
+	void dragEnded(Point<Inexact> location);
 
   protected:
 	void resizeEvent(QResizeEvent* e) override;
@@ -137,8 +157,12 @@ class GeometryWidget : public QWidget, GeometryRenderer {
 	/// The previous mouse position, in Qt coordinates. Used together with
 	/// \link m_mousePos to figure out how far the mouse was moved during a drag.
 	QPointF m_previousMousePos;
+	/// Whether a panning operation is in progress.
+	bool m_panning = false;
 	/// Whether a dragging operation is in progress.
 	bool m_dragging = false;
+	/// Whether the mouse button is currently held.
+	bool m_mouseButtonDown = false;
 	/// Whether to draw the background axes.
 	bool m_drawAxes = true;
 	/// The current drawing style.

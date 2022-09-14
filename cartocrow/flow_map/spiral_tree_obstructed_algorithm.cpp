@@ -29,7 +29,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "../core/core.h"
 #include "../necklace_map/circular_range.h"
-#include "circulator.h"
 #include "intersections.h"
 #include "polar_segment.h"
 #include "spiral_segment.h"

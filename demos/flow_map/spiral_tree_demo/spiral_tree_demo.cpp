@@ -19,9 +19,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include <filesystem>
-#include <fstream>
-#include <sstream>
+#include "spiral_tree_demo.h"
 
 #include <QApplication>
 
@@ -37,18 +35,47 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 using namespace cartocrow;
 using namespace cartocrow::flow_map;
+using namespace cartocrow::renderer;
 
-int main(int argc, char* argv[]) {
+SpiralTreeDemo::SpiralTreeDemo() {
+	setWindowTitle("CartoCrow – Spiral tree demo");
 
+	m_obstacle.push_back(Point<Inexact>(0, 50));
+	m_obstacle.push_back(Point<Inexact>(8, 95));
+	m_obstacle.push_back(Point<Inexact>(50, 140));
+	m_obstacle.push_back(Point<Inexact>(-43, 134));
+	m_obstacle.push_back(Point<Inexact>(-50, 100));
+
+	m_renderer = new GeometryWidget();
+	setCentralWidget(m_renderer);
+
+	recalculate();
+	connect(m_renderer, &GeometryWidget::dragStarted, [&](Point<Inexact> p) {
+		std::cout << "dragStarted" << std::endl;
+		//m_obstacle.push_back(p);
+		m_draggedPoint = findClosestPoint(p, 10 / m_renderer->zoomFactor());
+		recalculate();
+	});
+	connect(m_renderer, &GeometryWidget::dragMoved, [&](Point<Inexact> p) {
+		std::cout << "dragMoved" << std::endl;
+		//m_obstacle.push_back(p);
+		if (m_draggedPoint != nullptr) {
+			*m_draggedPoint = p;
+		}
+		recalculate();
+	});
+	connect(m_renderer, &GeometryWidget::dragEnded, [&](Point<Inexact> p) {
+		std::cout << "dragEnded" << std::endl;
+		//m_obstacle.push_back(p);
+		m_draggedPoint = nullptr;
+		recalculate();
+	});
+}
+
+void SpiralTreeDemo::recalculate() {
 	auto tree = std::make_shared<SpiralTree>(Point<Inexact>(0, 0), 0.5061454830783556);
 	tree->addPlace("p1", Point<Inexact>(0, 400), 1);
-	Polygon<Inexact> obstacle;
-	obstacle.push_back(Point<Inexact>(0, 50));
-	obstacle.push_back(Point<Inexact>(8, 95));
-	obstacle.push_back(Point<Inexact>(50, 140));
-	obstacle.push_back(Point<Inexact>(-43, 134));
-	obstacle.push_back(Point<Inexact>(-50, 100));
-	tree->addObstacle(obstacle);
+	tree->addObstacle(m_obstacle);
 	SpiralTreeObstructedAlgorithm algorithm(tree);
 	algorithm.run();
 
@@ -56,9 +83,29 @@ int main(int argc, char* argv[]) {
 	Painting p(nullptr, tree, options);
 	auto painting = std::make_shared<Painting>(nullptr, tree, options);
 
-	QApplication app(argc, nullptr);
-	renderer::GeometryWidget renderer(painting);
-	renderer.addPainting(algorithm.debugPainting());
-	renderer.show();
+	m_renderer->clear();
+	m_renderer->addPainting(painting);
+	m_renderer->addPainting(algorithm.debugPainting());
+
+	m_renderer->update();
+}
+
+Point<Inexact>* SpiralTreeDemo::findClosestPoint(Point<Inexact> p, Number<Inexact> radius) {
+	Point<Inexact>* closest = nullptr;
+	Number<Inexact> minSquaredDistance = radius * radius;
+	for (auto& vertex : m_obstacle) {
+		Number<Inexact> squaredDistance = (vertex - p).squared_length();
+		if (squaredDistance < minSquaredDistance) {
+			minSquaredDistance = squaredDistance;
+			closest = &vertex;
+		}
+	}
+	return closest;
+}
+
+int main(int argc, char* argv[]) {
+	QApplication app(argc, argv);
+	SpiralTreeDemo demo;
+	demo.show();
 	app.exec();
 }

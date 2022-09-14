@@ -31,9 +31,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 namespace cartocrow::renderer {
 
-GeometryWidget::GeometryWidget(std::shared_ptr<GeometryPainting> painting) {
-	m_paintings.push_back(painting);
-
+GeometryWidget::GeometryWidget() {
 	setMouseTracking(true);
 	m_transform.scale(1, -1);
 
@@ -54,6 +52,10 @@ GeometryWidget::GeometryWidget(std::shared_ptr<GeometryPainting> painting) {
 	m_zoomInButton->setText("+");
 	connect(m_zoomInButton, &QToolButton::clicked, this, &GeometryWidget::zoomIn);
 	m_zoomBar->addWidget(m_zoomInButton);
+}
+
+GeometryWidget::GeometryWidget(std::shared_ptr<GeometryPainting> painting) : GeometryWidget() {
+	m_paintings.push_back(painting);
 }
 
 void GeometryWidget::resizeEvent(QResizeEvent* e) {
@@ -90,11 +92,19 @@ void GeometryWidget::mouseMoveEvent(QMouseEvent* event) {
 	auto y = static_cast<int>(converted.y() + 0.5);
 	m_mousePos = QPointF(x, y);
 
-	if (m_dragging) {
+	if (m_panning) {
 		QPointF delta = event->pos() - m_previousMousePos;
 		QTransform translation;
 		translation.translate(delta.x(), delta.y());
 		m_transform = m_transform * translation;
+	} else if (m_mouseButtonDown) {
+		if (m_dragging) {
+			emit dragMoved(inverseConvertPoint(event->pos()));
+		} else {
+			m_dragging = true;
+			emit dragStarted(inverseConvertPoint(m_previousMousePos));
+			emit dragMoved(inverseConvertPoint(event->pos()));
+		}
 	}
 	m_previousMousePos = event->pos();
 
@@ -102,11 +112,12 @@ void GeometryWidget::mouseMoveEvent(QMouseEvent* event) {
 }
 
 void GeometryWidget::mousePressEvent(QMouseEvent* event) {
+	m_mouseButtonDown = true;
 	// initiate canvas panning when dragging with the right mouse button
 	// or when holding Ctrl while dragging
 	if ((event->button() & Qt::RightButton) ||
 	    QGuiApplication::keyboardModifiers().testFlag(Qt::KeyboardModifier::ControlModifier)) {
-		m_dragging = true;
+		m_panning = true;
 		setCursor(Qt::ClosedHandCursor);
 		update();
 	}
@@ -114,10 +125,16 @@ void GeometryWidget::mousePressEvent(QMouseEvent* event) {
 }
 
 void GeometryWidget::mouseReleaseEvent(QMouseEvent* event) {
-	if (m_dragging) {
-		m_dragging = false;
+	m_mouseButtonDown = false;
+	if (m_panning) {
+		m_panning = false;
 		setCursor(Qt::ArrowCursor);
 		update();
+	} else if (m_dragging) {
+		m_dragging = false;
+		emit dragEnded(inverseConvertPoint(m_previousMousePos));
+	} else {
+		emit clicked(inverseConvertPoint(m_previousMousePos));
 	}
 }
 
@@ -380,6 +397,14 @@ void GeometryWidget::setFillOpacity(int alpha) {
 
 void GeometryWidget::addPainting(std::shared_ptr<GeometryPainting> painting) {
 	m_paintings.push_back(painting);
+}
+
+void GeometryWidget::clear() {
+	m_paintings.clear();
+}
+
+Number<Inexact> GeometryWidget::zoomFactor() const {
+	return m_transform.m11();
 }
 
 void GeometryWidget::setDrawAxes(bool drawAxes) {
