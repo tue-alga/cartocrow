@@ -202,7 +202,7 @@ SweepCircle::SwitchResult SweepCircle::mergeToEdge(SweepEdge& rightEdge, SweepEd
 		nextEdge->m_previousInterval = &newEdge->m_nextInterval;
 	}
 
-	// this erases both edges as they have the same phi
+	m_edges.erase(rightEdge.shape());
 	m_edges.erase(leftEdge.shape());
 	m_edges.insert(std::make_pair(newEdge->shape(), newEdge));
 
@@ -222,7 +222,7 @@ SweepCircle::MergeResult SweepCircle::mergeToInterval(SweepEdge& rightEdge, Swee
 		nextEdge->m_previousInterval = &previousEdge->m_nextInterval;
 	}
 
-	// this erases both edges as they have the same phi
+	m_edges.erase(rightEdge.shape());
 	m_edges.erase(leftEdge.shape());
 
 	if (previousEdge) {

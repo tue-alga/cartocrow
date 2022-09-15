@@ -163,11 +163,6 @@ class SpiralTreeObstructedAlgorithm {
 
 	struct CompareEvents {
 		bool operator()(std::shared_ptr<Event>& a, std::shared_ptr<Event>& b) const {
-			// join nodes are conceptually farther from the root than other nodes
-			/*if (a.m_position.r() == b.m_position.r()) {
-				return b.m_node->m_children.size() > 1;
-			}*/
-
 			return a->r() > b->r();
 		}
 	};

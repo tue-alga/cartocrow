@@ -220,7 +220,6 @@ SpiralTreeObstructedAlgorithm::VertexEvent::determineSide() {
 
 void SpiralTreeObstructedAlgorithm::VertexEvent::insertJoinEvents() {
 	auto [begin, end] = m_alg->m_circle.edgesAt(phi());
-	std::cout << "inserting join events: " << std::distance(begin, end) << std::endl;
 	if (begin == end) {
 		return;
 	}
@@ -321,6 +320,7 @@ void SpiralTreeObstructedAlgorithm::run() {
 			edge.second->nextInterval()->paintSweepShape(*m_debugPainting, m_circle.r(), event->r());
 		}
 		m_circle.grow(event->r());
+		m_circle.print();
 		event->handle();
 		m_circle.print();
 	}

@@ -40,33 +40,44 @@ using namespace cartocrow::renderer;
 SpiralTreeDemo::SpiralTreeDemo() {
 	setWindowTitle("CartoCrow – Spiral tree demo");
 
+	/*
 	m_obstacle.push_back(Point<Inexact>(0, 50));
 	m_obstacle.push_back(Point<Inexact>(8, 95));
 	m_obstacle.push_back(Point<Inexact>(50, 140));
 	m_obstacle.push_back(Point<Inexact>(-43, 134));
 	m_obstacle.push_back(Point<Inexact>(-50, 100));
+	*/
+
+	m_obstacle.push_back(Point<Inexact>(-3, 38));
+	m_obstacle.push_back(Point<Inexact>(11, 56));
+	m_obstacle.push_back(Point<Inexact>(21, 79));
+	m_obstacle.push_back(Point<Inexact>(15, 108));
+	m_obstacle.push_back(Point<Inexact>(-57, 140));
+
+	// join not working
+	/*m_obstacle.push_back(Point<Inexact>(0, 50));
+	m_obstacle.push_back(Point<Inexact>(20, 80));
+	m_obstacle.push_back(Point<Inexact>(-20, 70));*/
 
 	m_renderer = new GeometryWidget();
 	setCentralWidget(m_renderer);
 
 	recalculate();
 	connect(m_renderer, &GeometryWidget::dragStarted, [&](Point<Inexact> p) {
-		std::cout << "dragStarted" << std::endl;
-		//m_obstacle.push_back(p);
 		m_draggedPoint = findClosestPoint(p, 10 / m_renderer->zoomFactor());
 		recalculate();
 	});
 	connect(m_renderer, &GeometryWidget::dragMoved, [&](Point<Inexact> p) {
-		std::cout << "dragMoved" << std::endl;
-		//m_obstacle.push_back(p);
 		if (m_draggedPoint != nullptr) {
+			Point<Inexact> originalPoint = *m_draggedPoint;
 			*m_draggedPoint = p;
+			if (!m_obstacle.is_simple()) {
+				*m_draggedPoint = originalPoint;
+			}
+			recalculate();
 		}
-		recalculate();
 	});
 	connect(m_renderer, &GeometryWidget::dragEnded, [&](Point<Inexact> p) {
-		std::cout << "dragEnded" << std::endl;
-		//m_obstacle.push_back(p);
 		m_draggedPoint = nullptr;
 		recalculate();
 	});
