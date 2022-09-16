@@ -52,7 +52,8 @@ class SweepCircle {
 
 	/// Checks if this sweep circle is still valid, that is, if the edges and
 	/// intervals in this sweep circle are still ordered in counter-clockwise
-	/// order around the origin.
+	/// order around the origin, and if all the pointers between neighboring
+	/// edges and intervals are still set correctly.
 	bool isValid() const;
 
 	/// Prints a summary of the edges and intervals on the sweep circle. This is

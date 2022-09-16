@@ -40,24 +40,30 @@ using namespace cartocrow::renderer;
 SpiralTreeDemo::SpiralTreeDemo() {
 	setWindowTitle("CartoCrow – Spiral tree demo");
 
-	/*
-	m_obstacle.push_back(Point<Inexact>(0, 50));
+	/*m_obstacle.push_back(Point<Inexact>(0, 50));
 	m_obstacle.push_back(Point<Inexact>(8, 95));
 	m_obstacle.push_back(Point<Inexact>(50, 140));
 	m_obstacle.push_back(Point<Inexact>(-43, 134));
-	m_obstacle.push_back(Point<Inexact>(-50, 100));
-	*/
-
-	m_obstacle.push_back(Point<Inexact>(-3, 38));
-	m_obstacle.push_back(Point<Inexact>(11, 56));
-	m_obstacle.push_back(Point<Inexact>(21, 79));
-	m_obstacle.push_back(Point<Inexact>(15, 108));
-	m_obstacle.push_back(Point<Inexact>(-57, 140));
+	m_obstacle.push_back(Point<Inexact>(-50, 100));*/
 
 	// join not working
 	/*m_obstacle.push_back(Point<Inexact>(0, 50));
 	m_obstacle.push_back(Point<Inexact>(20, 80));
 	m_obstacle.push_back(Point<Inexact>(-20, 70));*/
+
+	// right vertex event bug
+	/*m_obstacle.push_back(Point<Inexact>(-3, 38));
+	m_obstacle.push_back(Point<Inexact>(11, 56));
+	m_obstacle.push_back(Point<Inexact>(21, 79));
+	m_obstacle.push_back(Point<Inexact>(15, 108));
+	m_obstacle.push_back(Point<Inexact>(-57, 140));*/
+
+	// far vertex event on near side bug
+	m_obstacle.push_back(Point<Inexact>(-19, 59));
+	m_obstacle.push_back(Point<Inexact>(9, 83));
+	m_obstacle.push_back(Point<Inexact>(26, 59));
+	m_obstacle.push_back(Point<Inexact>(49, 114));
+	m_obstacle.push_back(Point<Inexact>(-33, 117));
 
 	m_renderer = new GeometryWidget();
 	setCentralWidget(m_renderer);

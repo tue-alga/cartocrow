@@ -46,6 +46,30 @@ bool SweepCircle::isValid() const {
 			return false;
 		}
 		previousPhi = phi;
+
+		if (edge.second->previousEdge()) {
+			if (edge.second->previousEdge()->nextInterval() != edge.second->previousInterval()) {
+				return false;
+			}
+		}
+		if (edge.second->previousInterval()->previousBoundary() != edge.second->previousEdge()) {
+			return false;
+		}
+		if (edge.second->previousInterval()->nextBoundary() != edge.second.get()) {
+			return false;
+		}
+
+		if (edge.second->nextEdge()) {
+			if (edge.second->nextEdge()->previousInterval() != edge.second->nextInterval()) {
+				return false;
+			}
+		}
+		if (edge.second->nextInterval()->nextBoundary() != edge.second->nextEdge()) {
+			return false;
+		}
+		if (edge.second->nextInterval()->previousBoundary() != edge.second.get()) {
+			return false;
+		}
 	}
 	return true;
 }
