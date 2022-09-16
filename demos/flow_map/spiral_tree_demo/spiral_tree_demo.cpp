@@ -59,11 +59,18 @@ SpiralTreeDemo::SpiralTreeDemo() {
 	m_obstacle.push_back(Point<Inexact>(-57, 140));*/
 
 	// far vertex event on near side bug
-	m_obstacle.push_back(Point<Inexact>(-19, 59));
+	/*m_obstacle.push_back(Point<Inexact>(-19, 59));
 	m_obstacle.push_back(Point<Inexact>(9, 83));
 	m_obstacle.push_back(Point<Inexact>(26, 59));
 	m_obstacle.push_back(Point<Inexact>(49, 114));
-	m_obstacle.push_back(Point<Inexact>(-33, 117));
+	m_obstacle.push_back(Point<Inexact>(-33, 117));*/
+
+	// another far vertex event handling bug
+	m_obstacle.push_back(Point<Inexact>(0, 50));
+	m_obstacle.push_back(Point<Inexact>(8, 95));
+	m_obstacle.push_back(Point<Inexact>(50, 140));
+	m_obstacle.push_back(Point<Inexact>(0, 175));
+	m_obstacle.push_back(Point<Inexact>(-50, 100));
 
 	m_renderer = new GeometryWidget();
 	setCentralWidget(m_renderer);

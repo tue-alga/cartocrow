@@ -132,21 +132,30 @@ SweepCircle::EdgeMap::iterator SweepCircle::end() {
 SweepCircle::SplitResult SweepCircle::splitFromEdge(SweepEdge& oldEdge,
                                                     std::shared_ptr<SweepEdge> newRightEdge,
                                                     std::shared_ptr<SweepEdge> newLeftEdge) {
-	SweepInterval* previousInterval = oldEdge.previousInterval();
-	SweepInterval* nextInterval = oldEdge.nextInterval();
+	SweepEdge* previousEdge = oldEdge.previousEdge();
+	SweepEdge* nextEdge = oldEdge.nextEdge();
+	SweepInterval nextInterval = oldEdge.m_nextInterval;
 
 	m_edges.erase(oldEdge.shape());
 	m_edges.insert(std::make_pair(newRightEdge->shape(), newRightEdge));
 	m_edges.insert(std::make_pair(newLeftEdge->shape(), newLeftEdge));
 
-	previousInterval->m_nextBoundary = newRightEdge.get();
-	newRightEdge->m_previousInterval = previousInterval;
+	if (previousEdge) {
+		previousEdge->m_nextInterval.m_nextBoundary = newRightEdge.get();
+		newRightEdge->m_previousInterval = &previousEdge->m_nextInterval;
+	} else {
+		m_firstInterval.m_nextBoundary = newRightEdge.get();
+		newRightEdge->m_previousInterval = &m_firstInterval;
+	}
+
 	newRightEdge->m_nextInterval =
-	    SweepInterval(previousInterval->type(), newRightEdge.get(), newLeftEdge.get());
-	nextInterval->m_previousBoundary = newLeftEdge.get();
+	    SweepInterval(nextInterval.type(), newRightEdge.get(), newLeftEdge.get());
 	newLeftEdge->m_previousInterval = &newRightEdge->m_nextInterval;
-	newLeftEdge->m_nextInterval = *nextInterval;
-	newLeftEdge->m_nextInterval.m_previousBoundary = newLeftEdge.get();
+
+	newLeftEdge->m_nextInterval = SweepInterval(nextInterval.type(), newLeftEdge.get(), nextEdge);
+	if (nextEdge) {
+		nextEdge->m_previousInterval = &newLeftEdge->m_nextInterval;
+	}
 
 	return SplitResult{newRightEdge->previousInterval(), newRightEdge->nextInterval(),
 	                   newLeftEdge->nextInterval()};

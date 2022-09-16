@@ -199,7 +199,8 @@ void SpiralTreeObstructedAlgorithm::VertexEvent::handleFar() {
 
 	} else if (m_e2->nextInterval() == m_e1->previousInterval()) {
 		// case 2: concave corner of an obstacle
-		auto result = m_alg->m_circle.mergeToInterval(*m_e2, *m_e1);
+		auto result = m_alg->m_circle.mergeToInterval(
+		    *m_e2, *m_e1);
 		result.mergedInterval->setType(OBSTACLE);
 
 	} else {
