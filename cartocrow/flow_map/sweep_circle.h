@@ -108,6 +108,9 @@ class SweepCircle {
 		}
 		struct is_transparent {};
 	};
+
+	/// The unordered set (actually a map, mapping edge shapes to SweepEdges)
+	/// storing the edges.
 	using EdgeMap =
 	    std::multimap<SweepEdgeShape, std::shared_ptr<SweepEdge>, SweepEdgeShapeComparator>;
 

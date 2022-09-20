@@ -40,7 +40,7 @@ TEST_CASE("Intersecting a left spiral and a right spiral starting at the same po
 	const SweepEdgeShape spiral2(SweepEdgeShape::Type::LEFT_SPIRAL, PolarPoint(2, M_PI / 2), 0.5);
 	auto r = spiral1.intersectWith(spiral2, 2);
 	REQUIRE(r.has_value());
-	CHECK(r > 2);
+	CHECK(*r > 2);
 	CHECK(spiral1.phiForR(*r) == Approx(spiral2.phiForR(*r)));
 }
 
@@ -50,6 +50,15 @@ TEST_CASE("Intersecting a left spiral and a right spiral starting at different p
 	const SweepEdgeShape spiral2(SweepEdgeShape::Type::LEFT_SPIRAL, PolarPoint(2, M_PI / 4), 0.5);
 	auto r = spiral1.intersectWith(spiral2, 2);
 	REQUIRE(r.has_value());
-	CHECK(r > 2);
+	CHECK(*r > 2);
+	CHECK(spiral1.phiForR(*r) == Approx(spiral2.phiForR(*r)));
+}
+
+TEST_CASE("Intersecting a left spiral and a right spiral straddling the φ = 0π ray") {
+	const SweepEdgeShape spiral1(SweepEdgeShape::Type::RIGHT_SPIRAL, PolarPoint(2, M_PI / 4), 0.5);
+	const SweepEdgeShape spiral2(SweepEdgeShape::Type::LEFT_SPIRAL, PolarPoint(2, -M_PI / 8), 0.5);
+	auto r = spiral1.intersectWith(spiral2, 2);
+	REQUIRE(r.has_value());
+	CHECK(*r > 2);
 	CHECK(spiral1.phiForR(*r) == Approx(spiral2.phiForR(*r)));
 }
