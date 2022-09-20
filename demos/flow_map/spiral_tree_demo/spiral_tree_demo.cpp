@@ -22,8 +22,10 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "spiral_tree_demo.h"
 
 #include <QApplication>
+#include <qnamespace.h>
 
 #include "cartocrow/core/core.h"
+#include "cartocrow/core/timer.h"
 #include "cartocrow/flow_map/painting.h"
 #include "cartocrow/flow_map/parameters.h"
 #include "cartocrow/flow_map/place.h"
@@ -40,11 +42,14 @@ using namespace cartocrow::renderer;
 SpiralTreeDemo::SpiralTreeDemo() {
 	setWindowTitle("CartoCrow – Spiral tree demo");
 
-	/*m_obstacle.push_back(Point<Inexact>(0, 50));
+	m_obstacle.push_back(Point<Inexact>(0, 50));
+	m_obstacle.push_back(Point<Inexact>(25, 40));
 	m_obstacle.push_back(Point<Inexact>(8, 95));
 	m_obstacle.push_back(Point<Inexact>(50, 140));
-	m_obstacle.push_back(Point<Inexact>(-43, 134));
-	m_obstacle.push_back(Point<Inexact>(-50, 100));*/
+	m_obstacle.push_back(Point<Inexact>(-41, 134));
+	m_obstacle.push_back(Point<Inexact>(-43, 60));
+	m_obstacle.push_back(Point<Inexact>(0, 70));
+	m_obstacle.push_back(Point<Inexact>(-20, 20));
 
 	// join not working
 	/*m_obstacle.push_back(Point<Inexact>(0, 50));
@@ -66,16 +71,37 @@ SpiralTreeDemo::SpiralTreeDemo() {
 	m_obstacle.push_back(Point<Inexact>(-33, 117));*/
 
 	// another far vertex event handling bug
-	m_obstacle.push_back(Point<Inexact>(0, 50));
+	/*m_obstacle.push_back(Point<Inexact>(0, 50));
 	m_obstacle.push_back(Point<Inexact>(8, 95));
 	m_obstacle.push_back(Point<Inexact>(50, 140));
 	m_obstacle.push_back(Point<Inexact>(0, 175));
-	m_obstacle.push_back(Point<Inexact>(-50, 100));
+	m_obstacle.push_back(Point<Inexact>(-50, 100));*/
+
+	// join event with obstacle edge
+	/*m_obstacle.push_back(Point<Inexact>(0, 50));
+	m_obstacle.push_back(Point<Inexact>(8, 95));
+	m_obstacle.push_back(Point<Inexact>(50, 140));
+	m_obstacle.push_back(Point<Inexact>(-37, 175));
+	m_obstacle.push_back(Point<Inexact>(-50, 100));*/
 
 	m_renderer = new GeometryWidget();
 	setCentralWidget(m_renderer);
 
-	recalculate();
+	QToolBar* toolBar = new QToolBar();
+	toolBar->addWidget(new QLabel("α = "));
+	m_alphaSlider = new QSlider(Qt::Horizontal);
+	m_alphaSlider->setMinimum(0);
+	m_alphaSlider->setMaximum(499);
+	m_alphaSlider->setValue(200);
+	toolBar->addWidget(m_alphaSlider);
+	addToolBar(toolBar);
+	m_alphaLabel = new QLabel("0.200π");
+	toolBar->addWidget(m_alphaLabel);
+	connect(m_alphaSlider, &QSlider::valueChanged, [&](int value) {
+		m_alpha = M_PI * value / 1000.0;
+		m_alphaLabel->setText(QString("%1π").arg(value / 1000.0, 0, 'f', 3));
+		recalculate();
+	});
 	connect(m_renderer, &GeometryWidget::dragStarted, [&](Point<Inexact> p) {
 		m_draggedPoint = findClosestPoint(p, 10 / m_renderer->zoomFactor());
 		recalculate();
@@ -94,14 +120,19 @@ SpiralTreeDemo::SpiralTreeDemo() {
 		m_draggedPoint = nullptr;
 		recalculate();
 	});
+	recalculate();
 }
 
 void SpiralTreeDemo::recalculate() {
-	auto tree = std::make_shared<SpiralTree>(Point<Inexact>(0, 0), 0.5061454830783556);
+	Timer t;
+	auto tree = std::make_shared<SpiralTree>(Point<Inexact>(0, 0), m_alpha);
 	tree->addPlace("p1", Point<Inexact>(0, 400), 1);
 	tree->addObstacle(m_obstacle);
 	SpiralTreeObstructedAlgorithm algorithm(tree);
 	algorithm.run();
+	t.stamp("Computing reachable region");
+
+	t.output();
 
 	Painting::Options options;
 	Painting p(nullptr, tree, options);

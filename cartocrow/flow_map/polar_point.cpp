@@ -22,8 +22,6 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 04-09-2020
 #include "polar_point.h"
 #include "cartocrow/core/core.h"
 
-#include <glog/logging.h>
-
 namespace cartocrow::flow_map {
 
 PolarPoint::PolarPoint() : m_r(0), m_phi(0) {}

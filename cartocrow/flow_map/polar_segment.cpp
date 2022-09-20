@@ -21,8 +21,6 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 19-02-2021
 
 #include "polar_segment.h"
 
-#include <glog/logging.h>
-
 namespace cartocrow::flow_map {
 
 PolarSegment::PolarSegment(const PolarPoint& p1, const PolarPoint& p2) : PolarLine(p1, p2) {

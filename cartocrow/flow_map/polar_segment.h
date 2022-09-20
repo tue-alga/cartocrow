@@ -60,10 +60,10 @@ class PolarSegment : private PolarLine {
 	Number<Inexact> rMax() const;
 
 	/// Checks if this segment is a *left line*, that is, if \f$OAB\f$ is a
-	/// left-turning angle.
+	/// right-turning angle.
 	bool isLeftLine() const;
 	/// Checks if this segment is a *right line*, that is, if \f$OAB\f$ is a
-	/// right-turning angle.
+	/// left-turning angle.
 	bool isRightLine() const;
 	/// Checks if \f$OAB\f$ are collinear.
 	bool isCollinear() const;

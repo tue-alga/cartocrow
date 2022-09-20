@@ -95,7 +95,27 @@ class SpiralTreeObstructedAlgorithm {
 		void handle() override;
 	};
 
-	/// The sweep circle hits an obstacle vertex.
+	/// An event that happens when the sweep circle hits an obstacle vertex. A
+	/// vertex event is characterized by the two obstacle edges \f$e_1\f$ and
+	/// \f$e_2\f$ incident to the hit vertex. We assume that the edges around
+	/// the obstacle are ordered counter-clockwise, that is, traversing the
+	/// obstacle boundary in counter-clockwise order, we traverse \f$e_2\f$
+	/// right after \f$e_1\f$.
+	///
+	/// Vertex events are classified as one of four types, each of which is
+	/// handled separately:
+	///
+	/// * A _near_ vertex event: both \f$e_1\f$ and \f$e_2\f$ lay outside the
+	/// sweep circle.
+	///
+	/// * A _far_ vertex event: both \f$e_1\f$ and \f$e_2\f$ lay inside the sweep
+	/// circle.
+	///
+	/// * A _left_ vertex event: \f$e_1\f$ lies outside the sweep circle, while
+	/// \f$e_2\f$ lies inside it.
+	///
+	/// * A _right_ vertex event: \f$e_1\f$ lies inside the sweep circle, while
+	/// \f$e_2\f$ lies outside it.
 	class VertexEvent : public Event {
 	  public:
 		/// Creates a new vertex event at the given position, with the given

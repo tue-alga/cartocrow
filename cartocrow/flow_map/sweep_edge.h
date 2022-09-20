@@ -22,6 +22,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "../core/core.h"
 #include "polar_point.h"
+#include "polar_segment.h"
 #include "spiral_segment.h"
 #include "sweep_interval.h"
 
@@ -78,6 +79,15 @@ class SweepEdgeShape {
 	/// Assumes that \c shape has the same \ref nearEndpoint() as this shape.
 	bool departsToLeftOf(const SweepEdgeShape& shape) const;
 
+	/// Computes the intersection (if any) of this sweep edge with another sweep
+	/// edge. Reports the smallest \f$r\f$ of the intersections larger than
+	/// \c rMin. If both this edge and the other edge are a segment, then this
+	/// returns \ref std::nullopt.
+	/// \todo Not supporting segments is a bit weird...
+	std::optional<Number<Inexact>> intersectWith(const SweepEdgeShape& other,
+	                                             Number<Inexact> rMin) const;
+
+	PolarSegment toPolarSegment() const;
 	SpiralSegment toSpiralSegment() const;
 
 	bool operator==(const SweepEdgeShape& s) const = default;

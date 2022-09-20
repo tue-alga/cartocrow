@@ -33,8 +33,30 @@ namespace cartocrow::flow_map {
 /// Representation of the sweep circle used in the \ref
 /// SpiralTreeObstructedAlgorithm.
 ///
-/// The sweep circle stores an ordered set of the edges it intersects, and the
-/// intervals between them.
+/// The sweep circle stores an ordered set of the \ref SweepEdge "SweepEdges" it
+/// intersects. These are ordered in counter-clockwise order along the circle,
+/// starting at \f$\phi = 0\f$, ending at (and excluding) \f$\phi = 2\pi\f$. The
+/// intervals between the edges are also stored: each SweepEdge stores the \ref
+/// SweepInterval that comes next to the SweepEdge. The first interval on the
+/// circle is stored separately, by the SweepCircle. SweepEdges also have a
+/// pointer to the previous SweepInterval, and SweepIntervals have pointers to
+/// the next and previous SweepEdges. This way, the edges and intervals can be
+/// traversed easily.
+///
+/// Initializing the sweep circle results in a circle of radius 0 with no edges.
+/// At any time, \ref r() returns the current radius of the circle. The radius
+/// can be increased with \ref grow(). However, at any time, the circle needs to
+/// be kept _valid_: the intersected edges need to be kept in order. (This can
+/// be double-checked using \ref isValid().) Hence, when growing the circle,
+/// even though the \f$\phi\f$ values of edges change, they cannot swap places.
+/// In other words, it is not allowed to grow the circle over an intersection.
+/// Instead, grow it to exactly touch the intersection, then handle the
+/// intersection (remove the intersecting edges and reinsert them in the right
+/// order), and then continue growing the circle.
+///
+/// The structural changes needed for handling such events are implemented in
+/// this class as methods: \ref splitFromInterval(), \ref splitFromEdge(), \ref
+/// switchEdge(), \ref mergeToEdge(), and \ref mergeToInterval().
 class SweepCircle {
   public:
 	/// Creates a sweep circle of radius 0, consisting of a single reachable
@@ -99,6 +121,22 @@ class SweepCircle {
 	/// Returns a past-the-end iterator, pointing past the last edge on the
 	/// sweep circle.
 	EdgeMap::iterator end();
+
+	/// The elements (intervals and edges) resulting from a three-way split
+	/// operation, in order in increasing angle over the circle.
+	struct ThreeWaySplitResult {
+		SweepInterval* rightInterval;
+		SweepInterval* middleRightInterval;
+		SweepInterval* middleLeftInterval;
+		SweepInterval* leftInterval;
+	};
+
+	/// Splits the given interval \f$i\f$ into three, with two new intervals in
+	/// between. Assumes that the newly inserted edges have their near endpoints
+	/// at the same point on this sweep circle.
+	ThreeWaySplitResult splitFromInterval(std::shared_ptr<SweepEdge> newRightEdge,
+	                                      std::shared_ptr<SweepEdge> newMiddleEdge,
+	                                      std::shared_ptr<SweepEdge> newLeftEdge);
 
 	/// The elements (intervals and edges) resulting from a split operation, in
 	/// order in increasing angle over the circle.

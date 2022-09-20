@@ -23,8 +23,6 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 04-09-2020
 
 #include "place.h"
 
-#include <glog/logging.h>
-
 namespace cartocrow::flow_map {
 
 Place::Place(const std::string& name, const Point<Inexact>& position, Number<Inexact> flow)

@@ -19,6 +19,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "sweep_edge.h"
 
+#include <limits>
+
 #include "cartocrow/flow_map/sweep_interval.h"
 #include "polar_segment.h"
 #include "spiral_segment.h"
@@ -109,9 +111,90 @@ bool SweepEdgeShape::departsToLeftOf(const SweepEdgeShape& shape) const {
 	return PolarSegment(this->evalForR(r + 0.00001), shape.evalForR(r + 0.00001)).isLeftLine();
 }
 
+std::optional<Number<Inexact>> SweepEdgeShape::intersectWith(const SweepEdgeShape& other,
+                                                             Number<Inexact> rMin) const {
+	if (this->type() == Type::SEGMENT && other.type() == Type::SEGMENT) {
+		return std::nullopt;
+	}
+	Number<Inexact> alpha = this->type() != Type::SEGMENT ? m_alpha : other.m_alpha;
+
+	auto isLeftOf = [&](Number<Inexact> r) {
+		return PolarSegment(evalForR(r), other.evalForR(r)).isLeftLine();
+	};
+	// at distance rMin + ε, are we to the left of the other shape?
+	bool initiallyLeftOfOther;
+	if (phiForR(rMin) == other.phiForR(rMin)) {
+		initiallyLeftOfOther = departsToLeftOf(other);
+	} else {
+		initiallyLeftOfOther = isLeftOf(rMin);
+	}
+
+	Number<Inexact> rMax = std::numeric_limits<Number<Inexact>>::infinity();
+	if (farR()) {
+		rMax = std::min(rMax, *farR());
+	}
+	if (other.farR()) {
+		rMax = std::min(rMax, *other.farR());
+	}
+
+	Number<Inexact> rLower = rMin;
+	std::cout << "at rLower " << isLeftOf(rLower) << " " << evalForR(rLower) << " "
+	          << other.evalForR(rLower) << std::endl;
+	std::cout << "at rLower + 0.01 " << isLeftOf(rLower + 0.01) << " " << evalForR(rLower + 0.01)
+	          << " " << other.evalForR(rLower + 0.01) << std::endl;
+	Number<Inexact> rUpper = rLower;
+	Number<Inexact> rLimit = std::min(rMax, rMin * std::exp(2 * M_PI / std::tan(alpha)));
+	while (rUpper < rLimit) {
+		rUpper = std::min(rMax, rUpper * std::exp(M_PI / (8 * std::tan(alpha))));
+		std::cout << "interval: (" << rLower << ", " << rUpper << "]" << std::endl;
+
+		if (isLeftOf(rUpper) != initiallyLeftOfOther) {
+			std::cout << std::abs(phiForR(rUpper) - other.phiForR(rUpper)) << std::endl;
+			if (std::abs(phiForR(rUpper) - other.phiForR(rUpper)) < M_PI / 2) {
+				// found intersection
+				break;
+			} else {
+				// found wraparound, continue searching
+				std::cout << "wraparound" << std::endl;
+				rLower = rUpper;
+				initiallyLeftOfOther = !initiallyLeftOfOther;
+			}
+		}
+	}
+
+	if (isLeftOf(rUpper) == initiallyLeftOfOther) {
+		return std::nullopt;
+	}
+
+	// binary search
+	for (int i = 0; i < 30; i++) {
+		std::cout << "interval: (" << rLower << ", " << rUpper << "]" << std::endl;
+		Number<Inexact> rMid = (rLower + rUpper) / 2;
+
+		bool leftOfOther = isLeftOf(rMid);
+		std::cout << "midpoint: " << rMid << " " << leftOfOther << std::endl;
+
+		if (leftOfOther == initiallyLeftOfOther) {
+			rLower = rMid;
+		} else {
+			rUpper = rMid;
+		}
+	}
+
+	return (rLower + rUpper) / 2;
+}
+
+PolarSegment SweepEdgeShape::toPolarSegment() const {
+	assert(m_type == Type::SEGMENT);
+	return PolarSegment(m_start, *m_end);
+}
+
 SpiralSegment SweepEdgeShape::toSpiralSegment() const {
+	assert(m_type == Type::LEFT_SPIRAL || m_type == Type::RIGHT_SPIRAL);
 	return SpiralSegment(m_start, m_type == Type::LEFT_SPIRAL ? -m_alpha : m_alpha, nearR(),
-	                     nearR() * 100); // TODO
+	                     nearR() * 100);
+	// TODO instead of "* 100" implement a spiral that doesn't end, or instead
+	// pick a value so that the spiral rotates by 2π
 }
 
 SweepEdge::SweepEdge(SweepEdgeShape shape)

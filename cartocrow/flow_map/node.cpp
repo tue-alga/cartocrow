@@ -1,7 +1,5 @@
 #include "node.h"
 
-#include <glog/logging.h>
-
 namespace cartocrow::flow_map {
 
 Node::Node(const PolarPoint& position, const std::shared_ptr<Place> place)

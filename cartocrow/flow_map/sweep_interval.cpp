@@ -49,20 +49,16 @@ SweepInterval::Type SweepInterval::type() const {
 	return m_type;
 }
 
-std::optional<PolarPoint> SweepInterval::vanishingPoint() const {
+std::optional<PolarPoint> SweepInterval::vanishingPoint(Number<Inexact> rMin) const {
 	if (m_previousBoundary == nullptr || m_nextBoundary == nullptr) {
 		return std::nullopt;
 	}
-	if (m_previousBoundary->shape().type() != SweepEdgeShape::Type::SEGMENT &&
-	    m_nextBoundary->shape().type() != SweepEdgeShape::Type::SEGMENT) {
-		std::vector<PolarPoint> intersections;
-		intersect(m_previousBoundary->shape().toSpiralSegment(),
-		          m_nextBoundary->shape().toSpiralSegment(), intersections);
-		if (intersections.size() > 0) {
-			return intersections[0]; // ???
-		}
+	std::optional<Number<Inexact>> r =
+	    m_previousBoundary->shape().intersectWith(m_nextBoundary->shape(), rMin);
+	if (!r) {
+		return std::nullopt;
 	}
-	return std::nullopt;
+	return m_previousBoundary->shape().evalForR(*r);
 }
 
 Polygon<Inexact> SweepInterval::sweepShape(Number<Inexact> rFrom, Number<Inexact> rTo) const {

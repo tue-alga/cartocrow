@@ -22,8 +22,6 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 19-02-2021
 #ifndef CARTOCROW_CORE_POLAR_SEGMENT_INC
 #define CARTOCROW_CORE_POLAR_SEGMENT_INC
 
-#include <glog/logging.h>
-
 namespace cartocrow::flow_map {
 
 /**@brief Collect the t at a given distance from the pole.

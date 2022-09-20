@@ -25,8 +25,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <optional>
 #include <ostream>
 
-#include <glog/logging.h>
-
 #include "../core/core.h"
 #include "../necklace_map/circular_range.h"
 #include "intersections.h"
@@ -115,11 +113,10 @@ void SpiralTreeObstructedAlgorithm::VertexEvent::handle() {
 void SpiralTreeObstructedAlgorithm::VertexEvent::handleLeft() {
 	using enum SweepInterval::Type;
 	using enum SweepEdgeShape::Type;
-	SweepInterval* i = m_e2->nextInterval();
-	if (i->type() == SHADOW) {
+	SweepInterval* outsideInterval = m_e2->nextInterval();
+	if (outsideInterval->type() == SHADOW) {
 		auto result = m_alg->m_circle.switchEdge(*m_e2, m_e1);
-		// TODO
-	} else if (i->type() == REACHABLE) {
+	} else if (outsideInterval->type() == REACHABLE) {
 		auto spiral = std::make_shared<SweepEdge>(
 		    SweepEdgeShape(RIGHT_SPIRAL, m_position, m_alg->m_tree->restrictingAngle()));
 		if (spiral->shape().departsToLeftOf(m_e1->shape())) {
@@ -128,8 +125,7 @@ void SpiralTreeObstructedAlgorithm::VertexEvent::handleLeft() {
 		} else {
 			auto result = m_alg->m_circle.switchEdge(*m_e2, m_e1);
 		}
-		// TODO
-	} else if (i->type() == OBSTACLE) {
+	} else if (outsideInterval->type() == OBSTACLE) {
 		// a vertex event cannot have an obstacle interval on the outside
 		assert(false);
 	}
@@ -138,11 +134,10 @@ void SpiralTreeObstructedAlgorithm::VertexEvent::handleLeft() {
 void SpiralTreeObstructedAlgorithm::VertexEvent::handleRight() {
 	using enum SweepInterval::Type;
 	using enum SweepEdgeShape::Type;
-	SweepInterval* i = m_e1->previousInterval();
-	if (i->type() == SHADOW) {
+	SweepInterval* outsideInterval = m_e1->previousInterval();
+	if (outsideInterval->type() == SHADOW) {
 		auto result = m_alg->m_circle.switchEdge(*m_e1, m_e2);
-		// TODO
-	} else if (i->type() == REACHABLE) {
+	} else if (outsideInterval->type() == REACHABLE) {
 		auto spiral = std::make_shared<SweepEdge>(
 		    SweepEdgeShape(LEFT_SPIRAL, m_position, m_alg->m_tree->restrictingAngle()));
 		if (m_e2->shape().departsToLeftOf(spiral->shape())) {
@@ -151,8 +146,7 @@ void SpiralTreeObstructedAlgorithm::VertexEvent::handleRight() {
 		} else {
 			auto result = m_alg->m_circle.switchEdge(*m_e1, m_e2);
 		}
-		// TODO
-	} else if (i->type() == OBSTACLE) {
+	} else if (outsideInterval->type() == OBSTACLE) {
 		// a vertex event cannot have an obstacle interval on the outside
 		assert(false);
 	}
@@ -161,15 +155,42 @@ void SpiralTreeObstructedAlgorithm::VertexEvent::handleRight() {
 void SpiralTreeObstructedAlgorithm::VertexEvent::handleNear() {
 	using enum SweepInterval::Type;
 	using enum SweepEdgeShape::Type;
+
 	SweepInterval* interval = m_alg->m_circle.intervalAt(phi());
-	if (interval->type() == REACHABLE) {
-		auto result = m_alg->m_circle.splitFromInterval(m_e2, m_e1);
-		result.middleInterval->setType(OBSTACLE);
-	} else if (interval->type() == OBSTACLE) {
+	if (interval->type() == OBSTACLE) {
+		// case 1: concave corner of an obstacle
 		auto result = m_alg->m_circle.splitFromInterval(m_e1, m_e2);
 		result.middleInterval->setType(SHADOW);
+
 	} else if (interval->type() == SHADOW) {
-		// ???
+		// case 2: convex corner of an obstacle, laying in the shadow
+		auto result = m_alg->m_circle.splitFromInterval(m_e2, m_e1);
+		result.middleInterval->setType(OBSTACLE);
+
+	} else if (interval->type() == REACHABLE) {
+		// case 3: convex corner of an obstacle, laying in reachable area
+		auto leftSpiral = std::make_shared<SweepEdge>(
+		    SweepEdgeShape(LEFT_SPIRAL, m_position, m_alg->m_tree->restrictingAngle()));
+		auto rightSpiral = std::make_shared<SweepEdge>(
+		    SweepEdgeShape(RIGHT_SPIRAL, m_position, m_alg->m_tree->restrictingAngle()));
+
+		if (m_e2->shape().departsToLeftOf(leftSpiral->shape())) {
+			// case 3a: vertex casts shadow to the right of the obstacle
+			auto result = m_alg->m_circle.splitFromInterval(leftSpiral, m_e2, m_e1);
+			result.middleLeftInterval->setType(OBSTACLE);
+			result.middleRightInterval->setType(SHADOW);
+
+		} else if (rightSpiral->shape().departsToLeftOf(m_e1->shape())) {
+			// case 3b: vertex casts shadow to the left of the obstacle
+			auto result = m_alg->m_circle.splitFromInterval(m_e2, m_e1, rightSpiral);
+			result.middleLeftInterval->setType(SHADOW);
+			result.middleRightInterval->setType(OBSTACLE);
+
+		} else {
+			// case 3c: no shadow
+			auto result = m_alg->m_circle.splitFromInterval(m_e2, m_e1);
+			result.middleInterval->setType(OBSTACLE);
+		}
 	}
 }
 
@@ -199,8 +220,7 @@ void SpiralTreeObstructedAlgorithm::VertexEvent::handleFar() {
 
 	} else if (m_e2->nextInterval() == m_e1->previousInterval()) {
 		// case 2: concave corner of an obstacle
-		auto result = m_alg->m_circle.mergeToInterval(
-		    *m_e2, *m_e1);
+		auto result = m_alg->m_circle.mergeToInterval(*m_e2, *m_e1);
 		result.mergedInterval->setType(OBSTACLE);
 
 	} else {
@@ -224,9 +244,9 @@ SpiralTreeObstructedAlgorithm::VertexEvent::determineSide() {
 
 void SpiralTreeObstructedAlgorithm::VertexEvent::insertJoinEvents() {
 	auto [begin, end] = m_alg->m_circle.edgesAt(phi());
-	if (begin == end) {
+	/*if (begin == end) {
 		return;
-	}
+	}*/
 	if (begin != m_alg->m_circle.begin()) {
 		insertJoinEventFor(std::prev(begin));
 	}
@@ -238,13 +258,28 @@ void SpiralTreeObstructedAlgorithm::VertexEvent::insertJoinEvents() {
 void SpiralTreeObstructedAlgorithm::VertexEvent::insertJoinEventFor(
     SweepCircle::EdgeMap::iterator rightEdge) {
 	SweepInterval* interval = rightEdge->second->nextInterval();
+	if (interval->previousBoundary() == nullptr || interval->nextBoundary() == nullptr) {
+		return;
+	}
 	if (interval->type() == SweepInterval::Type::OBSTACLE) {
 		return;
 	}
-	std::optional<PolarPoint> vanishingPoint = interval->vanishingPoint();
+	std::optional<PolarPoint> vanishingPoint = interval->vanishingPoint(m_alg->m_circle.r());
 	if (vanishingPoint) {
 		m_alg->m_queue.push(std::make_shared<JoinEvent>(*vanishingPoint, rightEdge->second,
 		                                                std::next(rightEdge)->second, m_alg));
+		std::cout << "(inserted join event at r = " << vanishingPoint->r() << ")" << std::endl;
+	} else {
+		std::cout << "(ignored join event for ["
+		          << interval->previousBoundary()->shape().nearEndpoint().toCartesian();
+		if (interval->previousBoundary()->shape().farEndpoint()) {
+			std::cout << " – " << interval->previousBoundary()->shape().farEndpoint()->toCartesian();
+		}
+		std::cout << "]  →  [" << interval->nextBoundary()->shape().nearEndpoint().toCartesian();
+		if (interval->nextBoundary()->shape().farEndpoint()) {
+			std::cout << " – " << interval->nextBoundary()->shape().farEndpoint()->toCartesian();
+		}
+		std::cout << "])" << std::endl;
 	}
 }
 
@@ -269,11 +304,6 @@ void SpiralTreeObstructedAlgorithm::JoinEvent::handle() {
 	SweepInterval* previousInterval = m_rightEdge->previousInterval();
 	SweepInterval* interval = m_rightEdge->nextInterval();
 	SweepInterval* nextInterval = m_leftEdge->nextInterval();
-
-	// we don't need to handle intervals other than shadow intervals
-	if (interval->type() != SHADOW) {
-		return;
-	}
 
 	if (previousInterval->type() == OBSTACLE && nextInterval->type() == OBSTACLE) {
 		// ignore, this is handled by a vertex event
@@ -316,7 +346,7 @@ void SpiralTreeObstructedAlgorithm::run() {
 	m_circle.print();
 	int eventCount = 0; // TODO debug: limit number of events handled
 	// main loop, handle all events
-	while (!m_queue.empty() && eventCount++ < 500) {
+	while (!m_queue.empty() && eventCount++ < 100) {
 		std::shared_ptr<Event> event = m_queue.top();
 		m_queue.pop();
 		m_circle.firstInterval().paintSweepShape(*m_debugPainting, m_circle.r(), event->r());

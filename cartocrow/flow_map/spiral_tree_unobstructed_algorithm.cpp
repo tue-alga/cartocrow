@@ -24,8 +24,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <optional>
 #include <ostream>
 
-#include <glog/logging.h>
-
 #include "../core/core.h"
 #include "../necklace_map/circular_range.h"
 #include "circulator.h"
@@ -89,9 +87,9 @@ void SpiralTreeUnobstructedAlgorithm::handleRootEvent(const Event& event, Wavefr
 
 	// if we reached the root, then the wavefront should have only one
 	// node left
-	CHECK_EQ(wavefront.size(), 1);
+	assert(wavefront.size() == 1);
 	std::shared_ptr<Node> node = wavefront.begin()->second.m_node;
-	CHECK_NOTNULL(node);
+	assert(node != nullptr);
 
 	// connect the remaining node to the root
 	root->m_children.push_back(node);
@@ -102,7 +100,7 @@ void SpiralTreeUnobstructedAlgorithm::handleRootEvent(const Event& event, Wavefr
 
 std::optional<SpiralTreeUnobstructedAlgorithm::Wavefront::iterator>
 SpiralTreeUnobstructedAlgorithm::handleJoinEvent(const Event& event, Wavefront& wavefront) {
-	CHECK_EQ(event.m_node->m_children.size(), 2);
+	assert(event.m_node->m_children.size() == 2);
 
 	// if a child is not active anymore, the event is invalid
 	if (event.m_node->m_children[0]->m_parent != nullptr ||
@@ -125,7 +123,7 @@ SpiralTreeUnobstructedAlgorithm::handleJoinEvent(const Event& event, Wavefront& 
 	event.m_node->m_children[1]->m_parent = event.m_node;
 
 	// remove the children from the wavefront
-	CHECK_GE(wavefront.size(), 3);
+	assert(wavefront.size() >= 3);
 	wavefront.erase(--make_circulator(node_iter, wavefront));
 	wavefront.erase(++make_circulator(node_iter, wavefront));
 
@@ -178,12 +176,12 @@ void SpiralTreeUnobstructedAlgorithm::insertJoinEvent(const Event& first, const 
 
 	std::vector<PolarPoint> intersections;
 	intersect(spiral_left, spiral_right, intersections);
-	CHECK(intersections.size() > 0);
+	assert(intersections.size() > 0);
 
 	// the intersections should be the two closest to the anchor of the first spiral
 	const PolarPoint& intersection = intersections[0];
-	CHECK_LE(intersection.r(), first.m_relative_position.r());
-	CHECK_LE(intersection.r(), second.m_relative_position.r());
+	assert(intersection.r() <= first.m_relative_position.r());
+	assert(intersection.r() <= second.m_relative_position.r());
 
 	std::shared_ptr<Node> join = std::make_shared<Node>(intersection);
 	join->m_children = {first.m_node, second.m_node};

@@ -27,8 +27,6 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 28-10-2020
 #include <optional>
 #include <ostream>
 
-#include <glog/logging.h>
-
 //#include "circular_range.h"
 #include "circulator.h"
 #include "intersections.h"

@@ -23,7 +23,6 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 16-10-2020
 
 #include <cmath>
 
-#include <glog/logging.h>
 #include <stdexcept>
 
 namespace cartocrow::flow_map {

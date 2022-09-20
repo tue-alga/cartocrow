@@ -161,6 +161,45 @@ SweepCircle::SplitResult SweepCircle::splitFromEdge(SweepEdge& oldEdge,
 	                   newLeftEdge->nextInterval()};
 }
 
+SweepCircle::ThreeWaySplitResult
+SweepCircle::splitFromInterval(std::shared_ptr<SweepEdge> newRightEdge,
+                               std::shared_ptr<SweepEdge> newMiddleEdge,
+                               std::shared_ptr<SweepEdge> newLeftEdge) {
+	Number<Inexact> phi = newLeftEdge->shape().phiForR(m_r);
+	SweepInterval* interval = intervalAt(phi);
+	SweepEdge* previousEdge = interval->previousBoundary();
+	SweepEdge* nextEdge = interval->nextBoundary();
+
+	m_edges.insert(std::make_pair(newRightEdge->shape(), newRightEdge));
+	m_edges.insert(std::make_pair(newMiddleEdge->shape(), newMiddleEdge));
+	m_edges.insert(std::make_pair(newLeftEdge->shape(), newLeftEdge));
+
+	if (previousEdge) {
+		previousEdge->m_nextInterval =
+		    SweepInterval(interval->type(), previousEdge, newRightEdge.get());
+		newRightEdge->m_previousInterval = &previousEdge->m_nextInterval;
+	} else {
+		m_firstInterval = SweepInterval(interval->type(), nullptr, newRightEdge.get());
+		newRightEdge->m_previousInterval = &m_firstInterval;
+	}
+
+	newRightEdge->m_nextInterval =
+	    SweepInterval(interval->type(), newRightEdge.get(), newMiddleEdge.get());
+	newMiddleEdge->m_previousInterval = &newRightEdge->m_nextInterval;
+
+	newMiddleEdge->m_nextInterval =
+	    SweepInterval(interval->type(), newMiddleEdge.get(), newLeftEdge.get());
+	newLeftEdge->m_previousInterval = &newMiddleEdge->m_nextInterval;
+
+	newLeftEdge->m_nextInterval = SweepInterval(interval->type(), newLeftEdge.get(), nextEdge);
+	if (nextEdge) {
+		nextEdge->m_previousInterval = &newLeftEdge->m_nextInterval;
+	}
+
+	return ThreeWaySplitResult{newRightEdge->previousInterval(), newRightEdge->nextInterval(),
+	                           newMiddleEdge->nextInterval(), newLeftEdge->nextInterval()};
+}
+
 SweepCircle::SplitResult SweepCircle::splitFromInterval(std::shared_ptr<SweepEdge> newRightEdge,
                                                         std::shared_ptr<SweepEdge> newLeftEdge) {
 	Number<Inexact> phi = newLeftEdge->shape().phiForR(m_r);
@@ -248,11 +287,14 @@ SweepCircle::MergeResult SweepCircle::mergeToInterval(SweepEdge& rightEdge, Swee
 	if (previousEdge) {
 		previousEdge->m_nextInterval =
 		    SweepInterval(rightEdge.m_nextInterval.type(), previousEdge, nextEdge);
+		if (nextEdge) {
+			nextEdge->m_previousInterval = &previousEdge->m_nextInterval;
+		}
 	} else {
 		m_firstInterval = SweepInterval(rightEdge.m_nextInterval.type(), nullptr, nextEdge);
-	}
-	if (nextEdge) {
-		nextEdge->m_previousInterval = &previousEdge->m_nextInterval;
+		if (nextEdge) {
+			nextEdge->m_previousInterval = &m_firstInterval;
+		}
 	}
 
 	m_edges.erase(rightEdge.shape());
