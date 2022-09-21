@@ -83,12 +83,13 @@ Polygon<Inexact> SweepInterval::sweepShape(Number<Inexact> rFrom, Number<Inexact
 			result.push_back(m_previousBoundary->shape().evalForR(r).toCartesian());
 		}
 	} else {
-		result.push_back(PolarPoint(rFrom, 0).toCartesian());
-		result.push_back(PolarPoint(rTo, 0).toCartesian());
+		result.push_back(PolarPoint(rFrom, -M_PI).toCartesian());
+		result.push_back(PolarPoint(rTo, -M_PI).toCartesian());
 	}
 	// far side
-	Number<Inexact> farPhiFrom = m_previousBoundary ? m_previousBoundary->shape().phiForR(rTo) : 0;
-	Number<Inexact> farPhiTo = m_nextBoundary ? m_nextBoundary->shape().phiForR(rTo) : M_PI * 2;
+	Number<Inexact> farPhiFrom =
+	    m_previousBoundary ? m_previousBoundary->shape().phiForR(rTo) : -M_PI;
+	Number<Inexact> farPhiTo = m_nextBoundary ? m_nextBoundary->shape().phiForR(rTo) : M_PI;
 	for (Number<Inexact> phi = farPhiFrom; phi < farPhiTo; phi += 0.01) {
 		result.push_back(PolarPoint(rTo, phi).toCartesian());
 	}
@@ -98,12 +99,13 @@ Polygon<Inexact> SweepInterval::sweepShape(Number<Inexact> rFrom, Number<Inexact
 			result.push_back(m_nextBoundary->shape().evalForR(r).toCartesian());
 		}
 	} else {
-		result.push_back(PolarPoint(rTo, 0).toCartesian());
-		result.push_back(PolarPoint(rFrom, 0).toCartesian());
+		result.push_back(PolarPoint(rTo, M_PI).toCartesian());
+		result.push_back(PolarPoint(rFrom, M_PI).toCartesian());
 	}
 	// near side
-	Number<Inexact> nearPhiFrom = m_nextBoundary ? m_nextBoundary->shape().phiForR(rFrom) : M_PI * 2;
-	Number<Inexact> nearPhiTo = m_previousBoundary ? m_previousBoundary->shape().phiForR(rFrom) : 0;
+	Number<Inexact> nearPhiFrom = m_nextBoundary ? m_nextBoundary->shape().phiForR(rFrom) : M_PI;
+	Number<Inexact> nearPhiTo =
+	    m_previousBoundary ? m_previousBoundary->shape().phiForR(rFrom) : -M_PI;
 	for (Number<Inexact> phi = nearPhiFrom; phi > nearPhiTo; phi -= 0.01) {
 		result.push_back(PolarPoint(rFrom, phi).toCartesian());
 	}

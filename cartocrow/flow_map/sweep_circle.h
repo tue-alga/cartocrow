@@ -35,10 +35,10 @@ namespace cartocrow::flow_map {
 ///
 /// The sweep circle stores an ordered set of the \ref SweepEdge "SweepEdges" it
 /// intersects. These are ordered in counter-clockwise order along the circle,
-/// starting at \f$\phi = 0\f$, ending at (and excluding) \f$\phi = 2\pi\f$. The
-/// intervals between the edges are also stored: each SweepEdge stores the \ref
-/// SweepInterval that comes next to the SweepEdge. The first interval on the
-/// circle is stored separately, by the SweepCircle. SweepEdges also have a
+/// starting at \f$\phi = -\pi\f$, ending at (and excluding) \f$\phi = \pi\f$.
+/// The intervals between the edges are also stored: each SweepEdge stores the
+/// \ref SweepInterval that comes next to the SweepEdge. The first interval on
+/// the circle is stored separately, by the SweepCircle. SweepEdges also have a
 /// pointer to the previous SweepInterval, and SweepIntervals have pointers to
 /// the next and previous SweepEdges. This way, the edges and intervals can be
 /// traversed easily.
@@ -70,6 +70,10 @@ class SweepCircle {
 	/// structurally; in other words, it assumes that the circle does not pass
 	/// over vertices or intersections. If it does, the sweep circle may become
 	/// invalid (see \ref isValid()).
+	///
+	/// This method does ensure that edges that move over the \f$\phi = \pi\f$
+	/// ray are properly handled, that is, they move to the other side of the
+	/// data structure.
 	void grow(Number<Inexact> r);
 
 	/// Checks if this sweep circle is still valid, that is, if the edges and

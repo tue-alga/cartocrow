@@ -39,7 +39,7 @@ void SweepCircle::grow(Number<Inexact> r) {
 }
 
 bool SweepCircle::isValid() const {
-	Number<Inexact> previousPhi = 0;
+	Number<Inexact> previousPhi = -M_PI;
 	for (auto& edge : m_edges) {
 		Number<Inexact> phi = edge.first.phiForR(m_r);
 		if (phi < previousPhi) {
@@ -84,7 +84,7 @@ void SweepCircle::print() const {
 			std::cout << "obstacle";
 		}
 	};
-	std::cout << "sweep circle at r = " << m_r << ": |0π| ";
+	std::cout << "sweep circle at r = " << m_r << ": |-1π| ";
 	printIntervalType(m_firstInterval);
 	for (auto& edge : m_edges) {
 		if (edge.first.type() == SweepEdgeShape::Type::SEGMENT) {
@@ -96,7 +96,7 @@ void SweepCircle::print() const {
 		}
 		printIntervalType(*edge.second->nextInterval());
 	}
-	std::cout << " |2π|" << std::endl;
+	std::cout << " |1π|" << std::endl;
 }
 
 std::size_t SweepCircle::intervalCount() const {
