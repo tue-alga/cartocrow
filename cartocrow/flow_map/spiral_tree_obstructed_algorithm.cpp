@@ -346,7 +346,7 @@ void SpiralTreeObstructedAlgorithm::run() {
 	m_circle.print();
 	int eventCount = 0; // TODO debug: limit number of events handled
 	// main loop, handle all events
-	while (!m_queue.empty() && eventCount++ < 100) {
+	while (!m_queue.empty() && eventCount++ < 4) {
 		std::shared_ptr<Event> event = m_queue.top();
 		m_queue.pop();
 		m_circle.firstInterval().paintSweepShape(*m_debugPainting, m_circle.r(), event->r());

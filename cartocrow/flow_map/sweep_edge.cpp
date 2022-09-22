@@ -138,24 +138,24 @@ std::optional<Number<Inexact>> SweepEdgeShape::intersectWith(const SweepEdgeShap
 	}
 
 	Number<Inexact> rLower = rMin;
-	std::cout << "at rLower " << isLeftOf(rLower) << " " << evalForR(rLower) << " "
+	/*std::cout << "at rLower " << isLeftOf(rLower) << " " << evalForR(rLower) << " "
 	          << other.evalForR(rLower) << std::endl;
 	std::cout << "at rLower + 0.01 " << isLeftOf(rLower + 0.01) << " " << evalForR(rLower + 0.01)
-	          << " " << other.evalForR(rLower + 0.01) << std::endl;
+	          << " " << other.evalForR(rLower + 0.01) << std::endl;*/
 	Number<Inexact> rUpper = rLower;
 	Number<Inexact> rLimit = std::min(rMax, rMin * std::exp(2 * M_PI / std::tan(alpha)));
 	while (rUpper < rLimit) {
 		rUpper = std::min(rMax, rUpper * std::exp(M_PI / (8 * std::tan(alpha))));
-		std::cout << "interval: (" << rLower << ", " << rUpper << "]" << std::endl;
+		//std::cout << "interval: (" << rLower << ", " << rUpper << "]" << std::endl;
 
 		if (isLeftOf(rUpper) != initiallyLeftOfOther) {
-			std::cout << std::abs(phiForR(rUpper) - other.phiForR(rUpper)) << std::endl;
+			//std::cout << std::abs(phiForR(rUpper) - other.phiForR(rUpper)) << std::endl;
 			if (std::abs(phiForR(rUpper) - other.phiForR(rUpper)) < M_PI / 2) {
 				// found intersection
 				break;
 			} else {
 				// found wraparound, continue searching
-				std::cout << "wraparound" << std::endl;
+				//std::cout << "wraparound" << std::endl;
 				rLower = rUpper;
 				initiallyLeftOfOther = !initiallyLeftOfOther;
 			}
@@ -168,11 +168,11 @@ std::optional<Number<Inexact>> SweepEdgeShape::intersectWith(const SweepEdgeShap
 
 	// binary search
 	for (int i = 0; i < 30; i++) {
-		std::cout << "interval: (" << rLower << ", " << rUpper << "]" << std::endl;
+		//std::cout << "interval: (" << rLower << ", " << rUpper << "]" << std::endl;
 		Number<Inexact> rMid = (rLower + rUpper) / 2;
 
 		bool leftOfOther = isLeftOf(rMid);
-		std::cout << "midpoint: " << rMid << " " << leftOfOther << std::endl;
+		//std::cout << "midpoint: " << rMid << " " << leftOfOther << std::endl;
 
 		if (leftOfOther == initiallyLeftOfOther) {
 			rLower = rMid;

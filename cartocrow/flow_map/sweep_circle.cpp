@@ -32,10 +32,22 @@ Number<Inexact> SweepCircle::r() {
 }
 
 void SweepCircle::grow(Number<Inexact> r) {
+	Number<Inexact> previousR = m_r;
 	m_r = r;
 
-	// TODO reinsert out-of-bounds elements (φ < 0 || φ >= 2π), make sure to
-	// maintain the right order and update the first / last intervals!
+	if (m_edges.empty()) {
+		return;
+	}
+
+	auto lastEdge = --m_edges.end();
+	auto beforeGrowing = lastEdge->first.evalForR(previousR);
+	auto afterGrowing = lastEdge->first.evalForR(r);
+	if (beforeGrowing.phi() > M_PI / 2) {
+		if (beforeGrowing.phi() > 0 && afterGrowing.phi() < 0) {
+			auto node = m_edges.extract(lastEdge);
+			m_edges.insert(std::move(node));
+		}
+	}
 }
 
 bool SweepCircle::isValid() const {

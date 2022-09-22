@@ -42,14 +42,14 @@ using namespace cartocrow::renderer;
 SpiralTreeDemo::SpiralTreeDemo() {
 	setWindowTitle("CartoCrow – Spiral tree demo");
 
-	m_obstacle.push_back(Point<Inexact>(0, 50));
+	/*m_obstacle.push_back(Point<Inexact>(0, 50));
 	m_obstacle.push_back(Point<Inexact>(25, 40));
 	m_obstacle.push_back(Point<Inexact>(8, 95));
 	m_obstacle.push_back(Point<Inexact>(50, 140));
 	m_obstacle.push_back(Point<Inexact>(-41, 134));
 	m_obstacle.push_back(Point<Inexact>(-43, 60));
 	m_obstacle.push_back(Point<Inexact>(0, 70));
-	m_obstacle.push_back(Point<Inexact>(-20, 20));
+	m_obstacle.push_back(Point<Inexact>(-20, 20));*/
 
 	// join not working
 	/*m_obstacle.push_back(Point<Inexact>(0, 50));
@@ -83,6 +83,10 @@ SpiralTreeDemo::SpiralTreeDemo() {
 	m_obstacle.push_back(Point<Inexact>(50, 140));
 	m_obstacle.push_back(Point<Inexact>(-37, 175));
 	m_obstacle.push_back(Point<Inexact>(-50, 100));*/
+
+	m_obstacle.push_back(Point<Inexact>(-20, 10));
+	m_obstacle.push_back(Point<Inexact>(-40, 2));
+	m_obstacle.push_back(Point<Inexact>(-22, -13));
 
 	m_renderer = new GeometryWidget();
 	setCentralWidget(m_renderer);
