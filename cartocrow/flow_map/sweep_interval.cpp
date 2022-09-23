@@ -62,25 +62,50 @@ std::optional<PolarPoint> SweepInterval::vanishingPoint(Number<Inexact> rMin) co
 }
 
 Polygon<Inexact> SweepInterval::sweepShape(Number<Inexact> rFrom, Number<Inexact> rTo) const {
-	/*std::cout << rFrom << " " << rTo;
-	if (m_previousBoundary) {
-		std::cout << " previous " << m_previousBoundary->shape().nearR();
-		if (m_previousBoundary->shape().farR()) {
-			std::cout << "-" << *m_previousBoundary->shape().farR();
-		}
-	}
-	if (m_nextBoundary) {
-		std::cout << " next " << m_nextBoundary->shape().nearR();
-		if (m_nextBoundary->shape().farR()) {
-			std::cout << "-" << *m_nextBoundary->shape().farR();
-		}
-	}
-	std::cout << std::endl;*/
 	Polygon<Inexact> result;
+	bool winding = false;
+	// left side
+	if (m_nextBoundary) {
+		Number<Inexact> prevAngle = m_nextBoundary->shape().evalForR(rTo).phi();
+		for (Number<Inexact> r = rTo; r > rFrom; r /= 1.05) {
+			auto p = m_nextBoundary->shape().evalForR(r);
+			if (prevAngle > M_PI / 2 && p.phi() <= -M_PI / 2) {
+				winding = !winding;
+			} else if (prevAngle < -M_PI / 2 && p.phi() > M_PI / 2) {
+				winding = !winding;
+			}
+			result.push_back(p.toCartesian());
+			prevAngle = p.phi();
+		}
+	} else {
+		result.push_back(PolarPoint(rTo, M_PI).toCartesian());
+		result.push_back(PolarPoint(rFrom, M_PI).toCartesian());
+	}
+	// near side
+	Number<Inexact> nearPhiNext = m_nextBoundary ? m_nextBoundary->shape().phiForR(rFrom) : M_PI;
+	Number<Inexact> nearPhiPrevious =
+	    m_previousBoundary ? m_previousBoundary->shape().phiForR(rFrom) : -M_PI;
+	if (nearPhiNext < nearPhiPrevious ||
+	    (nearPhiNext == nearPhiPrevious &&
+	     m_previousBoundary->shape().departsToLeftOf(m_nextBoundary->shape()))) {
+		nearPhiPrevious -= 2 * M_PI;
+		winding = !winding;
+	}
+	for (Number<Inexact> phi = nearPhiNext; phi > nearPhiPrevious; phi -= 0.01) {
+		result.push_back(PolarPoint(rFrom, phi).toCartesian());
+	}
 	// right side
 	if (m_previousBoundary) {
+		Number<Inexact> prevAngle = m_previousBoundary->shape().evalForR(rFrom).phi();
 		for (Number<Inexact> r = rFrom; r < rTo; r *= 1.05) {
-			result.push_back(m_previousBoundary->shape().evalForR(r).toCartesian());
+			auto p = m_previousBoundary->shape().evalForR(r);
+			if (prevAngle > M_PI / 2 && p.phi() <= -M_PI / 2) {
+				winding = !winding;
+			} else if (prevAngle < -M_PI / 2 && p.phi() > M_PI / 2) {
+				winding = !winding;
+			}
+			result.push_back(p.toCartesian());
+			prevAngle = p.phi();
 		}
 	} else {
 		result.push_back(PolarPoint(rFrom, -M_PI).toCartesian());
@@ -90,24 +115,13 @@ Polygon<Inexact> SweepInterval::sweepShape(Number<Inexact> rFrom, Number<Inexact
 	Number<Inexact> farPhiFrom =
 	    m_previousBoundary ? m_previousBoundary->shape().phiForR(rTo) : -M_PI;
 	Number<Inexact> farPhiTo = m_nextBoundary ? m_nextBoundary->shape().phiForR(rTo) : M_PI;
+	//	std::cout << farPhiFrom << " " << farPhiTo  << std::endl;
+	if (winding) {
+		//	std::cout << "rotations: " << rotations << std::endl;
+		farPhiTo += 2 * M_PI;
+	}
 	for (Number<Inexact> phi = farPhiFrom; phi < farPhiTo; phi += 0.01) {
 		result.push_back(PolarPoint(rTo, phi).toCartesian());
-	}
-	// left side
-	if (m_nextBoundary) {
-		for (Number<Inexact> r = rTo; r > rFrom; r /= 1.05) {
-			result.push_back(m_nextBoundary->shape().evalForR(r).toCartesian());
-		}
-	} else {
-		result.push_back(PolarPoint(rTo, M_PI).toCartesian());
-		result.push_back(PolarPoint(rFrom, M_PI).toCartesian());
-	}
-	// near side
-	Number<Inexact> nearPhiFrom = m_nextBoundary ? m_nextBoundary->shape().phiForR(rFrom) : M_PI;
-	Number<Inexact> nearPhiTo =
-	    m_previousBoundary ? m_previousBoundary->shape().phiForR(rFrom) : -M_PI;
-	for (Number<Inexact> phi = nearPhiFrom; phi > nearPhiTo; phi -= 0.01) {
-		result.push_back(PolarPoint(rFrom, phi).toCartesian());
 	}
 	return result;
 }

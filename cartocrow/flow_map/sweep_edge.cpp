@@ -149,8 +149,9 @@ std::optional<Number<Inexact>> SweepEdgeShape::intersectWith(const SweepEdgeShap
 		//std::cout << "interval: (" << rLower << ", " << rUpper << "]" << std::endl;
 
 		if (isLeftOf(rUpper) != initiallyLeftOfOther) {
-			//std::cout << std::abs(phiForR(rUpper) - other.phiForR(rUpper)) << std::endl;
-			if (std::abs(phiForR(rUpper) - other.phiForR(rUpper)) < M_PI / 2) {
+			Number<Inexact> angleDifference = std::abs(phiForR(rUpper) - other.phiForR(rUpper));
+			//std::cout << angleDifference << std::endl;
+			if (angleDifference < M_PI / 2 || angleDifference > 3 * M_PI / 2) {
 				// found intersection
 				break;
 			} else {

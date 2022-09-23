@@ -25,7 +25,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 namespace cartocrow::flow_map {
 
 SweepCircle::SweepCircle()
-    : m_r(0), m_firstInterval(SweepInterval(SweepInterval::Type::REACHABLE)) {}
+    : m_r(0), m_onlyInterval(SweepInterval(SweepInterval::Type::REACHABLE)) {}
 
 Number<Inexact> SweepCircle::r() {
 	return m_r;
@@ -39,85 +39,141 @@ void SweepCircle::grow(Number<Inexact> r) {
 		return;
 	}
 
-	auto lastEdge = --m_edges.end();
-	auto beforeGrowing = lastEdge->first.evalForR(previousR);
-	auto afterGrowing = lastEdge->first.evalForR(r);
-	if (beforeGrowing.phi() > M_PI / 2) {
-		if (beforeGrowing.phi() > 0 && afterGrowing.phi() < 0) {
-			auto node = m_edges.extract(lastEdge);
-			m_edges.insert(std::move(node));
+	// reinsert edges that moved counter-clockwise over the φ = π ray
+	std::vector<EdgeMap::node_type> toReinsert;
+	for (auto e = --m_edges.end(); e != m_edges.begin(); --e) {
+		auto beforeGrowing = e->first.evalForR(previousR);
+		auto afterGrowing = e->first.evalForR(r);
+		if (beforeGrowing.phi() > M_PI / 2 && afterGrowing.phi() < 0) {
+			std::cout << "counter-clockwise wraparound at φ = " << afterGrowing.phi() / M_PI << "π"
+			          << std::endl;
+			toReinsert.push_back(m_edges.extract(e));
+		} else {
+			break;
 		}
+	}
+	for (auto& node : toReinsert) {
+		m_edges.insert(std::move(node));
+	}
+
+	// reinsert edges that moved clockwise over the φ = π ray
+	toReinsert.clear();
+	for (auto e = m_edges.begin(); e != --m_edges.end(); ++e) {
+		auto beforeGrowing = e->first.evalForR(previousR);
+		auto afterGrowing = e->first.evalForR(r);
+		if (beforeGrowing.phi() < -M_PI / 2 && afterGrowing.phi() > 0) {
+			std::cout << "clockwise wraparound at φ = " << afterGrowing.phi() / M_PI << "π"
+			          << std::endl;
+			toReinsert.push_back(m_edges.extract(e));
+		} else {
+			break;
+		}
+	}
+	for (auto& node : toReinsert) {
+		m_edges.insert(std::move(node));
 	}
 }
 
 bool SweepCircle::isValid() const {
 	Number<Inexact> previousPhi = -M_PI;
-	for (auto& edge : m_edges) {
-		Number<Inexact> phi = edge.first.phiForR(m_r);
-		if (phi < previousPhi) {
-			return false;
+	bool valid = true;
+	if (m_edges.empty()) {
+		if (!m_onlyInterval.has_value()) {
+			std::cout << "sweep circle is invalid because it doesn't have edges, but onlyInterval "
+			             "isn't set"
+			          << std::endl;
 		}
-		previousPhi = phi;
-
-		if (edge.second->previousEdge()) {
-			if (edge.second->previousEdge()->nextInterval() != edge.second->previousInterval()) {
-				return false;
+	} else {
+		if (m_onlyInterval.has_value()) {
+			std::cout
+			    << "sweep circle is invalid because it has edges, but onlyInterval is still set"
+			    << std::endl;
+		}
+		int edgeId = 0;
+		for (auto edge = m_edges.begin(); edge != m_edges.end(); ++edge) {
+			Number<Inexact> phi = edge->first.phiForR(m_r);
+			if (phi < previousPhi) {
+				std::cout << "sweep circle is invalid because edge " << edgeId
+				          << " (at φ = " << phi / M_PI
+				          << "π) is ordered after the edge at φ = " << previousPhi / M_PI << "π"
+				          << std::endl;
+				valid = false;
 			}
-		}
-		if (edge.second->previousInterval()->previousBoundary() != edge.second->previousEdge()) {
-			return false;
-		}
-		if (edge.second->previousInterval()->nextBoundary() != edge.second.get()) {
-			return false;
-		}
+			previousPhi = phi;
 
-		if (edge.second->nextEdge()) {
-			if (edge.second->nextEdge()->previousInterval() != edge.second->nextInterval()) {
-				return false;
+			if (edge->second->m_previousInterval == nullptr) {
+				std::cout << "sweep circle is invalid because edge " << edgeId
+				          << " has nullptr as its previous interval" << std::endl;
+				valid = false;
+			} else if (edge->second->m_previousInterval->m_nextBoundary != edge->second.get()) {
+				std::cout << "sweep circle is invalid because the next boundary of the previous "
+				             "interval of edge "
+				          << edgeId << " is not equal to edge " << edgeId << std::endl;
+				valid = false;
 			}
-		}
-		if (edge.second->nextInterval()->nextBoundary() != edge.second->nextEdge()) {
-			return false;
-		}
-		if (edge.second->nextInterval()->previousBoundary() != edge.second.get()) {
-			return false;
+			if (edge->second->m_nextInterval.m_previousBoundary != edge->second.get()) {
+				std::cout << "sweep circle is invalid because the previous boundary of the next "
+				             "interval of edge "
+				          << edgeId << " is not equal to edge " << edgeId << std::endl;
+				valid = false;
+			}
+			if (std::next(edge) == m_edges.end()) {
+				if (edge->second->m_nextInterval.m_nextBoundary != m_edges.begin()->second.get()) {
+					std::cout << "sweep circle is invalid because the next boundary of the next "
+					             "interval of edge "
+					          << edgeId << " is not equal to edge 0" << std::endl;
+					valid = false;
+				}
+			} else {
+				if (edge->second->m_nextInterval.m_nextBoundary != std::next(edge)->second.get()) {
+					std::cout << "sweep circle is invalid because the next boundary of the next "
+					             "interval of edge "
+					          << edgeId << " is not equal to edge " << edgeId + 1 << std::endl;
+					valid = false;
+				}
+			}
+			edgeId++;
 		}
 	}
-	return true;
+	return valid;
 }
 
 void SweepCircle::print() const {
 	auto printIntervalType = [](const SweepInterval& interval) {
 		if (interval.type() == SweepInterval::Type::SHADOW) {
-			std::cout << "shadow";
+			std::cout << "\033[1mshadow\033[0m";
 		} else if (interval.type() == SweepInterval::Type::REACHABLE) {
-			std::cout << "reachable";
+			std::cout << "\033[1;32mreachable\033[0m";
 		} else if (interval.type() == SweepInterval::Type::OBSTACLE) {
-			std::cout << "obstacle";
+			std::cout << "\033[1;31mobstacle\033[0m";
 		}
 	};
-	std::cout << "sweep circle at r = " << m_r << ": |-1π| ";
-	printIntervalType(m_firstInterval);
-	for (auto& edge : m_edges) {
-		if (edge.first.type() == SweepEdgeShape::Type::SEGMENT) {
-			std::cout << " |" << edge.first.phiForR(m_r) / M_PI << "π| ";
-		} else if (edge.first.type() == SweepEdgeShape::Type::LEFT_SPIRAL) {
-			std::cout << " )" << edge.first.phiForR(m_r) / M_PI << "π) ";
-		} else if (edge.first.type() == SweepEdgeShape::Type::RIGHT_SPIRAL) {
-			std::cout << " (" << edge.first.phiForR(m_r) / M_PI << "π( ";
+	std::cout << "sweep circle at \033[1mr = " << m_r << "\033[0m: ← ";
+	if (m_edges.empty()) {
+		printIntervalType(*m_onlyInterval);
+	} else {
+		printIntervalType(*m_edges.begin()->second->previousInterval());
+		for (auto& edge : m_edges) {
+			if (edge.first.type() == SweepEdgeShape::Type::SEGMENT) {
+				std::cout << " |" << edge.first.phiForR(m_r) / M_PI << "π| ";
+			} else if (edge.first.type() == SweepEdgeShape::Type::LEFT_SPIRAL) {
+				std::cout << " )" << edge.first.phiForR(m_r) / M_PI << "π) ";
+			} else if (edge.first.type() == SweepEdgeShape::Type::RIGHT_SPIRAL) {
+				std::cout << " (" << edge.first.phiForR(m_r) / M_PI << "π( ";
+			}
+			printIntervalType(*edge.second->nextInterval());
 		}
-		printIntervalType(*edge.second->nextInterval());
 	}
-	std::cout << " |1π|" << std::endl;
+	std::cout << " →" << std::endl;
 }
 
 std::size_t SweepCircle::intervalCount() const {
-	return m_edges.size() + 1;
+	return std::max(std::size_t(1), m_edges.size());
 }
 
 SweepInterval* SweepCircle::intervalAt(Number<Inexact> phi) {
 	if (m_edges.empty()) {
-		return &m_firstInterval;
+		return &*m_onlyInterval;
 	}
 	auto edgeIterator = m_edges.lower_bound(phi);
 	if (edgeIterator == m_edges.end()) {
@@ -155,9 +211,6 @@ SweepCircle::SplitResult SweepCircle::splitFromEdge(SweepEdge& oldEdge,
 	if (previousEdge) {
 		previousEdge->m_nextInterval.m_nextBoundary = newRightEdge.get();
 		newRightEdge->m_previousInterval = &previousEdge->m_nextInterval;
-	} else {
-		m_firstInterval.m_nextBoundary = newRightEdge.get();
-		newRightEdge->m_previousInterval = &m_firstInterval;
 	}
 
 	newRightEdge->m_nextInterval =
@@ -178,6 +231,7 @@ SweepCircle::splitFromInterval(std::shared_ptr<SweepEdge> newRightEdge,
                                std::shared_ptr<SweepEdge> newMiddleEdge,
                                std::shared_ptr<SweepEdge> newLeftEdge) {
 	Number<Inexact> phi = newLeftEdge->shape().phiForR(m_r);
+
 	SweepInterval* interval = intervalAt(phi);
 	SweepEdge* previousEdge = interval->previousBoundary();
 	SweepEdge* nextEdge = interval->nextBoundary();
@@ -191,8 +245,7 @@ SweepCircle::splitFromInterval(std::shared_ptr<SweepEdge> newRightEdge,
 		    SweepInterval(interval->type(), previousEdge, newRightEdge.get());
 		newRightEdge->m_previousInterval = &previousEdge->m_nextInterval;
 	} else {
-		m_firstInterval = SweepInterval(interval->type(), nullptr, newRightEdge.get());
-		newRightEdge->m_previousInterval = &m_firstInterval;
+		newRightEdge->m_previousInterval = &newLeftEdge->m_nextInterval;
 	}
 
 	newRightEdge->m_nextInterval =
@@ -206,7 +259,12 @@ SweepCircle::splitFromInterval(std::shared_ptr<SweepEdge> newRightEdge,
 	newLeftEdge->m_nextInterval = SweepInterval(interval->type(), newLeftEdge.get(), nextEdge);
 	if (nextEdge) {
 		nextEdge->m_previousInterval = &newLeftEdge->m_nextInterval;
+	} else {
+		newLeftEdge->m_nextInterval =
+		    SweepInterval(interval->type(), newLeftEdge.get(), newRightEdge.get());
 	}
+
+	m_onlyInterval = std::nullopt;
 
 	return ThreeWaySplitResult{newRightEdge->previousInterval(), newRightEdge->nextInterval(),
 	                           newMiddleEdge->nextInterval(), newLeftEdge->nextInterval()};
@@ -215,6 +273,7 @@ SweepCircle::splitFromInterval(std::shared_ptr<SweepEdge> newRightEdge,
 SweepCircle::SplitResult SweepCircle::splitFromInterval(std::shared_ptr<SweepEdge> newRightEdge,
                                                         std::shared_ptr<SweepEdge> newLeftEdge) {
 	Number<Inexact> phi = newLeftEdge->shape().phiForR(m_r);
+
 	SweepInterval* interval = intervalAt(phi);
 	SweepEdge* previousEdge = interval->previousBoundary();
 	SweepEdge* nextEdge = interval->nextBoundary();
@@ -227,18 +286,22 @@ SweepCircle::SplitResult SweepCircle::splitFromInterval(std::shared_ptr<SweepEdg
 		    SweepInterval(interval->type(), previousEdge, newRightEdge.get());
 		newRightEdge->m_previousInterval = &previousEdge->m_nextInterval;
 	} else {
-		m_firstInterval = SweepInterval(interval->type(), nullptr, newRightEdge.get());
-		newRightEdge->m_previousInterval = &m_firstInterval;
+		newRightEdge->m_previousInterval = &newLeftEdge->m_nextInterval;
 	}
 
 	newRightEdge->m_nextInterval =
 	    SweepInterval(interval->type(), newRightEdge.get(), newLeftEdge.get());
 	newLeftEdge->m_previousInterval = &newRightEdge->m_nextInterval;
 
-	newLeftEdge->m_nextInterval = SweepInterval(interval->type(), newLeftEdge.get(), nextEdge);
 	if (nextEdge) {
+		newLeftEdge->m_nextInterval = SweepInterval(interval->type(), newLeftEdge.get(), nextEdge);
 		nextEdge->m_previousInterval = &newLeftEdge->m_nextInterval;
+	} else {
+		newLeftEdge->m_nextInterval =
+		    SweepInterval(interval->type(), newLeftEdge.get(), newRightEdge.get());
 	}
+
+	m_onlyInterval = std::nullopt;
 
 	return SplitResult{newRightEdge->previousInterval(), newRightEdge->nextInterval(),
 	                   newLeftEdge->nextInterval()};
@@ -248,22 +311,15 @@ SweepCircle::SwitchResult SweepCircle::switchEdge(SweepEdge& e, std::shared_ptr<
 	SweepEdge* previousEdge = e.previousEdge();
 	SweepEdge* nextEdge = e.nextEdge();
 
-	if (previousEdge) {
-		previousEdge->m_nextInterval =
-		    SweepInterval(previousEdge->m_nextInterval.type(), previousEdge, newEdge.get());
-		newEdge->m_previousInterval = &previousEdge->m_nextInterval;
-	} else {
-		m_firstInterval = SweepInterval(m_firstInterval.type(), nullptr, newEdge.get());
-		newEdge->m_previousInterval = &m_firstInterval;
-	}
+	previousEdge->m_nextInterval =
+	    SweepInterval(previousEdge->m_nextInterval.type(), previousEdge, newEdge.get());
+	newEdge->m_previousInterval = &previousEdge->m_nextInterval;
 	newEdge->m_nextInterval = SweepInterval(e.m_nextInterval.type(), newEdge.get(), nextEdge);
 
 	m_edges.erase(e.shape());
 	m_edges.insert(std::make_pair(newEdge->shape(), newEdge));
 
-	if (nextEdge) {
-		nextEdge->m_previousInterval = &newEdge->m_nextInterval;
-	}
+	nextEdge->m_previousInterval = &newEdge->m_nextInterval;
 
 	return SwitchResult{newEdge->previousInterval(), newEdge->nextInterval()};
 }
@@ -272,19 +328,11 @@ SweepCircle::SwitchResult SweepCircle::mergeToEdge(SweepEdge& rightEdge, SweepEd
                                                    std::shared_ptr<SweepEdge> newEdge) {
 	SweepEdge* previousEdge = rightEdge.previousEdge();
 	SweepEdge* nextEdge = leftEdge.nextEdge();
-	if (previousEdge) {
-		previousEdge->m_nextInterval =
-		    SweepInterval(rightEdge.m_previousInterval->type(), previousEdge, newEdge.get());
-		newEdge->m_previousInterval = &previousEdge->m_nextInterval;
-	} else {
-		m_firstInterval = SweepInterval(rightEdge.m_previousInterval->type(), nullptr, newEdge.get());
-		newEdge->m_previousInterval = &m_firstInterval;
-	}
+	previousEdge->m_nextInterval =
+	    SweepInterval(rightEdge.m_previousInterval->type(), previousEdge, newEdge.get());
+	newEdge->m_previousInterval = &previousEdge->m_nextInterval;
 	newEdge->m_nextInterval = SweepInterval(leftEdge.m_nextInterval.type(), newEdge.get(), nextEdge);
-
-	if (nextEdge) {
-		nextEdge->m_previousInterval = &newEdge->m_nextInterval;
-	}
+	nextEdge->m_previousInterval = &newEdge->m_nextInterval;
 
 	m_edges.erase(rightEdge.shape());
 	m_edges.erase(leftEdge.shape());
@@ -296,35 +344,26 @@ SweepCircle::SwitchResult SweepCircle::mergeToEdge(SweepEdge& rightEdge, SweepEd
 SweepCircle::MergeResult SweepCircle::mergeToInterval(SweepEdge& rightEdge, SweepEdge& leftEdge) {
 	SweepEdge* previousEdge = rightEdge.previousEdge();
 	SweepEdge* nextEdge = leftEdge.nextEdge();
-	if (previousEdge) {
-		previousEdge->m_nextInterval =
-		    SweepInterval(rightEdge.m_nextInterval.type(), previousEdge, nextEdge);
-		if (nextEdge) {
-			nextEdge->m_previousInterval = &previousEdge->m_nextInterval;
-		}
-	} else {
-		m_firstInterval = SweepInterval(rightEdge.m_nextInterval.type(), nullptr, nextEdge);
-		if (nextEdge) {
-			nextEdge->m_previousInterval = &m_firstInterval;
-		}
+	SweepInterval interval = SweepInterval(leftEdge.m_nextInterval.type(), nullptr, nullptr);
+	previousEdge->m_nextInterval =
+	    SweepInterval(rightEdge.m_nextInterval.type(), previousEdge, nextEdge);
+	if (nextEdge) {
+		nextEdge->m_previousInterval = &previousEdge->m_nextInterval;
 	}
 
 	m_edges.erase(rightEdge.shape());
 	m_edges.erase(leftEdge.shape());
 
-	if (previousEdge) {
-		return MergeResult{previousEdge->nextInterval()};
+	if (m_edges.empty()) {
+		m_onlyInterval = interval;
+		return MergeResult{&*m_onlyInterval};
 	} else {
-		return MergeResult{&m_firstInterval};
+		return MergeResult{previousEdge->nextInterval()};
 	}
 }
 
 const SweepCircle::EdgeMap& SweepCircle::edges() const {
 	return m_edges;
-}
-
-const SweepInterval& SweepCircle::firstInterval() const {
-	return m_firstInterval;
 }
 
 } // namespace cartocrow::flow_map

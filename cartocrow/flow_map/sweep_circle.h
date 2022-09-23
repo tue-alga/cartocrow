@@ -196,8 +196,9 @@ class SweepCircle {
 	/// A map containing the sweep edges separating the intervals, indexed by
 	/// their edge shapes.
 	EdgeMap m_edges{SweepEdgeShapeComparator(this)};
-	/// The first interval on the circle.
-	SweepInterval m_firstInterval;
+	/// If \ref m_edges is empty, this stores the one interval on the sweep
+	/// circle.
+	std::optional<SweepInterval> m_onlyInterval;
 	/// Current radius of the circle.
 	Number<Inexact> m_r;
 
@@ -205,8 +206,6 @@ class SweepCircle {
 	/// Returns a map containing the sweep edges separating the intervals,
 	/// indexed by their edge shapes.
 	const EdgeMap& edges() const;
-	/// Returns the first interval on the circle.
-	const SweepInterval& firstInterval() const;
 };
 
 } // namespace cartocrow::flow_map

@@ -82,6 +82,8 @@ class SpiralTreeObstructedAlgorithm {
 		Type type() const;
 		/// Handles this event.
 		virtual void handle() = 0;
+		/// Checks if this event is still valid.
+		virtual bool isValid() const;
 
 	  protected:
 		PolarPoint m_position;
@@ -170,15 +172,16 @@ class SpiralTreeObstructedAlgorithm {
 	/// event instead.
 	class JoinEvent : public Event {
 	  public:
-		JoinEvent(PolarPoint position, std::shared_ptr<SweepEdge> rightEdge,
-		          std::shared_ptr<SweepEdge> leftEdge, SpiralTreeObstructedAlgorithm* alg);
+		JoinEvent(PolarPoint position, std::weak_ptr<SweepEdge> rightEdge,
+		          std::weak_ptr<SweepEdge> leftEdge, SpiralTreeObstructedAlgorithm* alg);
 		void handle() override;
+		virtual bool isValid() const override;
 
 	  private:
 		/// The right edge involved in this join event.
-		std::shared_ptr<SweepEdge> m_rightEdge;
+		std::weak_ptr<SweepEdge> m_rightEdge;
 		/// The left edge involved in this join event.
-		std::shared_ptr<SweepEdge> m_leftEdge;
+		std::weak_ptr<SweepEdge> m_leftEdge;
 	};
 
 	struct CompareEvents {
