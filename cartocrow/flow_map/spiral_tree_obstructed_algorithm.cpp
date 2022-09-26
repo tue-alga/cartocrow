@@ -61,7 +61,7 @@ SpiralTreeObstructedAlgorithm::NodeEvent::NodeEvent(PolarPoint position,
 
 void SpiralTreeObstructedAlgorithm::NodeEvent::handle() {
 	// TODO
-	std::cout << "> handling node event" << std::endl;
+	std::cout << "> \033[1mhandling \033[33mnode event\033[0m" << std::endl;
 	m_alg->m_debugPainting->setMode(renderer::GeometryRenderer::stroke);
 	m_alg->m_debugPainting->setStroke(Color{240, 120, 0}, 1);
 	m_alg->m_debugPainting->draw(m_alg->m_tree->rootPosition() +
@@ -93,7 +93,7 @@ void SpiralTreeObstructedAlgorithm::VertexEvent::handle() {
 	case Side::FAR:
 		side = "far";
 	}
-	std::cout << "> handling " << side << " vertex event" << std::endl;
+	std::cout << "> \033[1mhandling \033[35m" << side << " vertex event\033[0m" << std::endl;
 	m_alg->m_debugPainting->setMode(renderer::GeometryRenderer::stroke);
 	m_alg->m_debugPainting->setStroke(Color{150, 150, 150}, 0.5);
 	m_alg->m_debugPainting->draw(m_alg->m_tree->rootPosition() +
@@ -275,9 +275,9 @@ void SpiralTreeObstructedAlgorithm::VertexEvent::insertJoinEventFor(
 		}
 		m_alg->m_queue.push(std::make_shared<JoinEvent>(*vanishingPoint, rightEdge->second,
 		                                                nextEdge->second, m_alg));
-		std::cout << "(inserted join event at r = " << vanishingPoint->r() << ")" << std::endl;
+		/*std::cout << "(inserted join event at r = " << vanishingPoint->r() << ")" << std::endl;*/
 	} else {
-		std::cout << "(ignored join event for ["
+		/*std::cout << "(ignored join event for ["
 		          << interval->previousBoundary()->shape().nearEndpoint().toCartesian();
 		if (interval->previousBoundary()->shape().farEndpoint()) {
 			std::cout << " – " << interval->previousBoundary()->shape().farEndpoint()->toCartesian();
@@ -286,7 +286,7 @@ void SpiralTreeObstructedAlgorithm::VertexEvent::insertJoinEventFor(
 		if (interval->nextBoundary()->shape().farEndpoint()) {
 			std::cout << " – " << interval->nextBoundary()->shape().farEndpoint()->toCartesian();
 		}
-		std::cout << "])" << std::endl;
+		std::cout << "])" << std::endl;*/
 	}
 }
 
@@ -303,7 +303,7 @@ void SpiralTreeObstructedAlgorithm::JoinEvent::handle() {
 	std::shared_ptr<SweepEdge> rightEdge = m_rightEdge.lock();
 	std::shared_ptr<SweepEdge> leftEdge = m_leftEdge.lock();
 
-	std::cout << "> handling join event" << std::endl;
+	std::cout << "> \033[1mhandling \033[34mjoin event\033[0m" << std::endl;
 	m_alg->m_debugPainting->setMode(renderer::GeometryRenderer::stroke);
 	m_alg->m_debugPainting->setStroke(Color{0, 120, 240}, 1);
 	m_alg->m_debugPainting->draw(m_alg->m_tree->rootPosition() +
@@ -375,6 +375,9 @@ void SpiralTreeObstructedAlgorithm::run() {
 				                                             event->r());
 			}
 		}
+		m_debugPainting->drawText(m_tree->rootPosition() +
+		                              (Point<Inexact>(0, event->r()) - CGAL::ORIGIN),
+		                          std::to_string(event->r()));
 		m_circle.grow(event->r());
 		m_circle.print();
 		event->handle();

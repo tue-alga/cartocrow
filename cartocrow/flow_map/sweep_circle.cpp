@@ -45,8 +45,8 @@ void SweepCircle::grow(Number<Inexact> r) {
 		auto beforeGrowing = e->first.evalForR(previousR);
 		auto afterGrowing = e->first.evalForR(r);
 		if (beforeGrowing.phi() > M_PI / 2 && afterGrowing.phi() < 0) {
-			std::cout << "counter-clockwise wraparound at φ = " << afterGrowing.phi() / M_PI << "π"
-			          << std::endl;
+			/*std::cout << "counter-clockwise wraparound at φ = " << afterGrowing.phi() / M_PI << "π"
+			          << std::endl;*/
 			toReinsert.push_back(m_edges.extract(e));
 		} else {
 			break;
@@ -62,8 +62,8 @@ void SweepCircle::grow(Number<Inexact> r) {
 		auto beforeGrowing = e->first.evalForR(previousR);
 		auto afterGrowing = e->first.evalForR(r);
 		if (beforeGrowing.phi() < -M_PI / 2 && afterGrowing.phi() > 0) {
-			std::cout << "clockwise wraparound at φ = " << afterGrowing.phi() / M_PI << "π"
-			          << std::endl;
+			/*std::cout << "clockwise wraparound at φ = " << afterGrowing.phi() / M_PI << "π"
+			          << std::endl;*/
 			toReinsert.push_back(m_edges.extract(e));
 		} else {
 			break;

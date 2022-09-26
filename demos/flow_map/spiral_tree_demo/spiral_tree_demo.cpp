@@ -84,9 +84,9 @@ SpiralTreeDemo::SpiralTreeDemo() {
 	m_obstacle.push_back(Point<Inexact>(-37, 175));
 	m_obstacle.push_back(Point<Inexact>(-50, 100));*/
 
-	m_obstacle.push_back(Point<Inexact>(-20, 10));
-	m_obstacle.push_back(Point<Inexact>(-40, 2));
-	m_obstacle.push_back(Point<Inexact>(-22, -13));
+	m_obstacle.push_back(Point<Inexact>(-19, 11));
+	m_obstacle.push_back(Point<Inexact>(-43, 9));
+	m_obstacle.push_back(Point<Inexact>(-33, -19));
 
 	m_renderer = new GeometryWidget();
 	setCentralWidget(m_renderer);
