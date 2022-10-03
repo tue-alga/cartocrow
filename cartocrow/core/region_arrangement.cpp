@@ -21,7 +21,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include <CGAL/Arr_overlay_2.h>
 #include <CGAL/Surface_sweep_2/Arr_default_overlay_traits_base.h>
-#include <CGAL/draw_polygon_set_2.h>
 #include <CGAL/number_utils.h>
 
 namespace cartocrow {
