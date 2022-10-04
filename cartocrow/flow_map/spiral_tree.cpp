@@ -166,6 +166,9 @@ void SpiralTree::subdivideClosestAndSpiral(Obstacle& obstacle) {
 		PolarPoint start = (*edge)->shape().start();
 		PolarPoint end = *(*edge)->shape().end();
 		PolarSegment segment(start, end);
+		if (segment.isCollinear()) {
+			continue;
+		}
 		const PolarPoint closest = segment.supportingLine().foot();
 
 		// compute R and phi of the spiral points
