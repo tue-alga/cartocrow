@@ -20,10 +20,13 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "sweep_interval.h"
 
 #include "../renderer/geometry_renderer.h"
+#include "cartocrow/core/core.h"
 #include "intersections.h"
 #include "polar_segment.h"
 #include "spiral_segment.h"
 #include "sweep_edge.h"
+#include <CGAL/Ray_2.h>
+#include <CGAL/enum.h>
 
 namespace cartocrow::flow_map {
 
@@ -63,19 +66,11 @@ std::optional<PolarPoint> SweepInterval::vanishingPoint(Number<Inexact> rMin) co
 
 Polygon<Inexact> SweepInterval::sweepShape(Number<Inexact> rFrom, Number<Inexact> rTo) const {
 	Polygon<Inexact> result;
-	bool winding = false;
 	// left side
 	if (m_nextBoundary) {
-		Number<Inexact> prevAngle = m_nextBoundary->shape().evalForR(rTo).phi();
 		for (Number<Inexact> r = rTo; r > rFrom; r /= 1.05) {
 			auto p = m_nextBoundary->shape().evalForR(r);
-			if (prevAngle > M_PI / 2 && p.phi() <= -M_PI / 2) {
-				winding = !winding;
-			} else if (prevAngle < -M_PI / 2 && p.phi() > M_PI / 2) {
-				winding = !winding;
-			}
 			result.push_back(p.toCartesian());
-			prevAngle = p.phi();
 		}
 	} else {
 		result.push_back(PolarPoint(rTo, M_PI).toCartesian());
@@ -89,39 +84,43 @@ Polygon<Inexact> SweepInterval::sweepShape(Number<Inexact> rFrom, Number<Inexact
 	    (nearPhiNext == nearPhiPrevious &&
 	     m_previousBoundary->shape().departsToLeftOf(m_nextBoundary->shape()))) {
 		nearPhiPrevious -= 2 * M_PI;
-		winding = !winding;
 	}
-	for (Number<Inexact> phi = nearPhiNext; phi > nearPhiPrevious; phi -= 0.01) {
+	for (Number<Inexact> phi = nearPhiNext; phi > nearPhiPrevious; phi -= 0.05) {
 		result.push_back(PolarPoint(rFrom, phi).toCartesian());
 	}
 	// right side
 	if (m_previousBoundary) {
-		Number<Inexact> prevAngle = m_previousBoundary->shape().evalForR(rFrom).phi();
 		for (Number<Inexact> r = rFrom; r < rTo; r *= 1.05) {
 			auto p = m_previousBoundary->shape().evalForR(r);
-			if (prevAngle > M_PI / 2 && p.phi() <= -M_PI / 2) {
-				winding = !winding;
-			} else if (prevAngle < -M_PI / 2 && p.phi() > M_PI / 2) {
-				winding = !winding;
-			}
 			result.push_back(p.toCartesian());
-			prevAngle = p.phi();
 		}
 	} else {
 		result.push_back(PolarPoint(rFrom, -M_PI).toCartesian());
 		result.push_back(PolarPoint(rTo, -M_PI).toCartesian());
 	}
 	// far side
-	Number<Inexact> farPhiFrom =
+	Number<Inexact> farPhiPrevious =
 	    m_previousBoundary ? m_previousBoundary->shape().phiForR(rTo) : -M_PI;
-	Number<Inexact> farPhiTo = m_nextBoundary ? m_nextBoundary->shape().phiForR(rTo) : M_PI;
-	//	std::cout << farPhiFrom << " " << farPhiTo  << std::endl;
-	if (winding) {
-		//	std::cout << "rotations: " << rotations << std::endl;
-		farPhiTo += 2 * M_PI;
-	}
-	for (Number<Inexact> phi = farPhiFrom; phi < farPhiTo; phi += 0.01) {
+	Number<Inexact> farPhiNext = m_nextBoundary ? m_nextBoundary->shape().phiForR(rTo) : M_PI;
+	for (Number<Inexact> phi = farPhiPrevious; phi < farPhiNext; phi += 0.05) {
 		result.push_back(PolarPoint(rTo, phi).toCartesian());
+	}
+	// if we have the origin on the inside of the shape, we need to walk an
+	// extra circle (unfortunately we cannot use CGAL's
+	// Polygon<Inexact>::bounded_side() because it asserts the polygon is simple
+	// which it may not be due to rounding errors
+	bool inside = false;
+	CGAL::Ray_2<Inexact> ray(CGAL::ORIGIN, Point<Inexact>(1, 0));
+	for (auto edge = result.edges_begin(); edge != result.edges_end(); ++edge) {
+		std::cout << PolarPoint(edge->start()) << std::endl;
+		if (CGAL::intersection(ray, *edge)) {
+			inside = !inside;
+		}
+	}
+	if (inside) {
+		for (Number<Inexact> phi = farPhiPrevious; phi < farPhiNext + 2 * M_PI; phi += 0.05) {
+			result.push_back(PolarPoint(rTo, phi).toCartesian());
+		}
 	}
 	return result;
 }

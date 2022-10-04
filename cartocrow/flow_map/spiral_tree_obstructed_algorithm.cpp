@@ -367,14 +367,18 @@ void SpiralTreeObstructedAlgorithm::run() {
 		if (!event->isValid()) {
 			continue;
 		}
-		if (m_circle.edges().empty()) {
-			m_circle.m_onlyInterval->paintSweepShape(*m_debugPainting, m_circle.r(), event->r());
-		} else {
-			for (const auto& edge : m_circle.edges()) {
-				edge.second->nextInterval()->paintSweepShape(*m_debugPainting, m_circle.r(),
-				                                             event->r());
+		//if (eventCount == 4) {
+			if (m_circle.edges().empty()) {
+				m_circle.m_onlyInterval->paintSweepShape(*m_debugPainting, m_circle.r(), event->r());
+			} else {
+				for (const auto& edge : m_circle.edges()) {
+					//if (edge.second->nextInterval()->type() == SweepInterval::Type::REACHABLE) {
+						edge.second->nextInterval()->paintSweepShape(*m_debugPainting, m_circle.r(),
+						                                             event->r());
+					//}
+				}
 			}
-		}
+		//}
 		m_debugPainting->drawText(m_tree->rootPosition() +
 		                              (Point<Inexact>(0, event->r()) - CGAL::ORIGIN),
 		                          std::to_string(event->r()));
