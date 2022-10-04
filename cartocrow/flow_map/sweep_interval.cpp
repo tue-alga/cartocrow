@@ -65,16 +65,16 @@ std::optional<PolarPoint> SweepInterval::vanishingPoint(Number<Inexact> rMin) co
 }
 
 Polygon<Inexact> SweepInterval::sweepShape(Number<Inexact> rFrom, Number<Inexact> rTo) const {
-	Polygon<Inexact> result;
+	std::vector<PolarPoint> vertices;
 	// left side
 	if (m_nextBoundary) {
 		for (Number<Inexact> r = rTo; r > rFrom; r /= 1.05) {
 			auto p = m_nextBoundary->shape().evalForR(r);
-			result.push_back(p.toCartesian());
+			vertices.push_back(p);
 		}
 	} else {
-		result.push_back(PolarPoint(rTo, M_PI).toCartesian());
-		result.push_back(PolarPoint(rFrom, M_PI).toCartesian());
+		vertices.push_back(PolarPoint(rTo, M_PI));
+		vertices.push_back(PolarPoint(rFrom, M_PI));
 	}
 	// near side
 	Number<Inexact> nearPhiNext = m_nextBoundary ? m_nextBoundary->shape().phiForR(rFrom) : M_PI;
@@ -86,41 +86,35 @@ Polygon<Inexact> SweepInterval::sweepShape(Number<Inexact> rFrom, Number<Inexact
 		nearPhiPrevious -= 2 * M_PI;
 	}
 	for (Number<Inexact> phi = nearPhiNext; phi > nearPhiPrevious; phi -= 0.05) {
-		result.push_back(PolarPoint(rFrom, phi).toCartesian());
+		vertices.push_back(PolarPoint(rFrom, phi));
 	}
 	// right side
 	if (m_previousBoundary) {
 		for (Number<Inexact> r = rFrom; r < rTo; r *= 1.05) {
 			auto p = m_previousBoundary->shape().evalForR(r);
-			result.push_back(p.toCartesian());
+			vertices.push_back(p);
 		}
 	} else {
-		result.push_back(PolarPoint(rFrom, -M_PI).toCartesian());
-		result.push_back(PolarPoint(rTo, -M_PI).toCartesian());
+		vertices.push_back(PolarPoint(rFrom, -M_PI));
+		vertices.push_back(PolarPoint(rTo, -M_PI));
 	}
 	// far side
 	Number<Inexact> farPhiPrevious =
 	    m_previousBoundary ? m_previousBoundary->shape().phiForR(rTo) : -M_PI;
 	Number<Inexact> farPhiNext = m_nextBoundary ? m_nextBoundary->shape().phiForR(rTo) : M_PI;
-	for (Number<Inexact> phi = farPhiPrevious; phi < farPhiNext; phi += 0.05) {
-		result.push_back(PolarPoint(rTo, phi).toCartesian());
+	Number<Inexact> angle;
+	for (size_t i = 0; i < vertices.size() - 1; i++) {
+		Number<Inexact> phi1 = PolarPoint(vertices[i]).phi();
+		Number<Inexact> phi2 = PolarPoint(vertices[i + 1]).phi();
+		angle += wrapAngle(phi2 - phi1, -M_PI);
 	}
-	// if we have the origin on the inside of the shape, we need to walk an
-	// extra circle (unfortunately we cannot use CGAL's
-	// Polygon<Inexact>::bounded_side() because it asserts the polygon is simple
-	// which it may not be due to rounding errors
-	bool inside = false;
-	CGAL::Ray_2<Inexact> ray(CGAL::ORIGIN, Point<Inexact>(1, 0));
-	for (auto edge = result.edges_begin(); edge != result.edges_end(); ++edge) {
-		std::cout << PolarPoint(edge->start()) << std::endl;
-		if (CGAL::intersection(ray, *edge)) {
-			inside = !inside;
-		}
+	for (Number<Inexact> phi = farPhiPrevious; phi < farPhiPrevious - angle; phi += 0.05) {
+		vertices.push_back(PolarPoint(rTo, phi));
 	}
-	if (inside) {
-		for (Number<Inexact> phi = farPhiPrevious; phi < farPhiNext + 2 * M_PI; phi += 0.05) {
-			result.push_back(PolarPoint(rTo, phi).toCartesian());
-		}
+
+	Polygon<Inexact> result;
+	for (auto vertex : vertices) {
+		result.push_back(vertex.toCartesian());
 	}
 	return result;
 }
