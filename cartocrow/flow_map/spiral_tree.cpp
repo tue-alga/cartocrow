@@ -170,7 +170,7 @@ void SpiralTree::subdivideClosestAndSpiral(Obstacle& obstacle) {
 
 		// compute R and phi of the spiral points
 		const Number<Inexact> rSpiral = closest.r() / std::sin(m_restrictingAngle);
-		const int sign = start.phi() < end.phi() ? -1 : 1;
+		const int sign = segment.isLeftLine() ? 1 : -1;
 		const Number<Inexact> phiStartSideSpiral = closest.phi() + sign * phi_offset;
 		const Number<Inexact> phiEndSideSpiral = closest.phi() - sign * phi_offset;
 
