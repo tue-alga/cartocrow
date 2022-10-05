@@ -103,9 +103,9 @@ Polygon<Inexact> SweepInterval::sweepShape(Number<Inexact> rFrom, Number<Inexact
 	    m_previousBoundary ? m_previousBoundary->shape().phiForR(rTo) : -M_PI;
 	Number<Inexact> farPhiNext = m_nextBoundary ? m_nextBoundary->shape().phiForR(rTo) : M_PI;
 	Number<Inexact> angle;
-	for (size_t i = 0; i < vertices.size() - 1; i++) {
-		Number<Inexact> phi1 = PolarPoint(vertices[i]).phi();
-		Number<Inexact> phi2 = PolarPoint(vertices[i + 1]).phi();
+	for (size_t i = 0; i + 1 < vertices.size(); i++) {
+		Number<Inexact> phi1 = vertices[i].phi();
+		Number<Inexact> phi2 = vertices[i + 1].phi();
 		angle += wrapAngle(phi2 - phi1, -M_PI);
 	}
 	for (Number<Inexact> phi = farPhiPrevious; phi < farPhiPrevious - angle; phi += 0.05) {
