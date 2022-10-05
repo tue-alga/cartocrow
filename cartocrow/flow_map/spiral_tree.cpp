@@ -76,7 +76,6 @@ void SpiralTree::addObstacle(const Polygon<Inexact>& shape) {
 void SpiralTree::addShields() {
 	for (const std::shared_ptr<Place>& place : places()) {
 		PolarPoint position(place->m_position, CGAL::ORIGIN - rootPosition());
-		std::cout << position << std::endl;
 		if (position.r() == 0) {
 			continue;
 		}

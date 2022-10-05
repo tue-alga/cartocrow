@@ -89,8 +89,18 @@ Number<Inexact> SweepEdgeShape::phiForR(Number<Inexact> r) const {
 		PolarSegment s(m_start, *m_end);
 		std::array<Number<Inexact>, 2> phis;
 		int phiCount = s.collectPhi(r, &phis[0]);
-		assert(phiCount != 0); // line segment did not contain the given phi
-		assert(phiCount == 1); // line segment contained two of the given phis
+		assert(phiCount <= 1); // line segment contained two of the given phis
+		if (phiCount == 0) {
+			// for floating-point robustness: if we are just within the near-far
+			// range, then it can happen that PolarSegment claims there is no
+			// intersection even though there should be one; in this case simply
+			// return the near or far φ
+			if (!farR() || std::abs(r - nearR()) < std::abs(r - *farR())) {
+				return nearEndpoint().phi();
+			} else {
+				return farEndpoint()->phi();
+			}
+		}
 		return phis[0];
 	} else {
 		Spiral s(m_start, m_type == Type::LEFT_SPIRAL ? -m_alpha : m_alpha);
