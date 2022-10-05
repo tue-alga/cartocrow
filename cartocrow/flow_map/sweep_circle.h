@@ -86,6 +86,10 @@ class SweepCircle {
 	/// meant for debug purposes.
 	void print() const;
 
+	/// Checks if the sweep circle consists of only a single interval, so it has
+	/// no edges.
+	bool isEmpty() const;
+
 	/// Returns the number of intervals on the sweep circle.
 	std::size_t intervalCount() const;
 

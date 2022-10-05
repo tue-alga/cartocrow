@@ -167,6 +167,10 @@ void SweepCircle::print() const {
 	std::cout << " →" << std::endl;
 }
 
+bool SweepCircle::isEmpty() const {
+	return m_edges.empty();
+}
+
 std::size_t SweepCircle::intervalCount() const {
 	return std::max(std::size_t(1), m_edges.size());
 }
