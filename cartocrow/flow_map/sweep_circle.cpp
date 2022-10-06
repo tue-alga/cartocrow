@@ -39,8 +39,8 @@ void SweepCircle::grow(Number<Inexact> r) {
 		return;
 	}
 
-	// reinsert edges that moved counter-clockwise over the φ = π ray
 	std::vector<EdgeMap::node_type> toReinsert;
+	// remove edges that moved counter-clockwise over the φ = π ray
 	for (auto e = --m_edges.end(); e != m_edges.begin(); --e) {
 		auto beforeGrowing = e->first.evalForR(previousR);
 		auto afterGrowing = e->first.evalForR(r);
@@ -52,12 +52,7 @@ void SweepCircle::grow(Number<Inexact> r) {
 			break;
 		}
 	}
-	for (auto& node : toReinsert) {
-		m_edges.insert(std::move(node));
-	}
-
-	// reinsert edges that moved clockwise over the φ = π ray
-	toReinsert.clear();
+	// remove edges that moved clockwise over the φ = π ray
 	for (auto e = m_edges.begin(); e != --m_edges.end(); ++e) {
 		auto beforeGrowing = e->first.evalForR(previousR);
 		auto afterGrowing = e->first.evalForR(r);
@@ -69,6 +64,7 @@ void SweepCircle::grow(Number<Inexact> r) {
 			break;
 		}
 	}
+	// reinsert them
 	for (auto& node : toReinsert) {
 		m_edges.insert(std::move(node));
 	}
