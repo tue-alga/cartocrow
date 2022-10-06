@@ -22,7 +22,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "spiral_tree_demo.h"
 
 #include <QApplication>
-#include <qnamespace.h>
 
 #include "cartocrow/core/core.h"
 #include "cartocrow/core/timer.h"
@@ -84,9 +83,14 @@ SpiralTreeDemo::SpiralTreeDemo() {
 	m_obstacle.push_back(Point<Inexact>(-37, 175));
 	m_obstacle.push_back(Point<Inexact>(-50, 100));*/
 
-	m_obstacle.push_back(Point<Inexact>(-7, 19));
-	m_obstacle.push_back(Point<Inexact>(-38, 56));
-	m_obstacle.push_back(Point<Inexact>(-36, 11));
+	// φ = π issues
+	/*m_obstacle.push_back(Point<Inexact>(-7, 19));
+	m_obstacle.push_back(Point<Inexact>(-76, 30));
+	m_obstacle.push_back(Point<Inexact>(-82, -47));*/
+
+	m_obstacle.push_back(Point<Inexact>(0, 7));
+	m_obstacle.push_back(Point<Inexact>(4, 11));
+	m_obstacle.push_back(Point<Inexact>(-8, 8));
 
 	m_renderer = new GeometryWidget();
 	setCentralWidget(m_renderer);
@@ -130,8 +134,14 @@ SpiralTreeDemo::SpiralTreeDemo() {
 void SpiralTreeDemo::recalculate() {
 	Timer t;
 	auto tree = std::make_shared<SpiralTree>(Point<Inexact>(0, 0), m_alpha);
-	tree->addPlace("p1", Point<Inexact>(0, 400), 1);
+	tree->addPlace("p1", Point<Inexact>(0, 20), 1);
+	tree->addPlace("p2", Point<Inexact>(6, 7), 1);
+	tree->addPlace("p3", Point<Inexact>(-18, 0), 1);
+	tree->addPlace("p4", Point<Inexact>(4, -9), 1);
+	tree->addPlace("p5", Point<Inexact>(-4, -11), 1);
 	tree->addObstacle(m_obstacle);
+	tree->addShields();
+	t.stamp("Constructing tree and obstacles");
 	SpiralTreeObstructedAlgorithm algorithm(tree);
 	algorithm.run();
 	t.stamp("Computing reachable region");
@@ -147,6 +157,10 @@ void SpiralTreeDemo::recalculate() {
 	m_renderer->addPainting(algorithm.debugPainting());
 
 	m_renderer->update();
+
+	/*IpeRenderer ipeRenderer(painting);
+	ipeRenderer.addPainting(algorithm.debugPainting());
+	ipeRenderer.save("/tmp/spiral-tree.ipe");*/
 }
 
 Point<Inexact>* SpiralTreeDemo::findClosestPoint(Point<Inexact> p, Number<Inexact> radius) {
