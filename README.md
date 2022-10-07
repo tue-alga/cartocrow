@@ -95,7 +95,7 @@ pacman -S mingw-w64-x86_64-cgal mingw-w64-x86_64-glog mingw-w64-x86_64-qt5 mingw
 
 The remaining dependencies need to be built manually.
 
-* **Ipelib.** Download the [source archive](https://github.com/otfried/ipe/releases/download/v7.2.24/ipe-7.2.24-src.tar.gz) and unpack it. Instead of the instructions for Ubuntu given in `install.txt`, you can use the following to install the dependencies:
+* **Ipelib.** Download the [source archive](https://github.com/otfried/ipe/releases/download/v7.2.26/ipe-7.2.26-src.tar.gz) and unpack it. Instead of the instructions for Ubuntu given in `install.txt`, you can use the following to install the dependencies:
   ```sh
   pacman -S mingw-w64-x86_64-freetype mingw-w64-x86_64-cairo mingw-w64-x86_64-libjpeg-turbo
   pacman -S mingw-w64-x86_64-libpng mingw-w64-x86_64-lua mingw-w64-x86_64-zlib
@@ -179,7 +179,7 @@ If you want to use [cartocrow-web](https://github.com/tue-alga/cartocrow-web), c
 
 ## Usage
 
-Cartocrow provides a command-line application, simply called `cartocrow`, which can be used to generate maps. To use it, you need a JSON file describing the map to generate, which can then be passed to `cartocrow`:
+CartoCrow provides a command-line application, simply called `cartocrow`, which can be used to generate maps. To use it, you need a JSON file describing the map to generate, which can then be passed to `cartocrow`:
 
 ```bash
 build/frontend/cartocrow <json-file>
