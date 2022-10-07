@@ -16,4 +16,4 @@ jobs:
     - name: Build
       run: cmake --build build-clang -j4
     - name: Test
-      run: build-clang/test/cartocrow-test
+      run: build-clang/test/cartocrow_test

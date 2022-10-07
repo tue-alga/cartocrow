@@ -16,4 +16,4 @@ jobs:
     - name: Build
       run: cmake --build build -j4
     - name: Test
-      run: build/test/cartocrow-test
+      run: build/test/cartocrow_test
