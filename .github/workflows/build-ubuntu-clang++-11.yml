@@ -12,8 +12,8 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: CMake 
-      run: cmake -DCMAKE_BUILD_TYPE=Release -S . -B build
+      run: cmake -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_BUILD_TYPE=Release -S . -B build-clang
     - name: Build
-      run: cmake --build build -j4
+      run: cmake --build build-clang -j4
     - name: Test
-      run: build/test/cartocrow-test
+      run: build-clang/test/cartocrow-test
