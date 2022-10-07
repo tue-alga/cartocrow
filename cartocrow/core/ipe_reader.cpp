@@ -20,6 +20,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "ipe_reader.h"
 
 #include <CGAL/Boolean_set_operations_2/Gps_polygon_validation.h>
+
 #include <ipebase.h>
 #include <ipegeo.h>
 #include <ipeshape.h>
@@ -40,7 +41,7 @@ std::shared_ptr<ipe::Document> IpeReader::loadIpeFile(const std::filesystem::pat
 		input.assign(Iterator(fin), Iterator());
 	}
 
-	ipe::Platform::initLib(70224);
+	ipe::Platform::initLib(ipe::IPELIB_VERSION);
 	int load_reason = 0;
 	ipe::Buffer buffer(input.c_str(), input.size());
 	ipe::BufferSource bufferSource(buffer);
