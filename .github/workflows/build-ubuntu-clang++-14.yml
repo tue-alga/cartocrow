@@ -1,4 +1,4 @@
-name: Linux (clang++-11 | Ubuntu 22.04)
+name: Linux (clang++-14 | Ubuntu 22.04)
 
 on:
   push:
