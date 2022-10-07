@@ -1,0 +1,19 @@
+name: Linux (g++-11 | Ubuntu 22.04)
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build:
+    runs-on: self-hosted
+    steps:
+    - uses: actions/checkout@v3
+    - name: CMake 
+      run: cmake -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_BUILD_TYPE=Release -S . -B build
+    - name: Build
+      run: cmake --build build -j4
+    - name: Test
+      run: build/test/cartocrow_test
