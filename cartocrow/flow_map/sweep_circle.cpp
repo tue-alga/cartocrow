@@ -88,7 +88,8 @@ bool SweepCircle::isValid() const {
 		int edgeId = 0;
 		for (auto edge = m_edges.begin(); edge != m_edges.end(); ++edge) {
 			Number<Inexact> phi = edge->first.phiForR(m_r);
-			if (phi < previousPhi) {
+			// compare with a small epsilon to handle floating-point inaccuracy
+			if (phi < previousPhi - 0.000001) {
 				std::cout << "sweep circle is invalid because edge " << edgeId
 				          << " (at φ = " << phi / M_PI
 				          << "π) is ordered after the edge at φ = " << previousPhi / M_PI << "π"
