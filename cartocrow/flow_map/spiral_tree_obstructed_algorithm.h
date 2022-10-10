@@ -85,6 +85,14 @@ class SpiralTreeObstructedAlgorithm {
 		/// Checks if this event is still valid.
 		virtual bool isValid() const;
 
+		/// Inserts join events for all edges starting at the event position.
+		void insertJoinEvents();
+		/// Inserts a join event for the interval vanishing with the given edge
+		/// as the previous boundary. If the provided interval never vanishes,
+		/// or the interval consists of two segment edges, no join event is
+		/// inserted.
+		void insertJoinEventFor(SweepCircle::EdgeMap::iterator previousEdge);
+
 	  protected:
 		PolarPoint m_position;
 		Type m_type;
@@ -147,14 +155,6 @@ class SpiralTreeObstructedAlgorithm {
 		void handleNear();
 		/// Handles a far vertex event.
 		void handleFar();
-
-		/// Inserts join events for all edges starting at the event position.
-		void insertJoinEvents();
-		/// Inserts a join event for the interval vanishing with the given edge
-		/// as the previous boundary. If the provided interval never vanishes,
-		/// or the interval consists of two segment edges, no join event is
-		/// inserted.
-		void insertJoinEventFor(SweepCircle::EdgeMap::iterator previousEdge);
 
 		/// The first edge (in counter-clockwise order around the obstacle,
 		/// coming before \ref m_e2).

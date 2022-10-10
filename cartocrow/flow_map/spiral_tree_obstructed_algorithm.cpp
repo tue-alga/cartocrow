@@ -26,8 +26,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <ostream>
 
 #include "../core/core.h"
-#include "../necklace_map/circular_range.h"
 #include "intersections.h"
+#include "polar_point.h"
 #include "polar_segment.h"
 #include "spiral_segment.h"
 #include "sweep_circle.h"
@@ -53,6 +53,65 @@ SpiralTreeObstructedAlgorithm::Event::Type SpiralTreeObstructedAlgorithm::Event:
 
 bool SpiralTreeObstructedAlgorithm::Event::isValid() const {
 	return true;
+}
+
+void SpiralTreeObstructedAlgorithm::Event::insertJoinEvents() {
+	if (m_alg->m_circle.isEmpty()) {
+		return;
+	}
+	auto [begin, end] = m_alg->m_circle.edgesAt(phi());
+	if (begin == m_alg->m_circle.begin()) {
+		insertJoinEventFor(std::prev(m_alg->m_circle.end()));
+	} else {
+		insertJoinEventFor(std::prev(begin));
+	}
+	for (auto e = begin; e != end; ++e) {
+		insertJoinEventFor(e);
+	}
+}
+
+void SpiralTreeObstructedAlgorithm::Event::insertJoinEventFor(
+    SweepCircle::EdgeMap::iterator rightEdge) {
+	SweepInterval* interval = rightEdge->second->nextInterval();
+	if (interval->previousBoundary() == nullptr || interval->nextBoundary() == nullptr) {
+		return;
+	}
+	if (interval->type() == SweepInterval::Type::OBSTACLE) {
+		return;
+	}
+	std::optional<PolarPoint> vanishingPoint = interval->vanishingPoint(m_alg->m_circle.r());
+	if (vanishingPoint) {
+		SweepCircle::EdgeMap::iterator nextEdge;
+		if (rightEdge == --m_alg->m_circle.end()) {
+			nextEdge = m_alg->m_circle.begin();
+		} else {
+			nextEdge = std::next(rightEdge);
+		}
+		m_alg->m_queue.push(std::make_shared<JoinEvent>(*vanishingPoint, rightEdge->second,
+		                                                nextEdge->second, m_alg));
+		/*std::cout << "(inserted join event at r = " << vanishingPoint->r()
+				  << " with right edge ["
+		          << rightEdge->first.nearEndpoint().toCartesian();
+		if (rightEdge->first.farEndpoint()) {
+			std::cout << " – " << rightEdge->first.farEndpoint()->toCartesian();
+		}
+		std::cout << "] and left edge [" << nextEdge->first.nearEndpoint().toCartesian();
+		if (nextEdge->first.farEndpoint()) {
+			std::cout << " – " << nextEdge->first.farEndpoint()->toCartesian();
+		}
+		std::cout << "])" << std::endl;*/
+	} else {
+		/*std::cout << "(ignored join event for ["
+		          << interval->previousBoundary()->shape().nearEndpoint().toCartesian();
+		if (interval->previousBoundary()->shape().farEndpoint()) {
+			std::cout << " – " << interval->previousBoundary()->shape().farEndpoint()->toCartesian();
+		}
+		std::cout << "]  →  [" << interval->nextBoundary()->shape().nearEndpoint().toCartesian();
+		if (interval->nextBoundary()->shape().farEndpoint()) {
+			std::cout << " – " << interval->nextBoundary()->shape().farEndpoint()->toCartesian();
+		}
+		std::cout << "])" << std::endl;*/
+	}
 }
 
 SpiralTreeObstructedAlgorithm::NodeEvent::NodeEvent(PolarPoint position,
@@ -246,65 +305,6 @@ SpiralTreeObstructedAlgorithm::VertexEvent::determineSide() {
 	assert(false); // near or far r (of both m_e1 and m_e2) needs to be equal to r() of event
 }
 
-void SpiralTreeObstructedAlgorithm::VertexEvent::insertJoinEvents() {
-	if (m_alg->m_circle.isEmpty()) {
-		return;
-	}
-	auto [begin, end] = m_alg->m_circle.edgesAt(phi());
-	if (begin == m_alg->m_circle.begin()) {
-		insertJoinEventFor(std::prev(m_alg->m_circle.end()));
-	} else {
-		insertJoinEventFor(std::prev(begin));
-	}
-	for (auto e = begin; e != end; ++e) {
-		insertJoinEventFor(e);
-	}
-}
-
-void SpiralTreeObstructedAlgorithm::VertexEvent::insertJoinEventFor(
-    SweepCircle::EdgeMap::iterator rightEdge) {
-	SweepInterval* interval = rightEdge->second->nextInterval();
-	if (interval->previousBoundary() == nullptr || interval->nextBoundary() == nullptr) {
-		return;
-	}
-	if (interval->type() == SweepInterval::Type::OBSTACLE) {
-		return;
-	}
-	std::optional<PolarPoint> vanishingPoint = interval->vanishingPoint(m_alg->m_circle.r());
-	if (vanishingPoint) {
-		SweepCircle::EdgeMap::iterator nextEdge;
-		if (rightEdge == --m_alg->m_circle.end()) {
-			nextEdge = m_alg->m_circle.begin();
-		} else {
-			nextEdge = std::next(rightEdge);
-		}
-		m_alg->m_queue.push(std::make_shared<JoinEvent>(*vanishingPoint, rightEdge->second,
-		                                                nextEdge->second, m_alg));
-		/*std::cout << "(inserted join event at r = " << vanishingPoint->r()
-				  << " with right edge ["
-		          << rightEdge->first.nearEndpoint().toCartesian();
-		if (rightEdge->first.farEndpoint()) {
-			std::cout << " – " << rightEdge->first.farEndpoint()->toCartesian();
-		}
-		std::cout << "] and left edge [" << nextEdge->first.nearEndpoint().toCartesian();
-		if (nextEdge->first.farEndpoint()) {
-			std::cout << " – " << nextEdge->first.farEndpoint()->toCartesian();
-		}
-		std::cout << "])" << std::endl;*/
-	} else {
-		/*std::cout << "(ignored join event for ["
-		          << interval->previousBoundary()->shape().nearEndpoint().toCartesian();
-		if (interval->previousBoundary()->shape().farEndpoint()) {
-			std::cout << " – " << interval->previousBoundary()->shape().farEndpoint()->toCartesian();
-		}
-		std::cout << "]  →  [" << interval->nextBoundary()->shape().nearEndpoint().toCartesian();
-		if (interval->nextBoundary()->shape().farEndpoint()) {
-			std::cout << " – " << interval->nextBoundary()->shape().farEndpoint()->toCartesian();
-		}
-		std::cout << "])" << std::endl;*/
-	}
-}
-
 SpiralTreeObstructedAlgorithm::JoinEvent::JoinEvent(PolarPoint position,
                                                     std::weak_ptr<SweepEdge> rightEdge,
                                                     std::weak_ptr<SweepEdge> leftEdge,
@@ -341,11 +341,15 @@ void SpiralTreeObstructedAlgorithm::JoinEvent::handle() {
 	} else if (previousInterval->type() == OBSTACLE) {
 		// right side is obstacle
 		auto result = m_alg->m_circle.mergeToEdge(*rightEdge, *leftEdge, rightEdge);
+		m_position = PolarPoint(r(), result.leftInterval->previousBoundary()->shape().phiForR(r()));
 
 	} else if (nextInterval->type() == OBSTACLE) {
 		// left side is obstacle
 		auto result = m_alg->m_circle.mergeToEdge(*rightEdge, *leftEdge, leftEdge);
+		m_position = PolarPoint(r(), result.leftInterval->previousBoundary()->shape().phiForR(r()));
 	}
+
+	insertJoinEvents();
 }
 
 bool SpiralTreeObstructedAlgorithm::JoinEvent::isValid() const {
