@@ -19,12 +19,13 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "sweep_interval.h"
 
+#include "../core/core.h"
 #include "../renderer/geometry_renderer.h"
-#include "cartocrow/core/core.h"
 #include "intersections.h"
 #include "polar_segment.h"
 #include "spiral_segment.h"
 #include "sweep_edge.h"
+
 #include <CGAL/Ray_2.h>
 #include <CGAL/enum.h>
 

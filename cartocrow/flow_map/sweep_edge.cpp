@@ -21,9 +21,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include <limits>
 
-#include "cartocrow/flow_map/sweep_interval.h"
 #include "polar_segment.h"
 #include "spiral_segment.h"
+#include "sweep_interval.h"
 
 namespace cartocrow::flow_map {
 
