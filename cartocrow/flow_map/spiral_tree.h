@@ -118,7 +118,7 @@ class SpiralTree {
 
   private:
 	/// Generates an obstacle of the given shape.
-	Obstacle makeObstacle(const Polygon<Inexact>& shape);
+	Obstacle makeObstacle(Polygon<Inexact> shape);
 	/// Subdivides edges of the given obstacle at every closest point (to the
 	/// root) and spiral point (relative to the root).
 	///

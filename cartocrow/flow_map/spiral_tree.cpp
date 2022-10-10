@@ -139,19 +139,19 @@ bool SpiralTree::isReachable(const PolarPoint& parent_point, const PolarPoint& c
 	return std::abs(spiral.angle()) <= m_restrictingAngle;
 }
 
-SpiralTree::Obstacle SpiralTree::makeObstacle(const Polygon<Inexact>& shape) {
+SpiralTree::Obstacle SpiralTree::makeObstacle(Polygon<Inexact> shape) {
 
 	Obstacle obstacle;
+
+	// enforce counter-clockwise vertex order
+	if (!shape.is_counterclockwise_oriented()) {
+		shape.reverse_orientation();
+	}
 
 	for (auto edge = shape.edges_begin(); edge != shape.edges_end(); ++edge) {
 		PolarPoint p1(edge->start(), CGAL::ORIGIN - rootPosition());
 		PolarPoint p2(edge->end(), CGAL::ORIGIN - rootPosition());
 		obstacle.push_back(std::make_shared<SweepEdge>(SweepEdgeShape(p1, p2)));
-	}
-
-	// enforce clockwise vertex order
-	if (!shape.is_counterclockwise_oriented()) {
-		obstacle.reverse();
 	}
 
 	return obstacle;
