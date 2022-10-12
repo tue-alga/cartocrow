@@ -88,9 +88,14 @@ SpiralTreeDemo::SpiralTreeDemo() {
 	m_obstacle.push_back(Point<Inexact>(-76, 30));
 	m_obstacle.push_back(Point<Inexact>(-82, -47));*/
 
+	// hitting the same obstacle edge with two spirals
+	/*m_obstacle.push_back(Point<Inexact>(0, 7));
+	m_obstacle.push_back(Point<Inexact>(4.5, 11));
+	m_obstacle.push_back(Point<Inexact>(-5.5, 9));*/
+
 	m_obstacle.push_back(Point<Inexact>(0, 7));
-	m_obstacle.push_back(Point<Inexact>(4, 11));
-	m_obstacle.push_back(Point<Inexact>(-8, 8));
+	m_obstacle.push_back(Point<Inexact>(2, 11));
+	m_obstacle.push_back(Point<Inexact>(-5.5, 9));
 
 	m_renderer = new GeometryWidget();
 	setCentralWidget(m_renderer);
@@ -118,7 +123,7 @@ SpiralTreeDemo::SpiralTreeDemo() {
 		if (m_draggedPoint != nullptr) {
 			Point<Inexact> originalPoint = *m_draggedPoint;
 			*m_draggedPoint = p;
-			if (!m_obstacle.is_simple()) {
+			if (!m_obstacle.is_simple() || m_obstacle.has_on_bounded_side(CGAL::ORIGIN)) {
 				*m_draggedPoint = originalPoint;
 			}
 			recalculate();
