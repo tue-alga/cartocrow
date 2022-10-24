@@ -94,8 +94,8 @@ SpiralTreeDemo::SpiralTreeDemo() {
 	m_obstacle.push_back(Point<Inexact>(-5.5, 9));*/
 
 	m_obstacle.push_back(Point<Inexact>(0, 7));
-	m_obstacle.push_back(Point<Inexact>(2, 11));
-	m_obstacle.push_back(Point<Inexact>(-5.5, 9));
+	m_obstacle.push_back(Point<Inexact>(4, 13));
+	m_obstacle.push_back(Point<Inexact>(-7, 10));
 
 	m_renderer = new GeometryWidget();
 	setCentralWidget(m_renderer);
@@ -158,8 +158,8 @@ void SpiralTreeDemo::recalculate() {
 	auto painting = std::make_shared<Painting>(nullptr, tree, options);
 
 	m_renderer->clear();
-	m_renderer->addPainting(painting);
-	m_renderer->addPainting(algorithm.debugPainting());
+	m_renderer->addPainting(painting, "Spiral tree");
+	m_renderer->addPainting(algorithm.debugPainting(), "Reachable region sweep");
 
 	m_renderer->update();
 

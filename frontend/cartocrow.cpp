@@ -122,7 +122,7 @@ int main(int argc, char* argv[]) {
 
 		cartocrow::renderer::GeometryWidget widget(painting);
 		if (debugPainting) {
-			widget.addPainting(debugPainting);
+			widget.addPainting(debugPainting, "Debug visualization");
 		}
 		widget.show();
 		return a.exec();

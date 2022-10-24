@@ -20,6 +20,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #ifndef CARTOCROW_RENDERER_GEOMETRY_WIDGET_H
 #define CARTOCROW_RENDERER_GEOMETRY_WIDGET_H
 
+#include <QListWidget>
 #include <QMouseEvent>
 #include <QPaintEvent>
 #include <QPainter>
@@ -52,7 +53,30 @@ struct GeometryWidgetStyle {
 	QColor m_fillColor = QColor(0, 102, 203);
 };
 
-/// QWidget specialization of the GeometryRenderer.
+/// \ref QWidget specialization of the GeometryRenderer.
+///
+/// A GeometryWidget renders the GeometryPainting using a \ref QPainter. It is
+/// well-suited to display a painting for debugging purposes, and for this
+/// purpose it supports a number of interactivity features. The user is able to
+/// pan and zoom the canvas, and the coordinate of the mouse cursor is shown in
+/// the bottom-right corner. Additionally, GeometryWidget automatically draws a
+/// Cartesian coordinate system behind the painting (this can be turned off
+/// using \ref setDrawAxes().
+///
+/// A GeometryWidget allows showing more than one painting at a time. These
+/// layers can be named (see \ref addPainting()) and if there is more than one,
+/// the user is able to toggle the visibility of each one individually.
+///
+/// It is very simple to create a GeometryWidget for a given painting and use it
+/// for debugging, for example like this:
+///
+/// ```cpp
+/// // std::shared_ptr<GeometryPainting> painting = ...;
+/// QApplication app(argc, argv);
+/// GeometryWidget widget = new GeometryWidget(painting);
+/// widget->show();
+/// app.exec();
+/// ```
 class GeometryWidget : public QWidget, GeometryRenderer {
 	Q_OBJECT;
 
@@ -78,7 +102,7 @@ class GeometryWidget : public QWidget, GeometryRenderer {
 	void setFillOpacity(int alpha) override;
 
 	/// Adds a new painting to this widget.
-	void addPainting(std::shared_ptr<GeometryPainting> painting);
+	void addPainting(std::shared_ptr<GeometryPainting> painting, const std::string& name);
 	/// Removes all paintings from this widget.
 	void clear();
 
@@ -133,8 +157,7 @@ class GeometryWidget : public QWidget, GeometryRenderer {
 	/// Converts the polygon to Qt coordinates and adds it to the QPainterPath.
 	void addPolygonToPath(QPainterPath& path, const Polygon<Inexact>& p);
 
-	/// Sets the pen and brush on \link m_painter corresponding to \link
-	/// m_style.
+	/// Sets the pen and brush on \ref m_painter corresponding to \link m_style.
 	void setupPainter();
 
 	/// Draws the axes, grid, and axis labels in the background, taking the
@@ -142,8 +165,19 @@ class GeometryWidget : public QWidget, GeometryRenderer {
 	void drawAxes();
 	/// Moves the zoom slider knob to the currently set zoom level.
 	void updateZoomSlider();
-	/// The paintings we're drawing.
-	std::vector<std::shared_ptr<GeometryPainting>> m_paintings;
+	/// Puts the layers currently in this GeometryWidget into the layer list.
+	void updateLayerList();
+	/// Data about a painting we're drawing.
+	struct DrawnPainting {
+		/// The painting itself.
+		std::shared_ptr<GeometryPainting> m_painting;
+		/// The name of the painting, to display in the layers pane.
+		std::string name;
+		/// Whether the painting is currently visible.
+		bool visible;
+	};
+	/// List of the paintings we're drawing.
+	std::vector<DrawnPainting> m_paintings;
 	/// The QPainter we are drawing with. Only valid while painting.
 	std::unique_ptr<QPainter> m_painter;
 	/// The transform from drawing coordinates to Qt coordinates.
@@ -167,9 +201,11 @@ class GeometryWidget : public QWidget, GeometryRenderer {
 	bool m_drawAxes = true;
 	/// The current drawing style.
 	GeometryWidgetStyle m_style;
-	/// A stack of drawing styles, used by \link pushStyle() and \link popStyle()
-	/// to store previously pushed styles.
+	/// A stack of drawing styles, used by \link pushStyle() and \link
+	/// popStyle() to store previously pushed styles.
 	std::stack<GeometryWidgetStyle> m_styleStack;
+	/// The list of layers, allowing the user to toggle their visibility.
+	QListWidget* m_layerList;
 	/// The toolbar containing the zoom buttons.
 	QToolBar* m_zoomBar;
 	/// The zoom out button in the toolbar.

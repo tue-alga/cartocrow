@@ -35,6 +35,15 @@ GeometryWidget::GeometryWidget() {
 	setMouseTracking(true);
 	m_transform.scale(1, -1);
 
+	m_layerList = new QListWidget(this);
+	updateLayerList();
+	connect(m_layerList, &QListWidget::itemChanged, [&]() {
+		for (int i = 0; i < m_layerList->count(); i++) {
+			m_paintings[i].visible = m_layerList->item(i)->checkState() == Qt::Checked;
+		}
+		update();
+	});
+
 	m_zoomBar = new QToolBar(this);
 	m_zoomOutButton = new QToolButton(m_zoomBar);
 	m_zoomOutButton->setText("-");
@@ -55,7 +64,7 @@ GeometryWidget::GeometryWidget() {
 }
 
 GeometryWidget::GeometryWidget(std::shared_ptr<GeometryPainting> painting) : GeometryWidget() {
-	m_paintings.push_back(painting);
+	m_paintings.push_back(DrawnPainting{painting, "", true});
 }
 
 void GeometryWidget::resizeEvent(QResizeEvent* e) {
@@ -75,9 +84,11 @@ void GeometryWidget::paintEvent(QPaintEvent* event) {
 		drawAxes();
 	}
 	for (auto painting : m_paintings) {
-		pushStyle();
-		painting->paint(*this);
-		popStyle();
+		if (painting.visible) {
+			pushStyle();
+			painting.m_painting->paint(*this);
+			popStyle();
+		}
 	}
 	m_painter->setPen(QPen(QColor(0, 0, 0)));
 	m_painter->drawText(rect().marginsRemoved(QMargins(10, 10, 10, 10)),
@@ -278,6 +289,21 @@ void GeometryWidget::updateZoomSlider() {
 	m_zoomSlider->setValue(fraction * 200);
 }
 
+void GeometryWidget::updateLayerList() {
+	if (m_paintings.size() < 2) {
+		m_layerList->hide();
+		return;
+	}
+	m_layerList->show();
+	m_layerList->clear();
+	for (auto painting : m_paintings) {
+		QListWidgetItem* item =
+		    new QListWidgetItem(QString::fromStdString(painting.name), m_layerList);
+		item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
+		item->setCheckState(painting.visible ? Qt::Checked : Qt::Unchecked);
+	}
+}
+
 void GeometryWidget::draw(const Point<Inexact>& p) {
 	m_painter->setPen(Qt::NoPen);
 	m_painter->setBrush(m_style.m_strokeColor);
@@ -395,12 +421,14 @@ void GeometryWidget::setFillOpacity(int alpha) {
 	return std::make_unique<QPainter>(this);
 }*/
 
-void GeometryWidget::addPainting(std::shared_ptr<GeometryPainting> painting) {
-	m_paintings.push_back(painting);
+void GeometryWidget::addPainting(std::shared_ptr<GeometryPainting> painting, const std::string& name) {
+	m_paintings.push_back(DrawnPainting{painting, name, true});
+	updateLayerList();
 }
 
 void GeometryWidget::clear() {
 	m_paintings.clear();
+	updateLayerList();
 }
 
 Number<Inexact> GeometryWidget::zoomFactor() const {
