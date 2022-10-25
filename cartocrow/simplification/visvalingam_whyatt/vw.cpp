@@ -20,10 +20,10 @@ void VWSimplification::simplify(const int c, const Number<Exact> t) {
 
 		VWMap::Vertex_handle best;
 		bool found = false;
-		for (auto v = map.vertices_begin(); v != map.vertices_end(); ++v) {
-
+		for (auto &v : map.vertex_handles()) {
+		
 			if (v->data().block == 0 && (!found || best->data().cost < v->data().cost)) {
-				best = &*v;
+				best = v;
 				found = true;
 			}
 		}
