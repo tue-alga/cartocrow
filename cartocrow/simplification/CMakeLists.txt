@@ -1,8 +1,9 @@
 set(SOURCES
-	vw_simplification.cpp
+	visvalingam_whyatt/vw.cpp
 )
 set(HEADERS
-	vw_simplification.h
+	visvalingam_whyatt/vw.h
+	visvalingam_whyatt/common.h
 )
 
 add_library(simplification ${SOURCES})
