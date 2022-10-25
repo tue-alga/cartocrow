@@ -57,6 +57,8 @@ template <class K> using Circle = CGAL::Circle_2<K>;
 template <class K> using Line = CGAL::Line_2<K>;
 /// A line segment in the plane. See \ref CGAL::Segment_2.
 template <class K> using Segment = CGAL::Segment_2<K>;
+/// A triangle segment in the plane. See \ref CGAL::Triangle_2.
+template <class K> using Triangle = CGAL::Triangle_2<K>;
 
 /// A polygon in the plane. See \ref CGAL::Polygon_2.
 template <class K> using Polygon = CGAL::Polygon_2<K>;
