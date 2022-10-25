@@ -32,7 +32,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 namespace cartocrow {
 
-
+struct DefaultVertex {};
+struct DefaultEdge {};
 
 struct DefaultFace {
 	std::string name;
@@ -44,13 +45,14 @@ struct DefaultFace {
 ///
 /// A RegionMap can be constructed from a \ref RegionMap by using \ref
 /// regionMapToArrangement().
-template <typename TVertexData = void, typename TEdgeData = void, typename TFaceData = DefaultFace>
-using RegionArrangement =
-    CGAL::Arrangement_2<CGAL::Arr_segment_traits_2<Exact>,
-                        CGAL::Arr_extended_dcel<CGAL::Arr_segment_traits_2<Exact>, TVertexData, TEdgeData, TFaceData>>;
+template <typename TVertexData = DefaultVertex, typename TEdgeData = DefaultEdge,
+          typename TFaceData = DefaultFace>
+using RegionArrangement = CGAL::Arrangement_2<
+    CGAL::Arr_segment_traits_2<Exact>,
+    CGAL::Arr_extended_dcel<CGAL::Arr_segment_traits_2<Exact>, TVertexData, TEdgeData, TFaceData>>;
 
 /// Creates a \ref RegionArrangement from a \ref RegionMap.
-RegionArrangement regionMapToArrangement(const RegionMap& map);
+RegionArrangement<> regionMapToArrangement(const RegionMap& map);
 
 } // namespace cartocrow
 
