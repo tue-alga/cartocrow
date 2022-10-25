@@ -32,15 +32,22 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 namespace cartocrow {
 
+
+
+struct DefaultFace {
+	std::string name;
+};
+
 /// An arrangement consisting of polygonal regions.
 ///
 /// This is an \ref Arrangement where each face has an ID.
 ///
 /// A RegionMap can be constructed from a \ref RegionMap by using \ref
 /// regionMapToArrangement().
+template <typename TVertexData = void, typename TEdgeData = void, typename TFaceData = DefaultFace>
 using RegionArrangement =
     CGAL::Arrangement_2<CGAL::Arr_segment_traits_2<Exact>,
-                        CGAL::Arr_face_extended_dcel<CGAL::Arr_segment_traits_2<Exact>, std::string>>;
+                        CGAL::Arr_extended_dcel<CGAL::Arr_segment_traits_2<Exact>, TVertexData, TEdgeData, TFaceData>>;
 
 /// Creates a \ref RegionArrangement from a \ref RegionMap.
 RegionArrangement regionMapToArrangement(const RegionMap& map);
