@@ -65,6 +65,7 @@ On Windows systems, we recommend using [vcpkg](https://github.com/microsoft/vcpk
   vcpkg install cgal:x64-windows
   vcpkg install qt5:x64-windows
   vcpkg install glog:x64-windows
+  vcpkg install nlohmann-json:x64-windows
   ```
 
   This step can take a very long time, especially compiling CGAL (around 30 minutes) and Qt (around 2 hours).
