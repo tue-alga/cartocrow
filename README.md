@@ -154,8 +154,8 @@ CartoCrow uses CMake as its build system and can therefore be built like any oth
 
 **Windows (MSVC)**
 ```sh
-cmake.exe -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=<install-directory> -DCMAKE_TOOLCHAIN_FILE=<path-to-vcpkg>\scripts\buildsystems\vcpkg.cmake -S . -B build
-cmake.exe --build build
+cmake.exe -DCMAKE_INSTALL_PREFIX=<install-directory> -DCMAKE_TOOLCHAIN_FILE=<path-to-vcpkg>\scripts\buildsystems\vcpkg.cmake -S . -B build
+cmake.exe --build build --config Release
 cmake.exe --install build
 ```
 
