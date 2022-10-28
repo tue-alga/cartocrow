@@ -368,7 +368,7 @@ std::vector<ReachableRegionAlgorithm::UnreachableRegionVertex> ReachableRegionAl
 	m_circle.print();
 	int eventCount = 0; // TODO debug: limit number of events handled
 	// main loop, handle all events
-	while (!m_queue.empty() && eventCount++ < 100) {
+	while (!m_queue.empty() /*&& eventCount++ < 3*/) {
 		std::shared_ptr<Event> event = m_queue.top();
 		m_queue.pop();
 		if (!event->isValid()) {

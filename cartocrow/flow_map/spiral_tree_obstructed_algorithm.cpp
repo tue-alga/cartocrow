@@ -371,12 +371,10 @@ void SpiralTreeObstructedAlgorithm::run() {
 	          << "\033[1m Step 2: Inwards sweep to construct the spiral tree \033[0m\n"
 	          << "\033[1m────────────────────────────────────────────────────\033[0m\n";
 
-	return; // TODO
-
 	// insert all terminals into the event queue
 	for (const std::shared_ptr<Node>& node : m_tree->nodes()) {
 		if (node->m_position.r() > 0) {
-			m_queue.push(std::make_shared<NodeEvent>(node->m_position, this));
+			//m_queue.push(std::make_shared<NodeEvent>(node->m_position, this));
 		}
 	}
 
@@ -395,14 +393,19 @@ void SpiralTreeObstructedAlgorithm::run() {
 		}
 		m_debugPainting->setStroke(Color{220, 20, 70}, 1);
 		m_debugPainting->draw(vertex.m_location.toCartesian());
-		m_queue.push(std::make_shared<VertexEvent>(vertex.m_location, vertex.m_e1, vertex.m_e2, this));
+		//m_queue.push(std::make_shared<VertexEvent>(vertex.m_location, vertex.m_e1, vertex.m_e2, this));
+	}
+
+	if (m_queue.size() == 0) {
+		// TODO error or something
+		return;
 	}
 
 	m_circle.grow(2 * m_queue.top()->r());
 	m_circle.print();
 	int eventCount = 0; // TODO debug: limit number of events handled
 	// main loop, handle all events
-	while (!m_queue.empty() && eventCount++ < 100) {
+	while (!m_queue.empty() && eventCount++ < 0) {
 		std::shared_ptr<Event> event = m_queue.top();
 		m_queue.pop();
 		if (!event->isValid()) {
