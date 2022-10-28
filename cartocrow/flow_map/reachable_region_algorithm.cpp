@@ -74,7 +74,7 @@ void ReachableRegionAlgorithm::Event::insertJoinEvents() {
 }
 
 void ReachableRegionAlgorithm::Event::insertJoinEventFor(SweepCircle::EdgeMap::iterator rightEdge) {
-	SweepInterval* interval = rightEdge->second->nextInterval();
+	SweepInterval* interval = (*rightEdge)->nextInterval();
 	if (interval->previousBoundary() == nullptr || interval->nextBoundary() == nullptr) {
 		return;
 	}
@@ -89,8 +89,8 @@ void ReachableRegionAlgorithm::Event::insertJoinEventFor(SweepCircle::EdgeMap::i
 		} else {
 			nextEdge = std::next(rightEdge);
 		}
-		m_alg->m_queue.push(std::make_shared<JoinEvent>(*vanishingPoint, rightEdge->second,
-		                                                nextEdge->second, m_alg));
+		m_alg->m_queue.push(
+		    std::make_shared<JoinEvent>(*vanishingPoint, *rightEdge, *nextEdge, m_alg));
 		/*std::cout << "(inserted join event at r = " << vanishingPoint->r()
 				  << " with right edge ["
 		          << rightEdge->first.nearEndpoint().toCartesian();
@@ -164,15 +164,15 @@ void ReachableRegionAlgorithm::VertexEvent::handleLeft() {
 	using enum SweepEdgeShape::Type;
 	SweepInterval* outsideInterval = m_e2->nextInterval();
 	if (outsideInterval->type() == SHADOW) {
-		auto result = m_alg->m_circle.switchEdge(*m_e2, m_e1);
+		auto result = m_alg->m_circle.switchEdge(m_e2, m_e1);
 	} else if (outsideInterval->type() == REACHABLE) {
 		auto spiral = std::make_shared<SweepEdge>(
 		    SweepEdgeShape(RIGHT_SPIRAL, m_position, m_alg->m_tree->restrictingAngle()));
 		if (spiral->shape().departsToLeftOf(m_e1->shape())) {
-			auto result = m_alg->m_circle.splitFromEdge(*m_e2, m_e1, spiral);
+			auto result = m_alg->m_circle.splitFromEdge(m_e2, m_e1, spiral);
 			result.middleInterval->setType(SHADOW);
 		} else {
-			auto result = m_alg->m_circle.switchEdge(*m_e2, m_e1);
+			auto result = m_alg->m_circle.switchEdge(m_e2, m_e1);
 		}
 	} else if (outsideInterval->type() == OBSTACLE) {
 		// a vertex event cannot have an obstacle interval on the outside
@@ -185,15 +185,15 @@ void ReachableRegionAlgorithm::VertexEvent::handleRight() {
 	using enum SweepEdgeShape::Type;
 	SweepInterval* outsideInterval = m_e1->previousInterval();
 	if (outsideInterval->type() == SHADOW) {
-		auto result = m_alg->m_circle.switchEdge(*m_e1, m_e2);
+		auto result = m_alg->m_circle.switchEdge(m_e1, m_e2);
 	} else if (outsideInterval->type() == REACHABLE) {
 		auto spiral = std::make_shared<SweepEdge>(
 		    SweepEdgeShape(LEFT_SPIRAL, m_position, m_alg->m_tree->restrictingAngle()));
 		if (m_e2->shape().departsToLeftOf(spiral->shape())) {
-			auto result = m_alg->m_circle.splitFromEdge(*m_e1, spiral, m_e2);
+			auto result = m_alg->m_circle.splitFromEdge(m_e1, spiral, m_e2);
 			result.middleInterval->setType(SHADOW);
 		} else {
-			auto result = m_alg->m_circle.switchEdge(*m_e1, m_e2);
+			auto result = m_alg->m_circle.switchEdge(m_e1, m_e2);
 		}
 	} else if (outsideInterval->type() == OBSTACLE) {
 		// a vertex event cannot have an obstacle interval on the outside
@@ -255,7 +255,7 @@ void ReachableRegionAlgorithm::VertexEvent::handleFar() {
 		if (previousIntervalType == nextIntervalType) {
 			// if both sides are SHADOW or both sides are REACHABLE, the entire
 			// merged interval simply becomes that type, too
-			auto result = m_alg->m_circle.mergeToInterval(*m_e1, *m_e2);
+			auto result = m_alg->m_circle.mergeToInterval(m_e1, m_e2);
 			result.mergedInterval->setType(previousIntervalType);
 		} else {
 			// else only one side is REACHABLE, we need to add a spiral to
@@ -264,12 +264,12 @@ void ReachableRegionAlgorithm::VertexEvent::handleFar() {
 			    previousIntervalType == REACHABLE ? LEFT_SPIRAL : RIGHT_SPIRAL;
 			auto spiral = std::make_shared<SweepEdge>(
 			    SweepEdgeShape(spiralType, m_position, m_alg->m_tree->restrictingAngle()));
-			auto result = m_alg->m_circle.mergeToEdge(*m_e1, *m_e2, spiral);
+			auto result = m_alg->m_circle.mergeToEdge(m_e1, m_e2, spiral);
 		}
 
 	} else if (m_e2->nextInterval() == m_e1->previousInterval()) {
 		// case 2: concave corner of an obstacle
-		auto result = m_alg->m_circle.mergeToInterval(*m_e2, *m_e1);
+		auto result = m_alg->m_circle.mergeToInterval(m_e2, m_e1);
 		result.mergedInterval->setType(OBSTACLE);
 
 	} else {
@@ -288,6 +288,7 @@ ReachableRegionAlgorithm::VertexEvent::Side ReachableRegionAlgorithm::VertexEven
 		return Side::RIGHT;
 	}
 	assert(false); // near or far r (of both m_e1 and m_e2) needs to be equal to r() of event
+	return Side::NEAR;
 }
 
 ReachableRegionAlgorithm::JoinEvent::JoinEvent(PolarPoint position,
@@ -320,20 +321,20 @@ void ReachableRegionAlgorithm::JoinEvent::handle() {
 
 	} else if (previousInterval->type() == REACHABLE && nextInterval->type() == REACHABLE) {
 		// simply merge the intervals into a big reachable interval
+		auto result = m_alg->m_circle.mergeToInterval(rightEdge, leftEdge);
 		rightEdge->shape().pruneFarSide(m_position);
 		leftEdge->shape().pruneFarSide(m_position);
-		auto result = m_alg->m_circle.mergeToInterval(*rightEdge, *leftEdge);
 		result.mergedInterval->setType(REACHABLE);
 		m_alg->m_vertices.emplace_back(m_position, rightEdge, leftEdge);
 
 	} else if (previousInterval->type() == OBSTACLE) {
 		// right side is obstacle
-		auto result = m_alg->m_circle.mergeToEdge(*rightEdge, *leftEdge, rightEdge);
+		auto result = m_alg->m_circle.mergeToEdge(rightEdge, leftEdge, rightEdge);
 		m_position = PolarPoint(r(), result.leftInterval->previousBoundary()->shape().phiForR(r()));
 
 	} else if (nextInterval->type() == OBSTACLE) {
 		// left side is obstacle
-		auto result = m_alg->m_circle.mergeToEdge(*rightEdge, *leftEdge, leftEdge);
+		auto result = m_alg->m_circle.mergeToEdge(rightEdge, leftEdge, leftEdge);
 		m_position = PolarPoint(r(), result.leftInterval->previousBoundary()->shape().phiForR(r()));
 	}
 
@@ -377,8 +378,7 @@ std::vector<ReachableRegionAlgorithm::UnreachableRegionVertex> ReachableRegionAl
 			m_circle.m_onlyInterval->paintSweepShape(*m_debugPainting, m_circle.r(), event->r());
 		} else {
 			for (const auto& edge : m_circle.edges()) {
-				edge.second->nextInterval()->paintSweepShape(*m_debugPainting, m_circle.r(),
-				                                             event->r());
+				edge->nextInterval()->paintSweepShape(*m_debugPainting, m_circle.r(), event->r());
 			}
 		}
 		m_circle.grow(event->r());

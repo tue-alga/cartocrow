@@ -20,8 +20,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #ifndef CARTOCROW_FLOW_MAP_SWEEP_CIRCLE_H
 #define CARTOCROW_FLOW_MAP_SWEEP_CIRCLE_H
 
-#include <map>
 #include <ostream>
+#include <set>
 
 #include "../core/core.h"
 #include "polar_point.h"
@@ -112,31 +112,46 @@ class SweepCircle {
 
 	/// Comparator that compares sweep edges by their phi value at the current
 	/// radius of the sweep circle.
-	struct SweepEdgeShapeComparator {
-		SweepEdgeShapeComparator(SweepCircle* owner) : m_owner(owner) {}
+	struct SweepEdgeComparator {
+		SweepEdgeComparator(SweepCircle* owner) : m_owner(owner) {}
 		SweepCircle* m_owner;
-		bool operator()(SweepEdgeShape e1, SweepEdgeShape e2) const {
-			return e1.phiForR(m_owner->m_r) < e2.phiForR(m_owner->m_r);
+		bool operator()(std::shared_ptr<SweepEdge> e1, std::shared_ptr<SweepEdge> e2) const {
+			return phiForRCorrected(e1, m_owner->m_r) < phiForRCorrected(e2, m_owner->m_r);
 		}
-		bool operator()(Number<Inexact> phi1, SweepEdgeShape e2) const {
-			return phi1 < e2.phiForR(m_owner->m_r);
+		bool operator()(Number<Inexact> phi1, std::shared_ptr<SweepEdge> e2) const {
+			return phi1 < phiForRCorrected(e2, m_owner->m_r);
 		}
-		bool operator()(SweepEdgeShape e1, Number<Inexact> phi2) const {
-			return e1.phiForR(m_owner->m_r) < phi2;
+		bool operator()(std::shared_ptr<SweepEdge> e1, Number<Inexact> phi2) const {
+			return phiForRCorrected(e1, m_owner->m_r) < phi2;
 		}
 		struct is_transparent {};
+
+	  private:
+		Number<Inexact> phiForRCorrected(std::shared_ptr<SweepEdge> e, Number<Inexact> r) const {
+			Number<Inexact> phi = e->shape().phiForR(r);
+			//std::cout << ">>>> our phi: " << phi / M_PI << std::endl;
+			if (!m_owner->isEmpty() && e != *m_owner->edges().begin() &&
+			    e->m_previousInterval != nullptr) {
+				Number<Inexact> phiPrevious = e->previousEdge()->shape().phiForR(r);
+				//std::cout << ">>>>     previous phi: " << phiPrevious / M_PI << std::endl;
+				if (phiPrevious > phi && phiPrevious < phi + M_PI / 2) {
+					//std::cout << ">>>>     bingo!" << std::endl;
+					return phiPrevious;
+				}
+			}
+			return phi;
+		}
 	};
 
 	/// The unordered set (actually a map, mapping edge shapes to SweepEdges)
 	/// storing the edges.
-	using EdgeMap =
-	    std::multimap<SweepEdgeShape, std::shared_ptr<SweepEdge>, SweepEdgeShapeComparator>;
+	using EdgeMap = std::multiset<std::shared_ptr<SweepEdge>, SweepEdgeComparator>;
 
 	/// Returns an iterator pointing at the first edge on the sweep circle.
 	EdgeMap::iterator begin();
 
 	/// Returns a pair of iterators representing the range of edges at the given
-	/// angle \f$\phi\f$, like \ref std::multimap::equal_range().
+	/// angle \f$\phi\f$, like \ref std::multiset::equal_range().
 	std::pair<EdgeMap::iterator, EdgeMap::iterator> edgesAt(Number<Inexact> phi);
 
 	/// Returns a past-the-end iterator, pointing past the last edge on the
@@ -171,7 +186,8 @@ class SweepCircle {
 	/// Assumes that the far endpoint of \f$e\f$ is currently on this sweep
 	/// circle, and the newly inserted edges have their near endpoints at the
 	/// same point on this sweep circle.
-	SplitResult splitFromEdge(SweepEdge& oldEdge, std::shared_ptr<SweepEdge> newRightEdge,
+	SplitResult splitFromEdge(std::shared_ptr<SweepEdge> oldEdge,
+	                          std::shared_ptr<SweepEdge> newRightEdge,
 	                          std::shared_ptr<SweepEdge> newLeftEdge);
 	/// Splits the given interval \f$i\f$ into two, with a new interval in
 	/// between. Assumes that the newly inserted edges have their near endpoints
@@ -189,7 +205,7 @@ class SweepCircle {
 	/// Replaces one edge \f$e\f$ by another. Assumes that the far endpoint of
 	/// \f$e\f$ is currently on this sweep circle and coincides with the near
 	/// endpoint of the new edge.
-	SwitchResult switchEdge(SweepEdge& e, std::shared_ptr<SweepEdge> newEdge);
+	SwitchResult switchEdge(std::shared_ptr<SweepEdge> e, std::shared_ptr<SweepEdge> newEdge);
 
 	/// The elements (intervals and edges) resulting from a merge operation, in
 	/// order in increasing angle over the circle.
@@ -200,16 +216,17 @@ class SweepCircle {
 	/// Removes two edges and replaces them by a single new edge. Assumes that
 	/// the far endpoints of both edges coincides and lies currently on this
 	/// sweep circle.
-	SwitchResult mergeToEdge(SweepEdge& rightEdge, SweepEdge& leftEdge,
-	                         std::shared_ptr<SweepEdge> newEdge);
+	SwitchResult mergeToEdge(std::shared_ptr<SweepEdge> rightEdge,
+	                         std::shared_ptr<SweepEdge> leftEdge, std::shared_ptr<SweepEdge> newEdge);
 	/// Removes two edges and replaces them by a new interval. Assumes that the
 	/// far endpoints of both edges coincides and lies currently on this sweep
 	/// circle.
-	MergeResult mergeToInterval(SweepEdge& rightEdge, SweepEdge& leftEdge);
+	MergeResult mergeToInterval(std::shared_ptr<SweepEdge> rightEdge,
+	                            std::shared_ptr<SweepEdge> leftEdge);
 
 	/// A map containing the sweep edges separating the intervals, indexed by
 	/// their edge shapes.
-	EdgeMap m_edges{SweepEdgeShapeComparator(this)};
+	EdgeMap m_edges{SweepEdgeComparator(this)};
 	/// If \ref m_edges is empty, this stores the one interval on the sweep
 	/// circle.
 	std::optional<SweepInterval> m_onlyInterval;

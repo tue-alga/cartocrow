@@ -190,6 +190,7 @@ Point<Inexact>* SpiralTreeDemo::findClosestPoint(Point<Inexact> p, Number<Inexac
 }
 
 int main(int argc, char* argv[]) {
+	std::cout << std::setprecision(15);
 	QApplication app(argc, argv);
 	SpiralTreeDemo demo;
 	demo.show();
