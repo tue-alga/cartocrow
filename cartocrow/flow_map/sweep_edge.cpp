@@ -45,6 +45,16 @@ std::optional<PolarPoint> SweepEdgeShape::end() const {
 	return m_end;
 }
 
+void SweepEdgeShape::pruneFarSide(PolarPoint newFar) const {
+	if (!m_end) {
+		m_end = newFar;
+	} else if (m_start.r() < m_end->r()) {
+		m_end = newFar;
+	} else {
+		m_start = newFar;
+	}
+}
+
 PolarPoint SweepEdgeShape::nearEndpoint() const {
 	if (m_end) {
 		return m_start.r() < m_end->r() ? m_start : *m_end;
@@ -74,7 +84,7 @@ std::optional<Number<Inexact>> SweepEdgeShape::farR() const {
 }
 
 Number<Inexact> SweepEdgeShape::phiForR(Number<Inexact> r) const {
-	assert(r >= nearR() && (!farR() || r <= farR())); // trying to compute phi for out-of-bounds r
+	assert(!farR() || (r >= nearR() && r <= farR())); // trying to compute phi for out-of-bounds r
 
 	// for robustness, it is important that if we are exactly at the beginning
 	// or end of the edge, we return the exact phi of its begin or end point

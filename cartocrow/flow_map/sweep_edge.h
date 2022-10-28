@@ -28,16 +28,64 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 namespace cartocrow::flow_map {
 
-/// The shape of a sweep edge: either a line segment or a spiral segment.
+/// The shape of an edge we are sweeping over: either a line segment or a spiral
+/// segment. A sweep edge shape can be seen as a function that maps \f$r\f$ to
+/// \f$\phi\f$.
+///
+/// Whether a SweepEdgeShape is a segment or a spiral is determined by its \ref
+/// type(). If the shape is a spiral, it can be either a left or a right spiral.
+///
+/// A segment is determined by two endpoints, `start` and `end`. We interpret
+/// this as a directed segment from `start` to `end`. The endpoint that is
+/// furthest away from the origin is called the *far endpoint*; the other
+/// endpoint is called the *near endpoint*.
+///
+/// A (left or right) spiral is completely determined by at a single point lying
+/// on the spiral (and its restricting angle \f$\alpha\f$, which we assume is
+/// identical for all sweep edges). This point is stored as `start`. In this
+/// case, specifying the `end` is optional. If it is specified, then it has to
+/// be further away from the origin than `start` (to make a bounded spiral
+/// segment from `start` to `end`). Otherwise, we interpret this shape as
+/// starting at `start` and ending at infinity.
+///
+/// ## Floating-point inaccuracy considerations
+///
+/// SweepEdgeShape and the flow_map module in general do not use CGAL's exact
+/// arithmetic (\ref Exact), because the shape of a logarithmic spiral cannot be
+/// expressed with rational numbers. (For example, in our algorithms we often
+/// need to compute the intersection of a segment and a spiral, for which we
+/// don't know any closed-form expression.) Therefore, we calculate with inexact
+/// (floating-point) arithmetic and hence we have to be careful not to return
+/// incorrect results due to rounding errors.
+///
+/// The implementation of SweepEdgeShape take some precautions to try to
+/// minimize any floating-point inaccuracies involved. Firstly, the endpoints of
+/// an edge shape are stored in polar coordinates, so that when the sweep circle
+/// hits an endpoint, it can be set to the exact radius of that endpoint.
+/// Secondly, SweepEdgeShape guarantees that if the requested radius is exactly
+/// that of one of the endpoints of the shape, \ref evalForR() and \ref
+/// phiForR() produce exactly the \f$\phi\f$ value of the corresponding
+/// endpoint. This means that if two edges start at the same point, and the
+/// sweep circle's radius is set to exactly the \f$r\f$ of that point, then \ref
+/// phiForR() will return the same \f$\phi\f$ for both edges. This guarantee is
+/// essential for \ref SweepCircle to work properly, as if the \f$\phi\f$ would
+/// differ even a little bit, then the edges may be inserted onto the circle in
+/// the incorrect order.
+///
+/// Unfortunately, this approach does not alleviate any and all floating-point
+/// inaccuracy issues. If that events on the sweep circle happen very close
+/// together, rounding errors can still cause out-of-order \f$\phi\f$ values. In
+/// this case, there is essentially nothing we can do to avoid problems. Such
+/// issues seem to be very rare in practice, however.
 class SweepEdgeShape {
   public:
-	/// Possible types of sweep edges.
+	/// Possible types of sweep edge shapes.
 	enum class Type {
-		/// The edge is a line segment.
+		/// The shape is a line segment.
 		SEGMENT,
-		/// The edge is a left spiral.
+		/// The shape is a left spiral.
 		LEFT_SPIRAL,
-		/// The edge is a right spiral.
+		/// The shape is a right spiral.
 		RIGHT_SPIRAL
 	};
 
@@ -54,6 +102,22 @@ class SweepEdgeShape {
 	PolarPoint start() const;
 	/// Returns the end point of this sweep edge shape.
 	std::optional<PolarPoint> end() const;
+
+	/// Prunes this edge shape so that the far endpoint now lies at the given
+	/// point `newFar`. It is assumed that `newFar` lies on (or, due to rounding
+	/// errors, at least close to) this edge shape.
+	///
+	/// \warning This method is marked `const` even though it modifies the far
+	/// endpoint of this edge shape. The reason for this is that edge shapes are
+	/// used as (`const`) keys in a \ref SweepCircle, and hence as soon as a
+	/// \ref SweepEdge is in the SweepCircle, its SweepEdgeShape cannot be
+	/// edited. However, pruning the far endpoint is necessary if we encounter
+	/// an event involving this SweepEdge, because we need to prune the edge to
+	/// the place where the event happened. This does not change the shape
+	/// itself (modulo rounding errors), it only shortens it. Hence the order of
+	/// edges on the SweepCircle is not influenced (again, modulo rounding
+	/// errors), hence marking this method `const` is justified.
+	void pruneFarSide(PolarPoint newFar) const;
 
 	/// Returns the endpoint of this sweep edge shape closer to the origin.
 	PolarPoint nearEndpoint() const;
@@ -96,9 +160,9 @@ class SweepEdgeShape {
 	/// The type of this sweep edge.
 	Type m_type;
 	/// The start point.
-	PolarPoint m_start;
+	mutable PolarPoint m_start;
 	/// The end point, if this is a segment.
-	std::optional<PolarPoint> m_end;
+	mutable std::optional<PolarPoint> m_end;
 	/// The angle, if this is a spiral.
 	Number<Inexact> m_alpha;
 };

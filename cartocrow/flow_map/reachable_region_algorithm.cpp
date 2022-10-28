@@ -19,14 +19,13 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "spiral_tree_obstructed_algorithm.h"
+#include "reachable_region_algorithm.h"
 
 #include <cmath>
 #include <optional>
 #include <ostream>
 
 #include "../core/core.h"
-#include "cartocrow/flow_map/reachable_region_algorithm.h"
 #include "intersections.h"
 #include "polar_point.h"
 #include "polar_segment.h"
@@ -36,27 +35,30 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 namespace cartocrow::flow_map {
 
-SpiralTreeObstructedAlgorithm::Event::Event(PolarPoint position, Type type,
-                                            SpiralTreeObstructedAlgorithm* alg)
+ReachableRegionAlgorithm::UnreachableRegionVertex::UnreachableRegionVertex(
+    PolarPoint location, std::shared_ptr<SweepEdge> e1, std::shared_ptr<SweepEdge> e2)
+    : m_location(location), m_e1(std::move(e1)), m_e2(std::move(e2)) {}
+
+ReachableRegionAlgorithm::Event::Event(PolarPoint position, Type type, ReachableRegionAlgorithm* alg)
     : m_position(position), m_type(type), m_alg(alg) {}
 
-Number<Inexact> SpiralTreeObstructedAlgorithm::Event::r() const {
+Number<Inexact> ReachableRegionAlgorithm::Event::r() const {
 	return m_position.r();
 }
 
-Number<Inexact> SpiralTreeObstructedAlgorithm::Event::phi() const {
+Number<Inexact> ReachableRegionAlgorithm::Event::phi() const {
 	return m_position.phi();
 }
 
-SpiralTreeObstructedAlgorithm::Event::Type SpiralTreeObstructedAlgorithm::Event::type() const {
+ReachableRegionAlgorithm::Event::Type ReachableRegionAlgorithm::Event::type() const {
 	return m_type;
 }
 
-bool SpiralTreeObstructedAlgorithm::Event::isValid() const {
+bool ReachableRegionAlgorithm::Event::isValid() const {
 	return true;
 }
 
-void SpiralTreeObstructedAlgorithm::Event::insertJoinEvents() {
+void ReachableRegionAlgorithm::Event::insertJoinEvents() {
 	if (m_alg->m_circle.isEmpty()) {
 		return;
 	}
@@ -71,8 +73,7 @@ void SpiralTreeObstructedAlgorithm::Event::insertJoinEvents() {
 	}
 }
 
-void SpiralTreeObstructedAlgorithm::Event::insertJoinEventFor(
-    SweepCircle::EdgeMap::iterator rightEdge) {
+void ReachableRegionAlgorithm::Event::insertJoinEventFor(SweepCircle::EdgeMap::iterator rightEdge) {
 	SweepInterval* interval = rightEdge->second->nextInterval();
 	if (interval->previousBoundary() == nullptr || interval->nextBoundary() == nullptr) {
 		return;
@@ -115,28 +116,12 @@ void SpiralTreeObstructedAlgorithm::Event::insertJoinEventFor(
 	}
 }
 
-SpiralTreeObstructedAlgorithm::NodeEvent::NodeEvent(PolarPoint position,
-                                                    SpiralTreeObstructedAlgorithm* alg)
-    : Event(position, Type::NODE, alg) {}
-
-void SpiralTreeObstructedAlgorithm::NodeEvent::handle() {
-	// TODO
-	std::cout << "> \033[1mhandling \033[33mnode event\033[0m\n";
-	m_alg->m_debugPainting->setMode(renderer::GeometryRenderer::stroke);
-	m_alg->m_debugPainting->setStroke(Color{240, 120, 0}, 1);
-	m_alg->m_debugPainting->draw(m_alg->m_tree->rootPosition() +
-	                             (m_position.toCartesian() - CGAL::ORIGIN));
-	m_alg->m_debugPainting->drawText(
-	    m_alg->m_tree->rootPosition() + (m_position.toCartesian() - CGAL::ORIGIN), "node");
-}
-
-SpiralTreeObstructedAlgorithm::VertexEvent::VertexEvent(PolarPoint position,
-                                                        std::shared_ptr<SweepEdge> e1,
-                                                        std::shared_ptr<SweepEdge> e2,
-                                                        SpiralTreeObstructedAlgorithm* alg)
+ReachableRegionAlgorithm::VertexEvent::VertexEvent(PolarPoint position, std::shared_ptr<SweepEdge> e1,
+                                                   std::shared_ptr<SweepEdge> e2,
+                                                   ReachableRegionAlgorithm* alg)
     : Event(position, Type::VERTEX, alg), m_e1(e1), m_e2(e2), m_side(determineSide()) {}
 
-void SpiralTreeObstructedAlgorithm::VertexEvent::handle() {
+void ReachableRegionAlgorithm::VertexEvent::handle() {
 	using enum SweepInterval::Type;
 
 	std::string side = "";
@@ -174,7 +159,7 @@ void SpiralTreeObstructedAlgorithm::VertexEvent::handle() {
 	insertJoinEvents();
 }
 
-void SpiralTreeObstructedAlgorithm::VertexEvent::handleLeft() {
+void ReachableRegionAlgorithm::VertexEvent::handleLeft() {
 	using enum SweepInterval::Type;
 	using enum SweepEdgeShape::Type;
 	SweepInterval* outsideInterval = m_e2->nextInterval();
@@ -195,7 +180,7 @@ void SpiralTreeObstructedAlgorithm::VertexEvent::handleLeft() {
 	}
 }
 
-void SpiralTreeObstructedAlgorithm::VertexEvent::handleRight() {
+void ReachableRegionAlgorithm::VertexEvent::handleRight() {
 	using enum SweepInterval::Type;
 	using enum SweepEdgeShape::Type;
 	SweepInterval* outsideInterval = m_e1->previousInterval();
@@ -216,7 +201,7 @@ void SpiralTreeObstructedAlgorithm::VertexEvent::handleRight() {
 	}
 }
 
-void SpiralTreeObstructedAlgorithm::VertexEvent::handleNear() {
+void ReachableRegionAlgorithm::VertexEvent::handleNear() {
 	using enum SweepInterval::Type;
 	using enum SweepEdgeShape::Type;
 
@@ -258,7 +243,7 @@ void SpiralTreeObstructedAlgorithm::VertexEvent::handleNear() {
 	}
 }
 
-void SpiralTreeObstructedAlgorithm::VertexEvent::handleFar() {
+void ReachableRegionAlgorithm::VertexEvent::handleFar() {
 	using enum SweepInterval::Type;
 	using enum SweepEdgeShape::Type;
 
@@ -292,8 +277,7 @@ void SpiralTreeObstructedAlgorithm::VertexEvent::handleFar() {
 	}
 }
 
-SpiralTreeObstructedAlgorithm::VertexEvent::Side
-SpiralTreeObstructedAlgorithm::VertexEvent::determineSide() {
+ReachableRegionAlgorithm::VertexEvent::Side ReachableRegionAlgorithm::VertexEvent::determineSide() {
 	if (m_e1->shape().nearR() == r() && m_e2->shape().nearR() == r()) {
 		return Side::NEAR;
 	} else if (m_e1->shape().farR() == r() && m_e2->shape().farR() == r()) {
@@ -306,13 +290,13 @@ SpiralTreeObstructedAlgorithm::VertexEvent::determineSide() {
 	assert(false); // near or far r (of both m_e1 and m_e2) needs to be equal to r() of event
 }
 
-SpiralTreeObstructedAlgorithm::JoinEvent::JoinEvent(PolarPoint position,
-                                                    std::weak_ptr<SweepEdge> rightEdge,
-                                                    std::weak_ptr<SweepEdge> leftEdge,
-                                                    SpiralTreeObstructedAlgorithm* alg)
+ReachableRegionAlgorithm::JoinEvent::JoinEvent(PolarPoint position,
+                                               std::weak_ptr<SweepEdge> rightEdge,
+                                               std::weak_ptr<SweepEdge> leftEdge,
+                                               ReachableRegionAlgorithm* alg)
     : Event(position, Type::JOIN, alg), m_rightEdge(rightEdge), m_leftEdge(leftEdge) {}
 
-void SpiralTreeObstructedAlgorithm::JoinEvent::handle() {
+void ReachableRegionAlgorithm::JoinEvent::handle() {
 	using enum SweepInterval::Type;
 	using enum SweepEdgeShape::Type;
 
@@ -336,8 +320,11 @@ void SpiralTreeObstructedAlgorithm::JoinEvent::handle() {
 
 	} else if (previousInterval->type() == REACHABLE && nextInterval->type() == REACHABLE) {
 		// simply merge the intervals into a big reachable interval
+		rightEdge->shape().pruneFarSide(m_position);
+		leftEdge->shape().pruneFarSide(m_position);
 		auto result = m_alg->m_circle.mergeToInterval(*rightEdge, *leftEdge);
 		result.mergedInterval->setType(REACHABLE);
+		m_alg->m_vertices.emplace_back(m_position, rightEdge, leftEdge);
 
 	} else if (previousInterval->type() == OBSTACLE) {
 		// right side is obstacle
@@ -353,53 +340,34 @@ void SpiralTreeObstructedAlgorithm::JoinEvent::handle() {
 	insertJoinEvents();
 }
 
-bool SpiralTreeObstructedAlgorithm::JoinEvent::isValid() const {
+bool ReachableRegionAlgorithm::JoinEvent::isValid() const {
 	// a join event is invalid if one of its edges has already been deleted
 	return !m_rightEdge.expired() && !m_leftEdge.expired();
 }
 
-SpiralTreeObstructedAlgorithm::SpiralTreeObstructedAlgorithm(
-    std::shared_ptr<SpiralTree> tree,
-    std::vector<ReachableRegionAlgorithm::UnreachableRegionVertex> vertices)
-    : m_tree(tree), m_vertices(std::move(vertices)),
-      m_debugPainting(std::make_shared<renderer::PaintingRenderer>()) {}
+ReachableRegionAlgorithm::ReachableRegionAlgorithm(std::shared_ptr<SpiralTree> tree)
+    : m_tree(tree), m_debugPainting(std::make_shared<renderer::PaintingRenderer>()) {}
 
-void SpiralTreeObstructedAlgorithm::run() {
+std::vector<ReachableRegionAlgorithm::UnreachableRegionVertex> ReachableRegionAlgorithm::run() {
 
-	std::cout << "\033[1m────────────────────────────────────────────────────\033[0m\n"
-	          << "\033[1m Step 2: Inwards sweep to construct the spiral tree \033[0m\n"
-	          << "\033[1m────────────────────────────────────────────────────\033[0m\n";
+	std::cout << "\033[1m──────────────────────────────────────────────────────────\033[0m\n"
+	          << "\033[1m Step 1: Outwards sweep to construct the reachable region \033[0m\n"
+	          << "\033[1m──────────────────────────────────────────────────────────\033[0m\n";
 
-	// insert all terminals into the event queue
-	for (const std::shared_ptr<Node>& node : m_tree->nodes()) {
-		if (node->m_position.r() > 0) {
-			m_queue.push(std::make_shared<NodeEvent>(node->m_position, this));
+	// insert all obstacle vertices into the event queue
+	for (SpiralTree::Obstacle& obstacle : m_tree->obstacles()) {
+		for (auto e = obstacle.begin(); e != obstacle.end(); e++) {
+			std::shared_ptr<SweepEdge> e1 = *e;
+			std::shared_ptr<SweepEdge> e2 = ++e == obstacle.end() ? *obstacle.begin() : *e;
+			m_queue.push(std::make_shared<VertexEvent>(e2->shape().start(), e1, e2, this));
+			e--;
 		}
 	}
 
-	// insert vertices of the unreachable region
-	for (ReachableRegionAlgorithm::UnreachableRegionVertex& vertex : m_vertices) {
-		// TODO debug drawing
-		assert(vertex.m_e1->shape().farEndpoint().has_value());
-		m_debugPainting->setStroke(Color{230, 120, 120}, 2);
-		for (Number<Inexact> r = vertex.m_e1->shape().nearR(); r < vertex.m_e1->shape().farR();
-		     r *= 1.01) {
-			m_debugPainting->draw(
-			    Segment<Inexact>(vertex.m_e1->shape().evalForR(r).toCartesian(),
-			                     vertex.m_e1->shape()
-			                         .evalForR(std::min(*vertex.m_e1->shape().farR(), r * 1.01))
-			                         .toCartesian()));
-		}
-		m_debugPainting->setStroke(Color{220, 20, 70}, 1);
-		m_debugPainting->draw(vertex.m_location.toCartesian());
-		m_queue.push(std::make_shared<VertexEvent>(vertex.m_location, vertex.m_e1, vertex.m_e2, this));
-	}
-
-	m_circle.grow(2 * m_queue.top()->r());
 	m_circle.print();
 	int eventCount = 0; // TODO debug: limit number of events handled
 	// main loop, handle all events
-	while (!m_queue.empty() && eventCount++ < 0) {
+	while (!m_queue.empty() && eventCount++ < 100) {
 		std::shared_ptr<Event> event = m_queue.top();
 		m_queue.pop();
 		if (!event->isValid()) {
@@ -408,19 +376,22 @@ void SpiralTreeObstructedAlgorithm::run() {
 		if (m_circle.edges().empty()) {
 			m_circle.m_onlyInterval->paintSweepShape(*m_debugPainting, m_circle.r(), event->r());
 		} else {
-		for (const auto& edge : m_circle.edges()) {
-			edge.second->nextInterval()->paintSweepShape(*m_debugPainting, m_circle.r(), event->r());
+			for (const auto& edge : m_circle.edges()) {
+				edge.second->nextInterval()->paintSweepShape(*m_debugPainting, m_circle.r(),
+				                                             event->r());
+			}
 		}
-		}
-		m_circle.shrink(event->r());
+		m_circle.grow(event->r());
 		m_circle.print();
 		event->handle();
 		m_circle.print();
 		assert(m_circle.isValid());
 	}
+
+	return m_vertices;
 }
 
-std::shared_ptr<renderer::GeometryPainting> SpiralTreeObstructedAlgorithm::debugPainting() {
+std::shared_ptr<renderer::GeometryPainting> ReachableRegionAlgorithm::debugPainting() {
 	return m_debugPainting;
 }
 

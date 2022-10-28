@@ -28,6 +28,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "cartocrow/flow_map/painting.h"
 #include "cartocrow/flow_map/parameters.h"
 #include "cartocrow/flow_map/place.h"
+#include "cartocrow/flow_map/reachable_region_algorithm.h"
 #include "cartocrow/flow_map/spiral_tree.h"
 #include "cartocrow/flow_map/spiral_tree_obstructed_algorithm.h"
 #include "cartocrow/renderer/geometry_painting.h"
@@ -147,9 +148,15 @@ void SpiralTreeDemo::recalculate() {
 	tree->addObstacle(m_obstacle);
 	tree->addShields();
 	t.stamp("Constructing tree and obstacles");
-	SpiralTreeObstructedAlgorithm algorithm(tree);
-	algorithm.run();
+
+	ReachableRegionAlgorithm reachableRegionAlg(tree);
+	std::vector<ReachableRegionAlgorithm::UnreachableRegionVertex> vertices =
+	    reachableRegionAlg.run();
 	t.stamp("Computing reachable region");
+
+	SpiralTreeObstructedAlgorithm spiralTreeAlg(tree, vertices);
+	spiralTreeAlg.run();
+	t.stamp("Computing spiral tree");
 
 	t.output();
 
@@ -159,7 +166,8 @@ void SpiralTreeDemo::recalculate() {
 
 	m_renderer->clear();
 	m_renderer->addPainting(painting, "Spiral tree");
-	m_renderer->addPainting(algorithm.debugPainting(), "Reachable region sweep");
+	m_renderer->addPainting(reachableRegionAlg.debugPainting(), "Reachable region sweep");
+	m_renderer->addPainting(spiralTreeAlg.debugPainting(), "Spiral tree sweep");
 
 	m_renderer->update();
 

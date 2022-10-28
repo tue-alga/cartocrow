@@ -7,6 +7,7 @@ set(SOURCES
 	polar_line.cpp
 	polar_point.cpp
 	polar_segment.cpp
+	reachable_region_algorithm.cpp
 	spiral.cpp
 	spiral_segment.cpp
 	spiral_tree.cpp
@@ -26,6 +27,7 @@ set(HEADERS
 	polar_line.h
 	polar_point.h
 	polar_segment.h
+	reachable_region_algorithm.h
 	spiral.h
 	spiral_segment.h
 	spiral_tree.h

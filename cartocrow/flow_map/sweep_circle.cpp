@@ -32,42 +32,13 @@ Number<Inexact> SweepCircle::r() {
 }
 
 void SweepCircle::grow(Number<Inexact> r) {
-	Number<Inexact> previousR = m_r;
-	m_r = r;
+	assert(r >= m_r);
+	setRadius(r);
+}
 
-	if (m_edges.empty()) {
-		return;
-	}
-
-	std::vector<EdgeMap::node_type> toReinsert;
-	// remove edges that moved counter-clockwise over the φ = π ray
-	for (auto e = --m_edges.end(); e != m_edges.begin(); --e) {
-		auto beforeGrowing = e->first.evalForR(previousR);
-		auto afterGrowing = e->first.evalForR(r);
-		if (beforeGrowing.phi() > M_PI / 2 && afterGrowing.phi() < 0) {
-			/*std::cout << "counter-clockwise wraparound at φ = " << afterGrowing.phi() / M_PI << "π"
-			          << std::endl;*/
-			toReinsert.push_back(m_edges.extract(e));
-		} else {
-			break;
-		}
-	}
-	// remove edges that moved clockwise over the φ = π ray
-	for (auto e = m_edges.begin(); e != --m_edges.end(); ++e) {
-		auto beforeGrowing = e->first.evalForR(previousR);
-		auto afterGrowing = e->first.evalForR(r);
-		if (beforeGrowing.phi() < -M_PI / 2 && afterGrowing.phi() > 0) {
-			/*std::cout << "clockwise wraparound at φ = " << afterGrowing.phi() / M_PI << "π"
-			          << std::endl;*/
-			toReinsert.push_back(m_edges.extract(e));
-		} else {
-			break;
-		}
-	}
-	// reinsert them
-	for (auto& node : toReinsert) {
-		m_edges.insert(std::move(node));
-	}
+void SweepCircle::shrink(Number<Inexact> r) {
+	assert(r <= m_r);
+	setRadius(r);
 }
 
 bool SweepCircle::isValid() const {
@@ -145,11 +116,12 @@ void SweepCircle::print() const {
 			std::cout << "\033[1;31mobstacle\033[0m";
 		}
 	};
-	std::cout << "sweep circle at \033[1mr = " << m_r << "\033[0m: ← ";
+	std::cout << "  sweep circle at \033[1mr = " << m_r << "\033[0m: ← ";
 	if (m_edges.empty()) {
 		printIntervalType(*m_onlyInterval);
 	} else {
 		printIntervalType(*m_edges.begin()->second->previousInterval());
+		int i = 0;
 		for (auto& edge : m_edges) {
 			if (edge.first.type() == SweepEdgeShape::Type::SEGMENT) {
 				std::cout << " |" << edge.first.phiForR(m_r) / M_PI << "π| ";
@@ -158,10 +130,13 @@ void SweepCircle::print() const {
 			} else if (edge.first.type() == SweepEdgeShape::Type::RIGHT_SPIRAL) {
 				std::cout << " (" << edge.first.phiForR(m_r) / M_PI << "π( ";
 			}
+			if (i++ % 4 == 3) {
+				std::cout << "…\n        … ";
+			}
 			printIntervalType(*edge.second->nextInterval());
 		}
 	}
-	std::cout << " →" << std::endl;
+	std::cout << " →\n";
 }
 
 bool SweepCircle::isEmpty() const {
@@ -360,6 +335,45 @@ SweepCircle::MergeResult SweepCircle::mergeToInterval(SweepEdge& rightEdge, Swee
 		return MergeResult{&*m_onlyInterval};
 	} else {
 		return MergeResult{previousEdge->nextInterval()};
+	}
+}
+
+void SweepCircle::setRadius(Number<Inexact> r) {
+	Number<Inexact> previousR = m_r;
+	m_r = r;
+
+	if (m_edges.empty()) {
+		return;
+	}
+
+	std::vector<EdgeMap::node_type> toReinsert;
+	// remove edges that moved counter-clockwise over the φ = π ray
+	for (auto e = --m_edges.end(); e != m_edges.begin(); --e) {
+		auto beforeGrowing = e->first.evalForR(previousR);
+		auto afterGrowing = e->first.evalForR(r);
+		if (beforeGrowing.phi() > M_PI / 2 && afterGrowing.phi() < 0) {
+			/*std::cout << "counter-clockwise wraparound at φ = " << afterGrowing.phi() / M_PI << "π"
+			          << std::endl;*/
+			toReinsert.push_back(m_edges.extract(e));
+		} else {
+			break;
+		}
+	}
+	// remove edges that moved clockwise over the φ = π ray
+	for (auto e = m_edges.begin(); e != --m_edges.end(); ++e) {
+		auto beforeGrowing = e->first.evalForR(previousR);
+		auto afterGrowing = e->first.evalForR(r);
+		if (beforeGrowing.phi() < -M_PI / 2 && afterGrowing.phi() > 0) {
+			/*std::cout << "clockwise wraparound at φ = " << afterGrowing.phi() / M_PI << "π"
+			          << std::endl;*/
+			toReinsert.push_back(m_edges.extract(e));
+		} else {
+			break;
+		}
+	}
+	// reinsert them
+	for (auto& node : toReinsert) {
+		m_edges.insert(std::move(node));
 	}
 }
 

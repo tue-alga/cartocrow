@@ -66,7 +66,7 @@ class SweepCircle {
 	/// Returns the current radius of the sweep circle.
 	Number<Inexact> r();
 
-	/// Sets the radius to the given value. This does not update anything
+	/// Grows the radius to the given value. This does not update anything
 	/// structurally; in other words, it assumes that the circle does not pass
 	/// over vertices or intersections. If it does, the sweep circle may become
 	/// invalid (see \ref isValid()).
@@ -75,6 +75,16 @@ class SweepCircle {
 	/// ray are properly handled, that is, they move to the other side of the
 	/// data structure.
 	void grow(Number<Inexact> r);
+
+	/// Shrinks the radius to the given value. This does not update anything
+	/// structurally; in other words, it assumes that the circle does not pass
+	/// over vertices or intersections. If it does, the sweep circle may become
+	/// invalid (see \ref isValid()).
+	///
+	/// This method does ensure that edges that move over the \f$\phi = \pi\f$
+	/// ray are properly handled, that is, they move to the other side of the
+	/// data structure.
+	void shrink(Number<Inexact> r);
 
 	/// Checks if this sweep circle is still valid, that is, if the edges and
 	/// intervals in this sweep circle are still ordered in counter-clockwise
@@ -206,10 +216,20 @@ class SweepCircle {
 	/// Current radius of the circle.
 	Number<Inexact> m_r;
 
-  public:
 	/// Returns a map containing the sweep edges separating the intervals,
 	/// indexed by their edge shapes.
 	const EdgeMap& edges() const;
+
+  private:
+	/// Sets the radius to the given value. This does not update anything
+	/// structurally; in other words, it assumes that the circle does not pass
+	/// over vertices or intersections. If it does, the sweep circle may become
+	/// invalid (see \ref isValid()).
+	///
+	/// This method does ensure that edges that move over the \f$\phi = \pi\f$
+	/// ray are properly handled, that is, they move to the other side of the
+	/// data structure.
+	void setRadius(Number<Inexact> r);
 };
 
 } // namespace cartocrow::flow_map

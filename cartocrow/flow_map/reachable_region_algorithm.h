@@ -19,35 +19,53 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef CARTOCROW_FLOW_MAP_SPIRAL_TREE_OBSTRUCTED_ALGORTIHM_H
-#define CARTOCROW_FLOW_MAP_SPIRAL_TREE_OBSTRUCTED_ALGORTIHM_H
+#ifndef CARTOCROW_FLOW_MAP_REACHABLE_REGION_ALGORTIHM_H
+#define CARTOCROW_FLOW_MAP_REACHABLE_REGION_ALGORTIHM_H
 
 #include <variant>
 
 #include "../renderer/geometry_painting.h"
 #include "../renderer/painting_renderer.h"
-#include "reachable_region_algorithm.h"
 #include "spiral_tree.h"
 #include "sweep_circle.h"
 
 namespace cartocrow::flow_map {
 
-/// Implementation of the algorithm to compute a spiral tree with obstacles. As
-/// the input this algorithm gets the vertices of the unreachable regions (see
-/// \ref ReachableRegionAlgorithm).
+/// Implementation of the algorithm to compute the region that is reachable by
+/// spirals that do not pass through obstacles. The unreachable region consists
+/// of course of the obstacles themselves, but additionally obstacles can cast
+/// an unreachable ‘shadow’ behind them.
 ///
-/// This is a sweep-circle algorithm which works by sweeping a circle inwards
-/// from infinity towards the origin.
-class SpiralTreeObstructedAlgorithm {
+/// This is a sweep-circle algorithm which works by sweeping a circle outwards
+/// from the origin and maintaining which part of the circle is reachable. The
+/// result is a list of vertices of the unreachable region, sorted by their
+/// distance from the origin.
+class ReachableRegionAlgorithm {
 
   public:
 	/// Constructs this class to run the algorithm for the given spiral tree.
-	SpiralTreeObstructedAlgorithm(
-	    std::shared_ptr<SpiralTree> tree,
-	    std::vector<ReachableRegionAlgorithm::UnreachableRegionVertex> vertices);
+	ReachableRegionAlgorithm(std::shared_ptr<SpiralTree> tree);
+
+	/// A vertex on the boundary of the unreachable region.
+	struct UnreachableRegionVertex {
+		/// Creates a new unreachable region vertex.
+		UnreachableRegionVertex(PolarPoint location, std::shared_ptr<SweepEdge> e1,
+		                        std::shared_ptr<SweepEdge> e2);
+		/// The location of this vertex.
+		PolarPoint m_location;
+		/// The first edge (in counter-clockwise order around the obstacle,
+		/// coming before \ref m_e2).
+		std::shared_ptr<SweepEdge> m_e1;
+		/// The second edge (in counter-clockwise order around the obstacle,
+		/// coming after \ref m_e1).
+		std::shared_ptr<SweepEdge> m_e2;
+	};
 
 	/// Runs the algorithm.
-	void run();
+	///
+	/// \return The result of the algorithm: a list of unreachable region
+	/// vertices, ordered by their distance from the origin.
+	std::vector<UnreachableRegionVertex> run();
 
 	/// Returns a \ref GeometryPainting that shows some debug information. This
 	/// painting shows some debug information about the algorithm run. If this
@@ -59,8 +77,8 @@ class SpiralTreeObstructedAlgorithm {
 	/// The spiral tree we are computing.
 	std::shared_ptr<SpiralTree> m_tree;
 
-	/// The list of vertices of the unreachable region.
-	std::vector<ReachableRegionAlgorithm::UnreachableRegionVertex> m_vertices;
+	/// Unreachable region vertices we've seen so far.
+	std::vector<UnreachableRegionVertex> m_vertices;
 
 	class Event;
 	class CompareEvents;
@@ -78,7 +96,7 @@ class SpiralTreeObstructedAlgorithm {
 			SWITCH,
 		};
 
-		Event(PolarPoint position, Type type, SpiralTreeObstructedAlgorithm* alg);
+		Event(PolarPoint position, Type type, ReachableRegionAlgorithm* alg);
 		Number<Inexact> r() const;
 		Number<Inexact> phi() const;
 		Type type() const;
@@ -98,13 +116,7 @@ class SpiralTreeObstructedAlgorithm {
 	  protected:
 		PolarPoint m_position;
 		Type m_type;
-		SpiralTreeObstructedAlgorithm* m_alg;
-	};
-
-	class NodeEvent : public Event {
-	  public:
-		NodeEvent(PolarPoint position, SpiralTreeObstructedAlgorithm* alg);
-		void handle() override;
+		ReachableRegionAlgorithm* m_alg;
 	};
 
 	/// An event that happens when the sweep circle hits an obstacle vertex. A
@@ -134,7 +146,7 @@ class SpiralTreeObstructedAlgorithm {
 		/// incident obstacle edges \f$e_1\f$ and \f$e_2\f$ (in
 		/// counter-clockwise order).
 		VertexEvent(PolarPoint position, std::shared_ptr<SweepEdge> e1,
-		            std::shared_ptr<SweepEdge> e2, SpiralTreeObstructedAlgorithm* alg);
+		            std::shared_ptr<SweepEdge> e2, ReachableRegionAlgorithm* alg);
 
 		/// Possible vertex event types.
 		enum class Side {
@@ -175,7 +187,7 @@ class SpiralTreeObstructedAlgorithm {
 	class JoinEvent : public Event {
 	  public:
 		JoinEvent(PolarPoint position, std::weak_ptr<SweepEdge> rightEdge,
-		          std::weak_ptr<SweepEdge> leftEdge, SpiralTreeObstructedAlgorithm* alg);
+		          std::weak_ptr<SweepEdge> leftEdge, ReachableRegionAlgorithm* alg);
 		void handle() override;
 		virtual bool isValid() const override;
 
@@ -186,11 +198,11 @@ class SpiralTreeObstructedAlgorithm {
 		std::weak_ptr<SweepEdge> m_leftEdge;
 	};
 
-	/// Comparator for events that sorts them in descending order of distance to
-	/// the origin (compare \ref ReachableRegionAlgorithm::CompareEvents).
+	/// Comparator for events that sorts them in ascending order of distance to
+	/// the origin (compare \ref SpiralTreeObstructedAlgorithm::CompareEvents).
 	struct CompareEvents {
 		bool operator()(std::shared_ptr<Event>& a, std::shared_ptr<Event>& b) const {
-			return a->r() < b->r();
+			return a->r() > b->r();
 		}
 	};
 
@@ -202,4 +214,4 @@ class SpiralTreeObstructedAlgorithm {
 
 } // namespace cartocrow::flow_map
 
-#endif //CARTOCROW_FLOW_MAP_SPIRAL_TREE_OBSTRUCTED_ALGORTIHM_H
+#endif //CARTOCROW_FLOW_MAP_REACHABLE_REGION_ALGORTIHM_H
