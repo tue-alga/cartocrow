@@ -129,16 +129,18 @@ class SweepCircle {
 	  private:
 		Number<Inexact> phiForRCorrected(std::shared_ptr<SweepEdge> e, Number<Inexact> r) const {
 			Number<Inexact> phi = e->shape().phiForR(r);
-			//std::cout << ">>>> our phi: " << phi / M_PI << std::endl;
+			/*std::cout << ">>>> our phi: " << phi / M_PI << std::endl;
 			if (!m_owner->isEmpty() && e != *m_owner->edges().begin() &&
 			    e->m_previousInterval != nullptr) {
 				Number<Inexact> phiPrevious = e->previousEdge()->shape().phiForR(r);
-				//std::cout << ">>>>     previous phi: " << phiPrevious / M_PI << std::endl;
+				std::cout << ">>>>     previous phi: " << phiPrevious / M_PI << std::endl;
+				std::cout << ">>>>     phi of first edge: "
+				          << (*m_owner->edges().begin())->shape().phiForR(r) / M_PI << std::endl;
 				if (phiPrevious > phi && phiPrevious < phi + M_PI / 2) {
-					//std::cout << ">>>>     bingo!" << std::endl;
+					std::cout << ">>>>     bingo!" << std::endl;
 					return phiPrevious;
 				}
-			}
+			}*/
 			return phi;
 		}
 	};
