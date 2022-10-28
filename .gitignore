@@ -8,3 +8,5 @@ doc/out/
 doc/tags/
 *.code-workspace
 compile_commands.json
+out/
+CMakeSettings.json

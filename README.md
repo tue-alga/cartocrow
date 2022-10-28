@@ -65,6 +65,7 @@ On Windows systems, we recommend using [vcpkg](https://github.com/microsoft/vcpk
   vcpkg install cgal:x64-windows
   vcpkg install qt5:x64-windows
   vcpkg install glog:x64-windows
+  vcpkg install nlohmann-json:x64-windows
   ```
 
   This step can take a very long time, especially compiling CGAL (around 30 minutes) and Qt (around 2 hours).
@@ -153,8 +154,8 @@ CartoCrow uses CMake as its build system and can therefore be built like any oth
 
 **Windows (MSVC)**
 ```sh
-cmake.exe -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=<install-directory> -DCMAKE_TOOLCHAIN_FILE=<path-to-vcpkg>\scripts\buildsystems\vcpkg.cmake -S . -B build
-cmake.exe --build build
+cmake.exe -DCMAKE_INSTALL_PREFIX=<install-directory> -DCMAKE_TOOLCHAIN_FILE=<path-to-vcpkg>\scripts\buildsystems\vcpkg.cmake -S . -B build
+cmake.exe --build build --config Release
 cmake.exe --install build
 ```
 

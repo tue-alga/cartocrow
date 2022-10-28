@@ -103,7 +103,7 @@ Polygon<Inexact> SweepInterval::sweepShape(Number<Inexact> rFrom, Number<Inexact
 	Number<Inexact> farPhiPrevious =
 	    m_previousBoundary ? m_previousBoundary->shape().phiForR(rTo) : -M_PI;
 	Number<Inexact> farPhiNext = m_nextBoundary ? m_nextBoundary->shape().phiForR(rTo) : M_PI;
-	Number<Inexact> angle;
+	Number<Inexact> angle = 0;
 	for (size_t i = 0; i + 1 < vertices.size(); i++) {
 		Number<Inexact> phi1 = vertices[i].phi();
 		Number<Inexact> phi2 = vertices[i + 1].phi();
