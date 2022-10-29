@@ -103,21 +103,15 @@ class SweepEdgeShape {
 	/// Returns the end point of this sweep edge shape.
 	std::optional<PolarPoint> end() const;
 
+	/// Prunes this edge shape so that the near endpoint now lies at the given
+	/// point `newNear`. It is assumed that `newNear` lies on (or, due to rounding
+	/// errors, at least close to) this edge shape.
+	void pruneNearSide(PolarPoint newNear);
+
 	/// Prunes this edge shape so that the far endpoint now lies at the given
 	/// point `newFar`. It is assumed that `newFar` lies on (or, due to rounding
 	/// errors, at least close to) this edge shape.
-	///
-	/// \warning This method is marked `const` even though it modifies the far
-	/// endpoint of this edge shape. The reason for this is that edge shapes are
-	/// used as (`const`) keys in a \ref SweepCircle, and hence as soon as a
-	/// \ref SweepEdge is in the SweepCircle, its SweepEdgeShape cannot be
-	/// edited. However, pruning the far endpoint is necessary if we encounter
-	/// an event involving this SweepEdge, because we need to prune the edge to
-	/// the place where the event happened. This does not change the shape
-	/// itself (modulo rounding errors), it only shortens it. Hence the order of
-	/// edges on the SweepCircle is not influenced (again, modulo rounding
-	/// errors), hence marking this method `const` is justified.
-	void pruneFarSide(PolarPoint newFar) const;
+	void pruneFarSide(PolarPoint newFar);
 
 	/// Returns the endpoint of this sweep edge shape closer to the origin.
 	PolarPoint nearEndpoint() const;
@@ -174,7 +168,7 @@ class SweepEdge {
 	explicit SweepEdge(SweepEdgeShape shape);
 
 	/// Returns the shape of this edge.
-	const SweepEdgeShape& shape() const;
+	SweepEdgeShape& shape();
 
 	/// Returns the right (i.e., previous) edge pointer.
 	SweepEdge* previousEdge();

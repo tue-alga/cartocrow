@@ -381,14 +381,14 @@ void SpiralTreeObstructedAlgorithm::run() {
 	// insert vertices of the unreachable region
 	for (ReachableRegionAlgorithm::UnreachableRegionVertex& vertex : m_vertices) {
 		// TODO debug drawing
-		assert(vertex.m_e1->shape().farEndpoint().has_value());
+		assert(vertex.m_e2->shape().farEndpoint().has_value());
 		m_debugPainting->setStroke(Color{230, 120, 120}, 2);
-		for (Number<Inexact> r = vertex.m_e1->shape().nearR(); r < vertex.m_e1->shape().farR();
+		for (Number<Inexact> r = vertex.m_e2->shape().nearR(); r < vertex.m_e2->shape().farR();
 		     r *= 1.01) {
 			m_debugPainting->draw(
-			    Segment<Inexact>(vertex.m_e1->shape().evalForR(r).toCartesian(),
-			                     vertex.m_e1->shape()
-			                         .evalForR(std::min(*vertex.m_e1->shape().farR(), r * 1.01))
+			    Segment<Inexact>(vertex.m_e2->shape().evalForR(r).toCartesian(),
+			                     vertex.m_e2->shape()
+			                         .evalForR(std::min(*vertex.m_e2->shape().farR(), r * 1.01))
 			                         .toCartesian()));
 		}
 		m_debugPainting->setStroke(Color{220, 20, 70}, 1);

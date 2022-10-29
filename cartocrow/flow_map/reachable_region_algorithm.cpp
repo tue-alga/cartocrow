@@ -171,8 +171,10 @@ void ReachableRegionAlgorithm::VertexEvent::handleLeft() {
 		if (spiral->shape().departsToLeftOf(m_e1->shape())) {
 			auto result = m_alg->m_circle.splitFromEdge(m_e2, m_e1, spiral);
 			result.middleInterval->setType(SHADOW);
+			m_alg->m_vertices.emplace_back(m_position, spiral, m_e2);
 		} else {
 			auto result = m_alg->m_circle.switchEdge(m_e2, m_e1);
+			m_alg->m_vertices.emplace_back(m_position, m_e1, m_e2);
 		}
 	} else if (outsideInterval->type() == OBSTACLE) {
 		// a vertex event cannot have an obstacle interval on the outside
@@ -192,8 +194,10 @@ void ReachableRegionAlgorithm::VertexEvent::handleRight() {
 		if (m_e2->shape().departsToLeftOf(spiral->shape())) {
 			auto result = m_alg->m_circle.splitFromEdge(m_e1, spiral, m_e2);
 			result.middleInterval->setType(SHADOW);
+			m_alg->m_vertices.emplace_back(m_position, m_e1, spiral);
 		} else {
 			auto result = m_alg->m_circle.switchEdge(m_e1, m_e2);
+			m_alg->m_vertices.emplace_back(m_position, m_e1, m_e2);
 		}
 	} else if (outsideInterval->type() == OBSTACLE) {
 		// a vertex event cannot have an obstacle interval on the outside
@@ -228,17 +232,20 @@ void ReachableRegionAlgorithm::VertexEvent::handleNear() {
 			auto result = m_alg->m_circle.splitFromInterval(leftSpiral, m_e2, m_e1);
 			result.middleLeftInterval->setType(OBSTACLE);
 			result.middleRightInterval->setType(SHADOW);
+			m_alg->m_vertices.emplace_back(m_position, m_e1, leftSpiral);
 
 		} else if (rightSpiral->shape().departsToLeftOf(m_e1->shape())) {
 			// case 3b: vertex casts shadow to the left of the obstacle
 			auto result = m_alg->m_circle.splitFromInterval(m_e2, m_e1, rightSpiral);
 			result.middleLeftInterval->setType(SHADOW);
 			result.middleRightInterval->setType(OBSTACLE);
+			m_alg->m_vertices.emplace_back(m_position, rightSpiral, m_e2);
 
 		} else {
 			// case 3c: no shadow
 			auto result = m_alg->m_circle.splitFromInterval(m_e2, m_e1);
 			result.middleInterval->setType(OBSTACLE);
+			m_alg->m_vertices.emplace_back(m_position, m_e1, m_e2);
 		}
 	}
 }
@@ -257,6 +264,9 @@ void ReachableRegionAlgorithm::VertexEvent::handleFar() {
 			// merged interval simply becomes that type, too
 			auto result = m_alg->m_circle.mergeToInterval(m_e1, m_e2);
 			result.mergedInterval->setType(previousIntervalType);
+			if (previousIntervalType == REACHABLE) {
+				m_alg->m_vertices.emplace_back(m_position, m_e1, m_e2);
+			}
 		} else {
 			// else only one side is REACHABLE, we need to add a spiral to
 			// separate them
@@ -265,12 +275,18 @@ void ReachableRegionAlgorithm::VertexEvent::handleFar() {
 			auto spiral = std::make_shared<SweepEdge>(
 			    SweepEdgeShape(spiralType, m_position, m_alg->m_tree->restrictingAngle()));
 			auto result = m_alg->m_circle.mergeToEdge(m_e1, m_e2, spiral);
+			if (previousIntervalType == REACHABLE) {
+				m_alg->m_vertices.emplace_back(m_position, m_e1, spiral);
+			} else {
+				m_alg->m_vertices.emplace_back(m_position, spiral, m_e2);
+			}
 		}
 
 	} else if (m_e2->nextInterval() == m_e1->previousInterval()) {
 		// case 2: concave corner of an obstacle
 		auto result = m_alg->m_circle.mergeToInterval(m_e2, m_e1);
 		result.mergedInterval->setType(OBSTACLE);
+		m_alg->m_vertices.emplace_back(m_position, m_e2, m_e1);
 
 	} else {
 		assert(false);
@@ -329,13 +345,17 @@ void ReachableRegionAlgorithm::JoinEvent::handle() {
 
 	} else if (previousInterval->type() == OBSTACLE) {
 		// right side is obstacle
+		rightEdge->shape().pruneNearSide(m_position);
+		leftEdge->shape().pruneFarSide(m_position);
 		auto result = m_alg->m_circle.mergeToEdge(rightEdge, leftEdge, rightEdge);
-		m_position = PolarPoint(r(), result.leftInterval->previousBoundary()->shape().phiForR(r()));
+		m_alg->m_vertices.emplace_back(m_position, rightEdge, leftEdge);
 
 	} else if (nextInterval->type() == OBSTACLE) {
 		// left side is obstacle
+		rightEdge->shape().pruneFarSide(m_position);
+		leftEdge->shape().pruneNearSide(m_position);
 		auto result = m_alg->m_circle.mergeToEdge(rightEdge, leftEdge, leftEdge);
-		m_position = PolarPoint(r(), result.leftInterval->previousBoundary()->shape().phiForR(r()));
+		m_alg->m_vertices.emplace_back(m_position, rightEdge, leftEdge);
 	}
 
 	insertJoinEvents();

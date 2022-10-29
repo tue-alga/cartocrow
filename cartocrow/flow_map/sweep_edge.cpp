@@ -45,7 +45,17 @@ std::optional<PolarPoint> SweepEdgeShape::end() const {
 	return m_end;
 }
 
-void SweepEdgeShape::pruneFarSide(PolarPoint newFar) const {
+void SweepEdgeShape::pruneNearSide(PolarPoint newNear) {
+	if (!m_end) {
+		m_start = newNear;
+	} else if (m_start.r() < m_end->r()) {
+		m_start = newNear;
+	} else {
+		m_end = newNear;
+	}
+}
+
+void SweepEdgeShape::pruneFarSide(PolarPoint newFar) {
 	if (!m_end) {
 		m_end = newFar;
 	} else if (m_start.r() < m_end->r()) {
@@ -222,7 +232,7 @@ SweepEdge::SweepEdge(SweepEdgeShape shape)
     : m_shape(shape), m_previousInterval(nullptr),
       m_nextInterval(SweepInterval(SweepInterval::Type::REACHABLE)) {}
 
-const SweepEdgeShape& SweepEdge::shape() const {
+SweepEdgeShape& SweepEdge::shape() {
 	return m_shape;
 }
 
