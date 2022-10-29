@@ -363,7 +363,8 @@ void ReachableRegionAlgorithm::JoinEvent::handle() {
 
 bool ReachableRegionAlgorithm::JoinEvent::isValid() const {
 	// a join event is invalid if one of its edges has already been deleted
-	return !m_rightEdge.expired() && !m_leftEdge.expired();
+	return !m_rightEdge.expired() && m_rightEdge.lock()->isOnCircle() && !m_leftEdge.expired() &&
+	       m_leftEdge.lock()->isOnCircle();
 }
 
 ReachableRegionAlgorithm::ReachableRegionAlgorithm(std::shared_ptr<SpiralTree> tree)

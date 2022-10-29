@@ -179,6 +179,10 @@ class SweepEdge {
 	/// Returns the left (i.e., next) edge pointer.
 	SweepEdge* nextEdge();
 
+	/// Returns whether this edge is currently on the sweep circle. (This is
+	/// maintained by \ref SweepCircle.)
+	bool isOnCircle() const;
+
   private:
 	/// The shape of this sweep edge.
 	SweepEdgeShape m_shape;
@@ -187,6 +191,8 @@ class SweepEdge {
 	SweepInterval* m_previousInterval;
 	/// The next interval (that is, the one to the left of this edge).
 	SweepInterval m_nextInterval;
+	/// Whether the edge is currently on the sweep circle.
+	bool m_onCircle = false;
 
 	friend class SweepCircle;
 };

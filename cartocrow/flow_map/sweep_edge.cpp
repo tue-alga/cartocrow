@@ -252,4 +252,8 @@ SweepEdge* SweepEdge::nextEdge() {
 	return m_nextInterval.nextBoundary();
 }
 
+bool SweepEdge::isOnCircle() const {
+	return m_onCircle;
+}
+
 } // namespace cartocrow::flow_map

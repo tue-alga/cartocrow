@@ -181,8 +181,11 @@ SweepCircle::SplitResult SweepCircle::splitFromEdge(std::shared_ptr<SweepEdge> o
 	SweepInterval nextInterval = oldEdge->m_nextInterval;
 
 	m_edges.erase(oldEdge);
+	oldEdge->m_onCircle = false;
 	m_edges.insert(newRightEdge);
+	newRightEdge->m_onCircle = true;
 	m_edges.insert(newLeftEdge);
+	newLeftEdge->m_onCircle = true;
 
 	if (previousEdge) {
 		previousEdge->m_nextInterval.m_nextBoundary = newRightEdge.get();
@@ -213,8 +216,11 @@ SweepCircle::splitFromInterval(std::shared_ptr<SweepEdge> newRightEdge,
 	SweepEdge* nextEdge = interval->nextBoundary();
 
 	m_edges.insert(newRightEdge);
+	newRightEdge->m_onCircle = true;
 	m_edges.insert(newMiddleEdge);
+	newMiddleEdge->m_onCircle = true;
 	m_edges.insert(newLeftEdge);
+	newLeftEdge->m_onCircle = true;
 
 	if (previousEdge) {
 		previousEdge->m_nextInterval =
@@ -255,7 +261,9 @@ SweepCircle::SplitResult SweepCircle::splitFromInterval(std::shared_ptr<SweepEdg
 	SweepEdge* nextEdge = interval->nextBoundary();
 
 	m_edges.insert(newRightEdge);
+	newRightEdge->m_onCircle = true;
 	m_edges.insert(newLeftEdge);
+	newLeftEdge->m_onCircle = true;
 
 	if (previousEdge) {
 		previousEdge->m_nextInterval =
@@ -294,7 +302,9 @@ SweepCircle::SwitchResult SweepCircle::switchEdge(std::shared_ptr<SweepEdge> e,
 	newEdge->m_nextInterval = SweepInterval(e->m_nextInterval.type(), newEdge.get(), nextEdge);
 
 	m_edges.erase(e);
+	e->m_onCircle = false;
 	m_edges.insert(newEdge);
+	newEdge->m_onCircle = true;
 
 	nextEdge->m_previousInterval = &newEdge->m_nextInterval;
 
@@ -313,8 +323,11 @@ SweepCircle::SwitchResult SweepCircle::mergeToEdge(std::shared_ptr<SweepEdge> ri
 	nextEdge->m_previousInterval = &newEdge->m_nextInterval;
 
 	m_edges.erase(rightEdge);
+	rightEdge->m_onCircle = false;
 	m_edges.erase(leftEdge);
+	leftEdge->m_onCircle = false;
 	m_edges.insert(newEdge);
+	newEdge->m_onCircle = true;
 
 	return SwitchResult{newEdge->previousInterval(), newEdge->nextInterval()};
 }
@@ -331,7 +344,9 @@ SweepCircle::MergeResult SweepCircle::mergeToInterval(std::shared_ptr<SweepEdge>
 	}
 
 	m_edges.erase(rightEdge);
+	rightEdge->m_onCircle = false;
 	m_edges.erase(leftEdge);
+	leftEdge->m_onCircle = false;
 
 	if (m_edges.empty()) {
 		m_onlyInterval = interval;
