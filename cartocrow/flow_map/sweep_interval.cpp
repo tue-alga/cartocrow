@@ -127,7 +127,7 @@ void SweepInterval::paintSweepShape(renderer::GeometryRenderer& renderer, Number
 	                 cartocrow::renderer::GeometryRenderer::stroke);
 	renderer.setStroke(Color{127, 127, 127}, 0.2);
 	renderer.setFillOpacity(50);
-	if (m_type == Type::SHADOW) {
+	if (m_type == Type::SHADOW || m_type == Type::FREE) {
 		renderer.setFill(Color{255, 255, 255});
 	} else if (m_type == Type::REACHABLE) {
 		renderer.setFill(Color{162, 255, 128});

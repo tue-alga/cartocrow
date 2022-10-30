@@ -59,9 +59,9 @@ namespace cartocrow::flow_map {
 /// switchEdge(), \ref mergeToEdge(), and \ref mergeToInterval().
 class SweepCircle {
   public:
-	/// Creates a sweep circle of radius 0, consisting of a single reachable
-	/// interval.
-	SweepCircle();
+	/// Creates a sweep circle of radius 0, consisting of a single interval of
+	/// the given type.
+	SweepCircle(SweepInterval::Type type);
 
 	/// Returns the current radius of the sweep circle.
 	Number<Inexact> r();

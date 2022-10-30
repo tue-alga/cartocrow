@@ -24,8 +24,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 namespace cartocrow::flow_map {
 
-SweepCircle::SweepCircle()
-    : m_r(0), m_onlyInterval(SweepInterval(SweepInterval::Type::REACHABLE)) {}
+SweepCircle::SweepCircle(SweepInterval::Type type) : m_r(0), m_onlyInterval(SweepInterval(type)) {}
 
 Number<Inexact> SweepCircle::r() {
 	return m_r;
@@ -110,6 +109,8 @@ void SweepCircle::print() const {
 	auto printIntervalType = [](const SweepInterval& interval) {
 		if (interval.type() == SweepInterval::Type::SHADOW) {
 			std::cout << "\033[1mshadow\033[0m";
+		} else if (interval.type() == SweepInterval::Type::FREE) {
+			std::cout << "\033[1mfree\033[0m";
 		} else if (interval.type() == SweepInterval::Type::REACHABLE) {
 			std::cout << "\033[1;32mreachable\033[0m";
 		} else if (interval.type() == SweepInterval::Type::OBSTACLE) {

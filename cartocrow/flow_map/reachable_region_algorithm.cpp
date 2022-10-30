@@ -368,7 +368,8 @@ bool ReachableRegionAlgorithm::JoinEvent::isValid() const {
 }
 
 ReachableRegionAlgorithm::ReachableRegionAlgorithm(std::shared_ptr<SpiralTree> tree)
-    : m_tree(tree), m_debugPainting(std::make_shared<renderer::PaintingRenderer>()) {}
+    : m_tree(tree), m_debugPainting(std::make_shared<renderer::PaintingRenderer>()),
+      m_circle(SweepInterval::Type::REACHABLE) {}
 
 std::vector<ReachableRegionAlgorithm::UnreachableRegionVertex> ReachableRegionAlgorithm::run() {
 

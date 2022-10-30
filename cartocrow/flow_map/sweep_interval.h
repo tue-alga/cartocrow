@@ -41,8 +41,12 @@ class SweepInterval {
 		REACHABLE,
 		/// The interval is not reachable due to being in an obstacle.
 		OBSTACLE,
-		/// The interval is not reachable due to being behind an obstacle.
-		SHADOW
+		/// The interval is not reachable due to being behind an obstacle (in
+		/// the first sweep).
+		SHADOW,
+		/// The interval is not being used by a spiral edge (in the second
+		/// sweep).
+		FREE
 	};
 
 	/// Creates a new sweep interval of the given type, with no associated

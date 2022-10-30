@@ -363,7 +363,8 @@ SpiralTreeObstructedAlgorithm::SpiralTreeObstructedAlgorithm(
     std::shared_ptr<SpiralTree> tree,
     std::vector<ReachableRegionAlgorithm::UnreachableRegionVertex> vertices)
     : m_tree(tree), m_vertices(std::move(vertices)),
-      m_debugPainting(std::make_shared<renderer::PaintingRenderer>()) {}
+      m_debugPainting(std::make_shared<renderer::PaintingRenderer>()),
+      m_circle(SweepInterval::Type::FREE) {}
 
 void SpiralTreeObstructedAlgorithm::run() {
 
@@ -374,7 +375,7 @@ void SpiralTreeObstructedAlgorithm::run() {
 	// insert all terminals into the event queue
 	for (const std::shared_ptr<Node>& node : m_tree->nodes()) {
 		if (node->m_position.r() > 0) {
-			//m_queue.push(std::make_shared<NodeEvent>(node->m_position, this));
+			m_queue.push(std::make_shared<NodeEvent>(node->m_position, this));
 		}
 	}
 
@@ -393,7 +394,7 @@ void SpiralTreeObstructedAlgorithm::run() {
 		}
 		m_debugPainting->setStroke(Color{220, 20, 70}, 1);
 		m_debugPainting->draw(vertex.m_location.toCartesian());
-		//m_queue.push(std::make_shared<VertexEvent>(vertex.m_location, vertex.m_e1, vertex.m_e2, this));
+		m_queue.push(std::make_shared<VertexEvent>(vertex.m_location, vertex.m_e1, vertex.m_e2, this));
 	}
 
 	if (m_queue.size() == 0) {
@@ -405,7 +406,7 @@ void SpiralTreeObstructedAlgorithm::run() {
 	m_circle.print();
 	int eventCount = 0; // TODO debug: limit number of events handled
 	// main loop, handle all events
-	while (!m_queue.empty() && eventCount++ < 0) {
+	while (!m_queue.empty() /*&& eventCount++ < 100*/) {
 		std::shared_ptr<Event> event = m_queue.top();
 		m_queue.pop();
 		if (!event->isValid()) {

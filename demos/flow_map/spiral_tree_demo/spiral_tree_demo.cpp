@@ -95,7 +95,7 @@ SpiralTreeDemo::SpiralTreeDemo() {
 	m_obstacle.push_back(Point<Inexact>(-5.5, 9));*/
 
 	m_obstacle.push_back(Point<Inexact>(0, 7));
-	m_obstacle.push_back(Point<Inexact>(6, 13));
+	m_obstacle.push_back(Point<Inexact>(3.5, 13));
 	m_obstacle.push_back(Point<Inexact>(-5, 10));
 	m_obstacle.push_back(Point<Inexact>(-3, 19));
 	m_obstacle.push_back(Point<Inexact>(-10, 4));

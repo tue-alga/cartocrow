@@ -32,7 +32,7 @@ TEST_CASE("Creating and computing phi for a segment sweep edge shape") {
 }*/
 
 TEST_CASE("Creating a sweep circle") {
-	SweepCircle circle;
+	SweepCircle circle(SweepInterval::Type::REACHABLE);
 	CHECK(circle.r() == 0);
 	CHECK(circle.isValid());
 	CHECK(circle.intervalCount() == 1);
@@ -44,7 +44,7 @@ TEST_CASE("Creating a sweep circle") {
 }
 
 TEST_CASE("Splitting, switching and merging in a sweep circle") {
-	SweepCircle circle;
+	SweepCircle circle(SweepInterval::Type::REACHABLE);
 	circle.grow(1);
 
 	auto e1 =
@@ -100,7 +100,7 @@ TEST_CASE("Splitting, switching and merging in a sweep circle") {
 }
 
 TEST_CASE("Querying a sweep circle for intervals and edges") {
-	SweepCircle circle;
+	SweepCircle circle(SweepInterval::Type::REACHABLE);
 	circle.grow(1);
 
 	SECTION("sweep circle with a single interval") {
@@ -135,7 +135,7 @@ TEST_CASE("Querying a sweep circle for intervals and edges") {
 }
 
 TEST_CASE("Growing a sweep circle") {
-	SweepCircle circle;
+	SweepCircle circle(SweepInterval::Type::REACHABLE);
 	circle.grow(1);
 
 	SECTION("with an edge moving counter-clockwise over φ = π") {
