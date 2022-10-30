@@ -32,6 +32,7 @@ class VWSimplification {
 
   private:
 	void initVertex(VWMap::Vertex_handle v);
+	void reduceCounts(VWMap::Vertex_handle v);
 
 	Number<Exact> max_cost;
 	VWMap& map;

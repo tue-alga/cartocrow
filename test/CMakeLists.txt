@@ -4,6 +4,11 @@ set(TEST_SOURCES "cartocrow_test.cpp"
 	"core/region_arrangement.cpp"
 	"core/region_map.cpp"
 	"core/timer.cpp"
+	"renderer/ipe_renderer.cpp"	
+	"necklace_map/bit_string.cpp"
+	"necklace_map/circular_range.cpp"
+	"necklace_map/necklace_map.cpp"
+	"necklace_map/range.cpp"
 	"flow_map/intersections.cpp"
 	"flow_map/polar_line.cpp"
 	"flow_map/polar_point.cpp"
@@ -12,20 +17,16 @@ set(TEST_SOURCES "cartocrow_test.cpp"
 	"flow_map/spiral_tree_obstructed_algorithm.cpp"
 	"flow_map/sweep_circle.cpp"
 	"flow_map/sweep_edge.cpp"
-	"necklace_map/bit_string.cpp"
-	"necklace_map/circular_range.cpp"
-	"necklace_map/necklace_map.cpp"
-	"necklace_map/range.cpp"
-	"renderer/ipe_renderer.cpp"
 	"simplification/vw_simplification.cpp"
 )
+
 
 add_executable(cartocrow_test cartocrow_test.cpp ${TEST_SOURCES})
 target_link_libraries(cartocrow_test
 	PRIVATE
 	core
-	flow_map
-	necklace_map
 	renderer
+	necklace_map
+	flow_map
 	simplification
 )

@@ -1,24 +1,24 @@
 #include "../catch.hpp"
 
+#include "../../cartocrow/core/core.h"
+#include "../../cartocrow/core/region_map.h"
+#include "../../cartocrow/core/region_arrangement.h"
 #include "../../cartocrow/simplification/visvalingam_whyatt/vw.h"
 
 using namespace cartocrow;
 using namespace cartocrow::simplification;
 
-TEST_CASE("Simplifying a list of points using Visvalingam-Whyatt") {
-	/*auto points = std::make_shared<std::vector<Point<Exact>>>();
-	points->push_back(Point<Exact>(0, 0));
-	points->push_back(Point<Exact>(0.5, 0.25));
-	points->push_back(Point<Exact>(1, 0));
-	points->push_back(Point<Exact>(1, 1));
-	points->push_back(Point<Exact>(0, 1));
-	REQUIRE(points->size() == 5);
+TEST_CASE("Simplifying a simple map by one") {
+	
+	/*std::shared_ptr<RegionMap> regions = std::make_shared<RegionMap>(
+	    ipeToRegionMap(std::filesystem::path("data/???.ipe")));
+	
+	auto map = regionMapToArrangement<VWVertex>(*regions);
 
-	VWSimplification vw_simplification(points);
-	vw_simplification.constructAtComplexity(4);
-	REQUIRE(points->size() == 4);
-	CHECK((*points)[0] == Point<Exact>(0, 0));
-	CHECK((*points)[1] == Point<Exact>(1, 0));
-	CHECK((*points)[2] == Point<Exact>(1, 1));
-	CHECK((*points)[3] == Point<Exact>(0, 1));*/
+	REQUIRE(map.number_of_vertices() == 10);
+
+	VWSimplification vw(map);
+	vw.simplify(0, 5000000);
+
+	REQUIRE(map.number_of_vertices() == 9);*/
 }
