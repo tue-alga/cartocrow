@@ -2,40 +2,33 @@
 
 #include "../../core/core.h"
 #include "../../core/region_arrangement.h"
+#include "vw_generic.h"
 
 namespace cartocrow::simplification {
 
-class VWVertex;
+struct VWVertex;
 
-using VWMap = RegionArrangement<VWVertex>;
+struct DefaultVW {
+	using Map = RegionArrangement<VWVertex>;
 
-class VWVertex {	
+	static Number<Exact> computeCost(Map::Vertex_handle v);
+};
+
+struct VWVertex {
 	int block;
 	Number<Exact> cost;
-	VWMap::Halfedge_handle inc;
+	DefaultVW::Map::Halfedge_handle inc;
 
 	Triangle<Exact> triangle() {
 		return Triangle<Exact>(inc->source()->point(), inc->target()->point(),
-		                inc->next()->target()->point());
+		                       inc->next()->target()->point());
 	}
-
-	friend class VWSimplification;
 };
 
-class VWSimplification {
+Number<Exact> DefaultVW::computeCost(Map::Vertex_handle v) {
+	return v->data().triangle().area();
+}
 
-  public:
-	VWSimplification(VWMap& inmap);
-	~VWSimplification();
-
-	void simplify(const int c, const Number<Exact> t);
-
-  private:
-	void initVertex(VWMap::Vertex_handle v);
-	void reduceCounts(VWMap::Vertex_handle v);
-
-	Number<Exact> max_cost;
-	VWMap& map;
-};
+using VWSimplificationArea = VWSimplification<DefaultVW>;
 
 } // namespace cartocrow::simplification

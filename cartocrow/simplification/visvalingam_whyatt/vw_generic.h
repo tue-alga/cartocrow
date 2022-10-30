@@ -1,26 +1,50 @@
-#include "vw.h"
+#pragma once
 
+#include "../../core/core.h"
+#include "../../core/region_arrangement.h"
 #include "../common.h"
 
 namespace cartocrow::simplification {
 
-VWSimplification::VWSimplification(VWMap& inmap) : map(inmap) {
-	this->max_cost = 0;
+template <class T> concept VWTraits = requires {
 
-	for (VWMap::Vertex_const_iterator v = map.vertices_begin(); v != map.vertices_end(); ++v) {
+	typename T::Map;
+};
+
+template <VWTraits VW> class VWSimplification {
+
+  public:
+	VWSimplification(){};
+	~VWSimplification(){};
+
+	void initialize(VW::Map& inmap);
+	void simplify(const int c, const Number<Exact> t);
+
+  private:
+	void initVertex(VW::Map::Vertex_handle v);
+	void reduceCounts(VW::Map::Vertex_handle v);
+
+	Number<Exact> max_cost;
+	VW::Map& map;
+};
+
+template <VWTraits VW> void VWSimplification<VW>::initialize(VW::Map& inmap) {
+	this->max_cost = 0;
+	this->map = inmap;
+
+	for (typename VW::Map::Vertex_const_iterator v = this->map.vertices_begin();
+	     v != this->map.vertices_end(); ++v) {
 		initVertex(&*v);
 	}
 }
 
-VWSimplification::~VWSimplification() {}
-
-void VWSimplification::simplify(const int c, const Number<Exact> t) {
+template <VWTraits VW> void VWSimplification<VW>::simplify(const int c, const Number<Exact> t) {
 
 	while (this->map.number_of_edges() > c) {
 
-		VWMap::Vertex_handle best;
+		typename VW::Map::Vertex_handle best;
 		bool found = false;
-		for (auto& v : map.vertex_handles()) {
+		for (auto& v : this->map.vertex_handles()) {
 
 			if (v->data().block == 0 && (!found || best->data().cost < v->data().cost)) {
 				best = v;
@@ -49,7 +73,7 @@ void VWSimplification::simplify(const int c, const Number<Exact> t) {
 	}
 }
 
-void VWSimplification::initVertex(VWMap::Vertex_handle v) {
+template <VWTraits VW> void VWSimplification<VW>::initVertex(VW::Map::Vertex_handle v) {
 
 	if (v->degree() == 2) {
 		auto inc = v->incident_halfedges();
@@ -65,21 +89,22 @@ void VWSimplification::initVertex(VWMap::Vertex_handle v) {
 
 			Triangle<Exact> T = v->data().triangle();
 
-			v->data().cost = v->data().triangle().area();
-			if (v->data().cost < 0) {
+			Number<Exact> area = T.area();
+			if (area < 0) {
 				v->data().inc = inc->next()->twin();
-				v->data().cost *= -1;
 			}
+			v->data().cost = VW::computeCost(v);
 
-			VWMap::Face_handle face = v->data().inc->face();
+			typename VW::Map::Face_handle face = v->data().inc->face();
 
 			// initialize block
+			// TODO: check vertex-based instead of halfedge based
 			if (!face->is_unbounded()) {
 				// the outer rim
-				VWMap::Ccb_halfedge_circulator circ = face->outer_ccb();
-				VWMap::Ccb_halfedge_circulator curr = circ;
+				typename VW::Map::Ccb_halfedge_circulator circ = face->outer_ccb();
+				typename VW::Map::Ccb_halfedge_circulator curr = circ;
 				do {
-					VWMap::Halfedge_handle curr_e = curr;
+					typename VW::Map::Halfedge_handle curr_e = curr;
 					if (curr_e != v->data().inc && curr_e != v->data().inc->next() &&
 					    curr_e != v->data().inc->next()->next() &&
 					    T.has_on_bounded_side(curr_e->source()->point())) {
@@ -89,11 +114,12 @@ void VWSimplification::initVertex(VWMap::Vertex_handle v) {
 			}
 
 			// holes
-			for (VWMap::Hole_iterator h = face->holes_begin(); h != face->holes_end(); ++h) {
-				VWMap::Ccb_halfedge_circulator circ = *h;
-				VWMap::Ccb_halfedge_circulator curr = circ;
+			for (typename VW::Map::Hole_iterator h = face->holes_begin(); h != face->holes_end();
+			     ++h) {
+				typename VW::Map::Ccb_halfedge_circulator circ = *h;
+				typename VW::Map::Ccb_halfedge_circulator curr = circ;
 				do {
-					VWMap::Halfedge_handle curr_e = curr;
+					typename VW::Map::Halfedge_handle curr_e = curr;
 					if (curr_e != v->data().inc && curr_e != v->data().inc->next() &&
 					    curr_e != v->data().inc->next()->next() &&
 					    T.has_on_bounded_side(curr_e->source()->point())) {
@@ -104,7 +130,7 @@ void VWSimplification::initVertex(VWMap::Vertex_handle v) {
 			}
 
 			// free floating vertices
-			for (VWMap::Isolated_vertex_iterator it = face->isolated_vertices_begin();
+			for (typename VW::Map::Isolated_vertex_iterator it = face->isolated_vertices_begin();
 			     it != face->isolated_vertices_end(); ++it) {
 				if (T.has_on_bounded_side(it->point())) {
 					v->data().block++;
@@ -119,13 +145,13 @@ void VWSimplification::initVertex(VWMap::Vertex_handle v) {
 	}
 }
 
-void VWSimplification::reduceCounts(VWMap::Vertex_handle v) {
-	VWMap::Face_handle face = v->data().inc->twin()->face();
+template <VWTraits VW> void VWSimplification<VW>::reduceCounts(VW::Map::Vertex_handle v) {
+	typename VW::Map::Face_handle face = v->data().inc->twin()->face();
 
 	if (!face->is_unbounded()) {
 		// the outer rim
-		VWMap::Ccb_halfedge_circulator circ = face->outer_ccb();
-		VWMap::Ccb_halfedge_circulator curr = circ;
+		typename VW::Map::Ccb_halfedge_circulator circ = face->outer_ccb();
+		typename VW::Map::Ccb_halfedge_circulator curr = circ;
 		do {
 			// NB: may also reduce v and its neighbors, but this doesn't matter
 			if (curr->target()->data().triangle().has_on_bounded_side(v->point())) {
@@ -135,9 +161,9 @@ void VWSimplification::reduceCounts(VWMap::Vertex_handle v) {
 	}
 
 	// holes
-	for (VWMap::Hole_iterator h = face->holes_begin(); h != face->holes_end(); ++h) {
-		VWMap::Ccb_halfedge_circulator circ = *h;
-		VWMap::Ccb_halfedge_circulator curr = circ;
+	for (typename VW::Map::Hole_iterator h = face->holes_begin(); h != face->holes_end(); ++h) {
+		typename VW::Map::Ccb_halfedge_circulator circ = *h;
+		typename VW::Map::Ccb_halfedge_circulator curr = circ;
 		do {
 			// NB: may also reduce v and its neighbors, but this doesn't matter
 			if (curr->target()->data().triangle().has_on_bounded_side(v->point())) {
