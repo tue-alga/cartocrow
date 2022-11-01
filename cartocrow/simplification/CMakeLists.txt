@@ -1,9 +1,10 @@
-set(SOURCES
-	
+set(SOURCES	
+	vertex_removal/visvalingam_whyatt.cpp
 )
 set(HEADERS
-	visvalingam_whyatt/vw.h
-	visvalingam_whyatt/vw_generic.h
+	vertex_removal/visvalingam_whyatt.h
+	vertex_removal/vertex_removal.h
+	painting.h
 	common.h
 )
 
