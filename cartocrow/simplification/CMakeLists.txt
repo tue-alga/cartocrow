@@ -5,7 +5,9 @@ set(HEADERS
 	vertex_removal/visvalingam_whyatt.h
 	vertex_removal/vertex_removal.h
 	painting.h
-	common.h
+	common_arrangement.h
+	common_traits.h
+	historic_arrangement.h
 )
 
 add_library(simplification ${SOURCES})

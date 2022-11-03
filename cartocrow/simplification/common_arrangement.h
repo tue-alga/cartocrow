@@ -50,7 +50,8 @@ inline THalfedge merge_with_next(TDCEL& dcel, THalfedge edge) {
 	                       Segment<Exact>(edge->source()->point(), edge->next()->target()->point()));
 }
 
-template <class TDCEL, class TVertex> inline void shift(TDCEL& dcel, TVertex vertex, Point<Exact> pt) {
+template <class TDCEL, class TVertex>
+inline void shift(TDCEL& dcel, TVertex vertex, Point<Exact> pt) {
 	CGAL::Arr_accessor<TDCEL> acc(dcel);
 	acc.modify_vertex_ex(vertex, pt);
 }
@@ -77,8 +78,8 @@ inline void shift_target(TDCEL& dcel, THalfedge edge, Point<Exact> pt) {
 template <class TDCEL, class THalfedge>
 inline THalfedge split(TDCEL& dcel, THalfedge edge, Point<Exact> pt) {
 	CGAL::Arr_accessor<TDCEL> acc(dcel);
-	return acc.split_edge_ex(edge, pt, Segment(edge->source()->point(), pt),
-	                         Segment(pt, edge->target()->point()));
+	return acc.split_edge_ex(edge, pt, Segment<Exact>(edge->source()->point(), pt),
+	                         Segment<Exact>(pt, edge->target()->point()));
 }
 
 template <class TDCEL, class THalfedge> inline Vector<Exact> direction(THalfedge edge) {

@@ -23,10 +23,10 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <QMainWindow>
 #include <QSlider>
 
+#include "cartocrow/simplification/vertex_removal/visvalingam_whyatt.h"
 #include <cartocrow/core/core.h>
 #include <cartocrow/core/region_map.h>
 #include <cartocrow/renderer/geometry_widget.h>
-#include "cartocrow/simplification/vertex_removal/visvalingam_whyatt.h"
 
 using namespace cartocrow;
 using namespace cartocrow::simplification;
@@ -37,6 +37,9 @@ class VWDemo : public QMainWindow {
 
   public:
 	VWDemo();
+	~VWDemo() {
+		delete simplification;
+	}
 
   private:
 	void recalculate();
@@ -46,6 +49,7 @@ class VWDemo : public QMainWindow {
 	QLabel* m_cLabel;
 
 	int c;
-	RegionMap regions;
-	std::shared_ptr<VWTraits::Map> inmap;
+	std::shared_ptr<RegionMap> regions;
+	std::shared_ptr<VWTraits::Map> map;
+	VWSimplification* simplification;
 };

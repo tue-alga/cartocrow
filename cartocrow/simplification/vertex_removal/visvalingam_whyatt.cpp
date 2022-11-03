@@ -26,4 +26,12 @@ void VWTraits::vrSetHalfedge(Map::Vertex_handle v, Map::Halfedge_handle inc) {
 	v->data().inc = inc;
 }
 
+void VWTraits::histSetData(Map::Halfedge_handle e, HistoricArrangement<VWTraits>::EdgeData* data) {
+	e->data().hist = data;
+}
+
+HistoricArrangement<VWTraits>::EdgeData* VWTraits::histGetData(Map::Halfedge_handle e) {
+	return e->data().hist;
+}
+
 } // namespace cartocrow::simplification

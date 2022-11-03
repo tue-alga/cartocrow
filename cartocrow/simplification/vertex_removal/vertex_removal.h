@@ -2,22 +2,19 @@
 
 #include "../../core/core.h"
 #include "../../core/region_arrangement.h"
-#include "../common.h"
+#include "../common_traits.h"
+#include "../common_arrangement.h"
+#include "../historic_arrangement.h"
 
 namespace cartocrow::simplification {
 
-template <class T> concept VertexRemovalTraits = requires {
-
-	typename T::Map;
-};
-
-template <VertexRemovalTraits VRT> class VertexRemovalSimplification {
+template <BaseSimplificationTraits VRT> class VertexRemovalSimplification {
 
   public:
-	VertexRemovalSimplification(VRT::Map& inmap) : map(inmap), max_cost(0){};
+	VertexRemovalSimplification(VRT::Map& inmap) : map(inmap), history(HistoricArrangement<VRT>(inmap)) {};
 
 	void initialize();
-	void simplify(const int c, const Number<Exact> t);
+	void simplify(const int c);
 
   private:
 	void initVertex(VRT::Map::Vertex_handle v);
@@ -32,21 +29,22 @@ template <VertexRemovalTraits VRT> class VertexRemovalSimplification {
 	const short NOOP_TRIANGLE = -2;
 	const short NOOP_DEGREE = -3;
 
-	Number<Exact> max_cost;
 	VRT::Map& map;
+	HistoricArrangement<VRT> history;
 };
 
-template <VertexRemovalTraits VRT> void VertexRemovalSimplification<VRT>::initialize() {
-	this->max_cost = 0;
-
+template <BaseSimplificationTraits VRT> void VertexRemovalSimplification<VRT>::initialize() {
+	
 	for (typename VRT::Map::Vertex_const_iterator v = this->map.vertices_begin();
 	     v != this->map.vertices_end(); ++v) {
 		initVertex(&*v);
 	}
 }
 
-template <VertexRemovalTraits VRT>
-void VertexRemovalSimplification<VRT>::simplify(const int c, const Number<Exact> t) {
+template <BaseSimplificationTraits VRT>
+void VertexRemovalSimplification<VRT>::simplify(const int c) {
+
+	history.recallComplexity(c);
 
 	while (this->map.number_of_edges() > c) {
 
@@ -65,38 +63,27 @@ void VertexRemovalSimplification<VRT>::simplify(const int c, const Number<Exact>
 			}
 		}
 
-		if (found && best_cost <= t) {
+		if (found) {
 			// walk over twin face to reduce counts
 			reduceCounts(best);
 
 			// execute
-			if (best_cost > max_cost) {
-				max_cost = best_cost;
-			}
-
-			//std::cout << "removing " << best->point() << ", degree = " << best->degree()
-			//          << ", prev = " << VRT::vrGetHalfedge(best)->source()->point()
-			//          << ", next = " << VRT::vrGetHalfedge(best)->next()->target()->point() << "\n";
-
-			auto e = merge_with_next(map, VRT::vrGetHalfedge(best));
-
-			//std::cout << "   reached " << this->map.number_of_edges() << "\n";
+			auto e = history.mergeWithNext(VRT::vrGetHalfedge(best), best_cost);
 
 			// reinit neighbors
 			initVertex(e->source());
 			initVertex(e->target());
 
-			// NB: we only get NOOP_TRIANGLE if the vertex is actually degree 2
-			// we need to test both endpoints in case the other is of high degree
-			// but if both would be NOOP_TRIANGLE, then they identify the same third point (disconnected triangle)
-			if (VRT::vrGetBlockingNumber(e->source()) == NOOP_TRIANGLE) {
-				// we just created a triangle
-				// also update the third point
-				initVertex(e->prev()->source());
-			} else if (VRT::vrGetBlockingNumber(e->target()) == NOOP_TRIANGLE) {
-				// we just created a triangle
-				// also update the third point
+			// NB: in case of an island, both cases may trigger on the same node...
+			// really doesn't matter much since it will be a triangle and thus solved in O(1) time.
+			if (e->next()->target() == e->prev()->source()) {
+				// constructed a triangle on this side
 				initVertex(e->next()->target());
+			}
+			
+			if (e->twin()->next()->target() == e->twin()->prev()->source()) {
+				// constructed a triangle on the other side
+				initVertex(e->twin()->next()->target());
 			}
 		} else {
 			// nothing more to do
@@ -105,7 +92,7 @@ void VertexRemovalSimplification<VRT>::simplify(const int c, const Number<Exact>
 	}
 }
 
-template <VertexRemovalTraits VRT>
+template <BaseSimplificationTraits VRT>
 void VertexRemovalSimplification<VRT>::initVertex(VRT::Map::Vertex_handle v) {
 
 	if (v->degree() == 2) {
@@ -188,7 +175,7 @@ void VertexRemovalSimplification<VRT>::initVertex(VRT::Map::Vertex_handle v) {
 	}
 }
 
-template <VertexRemovalTraits VRT>
+template <BaseSimplificationTraits VRT>
 void VertexRemovalSimplification<VRT>::reduceCounts(VRT::Map::Vertex_handle v) {
 	typename VRT::Map::Face_handle face = VRT::vrGetHalfedge(v)->twin()->face();
 
