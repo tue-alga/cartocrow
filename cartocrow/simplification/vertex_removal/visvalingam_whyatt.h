@@ -2,8 +2,9 @@
 
 #include "../../core/core.h"
 #include "../../core/region_arrangement.h"
-#include "vertex_removal.h"
 #include "../historic_arrangement.h"
+#include "../oblivious_arrangement.h"
+#include "vertex_removal.h"
 
 namespace cartocrow::simplification {
 
@@ -22,9 +23,13 @@ struct VWTraits {
 	static void vrSetHalfedge(Map::Vertex_handle v, Map::Halfedge_handle inc);
 	static Map::Halfedge_handle vrGetHalfedge(Map::Vertex_handle v);
 
-	static void histSetData(Map::Halfedge_handle e, HistoricArrangement<VWTraits>::EdgeData* data);
-	static HistoricArrangement<VWTraits>::EdgeData* histGetData(Map::Halfedge_handle e);
+	static void histSetData(Map::Halfedge_handle e, EdgeHistory<VWTraits>* data);
+	static EdgeHistory<VWTraits>* histGetData(Map::Halfedge_handle e);
 };
+
+using VWSimplification = VertexRemovalSimplification<ObliviousArrangement<VWTraits>, VWTraits>;
+using VWSimplificationWithHistory =
+    VertexRemovalSimplification<HistoricArrangement<VWTraits>, VWTraits>;
 
 struct VWVertex {
 	int block;
@@ -33,9 +38,7 @@ struct VWVertex {
 };
 
 struct VWEdge {
-	HistoricArrangement<VWTraits>::EdgeData* hist = nullptr;
+	EdgeHistory<VWTraits>* hist = nullptr;
 };
-
-using VWSimplification = VertexRemovalSimplification<VWTraits>;
 
 } // namespace cartocrow::simplification

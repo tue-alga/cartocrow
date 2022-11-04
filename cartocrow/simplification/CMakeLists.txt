@@ -8,6 +8,7 @@ set(HEADERS
 	common_arrangement.h
 	common_traits.h
 	historic_arrangement.h
+	oblivious_arrangement.h
 )
 
 add_library(simplification ${SOURCES})

@@ -6,57 +6,75 @@
 
 namespace cartocrow::simplification {
 
-template <BaseSimplificationTraits BST> class HistoricArrangement {
+template <class MT, class D>
+concept EdgeStoredHistory = requires(typename MT::Map::Halfedge_handle e, D* d) {
+	requires MapType<MT>;
+
+	{MT::histSetData(e, d)};
+	{ MT::histGetData(e) } -> std::same_as<D*>;
+};
+
+template <MapType MT> struct EdgeHistory {
+
+	using Map = MT::Map;
+
+	EdgeHistory(Map::Halfedge_handle he, EdgeHistory<MT>* p, EdgeHistory<MT>* n,
+	            EdgeHistory<MT>* pt, EdgeHistory<MT>* nt, int pc, Number<Exact> pmc, Point<Exact> pl)
+	    : halfedge(he), prev(p), next(n), prev_twin(pt), next_twin(nt), post_complexity(pc),
+	      post_maxcost(pmc), pre_loc(pl) {}
+
+	Map::Halfedge_handle halfedge;
+
+	EdgeHistory<MT>* prev = nullptr;
+	EdgeHistory<MT>* next = nullptr;
+	EdgeHistory<MT>* prev_twin = nullptr;
+	EdgeHistory<MT>* next_twin = nullptr;
+
+	int post_complexity;
+	Number<Exact> post_maxcost;
+	Point<Exact> pre_loc;
+};
+
+// implements the ModifiableArrangementWithHistory concept, requiring EdgeStoredHistory on the maptype
+template <MapType MT> requires(EdgeStoredHistory<MT, EdgeHistory<MT>>) class HistoricArrangement {
   public:
-	HistoricArrangement(BST::Map& inmap) : map(inmap), max_cost(0) {
+	using Map = MT::Map;
+
+	HistoricArrangement(Map& inmap) : map(inmap), max_cost(0) {
 		in_complexity = inmap.number_of_edges();
 	};
 
 	~HistoricArrangement() {
-		for (EdgeData* op : history) {
+		for (EdgeHistory<MT>* op : history) {
 			delete op;
 		}
 
-		for (EdgeData* op : undone) {
+		for (EdgeHistory<MT>* op : undone) {
 			delete op;
 		}
 	}
 
-	struct EdgeData {
+	Map& getMap() {
+		return map;
+	}
 
-		EdgeData(BST::Map::Halfedge_handle he, EdgeData* p, EdgeData* n, EdgeData* pt, EdgeData* nt,
-		         int pc, Number<Exact> pmc, Point<Exact> pl)
-		    : halfedge(he), prev(p), next(n), prev_twin(pt), next_twin(nt), post_complexity(pc),
-		      post_maxcost(pmc), pre_loc(pl) {}
-
-		BST::Map::Halfedge_handle halfedge;
-
-		EdgeData* prev = nullptr;
-		EdgeData* next = nullptr;
-		EdgeData* prev_twin = nullptr;
-		EdgeData* next_twin = nullptr;
-
-		int post_complexity;
-		Number<Exact> post_maxcost;
-		Point<Exact> pre_loc;
-	};
-
-	BST::Map::Halfedge_handle mergeWithNext(BST::Map::Halfedge_handle e, Number<Exact> cost) {
-		EdgeData* prev = BST::histGetData(e);
-		EdgeData* next = BST::histGetData(e->next());
-		EdgeData* prev_twin = BST::histGetData(e->twin());
-		EdgeData* next_twin = BST::histGetData(e->next()->twin());
+	Map::Halfedge_handle mergeWithNext(Map::Halfedge_handle e, Number<Exact> cost) {
+		EdgeHistory<MT>* prev = MT::histGetData(e);
+		EdgeHistory<MT>* next = MT::histGetData(e->next());
+		EdgeHistory<MT>* prev_twin = MT::histGetData(e->twin());
+		EdgeHistory<MT>* next_twin = MT::histGetData(e->next()->twin());
 
 		Point<Exact> pre_loc = e->target()->point();
 		if (cost > max_cost) {
 			max_cost = cost;
 		}
 
-		typename BST::Map::Halfedge_handle newe = merge_with_next(map, e);
+		typename Map::Halfedge_handle newe = merge_with_next(map, e);
 
-		EdgeData* newd = new EdgeData(newe, prev, next, prev_twin, next_twin, map.number_of_edges(), max_cost, pre_loc);
+		EdgeHistory<MT>* newd = new EdgeHistory<MT>(newe, prev, next, prev_twin, next_twin,
+		                                            map.number_of_edges(), max_cost, pre_loc);
 
-		BST::histSetData(newe, newd);
+		MT::histSetData(newe, newd);
 
 		history.push_back(newd);
 
@@ -86,11 +104,11 @@ template <BaseSimplificationTraits BST> class HistoricArrangement {
 	}
 
 	void backInTime() {
-		EdgeData* op = history.back();
+		EdgeHistory<MT>* op = history.back();
 		history.pop_back();
 		undone.push_back(op);
 
-		typename BST::Map::Halfedge_handle inc = split(map, op->halfedge, op->pre_loc);
+		typename Map::Halfedge_handle inc = split(map, op->halfedge, op->pre_loc);
 
 		if (op->prev != nullptr)
 			op->prev->halfedge = inc;
@@ -105,7 +123,7 @@ template <BaseSimplificationTraits BST> class HistoricArrangement {
 
 	void forwardInTime() {
 
-		EdgeData* op = undone.back();
+		EdgeHistory<MT>* op = undone.back();
 		undone.pop_back();
 		history.push_back(op);
 
@@ -114,10 +132,10 @@ template <BaseSimplificationTraits BST> class HistoricArrangement {
 
   private:
 	Number<Exact> max_cost;
-	BST::Map& map;
+	Map& map;
 	int in_complexity;
-	std::vector<EdgeData*> history;
-	std::vector<EdgeData*> undone;
+	std::vector<EdgeHistory<MT>*> history;
+	std::vector<EdgeHistory<MT>*> undone;
 };
 
 } // namespace cartocrow::simplification

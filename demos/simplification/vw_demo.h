@@ -37,9 +37,9 @@ class VWDemo : public QMainWindow {
 
   public:
 	VWDemo();
-	~VWDemo() {
-		delete simplification;
-	}
+	~VWDemo(){
+		delete hist;
+	};
 
   private:
 	void recalculate();
@@ -51,5 +51,5 @@ class VWDemo : public QMainWindow {
 	int c;
 	std::shared_ptr<RegionMap> regions;
 	std::shared_ptr<VWTraits::Map> map;
-	VWSimplification* simplification;
+	HistoricArrangement<VWTraits>* hist;
 };
