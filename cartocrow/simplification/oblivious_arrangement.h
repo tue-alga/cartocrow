@@ -4,6 +4,7 @@
 #include "common_arrangement.h"
 #include "common_traits.h"
 
+/// Definitions for an ObliviousArrangement that does not keep track of the performed operations.
 namespace cartocrow::simplification {
 
 // implements the ModifiableArrangement concept
@@ -21,10 +22,6 @@ template <MapType MT> class ObliviousArrangement {
 
 	Map& getMap() {
 		return map;
-	}
-
-	void goToPresent() {
-		// skip
 	}
 
   private:

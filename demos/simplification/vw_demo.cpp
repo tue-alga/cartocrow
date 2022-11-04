@@ -1,24 +1,3 @@
-/*
-The Necklace Map console application implements the algorithmic
-geo-visualization method by the same name, developed by
-Bettina Speckmann and Kevin Verbeek at TU Eindhoven
-(DOI: 10.1109/TVCG.2010.180 & 10.1142/S021819591550003X).
-Copyright (C) 2021  Netherlands eScience Center and TU Eindhoven
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
-*/
-
 #include "vw_demo.h"
 
 #include <QApplication>
@@ -44,7 +23,7 @@ VWDemo::VWDemo() {
 	setCentralWidget(m_renderer);
 
 	std::filesystem::path file =
-	    std::filesystem::absolute(std::filesystem::path("data/europe.ipe"));
+	    std::filesystem::absolute(std::filesystem::path("data/benelux.ipe"));
 	std::cout << "reading file " << file << "\n";
 
 	this->regions = std::make_shared<RegionMap>(ipeToRegionMap(file));
@@ -69,16 +48,12 @@ VWDemo::VWDemo() {
 	
 	std::cout << "out count " << outcnt << "\n";
 
-	//if (true) {
-	// // compare running time vs no history
+	// compare running time vs no history
 	//	std::cout << "creating arrangement\n";
-
 	//	VWTraits::Map map2 =regionMapToArrangement<VWVertex, VWEdge>(*regions);
 	//	ObliviousArrangement<VWTraits> mapmod(map2);
-
 	//	int incnt2 = map2.number_of_edges();
 	//	std::cout << "in count " << incnt2 << "\n";
-
 	//	Timer t;
 	//	VWSimplification simplification2(mapmod);
 	//	simplification2.initialize();
@@ -86,11 +61,8 @@ VWDemo::VWDemo() {
 	//	simplification2.simplify(0);
 	//	t.stamp("Simplification done");
 	//	t.output();
-
 	//	int outcnt2 = map2.number_of_edges();
-
 	//	std::cout << "out count " << outcnt2 << "\n";
-	//}
 
 	this->c = (3 * outcnt + incnt) / 4;
 	QToolBar* toolBar = new QToolBar();
@@ -129,7 +101,6 @@ VWDemo::VWDemo() {
 
 void VWDemo::recalculate() {
 	hist->recallComplexity(c);
-
 	m_renderer->update();
 }
 

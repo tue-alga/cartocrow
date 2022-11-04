@@ -6,6 +6,19 @@
 #include "../oblivious_arrangement.h"
 #include "vertex_removal.h"
 
+/// Paper title:
+///   Line generalisation by repeated elimination of points
+/// Paper authors:
+///	  M. Visvalingam
+///	  J. D. Whyatt
+/// doi:
+///  https://doi.org/10.1179/000870493786962263
+///
+/// Implementation notes:
+///    Implemented through \ref VWTraits that realizes the concepts \ref VertexRemovalTraits and \ref EdgeStoredHistory.
+///    The cost of an operation is set to the area of the spanned triangle.
+///    Shorthands for Visvalingam-Whyatt simplification, with and without, history are provided.
+
 namespace cartocrow::simplification {
 
 struct VWVertex;

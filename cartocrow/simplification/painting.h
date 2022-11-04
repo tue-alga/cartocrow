@@ -10,6 +10,8 @@ using namespace cartocrow;
 
 namespace cartocrow::simplification {
 
+/// The \ref renderer::GeometryPainting "GeometryPainting" for a \ref
+/// RegionMap.
 class MapPainting : public renderer::GeometryPainting {
 
   public:
@@ -23,7 +25,7 @@ class MapPainting : public renderer::GeometryPainting {
 		bool fill = true;
 	};
 
-	/// Creates a new painting for the given necklace map.
+	/// Creates a new painting for the given region map.
 	MapPainting(std::shared_ptr<RegionMap> map, Options options = {})
 	    : m_map(map), m_options(options){};
 
@@ -43,14 +45,14 @@ class MapPainting : public renderer::GeometryPainting {
 	}
 
   private:
-	/// The necklace map we are drawing.
+	/// The region map we are drawing.
 	std::shared_ptr<RegionMap> m_map;
 	/// The drawing options.
 	Options m_options;
 };
 
 /// The \ref renderer::GeometryPainting "GeometryPainting" for a \ref
-/// NecklaceMap.
+/// RegionArrangement.
 template <class TArr> class ArrangementPainting : public renderer::GeometryPainting {
 
   public:
@@ -63,7 +65,7 @@ template <class TArr> class ArrangementPainting : public renderer::GeometryPaint
 		Color color{0, 0, 0};
 	};
 
-	/// Creates a new painting for the given necklace map.
+	/// Creates a new painting for the given arrangement.
 	ArrangementPainting(std::shared_ptr<TArr> arr, Options options = {})
 	    : m_arr(arr), m_options(options){};
 
@@ -72,7 +74,7 @@ template <class TArr> class ArrangementPainting : public renderer::GeometryPaint
 		renderer.setMode(renderer::GeometryRenderer::stroke);
 		renderer.setStroke(m_options.color, m_options.line_width);
 
-		for (auto e : m_arr->halfedge_handles()) {
+		for (auto& e : m_arr->halfedge_handles()) {
 			Segment<Exact> ls = Segment<Exact>(e->source()->point(), e->target()->point());
 			Segment<Inexact> als = approximate(ls);
 			renderer.draw(als);
@@ -80,7 +82,7 @@ template <class TArr> class ArrangementPainting : public renderer::GeometryPaint
 	}
 
   private:
-	/// The necklace map we are drawing.
+	/// The arrangement we are drawing.
 	std::shared_ptr<TArr> m_arr;
 	/// The drawing options.
 	Options m_options;

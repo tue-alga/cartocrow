@@ -4,8 +4,10 @@
 #include "common_arrangement.h"
 #include "common_traits.h"
 
+/// Definitions for a HistoricArrangement that keeps of the operations performed, by storing this in the edges of the map.
 namespace cartocrow::simplification {
 
+// Concept to express that a pointer to a class D can be stored via the MapType.
 template <class MT, class D>
 concept EdgeStoredHistory = requires(typename MT::Map::Halfedge_handle e, D* d) {
 	requires MapType<MT>;
@@ -14,6 +16,7 @@ concept EdgeStoredHistory = requires(typename MT::Map::Halfedge_handle e, D* d) 
 	{ MT::histGetData(e) } -> std::same_as<D*>;
 };
 
+// The history of an edge, including pointers to other steps in the history that it may have overriden
 template <MapType MT> struct EdgeHistory {
 
 	using Map = MT::Map;
@@ -35,7 +38,7 @@ template <MapType MT> struct EdgeHistory {
 	Point<Exact> pre_loc;
 };
 
-// implements the ModifiableArrangementWithHistory concept, requiring EdgeStoredHistory on the maptype
+// Implements the ModifiableArrangementWithHistory concept, requiring EdgeStoredHistory on the maptype
 template <MapType MT> requires(EdgeStoredHistory<MT, EdgeHistory<MT>>) class HistoricArrangement {
   public:
 	using Map = MT::Map;
@@ -93,12 +96,20 @@ template <MapType MT> requires(EdgeStoredHistory<MT, EdgeHistory<MT>>) class His
 
 	void recallComplexity(int c) {
 		while ( // if history is a single element, check input complexity
-		    (history.size() == 1 && in_complexity <= c)
+		    (history.size() >= 1 && in_complexity <= c)
 		    // if history is more than a single element, check the previous operation
 		    || (history.size() > 1 && history[history.size() - 2]->post_complexity <= c)) {
 			backInTime();
 		}
 		while (!undone.empty() && map.number_of_edges() > c) {
+			forwardInTime();
+		}
+	}
+	void recallThreshold(Number<Exact> t) {
+		while ((history.size() >= 1 && history.last()->post_maxcost > t)) {
+			backInTime();
+		}
+		while (!undone.empty() && undone.last()->post_maxcost <= t) {
 			forwardInTime();
 		}
 	}
