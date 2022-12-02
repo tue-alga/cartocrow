@@ -348,14 +348,14 @@ void ReachableRegionAlgorithm::JoinEvent::handle() {
 		rightEdge->shape().pruneNearSide(m_position);
 		leftEdge->shape().pruneFarSide(m_position);
 		auto result = m_alg->m_circle.mergeToEdge(rightEdge, leftEdge, rightEdge);
-		m_alg->m_vertices.emplace_back(m_position, rightEdge, leftEdge);
+		m_alg->m_vertices.emplace_back(m_position, leftEdge, rightEdge);
 
 	} else if (nextInterval->type() == OBSTACLE) {
 		// left side is obstacle
 		rightEdge->shape().pruneFarSide(m_position);
 		leftEdge->shape().pruneNearSide(m_position);
 		auto result = m_alg->m_circle.mergeToEdge(rightEdge, leftEdge, leftEdge);
-		m_alg->m_vertices.emplace_back(m_position, rightEdge, leftEdge);
+		m_alg->m_vertices.emplace_back(m_position, leftEdge, rightEdge);
 	}
 
 	insertJoinEvents();
