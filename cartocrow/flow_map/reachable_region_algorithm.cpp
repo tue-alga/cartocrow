@@ -287,7 +287,7 @@ void ReachableRegionAlgorithm::VertexEvent::handleFar() {
 		auto result = m_alg->m_circle.mergeToInterval(m_e2, m_e1);
 		result.mergedInterval->setType(OBSTACLE);
 		if (m_e2->nextInterval()->type() == REACHABLE) {
-			m_alg->m_vertices.emplace_back(m_position, m_e2, m_e1);
+			m_alg->m_vertices.emplace_back(m_position, m_e1, m_e2);
 		}
 
 	} else {
