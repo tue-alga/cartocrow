@@ -124,6 +124,8 @@ class SweepEdgeShape {
 	/// Returns the \f$r\f$ of the endpoint of this sweep edge shape further
 	/// from the origin.
 	std::optional<Number<Inexact>> farR() const;
+	/// Returns the average \f$r\f$ of the endpoints of this sweep edge shape.
+	std::optional<Number<Inexact>> averageR() const;
 
 	/// Returns the angle \f$\phi\f$ at which this sweep edge shape intersects a
 	/// circle at radius \f$r\f$.

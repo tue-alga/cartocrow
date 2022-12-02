@@ -93,6 +93,14 @@ std::optional<Number<Inexact>> SweepEdgeShape::farR() const {
 	}
 }
 
+std::optional<Number<Inexact>> SweepEdgeShape::averageR() const {
+	if (farR()) {
+		return (nearR() + *farR()) / 2;
+	} else {
+		return std::nullopt;
+	}
+}
+
 Number<Inexact> SweepEdgeShape::phiForR(Number<Inexact> r) const {
 	assert(!farR() || (r >= nearR() && r <= farR())); // trying to compute phi for out-of-bounds r
 

@@ -143,10 +143,10 @@ void SpiralTreeDemo::recalculate() {
 	Timer t;
 	auto tree = std::make_shared<SpiralTree>(Point<Inexact>(0, 0), m_alpha);
 	tree->addPlace("p1", Point<Inexact>(0, 20), 1);
-	tree->addPlace("p2", Point<Inexact>(6, 7), 1);
-	tree->addPlace("p3", Point<Inexact>(-18, 0), 1);
-	tree->addPlace("p4", Point<Inexact>(4, -9), 1);
-	tree->addPlace("p5", Point<Inexact>(-4, -11), 1);
+	//tree->addPlace("p2", Point<Inexact>(6, 7), 1);
+	//tree->addPlace("p3", Point<Inexact>(-18, 0), 1);
+	//tree->addPlace("p4", Point<Inexact>(4, -9), 1);
+	//tree->addPlace("p5", Point<Inexact>(-4, -11), 1);
 	tree->addObstacle(m_obstacle);
 	tree->addShields();
 	t.stamp("Constructing tree and obstacles");
