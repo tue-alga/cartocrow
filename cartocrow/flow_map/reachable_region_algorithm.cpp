@@ -336,7 +336,7 @@ void ReachableRegionAlgorithm::JoinEvent::handle() {
 		// ignore, this is handled by a vertex event
 
 	} else if (previousInterval->type() == REACHABLE && nextInterval->type() == REACHABLE) {
-		// simply merge the intervals into a big reachable interval
+		// case 1: simply merge the intervals into a big reachable interval
 		auto result = m_alg->m_circle.mergeToInterval(rightEdge, leftEdge);
 		rightEdge->shape().pruneFarSide(m_position);
 		leftEdge->shape().pruneFarSide(m_position);
@@ -344,18 +344,42 @@ void ReachableRegionAlgorithm::JoinEvent::handle() {
 		m_alg->m_vertices.emplace_back(m_position, rightEdge, leftEdge);
 
 	} else if (previousInterval->type() == OBSTACLE) {
-		// right side is obstacle
-		rightEdge->shape().pruneNearSide(m_position);
+		// case 2: right side is obstacle
 		leftEdge->shape().pruneFarSide(m_position);
-		auto result = m_alg->m_circle.mergeToEdge(rightEdge, leftEdge, rightEdge);
-		m_alg->m_vertices.emplace_back(m_position, leftEdge, rightEdge);
+		if (interval->type() == SHADOW) {
+			// case 2a: shadow in the middle, reachable on the left
+			assert(nextInterval->type() == REACHABLE);
+			rightEdge->shape().pruneNearSide(m_position);
+			auto result = m_alg->m_circle.mergeToEdge(rightEdge, leftEdge, rightEdge);
+			m_alg->m_vertices.emplace_back(m_position, rightEdge, leftEdge);
+		} else if (interval->type() == REACHABLE) {
+			// case 2b: reachable in the middle, shadow on the left
+			assert(nextInterval->type() == SHADOW);
+			rightEdge->shape().pruneFarSide(m_position);
+			auto result = m_alg->m_circle.mergeToEdge(rightEdge, leftEdge, rightEdge);
+			m_alg->m_vertices.emplace_back(m_position, leftEdge, rightEdge);
+		} else {
+			assert(false);
+		}
 
 	} else if (nextInterval->type() == OBSTACLE) {
-		// left side is obstacle
+		// case 3: left side is obstacle
 		rightEdge->shape().pruneFarSide(m_position);
-		leftEdge->shape().pruneNearSide(m_position);
-		auto result = m_alg->m_circle.mergeToEdge(rightEdge, leftEdge, leftEdge);
-		m_alg->m_vertices.emplace_back(m_position, leftEdge, rightEdge);
+		if (interval->type() == SHADOW) {
+			// case 3a: shadow in the middle, reachable on the right
+			assert(previousInterval->type() == REACHABLE);
+			leftEdge->shape().pruneNearSide(m_position);
+			auto result = m_alg->m_circle.mergeToEdge(rightEdge, leftEdge, leftEdge);
+			m_alg->m_vertices.emplace_back(m_position, rightEdge, leftEdge);
+		} else if (interval->type() == REACHABLE) {
+			// case 3b: reachable in the middle, shadow on the right
+			assert(previousInterval->type() == SHADOW);
+			leftEdge->shape().pruneFarSide(m_position);
+			auto result = m_alg->m_circle.mergeToEdge(rightEdge, leftEdge, leftEdge);
+			m_alg->m_vertices.emplace_back(m_position, leftEdge, rightEdge);
+		} else {
+			assert(false);
+		}
 	}
 
 	insertJoinEvents();
