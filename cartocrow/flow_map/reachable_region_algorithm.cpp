@@ -286,7 +286,9 @@ void ReachableRegionAlgorithm::VertexEvent::handleFar() {
 		// case 2: concave corner of an obstacle
 		auto result = m_alg->m_circle.mergeToInterval(m_e2, m_e1);
 		result.mergedInterval->setType(OBSTACLE);
-		m_alg->m_vertices.emplace_back(m_position, m_e2, m_e1);
+		if (m_e2->nextInterval()->type() == REACHABLE) {
+			m_alg->m_vertices.emplace_back(m_position, m_e2, m_e1);
+		}
 
 	} else {
 		assert(false);
