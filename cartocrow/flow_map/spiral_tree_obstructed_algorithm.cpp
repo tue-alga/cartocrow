@@ -217,6 +217,9 @@ void SpiralTreeObstructedAlgorithm::VertexEvent::handleFar() {
 	if (interval->type() == FREE) {
 		auto result = m_alg->m_circle.splitFromInterval(m_e1, m_e2);
 		result.middleInterval->setType(OBSTACLE);
+	} else if (interval->type() == OBSTACLE) {
+		auto result = m_alg->m_circle.splitFromInterval(m_e2, m_e1);
+		result.middleInterval->setType(FREE);
 	}
 }
 
