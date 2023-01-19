@@ -1,9 +1,14 @@
 #ifndef CARTOCROW_MOSAIC_CARTOGRAM_MOSAIC_CARTOGRAM_H
 #define CARTOCROW_MOSAIC_CARTOGRAM_MOSAIC_CARTOGRAM_H
 
+#include <CGAL/graph_traits_dual_arrangement_2.h>
+
 #include "../core/core.h"
+#include "../core/region_arrangement.h"
 #include "../core/region_map.h"
 #include "parameters.h"
+
+typedef CGAL::Dual<cartocrow::RegionArrangement> DualArrangement;
 
 namespace cartocrow::mosaic_cartogram {
 
@@ -26,6 +31,7 @@ class MosaicCartogram {
   private:
 	/// The list of regions that this mosaic cartogram is computed for.
 	const std::shared_ptr<RegionMap> m_map;
+	DualArrangement m_dual;
 	/// The computation parameters.
 	Parameters m_parameters;
 
