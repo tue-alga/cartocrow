@@ -120,7 +120,7 @@ class NecklaceMap {
 	/// Constructs a necklace map with the given regions and no necklaces.
 	///
 	/// This does not compute the necklace map: use \ref compute() to run the
-	/// computation. Modifying the RegionList passed here after the necklace
+	/// computation. Modifying the RegionMap passed here after the necklace
 	/// map has been constructed results in undefined behavior.
 	NecklaceMap(const std::shared_ptr<RegionMap> map);
 
