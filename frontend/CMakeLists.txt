@@ -12,6 +12,7 @@ target_link_libraries(
     ${COMMON_CLA_TARGET}
     core
     flow_map
+    mosaic_cartogram
     necklace_map
     renderer
     CGAL::CGAL

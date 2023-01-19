@@ -15,6 +15,7 @@ add_subdirectory(renderer)
 add_subdirectory(necklace_map)
 add_subdirectory(simplification)
 add_subdirectory(flow_map)
+add_subdirectory(mosaic_cartogram)
 
 add_library(cartocrow_lib INTERFACE)
 target_link_libraries(
@@ -24,6 +25,7 @@ target_link_libraries(
     necklace_map
     flow_map
     simplification
+    mosaic_cartogram
 )
 
 install(

@@ -1,10 +1,12 @@
 #include "painting.h"
 
 #include "../core/core.h"
+#include "../core/centroid.h"
 #include "../renderer/geometry_renderer.h"
 #include "bezier_necklace.h"
 #include "circle_necklace.h"
 #include <stdexcept>
+#include <utility>
 
 namespace cartocrow::necklace_map {
 
@@ -28,11 +30,37 @@ Painting::Painting(std::shared_ptr<NecklaceMap> necklaceMap, Options options)
     : m_necklaceMap(necklaceMap), m_options(options) {}
 
 void Painting::paint(renderer::GeometryRenderer& renderer) const {
-	paintRegions(renderer);
+	// paintRegions(renderer);
 	paintNecklaces(renderer);
 	paintConnectors(renderer);
 	paintBeads(renderer, true);
 	paintBeads(renderer, false);
+
+	renderer.setMode(renderer::GeometryRenderer::fill);
+	renderer.setFillOpacity(255);
+	for (auto &region_it : *m_necklaceMap->m_map) {
+		Region &region = region_it.second;
+		renderer.setFill(region.color);
+
+		PolygonSet<Exact> &poly_set = region.shape;
+		// std::cout << set.number_of_polygons_with_holes() << '\n';
+
+		std::vector<PolygonWithHoles<Exact>> polygons;
+		poly_set.polygons_with_holes(std::back_inserter(polygons)); // TODO: can this be done easier?
+
+		for (auto &p_with_holes : polygons) {
+			Polygon<Exact> &p = p_with_holes.outer_boundary();
+			Box b = p.bbox();
+			renderer.draw(Circle<Exact>(
+				centroid(p_with_holes), //Point<Inexact>((b.xmin() + b.xmax()) / 2, (b.ymin() + b.ymax()) / 2),
+				p.area() / 6  // probably not 'the right way'
+			));
+
+			// std::vector<std::pair<Point<Exact>, float>> weighted_points;
+			// for (Point<Exact> &v : p.vertices()) weighted_points.push_back({v, 1});
+			// std::cout << weighted_points << '\n';
+		}
+	}
 }
 
 void Painting::paintRegions(renderer::GeometryRenderer& renderer) const {

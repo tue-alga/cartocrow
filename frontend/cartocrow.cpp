@@ -37,6 +37,9 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-2019
 #include "cartocrow/flow_map/place.h"
 #include "cartocrow/flow_map/spiral_tree.h"
 #include "cartocrow/flow_map/spiral_tree_unobstructed_algorithm.h"
+#include "cartocrow/mosaic_cartogram/mosaic_cartogram.h"
+#include "cartocrow/mosaic_cartogram/painting.h"
+#include "cartocrow/mosaic_cartogram/parameters.h"
 #include "cartocrow/necklace_map/circle_necklace.h"
 #include "cartocrow/necklace_map/necklace_map.h"
 #include "cartocrow/necklace_map/painting.h"
@@ -111,6 +114,28 @@ int main(int argc, char* argv[]) {
 
 		flow_map::Painting::Options options;
 		painting = std::make_shared<flow_map::Painting>(map_ptr, tree, options);
+
+	} else if (projectData["type"] == "mosaic_cartogram") {
+		auto cartogram = std::make_shared<mosaic_cartogram::MosaicCartogram>(map_ptr);
+
+		mosaic_cartogram::Parameters& parameters = cartogram->parameters();
+		// TODO: set parameters
+
+/*
+		for (json& n : projectData["necklaces"]) {
+			auto necklace = necklaceMap->addNecklace(std::make_unique<necklace_map::CircleNecklace>(
+			    Circle<Inexact>(Point<Inexact>(n["shape"]["center"][0], n["shape"]["center"][1]),
+			                    std::pow(n["shape"]["radius"].get<double>(), 2))));
+			for (std::string b : n["beads"]) {
+				necklaceMap->addBead(b, projectData["data"][b], necklace);
+			}
+		}
+*/
+
+		cartogram->compute();
+
+		mosaic_cartogram::Painting::Options options;
+		painting = std::make_shared<mosaic_cartogram::Painting>(cartogram, options);
 
 	} else {
 		std::cerr << "Unknown type \"" << projectData["type"] << "\" specified\n";
