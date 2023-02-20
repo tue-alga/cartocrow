@@ -1,7 +1,6 @@
 #include "painting.h"
 
 #include "../core/core.h"
-#include "../renderer/geometry_renderer.h"
 
 namespace cartocrow::mosaic_cartogram {
 
@@ -12,7 +11,7 @@ Painting::Painting(std::shared_ptr<MosaicCartogram> mosaicCartogram, Options opt
 
 void Painting::paint(renderer::GeometryRenderer& renderer) const {
 	// TODO
-    renderer.draw(Circle<Exact>(Point<Exact>(10, 20), 10));
+	renderer.draw(Circle<Exact>(Point<Exact>(10, 20), 10));
 }
 
 } // namespace cartocrow::mosaic_cartogram

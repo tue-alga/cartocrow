@@ -1,8 +1,6 @@
 #ifndef CARTOCROW_MOSAIC_CARTOGRAM_PARAMETERS_H
 #define CARTOCROW_MOSAIC_CARTOGRAM_PARAMETERS_H
 
-#include "../core/core.h"
-
 namespace cartocrow::mosaic_cartogram {
 
 /// A struct to collect the parameters used for computing the mosaic cartogram.

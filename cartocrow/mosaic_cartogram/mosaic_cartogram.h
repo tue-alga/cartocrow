@@ -8,9 +8,9 @@
 #include "../core/region_map.h"
 #include "parameters.h"
 
-typedef CGAL::Dual<cartocrow::RegionArrangement> DualArrangement;
-
 namespace cartocrow::mosaic_cartogram {
+
+template <typename A> using Dual = CGAL::Dual<A>;
 
 class MosaicCartogram {
 
@@ -31,7 +31,8 @@ class MosaicCartogram {
   private:
 	/// The list of regions that this mosaic cartogram is computed for.
 	const std::shared_ptr<RegionMap> m_map;
-	DualArrangement m_dual;
+	RegionArrangement m_arrangement;
+	Dual<RegionArrangement> m_dual;
 	/// The computation parameters.
 	Parameters m_parameters;
 

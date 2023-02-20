@@ -3,7 +3,6 @@
 
 #include "../renderer/geometry_painting.h"
 #include "../renderer/geometry_renderer.h"
-
 #include "mosaic_cartogram.h"
 
 namespace cartocrow::mosaic_cartogram {
