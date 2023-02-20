@@ -49,20 +49,20 @@ VWDemo::VWDemo() {
 	std::cout << "out count " << outcnt << "\n";
 
 	// compare running time vs no history
-	//	std::cout << "creating arrangement\n";
-	//	VWTraits::Map map2 =regionMapToArrangement<VWVertex, VWEdge>(*regions);
-	//	ObliviousArrangement<VWTraits> mapmod(map2);
-	//	int incnt2 = map2.number_of_edges();
-	//	std::cout << "in count " << incnt2 << "\n";
-	//	Timer t;
-	//	VWSimplification simplification2(mapmod);
-	//	simplification2.initialize();
-	//	t.stamp("Initialization");
-	//	simplification2.simplify(0);
-	//	t.stamp("Simplification done");
-	//	t.output();
-	//	int outcnt2 = map2.number_of_edges();
-	//	std::cout << "out count " << outcnt2 << "\n";
+		//std::cout << "creating arrangement\n";
+		//VWTraits::Map map2 =regionMapToArrangement<VWVertex, VWEdge>(*regions);
+		//ObliviousArrangement<VWTraits> mapmod(map2);
+		//int incnt2 = map2.number_of_edges();
+		//std::cout << "in count " << incnt2 << "\n";
+		//Timer t2;
+		//VWSimplification simplification2(mapmod);
+		//simplification2.initialize();
+		//t2.stamp("Initialization");
+		//simplification2.simplify(0);
+		//t2.stamp("Simplification done");
+		//t2.output();
+		//int outcnt2 = map2.number_of_edges();
+		//std::cout << "out count " << outcnt2 << "\n";
 
 	this->c = (3 * outcnt + incnt) / 4;
 	QToolBar* toolBar = new QToolBar();

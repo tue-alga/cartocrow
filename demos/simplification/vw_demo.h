@@ -16,7 +16,7 @@ class VWDemo : public QMainWindow {
 
   public:
 	VWDemo();
-	~VWDemo(){
+	~VWDemo() {
 		delete hist;
 	};
 

@@ -7,7 +7,7 @@
 /// Definitions for an ObliviousArrangement that does not keep track of the performed operations.
 namespace cartocrow::simplification {
 
-// implements the ModifiableArrangement concept
+/// Implements the \ref ModifiableArrangement concept
 template <MapType MT> class ObliviousArrangement {
   public:
 	using Map = MT::Map;

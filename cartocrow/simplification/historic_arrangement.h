@@ -4,19 +4,21 @@
 #include "common_arrangement.h"
 #include "common_traits.h"
 
-/// Definitions for a HistoricArrangement that keeps of the operations performed, by storing this in the edges of the map.
 namespace cartocrow::simplification {
 
-// Concept to express that a pointer to a class D can be stored via the MapType.
+/// Concept to express that a pointer to a class D can be stored via the MapType, via the described functions.
 template <class MT, class D>
 concept EdgeStoredHistory = requires(typename MT::Map::Halfedge_handle e, D* d) {
 	requires MapType<MT>;
 
+	/// Sets the data for a \ref HistoricArrangement
 	{MT::histSetData(e, d)};
+	/// Retrieves the data for a \ref HistoricArrangement
 	{ MT::histGetData(e) } -> std::same_as<D*>;
 };
 
-// The history of an edge, including pointers to other steps in the history that it may have overriden
+/// The history of an edge, including pointers to other steps in the history that it may have overriden.
+/// This struct is used by a \ref HistoricArrangement.
 template <MapType MT> struct EdgeHistory {
 
 	using Map = MT::Map;
@@ -26,6 +28,7 @@ template <MapType MT> struct EdgeHistory {
 	    : halfedge(he), prev(p), next(n), prev_twin(pt), next_twin(nt), post_complexity(pc),
 	      post_maxcost(pmc), pre_loc(pl) {}
 
+	// Pointer to the current halfedge
 	Map::Halfedge_handle halfedge;
 
 	EdgeHistory<MT>* prev = nullptr;
@@ -38,108 +41,37 @@ template <MapType MT> struct EdgeHistory {
 	Point<Exact> pre_loc;
 };
 
-// Implements the ModifiableArrangementWithHistory concept, requiring EdgeStoredHistory on the maptype
+/// This HistoricArrangement keeps track of the operations performed, by storing this in the edges of the map.
+/// It implements the \ref ModifiableArrangementWithHistory concept, requiring \ref EdgeStoredHistory on the maptype.
 template <MapType MT> requires(EdgeStoredHistory<MT, EdgeHistory<MT>>) class HistoricArrangement {
   public:
 	using Map = MT::Map;
 
-	HistoricArrangement(Map& inmap) : map(inmap), max_cost(0) {
-		in_complexity = inmap.number_of_edges();
-	};
+	HistoricArrangement(Map& inmap);
 
-	~HistoricArrangement() {
-		for (EdgeHistory<MT>* op : history) {
-			delete op;
-		}
+	~HistoricArrangement();
 
-		for (EdgeHistory<MT>* op : undone) {
-			delete op;
-		}
-	}
+	Map& getMap();
 
-	Map& getMap() {
-		return map;
-	}
 
-	Map::Halfedge_handle mergeWithNext(Map::Halfedge_handle e, Number<Exact> cost) {
-		EdgeHistory<MT>* prev = MT::histGetData(e);
-		EdgeHistory<MT>* next = MT::histGetData(e->next());
-		EdgeHistory<MT>* prev_twin = MT::histGetData(e->twin());
-		EdgeHistory<MT>* next_twin = MT::histGetData(e->next()->twin());
+	/// Redo any and all operations that were undone.
+	void goToPresent();
 
-		Point<Exact> pre_loc = e->target()->point();
-		if (cost > max_cost) {
-			max_cost = cost;
-		}
+	/// Tests whether any operations have been undone. True iff no operations were undone.
+	bool atPresent();
 
-		typename Map::Halfedge_handle newe = merge_with_next(map, e);
+	/// Undo one operation, if one exists.
+	void backInTime();
 
-		EdgeHistory<MT>* newd = new EdgeHistory<MT>(newe, prev, next, prev_twin, next_twin,
-		                                            map.number_of_edges(), max_cost, pre_loc);
+	/// Redo one operation, if one exists.
+	void forwardInTime();
 
-		MT::histSetData(newe, newd);
-
-		history.push_back(newd);
-
-		return newe;
-	}
-
-	void goToPresent() {
-		while (!atPresent()) {
-			forwardInTime();
-		}
-	}
-
-	bool atPresent() {
-		return undone.empty();
-	}
-
-	void recallComplexity(int c) {
-		while ( // if history is a single element, check input complexity
-		    (history.size() >= 1 && in_complexity <= c)
-		    // if history is more than a single element, check the previous operation
-		    || (history.size() > 1 && history[history.size() - 2]->post_complexity <= c)) {
-			backInTime();
-		}
-		while (!undone.empty() && map.number_of_edges() > c) {
-			forwardInTime();
-		}
-	}
-	void recallThreshold(Number<Exact> t) {
-		while ((history.size() >= 1 && history.last()->post_maxcost > t)) {
-			backInTime();
-		}
-		while (!undone.empty() && undone.last()->post_maxcost <= t) {
-			forwardInTime();
-		}
-	}
-
-	void backInTime() {
-		EdgeHistory<MT>* op = history.back();
-		history.pop_back();
-		undone.push_back(op);
-
-		typename Map::Halfedge_handle inc = split(map, op->halfedge, op->pre_loc);
-
-		if (op->prev != nullptr)
-			op->prev->halfedge = inc;
-		if (op->next != nullptr)
-			op->next->halfedge = inc->next();
-		if (op->prev_twin != nullptr)
-			op->prev_twin->halfedge = inc->twin();
-		if (op->next_twin != nullptr)
-			op->next_twin->halfedge = inc->next()->twin();
-		op->halfedge = inc;
-	}
-
-	void forwardInTime() {
-
-		EdgeHistory<MT>* op = undone.back();
-		undone.pop_back();
-		history.push_back(op);
-
-		op->halfedge = merge_with_next(map, op->halfedge);
-	}
+	// From \ref ModifiableArrangementWithHistory
+	Map::Halfedge_handle mergeWithNext(Map::Halfedge_handle e, Number<Exact> cost);
+	// From \ref ModifiableArrangementWithHistory
+	void recallComplexity(int c);
+	// From \ref ModifiableArrangementWithHistory
+	void recallThreshold(Number<Exact> t);
 
   private:
 	Number<Exact> max_cost;
@@ -150,3 +82,5 @@ template <MapType MT> requires(EdgeStoredHistory<MT, EdgeHistory<MT>>) class His
 };
 
 } // namespace cartocrow::simplification
+
+#include "historic_arrangement.hpp"

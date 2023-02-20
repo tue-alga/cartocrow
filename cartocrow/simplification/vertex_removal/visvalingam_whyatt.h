@@ -12,11 +12,11 @@
 ///	  M. Visvalingam
 ///	  J. D. Whyatt
 /// doi:
-///  https://doi.org/10.1179/000870493786962263
+///   https://doi.org/10.1179/000870493786962263
 ///
 /// Implementation notes:
 ///    Implemented through \ref VWTraits that realizes the concepts \ref VertexRemovalTraits and \ref EdgeStoredHistory.
-///    The cost of an operation is set to the area of the spanned triangle.
+///    The cost of an operation is set to the area of the spanned triangle, and the algorithm is made topologically safe.
 ///    Shorthands for Visvalingam-Whyatt simplification, with and without, history are provided.
 
 namespace cartocrow::simplification {
@@ -24,6 +24,7 @@ namespace cartocrow::simplification {
 struct VWVertex;
 struct VWEdge;
 
+/// Implements the \ref VertexRemovalTraits concept
 struct VWTraits {
 	using Map = RegionArrangement<VWVertex, VWEdge>;
 
