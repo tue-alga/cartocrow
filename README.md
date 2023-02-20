@@ -65,6 +65,7 @@ On Windows systems, we recommend using [vcpkg](https://github.com/microsoft/vcpk
   vcpkg install cgal:x64-windows
   vcpkg install qt5:x64-windows
   vcpkg install glog:x64-windows
+  vcpkg install nlohmann-json:x64-windows
   ```
 
   This step can take a very long time, especially compiling CGAL (around 30 minutes) and Qt (around 2 hours).
@@ -101,21 +102,26 @@ The remaining dependencies need to be built manually.
   pacman -S mingw-w64-x86_64-libpng mingw-w64-x86_64-lua mingw-w64-x86_64-zlib
   pacman -S mingw-w64-x86_64-libspiro mingw-w64-x86_64-gsl
   ```
-  A few changes are necessary to make Ipelib compile correctly: in `common.mak`, set
+  Then set the correct environment: in `common.mak`, set
   ```make
   # line 158
-  IPEDEPS       := /mingw64
+  IPEDEPS       := /mingw64  # or /ucrt64 if you're building under UCRT64
 
   # line 167-168
   LUA_CFLAGS    := -I$(IPEDEPS)/lua54/include
   LUA_LIBS      := -L$(IPEDEPS)/lib -llua
   ```
-  and in `src/ipelib/ipeplatform.cpp`, add an `#include <string>`. Then, to compile:
+  A few changes are necessary to make Ipelib compile correctly:
+    * in `src/ipelib/ipeplatform.cpp` and `src/ipelib/ipebitmap_win.cpp`, add an `#include <string>`;
+    * in `src/ipelib/ipeplatform.cpp`, in `Platform::runLatex()`, replace `wcmd.data()` by `&wcmd[0]`;
+    * in `src/ipelib/ipeplatform.cpp`, in `String::w()`, replace `result.data()` by `&result[0]`.
+  
+  Then, to compile:
   ```sh
   cd src
   make IPEPREFIX=/usr/local ipelib
   ```
-  The compiled library `ipe.lib` ends up in `mingw64/bin`.
+  The compiled library `ipe.dll` ends up in `mingw64/bin`.
 </details>
 
 
@@ -153,8 +159,8 @@ CartoCrow uses CMake as its build system and can therefore be built like any oth
 
 **Windows (MSVC)**
 ```sh
-cmake.exe -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=<install-directory> -DCMAKE_TOOLCHAIN_FILE=<path-to-vcpkg>\scripts\buildsystems\vcpkg.cmake -S . -B build
-cmake.exe --build build
+cmake.exe -DCMAKE_INSTALL_PREFIX=<install-directory> -DCMAKE_TOOLCHAIN_FILE=<path-to-vcpkg>\scripts\buildsystems\vcpkg.cmake -S . -B build
+cmake.exe --build build --config Release
 cmake.exe --install build
 ```
 
