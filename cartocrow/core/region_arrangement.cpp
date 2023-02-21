@@ -56,7 +56,6 @@ RegionArrangement regionMapToArrangement(const RegionMap& map) {
 	RegionArrangement arrangement;
 
 	for (const auto& [id, region] : map) {
-		const auto& regionArrangement = region.shape.arrangement();
 		RegionArrangement result;
 		detail::RegionOverlayTraits overlayTraits(id);
 		CGAL::overlay(arrangement, region.shape.arrangement(), result, overlayTraits);
