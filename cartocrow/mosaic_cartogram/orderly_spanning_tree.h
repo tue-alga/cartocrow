@@ -92,6 +92,8 @@ class OrderlySpanningTree {
 
 	/// This array defines the red tree: it specifies for each vertex its parent. Note that we are
 	/// not interested in the blue or green tree.
+	/// At initialization, it's filled with \c m_root1. In \c contract, we only update the array for
+	/// vertices that have a different parent.
 	std::vector<int> m_parent;
 
 	void contract(const int n);

@@ -42,10 +42,9 @@ void Graph::removeDirectedEdge(int u, int v) {
 }
 
 OrderlySpanningTree::OrderlySpanningTree(const Graph &g, int r1, int r2, int r3)
-    : m_graph(g), m_root1(r1), m_root2(r2), m_root3(r3), m_parent(g.getNumberOfVertices()) {
+    : m_graph(g), m_root1(r1), m_root2(r2), m_root3(r3), m_parent(g.getNumberOfVertices(), r1) {
 	// TODO: assert that `g` is connected, triangular, etc.
 	contract(g.getNumberOfVertices());
-	m_parent[m_root1] = m_parent[m_root2] = m_parent[m_root3] = m_root1;
 }
 
 void OrderlySpanningTree::contract(const int n) {
@@ -75,7 +74,6 @@ void OrderlySpanningTree::contract(const int n) {
 
 	// 4. Assign parents to construct the "next" part of the red spanning tree
 	//    Note that this occurs after the recursive call, so in reverse order (i.e., we process the "expansions")
-	m_parent[target] = m_root1;
 	for (int v : newNeighbors) m_parent[v] = target;
 }
 
