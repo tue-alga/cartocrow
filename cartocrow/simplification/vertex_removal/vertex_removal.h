@@ -8,8 +8,9 @@
 
 namespace cartocrow::simplification {
 
-/// Concept for functions necessary on a Map type to allow for performing \ref 
-/// VertexRemovalSimplification.
+/// Concept for functions necessary to allow for performing \ref 
+/// cartocrow::simplification::VertexRemovalSimplification 
+/// "VertexRemovalSimplification".
 template <class T>
 concept VertexRemovalTraits = requires(typename T::Map::Vertex_handle v, int b, Triangle<Exact> t,
                                        typename T::Map::Halfedge_handle e) {
@@ -17,7 +18,7 @@ concept VertexRemovalTraits = requires(typename T::Map::Vertex_handle v, int b, 
 	requires MapType<T>;
 
 	/// Set the cost of removing vertex \f$v\f$ spanning a triangle \f$t\f$ with 
-	/// its neighbors. 	/// Note that, in principle, the cost may also be derived 
+	/// its neighbors. Note that, in principle, the cost may also be derived 
 	/// each time upon calling \ref vrGetCost(). In such a case, this method does 
 	/// not have to perform any actions. The cost should be nonnegative.
 	{T::vrSetCost(v, t)};
@@ -53,7 +54,7 @@ concept VertexRemovalTraits = requires(typename T::Map::Vertex_handle v, int b, 
 ///   numbers in https://doi.org/10.1145/2818373
 /// - It abstracts from the way on how to compute (and store) the cost of removing
 ///   a vertex, its relevant edge, and the blocking number, via the \ref 
-///   VertexRemovalTraits concept.
+///   cartocrow::simplification::VertexRemovalTraits "VertexRemovalTraits" concept.
 /// - Each iteration, all vertices are polled for their cost: there is no specific
 ///   need to store these via the vrSetCost function
 template <ModifiableArrangement MA, VertexRemovalTraits VRT>
@@ -62,7 +63,8 @@ requires(std::same_as<typename MA::Map, typename VRT::Map>) class VertexRemovalS
   public:
 	using Map = MA::Map;
 
-	/// Constructs the algorithm for a given \ref ModifiableArrangement
+	/// Constructs the algorithm for a given \ref 
+	/// cartocrow::simplification::ModifiableArrangement "ModifiableArrangement".
 	VertexRemovalSimplification(MA& ma) : map(ma.getMap()), modmap(ma){};
 
 	/// Initializes the algorithm, taking \f$O(n^2)\f$ time.
@@ -82,26 +84,29 @@ requires(std::same_as<typename MA::Map, typename VRT::Map>) class VertexRemovalS
 	void simplify(int c);
 
   private:
-	// Reinitializes the simplification data for the vertex
+	/// Reinitializes the simplification data for the vertex
 	void initVertex(Map::Vertex_handle v);
-	// Finds the vertex to remove with the lowest cost. Returns true iff removable
-	// vertex was found. NB: assigns best and best_cost
+	/// Finds the vertex to remove with the lowest cost. Returns true iff removable
+	/// vertex was found. NB: assigns best and best_cost
 	bool findBest(Map::Vertex_handle& best, Number<Exact>& best_cost);
-	// Executes the removal of the given vertex
+	/// Executes the removal of the given vertex
 	void execute(Map::Vertex_handle v, Number<Exact> cost);
-	// Removes v from all blocking counters
+	/// Removes v from all blocking counters
 	void reduceCounts(Map::Vertex_handle v);
 
-	// Computes the triangle spanned by v and its two neighbors
+	/// Computes the triangle spanned by v and its two neighbors
 	Triangle<Exact> triangle(Map::Vertex_handle v);
 
-	// Flags for indicating why a vertex cannot be removed
+	/// Flags for indicating why a vertex cannot be removed
 	const short BLOCKED_FLOATING = -1;
+	/// Flags for indicating why a vertex cannot be removed
 	const short NOOP_TRIANGLE = -2;
+	/// Flags for indicating why a vertex cannot be removed
 	const short NOOP_DEGREE = -3;
 
-	// Fields
+	/// Stores the actual arrangement
 	Map& map;
+	/// Stores the modifiable arrangement
 	MA& modmap;
 };
 

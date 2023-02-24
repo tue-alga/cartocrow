@@ -8,6 +8,8 @@ namespace cartocrow::simplification {
 template <ModifiableArrangement MA, VertexRemovalTraits VRT>
 requires(std::same_as<typename MA::Map,
                       typename VRT::Map>) void VertexRemovalSimplification<MA, VRT>::initialize() {
+
+	// initialize each vertex
 	for (typename Map::Vertex_const_iterator v = map.vertices_begin(); v != map.vertices_end(); ++v) {
 		initVertex(&*v);
 	}
@@ -16,6 +18,8 @@ requires(std::same_as<typename MA::Map,
 template <ModifiableArrangement MA, VertexRemovalTraits VRT>
 requires(std::same_as<typename MA::Map, typename VRT::Map>) void VertexRemovalSimplification<
     MA, VRT>::simplify(Number<Exact> t) {
+	// make sure nothing has been undone, i.e., the state of the arrangement
+	// matches the data stored for the simplification
 	if constexpr (ModifiableArrangementWithHistory<MA>) {
 		modmap.goToPresent();
 	}
@@ -23,6 +27,7 @@ requires(std::same_as<typename MA::Map, typename VRT::Map>) void VertexRemovalSi
 	typename Map::Vertex_handle best;
 	Number<Exact> best_cost;
 
+	// find and execute the operation with lowest cost while not exceeding cost t
 	while (findBest(best, best_cost) && best_cost <= t) {
 		execute(best, best_cost);
 	}
@@ -32,6 +37,8 @@ template <ModifiableArrangement MA, VertexRemovalTraits VRT>
 requires(std::same_as<typename MA::Map,
                       typename VRT::Map>) void VertexRemovalSimplification<MA, VRT>::simplify(int c) {
 
+	// make sure nothing has been undone, i.e., the state of the arrangement
+	// matches the data stored for the simplification
 	if constexpr (ModifiableArrangementWithHistory<MA>) {
 		modmap.goToPresent();
 	}
@@ -39,6 +46,8 @@ requires(std::same_as<typename MA::Map,
 	typename Map::Vertex_handle best;
 	Number<Exact> best_cost;
 
+	// find and execute the operation with lowest cost while the map has more than
+	// c edges
 	while (map.number_of_edges() > c && findBest(best, best_cost)) {
 		execute(best, best_cost);
 	}
@@ -50,6 +59,8 @@ requires(std::same_as<typename MA::Map, typename VRT::Map>) void VertexRemovalSi
 	if (v->degree() == 2) {
 		auto inc = v->incident_halfedges();
 
+		// make sure we get the incoming edge on the face for which this vertex is
+		// convex
 		typename Map::Halfedge_handle realinc;
 		if (CGAL::right_turn(inc->source()->point(), v->point(), inc->next()->target()->point())) {
 			realinc = inc->next()->twin();
@@ -74,7 +85,7 @@ requires(std::same_as<typename MA::Map, typename VRT::Map>) void VertexRemovalSi
 			typename Map::Vertex_handle p = realinc->source();
 			typename Map::Vertex_handle n = realinc->next()->target();
 
-			// initialize block
+			// initialize blocking number
 			int b = 0;
 
 			// free floating vertices: if this blocks, then it will need reinitialization
@@ -135,8 +146,10 @@ requires(std::same_as<typename MA::Map, typename VRT::Map>) bool VertexRemovalSi
 	for (typename Map::Vertex_handle v : map.vertex_handles()) {
 
 		if (VRT::vrGetBlockingNumber(v) == 0) {
+			// performable operation
 			Number<Exact> cost = VRT::vrGetCost(v);
 			if (!found || cost < best_cost) {
+				// beats current best
 				best = v;
 				best_cost = cost;
 				found = true;
@@ -211,6 +224,7 @@ template <ModifiableArrangement MA, VertexRemovalTraits VRT>
 requires(std::same_as<typename MA::Map, typename VRT::Map>)
     Triangle<Exact> VertexRemovalSimplification<MA, VRT>::triangle(Map::Vertex_handle v) {
 	typename Map::Halfedge_handle inc = VRT::vrGetHalfedge(v);
+	// NB: the vertex provided is always the 2nd vertex
 	return Triangle<Exact>(inc->source()->point(), v->point(), inc->next()->target()->point());
 }
 

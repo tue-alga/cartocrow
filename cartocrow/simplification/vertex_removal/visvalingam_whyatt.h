@@ -11,13 +11,15 @@ namespace cartocrow::simplification {
 struct VWVertex;
 struct VWEdge;
 
-/// These traits implements the \ref VertexRemovalTraits to create a topologically-safe variant of the Visvalingam-Whyatt algorithm.
-/// That is, the cost of removing a vertex is equal to the area spanned by its triangle.
+/// These traits implements the \ref cartocrow::simplification::VertexRemovalTraits 
+/// "VertexRemovalTraits" to create a topologically-safe variant of the 
+/// Visvalingam-Whyatt algorithm. That is, the cost of removing a vertex is equal 
+/// to the area spanned by its triangle.
 ///
 /// Title: Line generalisation by repeated elimination of points
-/// Authors:
-///	- M. Visvalingam
-///	- J. D. Whyatt
+/// 
+/// Authors: M. Visvalingam and J. D. Whyatt
+/// 
 /// Doi: https://doi.org/10.1179/000870493786962263
 struct VWTraits {
 	using Map = RegionArrangement<VWVertex, VWEdge>;

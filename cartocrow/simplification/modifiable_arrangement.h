@@ -5,7 +5,8 @@
 namespace cartocrow::simplification {
 
 /// Concept that requires an inner type "Map" to be defined
-/// This map is assumed to be a \ref RegionArrangement, though this is not checked by the concept
+/// This map is assumed to be a \ref cartocrow::RegionArrangement, though this is 
+/// not checked by the concept
 template <class T> concept MapType = requires {
 	typename T::Map;
 };
@@ -25,7 +26,8 @@ concept ModifiableArrangement = requires(T ma, typename T::Map::Halfedge_handle 
 	{ ma.mergeWithNext(e, c) } -> std::same_as<typename T::Map::Halfedge_handle>;
 };
 
-/// Extension of the \ref ModifiableArrangement concept. It aims to keep track of
+/// Extension of the \ref cartocrow::simplification::ModifiableArrangement 
+/// "ModifiableArrangement" concept. It aims to keep track of
 /// the changes made, such that these can be undone and redone. The "present"
 /// refers to last computed result for this arrangement, and changes should not be
 /// made when the arrangement is not in the "present". This is may cause

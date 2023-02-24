@@ -6,7 +6,8 @@
 
 namespace cartocrow::simplification {
 
-/// Implements the \ref ModifiableArrangement concept. It does not keep track of 
+/// Implements the \ref cartocrow::simplification::ModifiableArrangement 
+/// "ModifiableArrangement" concept. It does not keep track of 
 /// changes made to the arrangement: any change made is final.
 template <MapType MT> class ObliviousArrangement {
   public:

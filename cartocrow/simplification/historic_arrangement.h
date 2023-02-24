@@ -7,7 +7,8 @@
 namespace cartocrow::simplification {
 
 /// Concept to express that a pointer to a class \f$D\f$ can be stored via the 
-/// \ref MapType \f$MT\f$, via the described functions.
+/// \ref cartocrow::simplification::MapType "MapType" \f$MT\f$, via the described 
+/// functions.
 template <class MT, class D>
 concept EdgeStoredHistory = requires(typename MT::Map::Halfedge_handle e, D* d) {
 	requires MapType<MT>;
@@ -44,8 +45,10 @@ template <MapType MT> struct EdgeHistory {
 
 /// This historic arrangement keeps track of the operations performed, by storing 
 /// this in the edges of the map. It implements the \ref 
-/// ModifiableArrangementWithHistory concept, requiring \ref EdgeStoredHistory on 
-/// the maptype.
+/// cartocrow::simplification::ModifiableArrangementWithHistory 
+/// "ModifiableArrangementWithHistory" concept, requiring \ref 
+/// cartocrow::simplification::EdgeStoredHistory "EdgeStoredHistory" on the 
+/// maptype.
 template <MapType MT> requires(EdgeStoredHistory<MT, EdgeHistory<MT>>) class HistoricArrangement {
   public:
 	using Map = MT::Map;
