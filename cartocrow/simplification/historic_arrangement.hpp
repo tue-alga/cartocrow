@@ -1,8 +1,3 @@
-// -----------------------------------------------------------------------------
-// IMPLEMENTATION OF TEMPLATE FUNCTIONS
-// Do not include this file, but the .h file instead
-// -----------------------------------------------------------------------------
-
 namespace cartocrow::simplification {
 
 template <MapType MT>
@@ -41,7 +36,7 @@ requires(EdgeStoredHistory<MT, EdgeHistory<MT>>) HistoricArrangement<MT>::Map::H
 		max_cost = cost;
 	}
 
-	typename Map::Halfedge_handle newe = merge_with_next(map, e);
+	typename Map::Halfedge_handle newe = util::mergeWithNext(map, e);
 
 	EdgeHistory<MT>* newd = new EdgeHistory<MT>(newe, prev, next, prev_twin, next_twin,
 	                                            map.number_of_edges(), max_cost, pre_loc);
@@ -71,7 +66,7 @@ requires(EdgeStoredHistory<MT, EdgeHistory<MT>>) void HistoricArrangement<MT>::b
 	history.pop_back();
 	undone.push_back(op);
 
-	typename Map::Halfedge_handle inc = split(map, op->halfedge, op->pre_loc);
+	typename Map::Halfedge_handle inc = util::split(map, op->halfedge, op->pre_loc);
 
 	if (op->prev != nullptr)
 		op->prev->halfedge = inc;
@@ -91,7 +86,7 @@ requires(EdgeStoredHistory<MT, EdgeHistory<MT>>) void HistoricArrangement<MT>::f
 	undone.pop_back();
 	history.push_back(op);
 
-	op->halfedge = merge_with_next(map, op->halfedge);
+	op->halfedge = util::mergeWithNext(map, op->halfedge);
 }
 
 template <MapType MT>

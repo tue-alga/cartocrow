@@ -32,7 +32,13 @@ CartoCrow consists of the following modules.
 
 ### Simplification
 
-* The **simplification** (work in progress!) module implements several algorithms to simplify maps consisting of polygonal regions.  
+The **simplification** module implements several algorithms to simplify maps consisting of polygonal regions. All algorithms are implemented to be topologically safe. Currently, the following algorithms are available:
+
+* A \ref cartocrow::simplification::VertexRemovalSimplification "vertex-removal algorithm" that repeatedly removes a single vertex
+  _Author: Wouter Meulemans_
+* An \ref cartocrow::simplification::EdgeCollapseSimplification "edge-collapse algorithm" (work in progress) that repeatedly collapses an edge onto a single vertex
+  _Author: Wouter Meulemans_
+* An \ref cartocrow::simplification::EdgeMoveSimplification "edge-move algorithm" (future work) that repeatedly moves pairs of edges to reduce the number of edges, while maintaining the area of each region
   _Author: Wouter Meulemans_
 \image html simplification-example.png
 

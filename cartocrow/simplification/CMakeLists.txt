@@ -5,8 +5,8 @@ set(HEADERS
 	vertex_removal/visvalingam_whyatt.h
 	vertex_removal/vertex_removal.h
 	painting.h
-	common_arrangement.h
-	common_traits.h
+	util.h
+	modifiable_arrangement.h
 	historic_arrangement.h
 	oblivious_arrangement.h
 )

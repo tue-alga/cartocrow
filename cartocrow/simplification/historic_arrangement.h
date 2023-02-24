@@ -1,12 +1,13 @@
 #pragma once
 
 #include "../core/core.h"
-#include "common_arrangement.h"
-#include "common_traits.h"
+#include "modifiable_arrangement.h"
+#include "util.h"
 
 namespace cartocrow::simplification {
 
-/// Concept to express that a pointer to a class D can be stored via the MapType, via the described functions.
+/// Concept to express that a pointer to a class \f$D\f$ can be stored via the 
+/// \ref MapType \f$MT\f$, via the described functions.
 template <class MT, class D>
 concept EdgeStoredHistory = requires(typename MT::Map::Halfedge_handle e, D* d) {
 	requires MapType<MT>;
@@ -17,8 +18,8 @@ concept EdgeStoredHistory = requires(typename MT::Map::Halfedge_handle e, D* d) 
 	{ MT::histGetData(e) } -> std::same_as<D*>;
 };
 
-/// The history of an edge, including pointers to other steps in the history that it may have overriden.
-/// This struct is used by a \ref HistoricArrangement.
+/// The history of an edge, including pointers to other steps in the history that
+/// it may have overriden. This struct is used by a \ref HistoricArrangement.
 template <MapType MT> struct EdgeHistory {
 
 	using Map = MT::Map;
@@ -41,8 +42,10 @@ template <MapType MT> struct EdgeHistory {
 	Point<Exact> pre_loc;
 };
 
-/// This HistoricArrangement keeps track of the operations performed, by storing this in the edges of the map.
-/// It implements the \ref ModifiableArrangementWithHistory concept, requiring \ref EdgeStoredHistory on the maptype.
+/// This historic arrangement keeps track of the operations performed, by storing 
+/// this in the edges of the map. It implements the \ref 
+/// ModifiableArrangementWithHistory concept, requiring \ref EdgeStoredHistory on 
+/// the maptype.
 template <MapType MT> requires(EdgeStoredHistory<MT, EdgeHistory<MT>>) class HistoricArrangement {
   public:
 	using Map = MT::Map;
@@ -53,11 +56,16 @@ template <MapType MT> requires(EdgeStoredHistory<MT, EdgeHistory<MT>>) class His
 
 	Map& getMap();
 
+	
+	// Recovers the result as if the simplification algorithm was run once with 
+	/// complexity parameter \f$c\f$.
+	void recallComplexity(int c);
+	// Recovers the result as if the simplification algorithm was run once with 
+	/// threshold parameter \f$t\f$.
+	void recallThreshold(Number<Exact> t);
 
-	/// Redo any and all operations that were undone.
-	void goToPresent();
-
-	/// Tests whether any operations have been undone. True iff no operations were undone.
+	/// Tests whether any operations have been undone. Returns true iff no 
+	/// operations were undone.
 	bool atPresent();
 
 	/// Undo one operation, if one exists.
@@ -66,12 +74,9 @@ template <MapType MT> requires(EdgeStoredHistory<MT, EdgeHistory<MT>>) class His
 	/// Redo one operation, if one exists.
 	void forwardInTime();
 
-	// From \ref ModifiableArrangementWithHistory
+	// From ModifiableArrangementWithHistory
 	Map::Halfedge_handle mergeWithNext(Map::Halfedge_handle e, Number<Exact> cost);
-	// From \ref ModifiableArrangementWithHistory
-	void recallComplexity(int c);
-	// From \ref ModifiableArrangementWithHistory
-	void recallThreshold(Number<Exact> t);
+	void goToPresent();
 
   private:
 	Number<Exact> max_cost;

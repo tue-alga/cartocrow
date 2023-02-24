@@ -23,13 +23,17 @@ VWDemo::VWDemo() {
 	setCentralWidget(m_renderer);
 
 	std::filesystem::path file =
-	    std::filesystem::absolute(std::filesystem::path("data/benelux.ipe"));
+	std::filesystem::absolute(std::filesystem::path("data/benelux-fix.ipe"));
 	std::cout << "reading file " << file << "\n";
 
+	// step 1: create a RegionMap
 	this->regions = std::make_shared<RegionMap>(ipeToRegionMap(file));
 
 	std::cout << "creating arrangement\n";
 
+	// step 2: convert this to an arrangement with the VWTraits
+	// and wrap it in a historic arrangement to allow for quickly recovering all 
+	// solution
 	this->map = std::make_shared<VWTraits::Map>(regionMapToArrangement<VWVertex, VWEdge>(*regions));
 	this->hist = new HistoricArrangement<VWTraits>(*(this->map));
 
@@ -37,9 +41,12 @@ VWDemo::VWDemo() {
 	std::cout << "in count " << incnt  << "\n";
 
 	Timer t;
+	// step 3: initialize the algorithm
 	VWSimplificationWithHistory simplification(*hist);
 	simplification.initialize();
 	t.stamp("Initialization");
+
+	// step 4: simplify until no more vertices can be removed
 	simplification.simplify(0);
 	t.stamp("Simplification done");
 	t.output();
@@ -64,6 +71,7 @@ VWDemo::VWDemo() {
 		//int outcnt2 = map2.number_of_edges();
 		//std::cout << "out count " << outcnt2 << "\n";
 
+	// initialize a gui with a slider to retrieve all intermediate solutions
 	this->c = (3 * outcnt + incnt) / 4;
 	QToolBar* toolBar = new QToolBar();
 	toolBar->addWidget(new QLabel("c = "));

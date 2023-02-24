@@ -2,43 +2,60 @@
 
 #include "../../core/core.h"
 #include "../../core/region_arrangement.h"
-#include "../common_arrangement.h"
-#include "../common_traits.h"
+#include "../util.h"
+#include "../modifiable_arrangement.h"
 #include "../historic_arrangement.h"
-
-/// Algorithm to iteratively remove vertices from a map.
-///
-/// Implementation notes
-///	  Runs in O(n^2) time
-///	  This is a topologically-safe variant, using the principle of blocking numbers in https://doi.org/10.1145/2818373
-///   It abstracts from the way on how to compute (and store) the cost of removing a vertex, its relevant edge, and the blocking number, via the \ref VertexRemovalTraits concept.
-///   Each iteration, all vertices are polled for their cost: there is no specific need to store these via the vrSetCost function
 
 namespace cartocrow::simplification {
 
-/// Concept for functions necessary on a Map type to allow for performing \ref VertexRemovalSimplification
+/// Concept for functions necessary on a Map type to allow for performing \ref 
+/// VertexRemovalSimplification.
 template <class T>
 concept VertexRemovalTraits = requires(typename T::Map::Vertex_handle v, int b, Triangle<Exact> t,
                                        typename T::Map::Halfedge_handle e) {
 
 	requires MapType<T>;
 
-	// can get and set the cost
-	// NB: this does not have to be stored necessarily, can also be derived each time GetCost is called
+	/// Set the cost of removing vertex \f$v\f$ spanning a triangle \f$t\f$ with 
+	/// its neighbors. 	/// Note that, in principle, the cost may also be derived 
+	/// each time upon calling \ref vrGetCost(). In such a case, this method does 
+	/// not have to perform any actions. The cost should be nonnegative.
 	{T::vrSetCost(v, t)};
+	/// Retrieve (or compute) the cost of removing vertex \f$v\f$. The cost should
+	/// be nonnegative.
 	{ T::vrGetCost(v) } -> std::same_as<Number<Exact>>;
 
-	// can store and retrieve an integer, this should be stored
+	/// Stores an integer \f$b\f$ with vertex \f$v\f$, representing the blocking 
+	/// number. This should not be modified in other ways that through calls of 
+	/// the \ref VertexRemovalSimplification algorithm.
 	{T::vrSetBlockingNumber(v, b)};
+	/// Retreives the blocking number stored with vertex \f$v\f$.
 	{ T::vrGetBlockingNumber(v) } -> std::same_as<int>;
 
-	// can get and set incoming halfedge on the convex side
-	// NB: this does not have to be stored necessarily, can also be derived each time GetHalfedge is called
+	/// Sets the incoming halfedge \f$e\f$ on the convex side of vertex \f$v\f$.
+	/// Note that, in principle, this edge may also be derived each time upon 
+	/// calling \ref vrGetHalfEdge(). In such a case, this method does not have to
+	/// perform any actions.
 	{T::vrSetHalfedge(v, e)};
+	/// Retrieve (or compute) the incoming halfedge on the convex side of \f$v\f$.
 	{ T::vrGetHalfedge(v) } -> std::same_as<typename T::Map::Halfedge_handle>;
 };
 
-/// Basic template for a simplification algorithm removing a vertex one at a time, while not causing topology violations.
+/// This simplification algorithm removes degree-2 vertices one at a time,
+/// replacing it by a single edge connecting its neighbors. The vertex is
+/// removed that incurs the smallest cost, while ensuring that no
+/// intersections are created by the new edge, and that no topological changes are
+/// made.
+///
+/// Implementation notes:
+///	- Runs in \f$O(n^2)\f$ time on a map with \f$n\f$ edges
+///	- This is a topologically-safe variant, using the principle of blocking 
+///   numbers in https://doi.org/10.1145/2818373
+/// - It abstracts from the way on how to compute (and store) the cost of removing
+///   a vertex, its relevant edge, and the blocking number, via the \ref 
+///   VertexRemovalTraits concept.
+/// - Each iteration, all vertices are polled for their cost: there is no specific
+///   need to store these via the vrSetCost function
 template <ModifiableArrangement MA, VertexRemovalTraits VRT>
 requires(std::same_as<typename MA::Map, typename VRT::Map>) class VertexRemovalSimplification {
 
@@ -48,19 +65,27 @@ requires(std::same_as<typename MA::Map, typename VRT::Map>) class VertexRemovalS
 	/// Constructs the algorithm for a given \ref ModifiableArrangement
 	VertexRemovalSimplification(MA& ma) : map(ma.getMap()), modmap(ma){};
 
-	/// Initializes the algorithm
+	/// Initializes the algorithm, taking \f$O(n^2)\f$ time.
 	void initialize();
 
-	/// Simplifies while operations cost at most threshold t
+	/// Performs as many operations as possible, while operations cost at most 
+	/// threshold \f$t\f$. Each iteration takes linear time. 
+	/// Notes:
+	/// - Subsequent calls with a lower value for \f$t\f$ have no effect.
+	/// - In case of a historic arrangement, it is always set to present. 
 	void simplify(Number<Exact> t);
-	/// Simplifies until the number of edges in the arrangement is at most c
+	/// Performs as few operations as possible, to achieve a result of at most 
+	/// \f$c\f$ edges. Each iteration takes linear time.
+	/// Notes:
+	/// - Subsequent calls with a higher value for \f$c\f$ have no effect.
+	/// - In case of a historic arrangement, it is always set to present. 
 	void simplify(int c);
 
   private:
 	// Reinitializes the simplification data for the vertex
 	void initVertex(Map::Vertex_handle v);
-	// Finds the vertex to remove with the lowest cost. Returns true iff removable vertex was found
-	// NB: assigns best and best_cost
+	// Finds the vertex to remove with the lowest cost. Returns true iff removable
+	// vertex was found. NB: assigns best and best_cost
 	bool findBest(Map::Vertex_handle& best, Number<Exact>& best_cost);
 	// Executes the removal of the given vertex
 	void execute(Map::Vertex_handle v, Number<Exact> cost);
@@ -75,6 +100,7 @@ requires(std::same_as<typename MA::Map, typename VRT::Map>) class VertexRemovalS
 	const short NOOP_TRIANGLE = -2;
 	const short NOOP_DEGREE = -3;
 
+	// Fields
 	Map& map;
 	MA& modmap;
 };

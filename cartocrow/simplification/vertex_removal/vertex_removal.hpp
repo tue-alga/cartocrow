@@ -17,7 +17,7 @@ template <ModifiableArrangement MA, VertexRemovalTraits VRT>
 requires(std::same_as<typename MA::Map, typename VRT::Map>) void VertexRemovalSimplification<
     MA, VRT>::simplify(Number<Exact> t) {
 	if constexpr (ModifiableArrangementWithHistory<MA>) {
-		modmap.recallThreshold(t);
+		modmap.goToPresent();
 	}
 
 	typename Map::Vertex_handle best;
@@ -33,7 +33,7 @@ requires(std::same_as<typename MA::Map,
                       typename VRT::Map>) void VertexRemovalSimplification<MA, VRT>::simplify(int c) {
 
 	if constexpr (ModifiableArrangementWithHistory<MA>) {
-		modmap.recallComplexity(c);
+		modmap.goToPresent();
 	}
 
 	typename Map::Vertex_handle best;

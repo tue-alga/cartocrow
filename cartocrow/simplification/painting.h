@@ -82,9 +82,9 @@ template <class TArr> class ArrangementPainting : public renderer::GeometryPaint
 	}
 
   private:
-	/// The arrangement we are drawing.
+	// The arrangement we are drawing.
 	std::shared_ptr<TArr> m_arr;
-	/// The drawing options.
+	// The drawing options.
 	Options m_options;
 };
 

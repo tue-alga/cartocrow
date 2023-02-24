@@ -1,13 +1,13 @@
 #pragma once
 
 #include "../core/core.h"
-#include "common_arrangement.h"
-#include "common_traits.h"
+#include "modifiable_arrangement.h"
+#include "util.h"
 
-/// Definitions for an ObliviousArrangement that does not keep track of the performed operations.
 namespace cartocrow::simplification {
 
-/// Implements the \ref ModifiableArrangement concept
+/// Implements the \ref ModifiableArrangement concept. It does not keep track of 
+/// changes made to the arrangement: any change made is final.
 template <MapType MT> class ObliviousArrangement {
   public:
 	using Map = MT::Map;
@@ -17,7 +17,7 @@ template <MapType MT> class ObliviousArrangement {
 	~ObliviousArrangement() {}
 
 	Map::Halfedge_handle mergeWithNext(Map::Halfedge_handle e, Number<Exact> cost) {
-		return merge_with_next(map, e);
+		return util::mergeWithNext(map, e);
 	}
 
 	Map& getMap() {
