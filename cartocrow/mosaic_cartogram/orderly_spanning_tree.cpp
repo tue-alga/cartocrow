@@ -4,7 +4,7 @@ namespace cartocrow::mosaic_cartogram {
 
 namespace detail {
 
-OrderlySpanningTree::OrderlySpanningTree(const Graph &g, int r1, int r2, int r3)
+OrderlySpanningTree::OrderlySpanningTree(const UndirectedGraph &g, int r1, int r2, int r3)
     : m_graph(g), m_root1(r1), m_root2(r2), m_root3(r3), m_parent(g.getNumberOfVertices(), r1) {
 	// TODO: assert that `g` is connected, triangular, etc.
 	contract(g.getNumberOfVertices());
@@ -43,7 +43,7 @@ void OrderlySpanningTree::contract(const int n) {
 } // namespace detail
 
 detail::OrderlySpanningTree RegionArrangementOST::arrangementToOST(RegionArrangement &arr, const IndexMap<RegionArrangement> &idxMap) {
-	Graph g(arr.number_of_vertices());
+	UndirectedGraph g(arr.number_of_vertices());
 
 	// add all edges in the arrangement to the graph
 	// each edge is represented by one of its half-edges

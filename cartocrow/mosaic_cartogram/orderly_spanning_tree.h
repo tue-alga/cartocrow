@@ -24,7 +24,7 @@ class OrderlySpanningTree {
 	/// Creates an OST for the given graph, which must be connected and triangular (i.e., maximal
 	/// planar). Since the graph data structure does not specify an embedding, the three vertices on
 	/// the outer boundary must also be specified.
-	OrderlySpanningTree(const Graph &g, int r1, int r2, int r3);
+	OrderlySpanningTree(const UndirectedGraph &g, int r1, int r2, int r3);
 
 	int getRoot() const {
 		return m_root1;
@@ -37,7 +37,7 @@ class OrderlySpanningTree {
 	}
 
   private:
-	Graph m_graph;
+	UndirectedGraph m_graph;
 	const int m_root1, m_root2, m_root3;  // .. of the red, blue, and green trees
 
 	/// This array defines the red tree: it specifies for each vertex its parent. Note that we are
