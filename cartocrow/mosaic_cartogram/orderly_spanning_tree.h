@@ -14,31 +14,32 @@ class RegionArrangementOST;  // forward declaration (so it can be declared as fr
 
 namespace detail {
 
-/// A class that computes and represents an orderly spanning tree. On its own, this class is only
-/// used for testing.
-/// It uses the algorithm described by Schnyder (1990) in sections 4 and 8.
+/// A class that computes and represents an orderly spanning tree. It uses the algorithm described
+/// by Schnyder (1990) in sections 4 and 8.
 class OrderlySpanningTree {
 	friend class cartocrow::mosaic_cartogram::RegionArrangementOST;
 
   public:
 	/// Creates an OST for the given graph, which must be connected and triangular (i.e., maximal
-	/// planar). Since the graph data structure does not specify an embedding, the three vertices on
-	/// the outer boundary must also be specified.
+	/// planar). The three vertices on the outer boundary must also be specified.
 	OrderlySpanningTree(const UndirectedGraph &g, int r1, int r2, int r3);
 
-	int getRoot() const {
-		return m_root1;
-	}
+	int getRoot() const { return m_root1; }
 
 	/// Returns the parent of the given vertex w.r.t. the OST. A vertex is its own parent if and
 	/// only if it's the root.
-	int getParent(int v) const {
-		return m_parent[v];
-	}
+	int getParent(int v) const { return m_parent[v]; }
+
+	/// Returns the children of the given vertex w.r.t. the OST. They have the same order as in the
+	/// original graph.
+	const std::vector<int>& getChildren(int v) const { return m_tree.getNeighbors(v); }
 
   private:
-	UndirectedGraph m_graph;
+	const UndirectedGraph m_graph;
 	const int m_root1, m_root2, m_root3;  // .. of the red, blue, and green trees
+
+	/// The contracted graph, only used for computation.
+	UndirectedGraph m_gc;
 
 	/// This array defines the red tree: it specifies for each vertex its parent. Note that we are
 	/// not interested in the blue or green tree.
@@ -46,7 +47,13 @@ class OrderlySpanningTree {
 	/// vertices that have a different parent.
 	std::vector<int> m_parent;
 
+	/// This graph is a more convenient specification of the red tree, computed after `m_parent`.
+	Graph m_tree;
+
 	void contract(const int n);
+
+	void buildTree(const int v);
+	void buildTreeRecur(const int v, const int neighbor);
 };
 
 } // namespace detail
