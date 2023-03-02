@@ -1,10 +1,12 @@
 set(SOURCES
+	graph.cpp
 	mosaic_cartogram.cpp
 	orderly_spanning_tree.cpp
 	painting.cpp
 	parameters.cpp
 )
 set(HEADERS
+	graph.h
 	mosaic_cartogram.h
 	orderly_spanning_tree.h
 	painting.h
