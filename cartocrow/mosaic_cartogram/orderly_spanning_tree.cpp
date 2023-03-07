@@ -6,7 +6,8 @@ namespace detail {
 
 OrderlySpanningTree::OrderlySpanningTree(const UndirectedGraph &g, int r1, int r2, int r3)
     : m_graph(g), m_root1(r1), m_root2(r2), m_root3(r3), m_gc(g),
-      m_parent(g.getNumberOfVertices(), r1), m_tree(g.getNumberOfVertices()) {
+      m_parent(g.getNumberOfVertices(), r1), m_tree(g.getNumberOfVertices()),
+      m_treePreordering(g.getNumberOfVertices()) {
 	// TODO: assert that `g` is not too small, connected, triangular, etc.
 	contract(g.getNumberOfVertices());
 	buildTree(r1);
@@ -27,12 +28,12 @@ void OrderlySpanningTree::contract(const int n) {
 
 	// 2. Contract the edge by:
 	//    • removing all edges incident to `target` (which effectively removes `target` from the graph)
-	//    • for each removed edge `(target, v), adding a new edge `(m_root1, v)` if it did not exist before
+	//    • for each removed edge `(target, v)`, adding a new edge `(m_root1, v)` if it did not exist before
 	std::vector<int> newNeighbors;  // of `m_root1`
-	for (int v : m_gc.getNeighbors(target)) {
-		m_gc.removeEdge(target, v);
-		if (m_gc.addEdge(m_root1, v)) newNeighbors.push_back(v);
-	}
+	for (int v : m_gc.getNeighbors(target))
+		if (m_gc.addEdge(m_root1, v))
+			newNeighbors.push_back(v);
+	m_gc.isolate(target);  // after the loop to prevent concurrent modification
 
 	// 3. Contract the remaining edges
 	contract(n - 1);
@@ -42,7 +43,9 @@ void OrderlySpanningTree::contract(const int n) {
 	for (int v : newNeighbors) m_parent[v] = target;
 }
 
-void OrderlySpanningTree::buildTree(const int v) {
+int OrderlySpanningTree::buildTree(const int v, int i) {
+	m_treePreordering[v] = i++;
+
 	auto &ns = m_graph.getNeighbors(v);  // cannot be empty
 	const int p = m_parent[v];
 
@@ -53,7 +56,7 @@ void OrderlySpanningTree::buildTree(const int v) {
 		while (*itEnd != p) ++itEnd;
 	} else {
 		// if `v` is the root, we mustn't skip the first neighbor
-		buildTreeRecur(v, *itEnd);
+		i = buildTreeRecur(v, *itEnd, i);
 	}
 
 	auto it = itEnd;
@@ -61,15 +64,18 @@ void OrderlySpanningTree::buildTree(const int v) {
 		++it;
 		if (it == ns.end()) it = ns.begin();  // loop around
 		if (it == itEnd) break;               // we reached the end
-		buildTreeRecur(v, *it);
+		i = buildTreeRecur(v, *it, i);
 	}
+
+	return i;
 }
 
-void OrderlySpanningTree::buildTreeRecur(const int v, const int neighbor) {
+int OrderlySpanningTree::buildTreeRecur(const int v, const int neighbor, int i) {
 	if (v == m_parent[neighbor]) {
 		m_tree.addEdgeUnsafe(v, neighbor);
-		buildTree(neighbor);  // recur: find children of `neighbor`
+		i = buildTree(neighbor, i);  // recur: find children of `neighbor`
 	}
+	return i;
 }
 
 } // namespace detail

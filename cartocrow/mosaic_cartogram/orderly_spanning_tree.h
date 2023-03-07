@@ -34,6 +34,8 @@ class OrderlySpanningTree {
 	/// original graph.
 	const std::vector<int>& getChildren(int v) const { return m_tree.getNeighbors(v); }
 
+	int getLabel(int v) const { return m_treePreordering[v]; }
+
   private:
 	const UndirectedGraph m_graph;
 	const int m_root1, m_root2, m_root3;  // .. of the red, blue, and green trees
@@ -47,13 +49,16 @@ class OrderlySpanningTree {
 	/// vertices that have a different parent.
 	std::vector<int> m_parent;
 
-	/// This graph is a more convenient specification of the red tree, computed after `m_parent`.
+	/// This graph is a more convenient specification of the red tree, computed after \c m_parent.
 	Graph m_tree;
+
+	/// Counterclockwise preordering of \c m_tree.
+	std::vector<int> m_treePreordering;
 
 	void contract(const int n);
 
-	void buildTree(const int v);
-	void buildTreeRecur(const int v, const int neighbor);
+	int buildTree(const int v, int i = 0);
+	int buildTreeRecur(const int v, const int neighbor, int i);
 };
 
 } // namespace detail

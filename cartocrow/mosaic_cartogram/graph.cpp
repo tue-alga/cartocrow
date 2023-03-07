@@ -53,4 +53,12 @@ bool UndirectedGraph::removeEdge(int u, int v) {
 	}
 }
 
+void UndirectedGraph::isolate(int v) {
+	for (int u : m_adj[v]) {
+		auto &ns = m_adj[u];
+		ns.erase(std::find(ns.begin(), ns.end(), v));
+	}
+	m_adj[v].clear();
+}
+
 } // namespace cartocrow::mosaic_cartogram

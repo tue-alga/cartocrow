@@ -42,6 +42,9 @@ class Graph {
 	/// \return \c true if and only if an edge was removed
 	virtual bool removeEdge(int u, int v);
 
+	/// Runtime: O(deg(v) + len(a))
+	void setAdjacenciesUnsafe(int v, std::vector<int> a) { m_adj[v] = a; }
+
   protected:
 	std::vector<std::vector<int>> m_adj;
 };
@@ -64,6 +67,10 @@ class UndirectedGraph : public Graph {
 	/// Runtime: O(deg(u) + deg(v))
 	/// \return \c true if and only if an edge was removed
 	bool removeEdge(int u, int v) override;
+
+	/// Removes all edges incident to \c v.
+	/// Runtime: O(\sum_u deg(u)) where u is a neighbor of v
+	void isolate(int v);
 };
 
 } // namespace cartocrow::mosaic_cartogram
