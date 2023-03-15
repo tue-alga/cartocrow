@@ -4,6 +4,7 @@ set(SOURCES
 	orderly_spanning_tree.cpp
 	painting.cpp
 	parameters.cpp
+	triangulation.cpp
 )
 set(HEADERS
 	graph.h
@@ -11,6 +12,7 @@ set(HEADERS
 	orderly_spanning_tree.h
 	painting.h
 	parameters.h
+	triangulation.h
 )
 
 add_library(mosaic_cartogram ${SOURCES})
