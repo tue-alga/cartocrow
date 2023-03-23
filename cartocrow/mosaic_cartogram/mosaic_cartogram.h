@@ -1,18 +1,20 @@
 #ifndef CARTOCROW_MOSAIC_CARTOGRAM_MOSAIC_CARTOGRAM_H
 #define CARTOCROW_MOSAIC_CARTOGRAM_MOSAIC_CARTOGRAM_H
 
-#include <CGAL/graph_traits_dual_arrangement_2.h>
+#include <string>
+#include <unordered_map>
+#include <vector>
 
 #include "../core/core.h"
 #include "../core/region_arrangement.h"
 #include "../core/region_map.h"
+#include "graph.h"
 #include "parameters.h"
 
 namespace cartocrow::mosaic_cartogram {
 
-template <typename A> using Dual = CGAL::Dual<A>;
-
 class MosaicCartogram {
+	friend class Painting;  // TODO: does it matter where it's placed?
 
   public:
 	/// Constructs a mosaic cartogram with the given regions.
@@ -23,20 +25,27 @@ class MosaicCartogram {
 	MosaicCartogram(const std::shared_ptr<RegionMap> map);
 
 	/// Returns the computation parameters for this mosaic cartogram.
-	Parameters& parameters();
+	Parameters& parameters() {
+		return m_parameters;
+	}
 
 	/// Computes the mosaic cartogram.
 	void compute();
 
   private:
 	/// The list of regions that this mosaic cartogram is computed for.
-	const std::shared_ptr<RegionMap> m_map;
-	RegionArrangement m_arrangement;
-	Dual<RegionArrangement> m_dual;
+	const std::shared_ptr<RegionMap> m_origMap;
+
 	/// The computation parameters.
 	Parameters m_parameters;
 
-	friend class Painting;
+	RegionMap m_map;
+	RegionArrangement m_arr;
+	std::vector<std::string> m_indexToCountry;
+	std::unordered_map<std::string, int> m_countryToIndex;
+	UndirectedGraph m_dual;
+
+	static std::pair<PolygonWithHoles<Exact>, Number<Exact>> getLargest(const PolygonSet<Exact> &set);
 };
 
 } // namespace cartocrow::mosaic_cartogram
