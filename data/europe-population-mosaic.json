@@ -1,6 +1,6 @@
 {
 	"type": "mosaic_cartogram",
-	"map": "europe.ipe",
+	"map": "europe-ne-110m-salient-points.ipe",
 	"data": {
 		"RUS": 145934462,
 		"DEU": 83783942,

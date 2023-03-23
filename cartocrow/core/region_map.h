@@ -75,6 +75,8 @@ std::optional<size_t> findLabelInside(const PolygonSet<Exact>& shape,
 /// or if the file does not contain regions like specified above.
 RegionMap ipeToRegionMap(const std::filesystem::path& file);
 
+std::vector<Point<Exact>> ipeToSalientPoints(const std::filesystem::path& file);
+
 } // namespace cartocrow
 
 #endif //CARTOCROW_CORE_REGION_MAP_H

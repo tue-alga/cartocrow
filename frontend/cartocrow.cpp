@@ -68,7 +68,8 @@ int main(int argc, char* argv[]) {
 	std::ifstream f(projectFilename);
 	json projectData = json::parse(f);
 
-	RegionMap map = ipeToRegionMap(projectFilename.parent_path() / projectData["map"]);
+	const std::filesystem::path ipeFilename = projectFilename.parent_path() / projectData["map"];
+	RegionMap map = ipeToRegionMap(ipeFilename);
 	auto map_ptr = std::make_shared<RegionMap>(map);
 
 	std::shared_ptr<renderer::GeometryPainting> painting;
@@ -116,6 +117,13 @@ int main(int argc, char* argv[]) {
 		painting = std::make_shared<flow_map::Painting>(map_ptr, tree, options);
 
 	} else if (projectData["type"] == "mosaic_cartogram") {
+		auto salientPoints = ipeToSalientPoints(ipeFilename);
+
+		// (temp)
+		std::sort(salientPoints.begin(), salientPoints.end());
+		for (auto p : salientPoints) std::cout << p << '\n';
+		std::cout << salientPoints.size() << " in total" << std::endl;
+
 		auto cartogram = std::make_shared<mosaic_cartogram::MosaicCartogram>(map_ptr);
 
 		mosaic_cartogram::Parameters& parameters = cartogram->parameters();
