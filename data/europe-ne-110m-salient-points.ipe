@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <!DOCTYPE ipe SYSTEM "ipe.dtd">
 <ipe version="70218" creator="Ipe 7.2.26">
-<info created="D:20230317121156" modified="D:20230329223849"/>
+<info created="D:20230317121156" modified="D:20230330000923"/>
 <ipestyle name="basic">
 <symbol name="arrow/arc(spx)">
 <path stroke="sym-stroke" fill="sym-stroke" pen="sym-pen">
@@ -310,10 +310,25 @@ h
 <tiling name="falling" angle="-60" step="4" width="1"/>
 <tiling name="rising" angle="30" step="4" width="1"/>
 </ipestyle>
+<ipestyle name="extendedcolors">
+<color name="CART 1" value="0.145 0.737 0.612"/>
+<color name="CART 10" value="0.996 0.965 0.608"/>
+<color name="CART 11" value="0.996 0.859 0.706"/>
+<color name="CART 12" value="0.98 0.714 0.58"/>
+<color name="CART 13" value="1 0.8 0.302"/>
+<color name="CART 2" value="0.533 0.78 0.396"/>
+<color name="CART 3" value="0.561 0.737 0.757"/>
+<color name="CART 4" value="0.604 0.839 0.741"/>
+<color name="CART 5" value="0.706 0.592 0.506"/>
+<color name="CART 6" value="0.733 0.718 0.349"/>
+<color name="CART 7" value="0.831 0.878 0.353"/>
+<color name="CART 8" value="0.835 0.725 0.541"/>
+<color name="CART 9" value="0.867 0.529 0.475"/>
+</ipestyle>
 <page>
 <layer name="alpha"/>
 <view layers="alpha" active="alpha"/>
-<path layer="alpha" stroke="0" fill="1">
+<path layer="alpha" stroke="0" fill="CART 12">
 512 177.97 m
 509.492 178.925 l
 497.389 179.649 l
@@ -457,7 +472,7 @@ h
 454.609 183.41 l
 h
 </path>
-<path stroke="0" fill="1">
+<path stroke="0" fill="CART 7">
 335.577 486.251 m
 329.433 478.629 l
 325.992 476.336 l
@@ -510,7 +525,7 @@ h
 335.577 486.251 l
 h
 </path>
-<path stroke="0" fill="1">
+<path stroke="0" fill="CART 7">
 200.982 196.986 m
 205.027 193.201 l
 217.882 190.221 l
@@ -569,7 +584,7 @@ h
 222.296 102.823 l
 h
 </path>
-<path stroke="0" fill="1">
+<path stroke="0" fill="CART 5">
 242.308 324.765 m
 245.275 332.702 l
 250.778 342.229 l
@@ -612,7 +627,7 @@ h
 242.308 324.765 l
 h
 </path>
-<path stroke="0" fill="1">
+<path stroke="0" fill="CART 7">
 372.346 305.444 m
 381.02 304.198 l
 383 301.199 l
@@ -660,7 +675,7 @@ h
 372.346 305.444 l
 h
 </path>
-<path stroke="0" fill="1">
+<path stroke="0" fill="CART 3">
 415.569 259.542 m
 418.72 259.95 l
 419.787 263.584 l
@@ -756,7 +771,7 @@ h
 415.569 259.542 l
 h
 </path>
-<path stroke="0" fill="1">
+<path stroke="0" fill="CART 2">
 343.344 267.154 m
 344.829 261.252 l
 348.047 256.549 l
@@ -804,7 +819,7 @@ h
 343.344 267.154 l
 h
 </path>
-<path stroke="0" fill="1">
+<path stroke="0" fill="CART 8">
 298.874 180.786 m
 298.689 175.151 l
 293.511 174.659 l
@@ -844,7 +859,7 @@ h
 298.874 180.786 l
 h
 </path>
-<path stroke="0" fill="1">
+<path stroke="0" fill="CART 7">
 344.574 190.857 m
 350.172 188.025 l
 351.412 184.512 l
@@ -879,7 +894,7 @@ h
 344.574 190.857 l
 h
 </path>
-<path stroke="0" fill="1">
+<path stroke="0" fill="CART 5">
 385.59 196.159 m
 387.261 198.626 l
 392.824 201.352 l
@@ -909,7 +924,7 @@ h
 385.59 196.159 l
 h
 </path>
-<path stroke="0" fill="1">
+<path stroke="0" fill="CART 4">
 408.697 163.162 m
 413.445 161.764 l
 417.286 165.05 l
@@ -956,7 +971,7 @@ h
 408.697 163.162 l
 h
 </path>
-<path stroke="0" fill="1">
+<path stroke="0" fill="CART 4">
 361.687 294.953 m
 363.831 289.128 l
 358.56 283.401 l
@@ -979,7 +994,7 @@ h
 361.687 294.953 l
 h
 </path>
-<path stroke="0" fill="1">
+<path stroke="0" fill="CART 9">
 361.365 321.185 m
 365.608 318.987 l
 367.919 312.69 l
@@ -1004,7 +1019,7 @@ h
 361.365 321.185 l
 h
 </path>
-<path stroke="0" fill="1">
+<path stroke="0" fill="CART 1">
 359.15 349.021 m
 359.15 349.021 l
 360.798 346.97 l
@@ -1026,7 +1041,7 @@ h
 359.15 349.021 l
 h
 </path>
-<path stroke="0" fill="1">
+<path stroke="0" fill="CART 9">
 268.424 255.842 m
 270.741 248.994 l
 268.661 245.21 l
@@ -1087,7 +1102,7 @@ h
 268.424 255.842 l
 h
 </path>
-<path stroke="0" fill="1">
+<path stroke="0" fill="CART 6">
 359.043 135.156 m
 362.744 130.092 l
 366.355 131.751 l
@@ -1118,7 +1133,7 @@ h
 359.043 135.156 l
 h
 </path>
-<path stroke="0" fill="1">
+<path stroke="0" fill="CART 10">
 417.726 22.5955 m
 417.075 18.3695 l
 401.277 13.9825 l
@@ -1176,7 +1191,7 @@ h
 368.247 96.5966 l
 h
 </path>
-<path stroke="0" fill="1">
+<path stroke="0" fill="CART 1">
 512 67.2562 m
 503.493 67.2565 l
 498.45 57.3219 l
@@ -1217,7 +1232,7 @@ h
 398.988 109.411 l
 h
 </path>
-<path stroke="0" fill="1">
+<path stroke="0" fill="CART 11">
 349.446 86.7481 m
 349.716 83.1703 l
 346.607 80.7267 l
@@ -1244,7 +1259,7 @@ h
 349.446 86.7481 l
 h
 </path>
-<path stroke="0" fill="1">
+<path stroke="0" fill="CART 1">
 296.989 158.359 m
 300.129 156.954 l
 307.754 151.809 l
@@ -1290,7 +1305,7 @@ h
 296.989 158.359 l
 h
 </path>
-<path stroke="0" fill="1">
+<path stroke="0" fill="CART 6">
 231.233 169.59 m
 231.58 167.162 l
 230.134 163.824 l
@@ -1317,7 +1332,7 @@ h
 231.233 169.59 l
 h
 </path>
-<path stroke="0" fill="1">
+<path stroke="0" fill="CART 4">
 200.188 206.135 m
 201.787 202.954 l
 200.982 196.986 l
@@ -1327,7 +1342,7 @@ h
 200.188 206.135 l
 h
 </path>
-<path stroke="0" fill="1">
+<path stroke="0" fill="CART 3">
 201.667 215.321 m
 200.188 206.135 l
 197.869 205.747 l
@@ -1348,7 +1363,7 @@ h
 201.667 215.321 l
 h
 </path>
-<path stroke="0" fill="1">
+<path stroke="0" fill="CART 13">
 209.715 251.666 m
 211.053 246.975 l
 208.455 234.531 l
@@ -1366,7 +1381,7 @@ h
 209.715 251.666 l
 h
 </path>
-<path stroke="0" fill="1">
+<path stroke="0" fill="CART 3">
 42.1512 117.058 m
 46.533 119.519 l
 51.0044 120.448 l
@@ -1402,7 +1417,7 @@ h
 42.1512 117.058 l
 h
 </path>
-<path stroke="0" fill="1">
+<path stroke="0" fill="CART 13">
 44.3157 49.3755 m
 44.3353 53.9927 l
 49.3039 58.0746 l
@@ -1456,7 +1471,7 @@ h
 44.3157 49.3755 l
 h
 </path>
-<path stroke="0" fill="1">
+<path stroke="0" fill="CART 10">
 105.094 271.028 m
 104.215 261.155 l
 95.3506 250.601 l
@@ -1472,7 +1487,7 @@ h
 105.094 271.028 l
 h
 </path>
-<path stroke="0" fill="1">
+<path stroke="0" fill="CART 2">
 239.153 160.958 m
 244.867 159.072 l
 245.922 161.688 l
@@ -1564,7 +1579,7 @@ h
 221.559 79.2968 l
 h
 </path>
-<path stroke="0" fill="1">
+<path stroke="0" fill="CART 4">
 234.381 271.685 m
 229.316 269.627 l
 223.374 271.524 l
@@ -1592,7 +1607,7 @@ h
 253.16 287.436 l
 h
 </path>
-<path stroke="0" fill="1">
+<path stroke="0" fill="CART 2">
 105.094 271.028 m
 99.8262 275.176 l
 94.961 276.173 l
@@ -1652,7 +1667,7 @@ h
 128.477 259.718 l
 h
 </path>
-<path stroke="0" fill="1">
+<path stroke="0" fill="CART 3">
 102.713 452.187 m
 98.1609 444.376 l
 100.735 433.425 l
@@ -1675,7 +1690,7 @@ h
 102.713 452.187 l
 h
 </path>
-<path stroke="0" fill="1">
+<path stroke="0" fill="CART 10">
 270.973 156.615 m
 278.833 156.001 l
 283.394 159.411 l
@@ -1697,7 +1712,7 @@ h
 270.973 156.615 l
 h
 </path>
-<path stroke="0" fill="1">
+<path stroke="0" fill="CART 2">
 325.992 476.336 m
 328.097 466.985 l
 338.438 460.472 l
@@ -1740,7 +1755,7 @@ h
 325.992 476.336 l
 h
 </path>
-<path stroke="0" fill="1">
+<path stroke="0" fill="CART 13">
 347.302 200.545 m
 345.43 196.604 l
 344.574 190.857 l
@@ -1776,7 +1791,7 @@ h
 347.302 200.545 l
 h
 </path>
-<path stroke="0" fill="1">
+<path stroke="0" fill="CART 12">
 278.205 220.077 m
 282.608 215.973 l
 289.174 215.305 l
@@ -1814,7 +1829,7 @@ h
 278.205 220.077 l
 h
 </path>
-<path stroke="0" fill="1">
+<path stroke="0" fill="CART 8">
 488.519 38.7801 m
 489.263 39.0862 l
 489.976 42.7343 l
@@ -1833,7 +1848,7 @@ h
 488.519 38.7801 l
 h
 </path>
-<path stroke="0" fill="1">
+<path stroke="0" fill="CART 9">
 488.519 38.7801 m
 490.726 38.7184 l
 493.351 40.7482 l
@@ -1851,7 +1866,7 @@ h
 488.519 38.7801 l
 h
 </path>
-<path stroke="0" fill="1">
+<path stroke="0" fill="CART 3">
 321.453 107.937 m
 312.058 112.113 l
 307.762 117.412 l
@@ -1877,7 +1892,7 @@ h
 321.453 107.937 l
 h
 </path>
-<path stroke="0" fill="1">
+<path stroke="0" fill="CART 2">
 360.393 108.856 m
 366.104 105.382 l
 368.247 96.5966 l
@@ -1898,7 +1913,7 @@ h
 360.393 108.856 l
 h
 </path>
-<path stroke="0" fill="1">
+<path stroke="0" fill="CART 9">
 319.203 152.492 m
 319.204 152.492 l
 326.022 156.965 l
@@ -1949,7 +1964,7 @@ h
 319.203 152.492 l
 h
 </path>
-<path stroke="0" fill="1">
+<path stroke="0" fill="CART 5">
 336.719 108.996 m
 334.165 107.437 l
 333.217 109.902 l
@@ -1970,7 +1985,7 @@ h
 336.719 108.996 l
 h
 </path>
-<path stroke="0" fill="1">
+<path stroke="0" fill="CART 13">
 343.234 99.7989 m
 341.911 104.605 l
 339.321 105.655 l
