@@ -53,12 +53,20 @@ struct IpeRendererStyle {
  * the painting to a file. \ref save() can be called more than one time (for
  * example after changing the painting) if desired.
  *
+ * ## Ipelib
+ *
  * Ipelib works with raw pointers a lot. In general, after adding an object to
  * a parent (for example, adding a page to a document), the parent takes
  * possession of the added object. This means that the parent's destructor will
  * also delete the added object. Because of this behavior, IpeRenderer
  * unavoidably has several methods that return raw pointers to newly allocated
  * objects.
+ *
+ * ## Rendering strings
+ *
+ * Ipe uses LaTeX to render text, so any strings rendered through the
+ * IpeRenderer will be interpreted by LaTeX. IpeRenderer escapes strings
+ * containing reserved characters to make sure they get displayed correctly.
  */
 class IpeRenderer : public GeometryRenderer {
 
@@ -91,6 +99,10 @@ class IpeRenderer : public GeometryRenderer {
 	ipe::Curve* convertPolygonToCurve(const Polygon<Inexact>& p) const;
 	/// Returns Ipe attributes to style an Ipe path with the current style.
 	ipe::AllAttributes getAttributesForStyle() const;
+	/// Escapes LaTeX's [reserved characters](https://latexref.xyz/Reserved-characters.html)
+	/// `# $ % & { } _ ~ ^ \` so that the resulting string can safely be used in
+	/// an Ipe file.
+	std::string escapeForLaTeX(const std::string& text) const;
 
 	/// The paintings we're drawing.
 	std::vector<std::shared_ptr<GeometryPainting>> m_paintings;

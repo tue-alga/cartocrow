@@ -116,6 +116,9 @@ class GeometryRenderer {
 	/// Draws a string at a given location.
 	/// The string is drawn centered horizontally around the location given.
 	virtual void drawText(const Point<Inexact>& p, const std::string& text) = 0;
+	/// Draws a string at a given location.
+	/// The string is drawn centered horizontally around the location given.
+	void drawText(const Point<Exact>& p, const std::string& text);
 
 	/// @}
 
