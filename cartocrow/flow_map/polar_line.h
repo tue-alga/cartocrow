@@ -108,6 +108,6 @@ std::ostream& operator<<(std::ostream& os, const PolarLine& line);
 
 } // namespace cartocrow::flow_map
 
-#include "polar_line.inc"
+#include "polar_line.hpp"
 
 #endif //CARTOCROW_CORE_POLAR_LINE_H
