@@ -2,7 +2,8 @@
 
 namespace cartocrow::mosaic_cartogram {
 
-MosaicCartogram::MosaicCartogram(const std::shared_ptr<RegionMap> map) : m_origMap(map), m_dual(0) {}
+MosaicCartogram::MosaicCartogram(const std::shared_ptr<RegionMap> map, const std::vector<Point<Exact>> &salient)
+    : m_origMap(map), m_salient(salient), m_dual(0) {}
 
 void MosaicCartogram::compute() {
 	// create `m_map` from `m_origMap` by only keeping largest polygon for each region
@@ -11,7 +12,7 @@ void MosaicCartogram::compute() {
 
 		// (temp) skip tiny countries; they clutter the visualization
 		if (area < 2) {
-			std::cout << id << '\n';
+			std::cout << "remove " << id << '\n';
 			continue;
 		}
 
@@ -23,8 +24,12 @@ void MosaicCartogram::compute() {
 		m_map[id] = singleton;
 	}
 
-	// create arrangement from `m_map`
-	m_arr = regionMapToArrangement(m_map);
+	// create arrangement from `m_map` (TODO)
+	m_arr = regionMapToArrangement(*m_origMap);
+
+	// (temp) ensure that all salient points exactly equal one vertex point
+	// this is necessary since the input map may contain "rounding errors"
+	snapToVertices(m_salient);
 
 	// create bidirectional mapping country <--> index
 	std::unordered_set<std::string> countries;
@@ -46,6 +51,21 @@ void MosaicCartogram::compute() {
 	}
 }
 
+void MosaicCartogram::snapToVertices(std::vector<Point<Exact>> &points) {
+	for (auto pit = points.begin(); pit != points.end(); ++pit) {
+		const Point<Exact> *nearest;
+		Number<Exact> nearestDistance = 1000000;
+
+		for (const RegionArrangement::Vertex_iterator vit : m_arr.vertex_handles()) {
+			const Point<Exact> &q = vit->point();
+			const Number<Exact> d = CGAL::squared_distance(*pit, q);
+			if (d < nearestDistance) nearest = &q, nearestDistance = d;
+		}
+
+		*pit = *nearest;
+	}
+}
+
 std::pair<PolygonWithHoles<Exact>, Number<Exact>> MosaicCartogram::getLargest(const PolygonSet<Exact> &set) {
 	// convert `PolygonSet` to vector of polygons
 	std::vector<PolygonWithHoles<Exact>> polygons;
@@ -60,10 +80,7 @@ std::pair<PolygonWithHoles<Exact>, Number<Exact>> MosaicCartogram::getLargest(co
 		for (const auto &h : p.holes()) a -= h.area();
 
 		// update largest-so-far if area is greater
-		if (a > largestArea) {
-			largest = &p;
-			largestArea = a;
-		}
+		if (a > largestArea) largest = &p, largestArea = a;
 	}
 
 	return std::make_pair(*largest, largestArea);

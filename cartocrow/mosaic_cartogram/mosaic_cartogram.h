@@ -22,7 +22,7 @@ class MosaicCartogram {
 	/// This does not compute the mosaic cartogram: use \ref compute() to run
 	/// the computation. Modifying the RegionMap passed here after the mosaic
 	/// cartogram has been constructed results in undefined behavior.
-	MosaicCartogram(const std::shared_ptr<RegionMap> map);
+	MosaicCartogram(const std::shared_ptr<RegionMap> map, const std::vector<Point<Exact>> &salient);
 
 	/// Returns the computation parameters for this mosaic cartogram.
 	Parameters& parameters() {
@@ -39,11 +39,15 @@ class MosaicCartogram {
 	/// The computation parameters.
 	Parameters m_parameters;
 
+	std::vector<Point<Exact>> m_salient;
+
 	RegionMap m_map;
 	RegionArrangement m_arr;
 	std::vector<std::string> m_indexToCountry;
 	std::unordered_map<std::string, int> m_countryToIndex;
 	UndirectedGraph m_dual;
+
+	void snapToVertices(std::vector<Point<Exact>> &points);
 
 	static std::pair<PolygonWithHoles<Exact>, Number<Exact>> getLargest(const PolygonSet<Exact> &set);
 };

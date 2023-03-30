@@ -118,13 +118,10 @@ int main(int argc, char* argv[]) {
 
 	} else if (projectData["type"] == "mosaic_cartogram") {
 		auto salientPoints = ipeToSalientPoints(ipeFilename);
+	/*	std::sort(salientPoints.begin(), salientPoints.end());
+		for (const auto &p : salientPoints) std::cout << p << '\n';	*/
 
-		// (temp)
-		std::sort(salientPoints.begin(), salientPoints.end());
-		for (auto p : salientPoints) std::cout << p << '\n';
-		std::cout << salientPoints.size() << " in total" << std::endl;
-
-		auto cartogram = std::make_shared<mosaic_cartogram::MosaicCartogram>(map_ptr);
+		auto cartogram = std::make_shared<mosaic_cartogram::MosaicCartogram>(map_ptr, salientPoints);
 
 		mosaic_cartogram::Parameters& parameters = cartogram->parameters();
 		// TODO: set parameters

@@ -1,6 +1,7 @@
 #ifndef CARTOCROW_MOSAIC_CARTOGRAM_GRAPH_H
 #define CARTOCROW_MOSAIC_CARTOGRAM_GRAPH_H
 
+#include <utility>
 #include <vector>
 
 namespace cartocrow::mosaic_cartogram {
@@ -20,6 +21,9 @@ class Graph {
 	int getNumberOfVertices() const { return m_adj.size(); }
 
 	/// Runtime: O(1)
+	int getDegree(int v) const { return m_adj[v].size(); }
+
+	/// Runtime: O(1)
 	const std::vector<int>& getNeighbors(int v) const { return m_adj[v]; }
 
 	/// Runtime: O(deg(u) deg(v))
@@ -27,6 +31,9 @@ class Graph {
 
 	/// Runtime: O(deg(u))
 	bool containsEdge(int u, int v) const;
+
+	/// Runtime: O(|E|)
+	std::vector<std::pair<int, int>> getEdges() const;
 
 	/// Adds an edge from \c u to \c v, even if it violates the class invariants.
 	/// Runtime: O(1)

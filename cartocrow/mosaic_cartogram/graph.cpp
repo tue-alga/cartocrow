@@ -23,6 +23,14 @@ bool Graph::containsEdge(int u, int v) const {
 	return std::find(ns.begin(), ns.end(), v) != ns.end();
 }
 
+std::vector<std::pair<int, int>> Graph::getEdges() const {
+	std::vector<std::pair<int, int>> edges;
+	for (int u = 0; u < m_adj.size(); u++)
+		for (int v : m_adj[u])
+			edges.push_back({ u, v });
+	return edges;
+}
+
 bool Graph::addEdge(int u, int v) {
 	if (u == v || containsEdge(u, v)) return false;
 	addEdgeUnsafe(u, v);

@@ -1,18 +1,19 @@
 #include "triangulation.h"
 
 #include <algorithm>
+#include <iostream>
 #include <limits>
 #include <CGAL/create_straight_skeleton_from_polygon_with_holes_2.h>
 #include <CGAL/Straight_skeleton_2.h>
-#include "../core/core.h"
 
-#include <iostream>
+#include "../core/core.h"
+#include "graph.h"
 
 namespace cartocrow::mosaic_cartogram {
 
 using StraightSkeleton = CGAL::Straight_skeleton_2<Exact>;
 
-void addOuterTriangle(RegionArrangement &arr) {
+std::vector<Point<Exact>> addOuterTriangle(RegionArrangement &arr) {
 	Number<Exact> xMin = std::numeric_limits<double>::max();
 	Number<Exact> xMax = std::numeric_limits<double>::min();
 	Number<Exact> yMin = std::numeric_limits<double>::max();
@@ -39,6 +40,8 @@ void addOuterTriangle(RegionArrangement &arr) {
 	arr.insert_at_vertices(Segment<Exact>(p0, p1), v0, v1);
 	arr.insert_at_vertices(Segment<Exact>(p1, p2), v1, v2);
 	arr.insert_at_vertices(Segment<Exact>(p2, p0), v2, v0);
+
+	return { p0, p1, p2 };
 }
 
 Polygon<Exact> ccbToPolygon(const RegionArrangement::Ccb_halfedge_const_circulator &circ) {
@@ -63,19 +66,76 @@ PolygonWithHoles<Exact> arrangementToPolygon(const RegionArrangement &arr) {
 	return polygon;
 }
 
-RegionArrangement triangulate(const RegionArrangement &arrOrig) {
+RegionArrangement triangulate(const RegionArrangement &arrOrig, const std::vector<Point<Exact>> salientPoints) {
 	RegionArrangement arr(arrOrig);
-	addOuterTriangle(arr);
-
+	const auto outerPoints = addOuterTriangle(arr);
 	const auto polygon = arrangementToPolygon(arr);
 	const StraightSkeleton skeleton = *CGAL::create_interior_straight_skeleton_2(polygon, Exact());
 
+	// anchors = salientPoints \union outerPoints
+	std::vector<Point<Exact>> anchors(salientPoints);
+	anchors.insert(anchors.end(), outerPoints.begin(), outerPoints.end());
+
+	std::vector<Point<Exact>> indexToPoint;
+	for (auto v : skeleton.vertex_handles())
+		if (v->is_skeleton())
+			indexToPoint.push_back(v->point());
+
+	const int numberOfSkeletonPoints = indexToPoint.size();
+
+	// after this, `indexToPoint` first contains all skeleton points, then all anchor points
+	indexToPoint.insert(indexToPoint.end(), anchors.begin(), anchors.end());
+
+	// graph size = no. skeleton vertices + no. anchor vertices
+	UndirectedGraph graph(indexToPoint.size());
+
+	// add all inner bisectors and all anchor-incident contour bisectors to the graph
+	int numberOfBisectorsAdded = 0;
 	for (auto eit = skeleton.halfedges_begin(); eit != skeleton.halfedges_end(); ++eit) {
-		if (!eit->is_border()) {
-			const auto p = eit->vertex()->point();
-			const auto q = eit->opposite()->vertex()->point();
-			CGAL::insert(arr, Segment<Exact>(p, q));
+		const auto p1 = eit->vertex()->point();
+		const auto p2 = eit->opposite()->vertex()->point();
+
+		// (temp) bad, slow
+		int i1 = 0;
+		int i2 = 0;
+		while (i1 < graph.getNumberOfVertices() && indexToPoint[i1] != p1) i1++;
+		while (i2 < graph.getNumberOfVertices() && indexToPoint[i2] != p2) i2++;
+
+		// immediately skip edges incident to a vertex which is not an anchor or a skeleton vertex
+		if (std::max(i1, i2) >= graph.getNumberOfVertices()) continue;
+
+		// only process one of each pair of halfedges
+		if (i1 > i2) continue;
+
+		if (eit->is_inner_bisector()) {
+			graph.addEdge(i1, i2);
+		} else if (eit->is_bisector()) {
+			// so if eit is contour bisector:
+			if (std::max(i1, i2) >= numberOfSkeletonPoints) {
+				// so if either p1 or p2 is an anchor:
+				graph.addEdge(i1, i2);
+				numberOfBisectorsAdded++;
+			}
 		}
+	}
+
+	// (temp) debug message
+	std::cout << "added " << numberOfBisectorsAdded << " bisectors for " << salientPoints.size() << " salient points (and 3 outer points)" << std::endl;
+
+	// remove all non-anchor deg=1 vertices until none are left
+	// TODO: use queue of candidates to improve runtime
+	for (int i = 0; i < numberOfSkeletonPoints; i++) {
+		if (graph.getDegree(i) == 1) {
+			graph.isolate(i);
+			i = -1;  // there may be new candidates; restart
+		}
+	}
+
+	// add all remaining edges to arrangement
+	for (auto [i1, i2] : graph.getEdges()) {
+		const auto p1 = indexToPoint[i1];
+		const auto p2 = indexToPoint[i2];
+		CGAL::insert(arr, Segment<Exact>(p1, p2));
 	}
 
 	return arr;
