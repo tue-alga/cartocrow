@@ -4,6 +4,7 @@
 #include "../../cartocrow/renderer/geometry_painting.h"
 #include "../../cartocrow/renderer/ipe_renderer.h"
 
+#include <ipeattributes.h>
 #include <ipedoc.h>
 
 #include <filesystem>
@@ -55,4 +56,40 @@ TEST_CASE("Exporting a line segment to Ipe") {
 	REQUIRE(ipeCurve->segment(0).type() == ipe::CurveSegment::Type::ESegment);
 	CHECK(ipeCurve->segment(0).cp(0) == ipe::Vector(2, 3));
 	CHECK(ipeCurve->segment(0).cp(1) == ipe::Vector(1, 4));
+}
+
+TEST_CASE("Exporting a label to Ipe") {
+	std::shared_ptr<renderer::GeometryPainting> painting;
+	std::string expectedText = "";
+	SECTION("without special characters") {
+		class TestPainting : public renderer::GeometryPainting {
+			void paint(renderer::GeometryRenderer& renderer) const override {
+				renderer.drawText(Point<Exact>(5, 5), "Hello!");
+			}
+		};
+		painting = std::make_shared<TestPainting>();
+		expectedText = "Hello!";
+	}
+	SECTION("with special characters") {
+		class TestPainting : public renderer::GeometryPainting {
+			void paint(renderer::GeometryRenderer& renderer) const override {
+				renderer.drawText(Point<Exact>(5, 5), "test # $ % & { } _ ~ ^ \\ test");
+			}
+		};
+		painting = std::make_shared<TestPainting>();
+		expectedText = "test \\# \\$ \\% \\& \\{ \\} \\_ \\~{} \\^{} \\textbackslash{} test";
+	}
+	renderer::IpeRenderer renderer(painting);
+	std::filesystem::path path = std::filesystem::temp_directory_path() / "test.ipe";
+	renderer.save(path);
+
+	std::shared_ptr<ipe::Document> result = IpeReader::loadIpeFile(path);
+	REQUIRE(result->countPages() == 1);
+	REQUIRE(result->page(0)->count() == 1);
+	REQUIRE(result->page(0)->object(0)->type() == ipe::Object::Type::EText);
+	const ipe::Text* ipeText = result->page(0)->object(0)->asText();
+	REQUIRE(ipeText->textType() == ipe::Text::TextType::ELabel);
+	REQUIRE(ipeText->horizontalAlignment() == ipe::THorizontalAlignment::EAlignHCenter);
+	REQUIRE(ipeText->verticalAlignment() == ipe::TVerticalAlignment::EAlignVCenter);
+	REQUIRE(ipeText->text().z() == expectedText);
 }

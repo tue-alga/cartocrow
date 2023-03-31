@@ -54,4 +54,8 @@ void GeometryRenderer::draw(const PolygonSet<Exact>& ps) {
 	draw(approximate(ps));
 }
 
+void GeometryRenderer::drawText(const Point<Exact>& p, const std::string& s) {
+	drawText(approximate(p), s);
+}
+
 } // namespace cartocrow::renderer

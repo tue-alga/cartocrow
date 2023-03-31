@@ -153,7 +153,8 @@ void IpeRenderer::draw(const Circle<Inexact>& c) {
 }*/
 
 void IpeRenderer::drawText(const Point<Inexact>& p, const std::string& text) {
-	ipe::Text* label = new ipe::Text(getAttributesForStyle(), text.data(),
+	ipe::String labelText = escapeForLaTeX(text).data();
+	ipe::Text* label = new ipe::Text(getAttributesForStyle(), labelText,
 	                                 ipe::Vector(p.x(), p.y()), ipe::Text::TextType::ELabel);
 	label->setHorizontalAlignment(ipe::THorizontalAlignment::EAlignHCenter);
 	label->setVerticalAlignment(ipe::TVerticalAlignment::EAlignVCenter);
@@ -225,6 +226,38 @@ ipe::AllAttributes IpeRenderer::getAttributesForStyle() const {
 
 void IpeRenderer::addPainting(std::shared_ptr<GeometryPainting> painting) {
 	m_paintings.push_back(painting);
+}
+
+std::string IpeRenderer::escapeForLaTeX(const std::string& text) const {
+	std::string result = "";
+	result.reserve(text.size());
+	for (int i = 0; i < text.size(); i++) {
+		switch (text[i]) {
+		case '#':
+		case '$':
+		case '%':
+		case '&':
+		case '{':
+		case '}':
+		case '_':
+			result.push_back('\\');
+			result.push_back(text[i]);
+			break;
+		case '~':
+		case '^':
+			result.push_back('\\');
+			result.push_back(text[i]);
+			result.push_back('{');
+			result.push_back('}');
+			break;
+		case '\\':
+			result += "\\textbackslash{}";
+			break;
+		default:
+			result.push_back(text[i]);
+		}
+	}
+	return result;
 }
 
 } // namespace cartocrow::renderer
