@@ -40,7 +40,7 @@ class SpiralTreeDemo : public QMainWindow {
 	Point<Inexact>* findClosestPoint(Point<Inexact> p, Number<Inexact> radius);
 	Polygon<Inexact> m_obstacle;
 	Point<Inexact>* m_draggedPoint = nullptr;
-	Number<Inexact> m_alpha = 0.2 * M_PI;
+	Number<Inexact> m_alpha = 25 * M_PI / 180;
 
 	GeometryWidget* m_renderer;
 	QSlider* m_alphaSlider;
