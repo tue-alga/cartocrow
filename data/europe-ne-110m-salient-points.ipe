@@ -2085,18 +2085,18 @@ h
 <use name="mark/disk(sx)" pos="396.825 497.642" size="normal" stroke="black"/>
 <use name="mark/disk(sx)" pos="465.252 163.619" size="normal" stroke="black"/>
 <use name="mark/disk(sx)" pos="512 177.97" size="normal" stroke="black"/>
-<use name="mark/disk(sx)" pos="512 134.448" size="normal" stroke="black"/>
+<use name="mark/disk(sx)" pos="486.967 137.391" size="normal" stroke="black"/>
 <use name="mark/disk(sx)" pos="332.053 82.8029" size="normal" stroke="black"/>
 <use name="mark/disk(sx)" pos="322.667 69.1508" size="normal" stroke="black"/>
 <use name="mark/disk(sx)" pos="295.164 345.203" size="normal" stroke="black"/>
 <use name="mark/disk(sx)" pos="209.059 376.833" size="normal" stroke="black"/>
 <use name="mark/disk(sx)" pos="326.336 317.641" size="normal" stroke="black"/>
 <use name="mark/disk(sx)" pos="191.386 247.37" size="normal" stroke="black"/>
-<use matrix="1 0 0 1 4.12195 1.13605" name="mark/disk(sx)" pos="170.65 222.466" size="normal" stroke="black"/>
+<use name="mark/disk(sx)" pos="174.772 223.602" size="normal" stroke="black"/>
 <use name="mark/disk(sx)" pos="255.094 265.012" size="normal" stroke="black"/>
 <use name="mark/disk(sx)" pos="295.15 273.063" size="normal" stroke="black"/>
 <use name="mark/disk(sx)" pos="312.872 275.419" size="normal" stroke="black"/>
-<use matrix="1 0 0 1 1.39325 -4.62626" name="mark/disk(sx)" pos="319.499 292.554" size="normal" stroke="black"/>
+<use name="mark/disk(sx)" pos="320.892 287.928" size="normal" stroke="black"/>
 <use name="mark/disk(sx)" pos="328.402 338.04" size="normal" stroke="black"/>
 <use name="mark/disk(sx)" pos="200.152 110.348" size="normal" stroke="black"/>
 <use name="mark/disk(sx)" pos="273.533 133.392" size="normal" stroke="black"/>
@@ -2106,10 +2106,9 @@ h
 <use name="mark/disk(sx)" pos="512 512" size="normal" stroke="black"/>
 <use name="mark/disk(sx)" pos="431.22 512" size="normal" stroke="black"/>
 <use name="mark/disk(sx)" pos="512 67.2562" size="normal" stroke="black"/>
-<use name="mark/disk(sx)" pos="417.179 116.154" size="normal" stroke="black"/>
 <use name="mark/disk(sx)" pos="211.427 254.499" size="normal" stroke="black"/>
 <use name="mark/disk(sx)" pos="128.826 56.6943" size="normal" stroke="black"/>
-<use matrix="0.710986 0.703206 -0.703206 0.710986 179.392 -148.479" name="mark/disk(sx)" pos="270.77 142.799" size="normal" stroke="black"/>
+<use name="mark/disk(sx)" pos="271.489 143.456" size="normal" stroke="black"/>
 <use name="mark/disk(sx)" pos="64.1919 423.787" size="normal" stroke="black"/>
 <use name="mark/disk(sx)" pos="102.713 452.187" size="normal" stroke="black"/>
 <use name="mark/disk(sx)" pos="77.8884 278.161" size="normal" stroke="black"/>
