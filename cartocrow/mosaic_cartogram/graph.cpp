@@ -4,6 +4,14 @@
 
 namespace cartocrow::mosaic_cartogram {
 
+std::optional<int> Graph::getNextNeighbor(int v, int neighbor) const {
+	const auto &ns = m_adj[v];
+	auto it = std::find(ns.begin(), ns.end(), neighbor);
+	if (it == ns.end()) return std::nullopt;
+	++it;
+	return it == ns.end() ? ns.front() : *it;
+}
+
 int Graph::getNumberOfCommonNeighbors(int u, int v) const {
 	// since the vectors are small, we use a simple quadratic-time approach with little overhead
 	int c = 0;

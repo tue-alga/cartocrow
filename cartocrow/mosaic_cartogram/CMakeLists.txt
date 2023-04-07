@@ -5,6 +5,7 @@ set(SOURCES
 	painting.cpp
 	parameters.cpp
 	triangulation.cpp
+	visibility_drawing.cpp
 )
 set(HEADERS
 	graph.h
@@ -13,6 +14,7 @@ set(HEADERS
 	painting.h
 	parameters.h
 	triangulation.h
+	visibility_drawing.h
 )
 
 add_library(mosaic_cartogram ${SOURCES})

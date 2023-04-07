@@ -1,8 +1,9 @@
 #include "orderly_spanning_tree.h"
 
-namespace cartocrow::mosaic_cartogram {
+#include <algorithm>
+#include <numeric>
 
-namespace detail {
+namespace cartocrow::mosaic_cartogram {
 
 OrderlySpanningTree::OrderlySpanningTree(const UndirectedGraph &g, int r1, int r2, int r3)
     : m_graph(g), m_root1(r1), m_root2(r2), m_root3(r3), m_gc(g),
@@ -13,15 +14,24 @@ OrderlySpanningTree::OrderlySpanningTree(const UndirectedGraph &g, int r1, int r
 	buildTree(r1);
 }
 
+std::vector<int> OrderlySpanningTree::getVerticesInOrder() const {
+	std::vector<int> vs(m_graph.getNumberOfVertices());
+	std::iota(vs.begin(), vs.end(), 0);  // fill `vs` with 0, .., n-1
+	std::sort(vs.begin(), vs.end(), [&](int u, int v) {
+		return m_treePreordering[u] < m_treePreordering[v];
+	});
+	return vs;
+}
+
 void OrderlySpanningTree::contract(const int n) {
-	if (n < 4) return;  // only the roots remain, so there's no contractible edge => done
+	if (n <= 3) return;  // only the roots remain, so there's no contractible edge => done
 
 	// 1. Find contractible edge (from `m_root1` to `target`)
 	//    TODO: it's more efficient to precompute an expansion sequence using a *canonical ordering*? (see Schnyder 1990, section 8)
 	int target;
 	for (int v : m_gc.getNeighbors(m_root1)) {
 		if (v != m_root2 && v != m_root3 && m_gc.getNumberOfCommonNeighbors(m_root1, v) == 2) {
-			target = v;  // i.e., we take a non-root neighbor of `m_root1` which shares exactly two neighbors with `m_root1`
+			target = v;  // i.e., we take a non-root neighbor of `m_root1` with which it shares exactly two neighbors
 			break;
 		}
 	}
@@ -43,59 +53,42 @@ void OrderlySpanningTree::contract(const int n) {
 	for (int v : newNeighbors) m_parent[v] = target;
 }
 
-int OrderlySpanningTree::buildTree(const int v, int i) {
-	m_treePreordering[v] = i++;
+int OrderlySpanningTree::buildTree(const int v, int label) {
+	m_treePreordering[v] = label++;
 
-	auto &ns = m_graph.getNeighbors(v);  // cannot be empty
-	const int p = m_parent[v];
+	const auto &neighbors = m_graph.getNeighbors(v);  // not empty
+	const int parent = m_parent[v];
 
-	auto itEnd = ns.begin();
-	if (p != v) {
+	const int n = neighbors.size();
+	int iEnd = n - 1;
+
+	if (parent != v) {
 		// below, we want to start after the parent
 		// such that the child at index 0 will be the first child after the parent
-		while (*itEnd != p) ++itEnd;
+		while (neighbors[iEnd] != parent) iEnd--;
 	} else {
 		// if `v` is the root, we mustn't skip the first neighbor
-		i = buildTreeRecur(v, *itEnd, i);
+		buildTreeRecur(v, neighbors[iEnd], label);
 	}
 
-	auto it = itEnd;
+	// recur for each child
+	// `neighbors` is (assumed to be) in clockwise order, but we want to label vertices left to right, so we iterate in reverse order
+	int i = iEnd;
 	while (true) {
-		++it;
-		if (it == ns.end()) it = ns.begin();  // loop around
-		if (it == itEnd) break;               // we reached the end
-		i = buildTreeRecur(v, *it, i);
+		i = (i-1 + n) % n;
+		if (i == iEnd) break;
+		buildTreeRecur(v, neighbors[i], label);
 	}
 
-	return i;
+	return label;
 }
 
-int OrderlySpanningTree::buildTreeRecur(const int v, const int neighbor, int i) {
+void OrderlySpanningTree::buildTreeRecur(const int v, const int neighbor, int &label) {
+	// if `neighbor` is child of `v`, then add edge to `m_tree` and recur (to find children of `neighbor`)
 	if (v == m_parent[neighbor]) {
 		m_tree.addEdgeUnsafe(v, neighbor);
-		i = buildTree(neighbor, i);  // recur: find children of `neighbor`
+		label = buildTree(neighbor, label);
 	}
-	return i;
-}
-
-} // namespace detail
-
-detail::OrderlySpanningTree RegionArrangementOST::arrangementToOST(RegionArrangement &arr, const IndexMap<RegionArrangement> &idxMap) {
-	UndirectedGraph g(arr.number_of_vertices());
-
-	// add all edges in the arrangement to the graph
-	// each edge is represented by one of its half-edges
-	for (auto eit = arr.edges_begin(); eit != arr.edges_end(); ++eit) {
-		g.addEdgeUnsafe(idxMap[eit->source()], idxMap[eit->target()]);
-	}
-
-	// take the three vertices on the outer boundary as the roots of the spanning trees
-	RegionArrangement::Ccb_halfedge_circulator ccb = *arr.unbounded_face()->holes_begin();
-	int r3 = idxMap[ccb->target()]; ccb++;
-	int r2 = idxMap[ccb->target()]; ccb++;
-	int r1 = idxMap[ccb->target()];
-
-	return detail::OrderlySpanningTree(g, r1, r2, r3);
 }
 
 } // namespace cartocrow::mosaic_cartogram

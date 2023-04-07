@@ -2,27 +2,20 @@
 #define CARTOCROW_MOSAIC_CARTOGRAM_OST_H
 
 #include <vector>
-#include <CGAL/Arr_vertex_index_map.h>
 
-#include "../core/core.h"
-#include "../core/region_arrangement.h"
 #include "graph.h"
 
 namespace cartocrow::mosaic_cartogram {
 
-class RegionArrangementOST;  // forward declaration (so it can be declared as friend below)
-
-namespace detail {
-
 /// A class that computes and represents an orderly spanning tree. It uses the algorithm described
 /// by Schnyder (1990) in sections 4 and 8.
 class OrderlySpanningTree {
-	friend class cartocrow::mosaic_cartogram::RegionArrangementOST;
-
   public:
 	/// Creates an OST for the given graph, which must be connected and triangular (i.e., maximal
 	/// planar). The three vertices on the outer boundary must also be specified.
 	OrderlySpanningTree(const UndirectedGraph &g, int r1, int r2, int r3);
+
+	int getNumberOfVertices() const { return m_graph.getNumberOfVertices(); }
 
 	int getRoot() const { return m_root1; }
 
@@ -34,7 +27,11 @@ class OrderlySpanningTree {
 	/// original graph.
 	const std::vector<int>& getChildren(int v) const { return m_tree.getNeighbors(v); }
 
+	/// Returns the index of the given vertex w.r.t. the counterclockwise preordering of the OST.
 	int getLabel(int v) const { return m_treePreordering[v]; }
+
+	/// Returns the list of vertices sorted by their label.
+	std::vector<int> getVerticesInOrder() const;
 
   private:
 	const UndirectedGraph m_graph;
@@ -57,40 +54,8 @@ class OrderlySpanningTree {
 
 	void contract(const int n);
 
-	int buildTree(const int v, int i = 0);
-	int buildTreeRecur(const int v, const int neighbor, int i);
-};
-
-} // namespace detail
-
-// TODO: why doesn't `operator[]` accept `const Vertex_handle`? then `arr` etc. could be const!
-template <typename A> using IndexMap = CGAL::Arr_vertex_index_map<A>;
-
-class RegionArrangementOST {
-  public:
-	using Vertex_handle = RegionArrangement::Vertex_handle;
-
-	explicit RegionArrangementOST(RegionArrangement &arr)
-	    : m_arr(arr), m_idxMap(arr), m_ost(arrangementToOST(arr, m_idxMap)) {}
-
-	/// Returns the vertex in the arrangement that corresponds to the root of the OST.
-	Vertex_handle getRoot() const {
-		return m_idxMap.vertex(m_ost.m_root1);
-	}
-
-	/// Given a vertex in the arrangement, returns its parent w.r.t. the OST. A vertex is its own
-	/// parent if and only if it's the root.
-	Vertex_handle getParent(const Vertex_handle v) const {
-		int i = m_idxMap[v];
-		return m_idxMap.vertex(m_ost.m_parent[i]);
-	}
-
-  private:
-	const RegionArrangement &m_arr;
-	const IndexMap<RegionArrangement> m_idxMap;
-	const detail::OrderlySpanningTree m_ost;
-
-	static detail::OrderlySpanningTree arrangementToOST(RegionArrangement &arr, const IndexMap<RegionArrangement> &idxMap);
+	int buildTree(const int v, int label = 0);
+	void buildTreeRecur(const int v, const int neighbor, int &label);
 };
 
 } // namespace cartocrow::mosaic_cartogram

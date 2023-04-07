@@ -7,7 +7,11 @@
 
 namespace cartocrow::mosaic_cartogram {
 
-RegionArrangement triangulate(const RegionArrangement &arrOrig, const std::vector<Point<Exact>> salientPoints);
+/// "Triangulates" \c arrOrig such that its dual is maximal planar.
+RegionArrangement triangulate(const RegionArrangement &arrOrig, const std::vector<Point<Exact>> &salientPoints);
+
+/// TODO
+bool dualIsTriangular(const RegionArrangement &arr);
 
 } // namespace cartocrow::mosaic_cartogram
 

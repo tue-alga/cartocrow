@@ -29,9 +29,10 @@ std::vector<Point<Exact>> addOuterTriangle(RegionArrangement &arr) {
 	const auto w = xMax - xMin;
 	const auto h = yMax - yMin;
 
-	const Point<Exact> p0(xMin - w,          yMin - h / 2  );  // bottom left
-	const Point<Exact> p1(xMax + w,          yMin - h / 2  );  // bottom right
-	const Point<Exact> p2((xMin + xMax) / 2, yMax + h * 3/2);  // top
+	// defined such that there is one large sea region "on top", which will become the root of the OST
+	const Point<Exact> p0(xMin - w,          yMax + h / 2  );  // top left
+	const Point<Exact> p1((xMin + xMax) / 2, yMin - h * 3/2);  // bottom
+	const Point<Exact> p2(xMax + w,          yMax + h / 2  );  // top right
 
 	const auto v0 = arr.insert_in_face_interior(p0, arr.unbounded_face());
 	const auto v1 = arr.insert_in_face_interior(p1, arr.unbounded_face());
@@ -66,7 +67,20 @@ PolygonWithHoles<Exact> arrangementToPolygon(const RegionArrangement &arr) {
 	return polygon;
 }
 
-RegionArrangement triangulate(const RegionArrangement &arrOrig, const std::vector<Point<Exact>> salientPoints) {
+// (temp) this fixes the only internal problem (i.e., that Moldova is a degree 2 vertex)
+void absorbMoldova(RegionArrangement &arr) {
+	std::vector<RegionArrangement::Edge_iterator> remove;
+	for (auto e : arr.edge_handles())
+		if (e->face()->data() == "MDA" && e->twin()->face()->data() == "UKR" || e->face()->data() == "UKR" && e->twin()->face()->data() == "MDA")
+			remove.push_back(e);
+	for (auto e : remove) {
+		auto f = arr.remove_edge(e);
+		f->set_data("UKR");  // TODO: this is only necessary once
+	}
+	std::cout << "removed " << remove.size() << " edges to absorb MDA into UKR" << std::endl;
+}
+
+RegionArrangement triangulate(const RegionArrangement &arrOrig, const std::vector<Point<Exact>> &salientPoints) {
 	RegionArrangement arr(arrOrig);
 	const auto outerPoints = addOuterTriangle(arr);
 	const auto polygon = arrangementToPolygon(arr);
@@ -138,7 +152,23 @@ RegionArrangement triangulate(const RegionArrangement &arrOrig, const std::vecto
 		CGAL::insert(arr, Segment<Exact>(p1, p2));
 	}
 
+	// give the three outer (sea) regions names
+	// TODO: ensure that "_outer0" is always top one
+	{
+		const auto circ = arr.unbounded_face()->holes_begin()->ptr()->ccb();
+		auto curr = circ;
+		int i = 0;
+		do {
+			curr->twin()->face()->set_data("_outer" + std::to_string(i++));
+		} while (--curr != circ);
+	}
+
+	absorbMoldova(arr);
 	return arr;
+}
+
+bool dualIsTriangular(const RegionArrangement &arr) {
+	return false;
 }
 
 } // namespace cartocrow::mosaic_cartogram

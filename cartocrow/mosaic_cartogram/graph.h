@@ -1,6 +1,7 @@
 #ifndef CARTOCROW_MOSAIC_CARTOGRAM_GRAPH_H
 #define CARTOCROW_MOSAIC_CARTOGRAM_GRAPH_H
 
+#include <optional>
 #include <utility>
 #include <vector>
 
@@ -26,6 +27,10 @@ class Graph {
 	/// Runtime: O(1)
 	const std::vector<int>& getNeighbors(int v) const { return m_adj[v]; }
 
+	/// Usually but not necessarily, "next" refers to the clockwise direction.
+	/// Runtime: O(deg(v))
+	std::optional<int> getNextNeighbor(int v, int neighbor) const;
+
 	/// Runtime: O(deg(u) deg(v))
 	int getNumberOfCommonNeighbors(int u, int v) const;
 
@@ -41,12 +46,12 @@ class Graph {
 
 	/// Adds an edge from \c u to \c v, unless it already exists or it's a loop.
 	/// Runtime: O(deg(u))
-	/// \return \c true if and only if an edge was added
+	/// \return whether an edge was added
 	bool addEdge(int u, int v);
 
 	/// Removes the edge from \c u to \c v (if it exists, otherwise there's no effect).
 	/// Runtime: O(deg(u))
-	/// \return \c true if and only if an edge was removed
+	/// \return whether an edge was removed
 	virtual bool removeEdge(int u, int v);
 
 	/// Runtime: O(deg(v) + len(a))
@@ -72,7 +77,7 @@ class UndirectedGraph : public Graph {
 
 	/// Removes the edge between \c u and \c v (if it exists, otherwise there's no effect).
 	/// Runtime: O(deg(u) + deg(v))
-	/// \return \c true if and only if an edge was removed
+	/// \return whether an edge was removed
 	bool removeEdge(int u, int v) override;
 
 	/// Removes all edges incident to \c v.

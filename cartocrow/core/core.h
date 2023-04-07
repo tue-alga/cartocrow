@@ -105,6 +105,14 @@ PolygonWithHoles<Inexact> approximate(const PolygonWithHoles<Exact>& p);
 /// inexact representation.
 PolygonSet<Inexact> approximate(const PolygonSet<Exact>& p);
 
+/// Returns the area of a polygon with holes.
+/// TODO: move to more logical place
+template <class K> Number<K> area(PolygonWithHoles<K> polygon) {
+	Number<K> a = polygon.outer_boundary().area();
+	for (const auto &h : polygon.holes()) a -= h.area();
+	return a;  // = outer area minus area of each hole
+}
+
 /// An RGB color. Used for storing the color of elements to be drawn.
 struct Color {
 	/// Red component (integer 0-255).

@@ -48,8 +48,6 @@ class MosaicCartogram {
 	UndirectedGraph m_dual;
 
 	void snapToVertices(std::vector<Point<Exact>> &points);
-
-	static std::pair<PolygonWithHoles<Exact>, Number<Exact>> getLargest(const PolygonSet<Exact> &set);
 };
 
 } // namespace cartocrow::mosaic_cartogram
