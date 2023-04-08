@@ -37,15 +37,16 @@ class SweepInterval {
   public:
 	/// Possible types of sweep intervals.
 	enum class Type {
-		/// The interval is reachable.
+		/// The interval is reachable from the origin (in the first sweep) or
+		/// from any of the active nodes (in the second sweep).
 		REACHABLE,
 		/// The interval is not reachable due to being in an obstacle.
 		OBSTACLE,
 		/// The interval is not reachable due to being behind an obstacle (in
 		/// the first sweep).
 		SHADOW,
-		/// The interval is not being used by a spiral edge (in the second
-		/// sweep).
+		/// The interval is not reachable due to being outside of the spiral
+		/// regions induced by the active nodes (in the second sweep).
 		FREE
 	};
 
@@ -66,9 +67,10 @@ class SweepInterval {
 	/// Returns the type of this interval.
 	Type type() const;
 
-	/// Computes the intersection of the two sides of this interval. This
-	/// returns \ref std::nullopt if the sides never intersect.
-	std::optional<PolarPoint> vanishingPoint(Number<Inexact> rMin) const;
+	/// Computes the point of intersection larger than \c rMin of the two sides
+	/// of this interval. This returns \ref std::nullopt if the sides never
+	/// intersect.
+	std::optional<PolarPoint> outwardsVanishingPoint(Number<Inexact> rMin) const;
 
 	/// Returns a piecewise linear approximation of the shape swept by this
 	/// interval within the given \f$r\f$ interval. This is meant for debugging

@@ -140,17 +140,16 @@ PolarPoint SweepEdgeShape::evalForR(Number<Inexact> r) const {
 	return PolarPoint(r, phiForR(r));
 }
 
-bool SweepEdgeShape::departsToLeftOf(const SweepEdgeShape& shape) const {
-	Number<Inexact> r = this->nearR();
-	assert(shape.nearR() == r);
+bool SweepEdgeShape::departsOutwardsToLeftOf(Number<Inexact> r, const SweepEdgeShape& shape) const {
+	assert(phiForR(r) == shape.phiForR(r));
 
 	// TODO temporary implementation with epsilon, should be replaced by angle
 	// computations
 	return PolarSegment(this->evalForR(r + 0.00001), shape.evalForR(r + 0.00001)).isLeftLine();
 }
 
-std::optional<Number<Inexact>> SweepEdgeShape::intersectWith(const SweepEdgeShape& other,
-                                                             Number<Inexact> rMin) const {
+std::optional<Number<Inexact>> SweepEdgeShape::intersectOutwardsWith(const SweepEdgeShape& other,
+                                                                     Number<Inexact> rMin) const {
 	if (this->type() == Type::SEGMENT && other.type() == Type::SEGMENT) {
 		return std::nullopt;
 	}
@@ -162,7 +161,7 @@ std::optional<Number<Inexact>> SweepEdgeShape::intersectWith(const SweepEdgeShap
 	// at distance rMin + ε, are we to the left of the other shape?
 	bool initiallyLeftOfOther;
 	if (phiForR(rMin) == other.phiForR(rMin)) {
-		initiallyLeftOfOther = departsToLeftOf(other);
+		initiallyLeftOfOther = departsOutwardsToLeftOf(rMin, other);
 	} else {
 		initiallyLeftOfOther = isLeftOf(rMin);
 	}
@@ -206,7 +205,7 @@ std::optional<Number<Inexact>> SweepEdgeShape::intersectWith(const SweepEdgeShap
 	}
 
 	// binary search
-	for (int i = 0; i < 30; i++) {
+	for (int i = 0; i < 50; i++) {
 		//std::cout << "interval: (" << rLower << ", " << rUpper << "]" << std::endl;
 		Number<Inexact> rMid = (rLower + rUpper) / 2;
 
@@ -217,6 +216,92 @@ std::optional<Number<Inexact>> SweepEdgeShape::intersectWith(const SweepEdgeShap
 			rLower = rMid;
 		} else {
 			rUpper = rMid;
+		}
+	}
+
+	return (rLower + rUpper) / 2;
+}
+
+bool SweepEdgeShape::departsInwardsToLeftOf(Number<Inexact> r, const SweepEdgeShape& shape) const {
+	assert(phiForR(r) == shape.phiForR(r));
+
+	// TODO temporary implementation with epsilon, should be replaced by angle
+	// computations
+	return PolarSegment(this->evalForR(r - 0.00001), shape.evalForR(r - 0.00001)).isLeftLine();
+}
+
+std::optional<Number<Inexact>> SweepEdgeShape::intersectInwardsWith(const SweepEdgeShape& other,
+                                                                    Number<Inexact> rMax) const {
+	if (this->type() == Type::SEGMENT && other.type() == Type::SEGMENT) {
+		return std::nullopt;
+	}
+	Number<Inexact> alpha = this->type() != Type::SEGMENT ? m_alpha : other.m_alpha;
+
+	auto isLeftOf = [&](Number<Inexact> r) {
+		return PolarSegment(evalForR(r), other.evalForR(r)).isLeftLine();
+	};
+	// at distance rMax - ε, are we to the left of the other shape?
+	bool initiallyLeftOfOther;
+	if (phiForR(rMax) == other.phiForR(rMax)) {
+		initiallyLeftOfOther = departsInwardsToLeftOf(rMax, other);
+	} else {
+		initiallyLeftOfOther = isLeftOf(rMax);
+	}
+
+	Number<Inexact> rMin = 0;
+	if (farR()) {
+		rMin = std::max(rMin, nearR());
+	}
+	if (other.farR()) {
+		rMin = std::max(rMin, other.nearR());
+	}
+
+	Number<Inexact> rUpper = rMax;
+	/*std::cout << "at rUpper " << isLeftOf(rUpper) << " " << evalForR(rUpper) << " "
+	          << other.evalForR(rUpper) << std::endl;
+	std::cout << "at rUpper - 0.01 " << isLeftOf(rUpper - 0.01) << " " << evalForR(rUpper - 0.01)
+	          << " " << other.evalForR(rUpper - 0.01) << std::endl;*/
+	Number<Inexact> rLower = rUpper;
+	Number<Inexact> rLimit = std::max(rMin, rMax / std::exp(2 * M_PI / std::tan(alpha)));
+	//std::cout << "rLimit " << rLimit << std::endl;
+	while (rLower > rLimit) {
+		rLower = std::max(rMin, rLower / std::exp(M_PI / (8 * std::tan(alpha))));
+		//std::cout << "interval: [" << rLower << ", " << rUpper << ")" << std::endl;
+
+		if (isLeftOf(rLower) != initiallyLeftOfOther) {
+			Number<Inexact> angleDifference = std::abs(phiForR(rLower) - other.phiForR(rLower));
+			//std::cout << angleDifference << std::endl;
+			if (angleDifference < M_PI / 2 || angleDifference > 3 * M_PI / 2) {
+				// found intersection
+				break;
+			} else {
+				// found wraparound, continue searching
+				//std::cout << "wraparound" << std::endl;
+				rUpper = rLower;
+				initiallyLeftOfOther = !initiallyLeftOfOther;
+			}
+		}
+	}
+
+	if (isLeftOf(rLower) == initiallyLeftOfOther) {
+		//std::cout << "no intersection" << std::endl;
+		return std::nullopt;
+	}
+
+	//std::cout << "binary search" << std::endl;
+
+	// binary search
+	for (int i = 0; i < 50; i++) {
+		//std::cout << "interval: [" << rLower << ", " << rUpper << ")" << std::endl;
+		Number<Inexact> rMid = (rLower + rUpper) / 2;
+
+		bool leftOfOther = isLeftOf(rMid);
+		//std::cout << "midpoint: " << rMid << " " << leftOfOther << std::endl;
+
+		if (leftOfOther == initiallyLeftOfOther) {
+			rUpper = rMid;
+		} else {
+			rLower = rMid;
 		}
 	}
 

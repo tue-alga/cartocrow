@@ -83,9 +83,11 @@ class SweepEdgeShape {
 	enum class Type {
 		/// The shape is a line segment.
 		SEGMENT,
-		/// The shape is a left spiral.
+		/// The shape is a left spiral (which approaches the origin while
+		/// winding around it in clockwise direction).
 		LEFT_SPIRAL,
-		/// The shape is a right spiral.
+		/// The shape is a right spiral (which approaches the origin while
+		/// winding around it in counter-clockwise direction).
 		RIGHT_SPIRAL
 	};
 
@@ -107,7 +109,6 @@ class SweepEdgeShape {
 	/// point `newNear`. It is assumed that `newNear` lies on (or, due to rounding
 	/// errors, at least close to) this edge shape.
 	void pruneNearSide(PolarPoint newNear);
-
 	/// Prunes this edge shape so that the far endpoint now lies at the given
 	/// point `newFar`. It is assumed that `newFar` lies on (or, due to rounding
 	/// errors, at least close to) this edge shape.
@@ -134,18 +135,25 @@ class SweepEdgeShape {
 	/// radius \f$r\f$.
 	PolarPoint evalForR(Number<Inexact> r) const;
 
-	/// Checks if at \f$\epsilon\f$ away from the near endpoint of this shape
-	/// and the given shape, this shape is to the left of the given shape.
-	/// Assumes that \c shape has the same \ref nearEndpoint() as this shape.
-	bool departsToLeftOf(const SweepEdgeShape& shape) const;
-
+	/// Checks if at \f$\r + \varepsilon\f$ this shape is to the left of the
+	/// given shape.
+	bool departsOutwardsToLeftOf(Number<Inexact> r, const SweepEdgeShape& shape) const;
 	/// Computes the intersection (if any) of this sweep edge with another sweep
-	/// edge. Reports the smallest \f$r\f$ of the intersections larger than
-	/// \c rMin. If both this edge and the other edge are a segment, then this
+	/// edge. Reports the smallest \f$r\f$ of the intersections larger than \c
+	/// rMin. If both this edge and the other edge are a segment, then this
 	/// returns \ref std::nullopt.
 	/// \todo Not supporting segments is a bit weird...
-	std::optional<Number<Inexact>> intersectWith(const SweepEdgeShape& other,
-	                                             Number<Inexact> rMin) const;
+	std::optional<Number<Inexact>> intersectOutwardsWith(const SweepEdgeShape& other,
+	                                                     Number<Inexact> rMin) const;
+	/// Checks if at \f$\r - \varepsilon\f$ this shape is to the left of the
+	/// given shape.
+	bool departsInwardsToLeftOf(Number<Inexact> r, const SweepEdgeShape& shape) const;
+	/// Computes the intersection (if any) of this sweep edge with another sweep
+	/// edge. Reports the largest \f$r\f$ of the intersections smaller than \c
+	/// rMax. If both this edge and the other edge are a segment, then this
+	/// returns \ref std::nullopt.
+	std::optional<Number<Inexact>> intersectInwardsWith(const SweepEdgeShape& other,
+	                                                    Number<Inexact> rMax) const;
 
 	PolarSegment toPolarSegment() const;
 	SpiralSegment toSpiralSegment() const;

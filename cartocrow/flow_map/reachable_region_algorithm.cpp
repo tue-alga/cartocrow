@@ -81,7 +81,7 @@ void ReachableRegionAlgorithm::Event::insertJoinEventFor(SweepCircle::EdgeMap::i
 	if (interval->type() == SweepInterval::Type::OBSTACLE) {
 		return;
 	}
-	std::optional<PolarPoint> vanishingPoint = interval->vanishingPoint(m_alg->m_circle.r());
+	std::optional<PolarPoint> vanishingPoint = interval->outwardsVanishingPoint(m_alg->m_circle.r());
 	if (vanishingPoint) {
 		SweepCircle::EdgeMap::iterator nextEdge;
 		if (rightEdge == --m_alg->m_circle.end()) {
@@ -168,7 +168,7 @@ void ReachableRegionAlgorithm::VertexEvent::handleLeft() {
 	} else if (outsideInterval->type() == REACHABLE) {
 		auto spiral = std::make_shared<SweepEdge>(
 		    SweepEdgeShape(RIGHT_SPIRAL, m_position, m_alg->m_tree->restrictingAngle()));
-		if (spiral->shape().departsToLeftOf(m_e1->shape())) {
+		if (spiral->shape().departsOutwardsToLeftOf(m_position.r(), m_e1->shape())) {
 			auto result = m_alg->m_circle.splitFromEdge(m_e2, m_e1, spiral);
 			result.middleInterval->setType(SHADOW);
 			m_alg->m_vertices.emplace_back(m_position, spiral, m_e2);
@@ -191,7 +191,7 @@ void ReachableRegionAlgorithm::VertexEvent::handleRight() {
 	} else if (outsideInterval->type() == REACHABLE) {
 		auto spiral = std::make_shared<SweepEdge>(
 		    SweepEdgeShape(LEFT_SPIRAL, m_position, m_alg->m_tree->restrictingAngle()));
-		if (m_e2->shape().departsToLeftOf(spiral->shape())) {
+		if (m_e2->shape().departsOutwardsToLeftOf(m_position.r(), spiral->shape())) {
 			auto result = m_alg->m_circle.splitFromEdge(m_e1, spiral, m_e2);
 			result.middleInterval->setType(SHADOW);
 			m_alg->m_vertices.emplace_back(m_position, m_e1, spiral);
@@ -227,14 +227,14 @@ void ReachableRegionAlgorithm::VertexEvent::handleNear() {
 		auto rightSpiral = std::make_shared<SweepEdge>(
 		    SweepEdgeShape(RIGHT_SPIRAL, m_position, m_alg->m_tree->restrictingAngle()));
 
-		if (m_e2->shape().departsToLeftOf(leftSpiral->shape())) {
+		if (m_e2->shape().departsOutwardsToLeftOf(m_position.r(), leftSpiral->shape())) {
 			// case 3a: vertex casts shadow to the right of the obstacle
 			auto result = m_alg->m_circle.splitFromInterval(leftSpiral, m_e2, m_e1);
 			result.middleLeftInterval->setType(OBSTACLE);
 			result.middleRightInterval->setType(SHADOW);
 			m_alg->m_vertices.emplace_back(m_position, m_e1, leftSpiral);
 
-		} else if (rightSpiral->shape().departsToLeftOf(m_e1->shape())) {
+		} else if (rightSpiral->shape().departsOutwardsToLeftOf(m_position.r(), m_e1->shape())) {
 			// case 3b: vertex casts shadow to the left of the obstacle
 			auto result = m_alg->m_circle.splitFromInterval(m_e2, m_e1, rightSpiral);
 			result.middleLeftInterval->setType(SHADOW);

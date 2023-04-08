@@ -53,12 +53,12 @@ SweepInterval::Type SweepInterval::type() const {
 	return m_type;
 }
 
-std::optional<PolarPoint> SweepInterval::vanishingPoint(Number<Inexact> rMin) const {
+std::optional<PolarPoint> SweepInterval::outwardsVanishingPoint(Number<Inexact> rMin) const {
 	if (m_previousBoundary == nullptr || m_nextBoundary == nullptr) {
 		return std::nullopt;
 	}
 	std::optional<Number<Inexact>> r =
-	    m_previousBoundary->shape().intersectWith(m_nextBoundary->shape(), rMin);
+	    m_previousBoundary->shape().intersectOutwardsWith(m_nextBoundary->shape(), rMin);
 	if (!r) {
 		return std::nullopt;
 	}
@@ -83,7 +83,7 @@ Polygon<Inexact> SweepInterval::sweepShape(Number<Inexact> rFrom, Number<Inexact
 	    m_previousBoundary ? m_previousBoundary->shape().phiForR(rFrom) : -M_PI;
 	if (nearPhiNext < nearPhiPrevious ||
 	    (nearPhiNext == nearPhiPrevious &&
-	     m_previousBoundary->shape().departsToLeftOf(m_nextBoundary->shape()))) {
+	     m_previousBoundary->shape().departsOutwardsToLeftOf(rFrom, m_nextBoundary->shape()))) {
 		nearPhiPrevious -= 2 * M_PI;
 	}
 	for (Number<Inexact> phi = nearPhiNext; phi > nearPhiPrevious; phi -= 0.05) {
