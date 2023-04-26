@@ -71,6 +71,10 @@ class SweepInterval {
 	/// of this interval. This returns \ref std::nullopt if the sides never
 	/// intersect.
 	std::optional<PolarPoint> outwardsVanishingPoint(Number<Inexact> rMin) const;
+	/// Computes the point of intersection smaller than \c rMax of the two sides
+	/// of this interval. This returns \ref std::nullopt if the sides never
+	/// intersect.
+	std::optional<PolarPoint> inwardsVanishingPoint(Number<Inexact> rMax) const;
 
 	/// Returns a piecewise linear approximation of the shape swept by this
 	/// interval within the given \f$r\f$ interval. This is meant for debugging

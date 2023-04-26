@@ -80,7 +80,7 @@ void SpiralTreeObstructedAlgorithm::Event::insertJoinEventFor(
 	if (interval->type() == SweepInterval::Type::OBSTACLE) {
 		return;
 	}
-	std::optional<PolarPoint> vanishingPoint = interval->outwardsVanishingPoint(m_alg->m_circle.r());
+	std::optional<PolarPoint> vanishingPoint = interval->inwardsVanishingPoint(m_alg->m_circle.r());
 	if (vanishingPoint) {
 		SweepCircle::EdgeMap::iterator nextEdge;
 		if (rightEdge == --m_alg->m_circle.end()) {
@@ -192,6 +192,18 @@ void SpiralTreeObstructedAlgorithm::VertexEvent::handleLeft() {
 	SweepInterval* outsideInterval = m_e1->nextInterval();
 	if (outsideInterval->type() == FREE) {
 		auto result = m_alg->m_circle.switchEdge(m_e1, m_e2);
+	} else if (outsideInterval->type() == REACHABLE) {
+		auto spiral = std::make_shared<SweepEdge>(
+		    SweepEdgeShape(LEFT_SPIRAL, m_position, m_alg->m_tree->restrictingAngle()));
+		if (spiral->shape().departsInwardsToLeftOf(m_position.r(), m_e2->shape())) {
+			auto result = m_alg->m_circle.splitFromEdge(m_e1, m_e2, spiral);
+			result.middleInterval->setType(FREE);
+		} else {
+			auto result = m_alg->m_circle.switchEdge(m_e1, m_e2);
+		}
+	} else if (outsideInterval->type() == OBSTACLE) {
+		// a vertex event cannot have an obstacle interval on the outside
+		assert(false);
 	}
 }
 
@@ -201,6 +213,18 @@ void SpiralTreeObstructedAlgorithm::VertexEvent::handleRight() {
 	SweepInterval* outsideInterval = m_e2->previousInterval();
 	if (outsideInterval->type() == FREE) {
 		auto result = m_alg->m_circle.switchEdge(m_e2, m_e1);
+	} else if (outsideInterval->type() == REACHABLE) {
+		auto spiral = std::make_shared<SweepEdge>(
+		    SweepEdgeShape(LEFT_SPIRAL, m_position, m_alg->m_tree->restrictingAngle()));
+		if (m_e1->shape().departsInwardsToLeftOf(m_position.r(), spiral->shape())) {
+			auto result = m_alg->m_circle.splitFromEdge(m_e2, spiral, m_e1);
+			result.middleInterval->setType(FREE);
+		} else {
+			auto result = m_alg->m_circle.switchEdge(m_e2, m_e1);
+		}
+	} else if (outsideInterval->type() == OBSTACLE) {
+		// a vertex event cannot have an obstacle interval on the outside
+		assert(false);
 	}
 }
 
@@ -271,30 +295,50 @@ void SpiralTreeObstructedAlgorithm::JoinEvent::handle() {
 	m_alg->m_debugPainting->drawText(
 	    m_alg->m_tree->rootPosition() + (m_position.toCartesian() - CGAL::ORIGIN), "join");
 
-	/*SweepInterval* previousInterval = rightEdge->previousInterval();
+	SweepInterval* previousInterval = rightEdge->previousInterval();
 	SweepInterval* interval = rightEdge->nextInterval();
 	SweepInterval* nextInterval = leftEdge->nextInterval();
+
+	std::cout << int(previousInterval->type()) << " " << int(interval->type()) << " " << int(nextInterval->type()) << std::endl;
 
 	if (previousInterval->type() == OBSTACLE && nextInterval->type() == OBSTACLE) {
 		// ignore, this is handled by a vertex event
 
 	} else if (previousInterval->type() == REACHABLE && nextInterval->type() == REACHABLE) {
-		// simply merge the intervals into a big reachable interval
-		auto result = m_alg->m_circle.mergeToInterval(*rightEdge, *leftEdge);
+		// case 1: simply merge the intervals into a big reachable interval
+		auto result = m_alg->m_circle.mergeToInterval(rightEdge, leftEdge);
+		rightEdge->shape().pruneNearSide(m_position);
+		leftEdge->shape().pruneNearSide(m_position);
 		result.mergedInterval->setType(REACHABLE);
 
 	} else if (previousInterval->type() == OBSTACLE) {
-		// right side is obstacle
-		auto result = m_alg->m_circle.mergeToEdge(*rightEdge, *leftEdge, rightEdge);
-		m_position = PolarPoint(r(), result.leftInterval->previousBoundary()->shape().phiForR(r()));
+		// case 2: right side is obstacle
+		leftEdge->shape().pruneNearSide(m_position);
+		if (interval->type() == FREE) {
+			// case 2a: shadow in the middle, reachable on the left
+			assert(nextInterval->type() == REACHABLE);
+			rightEdge->shape().pruneNearSide(m_position);
+			auto result = m_alg->m_circle.mergeToEdge(rightEdge, leftEdge, rightEdge);
+		} else if (interval->type() == REACHABLE) {
+			// case 2b: reachable in the middle, shadow on the left
+			assert(nextInterval->type() == FREE);
+			rightEdge->shape().pruneNearSide(m_position);
+			auto result = m_alg->m_circle.mergeToEdge(rightEdge, leftEdge, rightEdge);
+		} else {
+			assert(false);
+		}
 
 	} else if (nextInterval->type() == OBSTACLE) {
-		// left side is obstacle
-		auto result = m_alg->m_circle.mergeToEdge(*rightEdge, *leftEdge, leftEdge);
-		m_position = PolarPoint(r(), result.leftInterval->previousBoundary()->shape().phiForR(r()));
+		// case 3: left side is obstacle
+		rightEdge->shape().pruneNearSide(m_position);
+		if (interval->type() == FREE) {
+			assert(previousInterval->type() == REACHABLE);
+			leftEdge->shape().pruneNearSide(m_position);
+			auto result = m_alg->m_circle.mergeToEdge(rightEdge, leftEdge, leftEdge);
+		}
 	}
 
-	insertJoinEvents();*/
+	insertJoinEvents();
 }
 
 bool SpiralTreeObstructedAlgorithm::JoinEvent::isValid() const {

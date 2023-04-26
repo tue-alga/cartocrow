@@ -65,6 +65,18 @@ std::optional<PolarPoint> SweepInterval::outwardsVanishingPoint(Number<Inexact> 
 	return m_previousBoundary->shape().evalForR(*r);
 }
 
+std::optional<PolarPoint> SweepInterval::inwardsVanishingPoint(Number<Inexact> rMax) const {
+	if (m_previousBoundary == nullptr || m_nextBoundary == nullptr) {
+		return std::nullopt;
+	}
+	std::optional<Number<Inexact>> r =
+	    m_previousBoundary->shape().intersectInwardsWith(m_nextBoundary->shape(), rMax);
+	if (!r) {
+		return std::nullopt;
+	}
+	return m_previousBoundary->shape().evalForR(*r);
+}
+
 Polygon<Inexact> SweepInterval::sweepShape(Number<Inexact> rFrom, Number<Inexact> rTo) const {
 	std::vector<PolarPoint> vertices;
 	// left side
