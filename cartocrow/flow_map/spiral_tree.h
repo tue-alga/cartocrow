@@ -73,7 +73,7 @@ namespace cartocrow::flow_map {
 class SpiralTree {
 
   public:
-	/// An obstacle is made up of a list of segments in clockwise order.
+	/// An obstacle is made up of a list of segments in counter-clockwise order.
 	using Obstacle = std::list<std::shared_ptr<SweepEdge>>;
 
 	/// Constructs a spiral tree.

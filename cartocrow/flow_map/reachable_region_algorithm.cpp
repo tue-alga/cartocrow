@@ -39,8 +39,8 @@ ReachableRegionAlgorithm::UnreachableRegionVertex::UnreachableRegionVertex(
     PolarPoint location, std::shared_ptr<SweepEdge> e1, std::shared_ptr<SweepEdge> e2)
     : m_location(location), m_e1(std::move(e1)), m_e2(std::move(e2)) {}
 
-ReachableRegionAlgorithm::Event::Event(PolarPoint position, Type type, ReachableRegionAlgorithm* alg)
-    : m_position(position), m_type(type), m_alg(alg) {}
+ReachableRegionAlgorithm::Event::Event(PolarPoint position, ReachableRegionAlgorithm* alg)
+    : m_position(position), m_alg(alg) {}
 
 Number<Inexact> ReachableRegionAlgorithm::Event::r() const {
 	return m_position.r();
@@ -48,10 +48,6 @@ Number<Inexact> ReachableRegionAlgorithm::Event::r() const {
 
 Number<Inexact> ReachableRegionAlgorithm::Event::phi() const {
 	return m_position.phi();
-}
-
-ReachableRegionAlgorithm::Event::Type ReachableRegionAlgorithm::Event::type() const {
-	return m_type;
 }
 
 bool ReachableRegionAlgorithm::Event::isValid() const {
@@ -119,7 +115,7 @@ void ReachableRegionAlgorithm::Event::insertJoinEventFor(SweepCircle::EdgeMap::i
 ReachableRegionAlgorithm::VertexEvent::VertexEvent(PolarPoint position, std::shared_ptr<SweepEdge> e1,
                                                    std::shared_ptr<SweepEdge> e2,
                                                    ReachableRegionAlgorithm* alg)
-    : Event(position, Type::VERTEX, alg), m_e1(e1), m_e2(e2), m_side(determineSide()) {}
+    : Event(position, alg), m_e1(e1), m_e2(e2), m_side(determineSide()) {}
 
 void ReachableRegionAlgorithm::VertexEvent::handle() {
 	using enum SweepInterval::Type;
@@ -163,19 +159,22 @@ void ReachableRegionAlgorithm::VertexEvent::handleLeft() {
 	using enum SweepInterval::Type;
 	using enum SweepEdgeShape::Type;
 	SweepInterval* outsideInterval = m_e2->nextInterval();
-	if (outsideInterval->type() == SHADOW) {
+
+	if (outsideInterval->type() == SHADOW) { // case 1
 		auto result = m_alg->m_circle.switchEdge(m_e2, m_e1);
-	} else if (outsideInterval->type() == REACHABLE) {
+
+	} else if (outsideInterval->type() == REACHABLE) { // case 2
 		auto spiral = std::make_shared<SweepEdge>(
 		    SweepEdgeShape(RIGHT_SPIRAL, m_position, m_alg->m_tree->restrictingAngle()));
-		if (spiral->shape().departsOutwardsToLeftOf(m_position.r(), m_e1->shape())) {
+		if (spiral->shape().departsOutwardsToLeftOf(m_position.r(), m_e1->shape())) { // case 2a
 			auto result = m_alg->m_circle.splitFromEdge(m_e2, m_e1, spiral);
 			result.middleInterval->setType(SHADOW);
 			m_alg->m_vertices.emplace_back(m_position, spiral, m_e2);
-		} else {
+		} else { // case 2b
 			auto result = m_alg->m_circle.switchEdge(m_e2, m_e1);
 			m_alg->m_vertices.emplace_back(m_position, m_e1, m_e2);
 		}
+
 	} else if (outsideInterval->type() == OBSTACLE) {
 		// a vertex event cannot have an obstacle interval on the outside
 		assert(false);
@@ -186,19 +185,22 @@ void ReachableRegionAlgorithm::VertexEvent::handleRight() {
 	using enum SweepInterval::Type;
 	using enum SweepEdgeShape::Type;
 	SweepInterval* outsideInterval = m_e1->previousInterval();
-	if (outsideInterval->type() == SHADOW) {
+
+	if (outsideInterval->type() == SHADOW) { // case 1
 		auto result = m_alg->m_circle.switchEdge(m_e1, m_e2);
-	} else if (outsideInterval->type() == REACHABLE) {
+
+	} else if (outsideInterval->type() == REACHABLE) { // case 2
 		auto spiral = std::make_shared<SweepEdge>(
 		    SweepEdgeShape(LEFT_SPIRAL, m_position, m_alg->m_tree->restrictingAngle()));
-		if (m_e2->shape().departsOutwardsToLeftOf(m_position.r(), spiral->shape())) {
+		if (m_e2->shape().departsOutwardsToLeftOf(m_position.r(), spiral->shape())) { // case 2a
 			auto result = m_alg->m_circle.splitFromEdge(m_e1, spiral, m_e2);
 			result.middleInterval->setType(SHADOW);
 			m_alg->m_vertices.emplace_back(m_position, m_e1, spiral);
-		} else {
+		} else { // case 2b
 			auto result = m_alg->m_circle.switchEdge(m_e1, m_e2);
 			m_alg->m_vertices.emplace_back(m_position, m_e1, m_e2);
 		}
+
 	} else if (outsideInterval->type() == OBSTACLE) {
 		// a vertex event cannot have an obstacle interval on the outside
 		assert(false);
@@ -210,39 +212,34 @@ void ReachableRegionAlgorithm::VertexEvent::handleNear() {
 	using enum SweepEdgeShape::Type;
 
 	SweepInterval* interval = m_alg->m_circle.intervalAt(phi());
-	if (interval->type() == OBSTACLE) {
-		// case 1: concave corner of an obstacle
+	if (interval->type() == OBSTACLE) {  // case 1
 		auto result = m_alg->m_circle.splitFromInterval(m_e1, m_e2);
 		result.middleInterval->setType(SHADOW);
 
-	} else if (interval->type() == SHADOW) {
-		// case 2: convex corner of an obstacle, laying in the shadow
+	} else if (interval->type() == SHADOW) {  // case 2
 		auto result = m_alg->m_circle.splitFromInterval(m_e2, m_e1);
 		result.middleInterval->setType(OBSTACLE);
 
-	} else if (interval->type() == REACHABLE) {
-		// case 3: convex corner of an obstacle, laying in reachable area
+	} else if (interval->type() == REACHABLE) {  // case 3
 		auto leftSpiral = std::make_shared<SweepEdge>(
 		    SweepEdgeShape(LEFT_SPIRAL, m_position, m_alg->m_tree->restrictingAngle()));
 		auto rightSpiral = std::make_shared<SweepEdge>(
 		    SweepEdgeShape(RIGHT_SPIRAL, m_position, m_alg->m_tree->restrictingAngle()));
 
-		if (m_e2->shape().departsOutwardsToLeftOf(m_position.r(), leftSpiral->shape())) {
-			// case 3a: vertex casts shadow to the right of the obstacle
+		if (m_e2->shape().departsOutwardsToLeftOf(m_position.r(), leftSpiral->shape())) { // case 3a
 			auto result = m_alg->m_circle.splitFromInterval(leftSpiral, m_e2, m_e1);
 			result.middleLeftInterval->setType(OBSTACLE);
 			result.middleRightInterval->setType(SHADOW);
 			m_alg->m_vertices.emplace_back(m_position, m_e1, leftSpiral);
 
-		} else if (rightSpiral->shape().departsOutwardsToLeftOf(m_position.r(), m_e1->shape())) {
-			// case 3b: vertex casts shadow to the left of the obstacle
+		} else if (rightSpiral->shape().departsOutwardsToLeftOf(m_position.r(),
+		                                                        m_e1->shape())) { // case 3b
 			auto result = m_alg->m_circle.splitFromInterval(m_e2, m_e1, rightSpiral);
 			result.middleLeftInterval->setType(SHADOW);
 			result.middleRightInterval->setType(OBSTACLE);
 			m_alg->m_vertices.emplace_back(m_position, rightSpiral, m_e2);
 
-		} else {
-			// case 3c: no shadow
+		} else { // case 3c
 			auto result = m_alg->m_circle.splitFromInterval(m_e2, m_e1);
 			result.middleInterval->setType(OBSTACLE);
 			m_alg->m_vertices.emplace_back(m_position, m_e1, m_e2);
@@ -254,36 +251,30 @@ void ReachableRegionAlgorithm::VertexEvent::handleFar() {
 	using enum SweepInterval::Type;
 	using enum SweepEdgeShape::Type;
 
-	if (m_e1->nextInterval() == m_e2->previousInterval()) {
-		// case 1: convex corner of an obstacle
+	if (m_e1->nextInterval() == m_e2->previousInterval()) { // case 1
 		auto previousIntervalType = m_e1->previousInterval()->type();
 		auto nextIntervalType = m_e2->nextInterval()->type();
 
-		if (previousIntervalType == nextIntervalType) {
-			// if both sides are SHADOW or both sides are REACHABLE, the entire
-			// merged interval simply becomes that type, too
+		if (previousIntervalType == nextIntervalType) { // case 1a
 			auto result = m_alg->m_circle.mergeToInterval(m_e1, m_e2);
 			result.mergedInterval->setType(previousIntervalType);
 			if (previousIntervalType == REACHABLE) {
 				m_alg->m_vertices.emplace_back(m_position, m_e1, m_e2);
 			}
-		} else {
-			// else only one side is REACHABLE, we need to add a spiral to
-			// separate them
+		} else { // case 1b/1c
 			SweepEdgeShape::Type spiralType =
 			    previousIntervalType == REACHABLE ? LEFT_SPIRAL : RIGHT_SPIRAL;
 			auto spiral = std::make_shared<SweepEdge>(
 			    SweepEdgeShape(spiralType, m_position, m_alg->m_tree->restrictingAngle()));
 			auto result = m_alg->m_circle.mergeToEdge(m_e1, m_e2, spiral);
-			if (previousIntervalType == REACHABLE) {
+			if (previousIntervalType == REACHABLE) { // case 1b
 				m_alg->m_vertices.emplace_back(m_position, m_e1, spiral);
-			} else {
+			} else { // case 1c
 				m_alg->m_vertices.emplace_back(m_position, spiral, m_e2);
 			}
 		}
 
-	} else if (m_e2->nextInterval() == m_e1->previousInterval()) {
-		// case 2: concave corner of an obstacle
+	} else if (m_e2->nextInterval() == m_e1->previousInterval()) { // case 2
 		auto result = m_alg->m_circle.mergeToInterval(m_e2, m_e1);
 		result.mergedInterval->setType(OBSTACLE);
 		if (m_e2->nextInterval()->type() == REACHABLE) {
@@ -313,7 +304,7 @@ ReachableRegionAlgorithm::JoinEvent::JoinEvent(PolarPoint position,
                                                std::weak_ptr<SweepEdge> rightEdge,
                                                std::weak_ptr<SweepEdge> leftEdge,
                                                ReachableRegionAlgorithm* alg)
-    : Event(position, Type::JOIN, alg), m_rightEdge(rightEdge), m_leftEdge(leftEdge) {}
+    : Event(position, alg), m_rightEdge(rightEdge), m_leftEdge(leftEdge) {}
 
 void ReachableRegionAlgorithm::JoinEvent::handle() {
 	using enum SweepInterval::Type;
@@ -337,25 +328,21 @@ void ReachableRegionAlgorithm::JoinEvent::handle() {
 	if (previousInterval->type() == OBSTACLE && nextInterval->type() == OBSTACLE) {
 		// ignore, this is handled by a vertex event
 
-	} else if (previousInterval->type() == REACHABLE && nextInterval->type() == REACHABLE) {
-		// case 1: simply merge the intervals into a big reachable interval
+	} else if (previousInterval->type() == REACHABLE && nextInterval->type() == REACHABLE) { // case 1
 		auto result = m_alg->m_circle.mergeToInterval(rightEdge, leftEdge);
 		rightEdge->shape().pruneFarSide(m_position);
 		leftEdge->shape().pruneFarSide(m_position);
 		result.mergedInterval->setType(REACHABLE);
 		m_alg->m_vertices.emplace_back(m_position, rightEdge, leftEdge);
 
-	} else if (previousInterval->type() == OBSTACLE) {
-		// case 2: right side is obstacle
+	} else if (previousInterval->type() == OBSTACLE) { // case 2
 		leftEdge->shape().pruneFarSide(m_position);
-		if (interval->type() == SHADOW) {
-			// case 2a: shadow in the middle, reachable on the left
+		if (interval->type() == SHADOW) { // case 2a
 			assert(nextInterval->type() == REACHABLE);
 			rightEdge->shape().pruneNearSide(m_position);
 			auto result = m_alg->m_circle.mergeToEdge(rightEdge, leftEdge, rightEdge);
 			m_alg->m_vertices.emplace_back(m_position, rightEdge, leftEdge);
-		} else if (interval->type() == REACHABLE) {
-			// case 2b: reachable in the middle, shadow on the left
+		} else if (interval->type() == REACHABLE) { // case 2b
 			assert(nextInterval->type() == SHADOW);
 			rightEdge->shape().pruneFarSide(m_position);
 			auto result = m_alg->m_circle.mergeToEdge(rightEdge, leftEdge, rightEdge);
@@ -364,17 +351,14 @@ void ReachableRegionAlgorithm::JoinEvent::handle() {
 			assert(false);
 		}
 
-	} else if (nextInterval->type() == OBSTACLE) {
-		// case 3: left side is obstacle
+	} else if (nextInterval->type() == OBSTACLE) { // case 3
 		rightEdge->shape().pruneFarSide(m_position);
-		if (interval->type() == SHADOW) {
-			// case 3a: shadow in the middle, reachable on the right
+		if (interval->type() == SHADOW) { // case 3a
 			assert(previousInterval->type() == REACHABLE);
 			leftEdge->shape().pruneNearSide(m_position);
 			auto result = m_alg->m_circle.mergeToEdge(rightEdge, leftEdge, leftEdge);
 			m_alg->m_vertices.emplace_back(m_position, rightEdge, leftEdge);
-		} else if (interval->type() == REACHABLE) {
-			// case 3b: reachable in the middle, shadow on the right
+		} else if (interval->type() == REACHABLE) { // case 3b
 			assert(previousInterval->type() == SHADOW);
 			leftEdge->shape().pruneFarSide(m_position);
 			auto result = m_alg->m_circle.mergeToEdge(rightEdge, leftEdge, leftEdge);
