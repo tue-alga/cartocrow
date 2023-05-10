@@ -35,12 +35,12 @@ namespace cartocrow::flow_map {
 /// spirals that do not pass through obstacles. The unreachable region consists
 /// of course of the obstacles themselves, but additionally obstacles can cast
 /// an unreachable ‘shadow’ behind them. As shown in the figure below, this
-/// causes the boundaries of unreachable regions to consists of line segments
-/// and spiral segments.
+/// causes the boundaries of unreachable regions to consist of line segments and
+/// spiral segments.
 ///
 /// \image html reachable-region-algorithm-overview.svg
 ///
-/// Throughout this documentation we'll use the color scheme as shown in this
+/// Throughout this documentation we'll use the color scheme shown in this
 /// figure: dark brown for obstacles, light brown for shadows, and white for the
 /// reachable region.
 ///

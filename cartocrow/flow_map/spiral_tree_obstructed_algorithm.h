@@ -36,8 +36,39 @@ namespace cartocrow::flow_map {
 /// the input this algorithm gets the vertices of the unreachable regions (see
 /// \ref ReachableRegionAlgorithm).
 ///
-/// This is a sweep-circle algorithm which works by sweeping a circle inwards
-/// from infinity towards the origin.
+/// \image html spiral-tree-algorithm-overview.svg
+///
+/// The figure above illustrates the execution of this algorithm on some
+/// arbitrary input nodes \f$p_1, \ldots, p_5\f$ and the same obstacles as
+/// illustrated in the documentation for the ReachableRegionAlgorithm. The
+/// result of the complete procedure is this spiral tree:
+///
+/// \image html spiral-tree-algorithm-overview-2.svg
+///
+/// Throughout this documentation we'll use the color scheme shown in these
+/// figures: brown for obstacles (including their shadows), green for reachable
+/// regions, and blue edges for the resulting spiral tree.
+///
+/// ## Algorithm description
+///
+/// Just like the \ref ReachableRegionAlgorithm, this is a sweep-circle
+/// algorithm that maintains edges and intervals on the sweep circle. While the
+/// ReachableRegionAlgorithm sweeps outwards from the origin, this algorithm
+/// sweeps inwards from infinity towards the origin.
+///
+/// ## Event types
+///
+/// The algorithm handles three types of events:
+///
+/// * \ref NodeEvent "node events": the sweep circle hits a node;
+///
+/// * \ref VertexEvent "vertex events": the sweep circle hits an obstacle
+/// vertex;
+///
+/// * \ref JoinEvent "join events": a shadow interval vanishes.
+///
+/// See the linked class documentation for detailed descriptions of these event
+/// types.
 class SpiralTreeObstructedAlgorithm {
 
   public:
