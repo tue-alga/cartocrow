@@ -99,20 +99,17 @@ class SpiralTreeObstructedAlgorithm {
 	using EventQueue =
 	    std::priority_queue<std::shared_ptr<Event>, std::vector<std::shared_ptr<Event>>, CompareEvents>;
 
-	/// An event in the sweep circle algorithm.
+	/// An event in the \ref SpiralTreeObstructedAlgorithm.
 	class Event {
 	  public:
-		enum class Type {
-			NODE,
-			VERTEX,
-			JOIN,
-			SWITCH,
-		};
+		/// Constructs an event at the given position. Also requires a pointer
+		/// to the SpiralTreeObstructedAlgorithm.
+		Event(PolarPoint position, SpiralTreeObstructedAlgorithm* alg);
 
-		Event(PolarPoint position, Type type, SpiralTreeObstructedAlgorithm* alg);
+		/// Returns the radius at which this event happens.
 		Number<Inexact> r() const;
+		/// Returns the \f$\phi\f$ at which this event happens.
 		Number<Inexact> phi() const;
-		Type type() const;
 		/// Handles this event.
 		virtual void handle() = 0;
 		/// Checks if this event is still valid.
@@ -127,38 +124,45 @@ class SpiralTreeObstructedAlgorithm {
 		void insertJoinEventFor(SweepCircle::EdgeMap::iterator previousEdge);
 
 	  protected:
+		/// The position at which this event happens.
 		PolarPoint m_position;
-		Type m_type;
+		/// Pointer to the SpiralTreeObstructedAlgorithm this event belongs to.
 		SpiralTreeObstructedAlgorithm* m_alg;
 	};
 
+	/// An event that happens when the sweep circle hits a node.
 	class NodeEvent : public Event {
 	  public:
+		/// Creates a new node event at the given position.
 		NodeEvent(PolarPoint position, SpiralTreeObstructedAlgorithm* alg);
+
+		/// Handles this event by starting a reachable region for the node.
+		///
+		/// \image html spiral-tree-algorithm-node-event.svg
 		void handle() override;
 	};
 
 	/// An event that happens when the sweep circle hits an obstacle vertex. A
 	/// vertex event is characterized by the two obstacle edges \f$e_1\f$ and
 	/// \f$e_2\f$ incident to the hit vertex. We assume that the edges around
-	/// the obstacle are ordered counter-clockwise, that is, traversing the
+	/// the obstacle are ordered counter-clockwise. That is, traversing the
 	/// obstacle boundary in counter-clockwise order, we traverse \f$e_2\f$
 	/// right after \f$e_1\f$.
 	///
 	/// Vertex events are classified as one of four types, each of which is
 	/// handled separately:
 	///
-	/// * A _near_ vertex event: both \f$e_1\f$ and \f$e_2\f$ lay outside the
-	/// sweep circle.
+	/// * A \ref handleNear() "near vertex event": both \f$e_1\f$ and \f$e_2\f$
+	/// lay outside the sweep circle.
 	///
-	/// * A _far_ vertex event: both \f$e_1\f$ and \f$e_2\f$ lay inside the sweep
-	/// circle.
+	/// * A \ref handleFar() "far vertex event": both \f$e_1\f$ and \f$e_2\f$
+	/// lay inside the sweep circle.
 	///
-	/// * A _left_ vertex event: \f$e_1\f$ lies outside the sweep circle, while
-	/// \f$e_2\f$ lies inside it.
+	/// * A \ref handleLeft() "left vertex event": \f$e_1\f$ lies outside the
+	/// sweep circle, while \f$e_2\f$ lies inside it.
 	///
-	/// * A _right_ vertex event: \f$e_1\f$ lies inside the sweep circle, while
-	/// \f$e_2\f$ lies outside it.
+	/// * A \ref handleRight() "right vertex event": \f$e_1\f$ lies inside the
+	/// sweep circle, while \f$e_2\f$ lies outside it.
 	class VertexEvent : public Event {
 	  public:
 		/// Creates a new vertex event at the given position, with the given

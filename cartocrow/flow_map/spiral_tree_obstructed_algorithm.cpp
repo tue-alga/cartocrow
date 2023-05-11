@@ -36,9 +36,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 namespace cartocrow::flow_map {
 
-SpiralTreeObstructedAlgorithm::Event::Event(PolarPoint position, Type type,
+SpiralTreeObstructedAlgorithm::Event::Event(PolarPoint position,
                                             SpiralTreeObstructedAlgorithm* alg)
-    : m_position(position), m_type(type), m_alg(alg) {}
+    : m_position(position), m_alg(alg) {}
 
 Number<Inexact> SpiralTreeObstructedAlgorithm::Event::r() const {
 	return m_position.r();
@@ -46,10 +46,6 @@ Number<Inexact> SpiralTreeObstructedAlgorithm::Event::r() const {
 
 Number<Inexact> SpiralTreeObstructedAlgorithm::Event::phi() const {
 	return m_position.phi();
-}
-
-SpiralTreeObstructedAlgorithm::Event::Type SpiralTreeObstructedAlgorithm::Event::type() const {
-	return m_type;
 }
 
 bool SpiralTreeObstructedAlgorithm::Event::isValid() const {
@@ -116,7 +112,7 @@ void SpiralTreeObstructedAlgorithm::Event::insertJoinEventFor(
 
 SpiralTreeObstructedAlgorithm::NodeEvent::NodeEvent(PolarPoint position,
                                                     SpiralTreeObstructedAlgorithm* alg)
-    : Event(position, Type::NODE, alg) {}
+    : Event(position, alg) {}
 
 void SpiralTreeObstructedAlgorithm::NodeEvent::handle() {
 	using enum SweepInterval::Type;
@@ -146,7 +142,7 @@ SpiralTreeObstructedAlgorithm::VertexEvent::VertexEvent(PolarPoint position,
                                                         std::shared_ptr<SweepEdge> e1,
                                                         std::shared_ptr<SweepEdge> e2,
                                                         SpiralTreeObstructedAlgorithm* alg)
-    : Event(position, Type::VERTEX, alg), m_e1(e1), m_e2(e2), m_side(determineSide()) {}
+    : Event(position, alg), m_e1(e1), m_e2(e2), m_side(determineSide()) {}
 
 void SpiralTreeObstructedAlgorithm::VertexEvent::handle() {
 	using enum SweepInterval::Type;
@@ -278,7 +274,7 @@ SpiralTreeObstructedAlgorithm::JoinEvent::JoinEvent(PolarPoint position,
                                                     std::weak_ptr<SweepEdge> rightEdge,
                                                     std::weak_ptr<SweepEdge> leftEdge,
                                                     SpiralTreeObstructedAlgorithm* alg)
-    : Event(position, Type::JOIN, alg), m_rightEdge(rightEdge), m_leftEdge(leftEdge) {}
+    : Event(position, alg), m_rightEdge(rightEdge), m_leftEdge(leftEdge) {}
 
 void SpiralTreeObstructedAlgorithm::JoinEvent::handle() {
 	using enum SweepInterval::Type;

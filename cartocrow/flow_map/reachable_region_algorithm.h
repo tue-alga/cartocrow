@@ -119,7 +119,7 @@ class ReachableRegionAlgorithm {
 	using EventQueue =
 	    std::priority_queue<std::shared_ptr<Event>, std::vector<std::shared_ptr<Event>>, CompareEvents>;
 
-	/// An event in the ReachableRegionAlgorithm.
+	/// An event in the \ref ReachableRegionAlgorithm.
 	class Event {
 	  public:
 		/// Constructs an event at the given position. Also requires a pointer
