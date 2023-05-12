@@ -186,10 +186,15 @@ class SpiralTreeObstructedAlgorithm {
 
 		/// Handles a left vertex event.
 		void handleLeft();
+
 		/// Handles a right vertex event.
 		void handleRight();
+
 		/// Handles a near vertex event.
+		///
+		/// \image html spiral-tree-algorithm-near-vertex-event.svg
 		void handleNear();
+
 		/// Handles a far vertex event.
 		void handleFar();
 

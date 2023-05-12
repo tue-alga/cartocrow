@@ -228,16 +228,23 @@ void SpiralTreeObstructedAlgorithm::VertexEvent::handleNear() {
 	using enum SweepInterval::Type;
 	using enum SweepEdgeShape::Type;
 
-	if (m_e2->nextInterval() == m_e1->previousInterval()) {
+	// concave corners of obstacles shouldn't be possible
+	assert(m_e2->nextInterval() == m_e1->previousInterval());
+	auto previousIntervalType = m_e2->previousInterval()->type();
+	auto nextIntervalType = m_e1->nextInterval()->type();
+
+	if (previousIntervalType == nextIntervalType) {
 		auto result = m_alg->m_circle.mergeToInterval(m_e2, m_e1);
-		result.mergedInterval->setType(FREE);
-
-	} else if (m_e1->nextInterval() == m_e2->previousInterval()) {
-		auto result = m_alg->m_circle.mergeToInterval(m_e1, m_e2);
-		result.mergedInterval->setType(OBSTACLE);
-
+		result.mergedInterval->setType(previousIntervalType);
+		// TODO: if previousIntervalType == REACHABLE then join nodes
 	} else {
-		assert(false);
+		SweepEdgeShape::Type spiralType =
+			previousIntervalType == REACHABLE ? RIGHT_SPIRAL : LEFT_SPIRAL;
+		auto spiral = std::make_shared<SweepEdge>(
+			SweepEdgeShape(spiralType, m_position, m_alg->m_tree->restrictingAngle()));
+		auto result = m_alg->m_circle.mergeToEdge(m_e2, m_e1, spiral);
+		// TODO: figure out what Kevin's implementation does here
+		// probably set some parent pointers so we can route the spiral edge?
 	}
 }
 
