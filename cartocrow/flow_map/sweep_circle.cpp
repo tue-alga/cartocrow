@@ -174,6 +174,21 @@ SweepCircle::EdgeMap::iterator SweepCircle::end() {
 	return m_edges.end();
 }
 
+void SweepCircle::mergeFreeIntervals() {
+	std::vector<EdgeMap::iterator> toRemove;
+	for (auto edge = m_edges.begin(); edge != m_edges.end(); ++edge) {
+		if ((*edge)->previousInterval()->type() == SweepInterval::Type::FREE &&
+		    (*edge)->nextInterval()->type() == SweepInterval::Type::FREE) {
+			(*edge)->previousInterval()->m_nextBoundary = (*edge)->nextEdge();
+			(*edge)->nextEdge()->m_previousInterval = &(*edge)->previousEdge()->m_nextInterval;
+			toRemove.push_back(edge);
+		}
+	}
+	for (auto edge : toRemove) {
+		edge = m_edges.erase(edge);
+	}
+}
+
 SweepCircle::SplitResult SweepCircle::splitFromEdge(std::shared_ptr<SweepEdge> oldEdge,
                                                     std::shared_ptr<SweepEdge> newRightEdge,
                                                     std::shared_ptr<SweepEdge> newLeftEdge) {

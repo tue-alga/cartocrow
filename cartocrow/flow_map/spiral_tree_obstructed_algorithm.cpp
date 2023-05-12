@@ -307,12 +307,37 @@ void SpiralTreeObstructedAlgorithm::JoinEvent::handle() {
 	if (previousInterval->type() == OBSTACLE && nextInterval->type() == OBSTACLE) {
 		// ignore, this is handled by a vertex event
 
-	} else if (previousInterval->type() == REACHABLE && nextInterval->type() == REACHABLE) {
+	} else if (previousInterval->type() == FREE && nextInterval->type() == FREE) {
 		// case 1: simply merge the intervals into a big reachable interval
 		auto result = m_alg->m_circle.mergeToInterval(rightEdge, leftEdge);
 		rightEdge->shape().pruneNearSide(m_position);
 		leftEdge->shape().pruneNearSide(m_position);
 		result.mergedInterval->setType(REACHABLE);
+
+	} else if (previousInterval->type() == REACHABLE && nextInterval->type() == REACHABLE) {
+		// case 1.5: join and make new active node
+		rightEdge->shape().pruneNearSide(m_position);
+		leftEdge->shape().pruneNearSide(m_position);
+		auto rightSpiral = std::make_shared<SweepEdge>(
+			SweepEdgeShape(RIGHT_SPIRAL, m_position, m_alg->m_tree->restrictingAngle()));
+		auto leftSpiral = std::make_shared<SweepEdge>(
+			SweepEdgeShape(LEFT_SPIRAL, m_position, m_alg->m_tree->restrictingAngle()));
+		//auto result = m_alg->m_circle.mergeAndSplit(rightEdge, leftEdge, leftSpiral, rightSpiral);
+		m_alg->m_circle.mergeToInterval(rightEdge, leftEdge);
+		auto result = m_alg->m_circle.splitFromInterval(leftSpiral, rightSpiral);
+		result.rightInterval->setType(FREE);
+		result.middleInterval->setType(REACHABLE);
+		result.leftInterval->setType(FREE);
+		m_alg->m_circle.mergeFreeIntervals();
+
+	} else if ((previousInterval->type() == REACHABLE && nextInterval->type() == FREE) ||
+	           (previousInterval->type() == FREE && nextInterval->type() == REACHABLE)) {
+		// this case is in Kevin's code (line 1177-1193) but I have no idea why
+		// this can ever happen. assert(false) for now so if this ever fails
+		// then I know how it can happen :) addendum: it can actually happen
+		// because two adjacent free intervals aren't merged after a previous
+		// join, Kevin's code didn't merge such intervals
+		assert(false); // TODO
 
 	} else if (previousInterval->type() == OBSTACLE) {
 		// case 2: right side is obstacle

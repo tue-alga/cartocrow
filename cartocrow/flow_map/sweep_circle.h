@@ -160,6 +160,9 @@ class SweepCircle {
 	/// sweep circle.
 	EdgeMap::iterator end();
 
+	/// Merges any adjacent free intervals on the sweep circle.
+	void mergeFreeIntervals();
+
 	/// The elements (intervals and edges) resulting from a three-way split
 	/// operation, in order in increasing angle over the circle.
 	struct ThreeWaySplitResult {
