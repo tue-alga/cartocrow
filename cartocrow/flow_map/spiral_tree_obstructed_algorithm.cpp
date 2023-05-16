@@ -22,6 +22,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "spiral_tree_obstructed_algorithm.h"
 
 #include <cmath>
+#include <memory>
 #include <optional>
 #include <ostream>
 
@@ -329,6 +330,9 @@ void SpiralTreeObstructedAlgorithm::JoinEvent::handle() {
 		result.middleInterval->setType(REACHABLE);
 		result.leftInterval->setType(FREE);
 		m_alg->m_circle.mergeFreeIntervals();
+
+		std::shared_ptr<Node> node = std::make_shared<Node>(m_position);
+		m_alg->m_tree->m_nodes.push_back(node);
 
 	} else if ((previousInterval->type() == REACHABLE && nextInterval->type() == FREE) ||
 	           (previousInterval->type() == FREE && nextInterval->type() == REACHABLE)) {
