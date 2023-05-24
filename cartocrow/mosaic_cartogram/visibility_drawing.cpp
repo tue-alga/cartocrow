@@ -4,8 +4,8 @@
 
 namespace cartocrow::mosaic_cartogram {
 
-VisibilityDrawing::VisibilityDrawing(const UndirectedGraph &g, int vTop, int vBotL, int vBotR)
-    : m_graph(g), ost(g, vTop, vBotL, vBotR) {
+VisibilityDrawing::VisibilityDrawing(const UndirectedGraph &g, int vTop, int vBotL, int vBotR, const std::vector<Point<Exact>> &centroids)
+    : m_graph(g), ost(g, vTop, vBotL, vBotR, centroids) {
 	// initialize
 	const int n = g.getNumberOfVertices();
 	m_levelVertices.resize(n, -1);

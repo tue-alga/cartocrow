@@ -5,8 +5,8 @@
 
 namespace cartocrow::mosaic_cartogram {
 
-OrderlySpanningTree::OrderlySpanningTree(const UndirectedGraph &g, int r1, int r2, int r3)
-    : m_graph(g), m_root1(r1), m_root2(r2), m_root3(r3), m_gc(g),
+OrderlySpanningTree::OrderlySpanningTree(const UndirectedGraph &g, int r1, int r2, int r3, const std::vector<Point<Exact>> &positions)
+    : m_graph(g), m_root1(r1), m_root2(r2), m_root3(r3), m_positions(positions), m_gc(g),
       m_parent(g.getNumberOfVertices(), r1), m_tree(g.getNumberOfVertices()),
       m_treePreordering(g.getNumberOfVertices()) {
 	// TODO: assert that `g` is not too small, connected, triangular, etc.
@@ -26,13 +26,16 @@ std::vector<int> OrderlySpanningTree::getVerticesInOrder() const {
 void OrderlySpanningTree::contract(const int n) {
 	if (n <= 3) return;  // only the roots remain, so there's no contractible edge => done
 
-	// 1. Find contractible edge (from `m_root1` to `target`)
-	//    TODO: it's more efficient to precompute an expansion sequence using a *canonical ordering*? (see Schnyder 1990, section 8)
-	int target;
+	// 1. Find (the best) contractible edge (from `m_root1` to `target`)
+	//    TODO: is it more efficient to precompute an expansion sequence using a *canonical ordering*? (see Schnyder 1990, section 8)
+	int target = -1;
 	for (int v : m_gc.getNeighbors(m_root1)) {
+		// we consider all non-root neighbors of `m_root1` that share exactly two neighbors with it
 		if (v != m_root2 && v != m_root3 && m_gc.getNumberOfCommonNeighbors(m_root1, v) == 2) {
-			target = v;  // i.e., we take a non-root neighbor of `m_root1` with which it shares exactly two neighbors
-			break;
+			// among all candidates, choose the topmost ("the contraction heuristic")
+			if (target == -1 || m_positions[v].y() > m_positions[target].y()) {
+				target = v;
+			}
 		}
 	}
 

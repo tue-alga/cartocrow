@@ -3,6 +3,7 @@
 
 #include <vector>
 
+#include "../core/core.h"
 #include "graph.h"
 
 namespace cartocrow::mosaic_cartogram {
@@ -12,8 +13,9 @@ namespace cartocrow::mosaic_cartogram {
 class OrderlySpanningTree {
   public:
 	/// Creates an OST for the given graph, which must be connected and triangular (i.e., maximal
-	/// planar). The three vertices on the outer boundary must also be specified.
-	OrderlySpanningTree(const UndirectedGraph &g, int r1, int r2, int r3);
+	/// planar). The three vertices on the outer boundary must also be specified, as well as the
+	/// geometric position of each vertex (which is only used for the contraction heuristic).
+	OrderlySpanningTree(const UndirectedGraph &g, int r1, int r2, int r3, const std::vector<Point<Exact>> &positions);
 
 	int getNumberOfVertices() const { return m_graph.getNumberOfVertices(); }
 
@@ -36,6 +38,7 @@ class OrderlySpanningTree {
   private:
 	const UndirectedGraph m_graph;
 	const int m_root1, m_root2, m_root3;  // .. of the red, blue, and green trees
+	const std::vector<Point<Exact>> &m_positions;
 
 	/// The contracted graph, only used for computation.
 	UndirectedGraph m_gc;

@@ -4,6 +4,7 @@
 #include <optional>
 #include <string>
 
+#include "../core/core.h"
 #include "graph.h"
 #include "orderly_spanning_tree.h"
 
@@ -12,7 +13,7 @@ namespace cartocrow::mosaic_cartogram {
 class VisibilityDrawing {
   public:
 	// adjacencies of graph must be in clockwise order
-	VisibilityDrawing(const UndirectedGraph &g, int vTop, int vBotL, int vBotR);
+	VisibilityDrawing(const UndirectedGraph &g, int vTop, int vBotL, int vBotR, const std::vector<Point<Exact>> &centroids);
 
 	const OrderlySpanningTree ost;
 	std::vector<std::vector<int>> grid;
