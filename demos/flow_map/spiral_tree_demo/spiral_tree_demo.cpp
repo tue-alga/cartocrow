@@ -22,6 +22,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "spiral_tree_demo.h"
 
 #include <QApplication>
+#include <qcheckbox.h>
 
 #include "cartocrow/core/core.h"
 #include "cartocrow/core/timer.h"
@@ -104,6 +105,12 @@ SpiralTreeDemo::SpiralTreeDemo() {
 	setCentralWidget(m_renderer);
 
 	QToolBar* toolBar = new QToolBar();
+	m_obstacleBox = new QCheckBox("Compute with obstacles");
+	connect(m_obstacleBox, &QCheckBox::stateChanged, [&]() {
+		recalculate();
+	});
+	toolBar->addSeparator();
+	toolBar->addWidget(m_obstacleBox);
 	toolBar->addWidget(new QLabel("α = "));
 	m_alphaSlider = new QSlider(Qt::Horizontal);
 	m_alphaSlider->setMinimum(0);
@@ -169,30 +176,33 @@ void SpiralTreeDemo::recalculate() {
 	tree->addShields();
 	t.stamp("Constructing tree and obstacles");
 
-	SpiralTreeUnobstructedAlgorithm unobstructedSpiralTreeAlg(*tree);
-	unobstructedSpiralTreeAlg.run();
-	t.stamp("Computing spiral tree without obstacles");
+	m_renderer->clear();
+	if (m_obstacleBox->isChecked()) {
+		ReachableRegionAlgorithm reachableRegionAlg(tree);
+		std::vector<ReachableRegionAlgorithm::UnreachableRegionVertex> vertices =
+		    reachableRegionAlg.run();
+		t.stamp("Computing reachable region");
 
-	ReachableRegionAlgorithm reachableRegionAlg(tree);
-	std::vector<ReachableRegionAlgorithm::UnreachableRegionVertex> vertices =
-	    reachableRegionAlg.run();
-	t.stamp("Computing reachable region");
+		SpiralTreeObstructedAlgorithm spiralTreeAlg(tree, vertices);
+		spiralTreeAlg.run();
+		t.stamp("Computing spiral tree");
 
-	SpiralTreeObstructedAlgorithm spiralTreeAlg(tree, vertices);
-	spiralTreeAlg.run();
-	t.stamp("Computing spiral tree");
+		m_renderer->addPainting(reachableRegionAlg.debugPainting(), "Reachable region sweep");
+		m_renderer->addPainting(spiralTreeAlg.debugPainting(), "Spiral tree sweep");
+	} else {
+		SpiralTreeUnobstructedAlgorithm spiralTreeAlg(*tree);
+		spiralTreeAlg.run();
+		t.stamp("Computing spiral tree");
+
+		m_renderer->addPainting(spiralTreeAlg.debugPainting(), "Spiral tree sweep");
+	}
 
 	t.output();
 
 	Painting::Options options;
 	Painting p(nullptr, tree, options);
 	auto painting = std::make_shared<Painting>(nullptr, tree, options);
-
-	m_renderer->clear();
 	m_renderer->addPainting(painting, "Spiral tree");
-	m_renderer->addPainting(unobstructedSpiralTreeAlg.debugPainting(), "Spiral tree without obstacles");
-	m_renderer->addPainting(reachableRegionAlg.debugPainting(), "Reachable region sweep");
-	m_renderer->addPainting(spiralTreeAlg.debugPainting(), "Spiral tree sweep");
 
 	m_renderer->update();
 

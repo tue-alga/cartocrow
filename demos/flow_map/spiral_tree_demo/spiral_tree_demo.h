@@ -19,6 +19,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#include <QCheckBox>
 #include <QLabel>
 #include <QMainWindow>
 #include <QSlider>
@@ -45,4 +46,5 @@ class SpiralTreeDemo : public QMainWindow {
 	GeometryWidget* m_renderer;
 	QSlider* m_alphaSlider;
 	QLabel* m_alphaLabel;
+	QCheckBox* m_obstacleBox;
 };
