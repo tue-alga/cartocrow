@@ -31,6 +31,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "cartocrow/flow_map/reachable_region_algorithm.h"
 #include "cartocrow/flow_map/spiral_tree.h"
 #include "cartocrow/flow_map/spiral_tree_obstructed_algorithm.h"
+#include "cartocrow/flow_map/spiral_tree_unobstructed_algorithm.h"
 #include "cartocrow/renderer/geometry_painting.h"
 #include "cartocrow/renderer/geometry_widget.h"
 #include "cartocrow/renderer/ipe_renderer.h"
@@ -168,6 +169,10 @@ void SpiralTreeDemo::recalculate() {
 	tree->addShields();
 	t.stamp("Constructing tree and obstacles");
 
+	SpiralTreeUnobstructedAlgorithm unobstructedSpiralTreeAlg(*tree);
+	unobstructedSpiralTreeAlg.run();
+	t.stamp("Computing spiral tree without obstacles");
+
 	ReachableRegionAlgorithm reachableRegionAlg(tree);
 	std::vector<ReachableRegionAlgorithm::UnreachableRegionVertex> vertices =
 	    reachableRegionAlg.run();
@@ -185,6 +190,7 @@ void SpiralTreeDemo::recalculate() {
 
 	m_renderer->clear();
 	m_renderer->addPainting(painting, "Spiral tree");
+	m_renderer->addPainting(unobstructedSpiralTreeAlg.debugPainting(), "Spiral tree without obstacles");
 	m_renderer->addPainting(reachableRegionAlg.debugPainting(), "Reachable region sweep");
 	m_renderer->addPainting(spiralTreeAlg.debugPainting(), "Spiral tree sweep");
 
