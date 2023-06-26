@@ -24,6 +24,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "../core/core.h"
 #include "../renderer/geometry_renderer.h"
+#include "node.h"
 #include "polar_point.h"
 
 namespace cartocrow::flow_map {
@@ -67,6 +68,13 @@ class SweepInterval {
 	/// Returns the type of this interval.
 	Type type() const;
 
+	/// Sets the node this interval is reachable from. This is applicable only
+	/// for reachable intervals in the second sweep.
+	void setNode(std::shared_ptr<Node> nodeId);
+	/// Returns the node this interval is reachable from. This is applicable
+	/// only for reachable intervals in the second sweep.
+	std::shared_ptr<Node> node() const;
+
 	/// Computes the point of intersection larger than \c rMin of the two sides
 	/// of this interval. This returns \ref std::nullopt if the sides never
 	/// intersect.
@@ -94,6 +102,9 @@ class SweepInterval {
 	/// The sweep edge forming the next (that is, left) boundary of this sweep
 	/// circle interval, or \c nullptr if this is the last interval.
 	SweepEdge* m_nextBoundary;
+	/// If this is a reachable interval in the second sweep, this field stores
+	/// the node it is reachable from. Otherwise, it is \c nullptr.
+	std::shared_ptr<Node> m_node = nullptr;
 
 	friend class SweepCircle;
 };

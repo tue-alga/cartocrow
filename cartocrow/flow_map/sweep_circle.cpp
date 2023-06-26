@@ -113,6 +113,9 @@ void SweepCircle::print() const {
 			std::cout << "\033[1mfree\033[0m";
 		} else if (interval.type() == SweepInterval::Type::REACHABLE) {
 			std::cout << "\033[1;32mreachable\033[0m";
+			if (interval.m_node == nullptr) {
+				std::cout << " (without node!)";
+			}
 		} else if (interval.type() == SweepInterval::Type::OBSTACLE) {
 			std::cout << "\033[1;31mobstacle\033[0m";
 		}

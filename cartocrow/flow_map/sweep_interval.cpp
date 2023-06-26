@@ -53,6 +53,14 @@ SweepInterval::Type SweepInterval::type() const {
 	return m_type;
 }
 
+void SweepInterval::setNode(std::shared_ptr<Node> node) {
+	m_node = node;
+}
+
+std::shared_ptr<Node> SweepInterval::node() const {
+	return m_node;
+}
+
 std::optional<PolarPoint> SweepInterval::outwardsVanishingPoint(Number<Inexact> rMin) const {
 	if (m_previousBoundary == nullptr || m_nextBoundary == nullptr) {
 		return std::nullopt;

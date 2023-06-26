@@ -133,13 +133,16 @@ class SpiralTreeObstructedAlgorithm {
 	/// An event that happens when the sweep circle hits a node.
 	class NodeEvent : public Event {
 	  public:
-		/// Creates a new node event at the given position.
-		NodeEvent(PolarPoint position, SpiralTreeObstructedAlgorithm* alg);
+		/// Creates a new node event for the given node.
+		NodeEvent(std::shared_ptr<Node> node, SpiralTreeObstructedAlgorithm* alg);
 
 		/// Handles this event by starting a reachable region for the node.
 		///
 		/// \image html spiral-tree-algorithm-node-event.svg
 		void handle() override;
+
+	  private:
+		std::shared_ptr<Node> m_node;
 	};
 
 	/// An event that happens when the sweep circle hits an obstacle vertex. A

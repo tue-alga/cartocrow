@@ -87,7 +87,7 @@ void SpiralTreeObstructedAlgorithm::Event::insertJoinEventFor(
 		}
 		m_alg->m_queue.push(
 		    std::make_shared<JoinEvent>(*vanishingPoint, *rightEdge, *nextEdge, m_alg));
-		std::cout << "(inserted join event at r = " << vanishingPoint->r() << " for ["
+		/*std::cout << "(inserted join event at r = " << vanishingPoint->r() << " for ["
 		          << interval->previousBoundary()->shape().nearEndpoint().toCartesian();
 		if (interval->previousBoundary()->shape().farEndpoint()) {
 			std::cout << " – " << interval->previousBoundary()->shape().farEndpoint()->toCartesian();
@@ -96,9 +96,9 @@ void SpiralTreeObstructedAlgorithm::Event::insertJoinEventFor(
 		if (interval->nextBoundary()->shape().farEndpoint()) {
 			std::cout << " – " << interval->nextBoundary()->shape().farEndpoint()->toCartesian();
 		}
-		std::cout << "])" << std::endl;
+		std::cout << "])" << std::endl;*/
 	} else {
-		std::cout << "(ignored join event for ["
+		/*std::cout << "(ignored join event for ["
 		          << interval->previousBoundary()->shape().nearEndpoint().toCartesian();
 		if (interval->previousBoundary()->shape().farEndpoint()) {
 			std::cout << " – " << interval->previousBoundary()->shape().farEndpoint()->toCartesian();
@@ -107,13 +107,13 @@ void SpiralTreeObstructedAlgorithm::Event::insertJoinEventFor(
 		if (interval->nextBoundary()->shape().farEndpoint()) {
 			std::cout << " – " << interval->nextBoundary()->shape().farEndpoint()->toCartesian();
 		}
-		std::cout << "])" << std::endl;
+		std::cout << "])" << std::endl;*/
 	}
 }
 
-SpiralTreeObstructedAlgorithm::NodeEvent::NodeEvent(PolarPoint position,
+SpiralTreeObstructedAlgorithm::NodeEvent::NodeEvent(std::shared_ptr<Node> node,
                                                     SpiralTreeObstructedAlgorithm* alg)
-    : Event(position, alg) {}
+    : Event(node->m_position, alg), m_node(node) {}
 
 void SpiralTreeObstructedAlgorithm::NodeEvent::handle() {
 	using enum SweepInterval::Type;
@@ -135,6 +135,7 @@ void SpiralTreeObstructedAlgorithm::NodeEvent::handle() {
 	    SweepEdgeShape(RIGHT_SPIRAL, m_position, m_alg->m_tree->restrictingAngle()));
 	auto result = m_alg->m_circle.splitFromInterval(leftSpiral, rightSpiral);
 	result.middleInterval->setType(REACHABLE);
+	result.middleInterval->setNode(m_node);
 
 	insertJoinEvents();
 }
@@ -291,7 +292,7 @@ void SpiralTreeObstructedAlgorithm::JoinEvent::handle() {
 	std::shared_ptr<SweepEdge> rightEdge = m_rightEdge.lock();
 	std::shared_ptr<SweepEdge> leftEdge = m_leftEdge.lock();
 
-	std::cout << "> \033[1mhandling \033[34mjoin event\033[0m\n";
+	std::cout << "> \033[1mhandling \033[34mjoin event\033[0m";
 	m_alg->m_debugPainting->setMode(renderer::GeometryRenderer::stroke);
 	m_alg->m_debugPainting->setStroke(Color{0, 120, 240}, 1);
 	m_alg->m_debugPainting->draw(m_alg->m_tree->rootPosition() +
@@ -303,13 +304,17 @@ void SpiralTreeObstructedAlgorithm::JoinEvent::handle() {
 	SweepInterval* interval = rightEdge->nextInterval();
 	SweepInterval* nextInterval = leftEdge->nextInterval();
 
-	std::cout << int(previousInterval->type()) << " " << int(interval->type()) << " " << int(nextInterval->type()) << std::endl;
+	std::shared_ptr<Node> rightNode = previousInterval->node();
+	std::shared_ptr<Node> leftNode = nextInterval->node();
 
 	if (previousInterval->type() == OBSTACLE && nextInterval->type() == OBSTACLE) {
 		// ignore, this is handled by a vertex event
+		std::cout << " (ignored)\n";
 
 	} else if (previousInterval->type() == FREE && nextInterval->type() == FREE) {
 		// case 1: simply merge the intervals into a big reachable interval
+		std::cout << " (case 1)\n";
+
 		auto result = m_alg->m_circle.mergeToInterval(rightEdge, leftEdge);
 		rightEdge->shape().pruneNearSide(m_position);
 		leftEdge->shape().pruneNearSide(m_position);
@@ -317,6 +322,8 @@ void SpiralTreeObstructedAlgorithm::JoinEvent::handle() {
 
 	} else if (previousInterval->type() == REACHABLE && nextInterval->type() == REACHABLE) {
 		// case 1.5: join and make new active node
+		std::cout << " (case 1.5)\n";
+
 		rightEdge->shape().pruneNearSide(m_position);
 		leftEdge->shape().pruneNearSide(m_position);
 		auto rightSpiral = std::make_shared<SweepEdge>(
@@ -333,6 +340,17 @@ void SpiralTreeObstructedAlgorithm::JoinEvent::handle() {
 
 		std::shared_ptr<Node> node = std::make_shared<Node>(m_position);
 		m_alg->m_tree->m_nodes.push_back(node);
+		result.middleInterval->setNode(node);
+
+		if (rightNode != nullptr) {
+			rightNode->m_parent = node;
+			node->m_children.push_back(rightNode);
+		}
+
+		if (leftNode != nullptr) {
+			leftNode->m_parent = node;
+			node->m_children.push_back(leftNode);
+		}
 
 	} else if ((previousInterval->type() == REACHABLE && nextInterval->type() == FREE) ||
 	           (previousInterval->type() == FREE && nextInterval->type() == REACHABLE)) {
@@ -345,6 +363,8 @@ void SpiralTreeObstructedAlgorithm::JoinEvent::handle() {
 
 	} else if (previousInterval->type() == OBSTACLE) {
 		// case 2: right side is obstacle
+		std::cout << " (case 2)\n";
+
 		leftEdge->shape().pruneNearSide(m_position);
 		if (interval->type() == FREE) {
 			// case 2a: shadow in the middle, reachable on the left
@@ -362,6 +382,8 @@ void SpiralTreeObstructedAlgorithm::JoinEvent::handle() {
 
 	} else if (nextInterval->type() == OBSTACLE) {
 		// case 3: left side is obstacle
+		std::cout << " (case 3)\n";
+
 		rightEdge->shape().pruneNearSide(m_position);
 		if (interval->type() == FREE) {
 			assert(previousInterval->type() == REACHABLE);
@@ -394,7 +416,7 @@ void SpiralTreeObstructedAlgorithm::run() {
 	// insert all terminals into the event queue
 	for (const std::shared_ptr<Node>& node : m_tree->nodes()) {
 		if (node->m_position.r() > 0) {
-			m_queue.push(std::make_shared<NodeEvent>(node->m_position, this));
+			m_queue.push(std::make_shared<NodeEvent>(node, this));
 		}
 	}
 
