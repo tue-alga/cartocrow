@@ -210,6 +210,8 @@ class SpiralTreeObstructedAlgorithm {
 		void handleLeft();
 
 		/// Handles a right vertex event.
+		///
+		/// This exactly mirrors the cases from \ref handleLeft().
 		void handleRight();
 
 		/// Handles a near vertex event.

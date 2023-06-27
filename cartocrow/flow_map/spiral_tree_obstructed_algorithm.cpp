@@ -208,6 +208,7 @@ void SpiralTreeObstructedAlgorithm::VertexEvent::handleLeft() {
 			result.middleLeftInterval->setNode(newNode);
 			result.leftInterval->setNode(node);
 		} else {
+			// TODO implement case 2b/2c
 			auto result = m_alg->m_circle.switchEdge(m_e1, m_e2);
 			result.leftInterval->setNode(node);
 		}
@@ -221,16 +222,29 @@ void SpiralTreeObstructedAlgorithm::VertexEvent::handleRight() {
 	using enum SweepInterval::Type;
 	using enum SweepEdgeShape::Type;
 	SweepInterval* outsideInterval = m_e2->previousInterval();
-	if (outsideInterval->type() == FREE) {
+
+	if (outsideInterval->type() == FREE) { // case 1
 		auto result = m_alg->m_circle.switchEdge(m_e2, m_e1);
-	} else if (outsideInterval->type() == REACHABLE) {
-		auto spiral = std::make_shared<SweepEdge>(
+
+	} else if (outsideInterval->type() == REACHABLE) { // case 2
+		auto node = outsideInterval->node();
+		auto rightSpiral = std::make_shared<SweepEdge>(
+		    SweepEdgeShape(RIGHT_SPIRAL, m_position, m_alg->m_tree->restrictingAngle()));
+		auto leftSpiral = std::make_shared<SweepEdge>(
 		    SweepEdgeShape(LEFT_SPIRAL, m_position, m_alg->m_tree->restrictingAngle()));
-		if (m_e1->shape().departsInwardsToLeftOf(m_position.r(), spiral->shape())) {
-			auto result = m_alg->m_circle.splitFromEdge(m_e2, spiral, m_e1);
-			result.middleInterval->setType(FREE);
+		if (m_e1->shape().departsInwardsToLeftOf(m_position.r(), rightSpiral->shape())) { // case 2a
+			auto result = m_alg->m_circle.splitFromEdge(m_e2, leftSpiral, rightSpiral, m_e1);
+			result.middleLeftInterval->setType(FREE);
+			result.middleRightInterval->setType(REACHABLE);
+			std::shared_ptr<Node> newNode = std::make_shared<Node>(m_position);
+			m_alg->m_tree->m_nodes.push_back(newNode);
+			m_alg->m_tree->addEdge(newNode, node);
+			result.middleRightInterval->setNode(newNode);
+			result.rightInterval->setNode(node);
 		} else {
+			// TODO implement case 2b/2c
 			auto result = m_alg->m_circle.switchEdge(m_e2, m_e1);
+			result.rightInterval->setNode(node);
 		}
 	} else if (outsideInterval->type() == OBSTACLE) {
 		// a vertex event cannot have an obstacle interval on the outside
