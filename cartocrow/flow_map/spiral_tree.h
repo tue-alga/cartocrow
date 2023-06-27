@@ -116,6 +116,11 @@ class SpiralTree {
 	/// \todo document
 	bool isReachable(const PolarPoint& parent_point, const PolarPoint& child_point) const;
 
+	/// Adds an edge to the tree from the parent to the child node. This just
+	/// sets the parent of the child and adds the child to the children list of
+	/// the parent.
+	void addEdge(const std::shared_ptr<Node>& parent, const std::shared_ptr<Node>& child);
+
   private:
 	/// Generates an obstacle of the given shape.
 	Obstacle makeObstacle(Polygon<Inexact> shape);

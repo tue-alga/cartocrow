@@ -343,13 +343,10 @@ void SpiralTreeObstructedAlgorithm::JoinEvent::handle() {
 		result.middleInterval->setNode(node);
 
 		if (rightNode != nullptr) {
-			rightNode->m_parent = node;
-			node->m_children.push_back(rightNode);
+			m_alg->m_tree->addEdge(node, rightNode);
 		}
-
 		if (leftNode != nullptr) {
-			leftNode->m_parent = node;
-			node->m_children.push_back(leftNode);
+			m_alg->m_tree->addEdge(node, leftNode);
 		}
 
 	} else if ((previousInterval->type() == REACHABLE && nextInterval->type() == FREE) ||
