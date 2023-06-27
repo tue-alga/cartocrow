@@ -188,16 +188,28 @@ void SpiralTreeObstructedAlgorithm::VertexEvent::handleLeft() {
 	using enum SweepInterval::Type;
 	using enum SweepEdgeShape::Type;
 	SweepInterval* outsideInterval = m_e1->nextInterval();
-	if (outsideInterval->type() == FREE) {
+
+	if (outsideInterval->type() == FREE) { // case 1
 		auto result = m_alg->m_circle.switchEdge(m_e1, m_e2);
-	} else if (outsideInterval->type() == REACHABLE) {
-		auto spiral = std::make_shared<SweepEdge>(
+
+	} else if (outsideInterval->type() == REACHABLE) { // case 2
+		auto node = outsideInterval->node();
+		auto rightSpiral = std::make_shared<SweepEdge>(
+		    SweepEdgeShape(RIGHT_SPIRAL, m_position, m_alg->m_tree->restrictingAngle()));
+		auto leftSpiral = std::make_shared<SweepEdge>(
 		    SweepEdgeShape(LEFT_SPIRAL, m_position, m_alg->m_tree->restrictingAngle()));
-		if (spiral->shape().departsInwardsToLeftOf(m_position.r(), m_e2->shape())) {
-			auto result = m_alg->m_circle.splitFromEdge(m_e1, m_e2, spiral);
-			result.middleInterval->setType(FREE);
+		if (leftSpiral->shape().departsInwardsToLeftOf(m_position.r(), m_e2->shape())) { // case 2a
+			auto result = m_alg->m_circle.splitFromEdge(m_e1, m_e2, leftSpiral, rightSpiral);
+			result.middleRightInterval->setType(FREE);
+			result.middleLeftInterval->setType(REACHABLE);
+			std::shared_ptr<Node> newNode = std::make_shared<Node>(m_position);
+			m_alg->m_tree->m_nodes.push_back(newNode);
+			m_alg->m_tree->addEdge(newNode, node);
+			result.middleLeftInterval->setNode(newNode);
+			result.leftInterval->setNode(node);
 		} else {
 			auto result = m_alg->m_circle.switchEdge(m_e1, m_e2);
+			result.leftInterval->setNode(node);
 		}
 	} else if (outsideInterval->type() == OBSTACLE) {
 		// a vertex event cannot have an obstacle interval on the outside

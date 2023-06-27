@@ -188,6 +188,25 @@ class SpiralTreeObstructedAlgorithm {
 		Side determineSide();
 
 		/// Handles a left vertex event.
+		///
+		/// * **Case 1:** The obstacle is neighboring a free interval.
+		///
+		/// \image html spiral-tree-algorithm-left-vertex-event-1.svg
+		///
+		/// * **Case 2:** The obstacle is neighboring a reachable region. In
+		/// this case there are three subcases, depending on the position of the
+		/// obstacle edge relative to the two spirals departing from the vertex
+		/// position. Firstly, if the obstacle edge is to the right of both the
+		/// left and right spiral, then the obstacle leaves a non-reachable
+		/// (free) region (**case 2a**). The reachable region now gets split
+		/// into two: the left part maintains the parent of the old reachable
+		/// region; the right part gets the vertex as its parent. If the
+		/// obstacle edge falls between the spirals, then there are still two
+		/// reachable regions but there is no free region (**case 2b**). If the
+		/// obstacle edge is to the left of both spirals, then the result is
+		/// just one single reachable region (**case 2c**).
+		///
+		/// \image html spiral-tree-algorithm-left-vertex-event-2.svg
 		void handleLeft();
 
 		/// Handles a right vertex event.

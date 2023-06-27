@@ -172,6 +172,14 @@ class SweepCircle {
 		SweepInterval* leftInterval;
 	};
 
+	/// Splits the given edge \f$e\f$ into three, with two new intervals in
+	/// between. Assumes that the far endpoint of \f$e\f$ is currently on this
+	/// sweep circle, and the newly inserted edges have their near endpoints at
+	/// the same point on this sweep circle.
+	ThreeWaySplitResult splitFromEdge(std::shared_ptr<SweepEdge> oldEdge,
+	                                  std::shared_ptr<SweepEdge> newRightEdge,
+	                                  std::shared_ptr<SweepEdge> newMiddleEdge,
+	                                  std::shared_ptr<SweepEdge> newLeftEdge);
 	/// Splits the given interval \f$i\f$ into three, with two new intervals in
 	/// between. Assumes that the newly inserted edges have their near endpoints
 	/// at the same point on this sweep circle.

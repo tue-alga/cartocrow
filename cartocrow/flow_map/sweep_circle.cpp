@@ -192,6 +192,45 @@ void SweepCircle::mergeFreeIntervals() {
 	}
 }
 
+SweepCircle::ThreeWaySplitResult SweepCircle::splitFromEdge(std::shared_ptr<SweepEdge> oldEdge,
+                                                            std::shared_ptr<SweepEdge> newRightEdge,
+                                                            std::shared_ptr<SweepEdge> newMiddleEdge,
+                                                            std::shared_ptr<SweepEdge> newLeftEdge) {
+	SweepEdge* previousEdge = oldEdge->previousEdge();
+	SweepEdge* nextEdge = oldEdge->nextEdge();
+	SweepInterval nextInterval = oldEdge->m_nextInterval;
+
+	m_edges.erase(oldEdge);
+	oldEdge->m_onCircle = false;
+	m_edges.insert(newRightEdge);
+	newRightEdge->m_onCircle = true;
+	m_edges.insert(newMiddleEdge);
+	newMiddleEdge->m_onCircle = true;
+	m_edges.insert(newLeftEdge);
+	newLeftEdge->m_onCircle = true;
+
+	if (previousEdge) {
+		previousEdge->m_nextInterval.m_nextBoundary = newRightEdge.get();
+		newRightEdge->m_previousInterval = &previousEdge->m_nextInterval;
+	}
+
+	newRightEdge->m_nextInterval =
+	    SweepInterval(nextInterval.type(), newRightEdge.get(), newMiddleEdge.get());
+	newMiddleEdge->m_previousInterval = &newRightEdge->m_nextInterval;
+
+	newMiddleEdge->m_nextInterval =
+	    SweepInterval(nextInterval.type(), newMiddleEdge.get(), newLeftEdge.get());
+	newLeftEdge->m_previousInterval = &newMiddleEdge->m_nextInterval;
+
+	newLeftEdge->m_nextInterval = SweepInterval(nextInterval.type(), newLeftEdge.get(), nextEdge);
+	if (nextEdge) {
+		nextEdge->m_previousInterval = &newLeftEdge->m_nextInterval;
+	}
+
+	return ThreeWaySplitResult{newRightEdge->previousInterval(), newRightEdge->nextInterval(),
+	                           newMiddleEdge->nextInterval(), newLeftEdge->nextInterval()};
+}
+
 SweepCircle::SplitResult SweepCircle::splitFromEdge(std::shared_ptr<SweepEdge> oldEdge,
                                                     std::shared_ptr<SweepEdge> newRightEdge,
                                                     std::shared_ptr<SweepEdge> newLeftEdge) {
