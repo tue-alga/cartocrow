@@ -366,8 +366,10 @@ void SpiralTreeObstructedAlgorithm::JoinEvent::handle() {
 		if (interval->type() == FREE) {
 			// case 2a: shadow in the middle, reachable on the left
 			assert(nextInterval->type() == REACHABLE);
+			auto node = nextInterval->node();
 			rightEdge->shape().pruneNearSide(m_position);
 			auto result = m_alg->m_circle.mergeToEdge(rightEdge, leftEdge, rightEdge);
+			result.leftInterval->setNode(node);
 		} else if (interval->type() == REACHABLE) {
 			// case 2b: reachable in the middle, shadow on the left
 			assert(nextInterval->type() == FREE);
@@ -384,8 +386,10 @@ void SpiralTreeObstructedAlgorithm::JoinEvent::handle() {
 		rightEdge->shape().pruneNearSide(m_position);
 		if (interval->type() == FREE) {
 			assert(previousInterval->type() == REACHABLE);
+			auto node = previousInterval->node();
 			leftEdge->shape().pruneNearSide(m_position);
 			auto result = m_alg->m_circle.mergeToEdge(rightEdge, leftEdge, leftEdge);
+			result.rightInterval->setNode(node);
 		}
 	}
 
