@@ -34,8 +34,10 @@ namespace cartocrow::flow_map {
 SweepInterval::SweepInterval(Type type)
     : m_type(type), m_previousBoundary(nullptr), m_nextBoundary(nullptr) {}
 
-SweepInterval::SweepInterval(Type type, SweepEdge* previousBoundary, SweepEdge* nextBoundary)
-    : m_type(type), m_previousBoundary(previousBoundary), m_nextBoundary(nextBoundary) {}
+SweepInterval::SweepInterval(const SweepInterval& other, SweepEdge* previousBoundary,
+                             SweepEdge* nextBoundary)
+    : m_type(other.m_type), m_node(other.m_node), m_activeAncestor(other.m_activeAncestor),
+      m_previousBoundary(previousBoundary), m_nextBoundary(nextBoundary) {}
 
 SweepEdge* SweepInterval::previousBoundary() {
 	return m_previousBoundary;

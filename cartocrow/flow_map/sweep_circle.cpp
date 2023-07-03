@@ -215,14 +215,14 @@ SweepCircle::ThreeWaySplitResult SweepCircle::splitFromEdge(std::shared_ptr<Swee
 	}
 
 	newRightEdge->m_nextInterval =
-	    SweepInterval(nextInterval.type(), newRightEdge.get(), newMiddleEdge.get());
+	    SweepInterval(nextInterval, newRightEdge.get(), newMiddleEdge.get());
 	newMiddleEdge->m_previousInterval = &newRightEdge->m_nextInterval;
 
 	newMiddleEdge->m_nextInterval =
-	    SweepInterval(nextInterval.type(), newMiddleEdge.get(), newLeftEdge.get());
+	    SweepInterval(nextInterval, newMiddleEdge.get(), newLeftEdge.get());
 	newLeftEdge->m_previousInterval = &newMiddleEdge->m_nextInterval;
 
-	newLeftEdge->m_nextInterval = SweepInterval(nextInterval.type(), newLeftEdge.get(), nextEdge);
+	newLeftEdge->m_nextInterval = SweepInterval(nextInterval, newLeftEdge.get(), nextEdge);
 	if (nextEdge) {
 		nextEdge->m_previousInterval = &newLeftEdge->m_nextInterval;
 	}
@@ -251,10 +251,10 @@ SweepCircle::SplitResult SweepCircle::splitFromEdge(std::shared_ptr<SweepEdge> o
 	}
 
 	newRightEdge->m_nextInterval =
-	    SweepInterval(nextInterval.type(), newRightEdge.get(), newLeftEdge.get());
+	    SweepInterval(nextInterval, newRightEdge.get(), newLeftEdge.get());
 	newLeftEdge->m_previousInterval = &newRightEdge->m_nextInterval;
 
-	newLeftEdge->m_nextInterval = SweepInterval(nextInterval.type(), newLeftEdge.get(), nextEdge);
+	newLeftEdge->m_nextInterval = SweepInterval(nextInterval, newLeftEdge.get(), nextEdge);
 	if (nextEdge) {
 		nextEdge->m_previousInterval = &newLeftEdge->m_nextInterval;
 	}
@@ -282,26 +282,26 @@ SweepCircle::splitFromInterval(std::shared_ptr<SweepEdge> newRightEdge,
 
 	if (previousEdge) {
 		previousEdge->m_nextInterval =
-		    SweepInterval(interval->type(), previousEdge, newRightEdge.get());
+		    SweepInterval(*interval, previousEdge, newRightEdge.get());
 		newRightEdge->m_previousInterval = &previousEdge->m_nextInterval;
 	} else {
 		newRightEdge->m_previousInterval = &newLeftEdge->m_nextInterval;
 	}
 
 	newRightEdge->m_nextInterval =
-	    SweepInterval(interval->type(), newRightEdge.get(), newMiddleEdge.get());
+	    SweepInterval(*interval, newRightEdge.get(), newMiddleEdge.get());
 	newMiddleEdge->m_previousInterval = &newRightEdge->m_nextInterval;
 
 	newMiddleEdge->m_nextInterval =
-	    SweepInterval(interval->type(), newMiddleEdge.get(), newLeftEdge.get());
+	    SweepInterval(*interval, newMiddleEdge.get(), newLeftEdge.get());
 	newLeftEdge->m_previousInterval = &newMiddleEdge->m_nextInterval;
 
-	newLeftEdge->m_nextInterval = SweepInterval(interval->type(), newLeftEdge.get(), nextEdge);
+	newLeftEdge->m_nextInterval = SweepInterval(*interval, newLeftEdge.get(), nextEdge);
 	if (nextEdge) {
 		nextEdge->m_previousInterval = &newLeftEdge->m_nextInterval;
 	} else {
 		newLeftEdge->m_nextInterval =
-		    SweepInterval(interval->type(), newLeftEdge.get(), newRightEdge.get());
+		    SweepInterval(*interval, newLeftEdge.get(), newRightEdge.get());
 	}
 
 	m_onlyInterval = std::nullopt;
@@ -325,22 +325,22 @@ SweepCircle::SplitResult SweepCircle::splitFromInterval(std::shared_ptr<SweepEdg
 
 	if (previousEdge) {
 		previousEdge->m_nextInterval =
-		    SweepInterval(interval->type(), previousEdge, newRightEdge.get());
+		    SweepInterval(*interval, previousEdge, newRightEdge.get());
 		newRightEdge->m_previousInterval = &previousEdge->m_nextInterval;
 	} else {
 		newRightEdge->m_previousInterval = &newLeftEdge->m_nextInterval;
 	}
 
 	newRightEdge->m_nextInterval =
-	    SweepInterval(interval->type(), newRightEdge.get(), newLeftEdge.get());
+	    SweepInterval(*interval, newRightEdge.get(), newLeftEdge.get());
 	newLeftEdge->m_previousInterval = &newRightEdge->m_nextInterval;
 
 	if (nextEdge) {
-		newLeftEdge->m_nextInterval = SweepInterval(interval->type(), newLeftEdge.get(), nextEdge);
+		newLeftEdge->m_nextInterval = SweepInterval(*interval, newLeftEdge.get(), nextEdge);
 		nextEdge->m_previousInterval = &newLeftEdge->m_nextInterval;
 	} else {
 		newLeftEdge->m_nextInterval =
-		    SweepInterval(interval->type(), newLeftEdge.get(), newRightEdge.get());
+		    SweepInterval(*interval, newLeftEdge.get(), newRightEdge.get());
 	}
 
 	m_onlyInterval = std::nullopt;
@@ -355,9 +355,9 @@ SweepCircle::SwitchResult SweepCircle::switchEdge(std::shared_ptr<SweepEdge> e,
 	SweepEdge* nextEdge = e->nextEdge();
 
 	previousEdge->m_nextInterval =
-	    SweepInterval(previousEdge->m_nextInterval.type(), previousEdge, newEdge.get());
+	    SweepInterval(previousEdge->m_nextInterval, previousEdge, newEdge.get());
 	newEdge->m_previousInterval = &previousEdge->m_nextInterval;
-	newEdge->m_nextInterval = SweepInterval(e->m_nextInterval.type(), newEdge.get(), nextEdge);
+	newEdge->m_nextInterval = SweepInterval(e->m_nextInterval, newEdge.get(), nextEdge);
 
 	m_edges.erase(e);
 	e->m_onCircle = false;
@@ -375,9 +375,9 @@ SweepCircle::SwitchResult SweepCircle::mergeToEdge(std::shared_ptr<SweepEdge> ri
 	SweepEdge* previousEdge = rightEdge->previousEdge();
 	SweepEdge* nextEdge = leftEdge->nextEdge();
 	previousEdge->m_nextInterval =
-	    SweepInterval(rightEdge->m_previousInterval->type(), previousEdge, newEdge.get());
+	    SweepInterval(*rightEdge->m_previousInterval, previousEdge, newEdge.get());
 	newEdge->m_previousInterval = &previousEdge->m_nextInterval;
-	newEdge->m_nextInterval = SweepInterval(leftEdge->m_nextInterval.type(), newEdge.get(), nextEdge);
+	newEdge->m_nextInterval = SweepInterval(leftEdge->m_nextInterval, newEdge.get(), nextEdge);
 	nextEdge->m_previousInterval = &newEdge->m_nextInterval;
 
 	m_edges.erase(rightEdge);
@@ -394,9 +394,9 @@ SweepCircle::MergeResult SweepCircle::mergeToInterval(std::shared_ptr<SweepEdge>
                                                       std::shared_ptr<SweepEdge> leftEdge) {
 	SweepEdge* previousEdge = rightEdge->previousEdge();
 	SweepEdge* nextEdge = leftEdge->nextEdge();
-	SweepInterval interval = SweepInterval(leftEdge->m_nextInterval.type(), nullptr, nullptr);
+	SweepInterval interval = SweepInterval(leftEdge->m_nextInterval, nullptr, nullptr);
 	previousEdge->m_nextInterval =
-	    SweepInterval(rightEdge->m_nextInterval.type(), previousEdge, nextEdge);
+	    SweepInterval(rightEdge->m_nextInterval, previousEdge, nextEdge);
 	if (nextEdge) {
 		nextEdge->m_previousInterval = &previousEdge->m_nextInterval;
 	}

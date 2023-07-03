@@ -53,10 +53,10 @@ class SweepInterval {
 
 	/// Creates a new sweep interval of the given type, with no associated
 	/// previous boundary.
-	SweepInterval(Type type);
-	/// Creates a new sweep interval of the given type and associated previous
-	/// and next boundaries.
-	SweepInterval(Type type, SweepEdge* previousBoundary, SweepEdge* nextBoundary);
+	explicit SweepInterval(Type type);
+	/// Creates a new sweep interval whose attributes are copied from the given
+	/// interval, but with the specified previous and next boundaries.
+	SweepInterval(const SweepInterval& other, SweepEdge* previousBoundary, SweepEdge* nextBoundary);
 
 	/// Returns the previous boundary edge pointer.
 	SweepEdge* previousBoundary();

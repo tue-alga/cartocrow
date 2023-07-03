@@ -67,7 +67,7 @@ namespace cartocrow::flow_map {
 /// tree.addObstacle(obstacle);
 ///
 /// // run computation
-/// flow_map::SpiralTreeUnobstructedAlgorithm algorithm(tree);
+/// flow_map::SpiralTreeObstructedAlgorithm algorithm(tree);
 /// algorithm.run();
 /// ```
 class SpiralTree {
