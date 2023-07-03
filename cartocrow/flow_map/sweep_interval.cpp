@@ -36,7 +36,7 @@ SweepInterval::SweepInterval(Type type)
 
 SweepInterval::SweepInterval(const SweepInterval& other, SweepEdge* previousBoundary,
                              SweepEdge* nextBoundary)
-    : m_type(other.m_type), m_node(other.m_node), m_activeAncestor(other.m_activeAncestor),
+    : m_type(other.m_type), m_node(other.m_node), m_activeDescendant(other.m_activeDescendant),
       m_previousBoundary(previousBoundary), m_nextBoundary(nextBoundary) {}
 
 SweepEdge* SweepInterval::previousBoundary() {
@@ -61,6 +61,14 @@ void SweepInterval::setNode(std::shared_ptr<Node> node) {
 
 std::shared_ptr<Node> SweepInterval::node() const {
 	return m_node;
+}
+
+void SweepInterval::setActiveDescendant(std::shared_ptr<Node> activeDescendant) {
+	m_activeDescendant = activeDescendant;
+}
+
+std::shared_ptr<Node> SweepInterval::activeDescendant() const {
+	return m_activeDescendant;
 }
 
 std::optional<PolarPoint> SweepInterval::outwardsVanishingPoint(Number<Inexact> rMin) const {

@@ -70,10 +70,16 @@ class SweepInterval {
 
 	/// Sets the node this interval is reachable from. This is applicable only
 	/// for reachable intervals in the second sweep.
-	void setNode(std::shared_ptr<Node> nodeId);
+	void setNode(std::shared_ptr<Node> node);
 	/// Returns the node this interval is reachable from. This is applicable
 	/// only for reachable intervals in the second sweep.
 	std::shared_ptr<Node> node() const;
+	/// Sets the active descendant of this interval. This is applicable only for
+	/// reachable intervals in the second sweep.
+	void setActiveDescendant(std::shared_ptr<Node> activeDescendant);
+	/// Returns the active descendant of this interval. This is applicable only
+	/// for reachable intervals in the second sweep.
+	std::shared_ptr<Node> activeDescendant() const;
 
 	/// Computes the point of intersection larger than \c rMin of the two sides
 	/// of this interval. This returns \ref std::nullopt if the sides never
@@ -105,6 +111,9 @@ class SweepInterval {
 	/// If this is a reachable interval in the second sweep, this field stores
 	/// the node it is reachable from. Otherwise, it is \c nullptr.
 	std::shared_ptr<Node> m_node = nullptr;
+	/// If this is a reachable interval in the second sweep, this field stores
+	/// the active descendant of this interval. Otherwise, it is \c nullptr.
+	std::shared_ptr<Node> m_activeDescendant = nullptr;
 
 	friend class SweepCircle;
 };
