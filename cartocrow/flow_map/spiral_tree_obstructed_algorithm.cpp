@@ -367,6 +367,8 @@ void SpiralTreeObstructedAlgorithm::JoinEvent::handle() {
 		// case 1.5: join and make new active node
 		std::cout << " (case 1.5)\n";
 
+		m_alg->m_circle.freeAllWithActiveDescendant(previousInterval->activeDescendant());
+		m_alg->m_circle.freeAllWithActiveDescendant(nextInterval->activeDescendant());
 		rightEdge->shape().pruneNearSide(m_position);
 		leftEdge->shape().pruneNearSide(m_position);
 		auto rightSpiral = std::make_shared<SweepEdge>(

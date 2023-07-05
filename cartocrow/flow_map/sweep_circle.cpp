@@ -195,6 +195,21 @@ void SweepCircle::mergeFreeIntervals() {
 	}
 }
 
+void SweepCircle::freeAllWithActiveDescendant(const std::shared_ptr<Node>& activeDescendant) {
+	if (m_edges.empty()) {
+		if (m_onlyInterval->m_type == SweepInterval::Type::REACHABLE &&
+		    m_onlyInterval->activeDescendant() == activeDescendant) {
+			m_onlyInterval->m_type = SweepInterval::Type::FREE;
+		}
+	}
+	for (auto& edge : m_edges) {
+		if (edge->m_nextInterval.m_type == SweepInterval::Type::REACHABLE &&
+		    edge->m_nextInterval.activeDescendant() == activeDescendant) {
+			edge->m_nextInterval.m_type = SweepInterval::Type::FREE;
+		}
+	}
+}
+
 SweepCircle::ThreeWaySplitResult SweepCircle::splitFromEdge(std::shared_ptr<SweepEdge> oldEdge,
                                                             std::shared_ptr<SweepEdge> newRightEdge,
                                                             std::shared_ptr<SweepEdge> newMiddleEdge,

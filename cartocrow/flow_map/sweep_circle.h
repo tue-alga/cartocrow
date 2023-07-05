@@ -24,6 +24,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <set>
 
 #include "../core/core.h"
+#include "cartocrow/flow_map/node.h"
 #include "polar_point.h"
 #include "sweep_edge.h"
 #include "sweep_interval.h"
@@ -162,6 +163,10 @@ class SweepCircle {
 
 	/// Merges any adjacent free intervals on the sweep circle.
 	void mergeFreeIntervals();
+
+	/// Changes each reachable interval with the given active descendant into a
+	/// free interval.
+	void freeAllWithActiveDescendant(const std::shared_ptr<Node>& activeDescendant);
 
 	/// The elements (intervals and edges) resulting from a three-way split
 	/// operation, in order in increasing angle over the circle.
