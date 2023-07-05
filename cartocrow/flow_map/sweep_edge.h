@@ -28,9 +28,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 namespace cartocrow::flow_map {
 
-/// The shape of an edge we are sweeping over: either a line segment or a spiral
-/// segment. A sweep edge shape can be seen as a function that maps \f$r\f$ to
-/// \f$\phi\f$.
+/// The shape of an \ref SweepEdge "sweep edge": either a line segment or a
+/// spiral segment. A sweep edge shape can be seen as a function that maps
+/// \f$r\f$ to \f$\phi\f$.
 ///
 /// Whether a SweepEdgeShape is a segment or a spiral is determined by its \ref
 /// type(). If the shape is a spiral, it can be either a left or a right spiral.
@@ -171,7 +171,17 @@ class SweepEdgeShape {
 	Number<Inexact> m_alpha;
 };
 
-/// An edge intersected by the sweep circle.
+/// An edge intersected by the \ref SweepCircle "sweep circle".
+///
+/// This class stores the edge's \ref SweepEdgeShape "shape" and the next \ref
+/// SweepInterval "interval" ("next" in counter-clockwise order). Furthermore,
+/// it stores a pointer to the previous interval. Finally, it remembers if it is
+/// currently actually on the sweep circle. The latter gets stored because edges
+/// regularly get taken off the sweep circle during events, but that doesn't
+/// necessarily mean that the edge object gets destroyed. If an event happens
+/// with an edge that's no longer on the sweep circle, it needs to be ignored,
+/// so by using the field stored here this can be easily checked in constant
+/// time.
 class SweepEdge {
   public:
 	/// Creates a new sweep edge with the given shape.

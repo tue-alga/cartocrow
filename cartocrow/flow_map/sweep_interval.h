@@ -31,9 +31,31 @@ namespace cartocrow::flow_map {
 
 class SweepEdge;
 
-/// An interval on the sweep circle. A sweep interval maintains its type
-/// (reachable, obstacle, or free) and pointers to its boundary edges on the
-/// left and right sides.
+/// An interval on the sweep circle. A sweep interval maintains:
+///
+/// * its \ref Type "type" (reachable, obstacle, or free),
+///
+/// * pointers to its boundary edges on the left and right sides, and
+///
+/// * for reachable intervals in the second sweep: two pointers to nodes:
+///     * the *child*: the closest node that this interval is reachable from,
+///       and
+///     * the *active descendant*: the closest non-degree-2 node that this
+///       interval is reachable from (this is what is called the "tag" in
+///       \cite flow_maps_algorithmica).
+///
+/// Often the child and the active descendant are the same. However, it can
+/// happen that the child is a degree-2 node, which would route around an
+/// obstacle. In this case, the active descendant is further away than the
+/// child. The reason for storing both the child and the active descendant is
+/// the following. Assume that the reachable interval at some point gets joined
+/// with another reachable interval (see \ref
+/// SpiralTreeObstructedAlgorithm::JoinEvent "join events"), thereby generating
+/// a new node. At this point we need to insert a tree edge from the newly added
+/// node to the child. However, we also need to remove all other reachable
+/// intervals with the same active descendant. (If we wouldn't do that, then
+/// later in the process these reachable intervals may also experience join
+/// events, and hence we would get a cycle in the tree.)
 class SweepInterval {
   public:
 	/// Possible types of sweep intervals.
