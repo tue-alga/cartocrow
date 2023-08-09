@@ -189,6 +189,9 @@ void SpiralTreeDemo::recalculate() {
 
 		m_renderer->addPainting(reachableRegionAlg.debugPainting(), "Reachable region sweep");
 		m_renderer->addPainting(spiralTreeAlg.debugPainting(), "Spiral tree sweep");
+		IpeRenderer ipeRenderer(spiralTreeAlg.debugPainting());
+		ipeRenderer.addPainting(reachableRegionAlg.debugPainting());
+		ipeRenderer.save("/tmp/spiral-tree.ipe");
 	} else {
 		SpiralTreeUnobstructedAlgorithm spiralTreeAlg(*tree);
 		spiralTreeAlg.run();
@@ -205,10 +208,6 @@ void SpiralTreeDemo::recalculate() {
 	m_renderer->addPainting(painting, "Spiral tree");
 
 	m_renderer->update();
-
-	/*IpeRenderer ipeRenderer(painting);
-	ipeRenderer.addPainting(algorithm.debugPainting());
-	ipeRenderer.save("/tmp/spiral-tree.ipe");*/
 }
 
 Point<Inexact>* SpiralTreeDemo::findClosestPoint(Point<Inexact> p, Number<Inexact> radius) {

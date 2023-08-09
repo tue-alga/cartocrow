@@ -112,14 +112,40 @@ class SweepInterval {
 	/// intersect.
 	std::optional<PolarPoint> inwardsVanishingPoint(Number<Inexact> rMax) const;
 
-	/// Returns a piecewise linear approximation of the shape swept by this
-	/// interval within the given \f$r\f$ interval. This is meant for debugging
-	/// purposes, to allow rendering the interval.
-	Polygon<Inexact> sweepShape(Number<Inexact> rFrom, Number<Inexact> rTo) const;
 	/// Paints a sweep shape (see \ref sweepShape()) with a color determined by
 	/// the type of this interval.
 	void paintSweepShape(renderer::GeometryRenderer& renderer, Number<Inexact> rFrom,
 	                     Number<Inexact> rTo) const;
+	/// Returns a piecewise linear approximation of the shape swept by this
+	/// interval within the given \f$r\f$ interval. This is meant for debugging
+	/// purposes, to allow rendering the interval.
+	///
+	/// ## Implementation notes
+	///
+	/// While the sweep shape consists of four parts (left edge, near arc, right
+	/// edge, far arc) that can simply be concatenated, implementing this in a
+	/// robust manner is surprisingly tricky. While the left and right edges are
+	/// easy, the main difficulty lies in determining the (angular) length of
+	/// the near and far arcs, so we know how far we have to walk over the
+	/// circle to draw these arcs. This should be in \f$[0, 2\pi]\f$ and can be
+	/// computed by subtracting the angles of the end and start endpoints,
+	/// modulo \f$2\pi\f$ due to angle wraparound. However this computation
+	/// doesn't distinguish between angular length \f$0\f$ (a zero interval) and
+	/// angular length \f$2\pi\f$ (an interval spanning the entire circle). This
+	/// is further complicated by floating-point inaccuracies that can cause a
+	/// zero-length interval to have small positive or negative length. Hence,
+	/// the cases we have to take into account are roughly as follows:
+	///
+	/// \image html sweep-interval-shape-1.svg
+	///
+	/// To solve this problem, we measure the interval in the middle of the
+	/// sweep, that is, at radius \f$\frac{r_\text{from} + r_\text{to}}{2}\f$.
+	/// We assume that the interval has a strictly positive angular length
+	/// \f$\alpha\f$ here, so in \f$(0, 2\pi)\f$, so that floating-point
+	/// inaccuracies cannot confuse us.
+	///
+	/// \image html sweep-interval-shape-2.svg
+	Polygon<Inexact> sweepShape(Number<Inexact> rFrom, Number<Inexact> rTo) const;
 
   private:
 	/// The type of this sweep interval.
@@ -136,6 +162,17 @@ class SweepInterval {
 	/// If this is a reachable interval in the second sweep, this field stores
 	/// the active descendant of this interval. Otherwise, it is \c nullptr.
 	std::shared_ptr<Node> m_activeDescendant = nullptr;
+
+	/// Computes the *angle span* of a polyline through the given vertices.
+	///
+	/// The angle span of an edge is the difference between the \f$\phi\f$
+	/// values of its start and end vertices, which is positive if the end
+	/// vertex is in counter-clockwise direction from the start vertex, and
+	/// negative if it is in clockwise direction. The angle span of a polyline
+	/// is simply the sum of the angle spans of its edges. This results in the
+	/// difference between the \f$\phi\f$ values of the polyline's start and
+	/// end, taking into account the number of windings along the origin.
+	Number<Inexact> angleSpan(std::vector<PolarPoint>& vertices) const;
 
 	friend class SweepCircle;
 };
