@@ -117,33 +117,15 @@ class SweepCircle {
 		SweepEdgeComparator(SweepCircle* owner) : m_owner(owner) {}
 		SweepCircle* m_owner;
 		bool operator()(std::shared_ptr<SweepEdge> e1, std::shared_ptr<SweepEdge> e2) const {
-			return phiForRCorrected(e1, m_owner->m_r) < phiForRCorrected(e2, m_owner->m_r);
+			return e1->shape().phiForR(m_owner->m_r) < e2->shape().phiForR(m_owner->m_r);
 		}
 		bool operator()(Number<Inexact> phi1, std::shared_ptr<SweepEdge> e2) const {
-			return phi1 < phiForRCorrected(e2, m_owner->m_r);
+			return phi1 < e2->shape().phiForR(m_owner->m_r);
 		}
 		bool operator()(std::shared_ptr<SweepEdge> e1, Number<Inexact> phi2) const {
-			return phiForRCorrected(e1, m_owner->m_r) < phi2;
+			return e1->shape().phiForR(m_owner->m_r) < phi2;
 		}
 		struct is_transparent {};
-
-	  private:
-		Number<Inexact> phiForRCorrected(std::shared_ptr<SweepEdge> e, Number<Inexact> r) const {
-			Number<Inexact> phi = e->shape().phiForR(r);
-			/*std::cout << ">>>> our phi: " << phi / M_PI << std::endl;
-			if (!m_owner->isEmpty() && e != *m_owner->edges().begin() &&
-			    e->m_previousInterval != nullptr) {
-				Number<Inexact> phiPrevious = e->previousEdge()->shape().phiForR(r);
-				std::cout << ">>>>     previous phi: " << phiPrevious / M_PI << std::endl;
-				std::cout << ">>>>     phi of first edge: "
-				          << (*m_owner->edges().begin())->shape().phiForR(r) / M_PI << std::endl;
-				if (phiPrevious > phi && phiPrevious < phi + M_PI / 2) {
-					std::cout << ">>>>     bingo!" << std::endl;
-					return phiPrevious;
-				}
-			}*/
-			return phi;
-		}
 	};
 
 	/// The unordered set (actually a map, mapping edge shapes to SweepEdges)
