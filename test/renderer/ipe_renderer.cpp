@@ -1,14 +1,14 @@
 #include "../catch.hpp"
 
-#include "../../cartocrow/core/ipe_reader.h"
-#include "../../cartocrow/renderer/geometry_painting.h"
-#include "../../cartocrow/renderer/ipe_renderer.h"
+#include "cartocrow/core/ipe_reader.h"
+#include "cartocrow/renderer/geometry_painting.h"
+#include "cartocrow/renderer/ipe_renderer.h"
 
 #include <ipeattributes.h>
 #include <ipedoc.h>
+#include <ipeshape.h>
 
 #include <filesystem>
-#include <ipeshape.h>
 
 using namespace cartocrow;
 

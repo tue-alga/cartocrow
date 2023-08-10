@@ -3,7 +3,7 @@
 #include <cmath>
 #include <ctime>
 
-#include "../../cartocrow/flow_map/sweep_circle.h"
+#include "cartocrow/flow_map/sweep_circle.h"
 
 using namespace cartocrow;
 using namespace cartocrow::flow_map;

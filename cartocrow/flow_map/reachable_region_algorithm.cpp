@@ -87,28 +87,6 @@ void ReachableRegionAlgorithm::Event::insertJoinEventFor(SweepCircle::EdgeMap::i
 		}
 		m_alg->m_queue.push(
 		    std::make_shared<JoinEvent>(*vanishingPoint, *rightEdge, *nextEdge, m_alg));
-		/*std::cout << "(inserted join event at r = " << vanishingPoint->r()
-				  << " with right edge ["
-		          << rightEdge->first.nearEndpoint().toCartesian();
-		if (rightEdge->first.farEndpoint()) {
-			std::cout << " – " << rightEdge->first.farEndpoint()->toCartesian();
-		}
-		std::cout << "] and left edge [" << nextEdge->first.nearEndpoint().toCartesian();
-		if (nextEdge->first.farEndpoint()) {
-			std::cout << " – " << nextEdge->first.farEndpoint()->toCartesian();
-		}
-		std::cout << "])" << std::endl;*/
-	} else {
-		/*std::cout << "(ignored join event for ["
-		          << interval->previousBoundary()->shape().nearEndpoint().toCartesian();
-		if (interval->previousBoundary()->shape().farEndpoint()) {
-			std::cout << " – " << interval->previousBoundary()->shape().farEndpoint()->toCartesian();
-		}
-		std::cout << "]  →  [" << interval->nextBoundary()->shape().nearEndpoint().toCartesian();
-		if (interval->nextBoundary()->shape().farEndpoint()) {
-			std::cout << " – " << interval->nextBoundary()->shape().farEndpoint()->toCartesian();
-		}
-		std::cout << "])" << std::endl;*/
 	}
 }
 
@@ -398,9 +376,8 @@ std::vector<ReachableRegionAlgorithm::UnreachableRegionVertex> ReachableRegionAl
 	}
 
 	m_circle.print();
-	int eventCount = 0; // TODO debug: limit number of events handled
 	// main loop, handle all events
-	while (!m_queue.empty() /*&& eventCount++ < 3*/) {
+	while (!m_queue.empty()) {
 		std::shared_ptr<Event> event = m_queue.top();
 		m_queue.pop();
 		if (!event->isValid()) {

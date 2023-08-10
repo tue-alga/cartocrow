@@ -1,6 +1,6 @@
 #include "../catch.hpp"
 
-#include "../../cartocrow/necklace_map/bit_string.h"
+#include "cartocrow/necklace_map/bit_string.h"
 
 using namespace cartocrow::necklace_map;
 

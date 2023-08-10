@@ -1,6 +1,6 @@
 #include "../catch.hpp"
 
-#include "../../cartocrow/flow_map/sweep_edge.h"
+#include "cartocrow/flow_map/sweep_edge.h"
 
 using namespace cartocrow;
 using namespace cartocrow::flow_map;

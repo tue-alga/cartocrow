@@ -2,7 +2,7 @@
 
 #include <ctime>
 
-#include "../../cartocrow/core/timer.h"
+#include "cartocrow/core/timer.h"
 
 TEST_CASE("Creating and using a timer") {
 	clock_t startTime = clock();

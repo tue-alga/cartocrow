@@ -190,6 +190,8 @@ class ReachableRegionAlgorithm {
 		void handle() override;
 
 	  private:
+	  	/// Determines the type of vertex event this is, based on whether
+	  	/// \f$e_1\f$ and \f$e_2\f$ lie inside or outside the sweep circle.
 		Side determineSide();
 
 		/// Handles a left vertex event.
@@ -304,9 +306,12 @@ class ReachableRegionAlgorithm {
 		}
 	};
 
+	/// The sweep circle used in the algorithm.
 	SweepCircle m_circle;
+	/// The event queue storing the remaining events.
 	EventQueue m_queue;
-
+	/// A painting that contains sweep shapes for each sweep interval
+	/// encountered during the execution of the algorithm.
 	std::shared_ptr<renderer::PaintingRenderer> m_debugPainting;
 };
 

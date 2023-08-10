@@ -257,26 +257,18 @@ std::optional<Number<Inexact>> SweepEdgeShape::intersectInwardsWith(const SweepE
 	}
 
 	Number<Inexact> rUpper = rMax;
-	/*std::cout << "at rUpper " << isLeftOf(rUpper) << " " << evalForR(rUpper) << " "
-	          << other.evalForR(rUpper) << std::endl;
-	std::cout << "at rUpper - 0.01 " << isLeftOf(rUpper - 0.01) << " " << evalForR(rUpper - 0.01)
-	          << " " << other.evalForR(rUpper - 0.01) << std::endl;*/
 	Number<Inexact> rLower = rUpper;
 	Number<Inexact> rLimit = std::max(rMin, rMax / std::exp(2 * M_PI / std::tan(alpha)));
-	//std::cout << "rLimit " << rLimit << std::endl;
 	while (rLower > rLimit) {
 		rLower = std::max(rMin, rLower / std::exp(M_PI / (8 * std::tan(alpha))));
-		//std::cout << "interval: [" << rLower << ", " << rUpper << ")" << std::endl;
 
 		if (isLeftOf(rLower) != initiallyLeftOfOther) {
 			Number<Inexact> angleDifference = std::abs(phiForR(rLower) - other.phiForR(rLower));
-			//std::cout << angleDifference << std::endl;
 			if (angleDifference < M_PI / 2 || angleDifference > 3 * M_PI / 2) {
 				// found intersection
 				break;
 			} else {
 				// found wraparound, continue searching
-				//std::cout << "wraparound" << std::endl;
 				rUpper = rLower;
 				initiallyLeftOfOther = !initiallyLeftOfOther;
 			}
@@ -284,27 +276,19 @@ std::optional<Number<Inexact>> SweepEdgeShape::intersectInwardsWith(const SweepE
 	}
 
 	if (isLeftOf(rLower) == initiallyLeftOfOther) {
-		//std::cout << "no intersection" << std::endl;
 		return std::nullopt;
 	}
 
-	//std::cout << "binary search" << std::endl;
-
 	// binary search
 	for (int i = 0; i < 50; i++) {
-		//std::cout << "interval: [" << rLower << ", " << rUpper << ")" << std::endl;
 		Number<Inexact> rMid = (rLower + rUpper) / 2;
-
 		bool leftOfOther = isLeftOf(rMid);
-		//std::cout << "midpoint: " << rMid << " " << leftOfOther << std::endl;
-
 		if (leftOfOther == initiallyLeftOfOther) {
 			rUpper = rMid;
 		} else {
 			rLower = rMid;
 		}
 	}
-
 	return (rLower + rUpper) / 2;
 }
 

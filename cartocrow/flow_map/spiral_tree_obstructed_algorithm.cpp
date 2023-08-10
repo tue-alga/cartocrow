@@ -27,10 +27,10 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <ostream>
 
 #include "../core/core.h"
-#include "cartocrow/flow_map/reachable_region_algorithm.h"
 #include "intersections.h"
 #include "polar_point.h"
 #include "polar_segment.h"
+#include "reachable_region_algorithm.h"
 #include "spiral_segment.h"
 #include "sweep_circle.h"
 #include "sweep_interval.h"
@@ -87,27 +87,6 @@ void SpiralTreeObstructedAlgorithm::Event::insertJoinEventFor(
 		}
 		m_alg->m_queue.push(
 		    std::make_shared<JoinEvent>(*vanishingPoint, *rightEdge, *nextEdge, m_alg));
-		/*std::cout << "(inserted join event at r = " << vanishingPoint->r() << " for ["
-		          << interval->previousBoundary()->shape().nearEndpoint().toCartesian();
-		if (interval->previousBoundary()->shape().farEndpoint()) {
-			std::cout << " – " << interval->previousBoundary()->shape().farEndpoint()->toCartesian();
-		}
-		std::cout << "]  →  [" << interval->nextBoundary()->shape().nearEndpoint().toCartesian();
-		if (interval->nextBoundary()->shape().farEndpoint()) {
-			std::cout << " – " << interval->nextBoundary()->shape().farEndpoint()->toCartesian();
-		}
-		std::cout << "])" << std::endl;*/
-	} else {
-		/*std::cout << "(ignored join event for ["
-		          << interval->previousBoundary()->shape().nearEndpoint().toCartesian();
-		if (interval->previousBoundary()->shape().farEndpoint()) {
-			std::cout << " – " << interval->previousBoundary()->shape().farEndpoint()->toCartesian();
-		}
-		std::cout << "]  →  [" << interval->nextBoundary()->shape().nearEndpoint().toCartesian();
-		if (interval->nextBoundary()->shape().farEndpoint()) {
-			std::cout << " – " << interval->nextBoundary()->shape().farEndpoint()->toCartesian();
-		}
-		std::cout << "])" << std::endl;*/
 	}
 }
 
@@ -465,37 +444,6 @@ void SpiralTreeObstructedAlgorithm::run() {
 
 	// insert vertices of the unreachable region
 	for (ReachableRegionAlgorithm::UnreachableRegionVertex& vertex : m_vertices) {
-		// TODO debug drawing
-		/*assert(vertex.m_e1->shape().farEndpoint().has_value());
-		assert(vertex.m_e2->shape().farEndpoint().has_value());
-		m_debugPainting->setStroke(Color{120, 230, 120}, 2);
-		for (Number<Inexact> r = vertex.m_e1->shape().nearR(); r < *vertex.m_e1->shape().farR();
-		     r *= 1.01) {
-			m_debugPainting->draw(
-			    Segment<Inexact>(vertex.m_e1->shape().evalForR(r).toCartesian(),
-			                     vertex.m_e1->shape()
-			                         .evalForR(std::min(*vertex.m_e1->shape().farR(), r * 1.01))
-			                         .toCartesian()));
-		}
-		m_debugPainting->draw(
-		    (vertex.m_e1->shape()
-		         .evalForR((vertex.m_location.r() + *vertex.m_e1->shape().averageR()) / 2)
-		         .toCartesian()));
-		m_debugPainting->setStroke(Color{230, 120, 120}, 2);
-		for (Number<Inexact> r = vertex.m_e2->shape().nearR(); r < *vertex.m_e2->shape().farR();
-		     r *= 1.01) {
-			m_debugPainting->draw(
-			    Segment<Inexact>(vertex.m_e2->shape().evalForR(r).toCartesian(),
-			                     vertex.m_e2->shape()
-			                         .evalForR(std::min(*vertex.m_e2->shape().farR(), r * 1.01))
-			                         .toCartesian()));
-		}
-		m_debugPainting->draw(
-		    (vertex.m_e2->shape()
-		         .evalForR((vertex.m_location.r() + *vertex.m_e2->shape().averageR()) / 2)
-		         .toCartesian()));
-		m_debugPainting->setStroke(Color{220, 20, 70}, 1);
-		m_debugPainting->draw(vertex.m_location.toCartesian());*/
 		m_queue.push(std::make_shared<VertexEvent>(vertex.m_location, vertex.m_e1, vertex.m_e2, this));
 	}
 
@@ -505,9 +453,8 @@ void SpiralTreeObstructedAlgorithm::run() {
 	}
 
 	m_circle.grow(m_queue.top()->r());
-	int eventCount = 0; // TODO debug: limit number of events handled
 	// main loop, handle all events
-	while (!m_queue.empty() /*&& eventCount++ < 100*/) {
+	while (!m_queue.empty()) {
 		std::shared_ptr<Event> event = m_queue.top();
 		m_queue.pop();
 		if (!event->isValid()) {
@@ -525,11 +472,6 @@ void SpiralTreeObstructedAlgorithm::run() {
 		event->handle();
 		m_circle.print();
 		assert(m_circle.isValid());
-
-		// TODO temporary
-		if (!m_circle.isValid()) {
-			break;
-		}
 	}
 }
 

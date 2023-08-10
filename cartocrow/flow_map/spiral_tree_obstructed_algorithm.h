@@ -258,9 +258,12 @@ class SpiralTreeObstructedAlgorithm {
 		}
 	};
 
+	/// The sweep circle used in the algorithm.
 	SweepCircle m_circle;
+	/// The event queue storing the remaining events.
 	EventQueue m_queue;
-
+	/// A painting that contains sweep shapes for each sweep interval
+	/// encountered during the execution of the algorithm.
 	std::shared_ptr<renderer::PaintingRenderer> m_debugPainting;
 };
 

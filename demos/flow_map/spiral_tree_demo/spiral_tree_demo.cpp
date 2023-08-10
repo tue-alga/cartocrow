@@ -22,7 +22,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "spiral_tree_demo.h"
 
 #include <QApplication>
-#include <qcheckbox.h>
+#include <QCheckBox>
 
 #include "cartocrow/core/core.h"
 #include "cartocrow/core/timer.h"
@@ -35,7 +35,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "cartocrow/flow_map/spiral_tree_unobstructed_algorithm.h"
 #include "cartocrow/renderer/geometry_painting.h"
 #include "cartocrow/renderer/geometry_widget.h"
-#include "cartocrow/renderer/ipe_renderer.h"
 
 using namespace cartocrow;
 using namespace cartocrow::flow_map;
@@ -189,9 +188,6 @@ void SpiralTreeDemo::recalculate() {
 
 		m_renderer->addPainting(reachableRegionAlg.debugPainting(), "Reachable region sweep");
 		m_renderer->addPainting(spiralTreeAlg.debugPainting(), "Spiral tree sweep");
-		IpeRenderer ipeRenderer(spiralTreeAlg.debugPainting());
-		ipeRenderer.addPainting(reachableRegionAlg.debugPainting());
-		ipeRenderer.save("/tmp/spiral-tree.ipe");
 	} else {
 		SpiralTreeUnobstructedAlgorithm spiralTreeAlg(*tree);
 		spiralTreeAlg.run();

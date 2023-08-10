@@ -5,8 +5,8 @@
 #include <CGAL/number_utils.h>
 #include <ctime>
 
-#include "../../cartocrow/core/core.h"
-#include "../../cartocrow/core/timer.h"
+#include "cartocrow/core/core.h"
+#include "cartocrow/core/timer.h"
 
 using namespace cartocrow;
 
