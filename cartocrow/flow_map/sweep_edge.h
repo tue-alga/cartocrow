@@ -164,9 +164,9 @@ class SweepEdgeShape {
 	/// The type of this sweep edge.
 	Type m_type;
 	/// The start point.
-	mutable PolarPoint m_start;
+	PolarPoint m_start;
 	/// The end point, if this is a segment.
-	mutable std::optional<PolarPoint> m_end;
+	std::optional<PolarPoint> m_end;
 	/// The angle, if this is a spiral.
 	Number<Inexact> m_alpha;
 };
