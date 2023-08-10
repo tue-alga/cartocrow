@@ -158,17 +158,17 @@ Polygon<Inexact> SweepInterval::sweepShape(Number<Inexact> rFrom, Number<Inexact
 	for (auto vertex : nearArc) {
 		result.push_back(vertex.toCartesian());
 	}
-	for (auto vertex : std::ranges::views::reverse(rightNearEdge)) {
-		result.push_back(vertex.toCartesian());
+	for (auto vertex = rightNearEdge.rbegin(); vertex != rightNearEdge.rend(); ++vertex) {
+		result.push_back(vertex->toCartesian());
 	}
 	for (auto vertex : rightFarEdge) {
 		result.push_back(vertex.toCartesian());
 	}
-	for (auto vertex : std::ranges::views::reverse(farArc)) {
-		result.push_back(vertex.toCartesian());
+	for (auto vertex = farArc.rbegin(); vertex != farArc.rend(); ++vertex) {
+		result.push_back(vertex->toCartesian());
 	}
-	for (auto vertex : std::ranges::views::reverse(leftFarEdge)) {
-		result.push_back(vertex.toCartesian());
+	for (auto vertex = leftFarEdge.rbegin(); vertex != leftFarEdge.rend(); ++vertex) {
+		result.push_back(vertex->toCartesian());
 	}
 	return result;
 }
