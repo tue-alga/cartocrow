@@ -6,8 +6,8 @@
 
 namespace cartocrow::simplification {
 
-/// Concept to express that a pointer to a class \f$D\f$ can be stored via the 
-/// \ref cartocrow::simplification::MapType "MapType" \f$MT\f$, via the described 
+/// Concept to express that a pointer to a class \f$D\f$ can be stored via the
+/// \ref cartocrow::simplification::MapType "MapType" \f$MT\f$, via the described
 /// functions.
 template <class MT, class D>
 concept EdgeStoredHistory = requires(typename MT::Map::Halfedge_handle e, D* d) {
@@ -21,35 +21,108 @@ concept EdgeStoredHistory = requires(typename MT::Map::Halfedge_handle e, D* d) 
 
 /// The history of an edge, including pointers to other steps in the history that
 /// it may have overriden. This struct is used by a \ref HistoricArrangement.
-template <MapType MT> struct EdgeHistory {
+template <MapType MT> struct HalfedgeOperation {
 
 	using Map = MT::Map;
 
-	EdgeHistory(Map::Halfedge_handle he, EdgeHistory<MT>* p, EdgeHistory<MT>* n,
-	            EdgeHistory<MT>* pt, EdgeHistory<MT>* nt, int pc, Number<Exact> pmc, Point<Exact> pl)
-	    : halfedge(he), prev(p), next(n), prev_twin(pt), next_twin(nt), post_complexity(pc),
-	      post_maxcost(pmc), pre_loc(pl) {}
+	HalfedgeOperation(Map::Halfedge_handle he) : halfedge(he) {}
 
-	// Pointer to the current halfedge
+	/// Pointer to the current halfedge
 	Map::Halfedge_handle halfedge;
 
-	EdgeHistory<MT>* prev = nullptr;
-	EdgeHistory<MT>* next = nullptr;
-	EdgeHistory<MT>* prev_twin = nullptr;
-	EdgeHistory<MT>* next_twin = nullptr;
+	virtual void undo(Map& map) = 0;
+	virtual void redo(Map& map) = 0;
 
-	int post_complexity;
-	Number<Exact> post_maxcost;
-	Point<Exact> pre_loc;
+  protected:
+	// utility function to get and clear the history data stored with the given halfedge
+	inline HalfedgeOperation<MT>* getAndClear(Map::Halfedge_handle e) {
+		HalfedgeOperation<MT>* result = MT::histGetData(e);
+		MT::histSetData(e, nullptr);
+		return result;
+	}
 };
 
-/// This historic arrangement keeps track of the operations performed, by storing 
-/// this in the edges of the map. It implements the \ref 
-/// cartocrow::simplification::ModifiableArrangementWithHistory 
-/// "ModifiableArrangementWithHistory" concept, requiring \ref 
-/// cartocrow::simplification::EdgeStoredHistory "EdgeStoredHistory" on the 
+template <MapType MT> struct HalfedgeMerge : public HalfedgeOperation<MT> {
+
+	using Map = MT::Map;
+
+	HalfedgeMerge(Map::Halfedge_handle he) : HalfedgeOperation<MT>(he) {
+
+		pre_loc = he->target()->point();
+
+		self = this->getAndClear(he);
+		next = this->getAndClear(he->next());
+		self_twin = this->getAndClear(he->twin());
+		next_twin = this->getAndClear(he->next()->twin());
+	}
+
+	// edge histories of the old edges
+	// this is probably more than necessary, but this allows us to treat CGAL's
+	// arrangement more like a black box
+	HalfedgeOperation<MT>* self = nullptr;
+	HalfedgeOperation<MT>* next = nullptr;
+	HalfedgeOperation<MT>* self_twin = nullptr;
+	HalfedgeOperation<MT>* next_twin = nullptr;
+
+	// the location of the vertex that got merged away
+	Point<Exact> pre_loc;
+
+	virtual void undo(Map& map);
+	virtual void redo(Map& map);
+};
+
+template <MapType MT> struct HalfedgeTargetShift : public HalfedgeOperation<MT> {
+
+	using Map = MT::Map;
+
+	HalfedgeTargetShift(Map::Halfedge_handle he, Point<Exact> post)
+	    : HalfedgeOperation<MT>(he), post_loc(post) {
+
+		pre_loc = he->target()->point();
+
+		self = this->getAndClear(he);
+	}
+
+	// the location of the vertex
+	Point<Exact> pre_loc;
+	Point<Exact> post_loc;
+
+	// edge histories of the old edges
+	HalfedgeOperation<MT>* self = nullptr;
+
+	virtual void undo(Map& map);
+	virtual void redo(Map& map);
+};
+
+template <MapType MT> struct OperationBatch {
+
+	using Map = MT::Map;
+
+	~OperationBatch() {
+		for (HalfedgeOperation<MT>* op : operations) {
+			delete op;
+		}
+	}
+
+	std::vector<HalfedgeOperation<MT>*> operations;
+
+	/// Number of edges in the map after this operation
+	int post_complexity;
+	/// Maximum cost of operations up to this one
+	Number<Exact> post_maxcost;
+
+	void undo(Map& map);
+	void redo(Map& map);
+};
+
+/// This historic arrangement keeps track of the operations performed, by storing
+/// this in the edges of the map. It implements the \ref
+/// cartocrow::simplification::ModifiableArrangementWithHistory
+/// "ModifiableArrangementWithHistory" concept, requiring \ref
+/// cartocrow::simplification::EdgeStoredHistory "EdgeStoredHistory" on the
 /// maptype.
-template <MapType MT> requires(EdgeStoredHistory<MT, EdgeHistory<MT>>) class HistoricArrangement {
+template <MapType MT>
+requires(EdgeStoredHistory<MT, HalfedgeOperation<MT>>) class HistoricArrangement {
   public:
 	using Map = MT::Map;
 
@@ -59,15 +132,14 @@ template <MapType MT> requires(EdgeStoredHistory<MT, EdgeHistory<MT>>) class His
 
 	Map& getMap();
 
-	
-	// Recovers the result as if the simplification algorithm was run once with 
+	// Recovers the result as if the simplification algorithm was run once with
 	/// complexity parameter \f$c\f$.
 	void recallComplexity(int c);
-	// Recovers the result as if the simplification algorithm was run once with 
+	// Recovers the result as if the simplification algorithm was run once with
 	/// threshold parameter \f$t\f$.
 	void recallThreshold(Number<Exact> t);
 
-	/// Tests whether any operations have been undone. Returns true iff no 
+	/// Tests whether any operations have been undone. Returns true iff no
 	/// operations were undone.
 	bool atPresent();
 
@@ -78,15 +150,19 @@ template <MapType MT> requires(EdgeStoredHistory<MT, EdgeHistory<MT>>) class His
 	void forwardInTime();
 
 	// From ModifiableArrangementWithHistory
-	Map::Halfedge_handle mergeWithNext(Map::Halfedge_handle e, Number<Exact> cost);
+	Map::Halfedge_handle mergeWithNext(Map::Halfedge_handle e);
+	void shift(Map::Vertex_handle v, Point<Exact> p);
 	void goToPresent();
+	void startBatch(Number<Exact> cost);
+	void endBatch();
 
   private:
 	Number<Exact> max_cost;
 	Map& map;
 	int in_complexity;
-	std::vector<EdgeHistory<MT>*> history;
-	std::vector<EdgeHistory<MT>*> undone;
+	OperationBatch<MT>* building_batch = nullptr;
+	std::vector<OperationBatch<MT>*> history;
+	std::vector<OperationBatch<MT>*> undone;
 };
 
 } // namespace cartocrow::simplification

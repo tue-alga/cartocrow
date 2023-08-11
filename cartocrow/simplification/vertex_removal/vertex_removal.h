@@ -30,7 +30,7 @@ concept VertexRemovalTraits = requires(typename T::Map::Vertex_handle v, int b, 
 	/// number. This should not be modified in other ways that through calls of 
 	/// the \ref VertexRemovalSimplification algorithm.
 	{T::vrSetBlockingNumber(v, b)};
-	/// Retreives the blocking number stored with vertex \f$v\f$.
+	/// Retrieves the blocking number stored with vertex \f$v\f$.
 	{ T::vrGetBlockingNumber(v) } -> std::same_as<int>;
 
 	/// Sets the incoming halfedge \f$e\f$ on the convex side of vertex \f$v\f$.

@@ -33,8 +33,8 @@ struct VWTraits {
 	static void vrSetHalfedge(Map::Vertex_handle v, Map::Halfedge_handle inc);
 	static Map::Halfedge_handle vrGetHalfedge(Map::Vertex_handle v);
 
-	static void histSetData(Map::Halfedge_handle e, EdgeHistory<VWTraits>* data);
-	static EdgeHistory<VWTraits>* histGetData(Map::Halfedge_handle e);
+	static void histSetData(Map::Halfedge_handle e, HalfedgeOperation<VWTraits>* data);
+	static HalfedgeOperation<VWTraits>* histGetData(Map::Halfedge_handle e);
 };
 
 using VWSimplification = VertexRemovalSimplification<ObliviousArrangement<VWTraits>,VWTraits>;
@@ -49,7 +49,7 @@ struct VWVertex {
 
 /// The data associated with a halfedge in the arrangement used in \ref VWTraits.
 struct VWEdge {
-	EdgeHistory<VWTraits>* hist = nullptr;
+	HalfedgeOperation<VWTraits>* hist = nullptr;
 };
 
 } // namespace cartocrow::simplification

@@ -17,8 +17,12 @@ template <MapType MT> class ObliviousArrangement {
 
 	~ObliviousArrangement() {}
 
-	Map::Halfedge_handle mergeWithNext(Map::Halfedge_handle e, Number<Exact> cost) {
+	Map::Halfedge_handle mergeWithNext(Map::Halfedge_handle e) {
 		return util::mergeWithNext(map, e);
+	}
+
+	void shift(Map::Vertex_handle v, Point<Exact> p) {
+		util::shift(map, v, p);
 	}
 
 	Map& getMap() {

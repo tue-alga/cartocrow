@@ -93,6 +93,7 @@ requires(std::same_as<typename MA::Map, typename VRT::Map>) void VertexRemovalSi
 			     it != face->isolated_vertices_end(); ++it) {
 				if (T.has_on_bounded_side(it->point())) {
 					b = BLOCKED_FLOATING;
+					break;
 				}
 			}
 
@@ -166,7 +167,15 @@ requires(std::same_as<typename MA::Map, typename VRT::Map>) void VertexRemovalSi
 	reduceCounts(v);
 
 	// execute
-	typename Map::Halfedge_handle e = modmap.mergeWithNext(VRT::vrGetHalfedge(v), cost);
+	if constexpr (ModifiableArrangementWithHistory<MA>) {
+		modmap.startBatch(cost);
+	}
+
+	typename Map::Halfedge_handle e = modmap.mergeWithNext(VRT::vrGetHalfedge(v));
+
+	if constexpr (ModifiableArrangementWithHistory<MA>) {
+		modmap.endBatch();
+	}
 
 	// reinit neighbors
 	initVertex(e->source());

@@ -30,16 +30,6 @@ template <class TArr>
 inline void shift(TArr& dcel, typename TArr::Halfedge_handle edge, Point<Exact> pt_source,
                   Point<Exact> pt_target);
 
-/// Shifts the source of an edge to a new location without structurally changing 
-/// the arrangement
-template <class TArr>
-inline void shiftSource(TArr& dcel, typename TArr::Halfedge_handle edge, Point<Exact> pt);
-
-/// Shifts the target of an edge to a new location without structurally changing 
-/// the arrangement
-template <class TArr>
-inline void shiftTarget(TArr& dcel, typename TArr::Halfedge_handle edge, Point<Exact> pt);
-
 /// Splits an edge by introducing a new degree-2 vertex and the given location, 
 /// returning the incoming edge of the new point in the same direction as the given edge
 template <class TArr>

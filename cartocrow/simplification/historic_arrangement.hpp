@@ -1,96 +1,143 @@
 namespace cartocrow::simplification {
 
+template <MapType MT> void HalfedgeMerge<MT>::undo(Map& map) {
+
+	typename MT::Map::Halfedge_handle inc = util::split(map, this->halfedge, pre_loc);
+
+	if (self != nullptr)
+		self->halfedge = inc;
+	if (next != nullptr)
+		next->halfedge = inc->next();
+	if (self_twin != nullptr)
+		self_twin->halfedge = inc->twin();
+	if (next_twin != nullptr)
+		next_twin->halfedge = inc->next()->twin();
+	this->halfedge = inc;
+}
+
+template <MapType MT> void HalfedgeMerge<MT>::redo(Map& map) {
+
+	this->halfedge = util::mergeWithNext(map, this->halfedge);
+}
+
+template <MapType MT> void HalfedgeTargetShift<MT>::undo(Map& map) {
+
+	util::shift(map, this->halfedge->target(), pre_loc);
+
+	if (self != nullptr)
+		self->halfedge = this->halfedge;
+}
+
+template <MapType MT> void HalfedgeTargetShift<MT>::redo(Map& map) {
+
+	util::shift(map, this->halfedge->target(), post_loc);
+}
+
+template <MapType MT> void OperationBatch<MT>::undo(Map& map) {
+
+	// NB: reverse
+	for (auto it = operations.rbegin(); it != operations.rend(); it++) {
+
+		HalfedgeOperation<MT>* op = *it;
+		op->undo(map);
+	}
+}
+
+template <MapType MT> void OperationBatch<MT>::redo(Map& map) {
+	for (HalfedgeOperation<MT>* op : operations) {
+		op->redo(map);
+	}
+}
+
 template <MapType MT>
-requires(EdgeStoredHistory<MT, EdgeHistory<MT>>) HistoricArrangement<MT>::HistoricArrangement(Map& inmap)
+requires(EdgeStoredHistory<MT, HalfedgeOperation<MT>>)
+    HistoricArrangement<MT>::HistoricArrangement(Map& inmap)
     : map(inmap), max_cost(0) {
 	in_complexity = inmap.number_of_edges();
 };
 
 template <MapType MT>
-requires(EdgeStoredHistory<MT, EdgeHistory<MT>>) HistoricArrangement<MT>::~HistoricArrangement() {
-	for (EdgeHistory<MT>* op : history) {
+requires(EdgeStoredHistory<MT, HalfedgeOperation<MT>>) HistoricArrangement<MT>::~HistoricArrangement() {
+	for (OperationBatch<MT>* op : history) {
 		delete op;
 	}
 
-	for (EdgeHistory<MT>* op : undone) {
+	for (OperationBatch<MT>* op : undone) {
 		delete op;
 	}
 }
 
 template <MapType MT>
-requires(EdgeStoredHistory<MT, EdgeHistory<MT>>)
+requires(EdgeStoredHistory<MT, HalfedgeOperation<MT>>)
     HistoricArrangement<MT>::Map& HistoricArrangement<MT>::getMap() {
 	return map;
 }
 
 template <MapType MT>
-requires(EdgeStoredHistory<MT, EdgeHistory<MT>>) HistoricArrangement<MT>::Map::Halfedge_handle
-    HistoricArrangement<MT>::mergeWithNext(Map::Halfedge_handle e, Number<Exact> cost) {
-	EdgeHistory<MT>* prev = MT::histGetData(e);
-	EdgeHistory<MT>* next = MT::histGetData(e->next());
-	EdgeHistory<MT>* prev_twin = MT::histGetData(e->twin());
-	EdgeHistory<MT>* next_twin = MT::histGetData(e->next()->twin());
+requires(EdgeStoredHistory<MT, HalfedgeOperation<MT>>) HistoricArrangement<MT>::Map::Halfedge_handle
+    HistoricArrangement<MT>::mergeWithNext(Map::Halfedge_handle e) {
 
-	Point<Exact> pre_loc = e->target()->point();
-	if (cost > max_cost) {
-		max_cost = cost;
-	}
+	// TODO: assert that there is a batch to build
 
-	typename Map::Halfedge_handle newe = util::mergeWithNext(map, e);
-
-	EdgeHistory<MT>* newd = new EdgeHistory<MT>(newe, prev, next, prev_twin, next_twin,
-	                                            map.number_of_edges(), max_cost, pre_loc);
-
-	MT::histSetData(newe, newd);
-
-	history.push_back(newd);
-
-	return newe;
+	HalfedgeOperation<MT>* op = new HalfedgeMerge<MT>(e);
+	op->redo(map);
+	MT::histSetData(op->halfedge, op);
+	building_batch->operations.push_back(op);
+	return op->halfedge;
 }
 
 template <MapType MT>
-requires(EdgeStoredHistory<MT, EdgeHistory<MT>>) void HistoricArrangement<MT>::goToPresent() {
+requires(EdgeStoredHistory<MT, HalfedgeOperation<MT>>) void HistoricArrangement<MT>::shift(
+    Map::Vertex_handle v, Point<Exact> p) {
+
+	// TODO: assert that there is a batch to build
+
+	HalfedgeOperation<MT>* op = new HalfedgeTargetShift<MT>(v->inc(), p);
+	op->redo(map);
+	MT::histSetData(op->halfedge, op);
+	building_batch->operations.push_back(op);
+}
+
+template <MapType MT>
+requires(EdgeStoredHistory<MT, HalfedgeOperation<MT>>) void HistoricArrangement<MT>::goToPresent() {
 	while (!atPresent()) {
 		forwardInTime();
 	}
 }
 
 template <MapType MT>
-requires(EdgeStoredHistory<MT, EdgeHistory<MT>>) bool HistoricArrangement<MT>::atPresent() {
+requires(EdgeStoredHistory<MT, HalfedgeOperation<MT>>) bool HistoricArrangement<MT>::atPresent() {
 	return undone.empty();
 }
 
 template <MapType MT>
-requires(EdgeStoredHistory<MT, EdgeHistory<MT>>) void HistoricArrangement<MT>::backInTime() {
-	EdgeHistory<MT>* op = history.back();
+requires(EdgeStoredHistory<MT, HalfedgeOperation<MT>>) void HistoricArrangement<MT>::backInTime() {
+	// TODO: assert building_batch is nullptr
+
+	OperationBatch<MT>* batch = history.back();
 	history.pop_back();
-	undone.push_back(op);
+	undone.push_back(batch);
 
-	typename Map::Halfedge_handle inc = util::split(map, op->halfedge, op->pre_loc);
-
-	if (op->prev != nullptr)
-		op->prev->halfedge = inc;
-	if (op->next != nullptr)
-		op->next->halfedge = inc->next();
-	if (op->prev_twin != nullptr)
-		op->prev_twin->halfedge = inc->twin();
-	if (op->next_twin != nullptr)
-		op->next_twin->halfedge = inc->next()->twin();
-	op->halfedge = inc;
+	batch->undo(map);
 }
 
 template <MapType MT>
-requires(EdgeStoredHistory<MT, EdgeHistory<MT>>) void HistoricArrangement<MT>::forwardInTime() {
+requires(EdgeStoredHistory<MT, HalfedgeOperation<MT>>) void HistoricArrangement<MT>::forwardInTime() {
 
-	EdgeHistory<MT>* op = undone.back();
+	// TODO: assert building_batch is nullptr
+
+	OperationBatch<MT>* batch = undone.back();
 	undone.pop_back();
-	history.push_back(op);
+	history.push_back(batch);
 
-	op->halfedge = util::mergeWithNext(map, op->halfedge);
+	batch->redo(map);
 }
 
 template <MapType MT>
-requires(EdgeStoredHistory<MT, EdgeHistory<MT>>) void HistoricArrangement<MT>::recallComplexity(int c) {
+requires(EdgeStoredHistory<MT, HalfedgeOperation<MT>>) void HistoricArrangement<MT>::recallComplexity(
+    int c) {
+	// TODO: assert building_batch is nullptr
+
 	while ( // if history is a single element, check input complexity
 	    (history.size() >= 1 && in_complexity <= c)
 	    // if history is more than a single element, check the previous operation
@@ -103,14 +150,37 @@ requires(EdgeStoredHistory<MT, EdgeHistory<MT>>) void HistoricArrangement<MT>::r
 }
 
 template <MapType MT>
-requires(EdgeStoredHistory<MT, EdgeHistory<MT>>) void HistoricArrangement<MT>::recallThreshold(
+requires(EdgeStoredHistory<MT, HalfedgeOperation<MT>>) void HistoricArrangement<MT>::recallThreshold(
     Number<Exact> t) {
+	// TODO: assert building_batch is nullptr
+
 	while ((history.size() >= 1 && history.last()->post_maxcost > t)) {
 		backInTime();
 	}
 	while (!undone.empty() && undone.last()->post_maxcost <= t) {
 		forwardInTime();
 	}
+}
+
+template <MapType MT>
+requires(EdgeStoredHistory<MT, HalfedgeOperation<MT>>) void HistoricArrangement<MT>::startBatch(
+    Number<Exact> cost) {
+	// TODO: assert building_batch is nullptr and that the map is in the present
+
+	building_batch = new OperationBatch<MT>();
+	history.push_back(building_batch);
+
+	if (max_cost < cost) {
+		max_cost = cost;
+	}
+
+	building_batch->post_maxcost = max_cost;
+}
+
+template <MapType MT>
+requires(EdgeStoredHistory<MT, HalfedgeOperation<MT>>) void HistoricArrangement<MT>::endBatch() {
+	building_batch->post_complexity = map.number_of_edges();
+	building_batch = nullptr;
 }
 
 } // namespace cartocrow::simplification

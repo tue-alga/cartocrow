@@ -49,26 +49,39 @@ inline TArr::Halfedge_handle mergeWithNext(TArr& dcel, typename TArr::Halfedge_h
 template <class TArr>
 inline void shift(TArr& dcel, typename TArr::Vertex_handle vertex, Point<Exact> pt) {
 	CGAL::Arr_accessor<TArr> acc(dcel);
+	// modify vertex location
 	acc.modify_vertex_ex(vertex, pt);
+	// modify segments of all incoming edges
+	typename TArr::Halfedge_handle inc = vertex->inc();
+	do {
+		acc.modify_edge_ex(inc, Segment<Exact>(inc->source()->point(), pt));
+		inc = inc->next()->twin();
+	} while (inc != vertex->inc());
 }
 
 template <class TArr>
 inline void shift(TArr& dcel, typename TArr::Halfedge_handle edge, Point<Exact> pt_source,
                   Point<Exact> pt_target) {
+
 	CGAL::Arr_accessor<TArr> acc(dcel);
+
+	// modify the edgge itself
 	acc.modify_edge_ex(edge, Segment<Exact>(pt_source, pt_target));
-}
-
-template <class TArr>
-inline void shiftSource(TArr& dcel, typename TArr::Halfedge_handle edge, Point<Exact> pt) {
-	CGAL::Arr_accessor<TArr> acc(dcel);
-	acc.modify_edge_ex(edge, Segment<Exact>(pt, edge->target()->point()));
-}
-
-template <class TArr>
-inline void shiftTarget(TArr& dcel, typename TArr::Halfedge_handle edge, Point<Exact> pt) {
-	CGAL::Arr_accessor<TArr> acc(dcel);
-	acc.modify_edge_ex(edge, Segment<Exact>(edge->source()->point(), pt));
+	// modify the vertices
+	acc.modify_vertex_ex(edge->source(), pt_source);
+	acc.modify_vertex_ex(edge->target(), pt_target);
+	// modify all other edges around source
+	typename TArr::Halfedge_handle inc = edge->prev();
+	while (inc != edge->twin()) {
+		acc.modify_edge_ex(inc, Segment<Exact>(inc->source()->point(), pt_source));
+		inc = inc->twin()->prev();
+	}
+	// modify all other edges around target
+	typename TArr::Halfedge_handle out = edge->next();
+	while (out != edge->twin()) {
+		acc.modify_edge_ex(out, Segment<Exact>(pt_target, out->target()->point()));
+		out = out->twin()->next();
+	}
 }
 
 template <class TArr>
