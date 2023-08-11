@@ -340,7 +340,7 @@ void SpiralTreeObstructedAlgorithm::JoinEvent::handle() {
 		auto result = m_alg->m_circle.mergeToInterval(rightEdge, leftEdge);
 		rightEdge->shape().pruneNearSide(m_position);
 		leftEdge->shape().pruneNearSide(m_position);
-		result.mergedInterval->setType(REACHABLE);
+		result.mergedInterval->setType(FREE);
 
 	} else if (previousInterval->type() == REACHABLE && nextInterval->type() == REACHABLE) {
 		// case 1.5: join and make new active node
