@@ -374,44 +374,21 @@ void SpiralTreeObstructedAlgorithm::JoinEvent::handle() {
 			m_alg->m_tree->addEdge(node, leftNode);
 		}
 
-	} else if ((previousInterval->type() == REACHABLE && nextInterval->type() == FREE) ||
-	           (previousInterval->type() == FREE && nextInterval->type() == REACHABLE)) {
-		// this case is in Kevin's code (line 1177-1193) but I have no idea why
-		// this can ever happen. assert(false) for now so if this ever fails
-		// then I know how it can happen :) addendum: it can actually happen
-		// because two adjacent free intervals aren't merged after a previous
-		// join, Kevin's code didn't merge such intervals
-		assert(false); // TODO
-
 	} else if (previousInterval->type() == OBSTACLE) {
 		// case 2: right side is obstacle
 		std::cout << " (case 2)\n";
 
 		leftEdge->shape().pruneNearSide(m_position);
-		if (interval->type() == FREE) {
-			// case 2a: shadow in the middle, reachable on the left
-			assert(nextInterval->type() == REACHABLE);
-			rightEdge->shape().pruneNearSide(m_position);
-			auto result = m_alg->m_circle.mergeToEdge(rightEdge, leftEdge, rightEdge);
-		} else if (interval->type() == REACHABLE) {
-			// case 2b: reachable in the middle, shadow on the left
-			assert(nextInterval->type() == FREE);
-			rightEdge->shape().pruneNearSide(m_position);
-			auto result = m_alg->m_circle.mergeToEdge(rightEdge, leftEdge, rightEdge);
-		} else {
-			assert(false);
-		}
+		rightEdge->shape().pruneNearSide(m_position);
+		auto result = m_alg->m_circle.mergeToEdge(rightEdge, leftEdge, rightEdge);
 
 	} else if (nextInterval->type() == OBSTACLE) {
 		// case 3: left side is obstacle
 		std::cout << " (case 3)\n";
 
 		rightEdge->shape().pruneNearSide(m_position);
-		if (interval->type() == FREE) {
-			assert(previousInterval->type() == REACHABLE);
-			leftEdge->shape().pruneNearSide(m_position);
-			auto result = m_alg->m_circle.mergeToEdge(rightEdge, leftEdge, leftEdge);
-		}
+		leftEdge->shape().pruneNearSide(m_position);
+		auto result = m_alg->m_circle.mergeToEdge(rightEdge, leftEdge, leftEdge);
 	}
 
 	insertJoinEvents();
