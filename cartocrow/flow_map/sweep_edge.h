@@ -134,10 +134,13 @@ class SweepEdgeShape {
 	/// Returns the intersection of this sweep edge shape with a circle at
 	/// radius \f$r\f$.
 	PolarPoint evalForR(Number<Inexact> r) const;
+	/// Returns the tangent angle of this sweep edge shape, at the intersection
+	/// with a circle at radius \f$r\f$.
+	Number<Inexact> tangentAngleForR(Number<Inexact> r) const;
 
 	/// Checks if at \f$\r + \varepsilon\f$ this shape is to the left of the
 	/// given shape.
-	bool departsOutwardsToLeftOf(Number<Inexact> r, const SweepEdgeShape& shape) const;
+	bool departsOutwardsToLeftOf(Number<Inexact> r, const SweepEdgeShape& other) const;
 	/// Computes the intersection (if any) of this sweep edge with another sweep
 	/// edge. Reports the smallest \f$r\f$ of the intersections larger than \c
 	/// rMin. If both this edge and the other edge are a segment, then this
@@ -147,7 +150,7 @@ class SweepEdgeShape {
 	                                                     Number<Inexact> rMin) const;
 	/// Checks if at \f$\r - \varepsilon\f$ this shape is to the left of the
 	/// given shape.
-	bool departsInwardsToLeftOf(Number<Inexact> r, const SweepEdgeShape& shape) const;
+	bool departsInwardsToLeftOf(Number<Inexact> r, const SweepEdgeShape& other) const;
 	/// Computes the intersection (if any) of this sweep edge with another sweep
 	/// edge. Reports the largest \f$r\f$ of the intersections smaller than \c
 	/// rMax. If both this edge and the other edge are a segment, then this
