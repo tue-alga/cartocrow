@@ -158,27 +158,9 @@ Number<Inexact> SweepEdgeShape::tangentAngleForR(Number<Inexact> r) const {
 bool SweepEdgeShape::departsOutwardsToLeftOf(Number<Inexact> r, const SweepEdgeShape& other) const {
 	assert(phiForR(r) == other.phiForR(r));
 
-	bool computationWithEpsilon = PolarSegment(this->evalForR(r + 0.00001), other.evalForR(r + 0.00001)).isLeftLine();
 	Number<Inexact> thisAngle = tangentAngleForR(r);
 	Number<Inexact> otherAngle = other.tangentAngleForR(r);
-	bool computationWithAngles = wrapAngle(thisAngle - otherAngle, -M_PI) > 0;
-	if (computationWithEpsilon != computationWithAngles) {
-		std::cout << "OH NO! OUT " << computationWithEpsilon << " " << computationWithAngles << ", p = " << evalForR(r) << " / " << other.evalForR(r) << " -> " << evalForR(r + 0.001) << " / " << other.evalForR(r + 0.001) << std::endl;
-		std::cout << "    some extra information" << std::endl;
-		std::cout << "    this sweep shape: " << int(this->m_type) << " " << this->m_start << std::endl;
-		if (this->m_end) {
-			std::cout << "        " << *this->m_end << std::endl;
-		}
-		std::cout << "    other sweep shape: " << int(other.m_type) << " " << other.m_start << std::endl;
-		if (other.m_end) {
-			std::cout << "        " << *other.m_end << std::endl;
-		}
-		std::cout << "    epsilon computation result: " << computationWithEpsilon << std::endl;
-		std::cout << "    angle computation result: " << computationWithAngles << std::endl;
-	} else {
-		std::cout << "NICE!! OUT " << computationWithEpsilon << " " << computationWithAngles << ", p = " << evalForR(r) << " / " << other.evalForR(r) << " -> " << evalForR(r + 0.001) << " / " << other.evalForR(r + 0.001) << std::endl;
-	}
-	return computationWithAngles;
+	return wrapAngle(thisAngle - otherAngle, -M_PI) > 0;
 }
 
 std::optional<Number<Inexact>> SweepEdgeShape::intersectOutwardsWith(const SweepEdgeShape& other,
@@ -247,27 +229,9 @@ std::optional<Number<Inexact>> SweepEdgeShape::intersectOutwardsWith(const Sweep
 bool SweepEdgeShape::departsInwardsToLeftOf(Number<Inexact> r, const SweepEdgeShape& other) const {
 	assert(phiForR(r) == other.phiForR(r));
 
-	bool computationWithEpsilon = PolarSegment(this->evalForR(r - 0.00001), other.evalForR(r - 0.00001)).isLeftLine();
 	Number<Inexact> thisAngle = tangentAngleForR(r);
 	Number<Inexact> otherAngle = other.tangentAngleForR(r);
-	bool computationWithAngles = wrapAngle(otherAngle - thisAngle, -M_PI) > 0;
-	if (computationWithEpsilon != computationWithAngles) {
-		std::cout << "OH NO! IN " << computationWithEpsilon << " " << computationWithAngles << ", p = " << evalForR(r) << " / " << other.evalForR(r) << " -> " << evalForR(r + 0.001) << " / " << other.evalForR(r + 0.001) << std::endl;
-		std::cout << "    some extra information" << std::endl;
-		std::cout << "    this sweep shape: " << int(this->m_type) << " " << this->m_start << std::endl;
-		if (this->m_end) {
-			std::cout << "        " << *this->m_end << std::endl;
-		}
-		std::cout << "    other sweep shape: " << int(other.m_type) << " " << other.m_start << std::endl;
-		if (other.m_end) {
-			std::cout << "        " << *other.m_end << std::endl;
-		}
-		std::cout << "    epsilon computation result: " << computationWithEpsilon << std::endl;
-		std::cout << "    angle computation result: " << computationWithAngles << std::endl;
-	} else {
-		std::cout << "NICE!! IN " << computationWithEpsilon << " " << computationWithAngles << ", p = " << evalForR(r) << " / " << other.evalForR(r) << " -> " << evalForR(r + 0.001) << " / " << other.evalForR(r + 0.001) << std::endl;
-	}
-	return computationWithAngles;
+	return wrapAngle(otherAngle - thisAngle, -M_PI) > 0;
 }
 
 std::optional<Number<Inexact>> SweepEdgeShape::intersectInwardsWith(const SweepEdgeShape& other,
