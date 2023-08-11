@@ -1,9 +1,12 @@
 set(SOURCES	
 	vertex_removal/visvalingam_whyatt.cpp
+	edge_collapse/kronenfeld_etal.cpp
 )
 set(HEADERS
-	vertex_removal/visvalingam_whyatt.h
 	vertex_removal/vertex_removal.h
+	vertex_removal/visvalingam_whyatt.h
+	edge_collapse/edge_collapse.h
+	edge_collapse/kronenfeld_etal.h
 	painting.h
 	util.h
 	modifiable_arrangement.h
