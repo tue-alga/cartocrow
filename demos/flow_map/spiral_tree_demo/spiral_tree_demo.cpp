@@ -178,11 +178,10 @@ void SpiralTreeDemo::recalculate() {
 	m_renderer->clear();
 	if (m_obstacleBox->isChecked()) {
 		ReachableRegionAlgorithm reachableRegionAlg(tree);
-		std::vector<ReachableRegionAlgorithm::UnreachableRegionVertex> vertices =
-		    reachableRegionAlg.run();
+		ReachableRegionAlgorithm::ReachableRegion reachableRegion = reachableRegionAlg.run();
 		t.stamp("Computing reachable region");
 
-		SpiralTreeObstructedAlgorithm spiralTreeAlg(tree, vertices);
+		SpiralTreeObstructedAlgorithm spiralTreeAlg(tree, reachableRegion);
 		spiralTreeAlg.run();
 		t.stamp("Computing spiral tree");
 

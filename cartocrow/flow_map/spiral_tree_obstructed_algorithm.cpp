@@ -107,7 +107,6 @@ void SpiralTreeObstructedAlgorithm::NodeEvent::handle() {
 	m_alg->m_debugPainting->drawText(
 	    m_alg->m_tree->rootPosition() + (m_position.toCartesian() - CGAL::ORIGIN), "node");
 
-	// TODO do this only if the node is reachable from the origin
 	auto leftSpiral = std::make_shared<SweepEdge>(
 	    SweepEdgeShape(LEFT_SPIRAL, m_position, m_alg->m_tree->restrictingAngle()));
 	auto rightSpiral = std::make_shared<SweepEdge>(
@@ -401,8 +400,8 @@ bool SpiralTreeObstructedAlgorithm::JoinEvent::isValid() const {
 
 SpiralTreeObstructedAlgorithm::SpiralTreeObstructedAlgorithm(
     std::shared_ptr<SpiralTree> tree,
-    std::vector<ReachableRegionAlgorithm::UnreachableRegionVertex> vertices)
-    : m_tree(tree), m_vertices(std::move(vertices)),
+    ReachableRegionAlgorithm::ReachableRegion reachableRegion)
+    : m_tree(tree), m_reachableRegion(std::move(reachableRegion)),
       m_debugPainting(std::make_shared<renderer::PaintingRenderer>()),
       m_circle(SweepInterval::Type::FREE) {}
 
@@ -412,15 +411,15 @@ void SpiralTreeObstructedAlgorithm::run() {
 	          << "\033[1m Step 2: Inwards sweep to construct the spiral tree \033[0m\n"
 	          << "\033[1m────────────────────────────────────────────────────\033[0m\n";
 
-	// insert all terminals into the event queue
-	for (const std::shared_ptr<Node>& node : m_tree->nodes()) {
-		if (node->m_position.r() > 0) {
+	// insert all reachable nodes into the event queue
+	for (const std::shared_ptr<Node>& node : m_reachableRegion.reachableNodes) {
+		if (node->m_position.r() > 0 && node) {
 			m_queue.push(std::make_shared<NodeEvent>(node, this));
 		}
 	}
 
 	// insert vertices of the unreachable region
-	for (ReachableRegionAlgorithm::UnreachableRegionVertex& vertex : m_vertices) {
+	for (ReachableRegionAlgorithm::UnreachableRegionVertex& vertex : m_reachableRegion.boundary) {
 		m_queue.push(std::make_shared<VertexEvent>(vertex.m_location, vertex.m_e1, vertex.m_e2, this));
 	}
 

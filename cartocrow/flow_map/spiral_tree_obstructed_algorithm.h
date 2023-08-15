@@ -75,7 +75,7 @@ class SpiralTreeObstructedAlgorithm {
 	/// Constructs this class to run the algorithm for the given spiral tree.
 	SpiralTreeObstructedAlgorithm(
 	    std::shared_ptr<SpiralTree> tree,
-	    std::vector<ReachableRegionAlgorithm::UnreachableRegionVertex> vertices);
+	    ReachableRegionAlgorithm::ReachableRegion reachableRegion);
 
 	/// Runs the algorithm.
 	void run();
@@ -89,9 +89,8 @@ class SpiralTreeObstructedAlgorithm {
   private:
 	/// The spiral tree we are computing.
 	std::shared_ptr<SpiralTree> m_tree;
-
-	/// The list of vertices of the unreachable region.
-	std::vector<ReachableRegionAlgorithm::UnreachableRegionVertex> m_vertices;
+	/// The reachable region as produced by the \ref ReachableRegionAlgorithm.
+	ReachableRegionAlgorithm::ReachableRegion m_reachableRegion;
 
 	class Event;
 	class CompareEvents;

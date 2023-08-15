@@ -90,6 +90,29 @@ void ReachableRegionAlgorithm::Event::insertJoinEventFor(SweepCircle::EdgeMap::i
 	}
 }
 
+ReachableRegionAlgorithm::NodeEvent::NodeEvent(std::shared_ptr<Node> node,
+                                               ReachableRegionAlgorithm* alg)
+    : Event(node->m_position, alg), m_node(node) {}
+
+void ReachableRegionAlgorithm::NodeEvent::handle() {
+	using enum SweepInterval::Type;
+	using enum SweepEdgeShape::Type;
+
+	// TODO
+	std::cout << "> \033[1mhandling \033[33mnode event\033[0m\n";
+	m_alg->m_debugPainting->setMode(renderer::GeometryRenderer::stroke);
+	m_alg->m_debugPainting->setStroke(Color{240, 120, 0}, 1);
+	m_alg->m_debugPainting->draw(m_alg->m_tree->rootPosition() +
+	                             (m_position.toCartesian() - CGAL::ORIGIN));
+	m_alg->m_debugPainting->drawText(
+	    m_alg->m_tree->rootPosition() + (m_position.toCartesian() - CGAL::ORIGIN), "node");
+
+	SweepInterval* interval = m_alg->m_circle.intervalAt(m_node->m_position.phi());
+	if (interval->type() == SweepInterval::Type::REACHABLE) {
+		m_alg->m_reachableNodes.push_back(m_node);
+	}
+}
+
 ReachableRegionAlgorithm::VertexEvent::VertexEvent(PolarPoint position, std::shared_ptr<SweepEdge> e1,
                                                    std::shared_ptr<SweepEdge> e2,
                                                    ReachableRegionAlgorithm* alg)
@@ -359,11 +382,18 @@ ReachableRegionAlgorithm::ReachableRegionAlgorithm(std::shared_ptr<SpiralTree> t
     : m_tree(tree), m_debugPainting(std::make_shared<renderer::PaintingRenderer>()),
       m_circle(SweepInterval::Type::REACHABLE) {}
 
-std::vector<ReachableRegionAlgorithm::UnreachableRegionVertex> ReachableRegionAlgorithm::run() {
+ReachableRegionAlgorithm::ReachableRegion ReachableRegionAlgorithm::run() {
 
 	std::cout << "\033[1m──────────────────────────────────────────────────────────\033[0m\n"
 	          << "\033[1m Step 1: Outwards sweep to construct the reachable region \033[0m\n"
 	          << "\033[1m──────────────────────────────────────────────────────────\033[0m\n";
+
+	// insert all nodes into the event queue
+	for (const std::shared_ptr<Node>& node : m_tree->nodes()) {
+		if (node->m_position.r() > 0) {
+			m_queue.push(std::make_shared<NodeEvent>(node, this));
+		}
+	}
 
 	// insert all obstacle vertices into the event queue
 	for (SpiralTree::Obstacle& obstacle : m_tree->obstacles()) {
@@ -397,7 +427,7 @@ std::vector<ReachableRegionAlgorithm::UnreachableRegionVertex> ReachableRegionAl
 		assert(m_circle.isValid());
 	}
 
-	return m_vertices;
+	return {m_vertices, m_reachableNodes};
 }
 
 std::shared_ptr<renderer::GeometryPainting> ReachableRegionAlgorithm::debugPainting() {

@@ -26,6 +26,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "../renderer/geometry_painting.h"
 #include "../renderer/painting_renderer.h"
+#include "cartocrow/flow_map/node.h"
 #include "spiral_tree.h"
 #include "sweep_circle.h"
 
@@ -94,11 +95,17 @@ class ReachableRegionAlgorithm {
 		std::shared_ptr<SweepEdge> m_e2;
 	};
 
+	/// The result of the ReachableRegionAlgorithm.
+	struct ReachableRegion {
+		/// A list of unreachable region vertices, ordered by their distance
+		/// from the origin.
+		std::vector<UnreachableRegionVertex> boundary;
+		/// A list of all nodes that are reachable from the origin.
+		std::vector<std::shared_ptr<Node>> reachableNodes;
+	};
+
 	/// Runs the algorithm.
-	///
-	/// \return The result of the algorithm: a list of unreachable region
-	/// vertices, ordered by their distance from the origin.
-	std::vector<UnreachableRegionVertex> run();
+	ReachableRegion run();
 
 	/// Returns a \ref GeometryPainting that shows some debug information. This
 	/// painting shows some debug information about the algorithm run. If this
@@ -109,9 +116,10 @@ class ReachableRegionAlgorithm {
   private:
 	/// The spiral tree we are computing.
 	std::shared_ptr<SpiralTree> m_tree;
-
 	/// Unreachable region vertices we've seen so far.
 	std::vector<UnreachableRegionVertex> m_vertices;
+	/// Reachable nodes we've seen so far.
+	std::vector<std::shared_ptr<Node>> m_reachableNodes;
 
 	class Event;
 	class CompareEvents;
@@ -148,6 +156,20 @@ class ReachableRegionAlgorithm {
 		PolarPoint m_position;
 		/// Pointer to the ReachableRegionAlgorithm this event belongs to.
 		ReachableRegionAlgorithm* m_alg;
+	};
+
+	/// An event that happens when the sweep circle hits a node.
+	class NodeEvent : public Event {
+	  public:
+		/// Creates a new node event for the given node.
+		NodeEvent(std::shared_ptr<Node> node, ReachableRegionAlgorithm* alg);
+
+		/// Handles this event by checking if the node is reachable and if so,
+		/// adding it to \ref m_reachableNodes.
+		void handle() override;
+
+	  private:
+		std::shared_ptr<Node> m_node;
 	};
 
 	/// An event that happens when the sweep circle hits an obstacle vertex. A
