@@ -26,51 +26,65 @@ class KSBBDebugPainter : public renderer::GeometryPainting {
 	};
 
 	/// Creates a new painting for the given arrangement.
-	KSBBDebugPainter(std::shared_ptr<KSBBTraits::Map> arr, Options options = {})
-	    : m_arr(arr), m_options(options){};
+	KSBBDebugPainter(KSBBDemo& demo, Options options = {}) : m_demo(demo), m_options(options){};
 
   protected:
 	void paint(renderer::GeometryRenderer& renderer) const override {
 
 		int num = 0;
-		for (auto& e : m_arr->edge_handles()) {
-			if (e->source()->degree() != 2 || e->target()->degree() != 2) {
+		for (auto& e : m_demo.map->edge_handles()) {
+
+			KSBBTraits::Map::Halfedge_handle he = &*e;
+
+			if (he->source()->degree() != 2 || he->target()->degree() != 2) {
 				continue;
 			}
 
-			if (e->next()->next()->next() == e || e->twin()->next()->next()->next() == e->twin()) {
+			if (he->next()->next()->next() == he || he->twin()->next()->next()->next() == he->twin()) {
 				continue;
 			}
 			//if (e->source()->point() != Point<Exact>(208, 224) ||
 			//    e->target()->point() != Point<Exact>(128, 192))
 			//	continue;
 
+			if (m_demo.hist->atPresent() && KSBBTraits::ecGetEdgeMark(he) != ECEdgeMark::MAIN) {
+				he = he->twin();
+			}
 
 			//std::cout << e->source()->point() << "->" << e->target()->point() << "\n";
-			Collapse col = KSBBTraits::ecComputeCollapse(e);
+			Collapse col = m_demo.hist->atPresent() ? KSBBTraits::ecGetCollapse(he)
+			                                        : KSBBTraits::ecComputeCollapse(he);
 
-			Color color{ (num * 27) % 256, (50 + num * 13) % 256, (100 + num*73) % 256};
+			Color color{(num * 27) % 256, (50 + num * 13) % 256, (100 + num * 73) % 256};
 			num++;
 
-			renderer.setStroke(Color(0,0,0), 8);
+			renderer.setStroke(Color(0, 0, 0), 8);
 			renderer.setMode(renderer::GeometryRenderer::stroke);
-			Segment<Exact> s = Segment<Exact>(e->source()->point() + (e->target()->point() - e->source()->point()) / 2,
-			                   e->target()->point());
+			Segment<Exact> s = Segment<Exact>(he->source()->point() +
+			                                      (he->target()->point() - he->source()->point()) / 2,
+			                                  he->target()->point());
 			renderer.draw(s);
 
-			renderer.setStroke(color,4);
-			renderer.setFill(color);
-			renderer.setFillOpacity(75);
+			renderer.setMode(renderer::GeometryRenderer::fill | renderer::GeometryRenderer::stroke);
 			for (Polygon<Exact> p : col.this_face_polygons) {
 				Polygon<Inexact> ap = approximate(p);
-				renderer.setMode(renderer::GeometryRenderer::fill);
+				renderer.setStroke(color, 4);
+				renderer.setFill(color);
+				renderer.setFillOpacity(75);
 				renderer.draw(ap);
-				renderer.setMode(renderer::GeometryRenderer::stroke);
-				renderer.draw(ap);
+				if (m_demo.hist->atPresent()) {
+					renderer.setFillOpacity(255);
+					renderer.setStroke(Color(0,0,0), 4);
+					renderer.drawText(CGAL::centroid(ap.vertex(0), ap.vertex(1), ap.vertex(2)),
+					                  std::to_string(KSBBTraits::ecGetBlockingNumber(he)));
+				}
 			}
+
+			renderer.setFill(color);
+			renderer.setFillOpacity(75);
+			renderer.setMode(renderer::GeometryRenderer::fill);
 			for (Polygon<Exact> p : col.twin_face_polygons) {
 				Polygon<Inexact> ap = approximate(p);
-				renderer.setMode(renderer::GeometryRenderer::fill);
 				renderer.draw(ap);
 			}
 		}
@@ -78,7 +92,7 @@ class KSBBDebugPainter : public renderer::GeometryPainting {
 
   private:
 	// The arrangement we are drawing.
-	std::shared_ptr<KSBBTraits::Map> m_arr;
+	KSBBDemo& m_demo;
 	// The drawing options.
 	Options m_options;
 };
@@ -87,10 +101,11 @@ KSBBDemo::KSBBDemo() {
 	setWindowTitle("CartoCrow : Kronenfeld-etal demo");
 
 	m_renderer = new GeometryWidget();
+	m_renderer->setMaxZoom(3000);
 	setCentralWidget(m_renderer);
 
 	std::filesystem::path file =
-	    std::filesystem::absolute(std::filesystem::path("data/benelux-fix.ipe"));
+	    std::filesystem::absolute(std::filesystem::path("data/europe-north.ipe"));
 	std::cout << "reading file " << file << "\n";
 
 	// step 1: create a RegionMap
@@ -110,25 +125,25 @@ KSBBDemo::KSBBDemo() {
 
 	Timer t;
 	// step 3: initialize the algorithm
-	KSBBSimplificationWithHistory simplification(*hist);
-	simplification.initialize();
+	this->alg = new KSBBSimplificationWithHistory(*hist);
+	this->alg->initialize();
 	t.stamp("Initialization");
 
 	// step 4: simplify until no more vertices can be removed
-	simplification.simplify(0);
+	int to = 57;
+	this->alg->simplify(to);
 	t.stamp("Simplification done");
 	t.output();
 
+	this->alg->debug = false;
 	int outcnt = this->map->number_of_edges();
 
-	std::cout << "out count " << outcnt << "\n";
-
 	// initialize a gui with a slider to retrieve all intermediate solutions
-	this->c = (3 * outcnt + incnt) / 4;
+	this->c = outcnt;
 	QToolBar* toolBar = new QToolBar();
 	toolBar->addWidget(new QLabel("c = "));
 	m_cSlider = new QSlider(Qt::Horizontal);
-	m_cSlider->setMinimum(outcnt);
+	m_cSlider->setMinimum(0);
 	m_cSlider->setMaximum(incnt);
 	m_cSlider->setValue(this->c);
 	toolBar->addWidget(this->m_cSlider);
@@ -152,18 +167,26 @@ KSBBDemo::KSBBDemo() {
 	auto out_painting =
 	    std::make_shared<ArrangementPainting<KSBBTraits::Map>>(this->map, out_options);
 
-	auto debug_paint = std::make_shared<KSBBDebugPainter>(this->map);
+	auto debug_paint = std::make_shared<KSBBDebugPainter>(*this);
 
 	m_renderer->clear();
 	m_renderer->addPainting(debug_paint, "Debug");
 	m_renderer->addPainting(in_painting, "Input map");
 	m_renderer->addPainting(out_painting, "Output map");
 
+	IpeRenderer ipe(debug_paint);
+	ipe.save("./ipe.ipe");
+
 	recalculate();
 }
 
 void KSBBDemo::recalculate() {
+
 	hist->recallComplexity(c);
+	if (this->map->number_of_edges() > this->c) {
+		std::cout << "simplifying to " << this->c << "\n";
+		this->alg->simplify(this->c);
+	}
 	m_renderer->update();
 }
 

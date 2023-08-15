@@ -101,22 +101,37 @@ inline bool intersects(Point<Exact> p, PolygonVector polygons) {
 
 template <EdgeCollapseTraits ECT>
 inline bool blocks(typename ECT::Map::Halfedge_handle blocking,
-                   typename ECT::Map::Halfedge_handle collapsing) {
+                   typename ECT::Map::Halfedge_handle collapsing, bool debug) {
+
+	// TODO: assert that collapsing is a MAIN edge
 
 	PolygonVector polygons;
 	typename ECT::Map::Halfedge_handle collapse_test;
+	if (debug) {
+		std::cout << blocking->source()->point() << " > " << blocking->target()->point()
+		          << " blocks? " << collapsing->source()->point() << " > "
+		          << collapsing->target()->point() << " mark=" << (ECT::ecGetEdgeMark(collapsing) == ECEdgeMark::MAIN)
+		          << "\n";
+	}
+	// TODO: this isn't going to work when the same face is on both sides of an edge
 	if (blocking->face() == collapsing->face()) {
 		// same face
+		if (debug)
+			std::cout << "  same\n";
 		polygons = ECT::ecGetCollapse(collapsing).this_face_polygons;
 		collapse_test = collapsing;
 	} else {
 		// other face
+		if (debug)
+			std::cout << "  other\n";
 		polygons = ECT::ecGetCollapse(collapsing).twin_face_polygons;
 		collapse_test = collapsing->twin();
 	}
 
 	if (blocking == collapse_test || blocking == collapse_test->prev() ||
 	    blocking == collapse_test->next()) {
+		if (debug)
+			std::cout << "  near\n";
 		// one of the collapsing edges
 		return false;
 	} else {
@@ -124,17 +139,30 @@ inline bool blocks(typename ECT::Map::Halfedge_handle blocking,
 		bool next_adj = blocking == collapse_test->next()->next();
 		if (prev_adj) {
 			if (next_adj) {
+				if (debug)
+					std::cout << "  quad\n";
 				// quadrilateral, cannot block
 				return false;
 			} else {
+
+				if (debug)
+					std::cout << "  near prev\n";
 				// TODO: what if the segment cuts through?
 				return detail::intersects(blocking->source()->point(), polygons);
 			}
 		} else if (next_adj) {
+			if (debug)
+				std::cout << "  near next\n";
 			// TODO: what if the segment cuts through?
 			return detail::intersects(blocking->target()->point(), polygons);
 		} else {
+			if (debug) {
+
+				std::cout << "  independent " << blocking->curve() << "\n";
+				std::cout << "    result = " << detail::intersects(blocking->curve(), polygons) << "\n";
+			}
 			// independent edge
+
 			return detail::intersects(blocking->curve(), polygons);
 		}
 	}
@@ -253,7 +281,7 @@ requires(std::same_as<typename MA::Map, typename ECT::Map>) void EdgeCollapseSim
 			typename Map::Ccb_halfedge_circulator circ = face->outer_ccb();
 			typename Map::Ccb_halfedge_circulator curr = circ;
 			do {
-				if (detail::blocks<ECT>(&*curr, e)) {
+				if (detail::blocks<ECT>(&*curr, e, false)) {
 					b++;
 				}
 			} while (++curr != circ);
@@ -264,7 +292,7 @@ requires(std::same_as<typename MA::Map, typename ECT::Map>) void EdgeCollapseSim
 			typename Map::Ccb_halfedge_circulator circ = *h;
 			typename Map::Ccb_halfedge_circulator curr = circ;
 			do {
-				if (detail::blocks<ECT>(&*curr, e)) {
+				if (detail::blocks<ECT>(&*curr, e, false)) {
 					b++;
 				}
 
@@ -278,7 +306,7 @@ requires(std::same_as<typename MA::Map, typename ECT::Map>) void EdgeCollapseSim
 			typename Map::Ccb_halfedge_circulator circ = twin_face->outer_ccb();
 			typename Map::Ccb_halfedge_circulator curr = circ;
 			do {
-				if (detail::blocks<ECT>(&*curr, e)) {
+				if (detail::blocks<ECT>(&*curr, e, false)) {
 					b++;
 				}
 			} while (++curr != circ);
@@ -290,7 +318,7 @@ requires(std::same_as<typename MA::Map, typename ECT::Map>) void EdgeCollapseSim
 			typename Map::Ccb_halfedge_circulator circ = *h;
 			typename Map::Ccb_halfedge_circulator curr = circ;
 			do {
-				if (detail::blocks<ECT>(&*curr, e)) {
+				if (detail::blocks<ECT>(&*curr, e, false)) {
 					b++;
 				}
 
@@ -329,6 +357,12 @@ template <ModifiableArrangement MA, EdgeCollapseTraits ECT>
 requires(std::same_as<typename MA::Map, typename ECT::Map>) void EdgeCollapseSimplification<MA, ECT>::execute(
     Map::Halfedge_handle e, Number<Exact> cost) {
 
+	if (debug) {
+
+		std::cout << "EXEC " << e->source()->point() << "\n";
+		std::cout << "     " << e->target()->point() << "\n";
+	}
+
 	// walk over faces to reduce counts
 	adjustCounts(e, -1);
 	adjustCounts(e->prev(), -1);
@@ -365,6 +399,12 @@ requires(std::same_as<typename MA::Map, typename ECT::Map>) void EdgeCollapseSim
 			modmap.endBatch();
 		}
 
+		if (debug) {
+
+			std::cout << "e " << e->source()->point() << "\n";
+			std::cout << "  " << e->target()->point() << "\n";
+		}
+
 		// walk over faces to increase counts
 		adjustCounts(e, 1);
 		adjustCounts(e->twin(), 1);
@@ -382,7 +422,16 @@ requires(std::same_as<typename MA::Map, typename ECT::Map>) void EdgeCollapseSim
 template <ModifiableArrangement MA, EdgeCollapseTraits ECT>
 requires(std::same_as<typename MA::Map, typename ECT::Map>) void EdgeCollapseSimplification<
     MA, ECT>::adjustCounts(Map::Halfedge_handle e, const int adj) {
+
 	typename Map::Face_handle face = e->face();
+
+	if (debug && adj > 0) {
+
+		std::cout << "adj " << e->source()->point() << "\n";
+		std::cout << "    " << e->target()->point() << "\n";
+
+		std::cout << "    => " << adj << "\n";
+	}
 
 	if (!face->is_unbounded()) {
 		// the outer rim
@@ -390,9 +439,9 @@ requires(std::same_as<typename MA::Map, typename ECT::Map>) void EdgeCollapseSim
 		typename Map::Ccb_halfedge_circulator curr = circ;
 		do {
 			typename Map::Halfedge_handle collapsing = detail::getMain<ECT>(&*curr);
-			int b = ECT::ecGetBlockingNumber(&*curr);
-			if (b >= 0 && detail::blocks<ECT>(e, &*curr)) {
-				ECT::ecSetBlockingNumber(&*curr, b + adj);
+			int b = ECT::ecGetBlockingNumber(collapsing);
+			if (b >= 0 && detail::blocks<ECT>(e, collapsing, debug && adj > 0)) {
+				ECT::ecSetBlockingNumber(collapsing, b + adj);
 			}
 		} while (++curr != circ);
 	}
@@ -403,9 +452,9 @@ requires(std::same_as<typename MA::Map, typename ECT::Map>) void EdgeCollapseSim
 		typename Map::Ccb_halfedge_circulator curr = circ;
 		do {
 			typename Map::Halfedge_handle collapsing = detail::getMain<ECT>(&*curr);
-			int b = ECT::ecGetBlockingNumber(&*curr);
-			if (b >= 0 && detail::blocks<ECT>(e, &*curr)) {
-				ECT::ecSetBlockingNumber(&*curr, b + adj);
+			int b = ECT::ecGetBlockingNumber(collapsing);
+			if (b >= 0 && detail::blocks<ECT>(e, collapsing, debug && adj > 0)) {
+				ECT::ecSetBlockingNumber(collapsing, b + adj);
 			}
 
 		} while (++curr != circ);

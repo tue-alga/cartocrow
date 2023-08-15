@@ -18,10 +18,10 @@ class KSBBDemo : public QMainWindow {
 	KSBBDemo();
 	~KSBBDemo() {
 		delete hist;
+		delete alg;
 	};
 
-  private:
-	void recalculate();
+  	void recalculate();
 
 	GeometryWidget* m_renderer;
 	QSlider* m_cSlider;
@@ -31,4 +31,5 @@ class KSBBDemo : public QMainWindow {
 	std::shared_ptr<RegionMap> regions;
 	std::shared_ptr<KSBBTraits::Map> map;
 	HistoricArrangement<KSBBTraits>* hist;
+	KSBBSimplificationWithHistory* alg;
 };

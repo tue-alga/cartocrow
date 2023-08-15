@@ -102,6 +102,8 @@ requires(std::same_as<typename MA::Map, typename ECT::Map>) class EdgeCollapseSi
 	/// - In case of a historic arrangement, it is always set to present.
 	void simplify(int c);
 
+	bool debug = false;
+
   private:
 	/// Reinitializes the simplification data for the edge
 	void initEdge(Map::Halfedge_handle e);

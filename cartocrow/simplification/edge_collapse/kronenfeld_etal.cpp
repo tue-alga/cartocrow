@@ -17,6 +17,25 @@ Collapse KSBBTraits::ecComputeCollapse(Map::Halfedge_handle e) {
 	Point<Exact> c = e->target()->point();
 	Point<Exact> d = e->next()->target()->point();
 
+	bool abc = CGAL::collinear(a, b, c);
+	bool bcd = CGAL::collinear(b, c, d);
+	if (abc && bcd) {
+		col.erase_both = true;
+		return col;
+	} else if (abc) {
+		col.erase_both = false;
+		// TODO: optimize, to not even shift?
+		col.point = c;
+		return col;
+	} else if (bcd) {
+		col.erase_both = false;
+		// TODO: optimize, to not even shift?
+		col.point = b;
+		return col;
+	}
+
+	// else, no consecutive collinear edges
+
 	Polygon<Exact> P;
 	P.push_back(a);
 	P.push_back(b);
@@ -46,7 +65,8 @@ Collapse KSBBTraits::ecComputeCollapse(Map::Halfedge_handle e) {
 	if (ad.has_on_boundary(arealine.point())) {
 
 		if (ad.has_on_boundary(b)) {
-			// implies that c is also on ad
+			// This should not occur:
+			// implies that c is also on ad (caught already by collinearity earlier)
 			col.erase_both = true;
 		} else {
 			col.erase_both = true;
@@ -120,6 +140,11 @@ Collapse KSBBTraits::ecComputeCollapse(Map::Halfedge_handle e) {
 			col.point = boost::get<Point<Exact>>(intersection.get());
 			Segment<Exact> ns = Segment<Exact>(col.point, a);
 			auto intersection2 = CGAL::intersection(bc, ns);
+
+			// TODO: something may go wrong here still?
+			if (!intersection2) {
+				std::cout << a << "m\n" << b << "l\n" << c << "l\n" << d << "l\n" << col.point;
+			}
 
 			Point<Exact> is = boost::get<Point<Exact>>(intersection2.get());
 
