@@ -164,14 +164,17 @@ class SweepEdgeShape {
 	bool operator==(const SweepEdgeShape& s) const = default;
 
   private:
+	/// Returns \f$\alpha\f$ for right spirals, \f$-\alpha\f$ for left spirals,
+	/// and `0` for segments.
+	Number<Inexact> signedAlpha() const;
 	/// The type of this sweep edge.
 	Type m_type;
 	/// The start point.
 	PolarPoint m_start;
 	/// The end point, if this is a segment.
 	std::optional<PolarPoint> m_end;
-	/// The angle, if this is a spiral.
-	Number<Inexact> m_alpha;
+	/// The angle, if this is a spiral. Else this is `0`.
+	Number<Inexact> m_alpha = 0;
 };
 
 /// An edge intersected by the \ref SweepCircle "sweep circle".

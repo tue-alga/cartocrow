@@ -231,7 +231,14 @@ bool SweepEdgeShape::departsInwardsToLeftOf(Number<Inexact> r, const SweepEdgeSh
 
 	Number<Inexact> thisAngle = tangentAngleForR(r);
 	Number<Inexact> otherAngle = other.tangentAngleForR(r);
-	return wrapAngle(otherAngle - thisAngle, -M_PI) > 0;
+	Number<Inexact> angleDifference = wrapAngle(otherAngle - thisAngle, -M_PI);
+	if (std::abs(angleDifference) > M_EPSILON) {
+		return angleDifference > 0;
+	}
+	// if they have the same angle, then decide based on the curve direction
+	// (that is: a right spiral curves inwards more to the left than a segment,
+	// which in turn curves more to the left than a left spiral)
+	return other.signedAlpha() > this->signedAlpha();
 }
 
 std::optional<Number<Inexact>> SweepEdgeShape::intersectInwardsWith(const SweepEdgeShape& other,
@@ -307,6 +314,17 @@ SpiralSegment SweepEdgeShape::toSpiralSegment() const {
 	                     nearR() * 100);
 	// TODO instead of "* 100" implement a spiral that doesn't end, or instead
 	// pick a value so that the spiral rotates by 2π
+}
+
+Number<Inexact> SweepEdgeShape::signedAlpha() const {
+	switch (m_type) {
+	case SweepEdgeShape::Type::RIGHT_SPIRAL:
+		return m_alpha;
+	case SweepEdgeShape::Type::LEFT_SPIRAL:
+		return -m_alpha;
+	case SweepEdgeShape::Type::SEGMENT:
+		return 0;
+	}
 }
 
 SweepEdge::SweepEdge(SweepEdgeShape shape)
