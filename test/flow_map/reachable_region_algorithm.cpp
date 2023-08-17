@@ -3,8 +3,6 @@
 #include <cmath>
 #include <ctime>
 
-#include <QApplication>
-
 #include "cartocrow/flow_map/reachable_region_algorithm.h"
 #include "cartocrow/flow_map/spiral_tree.h"
 

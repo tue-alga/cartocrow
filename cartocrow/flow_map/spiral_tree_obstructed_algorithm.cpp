@@ -107,6 +107,8 @@ void SpiralTreeObstructedAlgorithm::NodeEvent::handle() {
 	m_alg->m_debugPainting->drawText(
 	    m_alg->m_tree->rootPosition() + (m_position.toCartesian() - CGAL::ORIGIN), "node");
 
+	m_alg->remainingNodeVertexEventCount--;
+
 	auto leftSpiral = std::make_shared<SweepEdge>(
 	    SweepEdgeShape(LEFT_SPIRAL, m_position, m_alg->m_tree->restrictingAngle()));
 	auto rightSpiral = std::make_shared<SweepEdge>(
@@ -149,6 +151,8 @@ void SpiralTreeObstructedAlgorithm::VertexEvent::handle() {
 	                             (m_position.toCartesian() - CGAL::ORIGIN));
 	m_alg->m_debugPainting->drawText(
 	    m_alg->m_tree->rootPosition() + (m_position.toCartesian() - CGAL::ORIGIN), side);
+
+	m_alg->remainingNodeVertexEventCount--;
 
 	if (m_side == Side::LEFT) {
 		handleLeft();
@@ -276,7 +280,7 @@ void SpiralTreeObstructedAlgorithm::VertexEvent::handleFar() {
 	using enum SweepEdgeShape::Type;
 
 	SweepInterval* interval = m_alg->m_circle.intervalAt(phi());
-	if (interval->type() == FREE) {
+	if (interval->type() == FREE || interval->type() == REACHABLE) {
 		auto result = m_alg->m_circle.splitFromInterval(m_e1, m_e2);
 		result.middleInterval->setType(OBSTACLE);
 	} else if (interval->type() == OBSTACLE) {
@@ -373,6 +377,8 @@ void SpiralTreeObstructedAlgorithm::JoinEvent::handle() {
 			m_alg->m_tree->addEdge(node, leftNode);
 		}
 
+		m_alg->activeNodeCount--;
+
 	} else if (previousInterval->type() == OBSTACLE) {
 		// case 2: right side is obstacle
 		std::cout << " (case 2)\n";
@@ -412,9 +418,11 @@ void SpiralTreeObstructedAlgorithm::run() {
 	          << "\033[1m────────────────────────────────────────────────────\033[0m\n";
 
 	// insert all reachable nodes into the event queue
+	activeNodeCount = 0;
 	for (const std::shared_ptr<Node>& node : m_reachableRegion.reachableNodes) {
 		if (node->m_position.r() > 0 && node) {
 			m_queue.push(std::make_shared<NodeEvent>(node, this));
+			activeNodeCount++;
 		}
 	}
 
@@ -422,15 +430,15 @@ void SpiralTreeObstructedAlgorithm::run() {
 	for (ReachableRegionAlgorithm::UnreachableRegionVertex& vertex : m_reachableRegion.boundary) {
 		m_queue.push(std::make_shared<VertexEvent>(vertex.m_location, vertex.m_e1, vertex.m_e2, this));
 	}
+	remainingNodeVertexEventCount = m_queue.size();
 
 	if (m_queue.size() == 0) {
-		// TODO error or something
 		return;
 	}
-
 	m_circle.grow(m_queue.top()->r());
+
 	// main loop, handle all events
-	while (!m_queue.empty()) {
+	while (!m_queue.empty() && (activeNodeCount > 1 || remainingNodeVertexEventCount > 0)) {
 		std::shared_ptr<Event> event = m_queue.top();
 		m_queue.pop();
 		if (!event->isValid()) {

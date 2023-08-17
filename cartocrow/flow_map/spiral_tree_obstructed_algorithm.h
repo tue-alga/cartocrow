@@ -261,6 +261,12 @@ class SpiralTreeObstructedAlgorithm {
 	SweepCircle m_circle;
 	/// The event queue storing the remaining events.
 	EventQueue m_queue;
+	/// The number of node and vertex events we still have to process.
+	int remainingNodeVertexEventCount;
+	/// The current number of active nodes. This starts with the number of
+	/// terminals; every join event one gets subtracted; we're done when this
+	/// reaches 1 (and \ref remainingNodeEventsCount is 0).
+	int activeNodeCount;
 	/// A painting that contains sweep shapes for each sweep interval
 	/// encountered during the execution of the algorithm.
 	std::shared_ptr<renderer::PaintingRenderer> m_debugPainting;
