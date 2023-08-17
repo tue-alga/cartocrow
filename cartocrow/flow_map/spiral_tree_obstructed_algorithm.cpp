@@ -446,6 +446,11 @@ void SpiralTreeObstructedAlgorithm::run() {
 		m_circle.print();
 		assert(m_circle.isValid());
 	}
+
+	// connect last join node to the root
+	std::shared_ptr<Node> lastNode = m_tree->nodes()[m_tree->nodes().size() - 1];
+	m_tree->m_root->m_children.push_back(lastNode);
+	lastNode->m_parent = m_tree->m_root;
 }
 
 std::shared_ptr<renderer::GeometryPainting> SpiralTreeObstructedAlgorithm::debugPainting() {
