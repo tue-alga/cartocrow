@@ -260,19 +260,8 @@ void SpiralTreeObstructedAlgorithm::VertexEvent::handleNear() {
 	auto previousIntervalType = m_e2->previousInterval()->type();
 	auto nextIntervalType = m_e1->nextInterval()->type();
 
-	if (previousIntervalType == nextIntervalType) {
-		auto result = m_alg->m_circle.mergeToInterval(m_e2, m_e1);
-		result.mergedInterval->setType(previousIntervalType);
-		// TODO: if previousIntervalType == REACHABLE then join nodes
-	} else {
-		SweepEdgeShape::Type spiralType =
-			previousIntervalType == REACHABLE ? RIGHT_SPIRAL : LEFT_SPIRAL;
-		auto spiral = std::make_shared<SweepEdge>(
-			SweepEdgeShape(spiralType, m_position, m_alg->m_tree->restrictingAngle()));
-		auto result = m_alg->m_circle.mergeToEdge(m_e2, m_e1, spiral);
-		// TODO: figure out what Kevin's implementation does here
-		// probably set some parent pointers so we can route the spiral edge?
-	}
+	// handle as a join event
+	JoinEvent(m_position, m_e2, m_e1, m_alg).handle();
 }
 
 void SpiralTreeObstructedAlgorithm::VertexEvent::handleFar() {
