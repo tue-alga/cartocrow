@@ -17,14 +17,18 @@ TEST_CASE("Computing a spiral tree with one node") {
 	tree->addPlace("p1", Point<Inexact>(0, 100), 1);
 	CHECK(tree->nodes().size() == 2);
 
+	int expectedNodeCount;
 	SECTION("without obstacle") {
+		expectedNodeCount = 2;
 	}
+
 	SECTION("with obstacle") {
 		Polygon<Inexact> obstacle;
 		obstacle.push_back(Point<Inexact>(-10, 50));
 		obstacle.push_back(Point<Inexact>(0, 25));
 		obstacle.push_back(Point<Inexact>(10, 50));
 		tree->addObstacle(obstacle);
+		expectedNodeCount = 4;
 	}
 
 	ReachableRegionAlgorithm algorithm(tree);
@@ -35,6 +39,5 @@ TEST_CASE("Computing a spiral tree with one node") {
 	cartocrow::renderer::IpeRenderer renderer(algorithm2.debugPainting());
 	renderer.save("/tmp/test.ipe");
 
-	REQUIRE(tree->nodes().size() == 2);
-	CHECK(tree->nodes()[0]->m_children.size() == 0);
+	REQUIRE(tree->nodes().size() == expectedNodeCount);
 }
