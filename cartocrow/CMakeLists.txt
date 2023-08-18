@@ -1,23 +1,14 @@
 set(CARTOCROW_INSTALL_DIR "${CMAKE_INSTALL_SOURCE_DIR}/cartocrow")
 set(CARTOCROW_EXPORT_TARGETS CartoCrowTargets)
 
-macro(cartocrow_add_library TARGET INSTALL_DIR)
-    # - While CMake will try various file extensions when adding files,
-    # specifying the files without extension may give problems due to ambiguity.
-    file(GLOB_RECURSE HDRS "*.h")
-    file(GLOB_RECURSE SRCS "*.cpp")
-
-    add_library(${TARGET} ${HDRS} ${SRCS})
-
-    # Install rules.
+macro(cartocrow_install_module NAME)
     install(
-        TARGETS ${TARGET}
+        TARGETS ${NAME}
         EXPORT ${CARTOCROW_EXPORT_TARGETS}
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBRARY_DIR}
         INCLUDES DESTINATION ${CMAKE_INSTALL_SOURCE_DIR}
     )
-    install_files_and_directories("${HDRS}" ${INSTALL_DIR})
-endmacro(cartocrow_add_library)
+endmacro(cartocrow_install_module)
 
 add_subdirectory(core)
 add_subdirectory(renderer)

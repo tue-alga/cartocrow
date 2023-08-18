@@ -65,8 +65,5 @@ target_link_libraries(necklace_map
 	PRIVATE glog::glog
 )
 
-install(TARGETS necklace_map
-	EXPORT ${CARTOCROW_EXPORT_TARGETS}
-	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBRARY_DIR}
-	INCLUDES DESTINATION ${CMAKE_INSTALL_SOURCE_DIR}
-)
+cartocrow_install_module(necklace_map)
+install(FILES ${HEADERS} DESTINATION ${CARTOCROW_INSTALL_DIR}/necklace_map)

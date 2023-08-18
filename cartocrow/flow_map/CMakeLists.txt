@@ -43,8 +43,5 @@ target_link_libraries(flow_map
 	PRIVATE glog::glog
 )
 
-install(TARGETS flow_map
-	EXPORT ${CARTOCROW_EXPORT_TARGETS}
-	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBRARY_DIR}
-	INCLUDES DESTINATION ${CMAKE_INSTALL_SOURCE_DIR}
-)
+cartocrow_install_module(flow_map)
+install(FILES ${HEADERS} DESTINATION ${CARTOCROW_INSTALL_DIR}/flow_map)
