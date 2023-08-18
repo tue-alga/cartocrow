@@ -5,7 +5,7 @@
 
 #include <QApplication>
 
-#include "../../cartocrow/flow_map/spiral_tree.h"
+#include "cartocrow/flow_map/spiral_tree.h"
 
 using namespace cartocrow;
 using namespace cartocrow::flow_map;

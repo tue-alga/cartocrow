@@ -2,7 +2,7 @@
 
 #include <filesystem>
 
-#include "../../cartocrow/core/region_map.h"
+#include "cartocrow/core/region_map.h"
 
 using namespace cartocrow;
 

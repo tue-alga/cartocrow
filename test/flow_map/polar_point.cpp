@@ -3,8 +3,8 @@
 #include <cmath>
 #include <ctime>
 
-#include "../../cartocrow/core/core.h"
-#include "../../cartocrow/flow_map/polar_point.h"
+#include "cartocrow/core/core.h"
+#include "cartocrow/flow_map/polar_point.h"
 
 using namespace cartocrow;
 using namespace cartocrow::flow_map;

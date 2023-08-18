@@ -39,7 +39,7 @@ IpeRenderer::IpeRenderer(std::shared_ptr<GeometryPainting> painting) {
 }
 
 void IpeRenderer::save(const std::filesystem::path& file) {
-	ipe::Platform::initLib(70224);
+	ipe::Platform::initLib(ipe::IPELIB_VERSION);
 	ipe::Document document;
 	ipe::Layout layout;
 	layout.iOrigin = ipe::Vector(0, 0);

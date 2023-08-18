@@ -3,31 +3,41 @@
 #include <cmath>
 #include <ctime>
 
-#include <QApplication>
+#include "cartocrow/flow_map/painting.h"
+#include "cartocrow/flow_map/spiral_tree.h"
+#include "cartocrow/flow_map/spiral_tree_obstructed_algorithm.h"
 
-#include "../../cartocrow/flow_map/painting.h"
-#include "../../cartocrow/flow_map/spiral_tree.h"
-#include "../../cartocrow/flow_map/spiral_tree_obstructed_algorithm.h"
-#include "../../cartocrow/renderer/geometry_painting.h"
-#include "../../cartocrow/renderer/geometry_widget.h"
-#include "../../cartocrow/renderer/ipe_renderer.h"
-#include "cartocrow/renderer/geometry_widget.h"
+#include "cartocrow/renderer/ipe_renderer.h"
 
 using namespace cartocrow;
 using namespace cartocrow::flow_map;
 
-TEST_CASE("Computing a spiral tree with one obstacle") {
+TEST_CASE("Computing a spiral tree with one node", "[!mayfail]") {
 	auto tree = std::make_shared<SpiralTree>(Point<Inexact>(0, 0), 0.5061454830783556);
-	tree->addPlace("p1", Point<Inexact>(0, 400), 1);
-	Polygon<Inexact> obstacle;
-	obstacle.push_back(Point<Inexact>(0, 50));
-	obstacle.push_back(Point<Inexact>(8, 95));
-	obstacle.push_back(Point<Inexact>(50, 140));
-	obstacle.push_back(Point<Inexact>(-43, 134));
-	obstacle.push_back(Point<Inexact>(-50, 100));
-	tree->addObstacle(obstacle);
-	SpiralTreeObstructedAlgorithm algorithm(tree);
-	algorithm.run();
+	tree->addPlace("p1", Point<Inexact>(0, 100), 1);
+	CHECK(tree->nodes().size() == 2);
 
-	// TODO add assertions
+	int expectedNodeCount;
+	SECTION("without obstacle") {
+		expectedNodeCount = 2;
+	}
+
+	SECTION("with obstacle") {
+		Polygon<Inexact> obstacle;
+		obstacle.push_back(Point<Inexact>(-10, 50));
+		obstacle.push_back(Point<Inexact>(0, 25));
+		obstacle.push_back(Point<Inexact>(10, 50));
+		tree->addObstacle(obstacle);
+		expectedNodeCount = 4;
+	}
+
+	ReachableRegionAlgorithm algorithm(tree);
+	auto reachable = algorithm.run();
+	SpiralTreeObstructedAlgorithm algorithm2(tree, reachable);
+	algorithm2.run();
+
+	cartocrow::renderer::IpeRenderer renderer(algorithm2.debugPainting());
+	renderer.save("/tmp/test.ipe");
+
+	REQUIRE(tree->nodes().size() == expectedNodeCount);
 }

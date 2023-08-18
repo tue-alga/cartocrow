@@ -3,11 +3,11 @@
 #include <cmath>
 #include <ctime>
 
-#include "../../cartocrow/core/core.h"
-#include "../../cartocrow/flow_map/intersections.h"
-#include "../../cartocrow/flow_map/polar_line.h"
-#include "../../cartocrow/flow_map/spiral.h"
-#include "../../cartocrow/flow_map/spiral_segment.h"
+#include "cartocrow/core/core.h"
+#include "cartocrow/flow_map/intersections.h"
+#include "cartocrow/flow_map/polar_line.h"
+#include "cartocrow/flow_map/spiral.h"
+#include "cartocrow/flow_map/spiral_segment.h"
 
 using namespace cartocrow;
 using namespace cartocrow::flow_map;

@@ -26,6 +26,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "spiral_segment.h"
 #include "sweep_edge.h"
 
+#include <ranges>
+
 #include <CGAL/Ray_2.h>
 #include <CGAL/enum.h>
 
@@ -34,8 +36,10 @@ namespace cartocrow::flow_map {
 SweepInterval::SweepInterval(Type type)
     : m_type(type), m_previousBoundary(nullptr), m_nextBoundary(nullptr) {}
 
-SweepInterval::SweepInterval(Type type, SweepEdge* previousBoundary, SweepEdge* nextBoundary)
-    : m_type(type), m_previousBoundary(previousBoundary), m_nextBoundary(nextBoundary) {}
+SweepInterval::SweepInterval(const SweepInterval& other, SweepEdge* previousBoundary,
+                             SweepEdge* nextBoundary)
+    : m_type(other.m_type), m_node(other.m_node), m_activeDescendant(other.m_activeDescendant),
+      m_previousBoundary(previousBoundary), m_nextBoundary(nextBoundary) {}
 
 SweepEdge* SweepInterval::previousBoundary() {
 	return m_previousBoundary;
@@ -53,12 +57,40 @@ SweepInterval::Type SweepInterval::type() const {
 	return m_type;
 }
 
-std::optional<PolarPoint> SweepInterval::vanishingPoint(Number<Inexact> rMin) const {
+void SweepInterval::setNode(std::shared_ptr<Node> node) {
+	m_node = node;
+}
+
+std::shared_ptr<Node> SweepInterval::node() const {
+	return m_node;
+}
+
+void SweepInterval::setActiveDescendant(std::shared_ptr<Node> activeDescendant) {
+	m_activeDescendant = activeDescendant;
+}
+
+std::shared_ptr<Node> SweepInterval::activeDescendant() const {
+	return m_activeDescendant;
+}
+
+std::optional<PolarPoint> SweepInterval::outwardsVanishingPoint(Number<Inexact> rMin) const {
 	if (m_previousBoundary == nullptr || m_nextBoundary == nullptr) {
 		return std::nullopt;
 	}
 	std::optional<Number<Inexact>> r =
-	    m_previousBoundary->shape().intersectWith(m_nextBoundary->shape(), rMin);
+	    m_previousBoundary->shape().intersectOutwardsWith(m_nextBoundary->shape(), rMin);
+	if (!r) {
+		return std::nullopt;
+	}
+	return m_previousBoundary->shape().evalForR(*r);
+}
+
+std::optional<PolarPoint> SweepInterval::inwardsVanishingPoint(Number<Inexact> rMax) const {
+	if (m_previousBoundary == nullptr || m_nextBoundary == nullptr) {
+		return std::nullopt;
+	}
+	std::optional<Number<Inexact>> r =
+	    m_previousBoundary->shape().intersectInwardsWith(m_nextBoundary->shape(), rMax);
 	if (!r) {
 		return std::nullopt;
 	}
@@ -66,58 +98,89 @@ std::optional<PolarPoint> SweepInterval::vanishingPoint(Number<Inexact> rMin) co
 }
 
 Polygon<Inexact> SweepInterval::sweepShape(Number<Inexact> rFrom, Number<Inexact> rTo) const {
-	std::vector<PolarPoint> vertices;
-	// left side
-	if (m_nextBoundary) {
-		for (Number<Inexact> r = rTo; r > rFrom; r /= 1.05) {
-			auto p = m_nextBoundary->shape().evalForR(r);
-			vertices.push_back(p);
+
+	const Number<Inexact> SWEEP_SHAPE_RESOLUTION = 0.05;
+
+	// special case: if we're the only interval on the circle, just draw an annulus
+	if (!m_nextBoundary) {
+		Polygon<Inexact> result;
+		for (Number<Inexact> phi = 0; phi < 2 * M_PI; phi += SWEEP_SHAPE_RESOLUTION) {
+			result.push_back(PolarPoint(rFrom, phi).toCartesian());
 		}
-	} else {
-		vertices.push_back(PolarPoint(rTo, M_PI));
-		vertices.push_back(PolarPoint(rFrom, M_PI));
-	}
-	// near side
-	Number<Inexact> nearPhiNext = m_nextBoundary ? m_nextBoundary->shape().phiForR(rFrom) : M_PI;
-	Number<Inexact> nearPhiPrevious =
-	    m_previousBoundary ? m_previousBoundary->shape().phiForR(rFrom) : -M_PI;
-	if (nearPhiNext < nearPhiPrevious ||
-	    (nearPhiNext == nearPhiPrevious &&
-	     m_previousBoundary->shape().departsToLeftOf(m_nextBoundary->shape()))) {
-		nearPhiPrevious -= 2 * M_PI;
-	}
-	for (Number<Inexact> phi = nearPhiNext; phi > nearPhiPrevious; phi -= 0.05) {
-		vertices.push_back(PolarPoint(rFrom, phi));
-	}
-	// right side
-	if (m_previousBoundary) {
-		for (Number<Inexact> r = rFrom; r < rTo; r *= 1.05) {
-			auto p = m_previousBoundary->shape().evalForR(r);
-			vertices.push_back(p);
+		result.push_back(PolarPoint(rFrom, 2 * M_PI).toCartesian());
+		for (Number<Inexact> phi = 2 * M_PI; phi > 0; phi -= SWEEP_SHAPE_RESOLUTION) {
+			result.push_back(PolarPoint(rTo, phi).toCartesian());
 		}
-	} else {
-		vertices.push_back(PolarPoint(rFrom, -M_PI));
-		vertices.push_back(PolarPoint(rTo, -M_PI));
+		result.push_back(PolarPoint(rTo, 0).toCartesian());
+		return result;
 	}
-	// far side
-	Number<Inexact> farPhiPrevious =
-	    m_previousBoundary ? m_previousBoundary->shape().phiForR(rTo) : -M_PI;
-	Number<Inexact> farPhiNext = m_nextBoundary ? m_nextBoundary->shape().phiForR(rTo) : M_PI;
+
+	Number<Inexact> rMid = (rFrom + rTo) / 2;
+	Number<Inexact> alpha = wrapAngleUpper(m_nextBoundary->shape().phiForR(rMid) -
+	                                       m_previousBoundary->shape().phiForR(rMid));
+
+	// compute side edges
+	std::vector<PolarPoint> leftNearEdge, rightNearEdge, leftFarEdge, rightFarEdge;
+	for (Number<Inexact> r = rMid; r > rFrom; r /= 1 + SWEEP_SHAPE_RESOLUTION) {
+		leftNearEdge.push_back(m_nextBoundary->shape().evalForR(r));
+		rightNearEdge.push_back(m_previousBoundary->shape().evalForR(r));
+	}
+	leftNearEdge.push_back(m_nextBoundary->shape().evalForR(rFrom));
+	rightNearEdge.push_back(m_previousBoundary->shape().evalForR(rFrom));
+	for (Number<Inexact> r = rMid; r < rTo; r *= 1 + SWEEP_SHAPE_RESOLUTION) {
+		leftFarEdge.push_back(m_nextBoundary->shape().evalForR(r));
+		rightFarEdge.push_back(m_previousBoundary->shape().evalForR(r));
+	}
+	leftFarEdge.push_back(m_nextBoundary->shape().evalForR(rTo));
+	rightFarEdge.push_back(m_previousBoundary->shape().evalForR(rTo));
+
+	// near arc
+	std::vector<PolarPoint> nearArc;
+	Number<Inexact> nearPhiNext = m_nextBoundary->shape().phiForR(rFrom);
+	Number<Inexact> alphaNear = alpha + angleSpan(leftNearEdge) - angleSpan(rightNearEdge);
+	for (Number<Inexact> phi = nearPhiNext; phi > nearPhiNext - alphaNear; phi -= SWEEP_SHAPE_RESOLUTION) {
+		nearArc.push_back(PolarPoint(rFrom, phi));
+	}
+
+	// far arc
+	std::vector<PolarPoint> farArc;
+	Number<Inexact> farPhiNext = m_nextBoundary->shape().phiForR(rTo);
+	Number<Inexact> alphaFar = alpha + angleSpan(leftFarEdge) - angleSpan(rightFarEdge);
+	for (Number<Inexact> phi = farPhiNext; phi > farPhiNext - alphaFar; phi -= SWEEP_SHAPE_RESOLUTION) {
+		farArc.push_back(PolarPoint(rTo, phi));
+	}
+
+	// assemble the result
+	Polygon<Inexact> result;
+	for (auto vertex : leftNearEdge) {
+		result.push_back(vertex.toCartesian());
+	}
+	for (auto vertex : nearArc) {
+		result.push_back(vertex.toCartesian());
+	}
+	for (auto vertex = rightNearEdge.rbegin(); vertex != rightNearEdge.rend(); ++vertex) {
+		result.push_back(vertex->toCartesian());
+	}
+	for (auto vertex : rightFarEdge) {
+		result.push_back(vertex.toCartesian());
+	}
+	for (auto vertex = farArc.rbegin(); vertex != farArc.rend(); ++vertex) {
+		result.push_back(vertex->toCartesian());
+	}
+	for (auto vertex = leftFarEdge.rbegin(); vertex != leftFarEdge.rend(); ++vertex) {
+		result.push_back(vertex->toCartesian());
+	}
+	return result;
+}
+
+Number<Inexact> SweepInterval::angleSpan(std::vector<PolarPoint>& vertices) const {
 	Number<Inexact> angle = 0;
 	for (size_t i = 0; i + 1 < vertices.size(); i++) {
 		Number<Inexact> phi1 = vertices[i].phi();
 		Number<Inexact> phi2 = vertices[i + 1].phi();
 		angle += wrapAngle(phi2 - phi1, -M_PI);
 	}
-	for (Number<Inexact> phi = farPhiPrevious; phi < farPhiPrevious - angle; phi += 0.05) {
-		vertices.push_back(PolarPoint(rTo, phi));
-	}
-
-	Polygon<Inexact> result;
-	for (auto vertex : vertices) {
-		result.push_back(vertex.toCartesian());
-	}
-	return result;
+	return angle;
 }
 
 void SweepInterval::paintSweepShape(renderer::GeometryRenderer& renderer, Number<Inexact> rFrom,
@@ -127,7 +190,7 @@ void SweepInterval::paintSweepShape(renderer::GeometryRenderer& renderer, Number
 	                 cartocrow::renderer::GeometryRenderer::stroke);
 	renderer.setStroke(Color{127, 127, 127}, 0.2);
 	renderer.setFillOpacity(50);
-	if (m_type == Type::SHADOW) {
+	if (m_type == Type::SHADOW || m_type == Type::FREE) {
 		renderer.setFill(Color{255, 255, 255});
 	} else if (m_type == Type::REACHABLE) {
 		renderer.setFill(Color{162, 255, 128});

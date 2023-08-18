@@ -1,6 +1,6 @@
 #include "../catch.hpp"
 
-#include "../../cartocrow/necklace_map/range.h"
+#include "cartocrow/necklace_map/range.h"
 
 using namespace cartocrow::necklace_map;
 
