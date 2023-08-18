@@ -7,8 +7,8 @@
 
 CartoCrow is a framework that simplifies the implementation of algorithms in cartographic visualization. It allows researchers to experiment with these algorithms and use them to generate maps. The framework behind CartoCrow can be used to run other cartography algorithms online. CartoCrow consists of a C++ library (this repository) which provides a set of command-line applications, and a web interface (see [cartocrow-web](https://github.com/tue-alga/cartocrow-web)) which allows end users to generate maps in a user-friendly way.
 
-> :warning: CartoCrow is still a **work in progress**  and should not be considered stable yet.
-
+> [!WARNING]  
+> CartoCrow is still a **work in progress**  and should not be considered stable yet.
 
 This repository consists of the following subdirectories:
 
