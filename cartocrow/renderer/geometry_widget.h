@@ -81,6 +81,14 @@ class GeometryWidget : public QWidget, GeometryRenderer {
 	Q_OBJECT;
 
   public:
+	/// Types of grid.
+	enum class GridMode {
+		/// A cartesian \f$(x, y)\f$ grid.
+		CARTESIAN,
+		/// A polar \f$(r, \theta)\f$ grid.
+		POLAR
+	};
+
 	/// Constructs a GeometryWidget without a painting.
 	GeometryWidget();
 	/// Constructs a GeometryWidget for the given painting.
@@ -110,7 +118,7 @@ class GeometryWidget : public QWidget, GeometryRenderer {
 	Number<Inexact> zoomFactor() const;
 
   public slots:
-	/// Determines whether to draw the axes in the background.
+	/// Determines whether to draw the axes and gridlines in the background.
 	void setDrawAxes(bool drawAxes);
 	/// Sets the minimum zoom level, in pixels per unit. If the current zoom
 	/// level violates the minimum, it is not automatically adjusted.
@@ -122,6 +130,8 @@ class GeometryWidget : public QWidget, GeometryRenderer {
 	void zoomIn();
 	/// Decreases the zoom level, taking the minimum zoom into account.
 	void zoomOut();
+	/// Sets the type of grid.
+	void setGridMode(GridMode mode);
 
   signals:
 	/// Emitted when the user clicks on the widget.
@@ -163,6 +173,8 @@ class GeometryWidget : public QWidget, GeometryRenderer {
 	/// Draws the axes, grid, and axis labels in the background, taking the
 	/// current zoom level into account.
 	void drawAxes();
+	/// Draws the coordinate hovered by the mouse.
+	void drawCoordinates();
 	/// Moves the zoom slider knob to the currently set zoom level.
 	void updateZoomSlider();
 	/// Puts the layers currently in this GeometryWidget into the layer list.
@@ -199,6 +211,9 @@ class GeometryWidget : public QWidget, GeometryRenderer {
 	bool m_mouseButtonDown = false;
 	/// Whether to draw the background axes.
 	bool m_drawAxes = true;
+	/// The grid mode.
+	GridMode m_gridMode = GridMode::CARTESIAN;
+	
 	/// The current drawing style.
 	GeometryWidgetStyle m_style;
 	/// A stack of drawing styles, used by \link pushStyle() and \link
