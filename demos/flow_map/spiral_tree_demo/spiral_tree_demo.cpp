@@ -95,14 +95,14 @@ SpiralTreeDemo::SpiralTreeDemo() {
 	m_obstacle.push_back(Point<Inexact>(4.5, 11));
 	m_obstacle.push_back(Point<Inexact>(-5.5, 9));*/
 
-	m_obstacle.push_back(Point<Inexact>(-8.9898989, -5.4545454));
+	/*m_obstacle.push_back(Point<Inexact>(-8.9898989, -5.4545454));
 	m_obstacle.push_back(Point<Inexact>(-9.5959595, -0.4040404));
 	m_obstacle.push_back(Point<Inexact>(-4.7474747, -3.0303030));
-	m_obstacle.push_back(Point<Inexact>(-6.5656565, -6.7676767));
+	m_obstacle.push_back(Point<Inexact>(-6.5656565, -6.7676767));*/
 
-	/*m_obstacle.push_back(Point<Inexact>(-10, 50));
+	m_obstacle.push_back(Point<Inexact>(-10, 50));
 	m_obstacle.push_back(Point<Inexact>(0, 25));
-	m_obstacle.push_back(Point<Inexact>(10, 50));*/
+	m_obstacle.push_back(Point<Inexact>(10, 50));
 
 	m_renderer = new GeometryWidget();
 	m_renderer->setMaxZoom(10000);
@@ -153,16 +153,16 @@ SpiralTreeDemo::SpiralTreeDemo() {
 void SpiralTreeDemo::recalculate() {
 	Timer t;
 	auto tree = std::make_shared<SpiralTree>(Point<Inexact>(0, 0), m_alpha);
-	tree->addPlace("p1", Point<Inexact>(11.2121212, 17.0707070), 1);
+	/*tree->addPlace("p1", Point<Inexact>(11.2121212, 17.0707070), 1);
 	tree->addPlace("p2", Point<Inexact>(13.9393939, -14.1414141), 1);
 	tree->addPlace("p3", Point<Inexact>(-4.5454545, -18.9898989), 1);
 	tree->addPlace("p4", Point<Inexact>(16.6666666, 6.1616161), 1);
 	tree->addPlace("p5", Point<Inexact>(-9.8989898, 13.9393939), 1);
-	tree->addPlace("p6", Point<Inexact>(-16.1616161, -2.6262626), 1);
-	//tree->addPlace("p1", Point<Inexact>(0, 100), 1);
+	tree->addPlace("p6", Point<Inexact>(-16.1616161, -2.6262626), 1);*/
+	tree->addPlace("p1", Point<Inexact>(0, 100), 1);
 	tree->addObstacle(m_obstacle);
 
-	Polygon<Inexact> obstacle2;
+	/*Polygon<Inexact> obstacle2;
 	obstacle2.push_back(Point<Inexact>(1.3131313, 10.2020202));
 	obstacle2.push_back(Point<Inexact>(6.1616161, 10.4040404));
 	obstacle2.push_back(Point<Inexact>(5.6565656, 5.2525252));
@@ -172,9 +172,9 @@ void SpiralTreeDemo::recalculate() {
 	obstacle3.push_back(Point<Inexact>(4.6464646, -10.4040404));
 	obstacle3.push_back(Point<Inexact>(10.4040404, -7.1717171));
 	obstacle3.push_back(Point<Inexact>(7.4747474, -13.9393939));
-	tree->addObstacle(obstacle3);
+	tree->addObstacle(obstacle3);*/
 
-	tree->addShields();
+	//tree->addShields();
 	t.stamp("Constructing tree and obstacles");
 
 	m_renderer->clear();

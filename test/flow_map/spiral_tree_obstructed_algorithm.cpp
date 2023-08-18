@@ -12,6 +12,8 @@
 using namespace cartocrow;
 using namespace cartocrow::flow_map;
 
+// marked as !mayfail as while the SpiralTreeObstacleAlgorithm works fine, the
+// tree is currently not yet correctly reconstructed causing an extra node
 TEST_CASE("Computing a spiral tree with one node", "[!mayfail]") {
 	auto tree = std::make_shared<SpiralTree>(Point<Inexact>(0, 0), 0.5061454830783556);
 	tree->addPlace("p1", Point<Inexact>(0, 100), 1);
