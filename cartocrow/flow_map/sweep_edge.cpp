@@ -317,13 +317,10 @@ SpiralSegment SweepEdgeShape::toSpiralSegment() const {
 }
 
 Number<Inexact> SweepEdgeShape::signedAlpha() const {
-	switch (m_type) {
-	case SweepEdgeShape::Type::RIGHT_SPIRAL:
-		return m_alpha;
-	case SweepEdgeShape::Type::LEFT_SPIRAL:
+	if (m_type == SweepEdgeShape::Type::LEFT_SPIRAL) {
 		return -m_alpha;
-	case SweepEdgeShape::Type::SEGMENT:
-		return 0;
+	} else {
+		return m_alpha;
 	}
 }
 
