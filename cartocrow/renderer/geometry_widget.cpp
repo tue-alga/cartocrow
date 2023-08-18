@@ -91,17 +91,17 @@ void GeometryWidget::paintEvent(QPaintEvent* event) {
 		}
 	}
 	m_painter->setPen(QPen(QColor(0, 0, 0)));
+	double decimalCount = std::max(0, static_cast<int>(log10(m_transform.m11())));
 	m_painter->drawText(rect().marginsRemoved(QMargins(10, 10, 10, 10)),
 	                    Qt::AlignRight | Qt::AlignBottom,
-	                    QString::number(m_mousePos.x()) + ", " + QString::number(m_mousePos.y()));
+	                    "(" + QString::number(m_mousePos.x(), 'f', decimalCount) + ", " +
+	                        QString::number(m_mousePos.y(), 'f', decimalCount) + ")");
 	m_painter->end();
 }
 
 void GeometryWidget::mouseMoveEvent(QMouseEvent* event) {
 	Point<Inexact> converted = inverseConvertPoint(event->pos());
-	auto x = static_cast<int>(converted.x() + 0.5);
-	auto y = static_cast<int>(converted.y() + 0.5);
-	m_mousePos = QPointF(x, y);
+	m_mousePos = QPointF(converted.x(), converted.y());
 
 	if (m_panning) {
 		QPointF delta = event->pos() - m_previousMousePos;
