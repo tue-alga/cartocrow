@@ -18,6 +18,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include "geometry_widget.h"
+
 #include "geometry_renderer.h"
 
 #include <QGuiApplication>
@@ -28,6 +29,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <QSlider>
 #include <QToolButton>
 #include <QtGlobal>
+#include <cmath>
+#include <limits>
 
 namespace cartocrow::renderer {
 
@@ -90,13 +93,7 @@ void GeometryWidget::paintEvent(QPaintEvent* event) {
 			popStyle();
 		}
 	}
-	m_painter->setPen(QPen(QColor(0, 0, 0)));
-	double decimalCount = std::max(0, static_cast<int>(log10(m_transform.m11())));
-	m_painter->drawText(rect().marginsRemoved(QMargins(10, 10, 10, 10)),
-	                    Qt::AlignRight | Qt::AlignBottom,
-	                    "(" + QString::number(m_mousePos.x(), 'f', decimalCount) + ", " +
-	                        QString::number(m_mousePos.y(), 'f', decimalCount) + ")");
-	m_painter->end();
+	drawCoordinates();
 }
 
 void GeometryWidget::mouseMoveEvent(QMouseEvent* event) {
@@ -215,31 +212,68 @@ void GeometryWidget::drawAxes() {
 	double tickScale = log10(m_transform.m11());
 	double majorScale = pow(10, 2 - floor(tickScale));
 
-	// minor grid lines
-	double minorTint = tickScale - floor(tickScale);
-	int minorColor = 255 - 64 * minorTint;
-	setMode({});
-	setStroke(Color{minorColor, minorColor, minorColor}, 1);
-	for (int i = floor(bounds.xmin() / (majorScale / 10)); i <= bounds.xmax() / (majorScale / 10);
-	     ++i) {
-		draw(Segment<Inexact>(Point<Inexact>(i * majorScale / 10, bounds.ymin()),
-		                      Point<Inexact>(i * majorScale / 10, bounds.ymax())));
-	}
-	for (int i = floor(bounds.ymax() / (majorScale / 10)); i <= bounds.ymin() / (majorScale / 10);
-	     ++i) {
-		draw(Segment<Inexact>(Point<Inexact>(bounds.xmin(), i * majorScale / 10),
-		                      Point<Inexact>(bounds.xmax(), i * majorScale / 10)));
-	}
+	setMode(DrawMode::stroke);
+	if (m_gridMode == GridMode::CARTESIAN) {
+		// minor grid lines
+		double minorTint = tickScale - floor(tickScale);
+		int minorColor = 255 - 64 * minorTint;
+		setStroke(Color{minorColor, minorColor, minorColor}, 1);
+		for (int i = floor(bounds.xmin() / (majorScale / 10)); i <= bounds.xmax() / (majorScale / 10);
+			++i) {
+			draw(Segment<Inexact>(Point<Inexact>(i * majorScale / 10, bounds.ymin()),
+								Point<Inexact>(i * majorScale / 10, bounds.ymax())));
+		}
+		for (int i = floor(bounds.ymax() / (majorScale / 10)); i <= bounds.ymin() / (majorScale / 10);
+			++i) {
+			draw(Segment<Inexact>(Point<Inexact>(bounds.xmin(), i * majorScale / 10),
+								Point<Inexact>(bounds.xmax(), i * majorScale / 10)));
+		}
 
-	// major grid lines
-	setStroke(Color{192, 192, 192}, 1);
-	for (int i = floor(bounds.xmin() / majorScale); i <= bounds.xmax() / majorScale; ++i) {
-		draw(Segment<Inexact>(Point<Inexact>(i * majorScale, bounds.ymin()),
-		                      Point<Inexact>(i * majorScale, bounds.ymax())));
-	}
-	for (int i = floor(bounds.ymax() / majorScale); i <= bounds.ymin() / majorScale; ++i) {
-		draw(Segment<Inexact>(Point<Inexact>(bounds.xmin(), i * majorScale),
-		                      Point<Inexact>(bounds.xmax(), i * majorScale)));
+		// major grid lines
+		setStroke(Color{192, 192, 192}, 1);
+		for (int i = floor(bounds.xmin() / majorScale); i <= bounds.xmax() / majorScale; ++i) {
+			draw(Segment<Inexact>(Point<Inexact>(i * majorScale, bounds.ymin()),
+								Point<Inexact>(i * majorScale, bounds.ymax())));
+		}
+		for (int i = floor(bounds.ymax() / majorScale); i <= bounds.ymin() / majorScale; ++i) {
+			draw(Segment<Inexact>(Point<Inexact>(bounds.xmin(), i * majorScale),
+								Point<Inexact>(bounds.xmax(), i * majorScale)));
+		}
+
+	} else if (m_gridMode == GridMode::POLAR) {
+		Number<Inexact> minRadius = std::numeric_limits<Number<Inexact>>::infinity();
+		Number<Inexact> maxRadius = 0;
+		const std::vector<Point<Inexact>> candidates = {
+		    {bounds.xmin(), bounds.ymin()},
+		    {bounds.xmin(), 0},
+		    {0, bounds.ymin()},
+		    {bounds.xmin(), bounds.ymax()},
+		    {bounds.xmax(), bounds.ymin()},
+		    {bounds.xmax(), 0},
+		    {0, bounds.ymax()},
+		    {bounds.xmax(), bounds.ymax()},
+		    {0, 0}
+		};
+		for (const auto& c : candidates) {
+			if (c.x() >= bounds.xmin() && c.x() <= bounds.xmax() && c.y() >= bounds.ymax() &&
+			    c.y() <= bounds.ymin()) {
+				Number<Inexact> r = std::hypot(c.x(), c.y());
+				minRadius = std::min(minRadius, r);
+				maxRadius = std::max(maxRadius, r);
+			}
+		}
+		// minor grid lines
+		double minorTint = tickScale - floor(tickScale);
+		int minorColor = 255 - 64 * minorTint;
+		setStroke(Color{minorColor, minorColor, minorColor}, 1);
+		for (int i = minRadius / (majorScale / 10); i <= maxRadius / (majorScale / 10); ++i) {
+			draw(Circle<Inexact>(CGAL::ORIGIN, std::pow(i * majorScale / 10, 2)));
+		}
+		// major grid lines
+		setStroke(Color{192, 192, 192}, 1);
+		for (int i = minRadius / majorScale; i <= maxRadius / majorScale; ++i) {
+			draw(Circle<Inexact>(CGAL::ORIGIN, std::pow(i * majorScale, 2)));
+		}
 	}
 
 	// axes
@@ -255,10 +289,12 @@ void GeometryWidget::drawAxes() {
 	for (int i = floor(bounds.xmin() / majorScale); i <= bounds.xmax() / majorScale + 1; ++i) {
 		if (i != 0) {
 			origin = convertPoint(Point<Inexact>(i * majorScale, 0));
-			if (origin.y() < 0) {
-				origin.setY(0);
-			} else if (origin.y() > rect().bottom() - 30) {
-				origin.setY(rect().bottom() - 30);
+			if (m_gridMode == GridMode::CARTESIAN) {
+				if (origin.y() < 0) {
+					origin.setY(0);
+				} else if (origin.y() > rect().bottom() - 30) {
+					origin.setY(rect().bottom() - 30);
+				}
 			}
 			m_painter->drawText(QRectF(origin + QPointF{-100, 5}, origin + QPointF{-5, 100}),
 			                    Qt::AlignRight, QString::number(i * majorScale));
@@ -270,10 +306,12 @@ void GeometryWidget::drawAxes() {
 			origin = convertPoint(Point<Inexact>(0, i * majorScale));
 			QString label = QString::number(i * majorScale);
 			double length = metrics.width(label);
-			if (origin.x() < length + 10) {
-				origin.setX(length + 10);
-			} else if (origin.x() > rect().right() - 0) {
-				origin.setX(rect().right() - 0);
+			if (m_gridMode == GridMode::CARTESIAN) {
+				if (origin.x() < length + 10) {
+					origin.setX(length + 10);
+				} else if (origin.x() > rect().right() - 0) {
+					origin.setX(rect().right() - 0);
+				}
 			}
 			m_painter->drawText(QRectF(origin + QPointF{-100, 5}, origin + QPointF{-5, 100}),
 			                    Qt::AlignRight, label);
@@ -281,6 +319,26 @@ void GeometryWidget::drawAxes() {
 	}
 
 	popStyle();
+}
+
+void GeometryWidget::drawCoordinates() {
+	m_painter->setPen(QPen(QColor(0, 0, 0)));
+	QString coordinate;
+	if (m_gridMode == GridMode::CARTESIAN) {
+		double decimalCount = std::max(0, static_cast<int>(log10(m_transform.m11())));
+		coordinate = "(" + QString::number(m_mousePos.x(), 'f', decimalCount) + ", " +
+		             QString::number(m_mousePos.y(), 'f', decimalCount) + ")";
+	} else if (m_gridMode == GridMode::POLAR) {
+		double rDecimalCount = std::max(0, static_cast<int>(log10(m_transform.m11())));
+		Number<Inexact> r = std::hypot(m_mousePos.x(), m_mousePos.y());
+		double phiDecimalCount = std::max(0, static_cast<int>(log10(m_transform.m11() * r)) + 1);
+		Number<Inexact> theta = std::atan2(m_mousePos.y(), m_mousePos.x());
+		coordinate = "(r = " + QString::number(r, 'f', rDecimalCount) + ", φ = " +
+		             QString::number(theta / M_PI, 'f', phiDecimalCount) + "π)";
+	}
+	m_painter->drawText(rect().marginsRemoved(QMargins(10, 10, 10, 10)),
+	                    Qt::AlignRight | Qt::AlignBottom, coordinate);
+	m_painter->end();
 }
 
 void GeometryWidget::updateZoomSlider() {
@@ -463,6 +521,11 @@ void GeometryWidget::zoomOut() {
 		m_transform /= m_minZoom / m_transform.m11();
 	}
 	updateZoomSlider();
+	update();
+}
+
+void GeometryWidget::setGridMode(GridMode mode) {
+	m_gridMode = mode;
 	update();
 }
 

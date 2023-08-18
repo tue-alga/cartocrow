@@ -106,6 +106,7 @@ SpiralTreeDemo::SpiralTreeDemo() {
 
 	m_renderer = new GeometryWidget();
 	m_renderer->setMaxZoom(10000);
+	m_renderer->setGridMode(GeometryWidget::GridMode::POLAR);
 	setCentralWidget(m_renderer);
 
 	QToolBar* toolBar = new QToolBar();
