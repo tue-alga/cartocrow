@@ -118,6 +118,11 @@ GeometryWidget::GeometryWidget() {
 	connect(m_layerList, &QListWidget::itemChanged, [&]() {
 		for (int i = 0; i < m_layerList->count(); i++) {
 			m_paintings[i].visible = m_layerList->item(i)->checkState() == Qt::Checked;
+			if (m_paintings[i].visible) {
+				m_invisibleLayerNames.erase(m_paintings[i].name);
+			} else {
+				m_invisibleLayerNames.insert(m_paintings[i].name);
+			}
 		}
 		update();
 	});
@@ -578,7 +583,8 @@ void GeometryWidget::setFillOpacity(int alpha) {
 }*/
 
 void GeometryWidget::addPainting(std::shared_ptr<GeometryPainting> painting, const std::string& name) {
-	m_paintings.push_back(DrawnPainting{painting, name, true});
+	bool visible = !m_invisibleLayerNames.contains(name);
+	m_paintings.push_back(DrawnPainting{painting, name, visible});
 	updateLayerList();
 }
 

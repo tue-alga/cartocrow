@@ -250,6 +250,10 @@ class GeometryWidget : public QWidget, GeometryRenderer {
 		/// Whether the painting is currently visible.
 		bool visible;
 	};
+	/// The set of layer names that were invisible. This set doesn't get cleared
+	/// when paintings are removed; when a new painting is added its name is
+	/// looked up in the set to find out if it should be made visible initially.
+	std::set<std::string> m_invisibleLayerNames;
 	/// List of the paintings we're drawing.
 	std::vector<DrawnPainting> m_paintings;
 	/// The QPainter we are drawing with. Only valid while painting.
