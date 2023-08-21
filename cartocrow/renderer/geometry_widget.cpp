@@ -27,6 +27,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <QPolygon>
 #include <QSlider>
 #include <QToolButton>
+#include <QGuiApplication>
 
 #include <cmath>
 #include <limits>
@@ -72,7 +73,6 @@ void GeometryWidget::PolygonEditable::endDrag() {
 int GeometryWidget::PolygonEditable::findVertex(Point<Inexact> location,
                                                 Number<Inexact> radius) const {
 	for (int i = 0; i < m_polygon->size(); i++) {
-		std::cout << location << " vs " << m_polygon->vertices()[i] << std::endl;
 		if ((m_polygon->vertices()[i] - location).squared_length() < radius * radius) {
 			return i;
 		}
