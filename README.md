@@ -22,18 +22,18 @@ This repository consists of the following subdirectories:
 
 CartoCrow depends on the following build tools:
 
-* g++ (11.2.0) / clang++ (14.0.0) / MSVC (2019)
+* g++ (11.4.0, 12.3.0) / clang++ (14.0.0, 15.0.7) / MSVC (2019)
 * CMake (3.15)
 
 And it depends on the following libraries:
 
-* CGAL (5.0) -- for implementations of computational geometry algorithms we need
-* glog (0.5.0) -- for logging
-* ipelib (7.2.26) -- for [Ipe](https://ipe.otfried.org) input and SVG/Ipe output
-* nlohmann-json (3.10.5) -- for JSON parsing
-* Qt (5.15) -- for the interactive GUI
+* CGAL (5.4, 5.5) – for implementations of computational geometry algorithms we need
+* glog (0.5.0, 0.6.0) – for logging
+* ipelib (7.2.26) – for [Ipe](https://ipe.otfried.org) input and SVG/Ipe output
+* nlohmann-json (3.10.5, 3.11.2) – for JSON parsing
+* Qt (5.15) – for the interactive GUI
 
-The version numbers listed are indicative. Newer (and possibly somewhat older) versions will most likely work as well.
+The version numbers listed are the ones we're testing with. Newer (and possibly somewhat older) versions will most likely work as well.
 
 
 ### Windows (MSVC)
