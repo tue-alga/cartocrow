@@ -21,18 +21,64 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "geometry_renderer.h"
 
-#include <QGuiApplication>
 #include <QPainterPath>
 #include <QPen>
 #include <QPoint>
 #include <QPolygon>
 #include <QSlider>
 #include <QToolButton>
-#include <QtGlobal>
+
 #include <cmath>
 #include <limits>
 
 namespace cartocrow::renderer {
+
+GeometryWidget::Editable::Editable(GeometryWidget* widget) : m_widget(widget) {}
+
+GeometryWidget::PolygonEditable::PolygonEditable(GeometryWidget* widget, std::shared_ptr<Polygon<Inexact>> polygon)
+    : Editable(widget), m_polygon(polygon) {}
+
+bool GeometryWidget::PolygonEditable::drawHoverHint(Point<Inexact> location,
+                                                    Number<Inexact> radius) const {
+	int vertexId = findVertex(location, radius);
+	if (vertexId == -1) {
+		return false;
+	}
+	QPointF position = m_widget->convertPoint(m_polygon->vertices()[vertexId]);
+	m_widget->m_painter->setPen(QPen(QBrush(QColor{240, 40, 20}), 1.5f));
+	m_widget->m_painter->setBrush(Qt::NoBrush);
+	m_widget->m_painter->drawEllipse(position, 5, 5);
+	return true;
+}
+
+bool GeometryWidget::PolygonEditable::startDrag(Point<Inexact> location, Number<Inexact> radius) {
+	int vertexId = findVertex(location, radius);
+	if (vertexId == -1) {
+		return false;
+	}
+	m_draggedVertex = vertexId;
+	return true;
+}
+
+void GeometryWidget::PolygonEditable::handleDrag(Point<Inexact> to) const {
+	assert(m_draggedVertex != -1);
+	m_polygon->set(m_polygon->vertices_begin() + m_draggedVertex, to);
+}
+
+void GeometryWidget::PolygonEditable::endDrag() {
+	m_draggedVertex = -1;
+}
+
+int GeometryWidget::PolygonEditable::findVertex(Point<Inexact> location,
+                                                Number<Inexact> radius) const {
+	for (int i = 0; i < m_polygon->size(); i++) {
+		std::cout << location << " vs " << m_polygon->vertices()[i] << std::endl;
+		if ((m_polygon->vertices()[i] - location).squared_length() < radius * radius) {
+			return i;
+		}
+	}
+	return -1;
+}
 
 GeometryWidget::GeometryWidget() {
 	setMouseTracking(true);
@@ -93,41 +139,61 @@ void GeometryWidget::paintEvent(QPaintEvent* event) {
 			popStyle();
 		}
 	}
+
+	Point<Inexact> mouseLocation = inverseConvertPoint(m_mousePos);
+	for (const auto& editable : m_editables) {
+		if (editable->drawHoverHint(mouseLocation, 10.0f / zoomFactor())) {
+			break;
+		}
+	}
+
 	drawCoordinates();
 }
 
 void GeometryWidget::mouseMoveEvent(QMouseEvent* event) {
-	Point<Inexact> converted = inverseConvertPoint(event->pos());
-	m_mousePos = QPointF(converted.x(), converted.y());
+	m_mousePos = event->pos();
 
 	if (m_panning) {
-		QPointF delta = event->pos() - m_previousMousePos;
+		QPointF delta = m_mousePos - m_previousMousePos;
 		QTransform translation;
 		translation.translate(delta.x(), delta.y());
 		m_transform = m_transform * translation;
 	} else if (m_mouseButtonDown) {
 		if (m_dragging) {
-			emit dragMoved(inverseConvertPoint(event->pos()));
+			emit dragMoved(inverseConvertPoint(m_mousePos));
+		} else if (m_activeEditable) {
+			m_activeEditable->handleDrag(inverseConvertPoint(m_mousePos));
+			emit edited();
 		} else {
 			m_dragging = true;
 			emit dragStarted(inverseConvertPoint(m_previousMousePos));
-			emit dragMoved(inverseConvertPoint(event->pos()));
+			emit dragMoved(inverseConvertPoint(m_mousePos));
 		}
 	}
-	m_previousMousePos = event->pos();
+	m_previousMousePos = m_mousePos;
 
 	update();
 }
 
 void GeometryWidget::mousePressEvent(QMouseEvent* event) {
 	m_mouseButtonDown = true;
-	// initiate canvas panning when dragging with the right mouse button
-	// or when holding Ctrl while dragging
 	if ((event->button() & Qt::RightButton) ||
 	    QGuiApplication::keyboardModifiers().testFlag(Qt::KeyboardModifier::ControlModifier)) {
+		// initiate canvas panning when dragging with the right mouse button
+		// or when holding Ctrl while dragging
 		m_panning = true;
 		setCursor(Qt::ClosedHandCursor);
 		update();
+
+	} else {
+		// else, see if there is some editable that wants to respond
+		Point<Inexact> mouseLocation = inverseConvertPoint(m_mousePos);
+		for (auto& editable : m_editables) {
+			if (editable->startDrag(mouseLocation, 10.0f / zoomFactor())) {
+				m_activeEditable = editable.get();
+				break;
+			}
+		}
 	}
 	m_previousMousePos = event->pos();
 }
@@ -141,6 +207,8 @@ void GeometryWidget::mouseReleaseEvent(QMouseEvent* event) {
 	} else if (m_dragging) {
 		m_dragging = false;
 		emit dragEnded(inverseConvertPoint(m_previousMousePos));
+	} else if (m_activeEditable) {
+		m_activeEditable = nullptr;
 	} else {
 		emit clicked(inverseConvertPoint(m_previousMousePos));
 	}
@@ -322,17 +390,18 @@ void GeometryWidget::drawAxes() {
 }
 
 void GeometryWidget::drawCoordinates() {
+	Point<Inexact> converted = inverseConvertPoint(m_mousePos);
 	m_painter->setPen(QPen(QColor(0, 0, 0)));
 	QString coordinate;
 	if (m_gridMode == GridMode::CARTESIAN) {
 		double decimalCount = std::max(0, static_cast<int>(log10(m_transform.m11())));
-		coordinate = "(" + QString::number(m_mousePos.x(), 'f', decimalCount) + ", " +
-		             QString::number(m_mousePos.y(), 'f', decimalCount) + ")";
+		coordinate = "(" + QString::number(converted.x(), 'f', decimalCount) + ", " +
+		             QString::number(converted.y(), 'f', decimalCount) + ")";
 	} else if (m_gridMode == GridMode::POLAR) {
 		double rDecimalCount = std::max(0, static_cast<int>(log10(m_transform.m11())));
-		Number<Inexact> r = std::hypot(m_mousePos.x(), m_mousePos.y());
+		Number<Inexact> r = std::hypot(converted.x(), converted.y());
 		double phiDecimalCount = std::max(0, static_cast<int>(log10(m_transform.m11() * r)) + 1);
-		Number<Inexact> theta = std::atan2(m_mousePos.y(), m_mousePos.x());
+		Number<Inexact> theta = std::atan2(converted.y(), converted.x());
 		coordinate = "(r = " + QString::number(r, 'f', rDecimalCount) + ", φ = " +
 		             QString::number(theta / M_PI, 'f', phiDecimalCount) + "π)";
 	}
@@ -491,6 +560,10 @@ void GeometryWidget::clear() {
 
 Number<Inexact> GeometryWidget::zoomFactor() const {
 	return m_transform.m11();
+}
+
+void GeometryWidget::registerEditable(std::shared_ptr<Polygon<Inexact>> polygon) {
+	m_editables.push_back(std::make_unique<PolygonEditable>(this, polygon));
 }
 
 void GeometryWidget::setDrawAxes(bool drawAxes) {

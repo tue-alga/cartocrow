@@ -95,10 +95,12 @@ SpiralTreeDemo::SpiralTreeDemo() {
 	m_obstacle.push_back(Point<Inexact>(4.5, 11));
 	m_obstacle.push_back(Point<Inexact>(-5.5, 9));*/
 
-	m_obstacle.push_back(Point<Inexact>(-8.9898989, -5.4545454));
-	m_obstacle.push_back(Point<Inexact>(-9.5959595, -0.4040404));
-	m_obstacle.push_back(Point<Inexact>(-4.7474747, -3.0303030));
-	m_obstacle.push_back(Point<Inexact>(-6.5656565, -6.7676767));
+	auto obstacle = std::make_shared<Polygon<Inexact>>();
+	obstacle->push_back(Point<Inexact>(-8.9898989, -5.4545454));
+	obstacle->push_back(Point<Inexact>(-9.5959595, -0.4040404));
+	obstacle->push_back(Point<Inexact>(-4.7474747, -3.0303030));
+	obstacle->push_back(Point<Inexact>(-6.5656565, -6.7676767));
+	m_obstacles.push_back(obstacle);
 
 	/*m_obstacle.push_back(Point<Inexact>(-10, 50));
 	m_obstacle.push_back(Point<Inexact>(0, 25));
@@ -130,7 +132,13 @@ SpiralTreeDemo::SpiralTreeDemo() {
 		m_alphaLabel->setText(QString("%1π").arg(value / 1000.0, 0, 'f', 3));
 		recalculate();
 	});
-	connect(m_renderer, &GeometryWidget::dragStarted, [&](Point<Inexact> p) {
+	for (auto obstacle : m_obstacles) {
+		m_renderer->registerEditable(obstacle);
+	}
+	connect(m_renderer, &GeometryWidget::edited, [&]() {
+		recalculate();
+	});
+	/*connect(m_renderer, &GeometryWidget::dragStarted, [&](Point<Inexact> p) {
 		m_draggedPoint = findClosestPoint(p, 10 / m_renderer->zoomFactor());
 		recalculate();
 	});
@@ -147,7 +155,7 @@ SpiralTreeDemo::SpiralTreeDemo() {
 	connect(m_renderer, &GeometryWidget::dragEnded, [&](Point<Inexact> p) {
 		m_draggedPoint = nullptr;
 		recalculate();
-	});
+	});*/
 	recalculate();
 }
 
@@ -161,9 +169,12 @@ void SpiralTreeDemo::recalculate() {
 	tree->addPlace("p5", Point<Inexact>(-9.8989898, 13.9393939), 1);
 	tree->addPlace("p6", Point<Inexact>(-16.1616161, -2.6262626), 1);
 	//tree->addPlace("p1", Point<Inexact>(0, 100), 1);
-	tree->addObstacle(m_obstacle);
 
-	Polygon<Inexact> obstacle2;
+	for (auto obstacle : m_obstacles) {
+		tree->addObstacle(*obstacle);
+	}
+
+	/*Polygon<Inexact> obstacle2;
 	obstacle2.push_back(Point<Inexact>(1.3131313, 10.2020202));
 	obstacle2.push_back(Point<Inexact>(6.1616161, 10.4040404));
 	obstacle2.push_back(Point<Inexact>(5.6565656, 5.2525252));
@@ -173,7 +184,7 @@ void SpiralTreeDemo::recalculate() {
 	obstacle3.push_back(Point<Inexact>(4.6464646, -10.4040404));
 	obstacle3.push_back(Point<Inexact>(10.4040404, -7.1717171));
 	obstacle3.push_back(Point<Inexact>(7.4747474, -13.9393939));
-	tree->addObstacle(obstacle3);
+	tree->addObstacle(obstacle3);*/
 
 	tree->addShields();
 	t.stamp("Constructing tree and obstacles");
@@ -208,7 +219,7 @@ void SpiralTreeDemo::recalculate() {
 	m_renderer->update();
 }
 
-Point<Inexact>* SpiralTreeDemo::findClosestPoint(Point<Inexact> p, Number<Inexact> radius) {
+/*Point<Inexact>* SpiralTreeDemo::findClosestPoint(Point<Inexact> p, Number<Inexact> radius) {
 	Point<Inexact>* closest = nullptr;
 	Number<Inexact> minSquaredDistance = radius * radius;
 	for (auto& vertex : m_obstacle) {
@@ -219,7 +230,7 @@ Point<Inexact>* SpiralTreeDemo::findClosestPoint(Point<Inexact> p, Number<Inexac
 		}
 	}
 	return closest;
-}
+}*/
 
 int main(int argc, char* argv[]) {
 	QApplication app(argc, argv);
