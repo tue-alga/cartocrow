@@ -102,9 +102,17 @@ SpiralTreeDemo::SpiralTreeDemo() {
 	obstacle->push_back(Point<Inexact>(-6.5656565, -6.7676767));
 	m_obstacles.push_back(obstacle);
 
-	/*m_obstacle.push_back(Point<Inexact>(-10, 50));
-	m_obstacle.push_back(Point<Inexact>(0, 25));
-	m_obstacle.push_back(Point<Inexact>(10, 50));*/
+	obstacle = std::make_shared<Polygon<Inexact>>();
+	obstacle->push_back(Point<Inexact>(1.3131313, 10.2020202));
+	obstacle->push_back(Point<Inexact>(6.1616161, 10.4040404));
+	obstacle->push_back(Point<Inexact>(5.6565656, 5.2525252));
+	m_obstacles.push_back(obstacle);
+
+	obstacle = std::make_shared<Polygon<Inexact>>();
+	obstacle->push_back(Point<Inexact>(4.6464646, -10.4040404));
+	obstacle->push_back(Point<Inexact>(10.4040404, -7.1717171));
+	obstacle->push_back(Point<Inexact>(7.4747474, -13.9393939));
+	m_obstacles.push_back(obstacle);
 
 	m_renderer = new GeometryWidget();
 	m_renderer->setMaxZoom(10000);
@@ -138,24 +146,6 @@ SpiralTreeDemo::SpiralTreeDemo() {
 	connect(m_renderer, &GeometryWidget::edited, [&]() {
 		recalculate();
 	});
-	/*connect(m_renderer, &GeometryWidget::dragStarted, [&](Point<Inexact> p) {
-		m_draggedPoint = findClosestPoint(p, 10 / m_renderer->zoomFactor());
-		recalculate();
-	});
-	connect(m_renderer, &GeometryWidget::dragMoved, [&](Point<Inexact> p) {
-		if (m_draggedPoint != nullptr) {
-			Point<Inexact> originalPoint = *m_draggedPoint;
-			*m_draggedPoint = p;
-			if (!m_obstacle.is_simple() || m_obstacle.has_on_bounded_side(CGAL::ORIGIN)) {
-				*m_draggedPoint = originalPoint;
-			}
-			recalculate();
-		}
-	});
-	connect(m_renderer, &GeometryWidget::dragEnded, [&](Point<Inexact> p) {
-		m_draggedPoint = nullptr;
-		recalculate();
-	});*/
 	recalculate();
 }
 
@@ -173,18 +163,6 @@ void SpiralTreeDemo::recalculate() {
 	for (auto obstacle : m_obstacles) {
 		tree->addObstacle(*obstacle);
 	}
-
-	/*Polygon<Inexact> obstacle2;
-	obstacle2.push_back(Point<Inexact>(1.3131313, 10.2020202));
-	obstacle2.push_back(Point<Inexact>(6.1616161, 10.4040404));
-	obstacle2.push_back(Point<Inexact>(5.6565656, 5.2525252));
-	tree->addObstacle(obstacle2);
-
-	Polygon<Inexact> obstacle3;
-	obstacle3.push_back(Point<Inexact>(4.6464646, -10.4040404));
-	obstacle3.push_back(Point<Inexact>(10.4040404, -7.1717171));
-	obstacle3.push_back(Point<Inexact>(7.4747474, -13.9393939));
-	tree->addObstacle(obstacle3);*/
 
 	tree->addShields();
 	t.stamp("Constructing tree and obstacles");
