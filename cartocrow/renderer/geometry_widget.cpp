@@ -80,6 +80,35 @@ int GeometryWidget::PolygonEditable::findVertex(Point<Inexact> location,
 	return -1;
 }
 
+GeometryWidget::PointEditable::PointEditable(GeometryWidget* widget, std::shared_ptr<Point<Inexact>> point)
+    : Editable(widget), m_point(point) {}
+
+bool GeometryWidget::PointEditable::drawHoverHint(Point<Inexact> location,
+                                                    Number<Inexact> radius) const {
+	if (!isClose(location, radius)) {
+		return false;
+	}
+	QPointF position = m_widget->convertPoint(*m_point);
+	m_widget->m_painter->setPen(QPen(QBrush(QColor{240, 40, 20}), 1.5f));
+	m_widget->m_painter->setBrush(Qt::NoBrush);
+	m_widget->m_painter->drawEllipse(position, 5, 5);
+	return true;
+}
+
+bool GeometryWidget::PointEditable::startDrag(Point<Inexact> location, Number<Inexact> radius) {
+	return isClose(location, radius);
+}
+
+void GeometryWidget::PointEditable::handleDrag(Point<Inexact> to) const {
+	*m_point = to;
+}
+
+void GeometryWidget::PointEditable::endDrag() {}
+
+bool GeometryWidget::PointEditable::isClose(Point<Inexact> location, Number<Inexact> radius) const {
+	return (*m_point - location).squared_length() < radius * radius;
+}
+
 GeometryWidget::GeometryWidget() {
 	setMouseTracking(true);
 	m_transform.scale(1, -1);
@@ -560,6 +589,10 @@ void GeometryWidget::clear() {
 
 Number<Inexact> GeometryWidget::zoomFactor() const {
 	return m_transform.m11();
+}
+
+void GeometryWidget::registerEditable(std::shared_ptr<Point<Inexact>> point) {
+	m_editables.push_back(std::make_unique<PointEditable>(this, point));
 }
 
 void GeometryWidget::registerEditable(std::shared_ptr<Polygon<Inexact>> polygon) {

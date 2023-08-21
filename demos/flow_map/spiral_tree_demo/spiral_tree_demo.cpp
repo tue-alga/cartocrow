@@ -95,6 +95,13 @@ SpiralTreeDemo::SpiralTreeDemo() {
 	m_obstacle.push_back(Point<Inexact>(4.5, 11));
 	m_obstacle.push_back(Point<Inexact>(-5.5, 9));*/
 
+	m_places.push_back(std::make_shared<Point<Inexact>>(11.2121212, 17.0707070));
+	m_places.push_back(std::make_shared<Point<Inexact>>(13.9393939, -14.1414141));
+	m_places.push_back(std::make_shared<Point<Inexact>>(-4.5454545, -18.9898989));
+	m_places.push_back(std::make_shared<Point<Inexact>>(16.6666666, 6.1616161));
+	m_places.push_back(std::make_shared<Point<Inexact>>(-9.8989898, 13.9393939));
+	m_places.push_back(std::make_shared<Point<Inexact>>(-16.1616161, -2.6262626));
+
 	auto obstacle = std::make_shared<Polygon<Inexact>>();
 	obstacle->push_back(Point<Inexact>(-8.9898989, -5.4545454));
 	obstacle->push_back(Point<Inexact>(-9.5959595, -0.4040404));
@@ -140,6 +147,9 @@ SpiralTreeDemo::SpiralTreeDemo() {
 		m_alphaLabel->setText(QString("%1π").arg(value / 1000.0, 0, 'f', 3));
 		recalculate();
 	});
+	for (auto place : m_places) {
+		m_renderer->registerEditable(place);
+	}
 	for (auto obstacle : m_obstacles) {
 		m_renderer->registerEditable(obstacle);
 	}
@@ -152,18 +162,12 @@ SpiralTreeDemo::SpiralTreeDemo() {
 void SpiralTreeDemo::recalculate() {
 	Timer t;
 	auto tree = std::make_shared<SpiralTree>(Point<Inexact>(0, 0), m_alpha);
-	tree->addPlace("p1", Point<Inexact>(11.2121212, 17.0707070), 1);
-	tree->addPlace("p2", Point<Inexact>(13.9393939, -14.1414141), 1);
-	tree->addPlace("p3", Point<Inexact>(-4.5454545, -18.9898989), 1);
-	tree->addPlace("p4", Point<Inexact>(16.6666666, 6.1616161), 1);
-	tree->addPlace("p5", Point<Inexact>(-9.8989898, 13.9393939), 1);
-	tree->addPlace("p6", Point<Inexact>(-16.1616161, -2.6262626), 1);
-	//tree->addPlace("p1", Point<Inexact>(0, 100), 1);
-
+	for (const auto& place : m_places) {
+		tree->addPlace("", *place, 1);
+	}
 	for (auto obstacle : m_obstacles) {
 		tree->addObstacle(*obstacle);
 	}
-
 	tree->addShields();
 	t.stamp("Constructing tree and obstacles");
 

@@ -24,6 +24,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <QMainWindow>
 #include <QSlider>
 
+#include <memory>
+#include <vector>
+
 #include <cartocrow/core/core.h>
 #include <cartocrow/renderer/geometry_widget.h>
 
@@ -38,8 +41,10 @@ class SpiralTreeDemo : public QMainWindow {
 
   private:
 	void recalculate();
-	std::vector<std::shared_ptr<Polygon<Inexact>>> m_obstacles;
 	Number<Inexact> m_alpha = 25 * M_PI / 180;
+
+	std::vector<std::shared_ptr<Point<Inexact>>> m_places;
+	std::vector<std::shared_ptr<Polygon<Inexact>>> m_obstacles;
 
 	GeometryWidget* m_renderer;
 	QSlider* m_alphaSlider;

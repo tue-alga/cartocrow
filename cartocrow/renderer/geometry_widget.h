@@ -117,6 +117,19 @@ class GeometryWidget : public QWidget, GeometryRenderer {
 		GeometryWidget* m_widget;
 	};
 
+	class PointEditable : public Editable {
+	  public:
+		PointEditable(GeometryWidget* widget, std::shared_ptr<Point<Inexact>> polygon);
+		bool drawHoverHint(Point<Inexact> location, Number<Inexact> radius) const override;
+		bool startDrag(Point<Inexact> location, Number<Inexact> radius) override;
+		void handleDrag(Point<Inexact> to) const override;
+		void endDrag() override;
+
+	  private:
+		bool isClose(Point<Inexact> location, Number<Inexact> radius) const;
+		std::shared_ptr<Point<Inexact>> m_point;
+	};
+
 	class PolygonEditable : public Editable {
 	  public:
 		PolygonEditable(GeometryWidget* widget, std::shared_ptr<Polygon<Inexact>> polygon);
@@ -159,6 +172,8 @@ class GeometryWidget : public QWidget, GeometryRenderer {
 	/// Returns the current zoom factor, in pixels per unit.
 	Number<Inexact> zoomFactor() const;
 
+	/// Adds an editable point.
+	void registerEditable(std::shared_ptr<Point<Inexact>> point);
 	/// Adds an editable polygon.
 	void registerEditable(std::shared_ptr<Polygon<Inexact>> polygon);
 
