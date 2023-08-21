@@ -82,8 +82,7 @@ struct GeometryWidgetStyle {
 ///
 /// GeometryWidget allows the user to edit inputs for an algorithm. Editable
 /// geometry objects are called *editables*. You can register an editable using
-/// \ref registerEditable() (and undo this again using \ref
-/// deregisterEditable()). Connect to the \ref edited() signal to be notified
+/// \ref registerEditable(). Connect to the \ref edited() signal to be notified
 /// when the user edits something, so that you can rerun the algorithm.
 class GeometryWidget : public QWidget, GeometryRenderer {
 	Q_OBJECT;
@@ -114,24 +113,31 @@ class GeometryWidget : public QWidget, GeometryRenderer {
 		virtual void endDrag() = 0;
 
 	  protected:
+		/// The GeometryWidget we belong to.
 		GeometryWidget* m_widget;
 	};
 
+	/// Editable for \ref Point<Inexact>.
 	class PointEditable : public Editable {
 	  public:
-		PointEditable(GeometryWidget* widget, std::shared_ptr<Point<Inexact>> polygon);
+		/// Constructs a PointEditable for the given point.
+		PointEditable(GeometryWidget* widget, std::shared_ptr<Point<Inexact>> point);
 		bool drawHoverHint(Point<Inexact> location, Number<Inexact> radius) const override;
 		bool startDrag(Point<Inexact> location, Number<Inexact> radius) override;
 		void handleDrag(Point<Inexact> to) const override;
 		void endDrag() override;
 
 	  private:
+		/// Checks if the location is within a circle with the given radius
+		/// around the point.
 		bool isClose(Point<Inexact> location, Number<Inexact> radius) const;
+		/// The point we're editing.
 		std::shared_ptr<Point<Inexact>> m_point;
 	};
 
 	class PolygonEditable : public Editable {
 	  public:
+		/// Constructs a PolygonEditable for the given polygon.
 		PolygonEditable(GeometryWidget* widget, std::shared_ptr<Polygon<Inexact>> polygon);
 		bool drawHoverHint(Point<Inexact> location, Number<Inexact> radius) const override;
 		bool startDrag(Point<Inexact> location, Number<Inexact> radius) override;
@@ -139,7 +145,10 @@ class GeometryWidget : public QWidget, GeometryRenderer {
 		void endDrag() override;
 
 	  private:
+		/// Finds a polygon vertex that is within a circle with the given radius
+		/// around the point. If such a vertex doesn't exist, this returns `-1`.
 		int findVertex(Point<Inexact> location, Number<Inexact> radius) const;
+		/// The polygon we're editing.
 		std::shared_ptr<Polygon<Inexact>> m_polygon;
 		int m_draggedVertex = -1;
 	};

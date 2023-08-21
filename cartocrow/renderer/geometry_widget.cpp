@@ -21,13 +21,13 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "geometry_renderer.h"
 
+#include <QGuiApplication>
 #include <QPainterPath>
 #include <QPen>
 #include <QPoint>
 #include <QPolygon>
 #include <QSlider>
 #include <QToolButton>
-#include <QGuiApplication>
 
 #include <cmath>
 #include <limits>
