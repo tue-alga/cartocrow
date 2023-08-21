@@ -77,6 +77,13 @@ struct GeometryWidgetStyle {
 /// widget->show();
 /// app.exec();
 /// ```
+///
+/// ## Editables
+///
+/// GeometryWidget allows the user to edit inputs for an algorithm. Editable
+/// geometry objects are called *editables*. You can register an editable using
+/// \ref registerEditable(). Connect to the \ref edited() signal to be notified
+/// when the user edits something, so that you can rerun the algorithm.
 class GeometryWidget : public QWidget, GeometryRenderer {
 	Q_OBJECT;
 
@@ -87,6 +94,63 @@ class GeometryWidget : public QWidget, GeometryRenderer {
 		CARTESIAN,
 		/// A polar \f$(r, \theta)\f$ grid.
 		POLAR
+	};
+
+	/// A geometry object that can be edited by the user.
+	class Editable {
+	  public:
+		Editable(GeometryWidget* widget);
+		/// Draws a hint that this editable will be active when the user starts
+		/// dragging from this location. Returns `false` if the editable
+		/// wouldn't become active from this location.
+		virtual bool drawHoverHint(Point<Inexact> location, Number<Inexact> radius) const = 0;
+		/// Starts a drag operation. Returns `false` if the editable doesn't
+		/// want to become active from this location.
+		virtual bool startDrag(Point<Inexact> location, Number<Inexact> radius) = 0;
+		/// Handles a drag operation.
+		virtual void handleDrag(Point<Inexact> to) const = 0;
+		/// Ends a running drag operation.
+		virtual void endDrag() = 0;
+
+	  protected:
+		/// The GeometryWidget we belong to.
+		GeometryWidget* m_widget;
+	};
+
+	/// Editable for \ref Point<Inexact>.
+	class PointEditable : public Editable {
+	  public:
+		/// Constructs a PointEditable for the given point.
+		PointEditable(GeometryWidget* widget, std::shared_ptr<Point<Inexact>> point);
+		bool drawHoverHint(Point<Inexact> location, Number<Inexact> radius) const override;
+		bool startDrag(Point<Inexact> location, Number<Inexact> radius) override;
+		void handleDrag(Point<Inexact> to) const override;
+		void endDrag() override;
+
+	  private:
+		/// Checks if the location is within a circle with the given radius
+		/// around the point.
+		bool isClose(Point<Inexact> location, Number<Inexact> radius) const;
+		/// The point we're editing.
+		std::shared_ptr<Point<Inexact>> m_point;
+	};
+
+	class PolygonEditable : public Editable {
+	  public:
+		/// Constructs a PolygonEditable for the given polygon.
+		PolygonEditable(GeometryWidget* widget, std::shared_ptr<Polygon<Inexact>> polygon);
+		bool drawHoverHint(Point<Inexact> location, Number<Inexact> radius) const override;
+		bool startDrag(Point<Inexact> location, Number<Inexact> radius) override;
+		void handleDrag(Point<Inexact> to) const override;
+		void endDrag() override;
+
+	  private:
+		/// Finds a polygon vertex that is within a circle with the given radius
+		/// around the point. If such a vertex doesn't exist, this returns `-1`.
+		int findVertex(Point<Inexact> location, Number<Inexact> radius) const;
+		/// The polygon we're editing.
+		std::shared_ptr<Polygon<Inexact>> m_polygon;
+		int m_draggedVertex = -1;
 	};
 
 	/// Constructs a GeometryWidget without a painting.
@@ -117,6 +181,11 @@ class GeometryWidget : public QWidget, GeometryRenderer {
 	/// Returns the current zoom factor, in pixels per unit.
 	Number<Inexact> zoomFactor() const;
 
+	/// Adds an editable point.
+	void registerEditable(std::shared_ptr<Point<Inexact>> point);
+	/// Adds an editable polygon.
+	void registerEditable(std::shared_ptr<Polygon<Inexact>> polygon);
+
   public slots:
 	/// Determines whether to draw the axes and gridlines in the background.
 	void setDrawAxes(bool drawAxes);
@@ -143,6 +212,8 @@ class GeometryWidget : public QWidget, GeometryRenderer {
 	void dragMoved(Point<Inexact> location);
 	/// Emitted when the user stopped dragging with the mouse.
 	void dragEnded(Point<Inexact> location);
+	/// Emitted when the user edited an editable.
+	void edited();
 
   protected:
 	void resizeEvent(QResizeEvent* e) override;
@@ -188,6 +259,10 @@ class GeometryWidget : public QWidget, GeometryRenderer {
 		/// Whether the painting is currently visible.
 		bool visible;
 	};
+	/// The set of layer names that were invisible. This set doesn't get cleared
+	/// when paintings are removed; when a new painting is added its name is
+	/// looked up in the set to find out if it should be made visible initially.
+	std::set<std::string> m_invisibleLayerNames;
 	/// List of the paintings we're drawing.
 	std::vector<DrawnPainting> m_paintings;
 	/// The QPainter we are drawing with. Only valid while painting.
@@ -213,6 +288,11 @@ class GeometryWidget : public QWidget, GeometryRenderer {
 	bool m_drawAxes = true;
 	/// The grid mode.
 	GridMode m_gridMode = GridMode::CARTESIAN;
+	/// The registered editables.
+	std::vector<std::unique_ptr<Editable>> m_editables;
+	/// The editable in \ref m_editables that the user is currently interacting
+	/// with, or `nullptr` if no such interaction is going on.
+	Editable* m_activeEditable = nullptr;
 	
 	/// The current drawing style.
 	GeometryWidgetStyle m_style;
