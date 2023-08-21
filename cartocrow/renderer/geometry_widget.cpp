@@ -45,7 +45,7 @@ bool GeometryWidget::PolygonEditable::drawHoverHint(Point<Inexact> location,
 	if (vertexId == -1) {
 		return false;
 	}
-	QPointF position = m_widget->convertPoint(m_polygon->vertices()[vertexId]);
+	QPointF position = m_widget->convertPoint(*(m_polygon->vertices_begin() + vertexId));
 	m_widget->m_painter->setPen(QPen(QBrush(QColor{240, 40, 20}), 1.5f));
 	m_widget->m_painter->setBrush(Qt::NoBrush);
 	m_widget->m_painter->drawEllipse(position, 5, 5);
@@ -73,7 +73,7 @@ void GeometryWidget::PolygonEditable::endDrag() {
 int GeometryWidget::PolygonEditable::findVertex(Point<Inexact> location,
                                                 Number<Inexact> radius) const {
 	for (int i = 0; i < m_polygon->size(); i++) {
-		if ((m_polygon->vertices()[i] - location).squared_length() < radius * radius) {
+		if ((*(m_polygon->vertices_begin() + i) - location).squared_length() < radius * radius) {
 			return i;
 		}
 	}
