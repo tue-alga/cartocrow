@@ -194,7 +194,6 @@ void SpiralTreeDemo::recalculate() {
 	t.output();
 
 	Painting::Options options;
-	Painting p(nullptr, tree, options);
 	auto painting = std::make_shared<Painting>(nullptr, tree, options);
 	m_renderer->addPainting(painting, "Spiral tree");
 

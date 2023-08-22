@@ -29,6 +29,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "cartocrow/flow_map/parameters.h"
 #include "cartocrow/flow_map/place.h"
 #include "cartocrow/flow_map/reachable_region_algorithm.h"
+#include "cartocrow/flow_map/smooth_tree.h"
+#include "cartocrow/flow_map/smooth_tree_painting.h"
 #include "cartocrow/flow_map/spiral_tree.h"
 #include "cartocrow/flow_map/spiral_tree_obstructed_algorithm.h"
 #include "cartocrow/flow_map/spiral_tree_unobstructed_algorithm.h"
@@ -87,16 +89,12 @@ void OptimizationDemo::recalculate() {
 	tree->addShields();
 
 	m_renderer->clear();
-	ReachableRegionAlgorithm reachableRegionAlg(tree);
-	ReachableRegionAlgorithm::ReachableRegion reachableRegion = reachableRegionAlg.run();
-
-	SpiralTreeObstructedAlgorithm spiralTreeAlg(tree, reachableRegion);
-	spiralTreeAlg.run();
-
-	Painting::Options options;
-	Painting p(nullptr, tree, options);
-	auto painting = std::make_shared<Painting>(nullptr, tree, options);
-	m_renderer->addPainting(painting, "Spiral tree");
+	ReachableRegionAlgorithm::ReachableRegion reachableRegion = ReachableRegionAlgorithm(tree).run();
+	SpiralTreeObstructedAlgorithm(tree, reachableRegion).run();
+	auto smoothTree = std::make_shared<SmoothTree>(tree);
+	SmoothTreePainting::Options options;
+	auto painting = std::make_shared<SmoothTreePainting>(smoothTree, options);
+	m_renderer->addPainting(painting, "Smooth tree");
 
 	m_renderer->update();
 }
