@@ -201,19 +201,6 @@ void SpiralTreeDemo::recalculate() {
 	m_renderer->update();
 }
 
-/*Point<Inexact>* SpiralTreeDemo::findClosestPoint(Point<Inexact> p, Number<Inexact> radius) {
-	Point<Inexact>* closest = nullptr;
-	Number<Inexact> minSquaredDistance = radius * radius;
-	for (auto& vertex : m_obstacle) {
-		Number<Inexact> squaredDistance = (vertex - p).squared_length();
-		if (squaredDistance < minSquaredDistance) {
-			minSquaredDistance = squaredDistance;
-			closest = &vertex;
-		}
-	}
-	return closest;
-}*/
-
 int main(int argc, char* argv[]) {
 	QApplication app(argc, argv);
 	SpiralTreeDemo demo;
