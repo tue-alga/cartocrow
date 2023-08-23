@@ -58,6 +58,10 @@ std::vector<SpiralTree::Obstacle>& SpiralTree::obstacles() {
 	return m_obstacles;
 }
 
+std::shared_ptr<Node> SpiralTree::root() {
+	return m_root;
+}
+
 void SpiralTree::addPlace(const std::string& name, const Point<Inexact>& position,
                           Number<Inexact> flow) {
 	auto newPlace = std::make_shared<Place>(name, position, flow);

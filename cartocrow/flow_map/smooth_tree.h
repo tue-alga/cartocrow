@@ -48,6 +48,8 @@ class SmoothTree {
 
 	/// List of nodes in this tree.
 	std::vector<std::shared_ptr<Node>> m_nodes;
+
+	std::shared_ptr<Node> constructSmoothTree(const std::shared_ptr<Node>& node, Number<Inexact> maxRStep);
 };
 
 } // namespace cartocrow::flow_map

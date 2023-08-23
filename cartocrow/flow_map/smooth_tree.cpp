@@ -24,7 +24,42 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 namespace cartocrow::flow_map {
 
-SmoothTree::SmoothTree(const std::shared_ptr<SpiralTree> spiralTree) : m_tree(spiralTree) {}
+SmoothTree::SmoothTree(const std::shared_ptr<SpiralTree> spiralTree) : m_tree(spiralTree) {
+	Number<Inexact> rMax = 0;
+	for (const auto& node : m_tree->nodes()) {
+		if (node->m_position.r() > rMax) {
+			rMax = node->m_position.r();
+		}
+	}
+	constructSmoothTree(spiralTree->root(), rMax / 10); // TODO make 10 configurable
+}
+
+std::shared_ptr<Node> SmoothTree::constructSmoothTree(const std::shared_ptr<Node>& node, Number<Inexact> maxRStep) {
+	auto smoothNode = std::make_shared<Node>(node->m_position);
+	m_nodes.push_back(smoothNode);
+	for (const auto& child : node->m_children) {
+		auto smoothChild = constructSmoothTree(child, maxRStep);
+		const Spiral spiral(node->m_position, child->m_position);
+		Number<Inexact> rMin = node->m_position.r();
+		Number<Inexact> rMax = child->m_position.r();
+		Number<Inexact> rRange = rMax - rMin;
+		int subdivisionCount = std::ceil(rRange / maxRStep);
+		auto previous = smoothNode;
+		for (double i = 1; i < subdivisionCount; ++i) {
+			const PolarPoint position =
+			    spiral.evaluate(spiral.parameterForR(rMin + i * (rMax - rMin) / subdivisionCount));
+			auto subdivision = std::make_shared<Node>(position);
+			m_nodes.push_back(subdivision);
+			subdivision->m_parent = previous;
+			previous->m_children.push_back(subdivision);
+			previous = subdivision;
+		}
+		smoothChild->m_parent = previous;
+		previous->m_children.push_back(smoothChild->m_parent);
+	}
+
+	return smoothNode;
+}
 
 const std::vector<std::shared_ptr<Node>>& SmoothTree::nodes() const {
 	return m_nodes;

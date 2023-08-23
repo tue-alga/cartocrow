@@ -30,9 +30,7 @@ void SmoothTreePainting::paintNodes(renderer::GeometryRenderer& renderer) const 
 	renderer.setMode(renderer::GeometryRenderer::vertices);
 	renderer.setStroke(Color{100, 100, 100}, 4);
 	for (const auto& node : m_tree->nodes()) {
-		if (!node->isSteiner()) {
-			renderer.draw(node->m_position.toCartesian());
-		}
+		renderer.draw(node->m_position.toCartesian());
 	}
 }
 
