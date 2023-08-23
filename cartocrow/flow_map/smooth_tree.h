@@ -42,6 +42,9 @@ class SmoothTree {
 	/// Returns a list of the nodes in this smooth tree.
 	const std::vector<std::shared_ptr<Node>>& nodes() const;
 
+	/// Performs one optimization step.
+	void optimize();
+
   private:
 	/// The spiral tree underlying this smooth tree.
 	std::shared_ptr<SpiralTree> m_tree;

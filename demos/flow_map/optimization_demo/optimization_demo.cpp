@@ -29,7 +29,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "cartocrow/flow_map/parameters.h"
 #include "cartocrow/flow_map/place.h"
 #include "cartocrow/flow_map/reachable_region_algorithm.h"
-#include "cartocrow/flow_map/smooth_tree.h"
 #include "cartocrow/flow_map/smooth_tree_painting.h"
 #include "cartocrow/flow_map/spiral_tree.h"
 #include "cartocrow/flow_map/spiral_tree_obstructed_algorithm.h"
@@ -57,6 +56,13 @@ OptimizationDemo::OptimizationDemo() {
 	setCentralWidget(m_renderer);
 
 	QToolBar* toolBar = new QToolBar();
+	toolBar->addSeparator();
+	m_optimizeButton = new QPushButton("Optimize");
+	toolBar->addWidget(m_optimizeButton);
+	connect(m_optimizeButton, &QPushButton::clicked, [&]() {
+		m_smoothTree->optimize();
+		m_renderer->update();
+	});
 	toolBar->addSeparator();
 	toolBar->addWidget(new QLabel("α = "));
 	m_alphaSlider = new QSlider(Qt::Horizontal);
@@ -91,9 +97,9 @@ void OptimizationDemo::recalculate() {
 	m_renderer->clear();
 	ReachableRegionAlgorithm::ReachableRegion reachableRegion = ReachableRegionAlgorithm(tree).run();
 	SpiralTreeObstructedAlgorithm(tree, reachableRegion).run();
-	auto smoothTree = std::make_shared<SmoothTree>(tree);
+	m_smoothTree = std::make_shared<SmoothTree>(tree);
 	SmoothTreePainting::Options options;
-	auto painting = std::make_shared<SmoothTreePainting>(smoothTree, options);
+	auto painting = std::make_shared<SmoothTreePainting>(m_smoothTree, options);
 	m_renderer->addPainting(painting, "Smooth tree");
 
 	m_renderer->update();

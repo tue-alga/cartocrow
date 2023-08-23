@@ -30,7 +30,9 @@ void SmoothTreePainting::paintNodes(renderer::GeometryRenderer& renderer) const 
 	renderer.setMode(renderer::GeometryRenderer::vertices);
 	renderer.setStroke(Color{100, 100, 100}, 4);
 	for (const auto& node : m_tree->nodes()) {
-		renderer.draw(node->m_position.toCartesian());
+		if (node->getType() == Node::ConnectionType::kJoin) {
+			renderer.draw(node->m_position.toCartesian());
+		}
 	}
 }
 
