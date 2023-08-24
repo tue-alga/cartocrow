@@ -67,7 +67,7 @@ const std::vector<std::shared_ptr<Node>>& SmoothTree::nodes() const {
 
 void SmoothTree::optimize() {
 	for (auto& node : m_nodes) {
-		node->m_position.setPhi(node->m_position.phi() + 0.1);
+		node->m_position.setPhi(node->m_position.phi() + 0.001);
 	}
 }
 

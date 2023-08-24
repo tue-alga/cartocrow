@@ -58,8 +58,17 @@ OptimizationDemo::OptimizationDemo() {
 	QToolBar* toolBar = new QToolBar();
 	toolBar->addSeparator();
 	m_optimizeButton = new QPushButton("Optimize");
+	m_optimizeButton->setCheckable(true);
 	toolBar->addWidget(m_optimizeButton);
+	m_optimizeTimer = new QTimer();
 	connect(m_optimizeButton, &QPushButton::clicked, [&]() {
+		if (m_optimizeButton->isChecked()) {
+			m_optimizeTimer->start(0);
+		} else {
+			m_optimizeTimer->stop();
+		}
+	});
+	connect(m_optimizeTimer, &QTimer::timeout, [&]() {
 		m_smoothTree->optimize();
 		m_renderer->update();
 	});

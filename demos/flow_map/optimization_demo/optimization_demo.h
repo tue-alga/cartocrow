@@ -23,6 +23,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <QMainWindow>
 #include <QPushButton>
 #include <QSlider>
+#include <QTimer>
 
 #include <memory>
 #include <vector>
@@ -51,4 +52,5 @@ class OptimizationDemo : public QMainWindow {
 	QSlider* m_alphaSlider;
 	QLabel* m_alphaLabel;
 	QPushButton* m_optimizeButton;
+	QTimer* m_optimizeTimer;
 };
