@@ -27,12 +27,22 @@ void SmoothTreePainting::paintFlow(renderer::GeometryRenderer& renderer) const {
 }
 
 void SmoothTreePainting::paintNodes(renderer::GeometryRenderer& renderer) const {
-	renderer.setMode(renderer::GeometryRenderer::vertices);
+	renderer.setMode(renderer::GeometryRenderer::vertices | renderer::GeometryRenderer::stroke);
 	renderer.setStroke(Color{100, 100, 100}, 4);
-	for (const auto& node : m_tree->nodes()) {
+	for (int i = 0; i < m_tree->nodes().size(); i++) {
+		const auto& node = m_tree->nodes()[i];
 		if (node->getType() == Node::ConnectionType::kJoin) {
-			renderer.draw(node->m_position.toCartesian());
+			renderer.setStroke(Color{100, 100, 100}, 4);
+		} else if (node->getType() == Node::ConnectionType::kSubdivision) {
+			renderer.setStroke(Color{255, 84, 32}, 4);
+		} else if (node->getType() == Node::ConnectionType::kLeaf) {
+			renderer.setStroke(Color{84, 160, 32}, 4);
+		} else if (node->getType() == Node::ConnectionType::kRoot) {
+			renderer.setStroke(Color{0, 0, 0}, 4);
 		}
+		renderer.draw(node->m_position.toCartesian());
+		renderer.setStroke(Color{50, 50, 50}, 4);
+		renderer.drawText(node->m_position.toCartesian(), std::to_string(i));
 	}
 }
 

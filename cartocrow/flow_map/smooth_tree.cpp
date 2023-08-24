@@ -78,7 +78,7 @@ Number<Inexact> SmoothTree::computeSmoothForce(const std::shared_ptr<Node>& node
 	Point<Inexact> n = node->m_position.toCartesian();
 	Point<Inexact> p = node->m_parent->m_position.toCartesian();
 	Point<Inexact> c = node->m_children[0]->m_position.toCartesian();
-	auto datan = [&](Point<Inexact> p1, Point<Inexact> p2) {
+	auto datan = [](Point<Inexact> p1, Point<Inexact> p2) {
 		Number<Inexact> r = std::hypot(p1.x(), p1.y());
 		Number<Inexact> phi = std::atan2(p1.y(), p1.x());
 		return r * (r - p2.x() * std::cos(phi) - p2.y() * std::sin(phi)) /
@@ -95,10 +95,6 @@ void SmoothTree::optimize() {
 	for (int i = 0; i < m_nodes.size(); i++) {
 		const auto& node = m_nodes[i];
 		if (node->getType() == Node::ConnectionType::kSubdivision) {
-			{
-				std::cout << i << ":   " << computeSmoothFunction(node) << " -- "
-				          << computeSmoothForce(node) << std::endl;
-			}
 			forces[i] += computeSmoothForce(node);
 		}
 	}
