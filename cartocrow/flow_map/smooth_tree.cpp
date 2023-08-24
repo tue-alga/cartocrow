@@ -67,27 +67,19 @@ const std::vector<std::shared_ptr<Node>>& SmoothTree::nodes() const {
 }
 
 Number<Inexact> SmoothTree::computeSmoothFunction(const std::shared_ptr<Node>& node) {
-	Point<Inexact> n = node->m_position.toCartesian();
-	Point<Inexact> p = node->m_parent->m_position.toCartesian();
-	Point<Inexact> c = node->m_children[0]->m_position.toCartesian();
-	return std::pow(
-	    std::atan2(c.y() - n.y(), c.x() - n.x()) - std::atan2(n.y() - p.y(), n.x() - p.x()), 2);
+	PolarPoint n = node->m_position;
+	PolarPoint p = node->m_parent->m_position;
+	PolarPoint c = node->m_children[0]->m_position;
+	return std::pow(Spiral::alphaBetweenPoints(p, n) - Spiral::alphaBetweenPoints(n, c), 2);
 }
 
 Number<Inexact> SmoothTree::computeSmoothForce(const std::shared_ptr<Node>& node) {
-	Point<Inexact> n = node->m_position.toCartesian();
-	Point<Inexact> p = node->m_parent->m_position.toCartesian();
-	Point<Inexact> c = node->m_children[0]->m_position.toCartesian();
-	auto datan = [](Point<Inexact> p1, Point<Inexact> p2) {
-		Number<Inexact> r = std::hypot(p1.x(), p1.y());
-		Number<Inexact> phi = std::atan2(p1.y(), p1.x());
-		return r * (r - p2.x() * std::cos(phi) - p2.y() * std::sin(phi)) /
-		       (std::pow(r, 2) - 2 * r * p2.x() * std::cos(phi) - 2 * r * p2.y() * std::sin(phi) +
-		        std::pow(p2.x(), 2) + std::pow(p2.y(), 2));
-	};
-	return -2 *
-	       (std::atan2(c.y() - n.y(), c.x() - n.x()) - std::atan2(n.y() - p.y(), n.x() - p.x())) *
-	       (datan(n, c) - datan(p, n));
+	PolarPoint n = node->m_position;
+	PolarPoint p = node->m_parent->m_position;
+	PolarPoint c = node->m_children[0]->m_position;
+	// chain rule: the derivative of (β_1 - β_2)² is 2(β_1 - β_2) * [β_1 - β_2]'
+	return 2 * (Spiral::alphaBetweenPoints(p, n) - Spiral::alphaBetweenPoints(n, c)) *
+	       (Spiral::alphaBetweenPointsDerivative(p, n) - Spiral::alphaBetweenPointsDerivative(n, c));
 }
 
 void SmoothTree::optimize() {

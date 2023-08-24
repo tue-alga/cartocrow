@@ -34,16 +34,17 @@ Spiral::Spiral(const PolarPoint& anchor, const Number<Inexact>& angle)
 	}
 }
 
-Spiral::Spiral(const PolarPoint& p1, const PolarPoint& p2) {
+Spiral::Spiral(const PolarPoint& p1, const PolarPoint& p2)
+    : m_anchor(p1.r() < p2.r() ? p2 : p1), m_angle(alphaBetweenPoints(p1, p2)) {}
+
+Number<Inexact> Spiral::alphaBetweenPoints(const PolarPoint& p1, const PolarPoint& p2) {
 	const PolarPoint& source = p1.r() < p2.r() ? p2 : p1;
 	const PolarPoint& target = p1.r() < p2.r() ? p1 : p2;
 
 	if (source.r() == target.r()) {
 		throw std::runtime_error(
-		    "Tried to construct a spiral containing two points equidistant to the root");
+		    "Cannot compute α for a spiral connecting two points equidistant to the root");
 	}
-
-	m_anchor = source;
 
 	// Computing a spiral through two points (p, q), with unknown angle (alpha):
 	//
@@ -59,11 +60,25 @@ Spiral::Spiral(const PolarPoint& p1, const PolarPoint& p2) {
 	//    =>  alpha = tan^-1((phi_q - phi_p) / -ln(R_q / R_p))
 
 	if (target.r() == 0) {
-		m_angle = 0;
+		return 0;
 	} else {
 		Number<Inexact> diff_phi = wrapAngle(target.phi() - source.phi(), -M_PI);
-		m_angle = std::atan(diff_phi / -std::log(target.r() / source.r()));
+		return std::atan(diff_phi / -std::log(target.r() / source.r()));
 	}
+}
+
+Number<Inexact> Spiral::alphaBetweenPointsDerivative(const PolarPoint& p1, const PolarPoint& p2) {
+	const PolarPoint& source = p1.r() < p2.r() ? p2 : p1;
+	const PolarPoint& target = p1.r() < p2.r() ? p1 : p2;
+
+	if (source.r() == target.r()) {
+		throw std::runtime_error(
+		    "Cannot compute α for a spiral connecting two points equidistant to the root");
+	}
+
+	Number<Inexact> phiDiff = wrapAngle(target.phi() - source.phi(), -M_PI);
+	Number<Inexact> rDiffLog = std::log(target.r() / source.r());
+	return rDiffLog / (phiDiff * phiDiff + rDiffLog * rDiffLog);
 }
 
 const PolarPoint& Spiral::anchor() const {

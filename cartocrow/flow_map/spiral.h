@@ -68,6 +68,14 @@ class Spiral {
 	/// segment.
 	Spiral(const PolarPoint& p1, const PolarPoint& p2);
 
+	/// Computes the \f$\alpha\f$ of the shortest logarithmic spiral connecting
+	/// the two given points.
+	static Number<Inexact> alphaBetweenPoints(const PolarPoint& p1, const PolarPoint& p2);
+	/// Computes \f$\frac{d\alpha}{d\phi}\f$, where \f$\alpha\f$ is the angle of
+	/// the shortest logarithmic spiral connecting the two given points (see
+	/// \ref alphaBetweenPoints) and \f$\phi\f$ is the polar angle of `p1`.
+	static Number<Inexact> alphaBetweenPointsDerivative(const PolarPoint& p1, const PolarPoint& p2);
+
 	/// Returns the anchor of this spiral.
 	const PolarPoint& anchor() const;
 	/// Returns the angle of this spiral.
