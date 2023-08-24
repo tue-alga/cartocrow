@@ -52,5 +52,6 @@ class OptimizationDemo : public QMainWindow {
 	QSlider* m_alphaSlider;
 	QLabel* m_alphaLabel;
 	QPushButton* m_optimizeButton;
+	QPushButton* m_optimizeOneStepButton;
 	QTimer* m_optimizeTimer;
 };

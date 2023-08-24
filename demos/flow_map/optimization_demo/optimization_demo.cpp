@@ -43,12 +43,14 @@ using namespace cartocrow::renderer;
 OptimizationDemo::OptimizationDemo() {
 	setWindowTitle("CartoCrow – Optimization demo");
 
-	m_places.push_back(std::make_shared<Point<Inexact>>(11.2121212, 17.0707070));
-	m_places.push_back(std::make_shared<Point<Inexact>>(13.9393939, -14.1414141));
-	m_places.push_back(std::make_shared<Point<Inexact>>(-4.5454545, -18.9898989));
-	m_places.push_back(std::make_shared<Point<Inexact>>(16.6666666, 6.1616161));
-	m_places.push_back(std::make_shared<Point<Inexact>>(-9.8989898, 13.9393939));
-	m_places.push_back(std::make_shared<Point<Inexact>>(-16.1616161, -2.6262626));
+	//m_places.push_back(std::make_shared<Point<Inexact>>(11.2121212, 17.0707070));
+	//m_places.push_back(std::make_shared<Point<Inexact>>(13.9393939, -14.1414141));
+	//m_places.push_back(std::make_shared<Point<Inexact>>(-4.5454545, -18.9898989));
+	//m_places.push_back(std::make_shared<Point<Inexact>>(16.6666666, 6.1616161));
+	//m_places.push_back(std::make_shared<Point<Inexact>>(-9.8989898, 13.9393939));
+	//m_places.push_back(std::make_shared<Point<Inexact>>(-16.1616161, -2.6262626));
+	/*m_places.push_back(std::make_shared<Point<Inexact>>(2, 1));
+	m_places.push_back(std::make_shared<Point<Inexact>>(2, -1));*/
 
 	m_renderer = new GeometryWidget();
 	m_renderer->setMaxZoom(10000);
@@ -57,7 +59,7 @@ OptimizationDemo::OptimizationDemo() {
 
 	QToolBar* toolBar = new QToolBar();
 	toolBar->addSeparator();
-	m_optimizeButton = new QPushButton("Optimize");
+	m_optimizeButton = new QPushButton("Run optimization");
 	m_optimizeButton->setCheckable(true);
 	toolBar->addWidget(m_optimizeButton);
 	m_optimizeTimer = new QTimer();
@@ -69,6 +71,12 @@ OptimizationDemo::OptimizationDemo() {
 		}
 	});
 	connect(m_optimizeTimer, &QTimer::timeout, [&]() {
+		m_smoothTree->optimize();
+		m_renderer->update();
+	});
+	m_optimizeOneStepButton = new QPushButton("Optimize one step");
+	toolBar->addWidget(m_optimizeOneStepButton);
+	connect(m_optimizeOneStepButton, &QPushButton::clicked, [&]() {
 		m_smoothTree->optimize();
 		m_renderer->update();
 	});
@@ -97,16 +105,36 @@ OptimizationDemo::OptimizationDemo() {
 }
 
 void OptimizationDemo::recalculate() {
+	m_renderer->clear();
 	auto tree = std::make_shared<SpiralTree>(Point<Inexact>(0, 0), m_alpha);
-	for (const auto& place : m_places) {
+	/*for (const auto& place : m_places) {
 		tree->addPlace("", *place, 1);
 	}
 	tree->addShields();
 
-	m_renderer->clear();
 	ReachableRegionAlgorithm::ReachableRegion reachableRegion = ReachableRegionAlgorithm(tree).run();
-	SpiralTreeObstructedAlgorithm(tree, reachableRegion).run();
+	SpiralTreeObstructedAlgorithm(tree, reachableRegion).run();*/
 	m_smoothTree = std::make_shared<SmoothTree>(tree);
+	auto n1 = std::make_shared<Node>(PolarPoint(Point<Inexact>(1, 0.2)));
+	n1->m_parent = m_smoothTree->m_nodes[0];
+	m_smoothTree->m_nodes[0]->m_children.push_back(n1);
+	auto n2 = std::make_shared<Node>(PolarPoint(Point<Inexact>(2, 0)));
+	n2->m_parent = n1;
+	n1->m_children.push_back(n2);
+	auto n3 = std::make_shared<Node>(PolarPoint(Point<Inexact>(3, 0.2)));
+	n3->m_parent = n2;
+	n2->m_children.push_back(n3);
+	auto n4 = std::make_shared<Node>(PolarPoint(Point<Inexact>(4, 0)));
+	n4->m_parent = n3;
+	n3->m_children.push_back(n4);
+	auto n5 = std::make_shared<Node>(PolarPoint(Point<Inexact>(5, 0.2)));
+	n5->m_parent = n4;
+	n4->m_children.push_back(n5);
+	m_smoothTree->m_nodes.push_back(n1);
+	m_smoothTree->m_nodes.push_back(n2);
+	m_smoothTree->m_nodes.push_back(n3);
+	m_smoothTree->m_nodes.push_back(n4);
+	m_smoothTree->m_nodes.push_back(n5);
 	SmoothTreePainting::Options options;
 	auto painting = std::make_shared<SmoothTreePainting>(m_smoothTree, options);
 	m_renderer->addPainting(painting, "Smooth tree");

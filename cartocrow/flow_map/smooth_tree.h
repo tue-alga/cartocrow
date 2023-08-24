@@ -45,7 +45,7 @@ class SmoothTree {
 	/// Performs one optimization step.
 	void optimize();
 
-  private:
+  //private:  // TODO temporary
 	/// The spiral tree underlying this smooth tree.
 	std::shared_ptr<SpiralTree> m_tree;
 
@@ -53,6 +53,9 @@ class SmoothTree {
 	std::vector<std::shared_ptr<Node>> m_nodes;
 
 	std::shared_ptr<Node> constructSmoothTree(const std::shared_ptr<Node>& node, Number<Inexact> maxRStep);
+
+	Number<Inexact> computeSmoothFunction(const std::shared_ptr<Node>& node);
+	Number<Inexact> computeSmoothForce(const std::shared_ptr<Node>& node);
 };
 
 } // namespace cartocrow::flow_map
