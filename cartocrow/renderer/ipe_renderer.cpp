@@ -136,6 +136,22 @@ void IpeRenderer::draw(const Circle<Inexact>& c) {
 	m_page->append(ipe::TSelect::ENotSelected, m_layer, path);
 }
 
+void IpeRenderer::draw(const mosaic_cartogram::Ellipse &e) {
+	const auto m = e.parameters().matrix();
+	ipe::Matrix matrix {
+		// transposed linear map:  (i.e., to make it column-major)
+		m(0, 0), m(1, 0),
+		m(0, 1), m(1, 1),
+		// translation:
+		m(0, 2), m(1, 2)
+	};
+	ipe::Ellipse* ellipse = new ipe::Ellipse(matrix);
+	ipe::Shape* shape = new ipe::Shape();
+	shape->appendSubPath(ellipse);
+	ipe::Path* path = new ipe::Path(getAttributesForStyle(), *shape);
+	m_page->append(ipe::TSelect::ENotSelected, m_layer, path);
+}
+
 /*void IpeRenderer::draw(const BezierSpline& s) {
 	ipe::Curve* curve = new ipe::Curve();
 	for (BezierCurve c : s.curves()) {

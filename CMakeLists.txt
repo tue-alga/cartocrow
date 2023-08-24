@@ -47,6 +47,7 @@ find_package(Qt5Widgets REQUIRED)
 set(CMAKE_AUTOMOC ON)
 find_package(glog REQUIRED)
 find_package(Ipelib REQUIRED)
+find_package(Eigen3 3.4 REQUIRED NO_MODULE)
 
 # ## SOURCES ###
 

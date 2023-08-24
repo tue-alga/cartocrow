@@ -1,4 +1,5 @@
 set(SOURCES
+	ellipse.cpp
 	graph.cpp
 	mosaic_cartogram.cpp
 	orderly_spanning_tree.cpp
@@ -8,6 +9,7 @@ set(SOURCES
 	visibility_drawing.cpp
 )
 set(HEADERS
+	ellipse.h
 	graph.h
 	mosaic_cartogram.h
 	orderly_spanning_tree.h
@@ -19,6 +21,7 @@ set(HEADERS
 
 add_library(mosaic_cartogram ${SOURCES})
 target_link_libraries(mosaic_cartogram
+	PRIVATE Eigen3::Eigen
 	PRIVATE glog::glog
 )
 
