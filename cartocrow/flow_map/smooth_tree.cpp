@@ -56,7 +56,7 @@ std::shared_ptr<Node> SmoothTree::constructSmoothTree(const std::shared_ptr<Node
 			previous = subdivision;
 		}
 		smoothChild->m_parent = previous;
-		previous->m_children.push_back(smoothChild->m_parent);
+		previous->m_children.push_back(smoothChild);
 	}
 
 	return smoothNode;
