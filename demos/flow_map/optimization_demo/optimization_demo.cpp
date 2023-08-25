@@ -44,14 +44,20 @@ using namespace cartocrow::renderer;
 OptimizationDemo::OptimizationDemo() {
 	setWindowTitle("CartoCrow – Optimization demo");
 
-	m_places.push_back(std::make_shared<Point<Inexact>>(11.2121212, 17.0707070));
+	/*m_places.push_back(std::make_shared<Point<Inexact>>(11.2121212, 17.0707070));
 	m_places.push_back(std::make_shared<Point<Inexact>>(13.9393939, -14.1414141));
 	m_places.push_back(std::make_shared<Point<Inexact>>(-4.5454545, -18.9898989));
 	m_places.push_back(std::make_shared<Point<Inexact>>(16.6666666, 6.1616161));
 	m_places.push_back(std::make_shared<Point<Inexact>>(-9.8989898, 13.9393939));
-	m_places.push_back(std::make_shared<Point<Inexact>>(-16.1616161, -2.6262626));
+	m_places.push_back(std::make_shared<Point<Inexact>>(-16.1616161, -2.6262626));*/
 	/*m_places.push_back(std::make_shared<Point<Inexact>>(2, 1));
 	m_places.push_back(std::make_shared<Point<Inexact>>(2, -1));*/
+
+	for (int i = 0; i < 40; i++) {
+		m_places.push_back(std::make_shared<Point<Inexact>>(
+		    static_cast<float>(std::rand()) / RAND_MAX * 200 - 100,
+		    static_cast<float>(std::rand()) / RAND_MAX * 200 - 100));
+	}
 
 	m_renderer = new GeometryWidget();
 	m_renderer->setMaxZoom(10000);
@@ -111,18 +117,18 @@ void OptimizationDemo::recalculate() {
 	for (const auto& place : m_places) {
 		tree->addPlace("", *place, 1);
 	}
-	tree->addShields();
+	//tree->addShields();
 
 	ReachableRegionAlgorithm::ReachableRegion reachableRegion = ReachableRegionAlgorithm(tree).run();
 	SpiralTreeObstructedAlgorithm(tree, reachableRegion).run();
 	m_smoothTree = std::make_shared<SmoothTree>(tree);
-	for (auto& node : m_smoothTree->m_nodes) {
+	/*for (auto& node : m_smoothTree->m_nodes) {
 		if (node->getType() == Node::ConnectionType::kSubdivision) {
 			node->m_position.setPhi(wrapAngle(
-			    node->m_position.phi() + static_cast<float>(std::rand()) / RAND_MAX * 0.5 - 0.25,
+			    node->m_position.phi() + static_cast<float>(std::rand()) / RAND_MAX * 0.2 - 0.1,
 			    -M_PI));
 		}
-	}
+	}*/
 	SmoothTreePainting::Options options;
 	auto painting = std::make_shared<SmoothTreePainting>(m_smoothTree, options);
 	m_renderer->addPainting(painting, "Smooth tree");
