@@ -78,7 +78,12 @@ Number<Inexact> Spiral::alphaBetweenPointsDerivative(const PolarPoint& p1, const
 
 	Number<Inexact> phiDiff = wrapAngle(target.phi() - source.phi(), -M_PI);
 	Number<Inexact> rDiffLog = std::log(target.r() / source.r());
-	return rDiffLog / (phiDiff * phiDiff + rDiffLog * rDiffLog);
+	Number<Inexact> derivative = -rDiffLog / (phiDiff * phiDiff + rDiffLog * rDiffLog);
+
+	// swap the sign if p1 was further from the origin than p2
+	int sign = p1.r() < p2.r() ? 1 : -1;
+
+	return sign * derivative;
 }
 
 const PolarPoint& Spiral::anchor() const {

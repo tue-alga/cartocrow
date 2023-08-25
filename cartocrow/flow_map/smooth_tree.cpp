@@ -70,7 +70,7 @@ Number<Inexact> SmoothTree::computeSmoothFunction(const std::shared_ptr<Node>& n
 	PolarPoint n = node->m_position;
 	PolarPoint p = node->m_parent->m_position;
 	PolarPoint c = node->m_children[0]->m_position;
-	return std::pow(Spiral::alphaBetweenPoints(p, n) - Spiral::alphaBetweenPoints(n, c), 2);
+	return std::pow(Spiral::alphaBetweenPoints(n, p) - Spiral::alphaBetweenPoints(n, c), 2);
 }
 
 Number<Inexact> SmoothTree::computeSmoothForce(const std::shared_ptr<Node>& node) {
@@ -78,8 +78,8 @@ Number<Inexact> SmoothTree::computeSmoothForce(const std::shared_ptr<Node>& node
 	PolarPoint p = node->m_parent->m_position;
 	PolarPoint c = node->m_children[0]->m_position;
 	// chain rule: the derivative of (β_1 - β_2)² is 2(β_1 - β_2) * [β_1 - β_2]'
-	return 2 * (Spiral::alphaBetweenPoints(p, n) - Spiral::alphaBetweenPoints(n, c)) *
-	       (Spiral::alphaBetweenPointsDerivative(p, n) - Spiral::alphaBetweenPointsDerivative(n, c));
+	return 2 * (Spiral::alphaBetweenPoints(n, p) - Spiral::alphaBetweenPoints(n, c)) *
+	       (Spiral::alphaBetweenPointsDerivative(n, p) - Spiral::alphaBetweenPointsDerivative(n, c));
 }
 
 void SmoothTree::optimize() {
@@ -92,7 +92,7 @@ void SmoothTree::optimize() {
 	}
 	for (int i = 0; i < m_nodes.size(); i++) {
 		if (forces[i] != std::numeric_limits<Number<Inexact>>::infinity()) {
-			m_nodes[i]->m_position.setPhi(m_nodes[i]->m_position.phi() + 0.001 * forces[i]);
+			m_nodes[i]->m_position.setPhi(m_nodes[i]->m_position.phi() - 0.001 * forces[i]);
 		}
 	}
 }

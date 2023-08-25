@@ -117,8 +117,11 @@ void OptimizationDemo::recalculate() {
 	SpiralTreeObstructedAlgorithm(tree, reachableRegion).run();
 	m_smoothTree = std::make_shared<SmoothTree>(tree);
 	for (auto& node : m_smoothTree->m_nodes) {
-		node->m_position.setPhi(wrapAngle(node->m_position.phi() +
-		                        static_cast<float>(std::rand()) / RAND_MAX * 0.05, -M_PI));
+		if (node->getType() == Node::ConnectionType::kSubdivision) {
+			node->m_position.setPhi(wrapAngle(
+			    node->m_position.phi() + static_cast<float>(std::rand()) / RAND_MAX * 0.5 - 0.25,
+			    -M_PI));
+		}
 	}
 	SmoothTreePainting::Options options;
 	auto painting = std::make_shared<SmoothTreePainting>(m_smoothTree, options);
