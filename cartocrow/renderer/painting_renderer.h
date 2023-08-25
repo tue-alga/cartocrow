@@ -41,6 +41,7 @@ class PaintingRenderer : public GeometryPainting, public GeometryRenderer {
 	void draw(const Polygon<Inexact>& p) override;
 	void draw(const PolygonWithHoles<Inexact>& p) override;
 	void draw(const Circle<Inexact>& c) override;
+	void draw(const mosaic_cartogram::Ellipse& e) override;
 	//void draw(const BezierSpline& s) override;
 	void drawText(const Point<Inexact>& p, const std::string& text) override;
 
@@ -68,7 +69,8 @@ class PaintingRenderer : public GeometryPainting, public GeometryRenderer {
 	};
 	using Label = std::pair<Point<Inexact>, std::string>;
 	using DrawableObject = std::variant<Point<Inexact>, Segment<Inexact>, Polygon<Inexact>,
-	                                    PolygonWithHoles<Inexact>, Circle<Inexact>, Label, Style>;
+	                                    PolygonWithHoles<Inexact>, Circle<Inexact>,
+	                                    mosaic_cartogram::Ellipse, Label, Style>;
 	std::vector<DrawableObject> m_objects;
 	Style m_style;
 };

@@ -37,6 +37,8 @@ void PaintingRenderer::paint(GeometryRenderer& renderer) const {
 			renderer.draw(std::get<PolygonWithHoles<Inexact>>(object));
 		} else if (std::holds_alternative<Circle<Inexact>>(object)) {
 			renderer.draw(std::get<Circle<Inexact>>(object));
+		} else if (std::holds_alternative<mosaic_cartogram::Ellipse>(object)) {
+			renderer.draw(std::get<mosaic_cartogram::Ellipse>(object));
 		} else if (std::holds_alternative<Label>(object)) {
 			renderer.drawText(std::get<Label>(object).first, std::get<Label>(object).second);
 		} else if (std::holds_alternative<Style>(object)) {
@@ -67,6 +69,10 @@ void PaintingRenderer::draw(const PolygonWithHoles<Inexact>& p) {
 
 void PaintingRenderer::draw(const Circle<Inexact>& c) {
 	m_objects.push_back(c);
+}
+
+void PaintingRenderer::draw(const mosaic_cartogram::Ellipse& e) {
+	m_objects.push_back(e);
 }
 
 void PaintingRenderer::drawText(const Point<Inexact>& p, const std::string& text) {

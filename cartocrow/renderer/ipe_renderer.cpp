@@ -136,7 +136,7 @@ void IpeRenderer::draw(const Circle<Inexact>& c) {
 	m_page->append(ipe::TSelect::ENotSelected, m_layer, path);
 }
 
-void IpeRenderer::draw(const mosaic_cartogram::Ellipse &e) {
+void IpeRenderer::draw(const mosaic_cartogram::Ellipse& e) {
 	const auto m = e.parameters().matrix();
 	ipe::Matrix matrix {
 		// transposed linear map:  (i.e., to make it column-major)

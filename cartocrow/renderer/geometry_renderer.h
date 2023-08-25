@@ -107,10 +107,8 @@ class GeometryRenderer {
 	virtual void draw(const Circle<Inexact>& c) = 0;
 	/// Draws a circle with the currently set style.
 	void draw(const Circle<Exact>& c);
-	virtual void draw(const mosaic_cartogram::Ellipse &e) {
-		// TODO
-		throw std::runtime_error("Drawing ellipses is not yet fully supported.");
-	}
+	/// Draws an ellipse with the currently set style.
+	virtual void draw(const mosaic_cartogram::Ellipse& e) = 0;
 	/// Draws a Bézier spline with the currently set style.
 	//virtual void draw(const BezierSpline<Inexact>& s) = 0; // TODO
 	/// Draws a polygon set with the currently set style.
