@@ -14,6 +14,10 @@ class Graph {
 	/// - <tt>m_adj[u].count(v) <= 1</tt>
 
   public:
+	/// Creates an empty graph.
+	/// Runtime: O(1)
+	Graph() = default;
+
 	/// Creates a graph consisting of \c n vertices and no edges.
 	/// Runtime: O(n)
 	explicit Graph(int n) : m_adj(n) {}
@@ -67,6 +71,10 @@ class UndirectedGraph : public Graph {
 	/// - <tt>m_adj[u].contains(v)</tt> iff <tt>m_adj[v].contains(u)</tt>
 
   public:
+	/// Creates an empty graph.
+	/// Runtime: O(1)
+	UndirectedGraph() = default;
+
 	/// Creates a graph consisting of \c n vertices and no edges.
 	/// Runtime: O(n)
 	explicit UndirectedGraph(int n) : Graph(n) {}

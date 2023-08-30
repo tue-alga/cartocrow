@@ -14,8 +14,9 @@
 namespace cartocrow::mosaic_cartogram {
 
 Eigen::Matrix3d Ellipse::Parameters::matrix() const {
-	double cos = std::cos(angle);
-	double sin = std::sin(angle);
+	// multiply matrices left to right: translation, rotation, scaling
+	const double cos = std::cos(angle);
+	const double sin = std::sin(angle);
 	return Eigen::Matrix3d {
 		{ cos*a, -sin*b, x0 },
 		{ sin*a,  cos*b, y0 },
@@ -28,47 +29,58 @@ Ellipse::Ellipse(double a, double b, double c, double d, double e, double f)
 	: A(a), B(b), C(c), D(d), E(e), F(f) {
 	if (!std::isfinite(a) || !std::isfinite(b) || !std::isfinite(c) ||
 	    !std::isfinite(d) || !std::isfinite(e) || !std::isfinite(f)) {
-		// (temp)
-		std::cout << "The coefficients cannot be infinite or NaN." << std::endl;
-		// throw std::invalid_argument("The coefficients cannot be infinite or NaN.");
+		throw std::invalid_argument("The coefficients cannot be infinite or NaN");
 	}
 
 	// see Lawrence (1972), page 63
-	double min = 4*A*C - B*B;
-	double det = min * F - A*E*E + (B*E - C*D) * D;
+	const double min = 4*A*C - B*B;
+	const double det = min * F - A*E*E + (B*E - C*D) * D;
 	if (det == 0) {
-		throw std::invalid_argument("The conic cannot be degenerate.");
+		throw std::invalid_argument("The conic cannot be degenerate");
 	}
 	if (min <= 0) {
-		throw std::invalid_argument("The conic cannot be a hyperbola or parabola.");
+		throw std::invalid_argument("The conic cannot be a hyperbola or parabola");
 	}
 	if (A*det >= 0) {
-		throw std::invalid_argument("The ellipse cannot be imaginary.");
+		throw std::invalid_argument("The ellipse cannot be imaginary");
 	}
 }
 
 // TODO: if A = C then atan(±∞) = ±π/2 correctly?
 double Ellipse::angle() const {
+	// substitute  x -> x cos(t) - y sin(t)  and  y -> x sin(t) + y cos(t)
+	// and solve for t such that coefficient of xy is 0
 	return .5 * std::atan(B / (A-C));
 }
 
 std::pair<double, double> Ellipse::center() const {
-	double x = (2*C*D - B*E) / (B*B - 4*A*C);
+	// solve system  { dQ/dx = 0, dQ/dy = 0 }  for  x,y
+	const double x = (2*C*D - B*E) / (B*B - 4*A*C);
 	return { x, -(B*x + E) / (2*C) };
+}
+
+std::array<double, 6> Ellipse::coefficients() const {
+	return { A, B, C, D, E, F };
+}
+
+double Ellipse::evaluate(double x, double y) const {
+	return (A*x + B*y + D) * x + (C*y + E) * y + F;
 }
 
 Ellipse::Parameters Ellipse::parameters() const {
 	Parameters p = translateToOrigin().parameters();
-	auto [x0, y0] = center();
+	const auto [x0, y0] = center();
 	p.x0 = x0, p.y0 = y0;
 	return p;
 }
 
 Ellipse Ellipse::stretch(double cx, double cy) const {
+	// substitute  x -> cx x  and  y -> cy y  and compute new coefficients
 	return { A*cx*cx, B*cx*cy, C*cy*cy, D*cx, E*cy, F };
 }
 
 Ellipse Ellipse::translate(double dx, double dy) const {
+	// substitute  x -> x-dx  and  y -> y-dy  and compute new coefficients
 	return {
 		A, B, C,
 		D - 2*A*dx - B*dy,
@@ -78,12 +90,12 @@ Ellipse Ellipse::translate(double dx, double dy) const {
 }
 
 Ellipse Ellipse::translateTo(double x, double y) const {
-	auto [x0, y0] = center();
+	const auto [x0, y0] = center();
 	return translate(x - x0, y - y0);
 }
 
 EllipseAtOrigin Ellipse::translateToOrigin() const {
-	auto [x0, y0] = center();
+	const auto [x0, y0] = center();
 	return {
 		A, B, C,
 		(A*x0 + D) * x0 + (B*x0 + C*y0 + E) * y0 + F
@@ -165,7 +177,7 @@ Ellipse leastSquares(const Eigen::ArrayX2d &boundary) {
 	const Eigen::Vector<double, 6> u = evSolver.eigenvectors().col(i).real();
 
 	// ellipse coefficients
-	const Eigen::Vector<double, 6> a = std::sqrt(1 / (u.transpose() * C * u)) * u;
+	const Eigen::Vector<double, 6> a = u / std::sqrt(u.transpose() * C * u);
 	return { a[0], a[1], a[2], a[3], a[4], a[5] };
 }
 
@@ -186,7 +198,8 @@ Ellipse Ellipse::fit(const Eigen::ArrayX2d &boundary) {
 }
 
 double EllipseAtOrigin::area() const {
-	return 2 * std::numbers::pi * -F / std::sqrt(4*A*C - B*B);
+	// https://math.stackexchange.com/q/2499695
+	return 2 * std::numbers::pi * std::abs(F) / std::sqrt(4*A*C - B*B);
 }
 
 Ellipse::Parameters EllipseAtOrigin::parameters() const {
@@ -197,7 +210,8 @@ Ellipse::Parameters EllipseAtOrigin::parameters() const {
 	const double cos = std::cos(p.angle);
 	const double sin = std::sin(p.angle);
 
-	// eliminate rotation and transform ellipse into the form Ax² + Cy² + F = 0
+	// substitute  x -> x cos(t) - y sin(t)  and  y -> x sin(t) + y cos(t)  where  t := angle
+	// this eliminates rotation and transforms ellipse into the form  Ax² + Cy² + F = 0
 	const double A2 = A*cos*cos + ( B*cos + C*sin) * sin;
 	const double C2 = C*cos*cos + (-B*cos + A*sin) * sin;
 
@@ -207,7 +221,22 @@ Ellipse::Parameters EllipseAtOrigin::parameters() const {
 	return p;
 }
 
+double EllipseAtOrigin::radius(double slope) const {
+	// special case: vertical line intersection
+	if (std::isinf(slope)) return std::sqrt(-F / C);
+
+	// substitute  y -> mx  i.e. the linear function with slope m through the origin
+	// and rewrite as quadratic equation in x, i.e., ax² + 0x + F, where:
+	const double a = A + (B + C*slope) * slope;
+	// then  x = \pm\sqrt{-F/a}  so:
+	const double xSq = -F / a;
+	// return distance from origin to  (x, y) = (x, mx)
+	return std::sqrt(xSq * (1 + slope*slope));
+}
+
 EllipseAtOrigin EllipseAtOrigin::scaleTo(double area) const {
+	// note that area is linear in |F|, so  |areaNew| / |areaOld| = |Fnew| / |Fold| = Fnew / Fold
+	// since the sign must remain the same
 	return { A, B, C, F * area / this->area() };
 }
 

@@ -22,7 +22,7 @@ class VisibilityDrawing {
 	const UndirectedGraph &m_graph;
 
 	// memoization
-	// level is similar (but not identical) to Chiang05 p935
+	// level is similar (but not identical) to Chiang (2005), page 935
 	std::vector<int> m_levelVertices;
 	std::vector<std::vector<int>> m_levelEdges;  // only for edges in Δ-T
 

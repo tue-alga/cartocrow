@@ -9,20 +9,25 @@
 
 namespace cartocrow::mosaic_cartogram {
 
-struct EllipseAtOrigin;
+class EllipseAtOrigin;
 
-struct Ellipse {
+class Ellipse {
+  protected:
+	double A, B, C, D, E, F;
+
+  public:
 	struct Parameters {
 		double a, b, angle, x0, y0;
 		Eigen::Matrix3d matrix() const;
 	};
 
-	const double A, B, C, D, E, F;
-
+	Ellipse() : A(1), B(), C(1), D(), E(), F(-1) {}
 	Ellipse(double a, double b, double c, double d, double e, double f);
 
 	double angle() const;
 	std::pair<double, double> center() const;
+	std::array<double, 6> coefficients() const;
+	double evaluate(double x, double y) const;
 	virtual Parameters parameters() const;
 	Ellipse stretch(double cx, double cy) const;
 	Ellipse translate(double dx, double dy) const;
@@ -37,16 +42,14 @@ struct Ellipse {
 	static Ellipse fit(const Eigen::ArrayX2d &boundary);
 };
 
-struct EllipseAtOrigin : public Ellipse {
-	using Ellipse::A;
-	using Ellipse::B;
-	using Ellipse::C;
-	using Ellipse::F;  // guaranteed to be strictly negative
-
+class EllipseAtOrigin : public Ellipse {
+  public:
+	EllipseAtOrigin() : Ellipse() {}
 	EllipseAtOrigin(double a, double b, double c, double f) : Ellipse(a, b, c, 0, 0, f) {}
 
 	double area() const;
 	Parameters parameters() const override;
+	double radius(double slope) const;
 	EllipseAtOrigin scaleTo(double area) const;
 };
 

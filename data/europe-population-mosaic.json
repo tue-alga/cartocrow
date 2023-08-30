@@ -54,69 +54,8 @@
 		"SMR": 33931,
 		"VAT": 801
 	},
-	"necklaces": [
-		{
-			"shape": {
-				"type": "circle",
-				"center": [
-					300,
-					300
-				],
-				"radius": 120
-			},
-			"beads": [
-				"RUS",
-				"DEU",
-				"GBR",
-				"FRA",
-				"ITA",
-				"ESP",
-				"UKR",
-				"POL",
-				"ROU",
-				"NLD",
-				"BEL",
-				"CZE",
-				"GRC",
-				"PR1",
-				"SWE",
-				"HUN",
-				"BLR",
-				"AUT",
-				"SRB",
-				"CHE",
-				"BGR",
-				"DNK",
-				"FIN",
-				"SVK",
-				"NOR",
-				"IRL",
-				"HRV",
-				"MDA",
-				"BIH",
-				"ALB",
-				"LTU",
-				"MKD",
-				"SVN",
-				"LVA",
-				"EST",
-				"MNE",
-				"LUX",
-				"MLT",
-				"ISL",
-				"JEY",
-				"IMN",
-				"AND",
-				"FRO",
-				"MCO",
-				"LIE",
-				"SMR",
-				"VAT"
-			]
-		}
-	],
 	"parameters": {
-		"centroidIntervalLength": 0.5,
-		"orderType": "any"
+		"tileRadius": 5,
+		"unitValue": 680000
 	}
 }

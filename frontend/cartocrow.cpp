@@ -117,31 +117,34 @@ int main(int argc, char* argv[]) {
 		painting = std::make_shared<flow_map::Painting>(map_ptr, tree, options);
 
 	} else if (projectData["type"] == "mosaic_cartogram") {
-		auto salientPoints = ipeToSalientPoints(ipeFilename);
-	/*	std::sort(salientPoints.begin(), salientPoints.end());
-		for (const auto &p : salientPoints) std::cout << p << '\n';	*/
-
-		auto cartogram = std::make_shared<mosaic_cartogram::MosaicCartogram>(map_ptr, salientPoints);
-
-		mosaic_cartogram::Parameters& parameters = cartogram->parameters();
-		// TODO: set parameters
-
-/*
-		for (json& n : projectData["necklaces"]) {
-			auto necklace = necklaceMap->addNecklace(std::make_unique<necklace_map::CircleNecklace>(
-			    Circle<Inexact>(Point<Inexact>(n["shape"]["center"][0], n["shape"]["center"][1]),
-			                    std::pow(n["shape"]["radius"].get<double>(), 2))));
-			for (std::string b : n["beads"]) {
-				necklaceMap->addBead(b, projectData["data"][b], necklace);
+		// read data values
+		std::unordered_map<std::string, Number<Inexact>> dataValues;
+		for (auto &[key, val] : projectData["data"].items()) {
+			if (dataValues.contains(key)) {
+				throw std::logic_error("More than one data value is specified for region \"" + key + '"');
 			}
+			dataValues[key] = val;
 		}
-*/
 
+		// initialize cartogram
+		auto cartogram = std::make_shared<mosaic_cartogram::MosaicCartogram>(
+			map_ptr,
+			std::move(dataValues),
+			ipeToSalientPoints(ipeFilename)
+		);
+
+		// read parameters
+		auto &p = cartogram->parameters();
+		auto &projectParams = projectData["parameters"];
+		p.tileRadius = projectParams.value("tileRadius", 1);  // optional (default = 1)
+		p.unitValue  = projectParams.value("unitValue", -1);  // required
+
+		// compute cartogram
 		cartogram->compute();
 
+		// initialize painting
 		mosaic_cartogram::Painting::Options options;
 		painting = std::make_shared<mosaic_cartogram::Painting>(cartogram, options);
-
 	} else {
 		std::cerr << "Unknown type \"" << projectData["type"] << "\" specified\n";
 	}

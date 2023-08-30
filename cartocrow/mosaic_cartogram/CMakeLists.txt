@@ -4,7 +4,6 @@ set(SOURCES
 	mosaic_cartogram.cpp
 	orderly_spanning_tree.cpp
 	painting.cpp
-	parameters.cpp
 	triangulation.cpp
 	visibility_drawing.cpp
 )

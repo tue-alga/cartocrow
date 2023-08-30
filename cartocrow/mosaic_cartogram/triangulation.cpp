@@ -67,7 +67,7 @@ PolygonWithHoles<Exact> arrangementToPolygon(const RegionArrangement &arr) {
 	return polygon;
 }
 
-// (temp) this fixes the only internal problem (i.e., that Moldova is a degree 2 vertex)
+// (temp) this fixes the only internal problem in Europe (i.e., that Moldova is a degree 2 vertex)
 void absorbMoldova(RegionArrangement &arr) {
 	std::vector<RegionArrangement::Edge_iterator> remove;
 	for (auto e : arr.edge_handles())
@@ -80,8 +80,29 @@ void absorbMoldova(RegionArrangement &arr) {
 	std::cout << "removed " << remove.size() << " edges to absorb MDA into UKR" << std::endl;
 }
 
-RegionArrangement triangulate(const RegionArrangement &arrOrig, const std::vector<Point<Exact>> &salientPoints) {
-	RegionArrangement arr(arrOrig);
+int labelSeaRegions(RegionArrangement &arr) {
+	auto circ = arr.unbounded_face()->holes_begin()->ptr()->ccb();
+
+	// find topmost edge (such that "_outer0" will be the topmost region)
+	while (circ->source()->point().y() != circ->target()->point().y()) ++circ;
+
+	// label outer sea regions in counterclockwise order
+	int i = 0;
+	auto curr = circ;
+	do {
+		curr->twin()->face()->set_data("_outer" + std::to_string(i++));
+	} while (--curr != circ);
+
+	// label remaining sea regions
+	i = 0;
+	for (const auto f : arr.face_handles())
+		if (!f->is_unbounded() && f->data().empty())
+			f->set_data("_sea" + std::to_string(i++));
+
+	return i;
+}
+
+int triangulate(RegionArrangement &arr, const std::vector<Point<Exact>> &salientPoints) {
 	const auto outerPoints = addOuterTriangle(arr);
 	const auto polygon = arrangementToPolygon(arr);
 	const StraightSkeleton skeleton = *CGAL::create_interior_straight_skeleton_2(polygon, Exact());
@@ -152,19 +173,8 @@ RegionArrangement triangulate(const RegionArrangement &arrOrig, const std::vecto
 		CGAL::insert(arr, Segment<Exact>(p1, p2));
 	}
 
-	// give the three outer (sea) regions names
-	// TODO: ensure that "_outer0" is always top one
-	{
-		const auto circ = arr.unbounded_face()->holes_begin()->ptr()->ccb();
-		auto curr = circ;
-		int i = 0;
-		do {
-			curr->twin()->face()->set_data("_outer" + std::to_string(i++));
-		} while (--curr != circ);
-	}
-
 	absorbMoldova(arr);
-	return arr;
+	return labelSeaRegions(arr);
 }
 
 bool dualIsTriangular(const RegionArrangement &arr) {

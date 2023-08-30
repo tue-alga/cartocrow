@@ -1,123 +1,208 @@
 #include "mosaic_cartogram.h"
 
 #include <algorithm>
+#include <cmath>
+#include <iterator>
+#include <stdexcept>
+#include <unordered_set>
+#include <CGAL/number_utils.h>
 
 #include "triangulation.h"
 
 namespace cartocrow::mosaic_cartogram {
 
-MosaicCartogram::MosaicCartogram(const std::shared_ptr<RegionMap> map, const std::vector<Point<Exact>> &salient)
-    : m_origMap(map), m_salient(salient), m_dual(0) {}
-
 void MosaicCartogram::compute() {
-	// transform `m_origMap` such that each region is a singleton, i.e., consists of one polygon
-	// each new region gets a unique id: old id + index, where a higher index indicates a smaller region
-	for (const auto &[id, region] : *m_origMap) {
-		std::vector<PolygonWithHoles<Exact>> polygons;
-		region.shape.polygons_with_holes(std::back_inserter(polygons));
+	validate();
+	computeLandRegions();
+	computeArrangement();
+	computeDual();
+}
 
-		// sort from largest to smallest area
-		std::sort(polygons.begin(), polygons.end(), [](const auto &p1, const auto &p2) {
-			return area(p1) > area(p2);
-		});
-
-		Region main;
-		main.name = region.name;
-		main.color = region.color;
-		main.shape = PolygonSet<Exact>(polygons.front());
-		m_map[main.name] = main;
-
-		int i = 2;
-		for (auto pit = polygons.begin() + 1; pit != polygons.end(); ++pit) {
-			Region r;
-			r.name = region.name + std::to_string(i++);
-			r.color = region.color;
-			r.shape = PolygonSet<Exact>(*pit);
-			m_map[r.name] = r;
-		}
-	}
-
-	// create arrangement from input map
-	m_arr = regionMapToArrangement(m_map);
+void MosaicCartogram::computeArrangement() {
+	RegionMap map;
+	map.reserve(m_landRegions.size());
+	for (const auto &r : m_landRegions) map.insert({ r.name, r.basic() });
+	m_arrangement = regionMapToArrangement(map);
 
 	// (temp) ensure that all salient points exactly equal one vertex point
 	// this is necessary since the input map may contain "rounding errors"
-	snapToVertices(m_salient);
-
-	// add sea regions such that dual is triangular
-	m_arr = triangulate(m_arr, m_salient);
-	{
-		int i = 0;
-		for (const auto f : m_arr.face_handles())
-			if (!f->is_unbounded() && f->data().empty())
-				f->set_data("_sea" + std::to_string(i++));
-	}
-
-	// create bidirectional mapping country <--> index
-	std::unordered_set<std::string> countries;
-	for (const auto f : m_arr.face_handles())
-		if (!f->is_unbounded())
-			countries.insert(f->data());
-
-	m_indexToCountry = std::vector<std::string>(countries.begin(), countries.end());
-	std::sort(m_indexToCountry.begin(), m_indexToCountry.end());
-
-	{
-		int i = 0;
-		for (const std::string &c : m_indexToCountry) m_countryToIndex[c] = i++;
-	}
-
-	// compute dual of `m_arr`: create vertex for each face and connect vertices if the corresponding faces are adjacent
-	m_dual = UndirectedGraph(countries.size());
-	for (const auto fit : m_arr.face_handles()) {
-		if (fit->data().empty()) continue;
-
-		const int v = m_countryToIndex[fit->data()];
-		std::vector<int> adj;
-
-		auto circ = fit->outer_ccb();
-
-		// for the three outer faces, start at the unbounded face
-		if (fit->data()[1] == 'o')  // TODO: more robust check
-			while (!circ->twin()->face()->is_unbounded())
-				++circ;
-
-		auto curr = circ;
-		do {
-			const auto &s = curr->twin()->face()->data();
-			if (s.empty()) continue;
-			const int u = m_countryToIndex[s];
-			if (std::find(adj.begin(), adj.end(), u) == adj.end()) adj.push_back(u);
-		} while (++curr != circ);
-
-		std::reverse(adj.begin(), adj.end());  // reverse `adj` from counterclockwise to clockwise order
-		m_dual.setAdjacenciesUnsafe(v, adj);
-	}
-
-	// print country name for each index
-	// for (int i = 0; i < countries.size(); i++) std::cout << i << " : " << m_indexToCountry[i] << '\n';
-	// std::cout << std::endl;
-
-	// print adjacencies for each country
-	// for (int i = 0; i < countries.size(); i++) {
-	// 	std::cout << "adj[" << i << "] : ";
-	// 	for (int j : m_dual.getNeighbors(i)) std::cout << j << ", ";
-	// 	std::cout << std::endl;
-	// }
-}
-
-void MosaicCartogram::snapToVertices(std::vector<Point<Exact>> &points) {
-	for (auto pit = points.begin(); pit != points.end(); ++pit) {
+	for (auto pit = m_salientPoints.begin(); pit != m_salientPoints.end(); ++pit) {
 		const Point<Exact> *nearest = nullptr;
 		Number<Exact> nearestDistance;
 
-		for (const RegionArrangement::Vertex_iterator vit : m_arr.vertex_handles()) {
+		for (const auto vit : m_arrangement.vertex_handles()) {
 			const Point<Exact> &q = vit->point();
 			const Number<Exact> d = CGAL::squared_distance(*pit, q);
 			if (!nearest || d < nearestDistance) nearest = &q, nearestDistance = d;
 		}
 
 		*pit = *nearest;
+	}
+
+	// add sea regions such that dual is triangular
+	m_seaRegionCount = triangulate(m_arrangement, m_salientPoints);
+
+	// (temp)
+	m_landRegions.erase(m_landRegions.begin() + m_landIndices.at("MDA"));
+	m_landIndices.clear();
+	int i = 0;
+	for (auto &r : m_landRegions) {
+		r.id = i++;
+		m_landIndices.insert({ r.name, r.id });
+	}
+}
+
+void MosaicCartogram::computeDual() {
+	m_dual = UndirectedGraph(getRegionCount());
+	for (const auto fit : m_arrangement.face_handles()) {
+		if (fit->is_unbounded()) continue;  // all other faces (should) have a label
+
+		// get region index corresponding to face
+		const std::string &vName = fit->data();
+		const int v = getRegionIndex(vName);
+
+		auto circ = fit->outer_ccb();
+
+		// for the three outer sea regions, start at the unbounded face
+		if (vName.starts_with("_outer"))
+			while (!circ->twin()->face()->is_unbounded())
+				++circ;
+
+		// walk along boundary to find adjacent regions
+		auto curr = circ;
+		std::vector<int> adj;
+		do {
+			const std::string &uName = curr->twin()->face()->data();
+			if (uName.empty()) continue;
+			const int u = getRegionIndex(uName);
+			if (std::find(adj.begin(), adj.end(), u) == adj.end()) adj.push_back(u);
+		} while (--curr != circ);  // in reverse order (so clockwise)
+
+		// add adjacencies to dual
+		m_dual.setAdjacenciesUnsafe(v, adj);
+
+		// if `v` is a land region, add adjacencies as neighbors
+		if (isLandRegion(v)) {
+			LandRegion &region = m_landRegions[v];
+			for (int u : adj)
+				if (isLandRegion(u))
+					region.neighbors.push_back(m_landRegions[u]);
+		}
+	}
+}
+
+void MosaicCartogram::computeLandRegions() {
+	// POD for internal use
+	struct Part {
+		PolygonWithHoles<Exact> *shape;
+		Number<Exact> area;
+		Number<Inexact> value;
+		int tiles;
+	};
+
+	for (const auto &[name, region] : *m_inputMap) {
+		const Number<Inexact> value = m_dataValues.at(name);  // already validated
+		int tiles = getTileCount(value);
+
+		std::vector<PolygonWithHoles<Exact>> polygons;
+		region.shape.polygons_with_holes(std::back_inserter(polygons));
+
+		// simple case: the region is contiguous
+		if (polygons.size() == 1) {
+			const auto &p = polygons[0];
+			m_landRegions.push_back({
+				0, name, std::nullopt, value, tiles, region.color, p, getGuidingShape(p, tiles)
+			});
+			continue;
+		}
+
+		// compute area of each part
+		std::vector<Part> parts;
+		Number<Exact> totalArea = 0;
+		for (auto &p : polygons) {
+			const auto a = area(p);
+			parts.push_back({ &p, a });
+			totalArea += a;
+		}
+
+		// sort parts from largest to smallest area
+		std::sort(parts.begin(), parts.end(), [](const auto &p1, const auto &p2) {
+			return p1.area > p2.area;
+		});
+
+		// allocate tiles (TODO: improve)
+		for (auto &p : parts) {
+			p.value = value * CGAL::to_double(p.area / totalArea);
+			const int n = std::min(getTileCount(p.value), tiles);
+			p.tiles = n;
+			tiles -= n;
+		}
+		parts[0].tiles += tiles;  // assign any remaining tiles to the largest part
+
+		int i = 0;
+		for (auto &p : parts) {
+			if (!p.tiles) {
+				// TODO: redistribute remaining value?
+				std::cerr << "[warning] " << parts.size() - i << " subregion(s) of " << name
+				          << " are too small and have been removed\n";
+				break;
+			}
+			m_landRegions.push_back({
+				0,
+				name + '_' + std::to_string(i++),
+				name,
+				p.value,
+				p.tiles,
+				region.color,
+				*p.shape,
+				getGuidingShape(*p.shape, p.tiles)
+			});
+		}
+	}
+	std::cerr << std::flush;
+
+	// set indices based on lexicographic order of names
+	std::sort(m_landRegions.begin(), m_landRegions.end(), [](const auto &r1, const auto &r2) {
+		return r1.name < r2.name;
+	});
+	int i = 0;
+	for (auto &r : m_landRegions) {
+		r.id = i++;
+		m_landIndices.insert({ r.name, r.id });
+	}
+}
+
+void MosaicCartogram::validate() const {
+	// validate parameter values
+	m_parameters.validate();
+
+	// validate region names and data values
+	for (const auto &[name, region] : *m_inputMap) {
+		if (name.empty()) {
+			throw std::logic_error("Region names cannot be empty");
+		}
+		if (name.find('_') != std::string::npos) {
+			throw std::logic_error("The region name '" + name + "' is illegal; it cannot contain underscores");
+		}
+		if (!m_dataValues.contains(name)) {
+			throw std::logic_error("No data value is specified for region '" + name + "'");
+		}
+		const double v = m_dataValues.at(name);
+		if (!std::isfinite(v) || v < 0) {
+			throw std::logic_error("Region '" + name + "' has an illegal data value; it must be non-negative");
+		}
+	}
+
+	// report on any ignored data
+	std::vector<std::string> ignored;
+	for (const auto &[name, region] : m_dataValues)
+		if (!m_inputMap->contains(name))
+			ignored.push_back(name);
+	std::sort(ignored.begin(), ignored.end());
+	if (!ignored.empty()) {
+		std::cerr << "[warning] For the following regions, data was provided, but they are not on the map:";
+		for (const auto &s : ignored) std::cerr << ' ' << s << ',';
+		std::cerr << "\b " << std::endl;
 	}
 }
 
