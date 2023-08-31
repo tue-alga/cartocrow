@@ -38,25 +38,32 @@ SmoothTree::SmoothTree(const std::shared_ptr<SpiralTree> spiralTree) : m_tree(sp
 std::shared_ptr<Node> SmoothTree::constructSmoothTree(const std::shared_ptr<Node>& node, Number<Inexact> maxRStep) {
 	auto smoothNode = std::make_shared<Node>(node->m_position);
 	m_nodes.push_back(smoothNode);
-	for (const auto& child : node->m_children) {
-		auto smoothChild = constructSmoothTree(child, maxRStep);
-		const Spiral spiral(node->m_position, child->m_position);
-		Number<Inexact> rMin = node->m_position.r();
-		Number<Inexact> rMax = child->m_position.r();
-		Number<Inexact> rRange = rMax - rMin;
-		int subdivisionCount = std::ceil(rRange / maxRStep);
-		auto previous = smoothNode;
-		for (double i = 1; i < subdivisionCount; ++i) {
-			const PolarPoint position =
-			    spiral.evaluate(spiral.parameterForR(rMin + i * (rMax - rMin) / subdivisionCount));
-			auto subdivision = std::make_shared<Node>(position);
-			m_nodes.push_back(subdivision);
-			subdivision->m_parent = previous;
-			previous->m_children.push_back(subdivision);
-			previous = subdivision;
+	if (node->getType() == Node::ConnectionType::kLeaf) {
+		smoothNode->m_flow = node->m_place->m_flow;
+	} else {
+		smoothNode->m_flow = 0;
+		for (const auto& child : node->m_children) {
+			auto smoothChild = constructSmoothTree(child, maxRStep);
+			smoothNode->m_flow += smoothChild->m_flow;
+			const Spiral spiral(node->m_position, child->m_position);
+			Number<Inexact> rMin = node->m_position.r();
+			Number<Inexact> rMax = child->m_position.r();
+			Number<Inexact> rRange = rMax - rMin;
+			int subdivisionCount = std::ceil(rRange / maxRStep);
+			auto previous = smoothNode;
+			for (double i = 1; i < subdivisionCount; ++i) {
+				const PolarPoint position =
+					spiral.evaluate(spiral.parameterForR(rMin + i * (rMax - rMin) / subdivisionCount));
+				auto subdivision = std::make_shared<Node>(position);
+				subdivision->m_flow = smoothChild->m_flow;
+				m_nodes.push_back(subdivision);
+				subdivision->m_parent = previous;
+				previous->m_children.push_back(subdivision);
+				previous = subdivision;
+			}
+			smoothChild->m_parent = previous;
+			previous->m_children.push_back(smoothChild);
 		}
-		smoothChild->m_parent = previous;
-		previous->m_children.push_back(smoothChild);
 	}
 
 	return smoothNode;
@@ -87,7 +94,7 @@ void SmoothTree::optimize() {
 	for (int i = 0; i < m_nodes.size(); i++) {
 		const auto& node = m_nodes[i];
 		if (node->getType() == Node::ConnectionType::kSubdivision) {
-			forces[i] += computeSmoothForce(node);
+			forces[i] += 0.4 * computeSmoothForce(node); // TODO c_S = 0.4
 		}
 	}
 	for (int i = 0; i < m_nodes.size(); i++) {

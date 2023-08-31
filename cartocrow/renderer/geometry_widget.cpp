@@ -31,6 +31,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include <cmath>
 #include <limits>
+#include <qnamespace.h>
 
 namespace cartocrow::renderer {
 
@@ -475,8 +476,7 @@ void GeometryWidget::draw(const Point<Inexact>& p) {
 }
 
 void GeometryWidget::draw(const Segment<Inexact>& s) {
-	m_painter->setPen(QPen(m_style.m_strokeColor, m_style.m_strokeWidth));
-	m_painter->setBrush(Qt::NoBrush);
+	setupPainter();
 	QPointF p1 = convertPoint(s.start());
 	QPointF p2 = convertPoint(s.end());
 	m_painter->drawLine(p1, p2);
@@ -546,7 +546,7 @@ void GeometryWidget::setupPainter() {
 		m_painter->setBrush(Qt::NoBrush);
 	}
 	if (m_style.m_mode & GeometryRenderer::stroke) {
-		m_painter->setPen(QPen(m_style.m_strokeColor, m_style.m_strokeWidth));
+		m_painter->setPen(QPen(m_style.m_strokeColor, m_style.m_strokeWidth, Qt::SolidLine, Qt::FlatCap, Qt::RoundJoin));
 	} else {
 		m_painter->setPen(Qt::NoPen);
 	}
