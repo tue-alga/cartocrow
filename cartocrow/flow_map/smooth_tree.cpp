@@ -73,14 +73,14 @@ const std::vector<std::shared_ptr<Node>>& SmoothTree::nodes() const {
 	return m_nodes;
 }
 
-Number<Inexact> SmoothTree::computeSmoothFunction(const std::shared_ptr<Node>& node) {
+Number<Inexact> SmoothTree::computeSmoothingFunction(const std::shared_ptr<Node>& node) {
 	PolarPoint n = node->m_position;
 	PolarPoint p = node->m_parent->m_position;
 	PolarPoint c = node->m_children[0]->m_position;
 	return std::pow(Spiral::alphaBetweenPoints(n, p) - Spiral::alphaBetweenPoints(n, c), 2);
 }
 
-Number<Inexact> SmoothTree::computeSmoothForce(const std::shared_ptr<Node>& node) {
+Number<Inexact> SmoothTree::computeSmoothingForce(const std::shared_ptr<Node>& node) {
 	PolarPoint n = node->m_position;
 	PolarPoint p = node->m_parent->m_position;
 	PolarPoint c = node->m_children[0]->m_position;
@@ -94,7 +94,7 @@ void SmoothTree::optimize() {
 	for (int i = 0; i < m_nodes.size(); i++) {
 		const auto& node = m_nodes[i];
 		if (node->getType() == Node::ConnectionType::kSubdivision) {
-			forces[i] += 0.4 * computeSmoothForce(node); // TODO c_S = 0.4
+			forces[i] += 0.4 * computeSmoothingForce(node); // TODO c_S = 0.4
 		}
 	}
 	for (int i = 0; i < m_nodes.size(); i++) {

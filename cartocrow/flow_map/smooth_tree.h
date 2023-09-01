@@ -54,8 +54,8 @@ class SmoothTree {
 
 	std::shared_ptr<Node> constructSmoothTree(const std::shared_ptr<Node>& node, Number<Inexact> maxRStep);
 
-	Number<Inexact> computeSmoothFunction(const std::shared_ptr<Node>& node);
-	Number<Inexact> computeSmoothForce(const std::shared_ptr<Node>& node);
+	Number<Inexact> computeSmoothingFunction(const std::shared_ptr<Node>& node);
+	Number<Inexact> computeSmoothingForce(const std::shared_ptr<Node>& node);
 };
 
 } // namespace cartocrow::flow_map
