@@ -69,12 +69,55 @@ class Spiral {
 	Spiral(const PolarPoint& p1, const PolarPoint& p2);
 
 	/// Computes the \f$\alpha\f$ of the shortest logarithmic spiral connecting
-	/// the two given points.
-	static Number<Inexact> alphaBetweenPoints(const PolarPoint& p1, const PolarPoint& p2);
-	/// Computes \f$\frac{d\alpha}{d\phi}\f$, where \f$\alpha\f$ is the angle of
-	/// the shortest logarithmic spiral connecting the two given points (see
-	/// \ref alphaBetweenPoints) and \f$\phi\f$ is the polar angle of `p1`.
-	static Number<Inexact> alphaBetweenPointsDerivative(const PolarPoint& p1, const PolarPoint& p2);
+	/// the two given points \f$(r_1, \phi_1)\f$ and \f$(r_2, \phi_2)\f$.
+	///
+	/// This value can be computed as follows:
+	/// \f[
+	///     \alpha (r_1, \phi_1, r_2, \phi_2) = \arctan \left(
+	///         \frac{\phi_2 - \phi_1}{-\ln(r_2 / r_1)}
+	///     \right) \text{.}
+	/// \f]
+	static Number<Inexact> alpha(const PolarPoint& p1, const PolarPoint& p2);
+	/// Computes \f$\frac{\partial\alpha}{\partial r_1}\f$ for the \f$\alpha\f$
+	/// function (see \ref alpha).
+	///
+	/// This value can be computed as follows:
+	/// \f[
+	///     \frac{\partial\alpha}{\partial r_1}(r_1, \phi_1, r_2, \phi_2) =
+	///     \frac{-(\phi_2 - \phi_1) \ / \ r_1}{\ln^2(r_2 / r_1) + (\phi_2 - \phi_1)^2}
+	///     \text{.}
+	/// \f]
+	static Number<Inexact> dAlphaDR1(const PolarPoint& p1, const PolarPoint& p2);
+	/// Computes \f$\frac{\partial\alpha}{\partial r_2}\f$ for the \f$\alpha\f$
+	/// function (see \ref alpha).
+	///
+	/// This value can be computed as follows:
+	/// \f[
+	///     \frac{\partial\alpha}{\partial r_2}(r_1, \phi_1, r_2, \phi_2) =
+	///     \frac{(\phi_2 - \phi_1) \ / \ r_2}{\ln^2(r_2 / r_1) + (\phi_2 - \phi_1)^2}
+	///     \text{.}
+	/// \f]
+	static Number<Inexact> dAlphaDR2(const PolarPoint& p1, const PolarPoint& p2);
+	/// Computes \f$\frac{\partial\alpha}{\partial\phi_1}\f$ for the
+	/// \f$\alpha\f$ function (see \ref alpha).
+	///
+	/// This value can be computed as follows:
+	/// \f[
+	///     \frac{\partial\alpha}{\partial\phi_1}(r_1, \phi_1, r_2, \phi_2) =
+	///     \frac{\ln(r_2 / r_1)}{\ln^2(r_2 / r_1) + (\phi_2 - \phi_1)^2}
+	///     \text{.}
+	/// \f]
+	static Number<Inexact> dAlphaDPhi1(const PolarPoint& p1, const PolarPoint& p2);
+	/// Computes \f$\frac{\partial\alpha}{\partial\phi_2}\f$ for the
+	/// \f$\alpha\f$ function (see \ref alpha).
+	///
+	/// This value can be computed as follows:
+	/// \f[
+	///     \frac{\partial\alpha}{\partial\phi_2}(r_1, \phi_1, r_2, \phi_2) =
+	///     \frac{-\ln(r_2 / r_1)}{\ln^2(r_2 / r_1) + (\phi_2 - \phi_1)^2}
+	///     \text{.}
+	/// \f]
+	static Number<Inexact> dAlphaDPhi2(const PolarPoint& p1, const PolarPoint& p2);
 
 	/// Returns the anchor of this spiral.
 	const PolarPoint& anchor() const;

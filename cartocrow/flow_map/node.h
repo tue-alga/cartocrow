@@ -60,6 +60,9 @@ struct Node {
 
 	/// The amount of flow through this node.
 	Number<Inexact> m_flow;
+
+	/// The index of this node in its tree.
+	int m_id = -1;
 };
 
 } // namespace cartocrow::flow_map

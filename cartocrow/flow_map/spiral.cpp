@@ -35,9 +35,9 @@ Spiral::Spiral(const PolarPoint& anchor, const Number<Inexact>& angle)
 }
 
 Spiral::Spiral(const PolarPoint& p1, const PolarPoint& p2)
-    : m_anchor(p1.r() < p2.r() ? p2 : p1), m_angle(alphaBetweenPoints(p1, p2)) {}
+    : m_anchor(p1.r() < p2.r() ? p2 : p1), m_angle(alpha(p1, p2)) {}
 
-Number<Inexact> Spiral::alphaBetweenPoints(const PolarPoint& p1, const PolarPoint& p2) {
+Number<Inexact> Spiral::alpha(const PolarPoint& p1, const PolarPoint& p2) {
 	const PolarPoint& source = p1.r() < p2.r() ? p2 : p1;
 	const PolarPoint& target = p1.r() < p2.r() ? p1 : p2;
 
@@ -67,23 +67,35 @@ Number<Inexact> Spiral::alphaBetweenPoints(const PolarPoint& p1, const PolarPoin
 	}
 }
 
-Number<Inexact> Spiral::alphaBetweenPointsDerivative(const PolarPoint& p1, const PolarPoint& p2) {
+Number<Inexact> Spiral::dAlphaDPhi1(const PolarPoint& p1, const PolarPoint& p2) {
 	const PolarPoint& source = p1.r() < p2.r() ? p2 : p1;
 	const PolarPoint& target = p1.r() < p2.r() ? p1 : p2;
 
-	if (source.r() == target.r()) {
-		throw std::runtime_error(
-		    "Cannot compute α for a spiral connecting two points equidistant to the root");
-	}
+	Number<Inexact> phiDiff = wrapAngle(target.phi() - source.phi(), -M_PI);
+	Number<Inexact> rDiffLog = std::log(target.r() / source.r());
+	return rDiffLog / (rDiffLog * rDiffLog + phiDiff * phiDiff);
+}
+
+Number<Inexact> Spiral::dAlphaDPhi2(const PolarPoint& p1, const PolarPoint& p2) {
+	return -dAlphaDPhi1(p1, p2);
+}
+
+Number<Inexact> Spiral::dAlphaDR1(const PolarPoint& p1, const PolarPoint& p2) {
+	const PolarPoint& source = p1.r() < p2.r() ? p2 : p1;
+	const PolarPoint& target = p1.r() < p2.r() ? p1 : p2;
 
 	Number<Inexact> phiDiff = wrapAngle(target.phi() - source.phi(), -M_PI);
 	Number<Inexact> rDiffLog = std::log(target.r() / source.r());
-	Number<Inexact> derivative = -rDiffLog / (phiDiff * phiDiff + rDiffLog * rDiffLog);
+	return (-phiDiff / p1.r()) / (rDiffLog * rDiffLog + phiDiff * phiDiff);
+}
 
-	// swap the sign if p1 was further from the origin than p2
-	int sign = p1.r() < p2.r() ? 1 : -1;
+Number<Inexact> Spiral::dAlphaDR2(const PolarPoint& p1, const PolarPoint& p2) {
+	const PolarPoint& source = p1.r() < p2.r() ? p2 : p1;
+	const PolarPoint& target = p1.r() < p2.r() ? p1 : p2;
 
-	return sign * derivative;
+	Number<Inexact> phiDiff = wrapAngle(target.phi() - source.phi(), -M_PI);
+	Number<Inexact> rDiffLog = std::log(target.r() / source.r());
+	return (phiDiff / p2.r()) / (rDiffLog * rDiffLog + phiDiff * phiDiff);
 }
 
 const PolarPoint& Spiral::anchor() const {

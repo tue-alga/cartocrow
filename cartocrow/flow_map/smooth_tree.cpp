@@ -77,29 +77,50 @@ Number<Inexact> SmoothTree::computeSmoothingFunction(const std::shared_ptr<Node>
 	PolarPoint n = node->m_position;
 	PolarPoint p = node->m_parent->m_position;
 	PolarPoint c = node->m_children[0]->m_position;
-	return std::pow(Spiral::alphaBetweenPoints(n, p) - Spiral::alphaBetweenPoints(n, c), 2);
+	return std::pow(Spiral::alpha(p, n) - Spiral::alpha(n, c), 2);
 }
 
-Number<Inexact> SmoothTree::computeSmoothingForce(const std::shared_ptr<Node>& node) {
-	PolarPoint n = node->m_position;
-	PolarPoint p = node->m_parent->m_position;
-	PolarPoint c = node->m_children[0]->m_position;
+void SmoothTree::applySmoothingForce(int i, int iParent, int iChild) {
+	PolarPoint n = m_nodes[i]->m_position;
+	PolarPoint p = m_nodes[iParent]->m_position;
+	PolarPoint c = m_nodes[iChild]->m_position;
+
 	// chain rule: the derivative of (β_1 - β_2)² is 2(β_1 - β_2) * [β_1 - β_2]'
-	return 2 * (Spiral::alphaBetweenPoints(n, p) - Spiral::alphaBetweenPoints(n, c)) *
-	       (Spiral::alphaBetweenPointsDerivative(n, p) - Spiral::alphaBetweenPointsDerivative(n, c));
+	m_forces[i].r += 2 * (Spiral::alpha(p, n) - Spiral::alpha(n, c)) *
+	                 (Spiral::dAlphaDR2(p, n) - Spiral::dAlphaDR1(n, c));
+	m_forces[i].phi += 2 * (Spiral::alpha(p, n) - Spiral::alpha(n, c)) *
+	                   (Spiral::dAlphaDPhi2(p, n) - Spiral::dAlphaDPhi1(n, c));
+
+	m_forces[iParent].r += 2 * (Spiral::alpha(p, n) - Spiral::alpha(n, c)) *
+	                 (Spiral::dAlphaDR1(p, n));
+	m_forces[iParent].phi += 2 * (Spiral::alpha(p, n) - Spiral::alpha(n, c)) *
+	                   (Spiral::dAlphaDPhi1(p, n));
+
+	m_forces[iChild].r += 2 * (Spiral::alpha(p, n) - Spiral::alpha(n, c)) *
+	                 (Spiral::dAlphaDR2(n, c));
+	m_forces[iChild].phi += 2 * (Spiral::alpha(p, n) - Spiral::alpha(n, c)) *
+	                   (Spiral::dAlphaDPhi2(n, c));
 }
 
 void SmoothTree::optimize() {
-	std::vector<Number<Inexact>> forces(m_nodes.size(), 0);
+	m_forces = std::vector<PolarForce>(m_nodes.size(), PolarForce{});
+	for (int i = 0; i < m_nodes.size(); i++) {
+		m_nodes[i]->m_id = i;
+	}
 	for (int i = 0; i < m_nodes.size(); i++) {
 		const auto& node = m_nodes[i];
 		if (node->getType() == Node::ConnectionType::kSubdivision) {
-			forces[i] += 0.4 * computeSmoothingForce(node); // TODO c_S = 0.4
+			applySmoothingForce(i, m_nodes[i]->m_parent->m_id, m_nodes[i]->m_children[0]->m_id);
 		}
 	}
 	for (int i = 0; i < m_nodes.size(); i++) {
-		if (forces[i] != std::numeric_limits<Number<Inexact>>::infinity()) {
-			m_nodes[i]->m_position.setPhi(m_nodes[i]->m_position.phi() - 0.001 * forces[i]);
+		Number<Inexact> epsilon = 0.001;
+		if (m_nodes[i]->getType() == Node::ConnectionType::kJoin) {
+			m_nodes[i]->m_position.setR(m_nodes[i]->m_position.r() + epsilon * m_forces[i].r);
+		}
+		if (m_nodes[i]->getType() == Node::ConnectionType::kJoin ||
+		    m_nodes[i]->getType() == Node::ConnectionType::kSubdivision) {
+			m_nodes[i]->m_position.setPhi(m_nodes[i]->m_position.phi() + epsilon * m_forces[i].phi);
 		}
 	}
 }
