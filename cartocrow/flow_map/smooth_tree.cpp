@@ -73,10 +73,10 @@ const std::vector<std::shared_ptr<Node>>& SmoothTree::nodes() const {
 	return m_nodes;
 }
 
-Number<Inexact> SmoothTree::computeSmoothingFunction(const std::shared_ptr<Node>& node) {
-	PolarPoint n = node->m_position;
-	PolarPoint p = node->m_parent->m_position;
-	PolarPoint c = node->m_children[0]->m_position;
+Number<Inexact> SmoothTree::computeSmoothingCost(int i, int iParent, int iChild) {
+	PolarPoint n = m_nodes[i]->m_position;
+	PolarPoint p = m_nodes[iParent]->m_parent->m_position;
+	PolarPoint c = m_nodes[iChild]->m_children[0]->m_position;
 	return std::pow(Spiral::alpha(p, n) - Spiral::alpha(n, c), 2);
 }
 
@@ -85,21 +85,20 @@ void SmoothTree::applySmoothingForce(int i, int iParent, int iChild) {
 	PolarPoint p = m_nodes[iParent]->m_position;
 	PolarPoint c = m_nodes[iChild]->m_position;
 
-	// chain rule: the derivative of (β_1 - β_2)² is 2(β_1 - β_2) * [β_1 - β_2]'
-	m_forces[i].r += 2 * (Spiral::alpha(p, n) - Spiral::alpha(n, c)) *
+	m_forces[i].r += 2 * m_smoothing_factor * (Spiral::alpha(p, n) - Spiral::alpha(n, c)) *
 	                 (Spiral::dAlphaDR2(p, n) - Spiral::dAlphaDR1(n, c));
-	m_forces[i].phi += 2 * (Spiral::alpha(p, n) - Spiral::alpha(n, c)) *
+	m_forces[i].phi += 2 * m_smoothing_factor * (Spiral::alpha(p, n) - Spiral::alpha(n, c)) *
 	                   (Spiral::dAlphaDPhi2(p, n) - Spiral::dAlphaDPhi1(n, c));
 
-	m_forces[iParent].r += 2 * (Spiral::alpha(p, n) - Spiral::alpha(n, c)) *
-	                 (Spiral::dAlphaDR1(p, n));
-	m_forces[iParent].phi += 2 * (Spiral::alpha(p, n) - Spiral::alpha(n, c)) *
-	                   (Spiral::dAlphaDPhi1(p, n));
+	m_forces[iParent].r += 2 * m_smoothing_factor * (Spiral::alpha(p, n) - Spiral::alpha(n, c)) *
+	                       (Spiral::dAlphaDR1(p, n));
+	m_forces[iParent].phi += 2 * m_smoothing_factor * (Spiral::alpha(p, n) - Spiral::alpha(n, c)) *
+	                         (Spiral::dAlphaDPhi1(p, n));
 
-	m_forces[iChild].r += 2 * (Spiral::alpha(p, n) - Spiral::alpha(n, c)) *
-	                 (Spiral::dAlphaDR2(n, c));
-	m_forces[iChild].phi += 2 * (Spiral::alpha(p, n) - Spiral::alpha(n, c)) *
-	                   (Spiral::dAlphaDPhi2(n, c));
+	m_forces[iChild].r += 2 * m_smoothing_factor * (Spiral::alpha(p, n) - Spiral::alpha(n, c)) *
+	                      (Spiral::dAlphaDR2(n, c));
+	m_forces[iChild].phi += 2 * m_smoothing_factor * (Spiral::alpha(p, n) - Spiral::alpha(n, c)) *
+	                        (Spiral::dAlphaDPhi2(n, c));
 }
 
 void SmoothTree::optimize() {

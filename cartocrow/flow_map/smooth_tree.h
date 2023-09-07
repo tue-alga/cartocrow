@@ -60,8 +60,14 @@ class SmoothTree {
 	};
 	std::vector<PolarForce> m_forces;
 
-	Number<Inexact> computeSmoothingFunction(const std::shared_ptr<Node>& node);
+	/// Computes the smoothing cost
+	Number<Inexact> computeSmoothingCost(int i, int iParent, int iChild);
 	void applySmoothingForce(int i, int iParent, int iChild);
+
+	Number<Inexact> m_obstacle_factor = 2.0;
+	Number<Inexact> m_smoothing_factor = 0.4;
+	Number<Inexact> m_straightening_factor = 0.4;
+	Number<Inexact> m_angle_restriction_factor = 0.077;
 };
 
 } // namespace cartocrow::flow_map
