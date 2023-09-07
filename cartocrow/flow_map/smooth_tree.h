@@ -102,8 +102,40 @@ class SmoothTree {
 	/// et cetera.
 	void applySmoothingForce(int i, int iParent, int iChild);
 	
-	Number<Inexact> computeAngleRestrictionCost(int i, int iParent, int iChild);
-	void applyAngleRestrictionForce(int i, int iParent, int iChild);
+	/// Computes the angle restriction cost for the join node `i` at \f$(r,
+	/// \phi)\f$, with children `iChild1` at \f$(r_{c_1}, \phi_{c_1})\f$ and
+	/// `iChild2` at \f$(r_{c_2}, \phi_{c_2})\f$.
+	///
+	/// \f[
+	///     F_\text{AR}(r, \phi, r_{c_1}, \phi_{c_1}, r_{c_2}, \phi_{c_2}) =
+	///     c_\text{AR} \cdot
+	///     \big( \log(\sec \alpha(r, \phi, r_{c_1}, \phi_{c_1}))
+	///         + \log(\sec \alpha(r, \phi, r_{c_2}, \phi_{c_2})) \big)
+	///     \text{.}
+	/// \f]
+	Number<Inexact> computeAngleRestrictionCost(int i, int iChild1, int iChild2);
+	/// Applies angle restriction forces in \ref m_forces to the subdivision
+	/// node `i` and its children `iChild1` and `iChild2`.
+	///
+	/// The forces are defined by the partial derivatives of the angle
+	/// restriction cost (see \ref computeAngleRestrictionCost), which are:
+	///
+	/// \f{align*}{
+	///     \frac{\partial F_\text{AR}}{\partial r}(r, \phi, r_{c_1}, \phi_{c_1}, r_{c_2}, \phi_{c_2})\ &=
+	///     c_\text{AR} \cdot
+	///     \Big( \frac{\partial\alpha}{\partial r_1}(r, \phi, r_{c_1}, \phi_{c_1}) \cdot
+	///             \tan \alpha(r, \phi, r_{c_1}, \phi_{c_1}) +
+	///         \frac{\partial\alpha}{\partial r_1}(r, \phi, r_{c_2}, \phi_{c_2}) \cdot
+	///             \tan \alpha(r, \phi, r_{c_2}, \phi_{c_2}) \Big)
+	///     \text{;} \\
+	///     \frac{\partial F_\text{AR}}{\partial r_{c_1}}(r, \phi, r_{c_1}, \phi_{c_1}, r_{c_2}, \phi_{c_2})\ &=
+	///     c_\text{AR} \cdot
+	///     \frac{\partial\alpha}{\partial r_2}(r, \phi, r_{c_1}, \phi_{c_1}) \cdot
+	///         \tan \alpha(r, \phi, r_{c_1}, \phi_{c_1})
+	///     \text{;} \\
+	/// \f}
+	/// et cetera.
+	void applyAngleRestrictionForce(int i, int iChild1, int iChild2);
 
 	Number<Inexact> m_obstacle_factor = 2.0;
 	Number<Inexact> m_smoothing_factor = 0.4;
