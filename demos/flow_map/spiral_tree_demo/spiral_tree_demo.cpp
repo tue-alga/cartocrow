@@ -23,6 +23,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include <QApplication>
 #include <QCheckBox>
+#include <QMainWindow>
 
 #include "cartocrow/core/core.h"
 #include "cartocrow/core/timer.h"

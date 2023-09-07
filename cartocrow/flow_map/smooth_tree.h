@@ -42,6 +42,9 @@ class SmoothTree {
 	/// Returns a list of the nodes in this smooth tree.
 	const std::vector<std::shared_ptr<Node>>& nodes() const;
 
+	/// Computes the total cost of the tree.
+	Number<Inexact> computeCost();
+
 	/// Performs one optimization step.
 	void optimize();
 
@@ -60,9 +63,47 @@ class SmoothTree {
 	};
 	std::vector<PolarForce> m_forces;
 
-	/// Computes the smoothing cost
+	/// Computes the smoothing cost for the subdivision node `i` at \f$(r,
+	/// \phi)\f$, with parent `iParent` at \f$(r_p, \phi_p)\f$ and child
+	/// `iChild` at \f$(r_c, \phi_c)\f$.
+	///
+	/// \f[
+	///     F_\text{smooth}(r, \phi, r_p, \phi_p, r_c, \phi_c) =
+	///     c_\text{smooth} \cdot
+	///     \big( \alpha(r_p, \phi_p, r, \phi)
+	///         - \alpha(r, \phi, r_c, \phi_c) \big)^2
+	///     \text{.}
+	/// \f]
 	Number<Inexact> computeSmoothingCost(int i, int iParent, int iChild);
+	/// Applies smoothing forces in \ref m_forces to the subdivision node `i`,
+	/// its parent `iParent`, and its child `iChild`.
+	///
+	/// The forces are defined by the partial derivatives of the smoothing cost
+	/// (see \ref computeSmoothingCost), which are:
+	///
+	/// \f{align*}{
+	///     \frac{\partial F_\text{smooth}}{\partial r}(r, \phi, r_p, \phi_p, r_c, \phi_c)\ &=
+	///     2c_\text{smooth} \cdot
+	///     \big( \alpha(r_p, \phi_p, r, \phi) - \alpha(r, \phi, r_c, \phi_c) \big) \cdot
+	///     \Big( \frac{\partial\alpha}{\partial r_2}(r_p, \phi_p, r, \phi)
+	///         - \frac{\partial\alpha}{\partial r_1}(r, \phi, r_c, \phi_c) \Big)
+	///     \text{;} \\
+	///     \frac{\partial F_\text{smooth}}{\partial r_p}(r, \phi, r_p, \phi_p, r_c, \phi_c)\ &=
+	///     2c_\text{smooth} \cdot
+	///     \big( \alpha(r_p, \phi_p, r, \phi) - \alpha(r, \phi, r_c, \phi_c) \big) \cdot
+	///     \frac{\partial\alpha}{\partial r_1}(r_p, \phi_p, r, \phi)
+	///     \text{;} \\
+	///     \frac{\partial F_\text{smooth}}{\partial r_c}(r, \phi, r_p, \phi_p, r_c, \phi_c)\ &=
+	///     2c_\text{smooth} \cdot
+	///     \big( \alpha(r_p, \phi_p, r, \phi) - \alpha(r, \phi, r_c, \phi_c) \big) \cdot
+	///     -\frac{\partial\alpha}{\partial r_2}(r, \phi, r_c, \phi_c)
+	///     \text{;} \\
+	/// \f}
+	/// et cetera.
 	void applySmoothingForce(int i, int iParent, int iChild);
+	
+	Number<Inexact> computeAngleRestrictionCost(int i, int iParent, int iChild);
+	void applyAngleRestrictionForce(int i, int iParent, int iChild);
 
 	Number<Inexact> m_obstacle_factor = 2.0;
 	Number<Inexact> m_smoothing_factor = 0.4;

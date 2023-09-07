@@ -23,7 +23,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include <QApplication>
 #include <QCheckBox>
-#include <cstdlib>
+#include <QStatusBar>
 
 #include "cartocrow/core/core.h"
 #include "cartocrow/flow_map/painting.h"
@@ -80,12 +80,14 @@ OptimizationDemo::OptimizationDemo() {
 	connect(m_optimizeTimer, &QTimer::timeout, [&]() {
 		m_smoothTree->optimize();
 		m_renderer->update();
+		updateCostLabel();
 	});
 	m_optimizeOneStepButton = new QPushButton("Optimize one step");
 	toolBar->addWidget(m_optimizeOneStepButton);
 	connect(m_optimizeOneStepButton, &QPushButton::clicked, [&]() {
 		m_smoothTree->optimize();
 		m_renderer->update();
+		updateCostLabel();
 	});
 	toolBar->addSeparator();
 	toolBar->addWidget(new QLabel("α = "));
@@ -102,6 +104,10 @@ OptimizationDemo::OptimizationDemo() {
 		m_alphaLabel->setText(QString("%1π").arg(value / 1000.0, 0, 'f', 3));
 		recalculate();
 	});
+
+	m_costLabel = new QLabel();
+	statusBar()->addWidget(m_costLabel);
+
 	for (auto place : m_places) {
 		m_renderer->registerEditable(place);
 	}
@@ -134,7 +140,13 @@ void OptimizationDemo::recalculate() {
 	m_renderer->addPainting(painting, "Smooth tree");
 
 	m_renderer->update();
+	updateCostLabel();
 }
+
+void OptimizationDemo::updateCostLabel() {
+	m_costLabel->setText(QString("Cost function: %1").arg(m_smoothTree->computeCost()));
+}
+
 
 int main(int argc, char* argv[]) {
 	QApplication app(argc, argv);

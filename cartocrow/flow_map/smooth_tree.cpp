@@ -33,6 +33,11 @@ SmoothTree::SmoothTree(const std::shared_ptr<SpiralTree> spiralTree) : m_tree(sp
 		}
 	}
 	constructSmoothTree(spiralTree->root(), rMax / 10); // TODO make 10 configurable
+
+	// set node IDs
+	for (int i = 0; i < m_nodes.size(); i++) {
+		m_nodes[i]->m_id = i;
+	}
 }
 
 std::shared_ptr<Node> SmoothTree::constructSmoothTree(const std::shared_ptr<Node>& node, Number<Inexact> maxRStep) {
@@ -75,9 +80,9 @@ const std::vector<std::shared_ptr<Node>>& SmoothTree::nodes() const {
 
 Number<Inexact> SmoothTree::computeSmoothingCost(int i, int iParent, int iChild) {
 	PolarPoint n = m_nodes[i]->m_position;
-	PolarPoint p = m_nodes[iParent]->m_parent->m_position;
-	PolarPoint c = m_nodes[iChild]->m_children[0]->m_position;
-	return std::pow(Spiral::alpha(p, n) - Spiral::alpha(n, c), 2);
+	PolarPoint p = m_nodes[iParent]->m_position;
+	PolarPoint c = m_nodes[iChild]->m_position;
+	return m_smoothing_factor * std::pow(Spiral::alpha(p, n) - Spiral::alpha(n, c), 2);
 }
 
 void SmoothTree::applySmoothingForce(int i, int iParent, int iChild) {
@@ -91,29 +96,47 @@ void SmoothTree::applySmoothingForce(int i, int iParent, int iChild) {
 	                   (Spiral::dAlphaDPhi2(p, n) - Spiral::dAlphaDPhi1(n, c));
 
 	m_forces[iParent].r += 2 * m_smoothing_factor * (Spiral::alpha(p, n) - Spiral::alpha(n, c)) *
-	                       (Spiral::dAlphaDR1(p, n));
+	                       Spiral::dAlphaDR1(p, n);
 	m_forces[iParent].phi += 2 * m_smoothing_factor * (Spiral::alpha(p, n) - Spiral::alpha(n, c)) *
-	                         (Spiral::dAlphaDPhi1(p, n));
+	                         Spiral::dAlphaDPhi1(p, n);
 
 	m_forces[iChild].r += 2 * m_smoothing_factor * (Spiral::alpha(p, n) - Spiral::alpha(n, c)) *
-	                      (Spiral::dAlphaDR2(n, c));
+	                      -Spiral::dAlphaDR2(n, c);
 	m_forces[iChild].phi += 2 * m_smoothing_factor * (Spiral::alpha(p, n) - Spiral::alpha(n, c)) *
-	                        (Spiral::dAlphaDPhi2(n, c));
+	                        -Spiral::dAlphaDPhi2(n, c);
+}
+
+Number<Inexact> SmoothTree::computeAngleRestrictionCost(int i, int iParent, int iChild) {
+	return 0; // TODO
+}
+
+void SmoothTree::applyAngleRestrictionForce(int i, int iParent, int iChild) {
+	// TODO
+}
+
+Number<Inexact> SmoothTree::computeCost() {
+	Number<Inexact> cost = 0;
+	for (int i = 0; i < m_nodes.size(); i++) {
+		const auto& node = m_nodes[i];
+		if (node->getType() == Node::ConnectionType::kSubdivision) {
+			cost += computeSmoothingCost(i, m_nodes[i]->m_parent->m_id, m_nodes[i]->m_children[0]->m_id);
+			cost += computeAngleRestrictionCost(i, m_nodes[i]->m_parent->m_id, m_nodes[i]->m_children[0]->m_id);
+		}
+	}
+	return cost;
 }
 
 void SmoothTree::optimize() {
 	m_forces = std::vector<PolarForce>(m_nodes.size(), PolarForce{});
 	for (int i = 0; i < m_nodes.size(); i++) {
-		m_nodes[i]->m_id = i;
-	}
-	for (int i = 0; i < m_nodes.size(); i++) {
 		const auto& node = m_nodes[i];
 		if (node->getType() == Node::ConnectionType::kSubdivision) {
 			applySmoothingForce(i, m_nodes[i]->m_parent->m_id, m_nodes[i]->m_children[0]->m_id);
+			applyAngleRestrictionForce(i, m_nodes[i]->m_parent->m_id, m_nodes[i]->m_children[0]->m_id);
 		}
 	}
 	for (int i = 0; i < m_nodes.size(); i++) {
-		Number<Inexact> epsilon = 0.001;
+		Number<Inexact> epsilon = 0.001; // TODO
 		if (m_nodes[i]->getType() == Node::ConnectionType::kJoin) {
 			m_nodes[i]->m_position.setR(m_nodes[i]->m_position.r() + epsilon * m_forces[i].r);
 		}

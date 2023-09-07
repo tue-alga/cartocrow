@@ -43,6 +43,7 @@ class OptimizationDemo : public QMainWindow {
 
   private:
 	void recalculate();
+	void updateCostLabel();
 	Number<Inexact> m_alpha = 25 * M_PI / 180;
 
 	std::vector<std::shared_ptr<Point<Inexact>>> m_places;
@@ -54,4 +55,5 @@ class OptimizationDemo : public QMainWindow {
 	QPushButton* m_optimizeButton;
 	QPushButton* m_optimizeOneStepButton;
 	QTimer* m_optimizeTimer;
+	QLabel* m_costLabel;
 };
