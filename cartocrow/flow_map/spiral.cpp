@@ -70,7 +70,9 @@ Number<Inexact> Spiral::alpha(const PolarPoint& p1, const PolarPoint& p2) {
 Number<Inexact> Spiral::dAlphaDPhi1(const PolarPoint& p1, const PolarPoint& p2) {
 	const PolarPoint& source = p1.r() < p2.r() ? p2 : p1;
 	const PolarPoint& target = p1.r() < p2.r() ? p1 : p2;
-
+	if (target.r() == 0) {
+		return 0;
+	}
 	Number<Inexact> phiDiff = wrapAngle(target.phi() - source.phi(), -M_PI);
 	Number<Inexact> rDiffLog = std::log(target.r() / source.r());
 	return rDiffLog / (rDiffLog * rDiffLog + phiDiff * phiDiff);
@@ -83,7 +85,9 @@ Number<Inexact> Spiral::dAlphaDPhi2(const PolarPoint& p1, const PolarPoint& p2) 
 Number<Inexact> Spiral::dAlphaDR1(const PolarPoint& p1, const PolarPoint& p2) {
 	const PolarPoint& source = p1.r() < p2.r() ? p2 : p1;
 	const PolarPoint& target = p1.r() < p2.r() ? p1 : p2;
-
+	if (target.r() == 0) {
+		return 0;
+	}
 	Number<Inexact> phiDiff = wrapAngle(target.phi() - source.phi(), -M_PI);
 	Number<Inexact> rDiffLog = std::log(target.r() / source.r());
 	return (-phiDiff / p1.r()) / (rDiffLog * rDiffLog + phiDiff * phiDiff);
@@ -92,7 +96,9 @@ Number<Inexact> Spiral::dAlphaDR1(const PolarPoint& p1, const PolarPoint& p2) {
 Number<Inexact> Spiral::dAlphaDR2(const PolarPoint& p1, const PolarPoint& p2) {
 	const PolarPoint& source = p1.r() < p2.r() ? p2 : p1;
 	const PolarPoint& target = p1.r() < p2.r() ? p1 : p2;
-
+	if (source.r() == 0) {
+		return 0;
+	}
 	Number<Inexact> phiDiff = wrapAngle(target.phi() - source.phi(), -M_PI);
 	Number<Inexact> rDiffLog = std::log(target.r() / source.r());
 	return (phiDiff / p2.r()) / (rDiffLog * rDiffLog + phiDiff * phiDiff);

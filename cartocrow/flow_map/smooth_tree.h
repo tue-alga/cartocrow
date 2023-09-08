@@ -116,8 +116,8 @@ class SmoothTree {
 	///     \text{.}
 	/// \f]
 	Number<Inexact> computeAngleRestrictionCost(int i, int iChild1, int iChild2);
-	/// Applies angle restriction forces in \ref m_forces to the subdivision
-	/// node `i` and its children `iChild1` and `iChild2`.
+	/// Applies angle restriction forces in \ref m_forces to the join node `i`
+	/// and its children `iChild1` and `iChild2`.
 	///
 	/// The forces are defined by the partial derivatives of the angle
 	/// restriction cost (see \ref computeAngleRestrictionCost), which are:
@@ -151,8 +151,8 @@ class SmoothTree {
 	///     \text{.}
 	/// \f]
 	Number<Inexact> computeBalancingCost(int i, int iChild1, int iChild2);
-	/// Applies balancing forces in \ref m_forces to the subdivision node `i`
-	/// and its children `iChild1` and `iChild2`.
+	/// Applies balancing forces in \ref m_forces to the join node `i` and its
+	/// children `iChild1` and `iChild2`.
 	///
 	/// The forces are defined by the partial derivatives of the balancing cost
 	/// (see \ref computeBalancingCost), which are:
@@ -169,6 +169,43 @@ class SmoothTree {
 	/// \f}
 	/// et cetera.
 	void applyBalancingForce(int i, int iChild1, int iChild2);
+	/// Computes the straightening cost for the join node `i` at \f$(r,
+	/// \phi)\f$, with parent `iParent` at \f$(r_p, \phi_p)\f$ and children
+	/// `children` at \f$(r_{c_i}, \phi_{c_i})\f$.
+	///
+	/// \f[
+	///     F_\text{balance}(r, \phi, r_p, \phi_p, \{r_{c_i}\}, \{\phi_{c_i}\}) =
+	///     c_\text{straighten} \cdot
+	///     \Big( \alpha(r_p, \phi_p, r, \phi) -
+	///         \frac{\sum_{i \mid t_i \geq ct^*} t_i \alpha(r, \phi, r_{c_i}, \phi_{c_i})}
+	///             {\sum_{i \mid t_i \geq ct^*} t_i}
+	///     \Big)^2
+	///     \text{.}
+	/// \f]
+	Number<Inexact> computeStraighteningCost(int i, int iParent,
+	                                         const std::vector<std::shared_ptr<Node>>& children);
+	/// Applies straightening forces in \ref m_forces to the join node `i` at
+	/// \f$(r, \phi)\f$, with parent `iParent` at \f$(r_p, \phi_p)\f$ and
+	/// children `children` at \f$(r_{c_i}, \phi_{c_i})\f$.
+	///
+	/// The forces are defined by the partial derivatives of the straightening cost
+	/// (see \ref computeStraighteningCost), which are:
+	///
+	/// \f{multline}{
+	///     \frac{\partial F_\text{straighten}}{\partial r}(r, \phi, r_p, \phi_p, \{r_{c_i}\}, \{\phi_{c_i}\}) =
+	///     2c_\text{straighten} \cdot
+	///     \bigg( \alpha(r_p, \phi_p, r, \phi) -
+	///         \frac{\sum_{i \mid t_i \geq ct^*} t_i \alpha(r, \phi, r_{c_i}, \phi_{c_i})}
+	///             {\sum_{i \mid t_i \geq ct^*} t_i} \bigg) \\
+	///     \cdot \bigg(
+	///         \frac{\partial\alpha}{\partial r_2}(r_p, \phi_p, r, \phi) -
+	///         \frac{\sum_{i \mid t_i \geq ct^*} t_i \frac{\partial\alpha}{\partial r_1}(r, \phi, r_{c_i}, \phi_{c_i})}
+	///             {\sum_{i \mid t_i \geq ct^*} t_i} \bigg)
+	///     \text{;} \\
+	/// \f}
+	/// et cetera.
+	void applyStraighteningForce(int i, int iParent,
+	                             const std::vector<std::shared_ptr<Node>>& children);
 
 	// [ws] TODO Somewhere in the optimization code there seems to be a sign
 	// issue, although the result seems correct. We are computing forces by
@@ -181,6 +218,8 @@ class SmoothTree {
 	Number<Inexact> m_smoothing_factor = 0.4;
 	Number<Inexact> m_straightening_factor = 0.4;
 	Number<Inexact> m_angle_restriction_factor = 0.077;
+
+	Number<Inexact> m_relevantFlowFactor = 0.5;
 };
 
 } // namespace cartocrow::flow_map

@@ -173,6 +173,74 @@ void SmoothTree::applyBalancingForce(int i, int iChild1, int iChild2) {
 	                         -Spiral::dAlphaDPhi2(n, c2);
 }
 
+Number<Inexact>
+SmoothTree::computeStraighteningCost(int i, int iParent,
+                                     const std::vector<std::shared_ptr<Node>>& children) {
+	PolarPoint n = m_nodes[i]->m_position;
+	PolarPoint p = m_nodes[iParent]->m_position;
+	Number<Inexact> maxFlow = 0;
+	for (const auto& child : children) {
+		if (child->m_flow > maxFlow) {
+			maxFlow = child->m_flow;
+		}
+	}
+	Number<Inexact> numerator = 0;
+	Number<Inexact> denominator = 0;
+	for (const auto& child : children) {
+		if (child->m_flow >= m_relevantFlowFactor * maxFlow) {
+			PolarPoint c = child->m_position;
+			numerator += child->m_flow * Spiral::alpha(n, c);
+			denominator += child->m_flow;
+		}
+	}
+	return m_straightening_factor * std::pow(Spiral::alpha(p, n) - numerator / denominator, 2);
+}
+
+void SmoothTree::applyStraighteningForce(int i, int iParent,
+                                         const std::vector<std::shared_ptr<Node>>& children) {
+	PolarPoint n = m_nodes[i]->m_position;
+	PolarPoint p = m_nodes[iParent]->m_position;
+	Number<Inexact> maxFlow = 0;
+	for (const auto& child : children) {
+		if (child->m_flow > maxFlow) {
+			maxFlow = child->m_flow;
+		}
+	}
+	Number<Inexact> numerator = 0;
+	Number<Inexact> numeratorDR1 = 0;
+	Number<Inexact> numeratorDPhi1 = 0;
+	Number<Inexact> denominator = 0;
+	for (const auto& child : children) {
+		if (child->m_flow >= m_relevantFlowFactor * maxFlow) {
+			PolarPoint c = child->m_position;
+			numerator += child->m_flow * Spiral::alpha(n, c);
+			numeratorDR1 += child->m_flow * Spiral::dAlphaDR1(n, c);
+			numeratorDPhi1 += child->m_flow * Spiral::dAlphaDPhi1(n, c);
+			denominator += child->m_flow;
+		}
+	}
+	m_forces[i].r += 2 * m_straightening_factor * (Spiral::alpha(p, n) - numerator / denominator) *
+	                 (Spiral::dAlphaDR2(p, n) - numeratorDR1 / denominator);
+	m_forces[i].phi += 2 * m_straightening_factor * (Spiral::alpha(p, n) - numerator / denominator) *
+	                   (Spiral::dAlphaDPhi2(p, n) - numeratorDPhi1 / denominator);
+
+	m_forces[iParent].r += 2 * m_straightening_factor * (Spiral::alpha(p, n) - numerator / denominator) *
+	                 Spiral::dAlphaDR1(p, n);
+	m_forces[iParent].phi += 2 * m_straightening_factor * (Spiral::alpha(p, n) - numerator / denominator) *
+	                   Spiral::dAlphaDPhi1(p, n);
+
+	for (const auto& child : children) {
+		if (child->m_flow > maxFlow) {
+			PolarPoint c = child->m_position;
+			m_forces[child->m_id].r += 2 * m_straightening_factor *
+			                           (Spiral::alpha(p, n) - numerator / denominator) *
+			                           -child->m_flow * Spiral::dAlphaDR2(n, c) / denominator;
+			m_forces[child->m_id].phi += 2 * m_straightening_factor *
+			                           (Spiral::alpha(p, n) - numerator / denominator) *
+			                           -child->m_flow * Spiral::dAlphaDPhi2(n, c) / denominator;
+		}
+	}
+}
 
 Number<Inexact> SmoothTree::computeCost() {
 	Number<Inexact> cost = 0;
@@ -187,6 +255,9 @@ Number<Inexact> SmoothTree::computeCost() {
 			cost += computeBalancingCost(
 			    i, m_nodes[i]->m_children[0]->m_id,
 			    m_nodes[i]->m_children[m_nodes[i]->m_children.size() - 1]->m_id);
+			cost += computeStraighteningCost(
+			    i, m_nodes[i]->m_parent->m_id,
+			    m_nodes[i]->m_children);
 		}
 	}
 	return cost;
@@ -205,10 +276,13 @@ void SmoothTree::optimize() {
 			applyBalancingForce(
 			    i, m_nodes[i]->m_children[0]->m_id,
 			    m_nodes[i]->m_children[m_nodes[i]->m_children.size() - 1]->m_id);
+			applyStraighteningForce(
+			    i, m_nodes[i]->m_parent->m_id,
+			    m_nodes[i]->m_children);
 		}
 	}
 	for (int i = 0; i < m_nodes.size(); i++) {
-		Number<Inexact> epsilon = 0.001; // TODO
+		Number<Inexact> epsilon = 0.0001; // TODO
 		if (m_nodes[i]->getType() == Node::ConnectionType::kJoin) {
 			//m_nodes[i]->m_position.setR(m_nodes[i]->m_position.r() + epsilon * m_forces[i].r);
 		}
