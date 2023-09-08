@@ -52,6 +52,8 @@ class SmoothTree {
 	/// The spiral tree underlying this smooth tree.
 	std::shared_ptr<SpiralTree> m_tree;
 
+	Number<Inexact> m_restrictingAngle;
+
 	/// List of nodes in this tree.
 	std::vector<std::shared_ptr<Node>> m_nodes;
 
@@ -136,6 +138,44 @@ class SmoothTree {
 	/// \f}
 	/// et cetera.
 	void applyAngleRestrictionForce(int i, int iChild1, int iChild2);
+	/// Computes the balancing cost for the join node `i` at \f$(r, \phi)\f$,
+	/// with children `iChild1` at \f$(r_{c_1}, \phi_{c_1})\f$ and `iChild2` at
+	/// \f$(r_{c_2}, \phi_{c_2})\f$.
+	///
+	/// \f[
+	///     F_\text{balance}(r, \phi, r_{c_1}, \phi_{c_1}, r_{c_2}, \phi_{c_2}) =
+	///     c_\text{AR} \cdot
+	///     2 \tan^2(\alpha) \log\Big( \csc \Big(
+	///         \frac{\alpha(r, \phi, r_{c_1}, \phi_{c_1}) - \alpha(r, \phi, r_{c_2}, \phi_{c_2})}{2}
+	///     \Big) \Big)
+	///     \text{.}
+	/// \f]
+	Number<Inexact> computeBalancingCost(int i, int iChild1, int iChild2);
+	/// Applies balancing forces in \ref m_forces to the subdivision node `i`
+	/// and its children `iChild1` and `iChild2`.
+	///
+	/// The forces are defined by the partial derivatives of the balancing cost
+	/// (see \ref computeBalancingCost), which are:
+	///
+	/// \f{multline}{
+	///     \frac{\partial F_\text{balance}}{\partial r}(r, \phi, r_{c_1}, \phi_{c_1}, r_{c_2}, \phi_{c_2})\ =
+	///     c_\text{AR} \cdot -\tan^2(\alpha) \cdot
+	///     \cot \Big(
+	///         \frac{\alpha(r, \phi, r_{c_1}, \phi_{c_1}) - \alpha(r, \phi, r_{c_2}, \phi_{c_2})}{2}
+	///     \Big) \\
+	///     \cdot \Big( \frac{\partial\alpha}{\partial r_1}(r, \phi, r_{c_1}, \phi_{c_1}) -
+	///         \frac{\partial\alpha}{\partial r_1}(r, \phi, r_{c_2}, \phi_{c_2}) \Big)
+	///     \text{;} \\
+	/// \f}
+	/// et cetera.
+	void applyBalancingForce(int i, int iChild1, int iChild2);
+
+	// [ws] TODO Somewhere in the optimization code there seems to be a sign
+	// issue, although the result seems correct. We are computing forces by
+	// computing the gradient, but the forces are supposed to point towards the
+	// negative gradient, not the positive. Yet, we are never inverting the
+	// sign. I'm confused as to why this seems to be working fine; maybe the
+	// sign of the α function is incorrect?
 
 	Number<Inexact> m_obstacle_factor = 2.0;
 	Number<Inexact> m_smoothing_factor = 0.4;

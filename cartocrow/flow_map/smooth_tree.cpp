@@ -25,7 +25,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 namespace cartocrow::flow_map {
 
-SmoothTree::SmoothTree(const std::shared_ptr<SpiralTree> spiralTree) : m_tree(spiralTree) {
+SmoothTree::SmoothTree(const std::shared_ptr<SpiralTree> spiralTree)
+    : m_tree(spiralTree), m_restrictingAngle(spiralTree->restrictingAngle()) {
 	Number<Inexact> rMax = 0;
 	for (const auto& node : m_tree->nodes()) {
 		if (node->m_position.r() > rMax) {
@@ -137,6 +138,42 @@ void SmoothTree::applyAngleRestrictionForce(int i, int iChild1, int iChild2) {
 	    m_angle_restriction_factor * Spiral::dAlphaDPhi2(n, c2) * std::tan(Spiral::alpha(n, c2));
 }
 
+Number<Inexact> SmoothTree::computeBalancingCost(int i, int iChild1, int iChild2) {
+	PolarPoint n = m_nodes[i]->m_position;
+	PolarPoint c1 = m_nodes[iChild1]->m_position;
+	PolarPoint c2 = m_nodes[iChild2]->m_position;
+	return m_angle_restriction_factor * 2 * std::pow(std::tan(m_restrictingAngle), 2) *
+	       std::log(1 / std::sin(0.5 * (Spiral::alpha(n, c1) - Spiral::alpha(n, c2))));
+}
+
+void SmoothTree::applyBalancingForce(int i, int iChild1, int iChild2) {
+	PolarPoint n = m_nodes[i]->m_position;
+	PolarPoint c1 = m_nodes[iChild1]->m_position;
+	PolarPoint c2 = m_nodes[iChild2]->m_position;
+
+	m_forces[i].r += m_angle_restriction_factor * -std::pow(std::tan(m_restrictingAngle), 2) *
+	                 (1 / std::tan(0.5 * (Spiral::alpha(n, c1) - Spiral::alpha(n, c2)))) *
+	                 (Spiral::dAlphaDR1(n, c1) - Spiral::dAlphaDR1(n, c2));
+	m_forces[i].phi += m_angle_restriction_factor * -std::pow(std::tan(m_restrictingAngle), 2) *
+	                 (1 / std::tan(0.5 * (Spiral::alpha(n, c1) - Spiral::alpha(n, c2)))) *
+	                 (Spiral::dAlphaDPhi1(n, c1) - Spiral::dAlphaDPhi1(n, c2));
+
+	m_forces[iChild1].r += m_angle_restriction_factor * -std::pow(std::tan(m_restrictingAngle), 2) *
+	                       (1 / std::tan(0.5 * (Spiral::alpha(n, c1) - Spiral::alpha(n, c2)))) *
+	                       Spiral::dAlphaDR2(n, c1);
+	m_forces[iChild1].phi += m_angle_restriction_factor * -std::pow(std::tan(m_restrictingAngle), 2) *
+	                         (1 / std::tan(0.5 * (Spiral::alpha(n, c1) - Spiral::alpha(n, c2)))) *
+	                         Spiral::dAlphaDPhi2(n, c1);
+
+	m_forces[iChild2].r += m_angle_restriction_factor * -std::pow(std::tan(m_restrictingAngle), 2) *
+	                       (1 / std::tan(0.5 * (Spiral::alpha(n, c1) - Spiral::alpha(n, c2)))) *
+	                       -Spiral::dAlphaDR2(n, c2);
+	m_forces[iChild2].phi += m_angle_restriction_factor * -std::pow(std::tan(m_restrictingAngle), 2) *
+	                         (1 / std::tan(0.5 * (Spiral::alpha(n, c1) - Spiral::alpha(n, c2)))) *
+	                         -Spiral::dAlphaDPhi2(n, c2);
+}
+
+
 Number<Inexact> SmoothTree::computeCost() {
 	Number<Inexact> cost = 0;
 	for (int i = 0; i < m_nodes.size(); i++) {
@@ -145,6 +182,9 @@ Number<Inexact> SmoothTree::computeCost() {
 			cost += computeSmoothingCost(i, m_nodes[i]->m_parent->m_id, m_nodes[i]->m_children[0]->m_id);
 		} else if (node->getType() == Node::ConnectionType::kJoin) {
 			cost += computeAngleRestrictionCost(
+			    i, m_nodes[i]->m_children[0]->m_id,
+			    m_nodes[i]->m_children[m_nodes[i]->m_children.size() - 1]->m_id);
+			cost += computeBalancingCost(
 			    i, m_nodes[i]->m_children[0]->m_id,
 			    m_nodes[i]->m_children[m_nodes[i]->m_children.size() - 1]->m_id);
 		}
@@ -162,12 +202,15 @@ void SmoothTree::optimize() {
 			applyAngleRestrictionForce(
 			    i, m_nodes[i]->m_children[0]->m_id,
 			    m_nodes[i]->m_children[m_nodes[i]->m_children.size() - 1]->m_id);
+			applyBalancingForce(
+			    i, m_nodes[i]->m_children[0]->m_id,
+			    m_nodes[i]->m_children[m_nodes[i]->m_children.size() - 1]->m_id);
 		}
 	}
 	for (int i = 0; i < m_nodes.size(); i++) {
 		Number<Inexact> epsilon = 0.001; // TODO
 		if (m_nodes[i]->getType() == Node::ConnectionType::kJoin) {
-			m_nodes[i]->m_position.setR(m_nodes[i]->m_position.r() + epsilon * m_forces[i].r);
+			//m_nodes[i]->m_position.setR(m_nodes[i]->m_position.r() + epsilon * m_forces[i].r);
 		}
 		if (m_nodes[i]->getType() == Node::ConnectionType::kJoin ||
 		    m_nodes[i]->getType() == Node::ConnectionType::kSubdivision) {
