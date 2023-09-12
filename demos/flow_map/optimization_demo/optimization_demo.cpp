@@ -23,6 +23,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include <QApplication>
 #include <QCheckBox>
+#include <QDockWidget>
 #include <QStatusBar>
 
 #include "cartocrow/core/core.h"
@@ -64,6 +65,12 @@ OptimizationDemo::OptimizationDemo() {
 	m_renderer->setGridMode(GeometryWidget::GridMode::POLAR);
 	setCentralWidget(m_renderer);
 
+	m_costGraph = new CostGraph();
+	QDockWidget* dockWidget = new QDockWidget();
+	dockWidget->setWindowTitle("Cost history");
+	dockWidget->setWidget(m_costGraph);
+	addDockWidget(Qt::RightDockWidgetArea, dockWidget);
+
 	QToolBar* toolBar = new QToolBar();
 	toolBar->addSeparator();
 	m_optimizeButton = new QPushButton("Run optimization");
@@ -78,13 +85,17 @@ OptimizationDemo::OptimizationDemo() {
 		}
 	});
 	connect(m_optimizeTimer, &QTimer::timeout, [&]() {
-		m_smoothTree->optimize();
+		for (int i = 0; i < 100; i++) {
+			m_iterationCount++;
+			m_smoothTree->optimize();
+			updateCostLabel();
+		}
 		m_renderer->update();
-		updateCostLabel();
 	});
 	m_optimizeOneStepButton = new QPushButton("Optimize one step");
 	toolBar->addWidget(m_optimizeOneStepButton);
 	connect(m_optimizeOneStepButton, &QPushButton::clicked, [&]() {
+		m_iterationCount++;
 		m_smoothTree->optimize();
 		m_renderer->update();
 		updateCostLabel();
@@ -119,6 +130,8 @@ OptimizationDemo::OptimizationDemo() {
 
 void OptimizationDemo::recalculate() {
 	m_renderer->clear();
+	m_costGraph->clear();
+	m_iterationCount = 0;
 	auto tree = std::make_shared<SpiralTree>(Point<Inexact>(0, 0), m_alpha);
 	for (const auto& place : m_places) {
 		tree->addPlace("", *place, 1);
@@ -144,9 +157,11 @@ void OptimizationDemo::recalculate() {
 }
 
 void OptimizationDemo::updateCostLabel() {
-	m_costLabel->setText(QString("Cost function: %1").arg(m_smoothTree->computeCost()));
+	m_costGraph->addStep({m_smoothTree->computeCost(), 0, 0, 0, 0});
+	m_costLabel->setText(QString("Iteration %1   |   Cost function: %2")
+	                         .arg(m_iterationCount)
+	                         .arg(m_smoothTree->computeCost()));
 }
-
 
 int main(int argc, char* argv[]) {
 	QApplication app(argc, argv);

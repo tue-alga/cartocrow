@@ -1,5 +1,6 @@
 set(SOURCES
     optimization_demo.cpp
+    cost_graph.cpp
 )
 
 add_executable(optimization_demo ${SOURCES})

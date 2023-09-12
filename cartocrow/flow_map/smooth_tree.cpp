@@ -284,7 +284,7 @@ void SmoothTree::optimize() {
 	for (int i = 0; i < m_nodes.size(); i++) {
 		Number<Inexact> epsilon = 0.0001; // TODO
 		if (m_nodes[i]->getType() == Node::ConnectionType::kJoin) {
-			//m_nodes[i]->m_position.setR(m_nodes[i]->m_position.r() + epsilon * m_forces[i].r);
+			m_nodes[i]->m_position.setR(m_nodes[i]->m_position.r() + epsilon * m_forces[i].r);
 		}
 		if (m_nodes[i]->getType() == Node::ConnectionType::kJoin ||
 		    m_nodes[i]->getType() == Node::ConnectionType::kSubdivision) {

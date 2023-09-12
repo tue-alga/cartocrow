@@ -19,45 +19,46 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include <QLabel>
-#include <QMainWindow>
-#include <QPushButton>
-#include <QSlider>
-#include <QTimer>
+#ifndef CARTOCROW_DEMOS_FLOWMAP_OPTIMIZATIONDEMO_COSTGRAPH_H
+#define CARTOCROW_DEMOS_FLOWMAP_OPTIMIZATIONDEMO_COSTGRAPH_H
 
-#include <memory>
+#include <QWidget>
+
 #include <vector>
 
 #include "cartocrow/core/core.h"
-#include "cartocrow/flow_map/smooth_tree.h"
-#include "cartocrow/renderer/geometry_widget.h"
-
-#include "cost_graph.h"
 
 using namespace cartocrow;
-using namespace cartocrow::renderer;
 
-class OptimizationDemo : public QMainWindow {
+/// Simple widget that displays the cost of a \ref SmoothTree as it changes
+/// during the optimization procedure.
+class CostGraph : public QWidget {
 	Q_OBJECT;
 
   public:
-	OptimizationDemo();
+	/// One data point containing all cost types.
+	struct DataPoint {
+		Number<Inexact> m_obstacle_cost;
+		Number<Inexact> m_smoothing_cost;
+		Number<Inexact> m_angle_restriction_cost;
+		Number<Inexact> m_balancing_cost;
+		Number<Inexact> m_straightening_cost;
+	};
+	/// Creates a cost graph without any cost data.
+	CostGraph();
+	/// Adds a new cost data point to the graph.
+	void addStep(DataPoint costs);
+	/// Clears all the cost data points.
+	void clear();
+
+  protected:
+	void paintEvent(QPaintEvent* event) override;
 
   private:
-	void recalculate();
-	void updateCostLabel();
-	Number<Inexact> m_alpha = 25 * M_PI / 180;
-
-	std::vector<std::shared_ptr<Point<Inexact>>> m_places;
-	std::shared_ptr<cartocrow::flow_map::SmoothTree> m_smoothTree;
-	int m_iterationCount = 0;
-
-	GeometryWidget* m_renderer;
-	QSlider* m_alphaSlider;
-	QLabel* m_alphaLabel;
-	QPushButton* m_optimizeButton;
-	QPushButton* m_optimizeOneStepButton;
-	QTimer* m_optimizeTimer;
-	QLabel* m_costLabel;
-	CostGraph* m_costGraph;
+	/// The ordered list of cost data points.
+	std::vector<DataPoint> m_dataPoints;
+	/// The maximum total cost we've seen so far.
+	Number<Inexact> m_maxCost = 0;
 };
+
+#endif
