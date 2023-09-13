@@ -11,7 +11,7 @@ namespace cartocrow::mosaic_cartogram {
 struct Parameters {
 
 	/// Specifies the size of a tile. Specifically, each square or hexagonal tile will be scaled
-	/// such that their area matches a circle with this radius.
+	/// such that its area matches a circle with this radius.
 	Number<Inexact> tileRadius;
 
 	/// The value represented by one tile. This parameter is required.

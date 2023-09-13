@@ -1,6 +1,7 @@
 set(SOURCES
 	ellipse.cpp
 	graph.cpp
+	guiding_shape.cpp
 	mosaic_cartogram.cpp
 	orderly_spanning_tree.cpp
 	painting.cpp
@@ -10,6 +11,7 @@ set(SOURCES
 set(HEADERS
 	ellipse.h
 	graph.h
+	guiding_shape.h
 	mosaic_cartogram.h
 	orderly_spanning_tree.h
 	painting.h

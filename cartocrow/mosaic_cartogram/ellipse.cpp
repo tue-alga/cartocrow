@@ -53,7 +53,7 @@ double Ellipse::angle() const {
 	return .5 * std::atan(B / (A-C));
 }
 
-std::pair<double, double> Ellipse::center() const {
+Eigen::Vector2d Ellipse::center() const {
 	// solve system  { dQ/dx = 0, dQ/dy = 0 }  for  x,y
 	const double x = (2*C*D - B*E) / (B*B - 4*A*C);
 	return { x, -(B*x + E) / (2*C) };
@@ -69,8 +69,8 @@ double Ellipse::evaluate(double x, double y) const {
 
 Ellipse::Parameters Ellipse::parameters() const {
 	Parameters p = translateToOrigin().parameters();
-	const auto [x0, y0] = center();
-	p.x0 = x0, p.y0 = y0;
+	const Eigen::Vector2d c = center();
+	p.x0 = c.x(), p.y0 = c.y();
 	return p;
 }
 
@@ -90,12 +90,13 @@ Ellipse Ellipse::translate(double dx, double dy) const {
 }
 
 Ellipse Ellipse::translateTo(double x, double y) const {
-	const auto [x0, y0] = center();
-	return translate(x - x0, y - y0);
+	const Eigen::Vector2d c = center();
+	return translate(x - c.x(), y - c.y());
 }
 
 EllipseAtOrigin Ellipse::translateToOrigin() const {
-	const auto [x0, y0] = center();
+	const Eigen::Vector2d c = center();
+	const double x0 = c.x(), y0 = c.y();
 	return {
 		A, B, C,
 		(A*x0 + D) * x0 + (B*x0 + C*y0 + E) * y0 + F
@@ -235,7 +236,7 @@ double EllipseAtOrigin::radius(double slope) const {
 }
 
 EllipseAtOrigin EllipseAtOrigin::scaleTo(double area) const {
-	// note that area is linear in |F|, so  |areaNew| / |areaOld| = |Fnew| / |Fold| = Fnew / Fold
+	// note that area is linear in |F|, so  areaNew / areaOld = |Fnew| / |Fold| = Fnew / Fold
 	// since the sign must remain the same
 	return { A, B, C, F * area / this->area() };
 }

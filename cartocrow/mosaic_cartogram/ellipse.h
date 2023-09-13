@@ -9,6 +9,8 @@
 
 namespace cartocrow::mosaic_cartogram {
 
+// TODO: move to core?
+
 class EllipseAtOrigin;
 
 class Ellipse {
@@ -25,7 +27,7 @@ class Ellipse {
 	Ellipse(double a, double b, double c, double d, double e, double f);
 
 	double angle() const;
-	std::pair<double, double> center() const;
+	Eigen::Vector2d center() const;
 	std::array<double, 6> coefficients() const;
 	double evaluate(double x, double y) const;
 	virtual Parameters parameters() const;
