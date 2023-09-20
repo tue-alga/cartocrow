@@ -157,7 +157,9 @@ void OptimizationDemo::recalculate() {
 }
 
 void OptimizationDemo::updateCostLabel() {
-	m_costGraph->addStep({m_smoothTree->computeCost(), 0, 0, 0, 0});
+	m_costGraph->addStep(
+	    {0, m_smoothTree->computeSmoothingCost(), m_smoothTree->computeAngleRestrictionCost(),
+	     m_smoothTree->computeBalancingCost(), m_smoothTree->computeStraighteningCost()});
 	m_costLabel->setText(QString("Iteration %1   |   Cost function: %2")
 	                         .arg(m_iterationCount)
 	                         .arg(m_smoothTree->computeCost()));

@@ -44,6 +44,14 @@ class SmoothTree {
 
 	/// Computes the total cost of the tree.
 	Number<Inexact> computeCost();
+	/// Computes the smoothing cost of the entire tree.
+	Number<Inexact> computeSmoothingCost();
+	/// Computes the angle restriction cost of the entire tree.
+	Number<Inexact> computeAngleRestrictionCost();
+	/// Computes the balancing cost of the entire tree.
+	Number<Inexact> computeBalancingCost();
+	/// Computes the straightening cost of the entire tree.
+	Number<Inexact> computeStraighteningCost();
 
 	/// Performs one optimization step.
 	void optimize();

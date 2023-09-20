@@ -80,6 +80,18 @@ const std::vector<std::shared_ptr<Node>>& SmoothTree::nodes() const {
 	return m_nodes;
 }
 
+Number<Inexact> SmoothTree::computeSmoothingCost() {
+	Number<Inexact> cost = 0;
+	for (int i = 0; i < m_nodes.size(); i++) {
+		const auto& node = m_nodes[i];
+		if (node->getType() == Node::ConnectionType::kSubdivision) {
+			cost +=
+			    computeSmoothingCost(i, m_nodes[i]->m_parent->m_id, m_nodes[i]->m_children[0]->m_id);
+		}
+	}
+	return cost;
+}
+
 Number<Inexact> SmoothTree::computeSmoothingCost(int i, int iParent, int iChild) {
 	PolarPoint n = m_nodes[i]->m_position;
 	PolarPoint p = m_nodes[iParent]->m_position;
@@ -106,6 +118,19 @@ void SmoothTree::applySmoothingGradient(int i, int iParent, int iChild) {
 	                        -Spiral::dAlphaDR2(n, c);
 	m_gradient[iChild].phi += 2 * m_smoothing_factor * (Spiral::alpha(p, n) - Spiral::alpha(n, c)) *
 	                          -Spiral::dAlphaDPhi2(n, c);
+}
+
+Number<Inexact> SmoothTree::computeAngleRestrictionCost() {
+	Number<Inexact> cost = 0;
+	for (int i = 0; i < m_nodes.size(); i++) {
+		const auto& node = m_nodes[i];
+		if (node->getType() == Node::ConnectionType::kJoin) {
+			cost += computeAngleRestrictionCost(
+			    i, m_nodes[i]->m_children[0]->m_id,
+			    m_nodes[i]->m_children[m_nodes[i]->m_children.size() - 1]->m_id);
+		}
+	}
+	return cost;
 }
 
 Number<Inexact> SmoothTree::computeAngleRestrictionCost(int i, int iChild1, int iChild2) {
@@ -137,6 +162,19 @@ void SmoothTree::applyAngleRestrictionGradient(int i, int iChild1, int iChild2) 
 	    m_angle_restriction_factor * Spiral::dAlphaDR2(n, c2) * std::tan(Spiral::alpha(n, c2));
 	m_gradient[iChild2].phi +=
 	    m_angle_restriction_factor * Spiral::dAlphaDPhi2(n, c2) * std::tan(Spiral::alpha(n, c2));
+}
+
+Number<Inexact> SmoothTree::computeBalancingCost() {
+	Number<Inexact> cost = 0;
+	for (int i = 0; i < m_nodes.size(); i++) {
+		const auto& node = m_nodes[i];
+		if (node->getType() == Node::ConnectionType::kJoin) {
+			cost +=
+			    computeBalancingCost(i, m_nodes[i]->m_children[0]->m_id,
+			                         m_nodes[i]->m_children[m_nodes[i]->m_children.size() - 1]->m_id);
+		}
+	}
+	return cost;
 }
 
 Number<Inexact> SmoothTree::computeBalancingCost(int i, int iChild1, int iChild2) {
@@ -174,6 +212,17 @@ void SmoothTree::applyBalancingGradient(int i, int iChild1, int iChild2) {
 	                           -std::pow(std::tan(m_restrictingAngle), 2) *
 	                           (1 / std::tan(0.5 * (Spiral::alpha(n, c1) - Spiral::alpha(n, c2)))) *
 	                           -Spiral::dAlphaDPhi2(n, c2);
+}
+
+Number<Inexact> SmoothTree::computeStraighteningCost() {
+	Number<Inexact> cost = 0;
+	for (int i = 0; i < m_nodes.size(); i++) {
+		const auto& node = m_nodes[i];
+		if (node->getType() == Node::ConnectionType::kJoin) {
+			cost += computeStraighteningCost(i, m_nodes[i]->m_parent->m_id, m_nodes[i]->m_children);
+		}
+	}
+	return cost;
 }
 
 Number<Inexact>
@@ -249,23 +298,8 @@ void SmoothTree::applyStraighteningGradient(int i, int iParent,
 }
 
 Number<Inexact> SmoothTree::computeCost() {
-	Number<Inexact> cost = 0;
-	for (int i = 0; i < m_nodes.size(); i++) {
-		const auto& node = m_nodes[i];
-		if (node->getType() == Node::ConnectionType::kSubdivision) {
-			cost +=
-			    computeSmoothingCost(i, m_nodes[i]->m_parent->m_id, m_nodes[i]->m_children[0]->m_id);
-		} else if (node->getType() == Node::ConnectionType::kJoin) {
-			/*cost += computeAngleRestrictionCost(
-			    i, m_nodes[i]->m_children[0]->m_id,
-			    m_nodes[i]->m_children[m_nodes[i]->m_children.size() - 1]->m_id);
-			cost +=
-			    computeBalancingCost(i, m_nodes[i]->m_children[0]->m_id,
-			                         m_nodes[i]->m_children[m_nodes[i]->m_children.size() - 1]->m_id);
-			cost += computeStraighteningCost(i, m_nodes[i]->m_parent->m_id, m_nodes[i]->m_children);*/
-		}
-	}
-	return cost;
+	return computeSmoothingCost() + computeAngleRestrictionCost() + computeBalancingCost() +
+	       computeStraighteningCost();
 }
 
 void SmoothTree::optimize() {

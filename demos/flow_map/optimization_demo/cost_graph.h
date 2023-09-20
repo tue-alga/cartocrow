@@ -24,6 +24,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include <QWidget>
 
+#include <array>
 #include <vector>
 
 #include "cartocrow/core/core.h"
@@ -43,6 +44,18 @@ class CostGraph : public QWidget {
 		Number<Inexact> m_angle_restriction_cost;
 		Number<Inexact> m_balancing_cost;
 		Number<Inexact> m_straightening_cost;
+
+		inline Number<Inexact> stackedCost(int count) const {
+			std::array<Number<Inexact> DataPoint::*, 5> stackingOrder = {
+			    &DataPoint::m_obstacle_cost, &DataPoint::m_smoothing_cost,
+			    &DataPoint::m_angle_restriction_cost, &DataPoint::m_balancing_cost,
+			    &DataPoint::m_straightening_cost};
+			Number<Inexact> sum = 0;
+			for (int i = 0; i < count; ++i) {
+				sum += this->*stackingOrder[i];
+			}
+			return sum;
+		}
 	};
 	/// Creates a cost graph without any cost data.
 	CostGraph();
@@ -59,6 +72,8 @@ class CostGraph : public QWidget {
 	std::vector<DataPoint> m_dataPoints;
 	/// The maximum total cost we've seen so far.
 	Number<Inexact> m_maxCost = 0;
+
+	QPainterPath createDataPath(int costIndex, int graphWidth, int graphHeight) const;
 };
 
 #endif

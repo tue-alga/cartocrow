@@ -23,6 +23,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include <QPainter>
 #include <QPainterPath>
+#include <QPalette>
+#include <QStyle>
 
 using namespace cartocrow;
 
@@ -58,22 +60,58 @@ void CostGraph::paintEvent(QPaintEvent* event) {
 	int graphHeight = height() - 2 * marginSize;
 
 	painter.translate(QPoint(marginSize, graphHeight + marginSize));
-	painter.scale(1, -1);
-	painter.drawLine(0, 0, 0, graphHeight);
+
+	// axes
+	painter.drawLine(0, 0, 0, -graphHeight);
 	painter.drawLine(0, 0, graphWidth, 0);
 
-	QPainterPath dataLine;
-	dataLine.moveTo(0, graphHeight * m_dataPoints[0].m_obstacle_cost / m_maxCost);
-	for (int i = 1; i < m_dataPoints.size(); ++i) {
-		dataLine.lineTo(graphWidth * i / std::max(100.0f, static_cast<float>(m_dataPoints.size())),
-		                graphHeight * m_dataPoints[i].m_obstacle_cost / m_maxCost);
-	}
+	// graphs
+	QPainterPath obstaclePath = createDataPath(1, graphWidth, graphHeight);
+	QPainterPath smoothingPath = createDataPath(2, graphWidth, graphHeight);
+	QPainterPath angleRestrictionPath = createDataPath(3, graphWidth, graphHeight);
+	QPainterPath balancingPath = createDataPath(4, graphWidth, graphHeight);
+	QPainterPath straighteningPath = createDataPath(5, graphWidth, graphHeight);
+	painter.drawPath(obstaclePath);
+	painter.drawPath(smoothingPath);
+	painter.drawPath(angleRestrictionPath);
+	painter.drawPath(balancingPath);
 	painter.setPen(QPen(QColor(240, 90, 40), 2));
-	painter.drawPath(dataLine);
+	painter.drawPath(straighteningPath);
 	painter.setBrush(QColor(240, 90, 40));
-	painter.drawEllipse(
-	    QPointF(graphWidth * (m_dataPoints.size() - 1) /
-	               std::max(100.0f, static_cast<float>(m_dataPoints.size())),
-	           graphHeight * m_dataPoints[m_dataPoints.size() - 1].m_obstacle_cost / m_maxCost),
-	    2, 2);
+
+	// dot
+	DataPoint lastData = m_dataPoints[m_dataPoints.size() - 1];
+	painter.drawEllipse(QPointF(graphWidth * (m_dataPoints.size() - 1) /
+	                                std::max(1000.0f, static_cast<float>(m_dataPoints.size())),
+	                            -graphHeight * lastData.stackedCost(5) / m_maxCost),
+	                    2, 2);
+
+	// labels
+	style()->standardPalette();
+	painter.setPen(QPen(style()->standardPalette().windowText(), 1));
+	painter.drawText(0, -graphHeight * lastData.stackedCost(1) / m_maxCost, graphWidth,
+	                 graphHeight * lastData.m_obstacle_cost / m_maxCost,
+	                 Qt::AlignRight | Qt::AlignVCenter, "obs");
+	painter.drawText(0, -graphHeight * lastData.stackedCost(2) / m_maxCost, graphWidth,
+	                 graphHeight * lastData.m_smoothing_cost / m_maxCost,
+	                 Qt::AlignRight | Qt::AlignVCenter, "sm");
+	painter.drawText(0, -graphHeight * lastData.stackedCost(3) / m_maxCost, graphWidth,
+	                 graphHeight * lastData.m_angle_restriction_cost / m_maxCost,
+	                 Qt::AlignRight | Qt::AlignVCenter, "AR");
+	painter.drawText(0, -graphHeight * lastData.stackedCost(4) / m_maxCost, graphWidth,
+	                 graphHeight * lastData.m_balancing_cost / m_maxCost,
+	                 Qt::AlignRight | Qt::AlignVCenter, "bal");
+	painter.drawText(0, -graphHeight * lastData.stackedCost(5) / m_maxCost, graphWidth,
+	                 graphHeight * lastData.m_straightening_cost / m_maxCost,
+	                 Qt::AlignRight | Qt::AlignVCenter, "str");
+}
+
+QPainterPath CostGraph::createDataPath(int costIndex, int graphWidth, int graphHeight) const {
+	QPainterPath dataPath;
+	dataPath.moveTo(0, -graphHeight * m_dataPoints[0].stackedCost(costIndex) / m_maxCost);
+	for (int i = 1; i < m_dataPoints.size(); ++i) {
+		dataPath.lineTo(graphWidth * i / std::max(1000.0f, static_cast<float>(m_dataPoints.size())),
+		                -graphHeight * m_dataPoints[i].stackedCost(costIndex) / m_maxCost);
+	}
+	return dataPath;
 }
