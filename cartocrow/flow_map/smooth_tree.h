@@ -59,11 +59,11 @@ class SmoothTree {
 
 	std::shared_ptr<Node> constructSmoothTree(const std::shared_ptr<Node>& node, Number<Inexact> maxRStep);
 
-	struct PolarForce {
+	struct PolarGradient {
 		Number<Inexact> r = 0;
 		Number<Inexact> phi = 0;
 	};
-	std::vector<PolarForce> m_forces;
+	std::vector<PolarGradient> m_gradient;
 
 	/// Computes the smoothing cost for the subdivision node `i` at \f$(r,
 	/// \phi)\f$, with parent `iParent` at \f$(r_p, \phi_p)\f$ and child
@@ -102,7 +102,7 @@ class SmoothTree {
 	///     \text{;} \\
 	/// \f}
 	/// et cetera.
-	void applySmoothingForce(int i, int iParent, int iChild);
+	void applySmoothingGradient(int i, int iParent, int iChild);
 	
 	/// Computes the angle restriction cost for the join node `i` at \f$(r,
 	/// \phi)\f$, with children `iChild1` at \f$(r_{c_1}, \phi_{c_1})\f$ and
@@ -137,7 +137,7 @@ class SmoothTree {
 	///     \text{;} \\
 	/// \f}
 	/// et cetera.
-	void applyAngleRestrictionForce(int i, int iChild1, int iChild2);
+	void applyAngleRestrictionGradient(int i, int iChild1, int iChild2);
 	/// Computes the balancing cost for the join node `i` at \f$(r, \phi)\f$,
 	/// with children `iChild1` at \f$(r_{c_1}, \phi_{c_1})\f$ and `iChild2` at
 	/// \f$(r_{c_2}, \phi_{c_2})\f$.
@@ -168,7 +168,7 @@ class SmoothTree {
 	///     \text{;} \\
 	/// \f}
 	/// et cetera.
-	void applyBalancingForce(int i, int iChild1, int iChild2);
+	void applyBalancingGradient(int i, int iChild1, int iChild2);
 	/// Computes the straightening cost for the join node `i` at \f$(r,
 	/// \phi)\f$, with parent `iParent` at \f$(r_p, \phi_p)\f$ and children
 	/// `children` at \f$(r_{c_i}, \phi_{c_i})\f$.
@@ -204,15 +204,8 @@ class SmoothTree {
 	///     \text{;} \\
 	/// \f}
 	/// et cetera.
-	void applyStraighteningForce(int i, int iParent,
-	                             const std::vector<std::shared_ptr<Node>>& children);
-
-	// [ws] TODO Somewhere in the optimization code there seems to be a sign
-	// issue, although the result seems correct. We are computing forces by
-	// computing the gradient, but the forces are supposed to point towards the
-	// negative gradient, not the positive. Yet, we are never inverting the
-	// sign. I'm confused as to why this seems to be working fine; maybe the
-	// sign of the α function is incorrect?
+	void applyStraighteningGradient(int i, int iParent,
+	                                const std::vector<std::shared_ptr<Node>>& children);
 
 	Number<Inexact> m_obstacle_factor = 2.0;
 	Number<Inexact> m_smoothing_factor = 0.4;

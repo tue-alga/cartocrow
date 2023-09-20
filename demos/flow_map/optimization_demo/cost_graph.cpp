@@ -63,7 +63,7 @@ void CostGraph::paintEvent(QPaintEvent* event) {
 	painter.drawLine(0, 0, graphWidth, 0);
 
 	QPainterPath dataLine;
-		dataLine.moveTo(0, graphHeight * m_dataPoints[0].m_obstacle_cost / m_maxCost);
+	dataLine.moveTo(0, graphHeight * m_dataPoints[0].m_obstacle_cost / m_maxCost);
 	for (int i = 1; i < m_dataPoints.size(); ++i) {
 		dataLine.lineTo(graphWidth * i / std::max(100.0f, static_cast<float>(m_dataPoints.size())),
 		                graphHeight * m_dataPoints[i].m_obstacle_cost / m_maxCost);

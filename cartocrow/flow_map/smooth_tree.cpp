@@ -41,7 +41,8 @@ SmoothTree::SmoothTree(const std::shared_ptr<SpiralTree> spiralTree)
 	}
 }
 
-std::shared_ptr<Node> SmoothTree::constructSmoothTree(const std::shared_ptr<Node>& node, Number<Inexact> maxRStep) {
+std::shared_ptr<Node> SmoothTree::constructSmoothTree(const std::shared_ptr<Node>& node,
+                                                      Number<Inexact> maxRStep) {
 	auto smoothNode = std::make_shared<Node>(node->m_position);
 	m_nodes.push_back(smoothNode);
 	if (node->getType() == Node::ConnectionType::kLeaf) {
@@ -58,8 +59,8 @@ std::shared_ptr<Node> SmoothTree::constructSmoothTree(const std::shared_ptr<Node
 			int subdivisionCount = std::ceil(rRange / maxRStep);
 			auto previous = smoothNode;
 			for (double i = 1; i < subdivisionCount; ++i) {
-				const PolarPoint position =
-					spiral.evaluate(spiral.parameterForR(rMin + i * (rMax - rMin) / subdivisionCount));
+				const PolarPoint position = spiral.evaluate(
+				    spiral.parameterForR(rMin + i * (rMax - rMin) / subdivisionCount));
 				auto subdivision = std::make_shared<Node>(position);
 				subdivision->m_flow = smoothChild->m_flow;
 				m_nodes.push_back(subdivision);
@@ -86,25 +87,25 @@ Number<Inexact> SmoothTree::computeSmoothingCost(int i, int iParent, int iChild)
 	return m_smoothing_factor * std::pow(Spiral::alpha(p, n) - Spiral::alpha(n, c), 2);
 }
 
-void SmoothTree::applySmoothingForce(int i, int iParent, int iChild) {
+void SmoothTree::applySmoothingGradient(int i, int iParent, int iChild) {
 	PolarPoint n = m_nodes[i]->m_position;
 	PolarPoint p = m_nodes[iParent]->m_position;
 	PolarPoint c = m_nodes[iChild]->m_position;
 
-	m_forces[i].r += 2 * m_smoothing_factor * (Spiral::alpha(p, n) - Spiral::alpha(n, c)) *
-	                 (Spiral::dAlphaDR2(p, n) - Spiral::dAlphaDR1(n, c));
-	m_forces[i].phi += 2 * m_smoothing_factor * (Spiral::alpha(p, n) - Spiral::alpha(n, c)) *
-	                   (Spiral::dAlphaDPhi2(p, n) - Spiral::dAlphaDPhi1(n, c));
+	m_gradient[i].r += 2 * m_smoothing_factor * (Spiral::alpha(p, n) - Spiral::alpha(n, c)) *
+	                   (Spiral::dAlphaDR2(p, n) - Spiral::dAlphaDR1(n, c));
+	m_gradient[i].phi += 2 * m_smoothing_factor * (Spiral::alpha(p, n) - Spiral::alpha(n, c)) *
+	                     (Spiral::dAlphaDPhi2(p, n) - Spiral::dAlphaDPhi1(n, c));
 
-	m_forces[iParent].r += 2 * m_smoothing_factor * (Spiral::alpha(p, n) - Spiral::alpha(n, c)) *
-	                       Spiral::dAlphaDR1(p, n);
-	m_forces[iParent].phi += 2 * m_smoothing_factor * (Spiral::alpha(p, n) - Spiral::alpha(n, c)) *
-	                         Spiral::dAlphaDPhi1(p, n);
+	m_gradient[iParent].r += 2 * m_smoothing_factor * (Spiral::alpha(p, n) - Spiral::alpha(n, c)) *
+	                         Spiral::dAlphaDR1(p, n);
+	m_gradient[iParent].phi += 2 * m_smoothing_factor * (Spiral::alpha(p, n) - Spiral::alpha(n, c)) *
+	                           Spiral::dAlphaDPhi1(p, n);
 
-	m_forces[iChild].r += 2 * m_smoothing_factor * (Spiral::alpha(p, n) - Spiral::alpha(n, c)) *
-	                      -Spiral::dAlphaDR2(n, c);
-	m_forces[iChild].phi += 2 * m_smoothing_factor * (Spiral::alpha(p, n) - Spiral::alpha(n, c)) *
-	                        -Spiral::dAlphaDPhi2(n, c);
+	m_gradient[iChild].r += 2 * m_smoothing_factor * (Spiral::alpha(p, n) - Spiral::alpha(n, c)) *
+	                        -Spiral::dAlphaDR2(n, c);
+	m_gradient[iChild].phi += 2 * m_smoothing_factor * (Spiral::alpha(p, n) - Spiral::alpha(n, c)) *
+	                          -Spiral::dAlphaDPhi2(n, c);
 }
 
 Number<Inexact> SmoothTree::computeAngleRestrictionCost(int i, int iChild1, int iChild2) {
@@ -115,26 +116,26 @@ Number<Inexact> SmoothTree::computeAngleRestrictionCost(int i, int iChild1, int 
 	                                     std::log(1.0 / std::cos(Spiral::alpha(n, c2))));
 }
 
-void SmoothTree::applyAngleRestrictionForce(int i, int iChild1, int iChild2) {
+void SmoothTree::applyAngleRestrictionGradient(int i, int iChild1, int iChild2) {
 	PolarPoint n = m_nodes[i]->m_position;
 	PolarPoint c1 = m_nodes[iChild1]->m_position;
 	PolarPoint c2 = m_nodes[iChild2]->m_position;
 
-	m_forces[i].r +=
+	m_gradient[i].r +=
 	    m_angle_restriction_factor * (Spiral::dAlphaDR1(n, c1) * std::tan(Spiral::alpha(n, c1)) +
 	                                  Spiral::dAlphaDR1(n, c2) * std::tan(Spiral::alpha(n, c2)));
-	m_forces[i].phi +=
+	m_gradient[i].phi +=
 	    m_angle_restriction_factor * (Spiral::dAlphaDPhi1(n, c1) * std::tan(Spiral::alpha(n, c1)) +
 	                                  Spiral::dAlphaDPhi1(n, c2) * std::tan(Spiral::alpha(n, c2)));
 
-	m_forces[iChild1].r +=
+	m_gradient[iChild1].r +=
 	    m_angle_restriction_factor * Spiral::dAlphaDR2(n, c1) * std::tan(Spiral::alpha(n, c1));
-	m_forces[iChild1].phi +=
+	m_gradient[iChild1].phi +=
 	    m_angle_restriction_factor * Spiral::dAlphaDPhi2(n, c1) * std::tan(Spiral::alpha(n, c1));
 
-	m_forces[iChild2].r +=
+	m_gradient[iChild2].r +=
 	    m_angle_restriction_factor * Spiral::dAlphaDR2(n, c2) * std::tan(Spiral::alpha(n, c2));
-	m_forces[iChild2].phi +=
+	m_gradient[iChild2].phi +=
 	    m_angle_restriction_factor * Spiral::dAlphaDPhi2(n, c2) * std::tan(Spiral::alpha(n, c2));
 }
 
@@ -146,31 +147,33 @@ Number<Inexact> SmoothTree::computeBalancingCost(int i, int iChild1, int iChild2
 	       std::log(1 / std::sin(0.5 * (Spiral::alpha(n, c1) - Spiral::alpha(n, c2))));
 }
 
-void SmoothTree::applyBalancingForce(int i, int iChild1, int iChild2) {
+void SmoothTree::applyBalancingGradient(int i, int iChild1, int iChild2) {
 	PolarPoint n = m_nodes[i]->m_position;
 	PolarPoint c1 = m_nodes[iChild1]->m_position;
 	PolarPoint c2 = m_nodes[iChild2]->m_position;
 
-	m_forces[i].r += m_angle_restriction_factor * -std::pow(std::tan(m_restrictingAngle), 2) *
-	                 (1 / std::tan(0.5 * (Spiral::alpha(n, c1) - Spiral::alpha(n, c2)))) *
-	                 (Spiral::dAlphaDR1(n, c1) - Spiral::dAlphaDR1(n, c2));
-	m_forces[i].phi += m_angle_restriction_factor * -std::pow(std::tan(m_restrictingAngle), 2) *
-	                 (1 / std::tan(0.5 * (Spiral::alpha(n, c1) - Spiral::alpha(n, c2)))) *
-	                 (Spiral::dAlphaDPhi1(n, c1) - Spiral::dAlphaDPhi1(n, c2));
+	m_gradient[i].r += m_angle_restriction_factor * -std::pow(std::tan(m_restrictingAngle), 2) *
+	                   (1 / std::tan(0.5 * (Spiral::alpha(n, c1) - Spiral::alpha(n, c2)))) *
+	                   (Spiral::dAlphaDR1(n, c1) - Spiral::dAlphaDR1(n, c2));
+	m_gradient[i].phi += m_angle_restriction_factor * -std::pow(std::tan(m_restrictingAngle), 2) *
+	                     (1 / std::tan(0.5 * (Spiral::alpha(n, c1) - Spiral::alpha(n, c2)))) *
+	                     (Spiral::dAlphaDPhi1(n, c1) - Spiral::dAlphaDPhi1(n, c2));
 
-	m_forces[iChild1].r += m_angle_restriction_factor * -std::pow(std::tan(m_restrictingAngle), 2) *
-	                       (1 / std::tan(0.5 * (Spiral::alpha(n, c1) - Spiral::alpha(n, c2)))) *
-	                       Spiral::dAlphaDR2(n, c1);
-	m_forces[iChild1].phi += m_angle_restriction_factor * -std::pow(std::tan(m_restrictingAngle), 2) *
+	m_gradient[iChild1].r += m_angle_restriction_factor * -std::pow(std::tan(m_restrictingAngle), 2) *
 	                         (1 / std::tan(0.5 * (Spiral::alpha(n, c1) - Spiral::alpha(n, c2)))) *
-	                         Spiral::dAlphaDPhi2(n, c1);
+	                         Spiral::dAlphaDR2(n, c1);
+	m_gradient[iChild1].phi += m_angle_restriction_factor *
+	                           -std::pow(std::tan(m_restrictingAngle), 2) *
+	                           (1 / std::tan(0.5 * (Spiral::alpha(n, c1) - Spiral::alpha(n, c2)))) *
+	                           Spiral::dAlphaDPhi2(n, c1);
 
-	m_forces[iChild2].r += m_angle_restriction_factor * -std::pow(std::tan(m_restrictingAngle), 2) *
-	                       (1 / std::tan(0.5 * (Spiral::alpha(n, c1) - Spiral::alpha(n, c2)))) *
-	                       -Spiral::dAlphaDR2(n, c2);
-	m_forces[iChild2].phi += m_angle_restriction_factor * -std::pow(std::tan(m_restrictingAngle), 2) *
+	m_gradient[iChild2].r += m_angle_restriction_factor * -std::pow(std::tan(m_restrictingAngle), 2) *
 	                         (1 / std::tan(0.5 * (Spiral::alpha(n, c1) - Spiral::alpha(n, c2)))) *
-	                         -Spiral::dAlphaDPhi2(n, c2);
+	                         -Spiral::dAlphaDR2(n, c2);
+	m_gradient[iChild2].phi += m_angle_restriction_factor *
+	                           -std::pow(std::tan(m_restrictingAngle), 2) *
+	                           (1 / std::tan(0.5 * (Spiral::alpha(n, c1) - Spiral::alpha(n, c2)))) *
+	                           -Spiral::dAlphaDPhi2(n, c2);
 }
 
 Number<Inexact>
@@ -196,8 +199,8 @@ SmoothTree::computeStraighteningCost(int i, int iParent,
 	return m_straightening_factor * std::pow(Spiral::alpha(p, n) - numerator / denominator, 2);
 }
 
-void SmoothTree::applyStraighteningForce(int i, int iParent,
-                                         const std::vector<std::shared_ptr<Node>>& children) {
+void SmoothTree::applyStraighteningGradient(int i, int iParent,
+                                            const std::vector<std::shared_ptr<Node>>& children) {
 	PolarPoint n = m_nodes[i]->m_position;
 	PolarPoint p = m_nodes[iParent]->m_position;
 	Number<Inexact> maxFlow = 0;
@@ -219,25 +222,28 @@ void SmoothTree::applyStraighteningForce(int i, int iParent,
 			denominator += child->m_flow;
 		}
 	}
-	m_forces[i].r += 2 * m_straightening_factor * (Spiral::alpha(p, n) - numerator / denominator) *
-	                 (Spiral::dAlphaDR2(p, n) - numeratorDR1 / denominator);
-	m_forces[i].phi += 2 * m_straightening_factor * (Spiral::alpha(p, n) - numerator / denominator) *
-	                   (Spiral::dAlphaDPhi2(p, n) - numeratorDPhi1 / denominator);
+	m_gradient[i].r += 2 * m_straightening_factor * (Spiral::alpha(p, n) - numerator / denominator) *
+	                   (Spiral::dAlphaDR2(p, n) - numeratorDR1 / denominator);
+	m_gradient[i].phi += 2 * m_straightening_factor *
+	                     (Spiral::alpha(p, n) - numerator / denominator) *
+	                     (Spiral::dAlphaDPhi2(p, n) - numeratorDPhi1 / denominator);
 
-	m_forces[iParent].r += 2 * m_straightening_factor * (Spiral::alpha(p, n) - numerator / denominator) *
-	                 Spiral::dAlphaDR1(p, n);
-	m_forces[iParent].phi += 2 * m_straightening_factor * (Spiral::alpha(p, n) - numerator / denominator) *
-	                   Spiral::dAlphaDPhi1(p, n);
+	m_gradient[iParent].r += 2 * m_straightening_factor *
+	                         (Spiral::alpha(p, n) - numerator / denominator) *
+	                         Spiral::dAlphaDR1(p, n);
+	m_gradient[iParent].phi += 2 * m_straightening_factor *
+	                           (Spiral::alpha(p, n) - numerator / denominator) *
+	                           Spiral::dAlphaDPhi1(p, n);
 
 	for (const auto& child : children) {
 		if (child->m_flow > maxFlow) {
 			PolarPoint c = child->m_position;
-			m_forces[child->m_id].r += 2 * m_straightening_factor *
-			                           (Spiral::alpha(p, n) - numerator / denominator) *
-			                           -child->m_flow * Spiral::dAlphaDR2(n, c) / denominator;
-			m_forces[child->m_id].phi += 2 * m_straightening_factor *
-			                           (Spiral::alpha(p, n) - numerator / denominator) *
-			                           -child->m_flow * Spiral::dAlphaDPhi2(n, c) / denominator;
+			m_gradient[child->m_id].r += 2 * m_straightening_factor *
+			                             (Spiral::alpha(p, n) - numerator / denominator) *
+			                             -child->m_flow * Spiral::dAlphaDR2(n, c) / denominator;
+			m_gradient[child->m_id].phi += 2 * m_straightening_factor *
+			                               (Spiral::alpha(p, n) - numerator / denominator) *
+			                               -child->m_flow * Spiral::dAlphaDPhi2(n, c) / denominator;
 		}
 	}
 }
@@ -247,48 +253,47 @@ Number<Inexact> SmoothTree::computeCost() {
 	for (int i = 0; i < m_nodes.size(); i++) {
 		const auto& node = m_nodes[i];
 		if (node->getType() == Node::ConnectionType::kSubdivision) {
-			cost += computeSmoothingCost(i, m_nodes[i]->m_parent->m_id, m_nodes[i]->m_children[0]->m_id);
+			cost +=
+			    computeSmoothingCost(i, m_nodes[i]->m_parent->m_id, m_nodes[i]->m_children[0]->m_id);
 		} else if (node->getType() == Node::ConnectionType::kJoin) {
-			cost += computeAngleRestrictionCost(
+			/*cost += computeAngleRestrictionCost(
 			    i, m_nodes[i]->m_children[0]->m_id,
 			    m_nodes[i]->m_children[m_nodes[i]->m_children.size() - 1]->m_id);
-			cost += computeBalancingCost(
-			    i, m_nodes[i]->m_children[0]->m_id,
-			    m_nodes[i]->m_children[m_nodes[i]->m_children.size() - 1]->m_id);
-			cost += computeStraighteningCost(
-			    i, m_nodes[i]->m_parent->m_id,
-			    m_nodes[i]->m_children);
+			cost +=
+			    computeBalancingCost(i, m_nodes[i]->m_children[0]->m_id,
+			                         m_nodes[i]->m_children[m_nodes[i]->m_children.size() - 1]->m_id);
+			cost += computeStraighteningCost(i, m_nodes[i]->m_parent->m_id, m_nodes[i]->m_children);*/
 		}
 	}
 	return cost;
 }
 
 void SmoothTree::optimize() {
-	m_forces = std::vector<PolarForce>(m_nodes.size(), PolarForce{});
+	m_gradient = std::vector<PolarGradient>(m_nodes.size(), PolarGradient{});
 	for (int i = 0; i < m_nodes.size(); i++) {
 		const auto& node = m_nodes[i];
 		if (node->getType() == Node::ConnectionType::kSubdivision) {
-			applySmoothingForce(i, m_nodes[i]->m_parent->m_id, m_nodes[i]->m_children[0]->m_id);
+			applySmoothingGradient(i, m_nodes[i]->m_parent->m_id, m_nodes[i]->m_children[0]->m_id);
 		} else if (node->getType() == Node::ConnectionType::kJoin) {
-			applyAngleRestrictionForce(
+			/*applyAngleRestrictionGradient(
 			    i, m_nodes[i]->m_children[0]->m_id,
 			    m_nodes[i]->m_children[m_nodes[i]->m_children.size() - 1]->m_id);
-			applyBalancingForce(
+			applyBalancingGradient(
 			    i, m_nodes[i]->m_children[0]->m_id,
 			    m_nodes[i]->m_children[m_nodes[i]->m_children.size() - 1]->m_id);
-			applyStraighteningForce(
+			applyStraighteningGradient(
 			    i, m_nodes[i]->m_parent->m_id,
-			    m_nodes[i]->m_children);
+			    m_nodes[i]->m_children);*/
 		}
 	}
 	for (int i = 0; i < m_nodes.size(); i++) {
 		Number<Inexact> epsilon = 0.0001; // TODO
 		if (m_nodes[i]->getType() == Node::ConnectionType::kJoin) {
-			m_nodes[i]->m_position.setR(m_nodes[i]->m_position.r() + epsilon * m_forces[i].r);
+			m_nodes[i]->m_position.setR(m_nodes[i]->m_position.r() - epsilon * m_gradient[i].r);
 		}
 		if (m_nodes[i]->getType() == Node::ConnectionType::kJoin ||
 		    m_nodes[i]->getType() == Node::ConnectionType::kSubdivision) {
-			m_nodes[i]->m_position.setPhi(m_nodes[i]->m_position.phi() + epsilon * m_forces[i].phi);
+			m_nodes[i]->m_position.setPhi(m_nodes[i]->m_position.phi() - epsilon * m_gradient[i].phi);
 		}
 	}
 }
