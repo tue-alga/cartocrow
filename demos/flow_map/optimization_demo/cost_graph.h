@@ -74,6 +74,7 @@ class CostGraph : public QWidget {
 	Number<Inexact> m_maxCost = 0;
 
 	QPainterPath createDataPath(int costIndex, int graphWidth, int graphHeight) const;
+	QPainterPath createRegionBetween(const QPainterPath& first, const QPainterPath& second) const;
 };
 
 #endif

@@ -65,12 +65,41 @@ void CostGraph::paintEvent(QPaintEvent* event) {
 	painter.drawLine(0, 0, 0, -graphHeight);
 	painter.drawLine(0, 0, graphWidth, 0);
 
-	// graphs
+	QColor green(52, 140, 80);
+	QColor orange(255, 120, 0);
+	QColor purple(110, 60, 190);
+	QColor blue(33, 142, 252);
+	QColor red(213, 0, 74);
+
+	QPainterPath zeroPath;
+	zeroPath.moveTo(0, 0);
+	zeroPath.lineTo(graphWidth * m_dataPoints.size() /
+	                    std::max(100.0f, static_cast<float>(m_dataPoints.size())),
+	                0);
 	QPainterPath obstaclePath = createDataPath(1, graphWidth, graphHeight);
 	QPainterPath smoothingPath = createDataPath(2, graphWidth, graphHeight);
 	QPainterPath angleRestrictionPath = createDataPath(3, graphWidth, graphHeight);
 	QPainterPath balancingPath = createDataPath(4, graphWidth, graphHeight);
 	QPainterPath straighteningPath = createDataPath(5, graphWidth, graphHeight);
+
+	// shading
+	painter.setPen(Qt::NoPen);
+	painter.setOpacity(0.2);
+	painter.setBrush(green);
+	painter.drawPath(createRegionBetween(zeroPath, obstaclePath));
+	painter.setBrush(orange);
+	painter.drawPath(createRegionBetween(obstaclePath, smoothingPath));
+	painter.setBrush(purple);
+	painter.drawPath(createRegionBetween(smoothingPath, angleRestrictionPath));
+	painter.setBrush(blue);
+	painter.drawPath(createRegionBetween(angleRestrictionPath, balancingPath));
+	painter.setBrush(red);
+	painter.drawPath(createRegionBetween(balancingPath, straighteningPath));
+	painter.setOpacity(1);
+
+	// graphs
+	painter.setPen(QPen(QColor(0, 0, 0), 1));
+	painter.setBrush(Qt::NoBrush);
 	painter.drawPath(obstaclePath);
 	painter.drawPath(smoothingPath);
 	painter.drawPath(angleRestrictionPath);
@@ -82,25 +111,29 @@ void CostGraph::paintEvent(QPaintEvent* event) {
 	// dot
 	DataPoint lastData = m_dataPoints[m_dataPoints.size() - 1];
 	painter.drawEllipse(QPointF(graphWidth * (m_dataPoints.size() - 1) /
-	                                std::max(1000.0f, static_cast<float>(m_dataPoints.size())),
+	                                std::max(100.0f, static_cast<float>(m_dataPoints.size())),
 	                            -graphHeight * lastData.stackedCost(5) / m_maxCost),
 	                    2, 2);
 
 	// labels
 	style()->standardPalette();
-	painter.setPen(QPen(style()->standardPalette().windowText(), 1));
+	painter.setPen(green);
 	painter.drawText(0, -graphHeight * lastData.stackedCost(1) / m_maxCost, graphWidth,
 	                 graphHeight * lastData.m_obstacle_cost / m_maxCost,
 	                 Qt::AlignRight | Qt::AlignVCenter, "obs");
+	painter.setPen(orange);
 	painter.drawText(0, -graphHeight * lastData.stackedCost(2) / m_maxCost, graphWidth,
 	                 graphHeight * lastData.m_smoothing_cost / m_maxCost,
 	                 Qt::AlignRight | Qt::AlignVCenter, "sm");
+	painter.setPen(purple);
 	painter.drawText(0, -graphHeight * lastData.stackedCost(3) / m_maxCost, graphWidth,
 	                 graphHeight * lastData.m_angle_restriction_cost / m_maxCost,
 	                 Qt::AlignRight | Qt::AlignVCenter, "AR");
+	painter.setPen(blue);
 	painter.drawText(0, -graphHeight * lastData.stackedCost(4) / m_maxCost, graphWidth,
 	                 graphHeight * lastData.m_balancing_cost / m_maxCost,
 	                 Qt::AlignRight | Qt::AlignVCenter, "bal");
+	painter.setPen(red);
 	painter.drawText(0, -graphHeight * lastData.stackedCost(5) / m_maxCost, graphWidth,
 	                 graphHeight * lastData.m_straightening_cost / m_maxCost,
 	                 Qt::AlignRight | Qt::AlignVCenter, "str");
@@ -110,8 +143,15 @@ QPainterPath CostGraph::createDataPath(int costIndex, int graphWidth, int graphH
 	QPainterPath dataPath;
 	dataPath.moveTo(0, -graphHeight * m_dataPoints[0].stackedCost(costIndex) / m_maxCost);
 	for (int i = 1; i < m_dataPoints.size(); ++i) {
-		dataPath.lineTo(graphWidth * i / std::max(1000.0f, static_cast<float>(m_dataPoints.size())),
+		dataPath.lineTo(graphWidth * i / std::max(100.0f, static_cast<float>(m_dataPoints.size())),
 		                -graphHeight * m_dataPoints[i].stackedCost(costIndex) / m_maxCost);
 	}
 	return dataPath;
+}
+
+QPainterPath CostGraph::createRegionBetween(const QPainterPath& first,
+                                            const QPainterPath& second) const {
+	QPainterPath region = first;
+	region.connectPath(second.toReversed());
+	return region;
 }
