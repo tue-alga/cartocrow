@@ -19,6 +19,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#include <QCheckBox>
 #include <QLabel>
 #include <QMainWindow>
 #include <QPushButton>
@@ -56,6 +57,7 @@ class OptimizationDemo : public QMainWindow {
 	QSlider* m_alphaSlider;
 	QLabel* m_alphaLabel;
 	QPushButton* m_optimizeButton;
+	QCheckBox* m_stopOnNanCheckbox;
 	QPushButton* m_optimizeOneStepButton;
 	QTimer* m_optimizeTimer;
 	QLabel* m_costLabel;

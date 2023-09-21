@@ -25,6 +25,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <QCheckBox>
 #include <QDockWidget>
 #include <QStatusBar>
+#include <qcheckbox.h>
 
 #include "cartocrow/core/core.h"
 #include "cartocrow/flow_map/painting.h"
@@ -89,7 +90,7 @@ OptimizationDemo::OptimizationDemo() {
 			m_iterationCount++;
 			m_smoothTree->optimize();
 			updateCostLabel();
-			if (std::isnan(m_smoothTree->computeCost())){
+			if (m_stopOnNanCheckbox->isChecked() && std::isnan(m_smoothTree->computeCost())) {
 				m_optimizeButton->setChecked(false);
 				m_optimizeTimer->stop();
 				break;
@@ -97,6 +98,8 @@ OptimizationDemo::OptimizationDemo() {
 		}
 		m_renderer->update();
 	});
+	m_stopOnNanCheckbox = new QCheckBox("Stop on nan");
+	toolBar->addWidget(m_stopOnNanCheckbox);
 	m_optimizeOneStepButton = new QPushButton("Optimize one step");
 	toolBar->addWidget(m_optimizeOneStepButton);
 	connect(m_optimizeOneStepButton, &QPushButton::clicked, [&]() {
