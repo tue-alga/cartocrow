@@ -25,6 +25,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <QPainterPath>
 #include <QPalette>
 #include <QStyle>
+#include <cmath>
 
 using namespace cartocrow;
 
@@ -142,7 +143,7 @@ void CostGraph::paintEvent(QPaintEvent* event) {
 QPainterPath CostGraph::createDataPath(int costIndex, int graphWidth, int graphHeight) const {
 	QPainterPath dataPath;
 	dataPath.moveTo(0, -graphHeight * m_dataPoints[0].stackedCost(costIndex) / m_maxCost);
-	for (int i = 1; i < m_dataPoints.size(); ++i) {
+	for (int i = 1; i < m_dataPoints.size(); i += 1 + i / width()) {
 		dataPath.lineTo(graphWidth * i / std::max(100.0f, static_cast<float>(m_dataPoints.size())),
 		                -graphHeight * m_dataPoints[i].stackedCost(costIndex) / m_maxCost);
 	}

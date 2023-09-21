@@ -309,7 +309,7 @@ void SmoothTree::optimize() {
 		if (node->getType() == Node::ConnectionType::kSubdivision) {
 			applySmoothingGradient(i, m_nodes[i]->m_parent->m_id, m_nodes[i]->m_children[0]->m_id);
 		} else if (node->getType() == Node::ConnectionType::kJoin) {
-			/*applyAngleRestrictionGradient(
+			applyAngleRestrictionGradient(
 			    i, m_nodes[i]->m_children[0]->m_id,
 			    m_nodes[i]->m_children[m_nodes[i]->m_children.size() - 1]->m_id);
 			applyBalancingGradient(
@@ -317,7 +317,7 @@ void SmoothTree::optimize() {
 			    m_nodes[i]->m_children[m_nodes[i]->m_children.size() - 1]->m_id);
 			applyStraighteningGradient(
 			    i, m_nodes[i]->m_parent->m_id,
-			    m_nodes[i]->m_children);*/
+			    m_nodes[i]->m_children);
 		}
 	}
 	for (int i = 0; i < m_nodes.size(); i++) {

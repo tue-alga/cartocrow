@@ -52,7 +52,9 @@ class CostGraph : public QWidget {
 			    &DataPoint::m_straightening_cost};
 			Number<Inexact> sum = 0;
 			for (int i = 0; i < count; ++i) {
-				sum += this->*stackingOrder[i];
+				if (!std::isnan(this->*stackingOrder[i])) {
+					sum += this->*stackingOrder[i];
+				}
 			}
 			return sum;
 		}

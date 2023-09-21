@@ -89,6 +89,11 @@ OptimizationDemo::OptimizationDemo() {
 			m_iterationCount++;
 			m_smoothTree->optimize();
 			updateCostLabel();
+			if (std::isnan(m_smoothTree->computeCost())){
+				m_optimizeButton->setChecked(false);
+				m_optimizeTimer->stop();
+				break;
+			}
 		}
 		m_renderer->update();
 	});
@@ -160,9 +165,11 @@ void OptimizationDemo::updateCostLabel() {
 	m_costGraph->addStep(
 	    {0, m_smoothTree->computeSmoothingCost(), m_smoothTree->computeAngleRestrictionCost(),
 	     m_smoothTree->computeBalancingCost(), m_smoothTree->computeStraighteningCost()});
-	m_costLabel->setText(QString("Iteration %1   |   Cost function: %2")
-	                         .arg(m_iterationCount)
-	                         .arg(m_smoothTree->computeCost()));
+	Number<Inexact> cost = m_smoothTree->computeCost();
+	m_costLabel->setText(
+	    QString("Iteration %1 | Cost function: %2")
+	        .arg(m_iterationCount)
+	        .arg(std::isnan(cost) ? "<b><font color=\"#d5004a\">nan</font></b>" : QString::number(cost)));
 }
 
 int main(int argc, char* argv[]) {
