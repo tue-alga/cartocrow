@@ -56,7 +56,7 @@ class SmoothTree {
 	/// Performs one optimization step.
 	void optimize();
 
-  //private:  // TODO temporary
+  private:
 	/// The spiral tree underlying this smooth tree.
 	std::shared_ptr<SpiralTree> m_tree;
 
@@ -215,10 +215,10 @@ class SmoothTree {
 	void applyStraighteningGradient(int i, int iParent,
 	                                const std::vector<std::shared_ptr<Node>>& children);
 
-	Number<Inexact> m_obstacle_factor = 2.0;
-	Number<Inexact> m_smoothing_factor = 0.4;
-	Number<Inexact> m_straightening_factor = 0.4;
-	Number<Inexact> m_angle_restriction_factor = 0.077;
+	Number<Inexact> m_obstacleFactor = 2.0;
+	Number<Inexact> m_smoothingFactor = 0.4;
+	Number<Inexact> m_straighteningFactor = 0.4;
+	Number<Inexact> m_angle_restrictionFactor = 0.077;
 
 	Number<Inexact> m_relevantFlowFactor = 0.5;
 };

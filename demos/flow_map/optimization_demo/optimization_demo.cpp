@@ -22,10 +22,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "optimization_demo.h"
 
 #include <QApplication>
-#include <QCheckBox>
 #include <QDockWidget>
 #include <QStatusBar>
-#include <qcheckbox.h>
 
 #include "cartocrow/core/core.h"
 #include "cartocrow/flow_map/painting.h"
@@ -45,15 +43,6 @@ using namespace cartocrow::renderer;
 
 OptimizationDemo::OptimizationDemo() {
 	setWindowTitle("CartoCrow – Optimization demo");
-
-	/*m_places.push_back(std::make_shared<Point<Inexact>>(11.2121212, 17.0707070));
-	m_places.push_back(std::make_shared<Point<Inexact>>(13.9393939, -14.1414141));
-	m_places.push_back(std::make_shared<Point<Inexact>>(-4.5454545, -18.9898989));
-	m_places.push_back(std::make_shared<Point<Inexact>>(16.6666666, 6.1616161));
-	m_places.push_back(std::make_shared<Point<Inexact>>(-9.8989898, 13.9393939));
-	m_places.push_back(std::make_shared<Point<Inexact>>(-16.1616161, -2.6262626));*/
-	/*m_places.push_back(std::make_shared<Point<Inexact>>(2, 1));
-	m_places.push_back(std::make_shared<Point<Inexact>>(2, -1));*/
 
 	for (int i = 0; i < 40; i++) {
 		m_places.push_back(std::make_shared<Point<Inexact>>(

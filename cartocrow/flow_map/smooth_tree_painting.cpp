@@ -1,8 +1,9 @@
 #include "smooth_tree_painting.h"
 
+#include <CGAL/Origin.h>
+
 #include "../core/core.h"
 #include "../renderer/geometry_renderer.h"
-#include <CGAL/Origin.h>
 
 namespace cartocrow::flow_map {
 

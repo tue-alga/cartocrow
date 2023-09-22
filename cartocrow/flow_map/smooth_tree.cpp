@@ -96,7 +96,7 @@ Number<Inexact> SmoothTree::computeSmoothingCost(int i, int iParent, int iChild)
 	PolarPoint n = m_nodes[i]->m_position;
 	PolarPoint p = m_nodes[iParent]->m_position;
 	PolarPoint c = m_nodes[iChild]->m_position;
-	return m_smoothing_factor * std::pow(Spiral::alpha(p, n) - Spiral::alpha(n, c), 2);
+	return m_smoothingFactor * std::pow(Spiral::alpha(p, n) - Spiral::alpha(n, c), 2);
 }
 
 void SmoothTree::applySmoothingGradient(int i, int iParent, int iChild) {
@@ -104,19 +104,19 @@ void SmoothTree::applySmoothingGradient(int i, int iParent, int iChild) {
 	PolarPoint p = m_nodes[iParent]->m_position;
 	PolarPoint c = m_nodes[iChild]->m_position;
 
-	m_gradient[i].r += 2 * m_smoothing_factor * (Spiral::alpha(p, n) - Spiral::alpha(n, c)) *
+	m_gradient[i].r += 2 * m_smoothingFactor * (Spiral::alpha(p, n) - Spiral::alpha(n, c)) *
 	                   (Spiral::dAlphaDR2(p, n) - Spiral::dAlphaDR1(n, c));
-	m_gradient[i].phi += 2 * m_smoothing_factor * (Spiral::alpha(p, n) - Spiral::alpha(n, c)) *
+	m_gradient[i].phi += 2 * m_smoothingFactor * (Spiral::alpha(p, n) - Spiral::alpha(n, c)) *
 	                     (Spiral::dAlphaDPhi2(p, n) - Spiral::dAlphaDPhi1(n, c));
 
-	m_gradient[iParent].r += 2 * m_smoothing_factor * (Spiral::alpha(p, n) - Spiral::alpha(n, c)) *
+	m_gradient[iParent].r += 2 * m_smoothingFactor * (Spiral::alpha(p, n) - Spiral::alpha(n, c)) *
 	                         Spiral::dAlphaDR1(p, n);
-	m_gradient[iParent].phi += 2 * m_smoothing_factor * (Spiral::alpha(p, n) - Spiral::alpha(n, c)) *
+	m_gradient[iParent].phi += 2 * m_smoothingFactor * (Spiral::alpha(p, n) - Spiral::alpha(n, c)) *
 	                           Spiral::dAlphaDPhi1(p, n);
 
-	m_gradient[iChild].r += 2 * m_smoothing_factor * (Spiral::alpha(p, n) - Spiral::alpha(n, c)) *
+	m_gradient[iChild].r += 2 * m_smoothingFactor * (Spiral::alpha(p, n) - Spiral::alpha(n, c)) *
 	                        -Spiral::dAlphaDR2(n, c);
-	m_gradient[iChild].phi += 2 * m_smoothing_factor * (Spiral::alpha(p, n) - Spiral::alpha(n, c)) *
+	m_gradient[iChild].phi += 2 * m_smoothingFactor * (Spiral::alpha(p, n) - Spiral::alpha(n, c)) *
 	                          -Spiral::dAlphaDPhi2(n, c);
 }
 
@@ -137,7 +137,7 @@ Number<Inexact> SmoothTree::computeAngleRestrictionCost(int i, int iChild1, int 
 	PolarPoint n = m_nodes[i]->m_position;
 	PolarPoint c1 = m_nodes[iChild1]->m_position;
 	PolarPoint c2 = m_nodes[iChild2]->m_position;
-	return m_angle_restriction_factor * (std::log(1.0 / std::cos(Spiral::alpha(n, c1))) +
+	return m_angle_restrictionFactor * (std::log(1.0 / std::cos(Spiral::alpha(n, c1))) +
 	                                     std::log(1.0 / std::cos(Spiral::alpha(n, c2))));
 }
 
@@ -147,21 +147,21 @@ void SmoothTree::applyAngleRestrictionGradient(int i, int iChild1, int iChild2) 
 	PolarPoint c2 = m_nodes[iChild2]->m_position;
 
 	m_gradient[i].r +=
-	    m_angle_restriction_factor * (Spiral::dAlphaDR1(n, c1) * std::tan(Spiral::alpha(n, c1)) +
+	    m_angle_restrictionFactor * (Spiral::dAlphaDR1(n, c1) * std::tan(Spiral::alpha(n, c1)) +
 	                                  Spiral::dAlphaDR1(n, c2) * std::tan(Spiral::alpha(n, c2)));
 	m_gradient[i].phi +=
-	    m_angle_restriction_factor * (Spiral::dAlphaDPhi1(n, c1) * std::tan(Spiral::alpha(n, c1)) +
+	    m_angle_restrictionFactor * (Spiral::dAlphaDPhi1(n, c1) * std::tan(Spiral::alpha(n, c1)) +
 	                                  Spiral::dAlphaDPhi1(n, c2) * std::tan(Spiral::alpha(n, c2)));
 
 	m_gradient[iChild1].r +=
-	    m_angle_restriction_factor * Spiral::dAlphaDR2(n, c1) * std::tan(Spiral::alpha(n, c1));
+	    m_angle_restrictionFactor * Spiral::dAlphaDR2(n, c1) * std::tan(Spiral::alpha(n, c1));
 	m_gradient[iChild1].phi +=
-	    m_angle_restriction_factor * Spiral::dAlphaDPhi2(n, c1) * std::tan(Spiral::alpha(n, c1));
+	    m_angle_restrictionFactor * Spiral::dAlphaDPhi2(n, c1) * std::tan(Spiral::alpha(n, c1));
 
 	m_gradient[iChild2].r +=
-	    m_angle_restriction_factor * Spiral::dAlphaDR2(n, c2) * std::tan(Spiral::alpha(n, c2));
+	    m_angle_restrictionFactor * Spiral::dAlphaDR2(n, c2) * std::tan(Spiral::alpha(n, c2));
 	m_gradient[iChild2].phi +=
-	    m_angle_restriction_factor * Spiral::dAlphaDPhi2(n, c2) * std::tan(Spiral::alpha(n, c2));
+	    m_angle_restrictionFactor * Spiral::dAlphaDPhi2(n, c2) * std::tan(Spiral::alpha(n, c2));
 }
 
 Number<Inexact> SmoothTree::computeBalancingCost() {
@@ -181,7 +181,7 @@ Number<Inexact> SmoothTree::computeBalancingCost(int i, int iChild1, int iChild2
 	PolarPoint n = m_nodes[i]->m_position;
 	PolarPoint c1 = m_nodes[iChild1]->m_position;
 	PolarPoint c2 = m_nodes[iChild2]->m_position;
-	return m_angle_restriction_factor * 2 * std::pow(std::tan(m_restrictingAngle), 2) *
+	return m_angle_restrictionFactor * 2 * std::pow(std::tan(m_restrictingAngle), 2) *
 	       std::log(1 / std::sin(0.5 * (Spiral::alpha(n, c1) - Spiral::alpha(n, c2))));
 }
 
@@ -190,25 +190,25 @@ void SmoothTree::applyBalancingGradient(int i, int iChild1, int iChild2) {
 	PolarPoint c1 = m_nodes[iChild1]->m_position;
 	PolarPoint c2 = m_nodes[iChild2]->m_position;
 
-	m_gradient[i].r += m_angle_restriction_factor * -std::pow(std::tan(m_restrictingAngle), 2) *
+	m_gradient[i].r += m_angle_restrictionFactor * -std::pow(std::tan(m_restrictingAngle), 2) *
 	                   (1 / std::tan(0.5 * (Spiral::alpha(n, c1) - Spiral::alpha(n, c2)))) *
 	                   (Spiral::dAlphaDR1(n, c1) - Spiral::dAlphaDR1(n, c2));
-	m_gradient[i].phi += m_angle_restriction_factor * -std::pow(std::tan(m_restrictingAngle), 2) *
+	m_gradient[i].phi += m_angle_restrictionFactor * -std::pow(std::tan(m_restrictingAngle), 2) *
 	                     (1 / std::tan(0.5 * (Spiral::alpha(n, c1) - Spiral::alpha(n, c2)))) *
 	                     (Spiral::dAlphaDPhi1(n, c1) - Spiral::dAlphaDPhi1(n, c2));
 
-	m_gradient[iChild1].r += m_angle_restriction_factor * -std::pow(std::tan(m_restrictingAngle), 2) *
+	m_gradient[iChild1].r += m_angle_restrictionFactor * -std::pow(std::tan(m_restrictingAngle), 2) *
 	                         (1 / std::tan(0.5 * (Spiral::alpha(n, c1) - Spiral::alpha(n, c2)))) *
 	                         Spiral::dAlphaDR2(n, c1);
-	m_gradient[iChild1].phi += m_angle_restriction_factor *
+	m_gradient[iChild1].phi += m_angle_restrictionFactor *
 	                           -std::pow(std::tan(m_restrictingAngle), 2) *
 	                           (1 / std::tan(0.5 * (Spiral::alpha(n, c1) - Spiral::alpha(n, c2)))) *
 	                           Spiral::dAlphaDPhi2(n, c1);
 
-	m_gradient[iChild2].r += m_angle_restriction_factor * -std::pow(std::tan(m_restrictingAngle), 2) *
+	m_gradient[iChild2].r += m_angle_restrictionFactor * -std::pow(std::tan(m_restrictingAngle), 2) *
 	                         (1 / std::tan(0.5 * (Spiral::alpha(n, c1) - Spiral::alpha(n, c2)))) *
 	                         -Spiral::dAlphaDR2(n, c2);
-	m_gradient[iChild2].phi += m_angle_restriction_factor *
+	m_gradient[iChild2].phi += m_angle_restrictionFactor *
 	                           -std::pow(std::tan(m_restrictingAngle), 2) *
 	                           (1 / std::tan(0.5 * (Spiral::alpha(n, c1) - Spiral::alpha(n, c2)))) *
 	                           -Spiral::dAlphaDPhi2(n, c2);
@@ -245,7 +245,7 @@ SmoothTree::computeStraighteningCost(int i, int iParent,
 			denominator += child->m_flow;
 		}
 	}
-	return m_straightening_factor * std::pow(Spiral::alpha(p, n) - numerator / denominator, 2);
+	return m_straighteningFactor * std::pow(Spiral::alpha(p, n) - numerator / denominator, 2);
 }
 
 void SmoothTree::applyStraighteningGradient(int i, int iParent,
@@ -271,26 +271,26 @@ void SmoothTree::applyStraighteningGradient(int i, int iParent,
 			denominator += child->m_flow;
 		}
 	}
-	m_gradient[i].r += 2 * m_straightening_factor * (Spiral::alpha(p, n) - numerator / denominator) *
+	m_gradient[i].r += 2 * m_straighteningFactor * (Spiral::alpha(p, n) - numerator / denominator) *
 	                   (Spiral::dAlphaDR2(p, n) - numeratorDR1 / denominator);
-	m_gradient[i].phi += 2 * m_straightening_factor *
+	m_gradient[i].phi += 2 * m_straighteningFactor *
 	                     (Spiral::alpha(p, n) - numerator / denominator) *
 	                     (Spiral::dAlphaDPhi2(p, n) - numeratorDPhi1 / denominator);
 
-	m_gradient[iParent].r += 2 * m_straightening_factor *
+	m_gradient[iParent].r += 2 * m_straighteningFactor *
 	                         (Spiral::alpha(p, n) - numerator / denominator) *
 	                         Spiral::dAlphaDR1(p, n);
-	m_gradient[iParent].phi += 2 * m_straightening_factor *
+	m_gradient[iParent].phi += 2 * m_straighteningFactor *
 	                           (Spiral::alpha(p, n) - numerator / denominator) *
 	                           Spiral::dAlphaDPhi1(p, n);
 
 	for (const auto& child : children) {
 		if (child->m_flow > maxFlow) {
 			PolarPoint c = child->m_position;
-			m_gradient[child->m_id].r += 2 * m_straightening_factor *
+			m_gradient[child->m_id].r += 2 * m_straighteningFactor *
 			                             (Spiral::alpha(p, n) - numerator / denominator) *
 			                             -child->m_flow * Spiral::dAlphaDR2(n, c) / denominator;
-			m_gradient[child->m_id].phi += 2 * m_straightening_factor *
+			m_gradient[child->m_id].phi += 2 * m_straighteningFactor *
 			                               (Spiral::alpha(p, n) - numerator / denominator) *
 			                               -child->m_flow * Spiral::dAlphaDPhi2(n, c) / denominator;
 		}
