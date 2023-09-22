@@ -85,10 +85,10 @@ class SmoothTree {
 	///     \text{.}
 	/// \f]
 	Number<Inexact> computeSmoothingCost(int i, int iParent, int iChild);
-	/// Applies smoothing forces in \ref m_forces to the subdivision node `i`,
-	/// its parent `iParent`, and its child `iChild`.
+	/// Applies the smoothing gradient in \ref m_gradient to the subdivision node
+	/// `i`, its parent `iParent`, and its child `iChild`.
 	///
-	/// The forces are defined by the partial derivatives of the smoothing cost
+	/// The gradient is defined by the partial derivatives of the smoothing cost
 	/// (see \ref computeSmoothingCost), which are:
 	///
 	/// \f{align*}{
@@ -124,10 +124,10 @@ class SmoothTree {
 	///     \text{.}
 	/// \f]
 	Number<Inexact> computeAngleRestrictionCost(int i, int iChild1, int iChild2);
-	/// Applies angle restriction forces in \ref m_forces to the join node `i`
-	/// and its children `iChild1` and `iChild2`.
+	/// Applies the angle restriction gradient in \ref m_gradient to the join node
+	/// `i` and its children `iChild1` and `iChild2`.
 	///
-	/// The forces are defined by the partial derivatives of the angle
+	/// The gradient is defined by the partial derivatives of the angle
 	/// restriction cost (see \ref computeAngleRestrictionCost), which are:
 	///
 	/// \f{align*}{
@@ -159,10 +159,10 @@ class SmoothTree {
 	///     \text{.}
 	/// \f]
 	Number<Inexact> computeBalancingCost(int i, int iChild1, int iChild2);
-	/// Applies balancing forces in \ref m_forces to the join node `i` and its
-	/// children `iChild1` and `iChild2`.
+	/// Applies the balancing gradient in \ref m_gradient to the join node `i` and
+	/// its children `iChild1` and `iChild2`.
 	///
-	/// The forces are defined by the partial derivatives of the balancing cost
+	/// The gradient is defined by the partial derivatives of the balancing cost
 	/// (see \ref computeBalancingCost), which are:
 	///
 	/// \f{multline}{
@@ -192,12 +192,12 @@ class SmoothTree {
 	/// \f]
 	Number<Inexact> computeStraighteningCost(int i, int iParent,
 	                                         const std::vector<std::shared_ptr<Node>>& children);
-	/// Applies straightening forces in \ref m_forces to the join node `i` at
-	/// \f$(r, \phi)\f$, with parent `iParent` at \f$(r_p, \phi_p)\f$ and
+	/// Applies the straightening gradient in \ref m_gradient to the join node `i`
+	/// at \f$(r, \phi)\f$, with parent `iParent` at \f$(r_p, \phi_p)\f$ and
 	/// children `children` at \f$(r_{c_i}, \phi_{c_i})\f$.
 	///
-	/// The forces are defined by the partial derivatives of the straightening cost
-	/// (see \ref computeStraighteningCost), which are:
+	/// The gradient is defined by the partial derivatives of the straightening
+	/// cost (see \ref computeStraighteningCost), which are:
 	///
 	/// \f{multline}{
 	///     \frac{\partial F_\text{straighten}}{\partial r}(r, \phi, r_p, \phi_p, \{r_{c_i}\}, \{\phi_{c_i}\}) =

@@ -20,7 +20,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include "smooth_tree.h"
+
 #include "cartocrow/flow_map/smooth_tree_painting.h"
+
 #include <limits>
 
 namespace cartocrow::flow_map {
@@ -138,7 +140,7 @@ Number<Inexact> SmoothTree::computeAngleRestrictionCost(int i, int iChild1, int 
 	PolarPoint c1 = m_nodes[iChild1]->m_position;
 	PolarPoint c2 = m_nodes[iChild2]->m_position;
 	return m_angle_restrictionFactor * (std::log(1.0 / std::cos(Spiral::alpha(n, c1))) +
-	                                     std::log(1.0 / std::cos(Spiral::alpha(n, c2))));
+	                                    std::log(1.0 / std::cos(Spiral::alpha(n, c2))));
 }
 
 void SmoothTree::applyAngleRestrictionGradient(int i, int iChild1, int iChild2) {
@@ -148,10 +150,10 @@ void SmoothTree::applyAngleRestrictionGradient(int i, int iChild1, int iChild2) 
 
 	m_gradient[i].r +=
 	    m_angle_restrictionFactor * (Spiral::dAlphaDR1(n, c1) * std::tan(Spiral::alpha(n, c1)) +
-	                                  Spiral::dAlphaDR1(n, c2) * std::tan(Spiral::alpha(n, c2)));
+	                                 Spiral::dAlphaDR1(n, c2) * std::tan(Spiral::alpha(n, c2)));
 	m_gradient[i].phi +=
 	    m_angle_restrictionFactor * (Spiral::dAlphaDPhi1(n, c1) * std::tan(Spiral::alpha(n, c1)) +
-	                                  Spiral::dAlphaDPhi1(n, c2) * std::tan(Spiral::alpha(n, c2)));
+	                                 Spiral::dAlphaDPhi1(n, c2) * std::tan(Spiral::alpha(n, c2)));
 
 	m_gradient[iChild1].r +=
 	    m_angle_restrictionFactor * Spiral::dAlphaDR2(n, c1) * std::tan(Spiral::alpha(n, c1));
