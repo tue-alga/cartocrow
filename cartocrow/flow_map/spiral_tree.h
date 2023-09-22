@@ -96,6 +96,8 @@ class SpiralTree {
 	const std::vector<std::shared_ptr<Node>>& nodes() const;
 	/// Returns a list of the obstacles in this spiral tree.
 	std::vector<Obstacle>& obstacles();
+	/// Returns the root of this spiral tree.
+	std::shared_ptr<Node> root();
 
 	/// Adds a node to the spiral tree.
 	//void addNode(std::shared_ptr<Node> node);

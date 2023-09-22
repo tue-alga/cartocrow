@@ -22,7 +22,6 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 16-10-2020
 #include "spiral.h"
 
 #include <cmath>
-
 #include <stdexcept>
 
 namespace cartocrow::flow_map {
@@ -34,36 +33,58 @@ Spiral::Spiral(const PolarPoint& anchor, const Number<Inexact>& angle)
 	}
 }
 
-Spiral::Spiral(const PolarPoint& p1, const PolarPoint& p2) {
-	const PolarPoint& source = p1.r() < p2.r() ? p2 : p1;
-	const PolarPoint& target = p1.r() < p2.r() ? p1 : p2;
+Spiral::Spiral(const PolarPoint& p1, const PolarPoint& p2)
+    : m_anchor(p1.r() < p2.r() ? p2 : p1), m_angle(alpha(p1, p2)) {}
 
+Number<Inexact> Spiral::alpha(const PolarPoint& p1, const PolarPoint& p2) {
+	const PolarPoint& source = p1.r() < p2.r() ? p1 : p2;
+	const PolarPoint& target = p1.r() < p2.r() ? p2 : p1;
 	if (source.r() == target.r()) {
 		throw std::runtime_error(
-		    "Tried to construct a spiral containing two points equidistant to the root");
+		    "Cannot compute α for a spiral connecting two points equidistant to the root");
 	}
-
-	m_anchor = source;
-
-	// Computing a spiral through two points (p, q), with unknown angle (alpha):
-	//
-	// p = (R_p, phi_p)  ->  R(0) = R_p; phi(0) = phi_p
-	// q = (R_q, phi_q)  ->  R(t) = R_p * e^{-t}; phi(t) = phi_p + tan(alpha) * t
-	//
-	// R(0) = R_p * e^0 = R_p
-	// phi(0) = phi_p + tan(alpha) * 0 = phi_p
-	// Assuming R_q < R_p and 0 < t:
-	//    R(t) = R_q = R_p * e^{-t}  =>  e^{-t} = R_q / R_p  =>  t = -ln(R_q / R_p)
-	//    phi(t) = phi_q = phi_p + tan(alpha) * t  =>  tan(alpha) = (phi_q - phi_p) / t  =>  alpha = tan^-1((phi_q - phi_p) / t)
-	//
-	//    =>  alpha = tan^-1((phi_q - phi_p) / -ln(R_q / R_p))
-
-	if (target.r() == 0) {
-		m_angle = 0;
-	} else {
-		Number<Inexact> diff_phi = wrapAngle(target.phi() - source.phi(), -M_PI);
-		m_angle = std::atan(diff_phi / -std::log(target.r() / source.r()));
+	if (source.r() == 0) {
+		return 0;
 	}
+	Number<Inexact> diff_phi = wrapAngle(target.phi() - source.phi(), -M_PI);
+	return std::atan(diff_phi / -std::log(target.r() / source.r()));
+}
+
+Number<Inexact> Spiral::dAlphaDPhi1(const PolarPoint& p1, const PolarPoint& p2) {
+	const PolarPoint& source = p1.r() < p2.r() ? p1 : p2;
+	const PolarPoint& target = p1.r() < p2.r() ? p2 : p1;
+	if (source.r() == 0) {
+		return 0;
+	}
+	Number<Inexact> phiDiff = wrapAngle(target.phi() - source.phi(), -M_PI);
+	Number<Inexact> rDiffLog = std::log(target.r() / source.r());
+	return rDiffLog / (rDiffLog * rDiffLog + phiDiff * phiDiff);
+}
+
+Number<Inexact> Spiral::dAlphaDPhi2(const PolarPoint& p1, const PolarPoint& p2) {
+	return -dAlphaDPhi1(p1, p2);
+}
+
+Number<Inexact> Spiral::dAlphaDR1(const PolarPoint& p1, const PolarPoint& p2) {
+	const PolarPoint& source = p1.r() < p2.r() ? p1 : p2;
+	const PolarPoint& target = p1.r() < p2.r() ? p2 : p1;
+	if (source.r() == 0) {
+		return 0;
+	}
+	Number<Inexact> phiDiff = wrapAngle(target.phi() - source.phi(), -M_PI);
+	Number<Inexact> rDiffLog = std::log(target.r() / source.r());
+	return (-phiDiff / p1.r()) / (rDiffLog * rDiffLog + phiDiff * phiDiff);
+}
+
+Number<Inexact> Spiral::dAlphaDR2(const PolarPoint& p1, const PolarPoint& p2) {
+	const PolarPoint& source = p1.r() < p2.r() ? p1 : p2;
+	const PolarPoint& target = p1.r() < p2.r() ? p2 : p1;
+	if (source.r() == 0) {
+		return 0;
+	}
+	Number<Inexact> phiDiff = wrapAngle(target.phi() - source.phi(), -M_PI);
+	Number<Inexact> rDiffLog = std::log(target.r() / source.r());
+	return (phiDiff / p2.r()) / (rDiffLog * rDiffLog + phiDiff * phiDiff);
 }
 
 const PolarPoint& Spiral::anchor() const {

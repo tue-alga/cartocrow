@@ -41,23 +41,17 @@ class PolarPoint {
   public:
 	/// Constructs a polar point at the origin.
 	PolarPoint();
-
 	/// Constructs a polar point at the origin.
 	[[deprecated]] PolarPoint(const CGAL::Origin& o);
-
 	/// Constructs a polar point with given \f$r\f$ and \f$\phi\f$.
 	PolarPoint(const Number<Inexact>& R, const Number<Inexact>& phi);
-
 	/// Copy constructor.
 	PolarPoint(const PolarPoint& p);
-
 	/// Constructs a polar point that corresponds to \f$p + t\f$, where \f$p\f$
 	/// is a polar point and \f$t\f$ is a vector in Cartesian coordinates.
 	PolarPoint(const PolarPoint& p, const Vector<Inexact>& t);
-
 	/// Constructs a polar point from a point in Cartesian coordinates.
 	explicit PolarPoint(const Point<Inexact>& p);
-
 	PolarPoint(const Point<Inexact>& p, const Vector<Inexact>& t);
 
 	/// Returns the distance \f$r\f$ from the origin.
@@ -66,6 +60,11 @@ class PolarPoint {
 	const Number<Inexact> rSquared() const;
 	/// Returns the angle \f$\phi\f$ relative to the origin.
 	const Number<Inexact> phi() const;
+
+	/// Sets the distance \f$r\f$ from the origin.
+	void setR(Number<Inexact> r);
+	/// Sets the distance \f$\phi\f$ relative to the origin.
+	void setPhi(Number<Inexact> phi);
 
 	/// Returns the point in Cartesian coordinates corresponding to this polar
 	/// point.
