@@ -149,13 +149,13 @@ void OptimizationDemo::recalculate() {
 	ReachableRegionAlgorithm::ReachableRegion reachableRegion = ReachableRegionAlgorithm(tree).run();
 	SpiralTreeObstructedAlgorithm(tree, reachableRegion).run();
 	m_smoothTree = std::make_shared<SmoothTree>(tree);
-	for (auto& node : m_smoothTree->m_nodes) {
+	/*for (auto& node : m_smoothTree->m_nodes) {
 		if (node->getType() == Node::ConnectionType::kSubdivision) {
 			node->m_position.setPhi(wrapAngle(
 			    node->m_position.phi() + static_cast<float>(std::rand()) / RAND_MAX * 0.2 - 0.1,
 			    -M_PI));
 		}
-	}
+	}*/
 	SmoothTreePainting::Options options;
 	auto painting = std::make_shared<SmoothTreePainting>(m_smoothTree, options);
 	m_renderer->addPainting(painting, "Smooth tree");
