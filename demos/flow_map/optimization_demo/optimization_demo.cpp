@@ -46,11 +46,14 @@ OptimizationDemo::OptimizationDemo() {
 
 	for (int i = 0; i < 40; i++) {
 		m_places.push_back(std::make_shared<Point<Inexact>>(
-		    static_cast<float>(std::rand()) / RAND_MAX * 200 - 100,
-		    static_cast<float>(std::rand()) / RAND_MAX * 200 - 100));
+		    static_cast<float>(std::rand()) / RAND_MAX * 50 - 25,
+		    static_cast<float>(std::rand()) / RAND_MAX * 50 - 25));
 	}
 
 	m_renderer = new GeometryWidget();
+	m_renderer->zoomIn();
+	m_renderer->zoomIn();
+	m_renderer->zoomIn();
 	m_renderer->setMaxZoom(10000);
 	m_renderer->setGridMode(GeometryWidget::GridMode::POLAR);
 	setCentralWidget(m_renderer);
@@ -133,7 +136,7 @@ void OptimizationDemo::recalculate() {
 	for (const auto& place : m_places) {
 		tree->addPlace("", *place, 1);
 	}
-	//tree->addShields();
+	tree->addShields();
 
 	ReachableRegionAlgorithm::ReachableRegion reachableRegion = ReachableRegionAlgorithm(tree).run();
 	SpiralTreeObstructedAlgorithm(tree, reachableRegion).run();
