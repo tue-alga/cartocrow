@@ -4,10 +4,13 @@
 #include <functional>
 #include <unordered_map>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
 #include "../core/core.h"
 #include "../renderer/geometry_renderer.h"
+#include "ellipse.h"
+#include "guiding_shape.h"
 #include "parameters.h"
 #include "region.h"
 #include "visibility_drawing.h"
@@ -17,18 +20,6 @@ namespace cartocrow::mosaic_cartogram {
 // TODO: make base class and separate subclass SquareMap
 
 class HexagonalMap {
-  private:
-	/// The radius of the circumcircle (i.e., the circle that passes through all six vertices). Also
-	/// known as the circumradius, and equal to the side length.
-	Number<Inexact> exradius;
-	/// The radius of the inscribed circle (i.e., the largest circle that can be contained in the
-	/// hexagon). Also known as the apothem.
-	Number<Inexact> inradius;
-	/// The area of one hexagon.
-	Number<Inexact> tileArea;
-	/// The hexagon used for painting. The bottom left point of its bounding box is at the origin.
-	Polygon<Inexact> tileShape;
-
   public:
 	/// To represent a position in the hexagonal tiling, we use barycentric coordinates. These are
 	/// of the form (x,y,z). A step towards the right increases x, towards the top-left increases y,
@@ -64,19 +55,41 @@ class HexagonalMap {
 		std::optional<std::reference_wrapper<const LandRegion>> region;
 		std::unordered_set<Coordinate, CoordinateHash> tiles;
 
-		Configuration() {}
-		Configuration(const LandRegion &r) : region(r) {}
+		int id() const { return region ? region->get().id : -1; }
+		bool isSea() const { return !region.has_value(); }
 	};
+
+  private:
+	/// The radius of the circumcircle (i.e., the circle that passes through all six vertices). Also
+	/// known as the circumradius, and equal to the side length.
+	Number<Inexact> exradius;
+	/// The radius of the inscribed circle (i.e., the largest circle that can be contained in the
+	/// hexagon). Also known as the apothem.
+	Number<Inexact> inradius;
+	/// The area of one hexagon.
+	Number<Inexact> tileArea;
+	/// The hexagon used for painting. The bottom left point of its bounding box is at the origin.
+	Polygon<Inexact> tileShape;
+
+	std::vector<std::unordered_map<int, GuidingPair>> guidingPairs;
 
 	std::unordered_map<Coordinate, int, CoordinateHash> tiles;
 	std::vector<Configuration> configurations;
 
+  public:
 	HexagonalMap() {}
 	HexagonalMap(const VisibilityDrawing &initial, const std::vector<LandRegion> &landRegions,
 	             int seaRegionCount, const Parameters &params);
 
 	void paint(renderer::GeometryRenderer &renderer) const;
 	void paintTile(renderer::GeometryRenderer &renderer, const Coordinate &c) const;
+
+	std::pair<Ellipse, Ellipse> getGuidingPair(const Configuration &config1, const Configuration &config2) const;
+	std::pair<Ellipse, Ellipse> getGuidingPair(int id1, int id2) const { return getGuidingPair(configurations[id1], configurations[id2]); }
+
+  private:
+	Vector<Inexact> getCentroid(const Configuration &config) const;
+	Vector<Inexact> getCentroid(const Coordinate &c) const;
 };
 
 } // namespace cartocrow::mosaic_cartogram
