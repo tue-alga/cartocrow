@@ -5,6 +5,7 @@ set(SOURCES
 	mosaic_cartogram.cpp
 	orderly_spanning_tree.cpp
 	painting.cpp
+	tile_map.cpp
 	triangulation.cpp
 	visibility_drawing.cpp
 )
@@ -16,6 +17,8 @@ set(HEADERS
 	orderly_spanning_tree.h
 	painting.h
 	parameters.h
+	region.h
+	tile_map.h
 	triangulation.h
 	visibility_drawing.h
 )

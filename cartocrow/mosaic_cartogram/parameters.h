@@ -20,7 +20,7 @@ struct Parameters {
 	/// Checks whether the parameters are valid. If not, an exception is thrown.
 	void validate() const {
 		if (tileRadius <= 0) {
-			throw std::invalid_argument("'tileRadius' must be positive (Did you forget to specify it?)");
+			throw std::invalid_argument("'tileRadius' must be positive");
 		}
 		if (unitValue <= 0) {
 			throw std::invalid_argument("'unitValue' must be positive (Did you forget to specify it?)");

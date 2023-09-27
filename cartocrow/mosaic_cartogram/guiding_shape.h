@@ -2,8 +2,8 @@
 #define CARTOCROW_MOSAIC_CARTOGRAM_GUIDING_SHAPE_H
 
 #include "ellipse.h"
-#include "mosaic_cartogram.h"
 #include "parameters.h"
+#include "region.h"
 
 namespace cartocrow::mosaic_cartogram {
 

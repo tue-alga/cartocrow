@@ -13,6 +13,9 @@ class Graph {
 	/// - <tt>!m_adj[u].contains(u)</tt>
 	/// - <tt>m_adj[u].count(v) <= 1</tt>
 
+  protected:
+	std::vector<std::vector<int>> m_adj;
+
   public:
 	/// Creates an empty graph.
 	/// Runtime: O(1)
@@ -60,9 +63,6 @@ class Graph {
 
 	/// Runtime: O(deg(v) + len(a))
 	void setAdjacenciesUnsafe(int v, std::vector<int> a) { m_adj[v] = a; }
-
-  protected:
-	std::vector<std::vector<int>> m_adj;
 };
 
 /// A simple, undirected graph with a fixed number of vertices.

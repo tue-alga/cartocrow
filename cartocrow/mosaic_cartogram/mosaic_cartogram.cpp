@@ -7,6 +7,7 @@
 #include <unordered_set>
 #include <CGAL/number_utils.h>
 
+#include "../core/centroid.h"
 #include "triangulation.h"
 
 namespace cartocrow::mosaic_cartogram {
@@ -16,6 +17,7 @@ void MosaicCartogram::compute() {
 	computeLandRegions();
 	computeArrangement();
 	computeDual();
+	computeTileMap();
 }
 
 void MosaicCartogram::computeArrangement() {
@@ -102,7 +104,7 @@ void MosaicCartogram::computeLandRegions() {
 
 	for (const auto &[name, region] : *m_inputMap) {
 		const Number<Inexact> value = m_dataValues.at(name);  // already validated
-		int tiles = getTileCount(value);
+		int tiles = getTileCount(value);  // TODO: what if 0?
 
 		std::vector<PolygonWithHoles<Exact>> polygons;
 		region.shape.polygons_with_holes(std::back_inserter(polygons));
@@ -170,6 +172,24 @@ void MosaicCartogram::computeLandRegions() {
 		r.id = i++;
 		m_landIndices.insert({ r.name, r.id });
 	}
+}
+
+void MosaicCartogram::computeTileMap() {
+	std::vector<Point<Exact>> centroids(getRegionCount());
+	for (auto f : m_arrangement.face_handles()) {
+		std::string label = f->data();
+		if (!label.empty()) centroids[getRegionIndex(label)] = centroid(f);
+	}
+
+	VisibilityDrawing vd(
+		m_dual,
+		getRegionIndex("_outer0"),
+		getRegionIndex("_outer1"),
+		getRegionIndex("_outer2"),
+		centroids
+	);
+
+	m_tileMap = HexagonalMap(vd, m_landRegions, m_seaRegionCount, m_parameters);
 }
 
 void MosaicCartogram::validate() const {

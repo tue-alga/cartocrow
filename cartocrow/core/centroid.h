@@ -23,6 +23,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 05-12-2019
 #define CARTOCROW_CORE_POLYGON_H
 
 #include "core.h"
+#include "region_arrangement.h"
 
 #include <CGAL/Kernel/global_functions_2.h>
 #include <CGAL/Origin.h>
@@ -88,6 +89,17 @@ template <class K> Point<K> centroid(const PolygonSet<K>& polygon) {
 		areaSum += area;
 	}
 	return CGAL::ORIGIN + sum / areaSum;
+}
+
+/// Computes the centroid of the given face.
+inline Point<Exact> centroid(RegionArrangement::Face_const_handle f) {
+	Polygon<Exact> polygon;
+	auto circ = f->outer_ccb();
+	auto curr = circ;
+	do {
+		polygon.push_back(curr->target()->point());
+	} while (++curr != circ);
+	return centroid(polygon);
 }
 
 } // namespace cartocrow

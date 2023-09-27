@@ -16,42 +16,10 @@
 #include "ellipse.h"
 #include "graph.h"
 #include "parameters.h"
+#include "region.h"
+#include "tile_map.h"
 
 namespace cartocrow::mosaic_cartogram {
-
-/// A contiguous land region in the mosaic cartogram.
-/// Note that the input map may contain non-contiguous regions. These "superregions" are partitioned
-/// into "subregions", which are henceforth processed separately. The data value of the superregion
-/// is split among the subregions by area.
-struct LandRegion {
-	/// The unique, non-negative number identifying this region.
-	int id;
-	/// The region's name.
-	std::string name;
-	/// The superregion's name, if this region has one. In that case, the region's name has the
-	/// following format: "<superregion name>_<index>".
-	std::optional<std::string> superName;
-	/// The data value of this region.
-	Number<Inexact> dataValue;
-	/// The desired number of tiles to represent this region. This is computed from the data value
-	/// and unit value.
-	int targetTileCount;
-	/// The color of this region as specified by the input map. This is only used for visualization.
-	/// Note that all subregions have the same color.
-	Color color;
-	/// The shape of this region as specified by the input map.
-	PolygonWithHoles<Exact> shape;
-	/// An approximation of the desired final shape of this region. It is centered at the origin and
-	/// scaled according to the desired number of tiles.
-	EllipseAtOrigin guidingShape;
-	/// The adjacent regions in clockwise order.
-	std::vector<std::reference_wrapper<LandRegion>> neighbors;
-
-	/// Returns the corresponding \c Region.
-	Region basic() const {
-		return { name, color, PolygonSet<Exact>(shape) };
-	}
-};
 
 class MosaicCartogram {
 	friend class Painting;
@@ -86,6 +54,7 @@ class MosaicCartogram {
 
 	RegionArrangement m_arrangement;
 	UndirectedGraph m_dual;
+	HexagonalMap m_tileMap;
 
 	int getTileCount(double value) const {
 		return std::round(value / m_parameters.unitValue);
@@ -111,7 +80,7 @@ class MosaicCartogram {
 		const auto it = m_landIndices.find(name);
 		if (it != m_landIndices.end()) return it->second;
 
-		// otherwise, it's a sea region
+		// otherwise, it's a sea region (TODO: ugly)
 		int i = 0, e = 1;
 		for (auto c = name.rbegin(); std::isdigit(*c); ++c) i += e * (*c - '0'), e *= 10;
 		return m_landRegions.size() + (name[1] == 'o' ? m_seaRegionCount : 0) + i;
@@ -133,13 +102,18 @@ class MosaicCartogram {
 		throw std::out_of_range("No region exists with index " + std::to_string(index));
 	}
 
+	/// Step 2. Construct arrangement from the contiguous regions, and create sea regions such that
+	/// the dual is triangular.
 	void computeArrangement();
-	/// Create a vertex for each face in the arrangement and connect two vertices if the
+	/// Step 3. Create a vertex for each face in the arrangement and connect two vertices if the
 	/// corresponding faces are adjacent.
 	void computeDual();
-	/// Transforms \c m_inputMap to \c m_landRegions such that each region is contiguous, i.e.,
-	/// consists of one polygon (possibly with holes).
+	/// Step 1. Transforms \c m_inputMap to \c m_landRegions such that each region is contiguous,
+	/// i.e., consists of one polygon (possibly with holes).
 	void computeLandRegions();
+	/// Step 4. Compute an initial tile map using a visibility diagram and TODO.
+	void computeTileMap();
+	/// Step 0. Check parameters, region names, and region data.
 	void validate() const;
 };
 
