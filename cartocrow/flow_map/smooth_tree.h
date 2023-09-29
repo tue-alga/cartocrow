@@ -44,6 +44,8 @@ class SmoothTree {
 
 	/// Computes the total cost of the tree.
 	Number<Inexact> computeCost();
+	/// Computes the obstacle cost of the entire tree.
+	Number<Inexact> computeObstacleCost();
 	/// Computes the smoothing cost of the entire tree.
 	Number<Inexact> computeSmoothingCost();
 	/// Computes the angle restriction cost of the entire tree.
@@ -72,6 +74,26 @@ class SmoothTree {
 		Number<Inexact> phi = 0;
 	};
 	std::vector<PolarGradient> m_gradient;
+
+	/// Computes the obstacle cost for the subdivision or join node `i` at
+	/// \f$(r, \phi)\f$ to the given obstacle leaf node at \f$(r_{\text{obs}},
+	/// \phi_{\text{obs}})\f$.
+	///
+	/// \f[
+	///     F_\text{obs}(r, \phi) =
+	///     c_\text{obs} \cdot
+	///     \begin{cases}
+	///         \frac{t}{BD} \big( \frac{B}{2} + t \big) +
+	///             \frac{D}{Bt} \big( \frac{B}{2} - t \big) & \text{if $D < t$;} \\
+	///         \big( 1 - \frac{D - t}{B} \big)^2 & \text{if $t \leq D < t + B$;} \\
+	///         0 & \text{otherwise,} \\
+	///     \end{cases}
+	/// \f]
+	///
+	/// where \f$t\f$ is the thickness of the flow tree at this node, \f$B\f$ is
+	/// a buffer size, and \f$D\f$ is the distance between \f$(r, \phi)\f$ and
+	/// \f$(r_{\text{obs}}, \phi_{\text{obs}})\f$.
+	Number<Inexact> computeObstacleCost(int i, Number<Inexact> thickness, PolarPoint obstacle);
 
 	/// Computes the smoothing cost for the subdivision node `i` at \f$(r,
 	/// \phi)\f$, with parent `iParent` at \f$(r_p, \phi_p)\f$ and child
@@ -220,6 +242,7 @@ class SmoothTree {
 	Number<Inexact> m_straighteningFactor = 0.4;
 	Number<Inexact> m_angle_restrictionFactor = 0.077;
 
+	Number<Inexact> m_bufferSize = 1.0; // TODO
 	Number<Inexact> m_relevantFlowFactor = 0.5;
 };
 

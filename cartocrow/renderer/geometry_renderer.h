@@ -134,7 +134,12 @@ class GeometryRenderer {
 	/// Sets the draw mode (whether shapes should be stroked, filled, etc.)
 	virtual void setMode(int mode) = 0;
 	/// Sets the stroke style of the renderer.
-	virtual void setStroke(Color color, double width) = 0;
+	///
+	/// If `absoluteWidth` is `false`, in interactive renderers, the width is
+	/// interpreted in screen coordinates, so when zooming in the stroke doesn't
+	/// become thicker. If it is `true`, the width is interpreted in drawing
+	/// coordinates.
+	virtual void setStroke(Color color, double width, bool absoluteWidth = false) = 0;
 	/// Sets the fill color of the renderer.
 	virtual void setFill(Color color) = 0;
 	/// Sets the fill opacity of the renderer (range 0-255).
