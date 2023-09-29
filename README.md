@@ -200,5 +200,5 @@ build/frontend/cartocrow data/europe-population-necklace.json
 
 ## License
 
-Copyright (c) 2019-2022 Netherlands eScience Center and TU Eindhoven
+Copyright (c) 2019-2023 Netherlands eScience Center and TU Eindhoven
 Licensed under the GPLv3.0 license. See LICENSE for details.
