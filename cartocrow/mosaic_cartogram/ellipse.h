@@ -10,6 +10,7 @@
 namespace cartocrow::mosaic_cartogram {
 
 // TODO: move to core?
+// TODO: convert to/from CGAL ellipse
 
 class EllipseAtOrigin;
 
@@ -30,6 +31,7 @@ class Ellipse {
 	Eigen::Vector2d center() const;
 	std::array<double, 6> coefficients() const;
 	double evaluate(double x, double y) const;
+	Ellipse normalizeSign() const;
 	virtual Parameters parameters() const;
 	Ellipse stretch(double cx, double cy) const;
 	Ellipse translate(double dx, double dy) const;
@@ -50,6 +52,7 @@ class EllipseAtOrigin : public Ellipse {
 	EllipseAtOrigin(double a, double b, double c, double f) : Ellipse(a, b, c, 0, 0, f) {}
 
 	double area() const;
+	EllipseAtOrigin normalizeContours(double deltaArea) const;
 	Parameters parameters() const override;
 	double radius(double slope) const;
 	EllipseAtOrigin scaleTo(double area) const;

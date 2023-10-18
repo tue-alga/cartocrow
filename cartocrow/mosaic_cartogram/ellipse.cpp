@@ -26,7 +26,7 @@ Eigen::Matrix3d Ellipse::Parameters::matrix() const {
 
 // TODO: only enable checks in debug builds?
 Ellipse::Ellipse(double a, double b, double c, double d, double e, double f)
-	: A(a), B(b), C(c), D(d), E(e), F(f) {
+    : A(a), B(b), C(c), D(d), E(e), F(f) {
 	if (!std::isfinite(a) || !std::isfinite(b) || !std::isfinite(c) ||
 	    !std::isfinite(d) || !std::isfinite(e) || !std::isfinite(f)) {
 		throw std::invalid_argument("The coefficients cannot be infinite or NaN");
@@ -67,6 +67,11 @@ double Ellipse::evaluate(double x, double y) const {
 	return (A*x + B*y + D) * x + (C*y + E) * y + F;
 }
 
+Ellipse Ellipse::normalizeSign() const {
+	if (A > 0) return *this;  // note:  sgn(A) = sgn(C)
+	return { -A, -B, -C, -D, -E, -F };
+}
+
 Ellipse::Parameters Ellipse::parameters() const {
 	Parameters p = translateToOrigin().parameters();
 	const Eigen::Vector2d c = center();
@@ -104,7 +109,7 @@ EllipseAtOrigin Ellipse::translateToOrigin() const {
 }
 
 std::ostream& operator<<(std::ostream &os, const Ellipse &e) {
-	const std::vector<double> coefficients = { e.A, e.B, e.C, e.D, e.E, e.F };
+	const std::array<double, 6> coefficients = e.coefficients();
 	static const std::vector<std::string> variables = { "x²", "xy", "y²", "x", "y", "" };
 
 	bool first = true;
@@ -201,6 +206,12 @@ Ellipse Ellipse::fit(const Eigen::ArrayX2d &boundary) {
 double EllipseAtOrigin::area() const {
 	// https://math.stackexchange.com/q/2499695
 	return 2 * std::numbers::pi * std::abs(F) / std::sqrt(4*A*C - B*B);
+}
+
+EllipseAtOrigin EllipseAtOrigin::normalizeContours(double deltaArea) const {
+	// let  F(n) = area(Q + n)  and solve  F'(1) = deltaArea  for (scaling factor of) new coefficients
+	const double c = 2 * std::numbers::pi / (std::sqrt(4*A*C - B*B) * deltaArea);
+	return { c*A, c*B, c*C, c*F };
 }
 
 Ellipse::Parameters EllipseAtOrigin::parameters() const {

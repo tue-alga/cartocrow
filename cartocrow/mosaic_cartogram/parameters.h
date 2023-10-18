@@ -1,6 +1,7 @@
 #ifndef CARTOCROW_MOSAIC_CARTOGRAM_PARAMETERS_H
 #define CARTOCROW_MOSAIC_CARTOGRAM_PARAMETERS_H
 
+#include <numbers>
 #include <stdexcept>
 
 #include "../core/core.h"
@@ -16,6 +17,11 @@ struct Parameters {
 
 	/// The value represented by one tile. This parameter is required.
 	Number<Inexact> unitValue;
+
+	/// The area of a tile.
+	Number<Inexact> tileArea() const {
+		return std::numbers::pi * tileRadius * tileRadius;
+	}
 
 	/// Checks whether the parameters are valid. If not, an exception is thrown.
 	void validate() const {

@@ -3,7 +3,6 @@
 
 #include <cctype>
 #include <functional>
-#include <numbers>
 #include <optional>
 #include <stdexcept>
 #include <string>
@@ -59,14 +58,13 @@ class MosaicCartogram {
 	int getTileCount(double value) const {
 		return std::round(value / m_parameters.unitValue);
 	}
-	Number<Inexact> getTileArea(int n = 1) const {
-		return n * std::numbers::pi * m_parameters.tileRadius * m_parameters.tileRadius;
-	}
 	template <class K>
 	EllipseAtOrigin getGuidingShape(const PolygonWithHoles<K> &polygon, int tileCount) const {
+		const double a = m_parameters.tileArea();
 		return Ellipse::fit(polygon.outer_boundary())
 			.translateToOrigin()
-			.scaleTo(getTileArea(tileCount));
+			.scaleTo(tileCount * a)
+			.normalizeContours(a);
 	}
 
 	bool isLandRegion(const int index) const {

@@ -49,4 +49,11 @@ GuidingPair::GuidingPair(const LandRegion &region1, const LandRegion &region2, c
 	ellipse2 = ellipse2.translate(correction.x(), correction.y());
 }
 
+std::pair<Ellipse, Ellipse> GuidingPair::translate(const double dx, const double dy) const {
+	return {
+		ellipse1.translate(dx, dy).normalizeSign(),
+		ellipse2.translate(dx, dy).normalizeSign()
+	};
+}
+
 } // namespace cartocrow::mosaic_cartogram
