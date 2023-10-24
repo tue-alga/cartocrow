@@ -2,7 +2,7 @@
 
 #include <stdexcept>
 #include <CGAL/number_utils.h>
-#include <Eigen/Dense>
+#include <CGAL/Origin.h>
 
 #include "../core/centroid.h"
 #include "../core/core.h"
@@ -42,7 +42,8 @@ GuidingPair::GuidingPair(const LandRegion &region1, const LandRegion &region2, c
 	const double area2 = guide2->area();
 
 	// opposite of "joint" center  (note: overlap is counted twice)
-	const Eigen::Vector2d correction = -(area1 * ellipse1.center() + area2 * ellipse2.center()) / (area1 + area2);
+	const auto correction = -(area1 * (ellipse1.center() - CGAL::ORIGIN)
+	                        + area2 * (ellipse2.center() - CGAL::ORIGIN)) / (area1 + area2);
 
 	// move guiding shapes such that their joint center is at the origin
 	ellipse1 = ellipse1.translate(correction.x(), correction.y());

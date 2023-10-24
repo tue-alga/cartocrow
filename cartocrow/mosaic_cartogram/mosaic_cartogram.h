@@ -64,7 +64,7 @@ class MosaicCartogram {
 		return Ellipse::fit(polygon.outer_boundary())
 			.translateToOrigin()
 			.scaleTo(tileCount * a)
-			.normalizeContours(a);
+			.normalizeContours(6 * a);  // area of a 1-tile (hexagonal) neighborhood
 	}
 
 	bool isLandRegion(const int index) const {

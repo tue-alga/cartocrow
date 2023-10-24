@@ -28,7 +28,7 @@ class Ellipse {
 	Ellipse(double a, double b, double c, double d, double e, double f);
 
 	double angle() const;
-	Eigen::Vector2d center() const;
+	Point<Inexact> center() const;
 	std::array<double, 6> coefficients() const;
 	double evaluate(double x, double y) const;
 	Ellipse normalizeSign() const;

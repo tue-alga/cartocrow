@@ -53,7 +53,7 @@ double Ellipse::angle() const {
 	return .5 * std::atan(B / (A-C));
 }
 
-Eigen::Vector2d Ellipse::center() const {
+Point<Inexact> Ellipse::center() const {
 	// solve system  { dQ/dx = 0, dQ/dy = 0 }  for  x,y
 	const double x = (2*C*D - B*E) / (B*B - 4*A*C);
 	return { x, -(B*x + E) / (2*C) };
@@ -74,7 +74,7 @@ Ellipse Ellipse::normalizeSign() const {
 
 Ellipse::Parameters Ellipse::parameters() const {
 	Parameters p = translateToOrigin().parameters();
-	const Eigen::Vector2d c = center();
+	const Point<Inexact> c = center();
 	p.x0 = c.x(), p.y0 = c.y();
 	return p;
 }
@@ -95,12 +95,12 @@ Ellipse Ellipse::translate(double dx, double dy) const {
 }
 
 Ellipse Ellipse::translateTo(double x, double y) const {
-	const Eigen::Vector2d c = center();
+	const Point<Inexact> c = center();
 	return translate(x - c.x(), y - c.y());
 }
 
 EllipseAtOrigin Ellipse::translateToOrigin() const {
-	const Eigen::Vector2d c = center();
+	const Point<Inexact> c = center();
 	const double x0 = c.x(), y0 = c.y();
 	return {
 		A, B, C,
@@ -209,7 +209,7 @@ double EllipseAtOrigin::area() const {
 }
 
 EllipseAtOrigin EllipseAtOrigin::normalizeContours(double deltaArea) const {
-	// let  F(n) = area(Q + n)  and solve  F'(1) = deltaArea  for (scaling factor of) new coefficients
+	// let  g(x) = area(Q + x)  and solve  g'(1) = deltaArea  for (scaling factor of) new coefficients
 	const double c = 2 * std::numbers::pi / (std::sqrt(4*A*C - B*B) * deltaArea);
 	return { c*A, c*B, c*C, c*F };
 }

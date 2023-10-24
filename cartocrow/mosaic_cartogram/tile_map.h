@@ -85,11 +85,10 @@ class HexagonalMap {
 	void paintTile(renderer::GeometryRenderer &renderer, const Coordinate &c) const;
 
 	std::pair<Ellipse, Ellipse> getGuidingPair(const Configuration &config1, const Configuration &config2) const;
-	std::pair<Ellipse, Ellipse> getGuidingPair(int id1, int id2) const { return getGuidingPair(configurations[id1], configurations[id2]); }
 
   private:
-	Vector<Inexact> getCentroid(const Configuration &config) const;
-	Vector<Inexact> getCentroid(const Coordinate &c) const;
+	Point<Inexact> getCentroid(const Configuration &config) const;
+	Point<Inexact> getCentroid(const Coordinate &c) const;
 };
 
 } // namespace cartocrow::mosaic_cartogram
