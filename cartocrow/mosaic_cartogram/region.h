@@ -1,8 +1,8 @@
 #ifndef CARTOCROW_MOSAIC_CARTOGRAM_REGION_H
 #define CARTOCROW_MOSAIC_CARTOGRAM_REGION_H
 
+#include "../core/ellipse.h"
 #include "../core/region_map.h"
-#include "ellipse.h"
 
 namespace cartocrow::mosaic_cartogram {
 

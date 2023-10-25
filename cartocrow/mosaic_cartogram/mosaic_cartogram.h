@@ -10,9 +10,9 @@
 #include <vector>
 
 #include "../core/core.h"
+#include "../core/ellipse.h"
 #include "../core/region_arrangement.h"
 #include "../core/region_map.h"
-#include "ellipse.h"
 #include "graph.h"
 #include "parameters.h"
 #include "region.h"

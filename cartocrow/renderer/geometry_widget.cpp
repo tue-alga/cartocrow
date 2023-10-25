@@ -522,7 +522,7 @@ void GeometryWidget::draw(const Circle<Inexact>& c) {
 	m_painter->drawEllipse(rect);
 }
 
-void GeometryWidget::draw(const mosaic_cartogram::Ellipse& e) {
+void GeometryWidget::draw(const Ellipse& e) {
 	setupPainter();
 	const auto p = e.parameters();
 	m_painter->save();

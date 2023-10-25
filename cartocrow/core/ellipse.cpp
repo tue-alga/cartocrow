@@ -11,7 +11,7 @@
 #include <CGAL/number_utils.h>
 #include <Eigen/Eigenvalues>
 
-namespace cartocrow::mosaic_cartogram {
+namespace cartocrow {
 
 Eigen::Matrix3d Ellipse::Parameters::matrix() const {
 	// multiply matrices left to right: translation, rotation, scaling
@@ -252,4 +252,4 @@ EllipseAtOrigin EllipseAtOrigin::scaleTo(double area) const {
 	return { A, B, C, F * area / this->area() };
 }
 
-} // namespace cartocrow::mosaic_cartogram
+} // namespace cartocrow

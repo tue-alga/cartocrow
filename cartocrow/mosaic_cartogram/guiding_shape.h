@@ -1,7 +1,7 @@
 #ifndef CARTOCROW_MOSAIC_CARTOGRAM_GUIDING_SHAPE_H
 #define CARTOCROW_MOSAIC_CARTOGRAM_GUIDING_SHAPE_H
 
-#include "ellipse.h"
+#include "../core/ellipse.h"
 #include "parameters.h"
 #include "region.h"
 

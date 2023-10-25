@@ -82,7 +82,7 @@ class IpeRenderer : public GeometryRenderer {
 	void draw(const Polygon<Inexact>& p) override;
 	void draw(const PolygonWithHoles<Inexact>& p) override;
 	void draw(const Circle<Inexact>& c) override;
-	void draw(const mosaic_cartogram::Ellipse& e) override;
+	void draw(const Ellipse& e) override;
 	//void draw(const BezierSpline& s) override;
 	void drawText(const Point<Inexact>& p, const std::string& text) override;
 

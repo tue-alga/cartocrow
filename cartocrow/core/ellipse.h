@@ -1,19 +1,19 @@
-#ifndef CARTOCROW_MOSAIC_CARTOGRAM_ELLIPSE_H
-#define CARTOCROW_MOSAIC_CARTOGRAM_ELLIPSE_H
+#ifndef CARTOCROW_CORE_ELLIPSE_H
+#define CARTOCROW_CORE_ELLIPSE_H
 
 #include <string>
 #include <utility>
 #include <Eigen/Dense>
 
-#include "../core/core.h"
+#include "core.h"
 
-namespace cartocrow::mosaic_cartogram {
+namespace cartocrow {
 
-// TODO: move to core?
 // TODO: convert to/from CGAL ellipse
 
 class EllipseAtOrigin;
 
+/// \author Gijs Pennings
 class Ellipse {
   protected:
 	double A, B, C, D, E, F;
@@ -46,6 +46,7 @@ class Ellipse {
 	static Ellipse fit(const Eigen::ArrayX2d &boundary);
 };
 
+/// \author Gijs Pennings
 class EllipseAtOrigin : public Ellipse {
   public:
 	EllipseAtOrigin() : Ellipse() {}
@@ -58,6 +59,6 @@ class EllipseAtOrigin : public Ellipse {
 	EllipseAtOrigin scaleTo(double area) const;
 };
 
-} // namespace cartocrow::mosaic_cartogram
+} // namespace cartocrow
 
-#endif // CARTOCROW_MOSAIC_CARTOGRAM_ELLIPSE_H
+#endif // CARTOCROW_CORE_ELLIPSE_H

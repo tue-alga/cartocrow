@@ -1,5 +1,4 @@
 set(SOURCES
-	ellipse.cpp
 	graph.cpp
 	guiding_shape.cpp
 	mosaic_cartogram.cpp
@@ -10,7 +9,6 @@ set(SOURCES
 	visibility_drawing.cpp
 )
 set(HEADERS
-	ellipse.h
 	graph.h
 	guiding_shape.h
 	mosaic_cartogram.h
@@ -25,12 +23,9 @@ set(HEADERS
 
 add_library(mosaic_cartogram ${SOURCES})
 target_link_libraries(mosaic_cartogram
-	PRIVATE Eigen3::Eigen
+	PUBLIC core
 	PRIVATE glog::glog
 )
 
-install(TARGETS mosaic_cartogram
-	EXPORT ${CARTOCROW_EXPORT_TARGETS}
-	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBRARY_DIR}
-	INCLUDES DESTINATION ${CMAKE_INSTALL_SOURCE_DIR}
-)
+cartocrow_install_module(mosaic_cartogram)
+install(FILES ${HEADERS} DESTINATION ${CARTOCROW_INSTALL_DIR}/mosaic_cartogram)

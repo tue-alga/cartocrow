@@ -44,6 +44,7 @@ set(HEADERS
 
 add_library(flow_map ${SOURCES})
 target_link_libraries(flow_map
+	PUBLIC core
 	PRIVATE glog::glog
 )
 

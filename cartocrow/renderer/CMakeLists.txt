@@ -14,8 +14,7 @@ set(HEADERS
 
 add_library(renderer ${SOURCES})
 target_link_libraries(renderer
-	PUBLIC core mosaic_cartogram Qt5::Widgets Ipe::ipelib
-	PRIVATE Eigen3::Eigen
+	PUBLIC core Qt5::Widgets Ipe::ipelib
 	PRIVATE glog::glog
 )
 

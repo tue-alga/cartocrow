@@ -8,8 +8,8 @@
 #include <vector>
 
 #include "../core/core.h"
+#include "../core/ellipse.h"
 #include "../renderer/geometry_renderer.h"
-#include "ellipse.h"
 #include "guiding_shape.h"
 #include "parameters.h"
 #include "region.h"
