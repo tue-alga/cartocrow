@@ -29,13 +29,17 @@ class Ellipse {
 
 	double angle() const;
 	Point<Inexact> center() const;
-	std::array<double, 6> coefficients() const;
-	double evaluate(double x, double y) const;
+	std::array<double, 6> coefficients() const { return { A, B, C, D, E, F }; }
+	Ellipse contour(double c) const { return { A, B, C, D, E, F - c }; }
+	double evaluate(double x, double y) const { return (A*x + B*y + D) * x + (C*y + E) * y + F; }
+	double evaluate(const Point<Inexact> &p) const { return evaluate(p.x(), p.y()); }
 	Ellipse normalizeSign() const;
 	virtual Parameters parameters() const;
 	Ellipse stretch(double cx, double cy) const;
 	Ellipse translate(double dx, double dy) const;
+	Ellipse translate(const Vector<Inexact> &v) const { return translate(v.x(), v.y()); }
 	Ellipse translateTo(double x, double y) const;
+	Ellipse translateTo(const Point<Inexact> &p) const { return translateTo(p.x(), p.y()); }
 	EllipseAtOrigin translateToOrigin() const;
 
 	friend std::ostream& operator<<(std::ostream &os, const Ellipse &e);

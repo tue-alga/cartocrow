@@ -1,6 +1,7 @@
 #ifndef CARTOCROW_MOSAIC_CARTOGRAM_GUIDING_SHAPE_H
 #define CARTOCROW_MOSAIC_CARTOGRAM_GUIDING_SHAPE_H
 
+#include "../core/core.h"
 #include "../core/ellipse.h"
 #include "parameters.h"
 #include "region.h"
@@ -13,7 +14,7 @@ class GuidingPair {
 
 	GuidingPair(const LandRegion &region1, const LandRegion &region2, const Parameters &params);
 
-	std::pair<Ellipse, Ellipse> translate(const double dx, const double dy) const;
+	std::pair<Ellipse, Ellipse> translate(const Vector<Inexact> &v) const;
 };
 
 } // namespace cartocrow::mosaic_cartogram

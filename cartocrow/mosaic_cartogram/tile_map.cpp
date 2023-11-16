@@ -9,13 +9,29 @@
 
 namespace cartocrow::mosaic_cartogram {
 
+std::array<HexagonalMap::Coordinate, 6> HexagonalMap::Coordinate::neighbors() const {
+	// we must use double outer braces to indicate that the inner braces initialize a Coordinate
+	return {{
+		{ m_x + 1, m_y + 0 },
+		{ m_x + 1, m_y + 1 },
+		{ m_x + 0, m_y + 1 },
+		{ m_x - 1, m_y + 0 },
+		{ m_x - 1, m_y - 1 },
+		{ m_x + 0, m_y - 1 }
+	}};
+}
+
+std::ostream& operator<<(std::ostream &os, const HexagonalMap::Coordinate &c) {
+	return os << '(' << c.m_x << ", " << c.m_y << ')';
+}
+
 HexagonalMap::HexagonalMap(const VisibilityDrawing &initial,
                            const std::vector<LandRegion> &landRegions, int seaRegionCount,
                            const Parameters &params)
     : guidingPairs(landRegions.size() - 1), configurations(landRegions.size() + seaRegionCount) {
 	// compute painting constants
 	const double sqrt3 = std::sqrt(3);
-	tileArea = std::numbers::pi * params.tileRadius * params.tileRadius;
+	tileArea = params.tileArea();
 	inradius = std::sqrt(tileArea / (2*sqrt3));
 	exradius = inradius * 2/sqrt3;
 	for (int i = 0; i < 6; i++) {
@@ -75,7 +91,7 @@ std::pair<Ellipse, Ellipse> HexagonalMap::getGuidingPair(const Configuration &c1
 	// translate precomputed guiding pair to centroid
 	int id1 = c1.id(), id2 = c2.id();
 	if (id1 > id2) std::swap(id1, id2);
-	const auto p = guidingPairs[id1].at(id2).translate(centroid.x(), centroid.y());
+	const auto p = guidingPairs[id1].at(id2).translate(centroid);
 
 	return c1.id() < c2.id() ? p : std::make_pair(p.second, p.first);
 }

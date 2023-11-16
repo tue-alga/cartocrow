@@ -59,14 +59,6 @@ Point<Inexact> Ellipse::center() const {
 	return { x, -(B*x + E) / (2*C) };
 }
 
-std::array<double, 6> Ellipse::coefficients() const {
-	return { A, B, C, D, E, F };
-}
-
-double Ellipse::evaluate(double x, double y) const {
-	return (A*x + B*y + D) * x + (C*y + E) * y + F;
-}
-
 Ellipse Ellipse::normalizeSign() const {
 	if (A > 0) return *this;  // note:  sgn(A) = sgn(C)
 	return { -A, -B, -C, -D, -E, -F };
