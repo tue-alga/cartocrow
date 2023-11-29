@@ -28,8 +28,9 @@ struct LandRegion {
 	Color color;
 	/// The shape of this region as specified by the input map.
 	PolygonWithHoles<Exact> shape;
-	/// An approximation of the desired final shape of this region. It is centered at the origin and
-	/// scaled according to the desired number of tiles.
+	/// An approximation of the desired final shape of this region. It is centered at the origin,
+	/// scaled according to the desired number of tiles, and its contour lines are normalized such
+	/// that the additional area is equal to 6 tiles.
 	EllipseAtOrigin guidingShape;
 	/// The adjacent regions in clockwise order.
 	std::vector<std::reference_wrapper<LandRegion>> neighbors;

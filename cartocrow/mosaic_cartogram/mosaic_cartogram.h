@@ -100,19 +100,19 @@ class MosaicCartogram {
 		throw std::out_of_range("No region exists with index " + std::to_string(index));
 	}
 
+	/// Step 0. Check parameters, region names, and region data.
+	void validate() const;
+	/// Step 1. Transforms \c m_inputMap to \c m_landRegions such that each region is contiguous,
+	/// i.e., consists of one polygon (possibly with holes).
+	void computeLandRegions();
 	/// Step 2. Construct arrangement from the contiguous regions, and create sea regions such that
 	/// the dual is triangular.
 	void computeArrangement();
 	/// Step 3. Create a vertex for each face in the arrangement and connect two vertices if the
 	/// corresponding faces are adjacent.
 	void computeDual();
-	/// Step 1. Transforms \c m_inputMap to \c m_landRegions such that each region is contiguous,
-	/// i.e., consists of one polygon (possibly with holes).
-	void computeLandRegions();
 	/// Step 4. Compute an initial tile map using a visibility diagram and TODO.
 	void computeTileMap();
-	/// Step 0. Check parameters, region names, and region data.
-	void validate() const;
 };
 
 } // namespace cartocrow::mosaic_cartogram

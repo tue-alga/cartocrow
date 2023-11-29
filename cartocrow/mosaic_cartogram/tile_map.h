@@ -2,9 +2,9 @@
 #define CARTOCROW_MOSAIC_CARTOGRAM_MAP_H
 
 #include <array>
-#include <cstddef>
 #include <functional>
 #include <optional>
+#include <stdint.h>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
@@ -77,9 +77,17 @@ class HexagonalMap {
 		std::unordered_set<Coordinate, CoordinateHash> tiles;
 
 		int desire() const { return region ? region->get().targetTileCount - tiles.size() : 0; }
-		int id() const { return region.value().get().id; }  // checked, i.e., throws exception if `region` has no value
+		int id() const { return region.value().get().id; }  // throws exception if `region` has no value
 		bool isSea() const { return !region.has_value(); }
 	};
+
+	/// A function that returns a color given a tile coordinate. Used as a parameter for painting,
+	/// so different "views" can be drawn with the same function.
+	using ColorFunction = std::function<Color(const Coordinate&)>;
+
+	static constexpr Color COLOR_BORDER = { 32,  32,  32};
+	static constexpr Color COLOR_LAND   = { 34, 139,  34};  // forest green
+	static constexpr Color COLOR_SEA    = {175, 238, 238};  // pale turquoise
 
 	/// The radius of the circumcircle (i.e., the circle that passes through all six vertices). Also
 	/// known as the circumradius, and equal to the side length.
@@ -101,13 +109,32 @@ class HexagonalMap {
 	HexagonalMap(const VisibilityDrawing &initial, const std::vector<LandRegion> &landRegions,
 	             int seaRegionCount, const Parameters &params);
 
-	void paint(renderer::GeometryRenderer &renderer) const;
-	void paintTile(renderer::GeometryRenderer &renderer, const Coordinate &c) const;
+	Configuration& getConfiguration(const Coordinate &c) {
+		return configurations[tiles.at(c)];
+	}
+	const Configuration& getConfiguration(const Coordinate &c) const {
+		return configurations[tiles.at(c)];
+	}
+
+	Point<Inexact> getCentroid(const Coordinate &c) const;
+	Point<Inexact> getCentroid(const Configuration &config) const;
 
 	std::pair<Ellipse, Ellipse> getGuidingPair(const Configuration &config1, const Configuration &config2) const;
 
-	Point<Inexact> getCentroid(const Configuration &config) const;
-	Point<Inexact> getCentroid(const Coordinate &c) const;
+	Color getColorDefault(const Coordinate &c) const {
+		const Configuration &config = getConfiguration(c);
+		return config.isSea() ? Color{255, 255, 255} : config.region->get().color;
+	}
+	Color getColorUniform(const Coordinate &c) const {
+		return getConfiguration(c).isSea() ? COLOR_SEA : COLOR_LAND;
+	}
+
+	// TODO: move to painting.cpp
+	void paintTile(renderer::GeometryRenderer &renderer, const Coordinate &c) const;
+	void paint(renderer::GeometryRenderer &renderer, ColorFunction tileColor) const;
+	void paint(renderer::GeometryRenderer &renderer) const {
+		paint(renderer, std::bind(&HexagonalMap::getColorUniform, this, std::placeholders::_1));
+	}
 };
 
 } // namespace cartocrow::mosaic_cartogram
