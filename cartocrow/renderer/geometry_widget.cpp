@@ -491,6 +491,11 @@ void GeometryWidget::draw(const Polygon<Inexact>& p) {
 	QPainterPath path;
 	addPolygonToPath(path, p);
 	m_painter->drawPath(path);
+	if (m_style.m_mode & vertices) {
+		for (auto v = p.vertices_begin(); v != p.vertices_end(); v++) {
+			draw(*v);
+		}
+	}
 }
 
 void GeometryWidget::draw(const PolygonWithHoles<Inexact>& p) {
@@ -501,6 +506,16 @@ void GeometryWidget::draw(const PolygonWithHoles<Inexact>& p) {
 		addPolygonToPath(path, hole);
 	}
 	m_painter->drawPath(path);
+	if (m_style.m_mode & vertices) {
+		for (auto v = p.outer_boundary().vertices_begin(); v != p.outer_boundary().vertices_end(); v++) {
+			draw(*v);
+		}
+		for (auto h = p.holes_begin(); h != p.holes_end(); h++) {
+			for (auto v = h->vertices_begin(); v != h->vertices_end(); v++) {
+				draw(*v);
+			}
+		}
+	}
 }
 
 void GeometryWidget::addPolygonToPath(QPainterPath& path, const Polygon<Inexact>& p) {
@@ -520,7 +535,7 @@ void GeometryWidget::draw(const Circle<Inexact>& c) {
 	m_painter->drawEllipse(rect);
 }
 
-/*void GeometryWidget::draw(const BezierSpline& s) {
+void GeometryWidget::draw(const BezierSpline& s) {
 	setupPainter();
 	QPainterPath path;
 	path.moveTo(convertPoint(s.curves()[0].source()));
@@ -529,7 +544,51 @@ void GeometryWidget::draw(const Circle<Inexact>& c) {
 		             convertPoint(c.target()));
 	}
 	m_painter->drawPath(path);
-}*/
+	if (m_style.m_mode & vertices) {
+		for (BezierCurve c : s.curves()) {
+			draw(c.source());
+		}
+		draw(s.curves().back().target());
+	}
+}
+
+void GeometryWidget::draw(const Ray<Inexact>& r) {
+	Box bounds = inverseConvertBox(rect());
+	auto result = intersection(r, CGAL::Iso_rectangle_2<Inexact>(Point<Inexact>(bounds.xmin(), bounds.ymin()), Point<Inexact>(bounds.xmax(), bounds.ymax())));
+	if (result) {
+		if (const Segment<Inexact>* s = boost::get<Segment<Inexact>>(&*result)) {
+			draw(*s);
+		}
+		if (m_style.m_mode & vertices) {
+			draw(r.source());
+		}
+	}
+}
+
+void GeometryWidget::draw(const Line<Inexact>& l) {
+	Box bounds = inverseConvertBox(rect());
+	auto result = intersection(l, CGAL::Iso_rectangle_2<Inexact>(Point<Inexact>(bounds.xmin(), bounds.ymin()), Point<Inexact>(bounds.xmax(), bounds.ymax())));
+	if (result) {
+		if (const Segment<Inexact>* s = boost::get<Segment<Inexact>>(&*result)) {
+			draw(*s);
+		}
+	}
+}
+
+void GeometryWidget::draw(const Polyline<Inexact>& p) {
+	setupPainter();
+	QPainterPath path;
+	path.moveTo(convertPoint(*p.vertices_begin()));
+	for (auto v = p.vertices_begin()++; v != p.vertices_end(); v++) {
+		path.lineTo(convertPoint(*v));
+	}
+	m_painter->drawPath(path);
+	if (m_style.m_mode & vertices) {
+		for (auto v = p.vertices_begin(); v != p.vertices_end(); v++) {
+			draw(*v);
+		}
+	}
+}
 
 void GeometryWidget::drawText(const Point<Inexact>& p, const std::string& text) {
 	setupPainter();
@@ -576,10 +635,6 @@ void GeometryWidget::setFill(Color color) {
 void GeometryWidget::setFillOpacity(int alpha) {
 	m_style.m_fillColor.setAlpha(alpha);
 }
-
-/*std::unique_ptr<QPainter> GeometryWidget::getQPainter() {
-	return std::make_unique<QPainter>(this);
-}*/
 
 void GeometryWidget::addPainting(std::shared_ptr<GeometryPainting> painting, const std::string& name) {
 	bool visible = !m_invisibleLayerNames.contains(name);

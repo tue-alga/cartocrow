@@ -69,6 +69,22 @@ void PaintingRenderer::draw(const Circle<Inexact>& c) {
 	m_objects.push_back(c);
 }
 
+void PaintingRenderer::draw(const BezierSpline& s) {
+	m_objects.push_back(s);
+}
+
+void PaintingRenderer::draw(const Line<Inexact>& l) {
+	m_objects.push_back(l);
+}
+
+void PaintingRenderer::draw(const Ray<Inexact>& r) {
+	m_objects.push_back(r);
+}
+
+void PaintingRenderer::draw(const Polyline<Inexact>& p) {
+	m_objects.push_back(p);
+}
+
 void PaintingRenderer::drawText(const Point<Inexact>& p, const std::string& text) {
 	m_objects.push_back(Label(p, text));
 }
