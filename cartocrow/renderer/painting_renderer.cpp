@@ -37,6 +37,14 @@ void PaintingRenderer::paint(GeometryRenderer& renderer) const {
 			renderer.draw(std::get<PolygonWithHoles<Inexact>>(object));
 		} else if (std::holds_alternative<Circle<Inexact>>(object)) {
 			renderer.draw(std::get<Circle<Inexact>>(object));
+		} else if (std::holds_alternative<BezierSpline>(object)) {
+			renderer.draw(std::get<BezierSpline>(object));
+		} else if (std::holds_alternative<Line<Inexact>>(object)) {
+			renderer.draw(std::get<Line<Inexact>>(object));
+		} else if (std::holds_alternative<Ray<Inexact>>(object)) {
+			renderer.draw(std::get<Ray<Inexact>>(object));
+		} else if (std::holds_alternative<Polyline<Inexact>>(object)) {
+			renderer.draw(std::get<Polyline<Inexact>>(object));
 		} else if (std::holds_alternative<Label>(object)) {
 			renderer.drawText(std::get<Label>(object).first, std::get<Label>(object).second);
 		} else if (std::holds_alternative<Style>(object)) {
