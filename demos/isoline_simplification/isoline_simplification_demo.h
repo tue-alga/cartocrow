@@ -32,7 +32,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "cartocrow/core/ipe_reader.h"
 
 typedef CGAL::Exact_predicates_inexact_constructions_kernel    K;
-typedef CGAL::Segment_Delaunay_graph_filtered_traits_2<K, CGAL::Field_with_sqrt_tag>  Gt;
+typedef CGAL::Segment_Delaunay_graph_filtered_traits_without_intersections_2<K, CGAL::Field_with_sqrt_tag>  Gt;
 typedef CGAL::Segment_Delaunay_graph_2<Gt>                             SDG2;
 
 using namespace cartocrow;
@@ -44,7 +44,7 @@ class IsolineSimplificationDemo : public QMainWindow {
 
   public:
 	IsolineSimplificationDemo();
-	void recalculate(bool voronoi, int target);
+	void recalculate(bool voronoi, int target, bool cgal_simplify);
 	void addIsolineToVoronoi(const Isoline<K>& isoline);
 
   private:
@@ -75,6 +75,18 @@ class IsolinePainting : public GeometryPainting {
 	void paint(GeometryRenderer& renderer) const override;
 
   private:
+	std::vector<Isoline<K>>& m_isolines;
+};
+
+class FilteredMedialAxisPainting : public GeometryPainting {
+  public:
+	FilteredMedialAxisPainting(SDG2& delaunay, std::vector<Isoline<K>>& isolines);
+
+  protected:
+	void paint(GeometryRenderer& renderer) const override;
+
+  private:
+	SDG2& m_delaunay;
 	std::vector<Isoline<K>>& m_isolines;
 };
 

@@ -67,6 +67,9 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 	doMedial->setCheckState(Qt::Checked);
 	vLayout->addWidget(doMedial);
 
+	auto* doCGALSimplify = new QCheckBox("CGAL simplify");
+	vLayout->addWidget(doCGALSimplify);
+
 	auto* simplificationTarget = new QSpinBox();
 	simplificationTarget->setValue(50);
 	simplificationTarget->setMaximum(10000);
@@ -84,19 +87,22 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 			fileSelector->addItem(QString::fromStdString(p.path().stem().string()));
 	}
 
-	connect(fileSelector, &QComboBox::currentTextChanged, [this, dir, doMedial, simplificationTarget](const QString& name) {
+	connect(fileSelector, &QComboBox::currentTextChanged,
+	        [this, dir, doMedial, doCGALSimplify, simplificationTarget](const QString& name) {
 	    std::shared_ptr<ipe::Document> document = IpeReader::loadIpeFile(dir + name.toStdString() + ".ipe");
 	    ipe::Page* page = document->page(0);
 	    m_isolines = isolinesInPage(page);
-	  	recalculate(doMedial->checkState(), simplificationTarget->value());
+		recalculate(doMedial->checkState(), simplificationTarget->value(), doCGALSimplify->checkState());
 	});
 
-	connect(doMedial, &QCheckBox::stateChanged, [this, doMedial, simplificationTarget]() {
-		recalculate(doMedial->checkState(), simplificationTarget->value());
+	connect(doMedial, &QCheckBox::stateChanged,
+	        [this, doMedial, doCGALSimplify, simplificationTarget]() {
+		recalculate(doMedial->checkState(), simplificationTarget->value(), doCGALSimplify->checkState());
 	});
 
-	connect(simplificationTarget, QOverload<int>::of(&QSpinBox::valueChanged), [this, doMedial, simplificationTarget](int v) {
-		recalculate(doMedial->checkState(), simplificationTarget->value());
+	connect(simplificationTarget, QOverload<int>::of(&QSpinBox::valueChanged),
+	        [this, doMedial, doCGALSimplify, simplificationTarget](int v) {
+		        recalculate(doMedial->checkState(), simplificationTarget->value(), doCGALSimplify->checkState());
 	});
 
 	std::shared_ptr<ipe::Document> document = IpeReader::loadIpeFile(dir + fileSelector->currentText().toStdString() + ".ipe");
@@ -106,10 +112,10 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 	m_renderer = new GeometryWidget();
 //	m_renderer->setDrawAxes(false);
 	setCentralWidget(m_renderer);
-	recalculate(doMedial->checkState(), simplificationTarget->value());
+	recalculate(doMedial->checkState(), simplificationTarget->value(), doCGALSimplify->checkState());
 }
 
-void IsolineSimplificationDemo::recalculate(bool voronoi, int target) {
+void IsolineSimplificationDemo::recalculate(bool voronoi, int target, bool cgal_simplify) {
 	m_renderer->clear();
 	m_delaunay.clear();
 	m_cgal_simplified.clear();
@@ -137,23 +143,30 @@ void IsolineSimplificationDemo::recalculate(bool voronoi, int target) {
 		}
 	}
 
-	PS::simplify(ct, Cost(), Stop(target));
-	for(auto cit = ct.constraints_begin(); cit != ct.constraints_end(); ++cit) {
-		CT::Constraint_id id = *cit;
-		auto i = std::distance(ids.begin(), std::find(ids.begin(), ids.end(), id));
-
-		std::vector<Point<K>> simplified_points;
-		for (auto vit = ct.points_in_constraint_begin(*cit); vit != ct.points_in_constraint_end(*cit); ++vit) {
-			simplified_points.push_back(*vit);
-		}
-		m_cgal_simplified.emplace_back(std::move(simplified_points), m_isolines[i].m_closed);
-	}
-
 	auto isolines_p = std::make_shared<IsolinePainting>(m_isolines);
 	m_renderer->addPainting(isolines_p, "Isolines");
 
-	auto cgal_simplified_p = std::make_shared<IsolinePainting>(m_cgal_simplified);
-	m_renderer->addPainting(cgal_simplified_p, "CGAL simplified isolines");
+	if (cgal_simplify) {
+		PS::simplify(ct, Cost(), Stop(target));
+		for(auto cit = ct.constraints_begin(); cit != ct.constraints_end(); ++cit) {
+			CT::Constraint_id id = *cit;
+			auto i = std::distance(ids.begin(), std::find(ids.begin(), ids.end(), id));
+
+			std::vector<Point<K>> simplified_points;
+			for (auto vit = ct.points_in_constraint_begin(*cit); vit != ct.points_in_constraint_end(*cit); ++vit) {
+				simplified_points.push_back(*vit);
+			}
+			m_cgal_simplified.emplace_back(std::move(simplified_points), m_isolines[i].m_closed);
+		}
+
+		auto cgal_simplified_p = std::make_shared<IsolinePainting>(m_cgal_simplified);
+		m_renderer->addPainting(cgal_simplified_p, "CGAL simplified isolines");
+	}
+
+	auto filtered_medial_axis_p = std::make_shared<FilteredMedialAxisPainting>(m_delaunay, m_isolines);
+	if (voronoi) {
+		m_renderer->addPainting(filtered_medial_axis_p, "Filtered medial axis");
+	}
 
 	m_renderer->update();
 
@@ -227,5 +240,44 @@ void IsolinePainting::paint(GeometryRenderer& renderer) const {
 		std::visit([&](auto&& v){
 			renderer.draw(v);
 		}, isoline.m_drawing_representation);
+	}
+}
+
+FilteredMedialAxisPainting::FilteredMedialAxisPainting(SDG2& delaunay, std::vector<Isoline<K>>& isolines):
+      m_delaunay(delaunay), m_isolines(isolines) {}
+
+void FilteredMedialAxisPainting::paint(GeometryRenderer& renderer) const {
+	auto filter_edge = [this](const SDG2::Edge& edge) {
+		SDG2::Site_2 p = edge.first->vertex(SDG2::cw(edge.second))->site();
+		SDG2::Site_2 q = edge.first->vertex(SDG2::ccw(edge.second))->site();
+		auto point_of_site = [](SDG2::Site_2 site) {
+			SDG2::Point_2 point;
+			if (site.is_point()) {
+				point = site.point();
+			} else {
+				point = site.source();
+			}
+			return point;
+		};
+		SDG2::Point_2 p_point = point_of_site(p);
+		SDG2::Point_2 q_point = point_of_site(q);
+		auto find_isoline = [this](SDG2::Point_2 point) {
+			return std::find_if(
+				m_isolines.begin(), m_isolines.end(), [&point](const Isoline<K>& isoline) {
+					return std::find(isoline.m_points.begin(), isoline.m_points.end(), point) !=
+						   isoline.m_points.end();
+				});
+		};
+		auto p_isoline = find_isoline(p_point);
+		auto q_isoline = find_isoline(q_point);
+
+		return p_isoline == q_isoline;
+	};
+
+	for (auto eit = m_delaunay.finite_edges_begin(); eit != m_delaunay.finite_edges_end(); ++eit) {
+		if (filter_edge(*eit)) continue;
+		renderer.setStroke(Color(0, 0, 255), 2.5);
+		auto voronoiDrawer = VoronoiDrawer<Gt>(&renderer);
+		draw_dual_edge<VoronoiDrawer<Gt>, K>(m_delaunay, *eit, voronoiDrawer);
 	}
 }
