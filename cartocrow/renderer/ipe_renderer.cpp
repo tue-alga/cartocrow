@@ -111,7 +111,10 @@ void IpeRenderer::draw(const Line<Inexact>& l) {
 	auto result = intersection(l, bounds);
 	if (result) {
 		if (const Segment<Inexact>* s = boost::get<Segment<Inexact>>(&*result)) {
+			int oldMode = m_style.m_mode;
+			setMode(oldMode & ~vertices);
 			draw(*s);
+			setMode(oldMode);
 		}
 	}
 }
@@ -122,7 +125,10 @@ void IpeRenderer::draw(const Ray<Inexact>& r) {
 	auto result = intersection(r, bounds);
 	if (result) {
 		if (const Segment<Inexact>* s = boost::get<Segment<Inexact>>(&*result)) {
+			int oldMode = m_style.m_mode;
+			setMode(oldMode & ~vertices);
 			draw(*s);
+			setMode(oldMode);
 		}
 		if (m_style.m_mode & vertices) {
 			draw(r.source());

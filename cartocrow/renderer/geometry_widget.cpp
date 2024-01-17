@@ -557,7 +557,10 @@ void GeometryWidget::draw(const Ray<Inexact>& r) {
 	auto result = intersection(r, CGAL::Iso_rectangle_2<Inexact>(Point<Inexact>(bounds.xmin(), bounds.ymin()), Point<Inexact>(bounds.xmax(), bounds.ymax())));
 	if (result) {
 		if (const Segment<Inexact>* s = boost::get<Segment<Inexact>>(&*result)) {
+			int oldMode = m_style.m_mode;
+			setMode(oldMode & ~vertices);
 			draw(*s);
+			setMode(oldMode);
 		}
 		if (m_style.m_mode & vertices) {
 			draw(r.source());
@@ -570,7 +573,10 @@ void GeometryWidget::draw(const Line<Inexact>& l) {
 	auto result = intersection(l, CGAL::Iso_rectangle_2<Inexact>(Point<Inexact>(bounds.xmin(), bounds.ymin()), Point<Inexact>(bounds.xmax(), bounds.ymax())));
 	if (result) {
 		if (const Segment<Inexact>* s = boost::get<Segment<Inexact>>(&*result)) {
+			int oldMode = m_style.m_mode;
+			setMode(oldMode & ~vertices);
 			draw(*s);
+			setMode(oldMode);
 		}
 	}
 }
