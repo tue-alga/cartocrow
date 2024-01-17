@@ -10,6 +10,7 @@ target_link_libraries(
     ${COMMON_CLA_TARGET}
     core
     renderer
+    isoline_simplification
     CGAL::CGAL
     Qt5::Widgets
     glog::glog

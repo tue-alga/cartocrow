@@ -1,7 +1,10 @@
 set(SOURCES
+	medial_axis_separator.cpp
 )
 set(HEADERS
 	isoline.h
+	medial_axis.h
+	medial_axis_separator.h
 )
 
 add_library(isoline_simplification ${SOURCES})

@@ -23,17 +23,11 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <QMainWindow>
 #include "cartocrow/core/core.h"
 #include "cartocrow/isoline_simplification/isoline.h"
+#include "cartocrow/isoline_simplification/medial_axis.h"
+#include "cartocrow/isoline_simplification/medial_axis_separator.h"
 #include "cartocrow/renderer/geometry_painting.h"
 #include "cartocrow/renderer/geometry_widget.h"
-#include <CGAL/Segment_Delaunay_graph_2.h>
-#include <CGAL/Segment_Delaunay_graph_adaptation_policies_2.h>
-#include <CGAL/Segment_Delaunay_graph_adaptation_traits_2.h>
-#include <CGAL/Segment_Delaunay_graph_traits_2.h>
 #include "cartocrow/core/ipe_reader.h"
-
-typedef CGAL::Exact_predicates_inexact_constructions_kernel    K;
-typedef CGAL::Segment_Delaunay_graph_filtered_traits_without_intersections_2<K, CGAL::Field_with_sqrt_tag>  Gt;
-typedef CGAL::Segment_Delaunay_graph_2<Gt>                             SDG2;
 
 using namespace cartocrow;
 using namespace cartocrow::renderer;
@@ -44,14 +38,17 @@ class IsolineSimplificationDemo : public QMainWindow {
 
   public:
 	IsolineSimplificationDemo();
-	void recalculate(bool voronoi, int target, bool cgal_simplify);
+	void recalculate(bool voronoi, int target, bool cgal_simplify, int region_index, bool show_vertices);
 	void addIsolineToVoronoi(const Isoline<K>& isoline);
 
   private:
 	std::vector<Isoline<K>> m_isolines;
 	std::vector<Isoline<K>> m_cgal_simplified;
 	SDG2 m_delaunay;
+	Separator m_separator;
+	std::vector<Gt::Segment_2> m_matching;
 	GeometryWidget* m_renderer;
+	std::function<void()> m_recalculate;
 };
 
 std::vector<Isoline<K>> isolinesInPage(ipe::Page* page);
@@ -69,25 +66,49 @@ class MedialAxisPainting : public GeometryPainting {
 
 class IsolinePainting : public GeometryPainting {
   public:
-	IsolinePainting(std::vector<Isoline<K>>& isolines);
+	IsolinePainting(std::vector<Isoline<K>>& isolines, bool show_vertices);
 
   protected:
 	void paint(GeometryRenderer& renderer) const override;
 
   private:
 	std::vector<Isoline<K>>& m_isolines;
+	bool m_show_vertices;
 };
 
-class FilteredMedialAxisPainting : public GeometryPainting {
+class MedialAxisSeparatorPainting : public GeometryPainting {
   public:
-	FilteredMedialAxisPainting(SDG2& delaunay, std::vector<Isoline<K>>& isolines);
+	MedialAxisSeparatorPainting(Separator& separator, SDG2& delaunay);
 
   protected:
 	void paint(GeometryRenderer& renderer) const override;
 
   private:
+ 	Separator& m_separator;
 	SDG2& m_delaunay;
-	std::vector<Isoline<K>>& m_isolines;
+};
+
+class MatchingPainting : public GeometryPainting {
+  public:
+	MatchingPainting(std::vector<Segment<K>>& matching);
+
+  protected:
+	void paint(GeometryRenderer& renderer) const override;
+
+  private:
+	std::vector<Segment<K>>& m_matching;
+};
+
+class TouchedPainting : public GeometryPainting {
+  public:
+	TouchedPainting(std::vector<SDG2::Edge>& edges, SDG2& delaunay);
+
+  protected:
+	void paint(GeometryRenderer& renderer) const override;
+
+  private:
+	std::vector<SDG2::Edge>& m_edges;
+	SDG2& m_delaunay;
 };
 
 #endif //CARTOCROW_ISOLINE_SIMPLIFICATION_DEMO_H

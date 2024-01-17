@@ -20,6 +20,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "isoline_simplification_demo.h"
 #include "cartocrow/core/ipe_reader.h"
 #include "cartocrow/isoline_simplification/isoline.h"
+#include "cartocrow/isoline_simplification/medial_axis_separator.h"
 #include "cartocrow/renderer/ipe_renderer.h"
 #include "medial_axis_helpers.h"
 #include "voronoi_drawer.h"
@@ -63,8 +64,17 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 	vLayout->setAlignment(Qt::AlignTop);
 	dockWidget->setWidget(vWidget);
 
+	auto* fileSelector = new QComboBox();
+	vLayout->addWidget(fileSelector);
+	std::string ext(".ipe");
+	for (auto &p : fs::recursive_directory_iterator(dir))
+	{
+		if (p.path().extension() == ext)
+			fileSelector->addItem(QString::fromStdString(p.path().stem().string()));
+	}
+
 	auto* doMedial = new QCheckBox("Compute medial axis");
-	doMedial->setCheckState(Qt::Checked);
+	//	doMedial->setCheckState(Qt::Checked);
 	vLayout->addWidget(doMedial);
 
 	auto* doCGALSimplify = new QCheckBox("CGAL simplify");
@@ -78,44 +88,51 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 	vLayout->addWidget(simplificationTargetLabel);
 	vLayout->addWidget(simplificationTarget);
 
-	auto* fileSelector = new QComboBox();
-	vLayout->addWidget(fileSelector);
-	std::string ext(".ipe");
-	for (auto &p : fs::recursive_directory_iterator(dir))
-	{
-		if (p.path().extension() == ext)
-			fileSelector->addItem(QString::fromStdString(p.path().stem().string()));
-	}
+	auto* regionIndex = new QSpinBox();
+	regionIndex->setValue(0);
+	regionIndex->setMaximum(20);
+	auto* regionIndexLabel = new QLabel("Region index");
+	regionIndexLabel->setBuddy(regionIndex);
+	vLayout->addWidget(regionIndexLabel);
+	vLayout->addWidget(regionIndex);
 
-	connect(fileSelector, &QComboBox::currentTextChanged,
-	        [this, dir, doMedial, doCGALSimplify, simplificationTarget](const QString& name) {
+	auto* showGrid = new QCheckBox("Show grid");
+	vLayout->addWidget(showGrid);
+
+	auto* showVertices = new QCheckBox("Show isoline vertices");
+	vLayout->addWidget(showVertices);
+
+	m_recalculate = [this, doMedial, doCGALSimplify, simplificationTarget, regionIndex, showVertices]() {
+		recalculate(doMedial->checkState(), simplificationTarget->value(),
+					doCGALSimplify->checkState(), regionIndex->value(), showVertices->checkState());
+	};
+
+	connect(fileSelector, &QComboBox::currentTextChanged, [this, dir](const QString& name) {
 	    std::shared_ptr<ipe::Document> document = IpeReader::loadIpeFile(dir + name.toStdString() + ".ipe");
 	    ipe::Page* page = document->page(0);
 	    m_isolines = isolinesInPage(page);
-		recalculate(doMedial->checkState(), simplificationTarget->value(), doCGALSimplify->checkState());
+		m_recalculate();
 	});
 
-	connect(doMedial, &QCheckBox::stateChanged,
-	        [this, doMedial, doCGALSimplify, simplificationTarget]() {
-		recalculate(doMedial->checkState(), simplificationTarget->value(), doCGALSimplify->checkState());
-	});
-
-	connect(simplificationTarget, QOverload<int>::of(&QSpinBox::valueChanged),
-	        [this, doMedial, doCGALSimplify, simplificationTarget](int v) {
-		        recalculate(doMedial->checkState(), simplificationTarget->value(), doCGALSimplify->checkState());
-	});
+	connect(doMedial, &QCheckBox::stateChanged, m_recalculate);
+	connect(simplificationTarget, QOverload<int>::of(&QSpinBox::valueChanged), m_recalculate);
+	connect(doCGALSimplify, &QCheckBox::stateChanged, m_recalculate);
+	connect(regionIndex, QOverload<int>::of(&QSpinBox::valueChanged), m_recalculate);
+	connect(showGrid, &QCheckBox::stateChanged, [this](bool v) { m_renderer->setDrawAxes(v); });
+	connect(showVertices, &QCheckBox::stateChanged, m_recalculate);
 
 	std::shared_ptr<ipe::Document> document = IpeReader::loadIpeFile(dir + fileSelector->currentText().toStdString() + ".ipe");
 	ipe::Page* page = document->page(0);
 	m_isolines = isolinesInPage(page);
 
 	m_renderer = new GeometryWidget();
-//	m_renderer->setDrawAxes(false);
+	m_renderer->setDrawAxes(showGrid->checkState());
 	setCentralWidget(m_renderer);
-	recalculate(doMedial->checkState(), simplificationTarget->value(), doCGALSimplify->checkState());
+	m_recalculate();
 }
 
-void IsolineSimplificationDemo::recalculate(bool voronoi, int target, bool cgal_simplify) {
+void IsolineSimplificationDemo::recalculate(bool voronoi, int target, bool cgal_simplify, int region_index, bool show_vertices) {
+	// todo: split into repaint and separate recalculations like simplification, voronoi
 	m_renderer->clear();
 	m_delaunay.clear();
 	m_cgal_simplified.clear();
@@ -143,7 +160,18 @@ void IsolineSimplificationDemo::recalculate(bool voronoi, int target, bool cgal_
 		}
 	}
 
-	auto isolines_p = std::make_shared<IsolinePainting>(m_isolines);
+	m_separator = medial_axis_separator(m_delaunay, m_isolines);
+	auto separator_p = std::make_shared<MedialAxisSeparatorPainting>(m_separator, m_delaunay);
+
+	m_matching = matching(m_delaunay, m_separator);
+	auto matching_p = std::make_shared<MatchingPainting>(m_matching);
+
+	if (voronoi) {
+		m_renderer->addPainting(matching_p, "Matching");
+		m_renderer->addPainting(separator_p, "Separator");
+	}
+
+	auto isolines_p = std::make_shared<IsolinePainting>(m_isolines, show_vertices);
 	m_renderer->addPainting(isolines_p, "Isolines");
 
 	if (cgal_simplify) {
@@ -159,21 +187,21 @@ void IsolineSimplificationDemo::recalculate(bool voronoi, int target, bool cgal_
 			m_cgal_simplified.emplace_back(std::move(simplified_points), m_isolines[i].m_closed);
 		}
 
-		auto cgal_simplified_p = std::make_shared<IsolinePainting>(m_cgal_simplified);
+		auto cgal_simplified_p = std::make_shared<IsolinePainting>(m_cgal_simplified, show_vertices);
 		m_renderer->addPainting(cgal_simplified_p, "CGAL simplified isolines");
 	}
 
-	auto filtered_medial_axis_p = std::make_shared<FilteredMedialAxisPainting>(m_delaunay, m_isolines);
-	if (voronoi) {
-		m_renderer->addPainting(filtered_medial_axis_p, "Filtered medial axis");
+	if (voronoi && region_index < m_isolines.size() && m_separator.contains(&m_isolines[region_index])) {
+		auto touched_p = std::make_shared<TouchedPainting>(m_separator[&m_isolines[region_index]], m_delaunay);
+		m_renderer->addPainting(touched_p, "Touched");
 	}
 
 	m_renderer->update();
 
-	IpeRenderer ipeRenderer;
-	ipeRenderer.addPainting(medial_axis_p);
-	ipeRenderer.addPainting(isolines_p);
-	ipeRenderer.save("/home/steven/Documents/cartocrow/output.ipe");
+//	IpeRenderer ipeRenderer;
+//	ipeRenderer.addPainting(medial_axis_p);
+//	ipeRenderer.addPainting(isolines_p);
+//	ipeRenderer.save("/home/steven/Documents/cartocrow/output.ipe");
 }
 
 std::vector<Isoline<K>> isolinesInPage(ipe::Page* page) {
@@ -224,17 +252,22 @@ MedialAxisPainting::MedialAxisPainting(SDG2& delaunay): m_delaunay(delaunay) {}
 void MedialAxisPainting::paint(GeometryRenderer& renderer) const {
 	renderer.setStroke(Color(150, 150, 150), 1);
 	renderer.setMode(GeometryRenderer::stroke);
+
+	renderer.setStroke(Color(150, 150, 150), 1);
 	auto voronoiDrawer = VoronoiDrawer<Gt>(&renderer);
 	draw_skeleton<VoronoiDrawer<Gt>, K>(m_delaunay, voronoiDrawer);
 }
 
-IsolinePainting::IsolinePainting(std::vector<Isoline<K>>& isolines):
-      m_isolines(isolines) {}
+IsolinePainting::IsolinePainting(std::vector<Isoline<K>>& isolines, bool show_vertices):
+      m_isolines(isolines), m_show_vertices(show_vertices) {}
 
 void IsolinePainting::paint(GeometryRenderer& renderer) const {
 	// Draw isolines
-	//	renderer.setMode(GeometryRenderer::stroke | GeometryRenderer::vertices);
-	renderer.setMode(GeometryRenderer::stroke);
+	if (m_show_vertices) {
+		renderer.setMode(GeometryRenderer::stroke | GeometryRenderer::vertices);
+	} else {
+		renderer.setMode(GeometryRenderer::stroke);
+	}
 	renderer.setStroke(Color(0, 0, 0), 2);
 	for (const auto& isoline : m_isolines) {
 		std::visit([&](auto&& v){
@@ -243,41 +276,45 @@ void IsolinePainting::paint(GeometryRenderer& renderer) const {
 	}
 }
 
-FilteredMedialAxisPainting::FilteredMedialAxisPainting(SDG2& delaunay, std::vector<Isoline<K>>& isolines):
-      m_delaunay(delaunay), m_isolines(isolines) {}
+MedialAxisSeparatorPainting::MedialAxisSeparatorPainting(Separator& separator, SDG2& delaunay):
+      m_separator(separator), m_delaunay(delaunay) {}
 
-void FilteredMedialAxisPainting::paint(GeometryRenderer& renderer) const {
-	auto filter_edge = [this](const SDG2::Edge& edge) {
+void MedialAxisSeparatorPainting::paint(GeometryRenderer& renderer) const {
+	for (auto& [_, edges] : m_separator)
+	for (auto edge : edges) {
+		renderer.setStroke(Color(0, 0, 255), 2.5);
+		renderer.setMode(GeometryRenderer::stroke);
+		auto voronoiDrawer = VoronoiDrawer<Gt>(&renderer);
+		draw_dual_edge<VoronoiDrawer<Gt>, K>(m_delaunay, edge, voronoiDrawer);
+	}
+}
+
+MatchingPainting::MatchingPainting(std::vector<Segment<K>>& matching):
+      m_matching(matching) {}
+
+void MatchingPainting::paint(GeometryRenderer& renderer) const {
+	renderer.setMode(GeometryRenderer::stroke);
+	renderer.setStroke(Color(50, 200, 200), 1);
+	for (const auto& s : m_matching) {
+		renderer.draw(s);
+	}
+}
+
+TouchedPainting::TouchedPainting(std::vector<SDG2::Edge>& edges, SDG2& delaunay):
+      m_edges(edges), m_delaunay(delaunay) {}
+
+void TouchedPainting::paint(GeometryRenderer& renderer) const {
+	for (auto edge : m_edges) {
+		auto draw_site = [&renderer, &edge, this](SDG2::Site_2 site) {
+			auto point_or_segment = site_projection(m_delaunay, edge, site);
+			std::visit([&renderer](auto v) { renderer.draw(v); }, point_or_segment);
+		};
+
 		SDG2::Site_2 p = edge.first->vertex(SDG2::cw(edge.second))->site();
 		SDG2::Site_2 q = edge.first->vertex(SDG2::ccw(edge.second))->site();
-		auto point_of_site = [](SDG2::Site_2 site) {
-			SDG2::Point_2 point;
-			if (site.is_point()) {
-				point = site.point();
-			} else {
-				point = site.source();
-			}
-			return point;
-		};
-		SDG2::Point_2 p_point = point_of_site(p);
-		SDG2::Point_2 q_point = point_of_site(q);
-		auto find_isoline = [this](SDG2::Point_2 point) {
-			return std::find_if(
-				m_isolines.begin(), m_isolines.end(), [&point](const Isoline<K>& isoline) {
-					return std::find(isoline.m_points.begin(), isoline.m_points.end(), point) !=
-						   isoline.m_points.end();
-				});
-		};
-		auto p_isoline = find_isoline(p_point);
-		auto q_isoline = find_isoline(q_point);
 
-		return p_isoline == q_isoline;
-	};
-
-	for (auto eit = m_delaunay.finite_edges_begin(); eit != m_delaunay.finite_edges_end(); ++eit) {
-		if (filter_edge(*eit)) continue;
-		renderer.setStroke(Color(0, 0, 255), 2.5);
-		auto voronoiDrawer = VoronoiDrawer<Gt>(&renderer);
-		draw_dual_edge<VoronoiDrawer<Gt>, K>(m_delaunay, *eit, voronoiDrawer);
+		renderer.setStroke(Color(0, 255, 0), 4.0);
+		draw_site(p);
+		draw_site(q);
 	}
 }
