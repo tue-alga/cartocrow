@@ -20,14 +20,15 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #ifndef CARTOCROW_ISOLINE_SIMPLIFICATION_DEMO_H
 #define CARTOCROW_ISOLINE_SIMPLIFICATION_DEMO_H
 
-#include <QMainWindow>
 #include "cartocrow/core/core.h"
+#include "cartocrow/core/ipe_reader.h"
 #include "cartocrow/isoline_simplification/isoline.h"
-#include "cartocrow/isoline_simplification/medial_axis.h"
+#include "cartocrow/isoline_simplification/isoline_simplifier.h"
 #include "cartocrow/isoline_simplification/medial_axis_separator.h"
+#include "cartocrow/isoline_simplification/types.h"
 #include "cartocrow/renderer/geometry_painting.h"
 #include "cartocrow/renderer/geometry_widget.h"
-#include "cartocrow/core/ipe_reader.h"
+#include <QMainWindow>
 
 using namespace cartocrow;
 using namespace cartocrow::renderer;
@@ -38,15 +39,12 @@ class IsolineSimplificationDemo : public QMainWindow {
 
   public:
 	IsolineSimplificationDemo();
-	void recalculate(bool voronoi, int target, bool cgal_simplify, int region_index, bool show_vertices);
-	void addIsolineToVoronoi(const Isoline<K>& isoline);
+	void recalculate(bool voronoi, int target, bool cgal_simplify, int region_index, bool show_vertices, int isoline_index);
 
   private:
-	std::vector<Isoline<K>> m_isolines;
 	std::vector<Isoline<K>> m_cgal_simplified;
-	SDG2 m_delaunay;
-	Separator m_separator;
-	std::vector<Gt::Segment_2> m_matching;
+	IsolineSimplifier m_isoline_simplifier;
+
 	GeometryWidget* m_renderer;
 	std::function<void()> m_recalculate;
 };
@@ -78,37 +76,49 @@ class IsolinePainting : public GeometryPainting {
 
 class MedialAxisSeparatorPainting : public GeometryPainting {
   public:
-	MedialAxisSeparatorPainting(Separator& separator, SDG2& delaunay);
+	MedialAxisSeparatorPainting(Separator separator, const SDG2& delaunay);
 
   protected:
 	void paint(GeometryRenderer& renderer) const override;
 
   private:
- 	Separator& m_separator;
-	SDG2& m_delaunay;
+ 	Separator m_separator;
+	const SDG2& m_delaunay;
 };
 
 class MatchingPainting : public GeometryPainting {
   public:
-	MatchingPainting(std::vector<Segment<K>>& matching);
+	MatchingPainting(Matching& matching, std::function<bool(Gt::Point_2)> predicate);
 
   protected:
 	void paint(GeometryRenderer& renderer) const override;
 
   private:
-	std::vector<Segment<K>>& m_matching;
+	Matching& m_matching;
+	std::function<bool(Gt::Point_2)> m_predicate;
 };
 
 class TouchedPainting : public GeometryPainting {
   public:
-	TouchedPainting(std::vector<SDG2::Edge>& edges, SDG2& delaunay);
+	TouchedPainting(std::vector<SDG2::Edge> edges, const SDG2& delaunay);
 
   protected:
 	void paint(GeometryRenderer& renderer) const override;
 
   private:
-	std::vector<SDG2::Edge>& m_edges;
-	SDG2& m_delaunay;
+	std::vector<SDG2::Edge> m_edges;
+	const SDG2& m_delaunay;
+};
+
+class SlopeLadderPainting : public GeometryPainting {
+  public:
+	SlopeLadderPainting(const std::vector<SlopeLadder>& slope_ladders);
+
+  protected:
+	void paint(GeometryRenderer& renderer) const override;
+
+  private:
+	const std::vector<SlopeLadder>& m_slope_ladders;
 };
 
 #endif //CARTOCROW_ISOLINE_SIMPLIFICATION_DEMO_H

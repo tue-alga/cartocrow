@@ -84,7 +84,7 @@ struct GeometryWidgetStyle {
 /// geometry objects are called *editables*. You can register an editable using
 /// \ref registerEditable(). Connect to the \ref edited() signal to be notified
 /// when the user edits something, so that you can rerun the algorithm.
-class GeometryWidget : public QWidget, GeometryRenderer {
+class GeometryWidget : public QWidget, public GeometryRenderer {
 	Q_OBJECT;
 
   public:

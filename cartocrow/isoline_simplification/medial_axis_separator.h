@@ -17,18 +17,25 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include <vector>
 #include "isoline.h"
-#include "medial_axis.h"
+#include "types.h"
+#include <vector>
 
 #ifndef CARTOCROW_MEDIAL_AXIS_SEPARATOR_H
 #define CARTOCROW_MEDIAL_AXIS_SEPARATOR_H
 
 namespace cartocrow::isoline_simplification {
 typedef std::unordered_map<Isoline<K>*, std::vector<SDG2::Edge>> Separator;
-Separator medial_axis_separator(const SDG2& delaunay, std::vector<Isoline<K>>& isolines);
+
+std::pair<SDG2::Site_2, SDG2::Site_2> defining_sites(const SDG2::Edge& edge);
+SDG2::Point_2 point_of_site(const SDG2::Site_2& site);
+Separator medial_axis_separator(const SDG2& delaunay, const PointToIsoline& isoline, const PointToPoint& prev, const PointToPoint& next);
 std::variant<Gt::Point_2, Gt::Segment_2> site_projection(const SDG2& delaunay, const SDG2::Edge& edge, const SDG2::Site_2& site);
 Gt::Segment_2 snap_endpoints(Gt::Segment_2 proj, Gt::Segment_2 original);
-std::vector<Gt::Segment_2> matching(const SDG2& delaunay, const Separator& edges);
+Matching matching(const SDG2& delaunay, const Separator& separator, const PointToPoint& p_prev, const PointToPoint& p_next,
+                  const PointToIsoline& p_isoline, const PointToIndex& p_index);
+std::vector<SlopeLadder> slope_ladders(const Matching& matching,
+                                      const std::vector<Isoline<K>>& isolines,
+                                      const PointToPoint& p_next);
 }
 #endif //CARTOCROW_MEDIAL_AXIS_SEPARATOR_H

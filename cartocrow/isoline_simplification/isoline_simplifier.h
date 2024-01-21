@@ -17,18 +17,33 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef CARTOCROW_MEDIAL_AXIS_H
-#define CARTOCROW_MEDIAL_AXIS_H
+#ifndef CARTOCROW_ISOLINE_SIMPLIFICATION_H
+#define CARTOCROW_ISOLINE_SIMPLIFICATION_H
+#include "isoline.h"
+#include "medial_axis_separator.h"
+#include "types.h"
 
-#include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
-#include <CGAL/Segment_Delaunay_graph_2.h>
-#include <CGAL/Segment_Delaunay_graph_adaptation_policies_2.h>
-#include <CGAL/Segment_Delaunay_graph_adaptation_traits_2.h>
-#include <CGAL/Segment_Delaunay_graph_hierarchy_2.h>
-#include <CGAL/Segment_Delaunay_graph_traits_2.h>
+namespace cartocrow::isoline_simplification {
+class IsolineSimplifier {
+  public:
+	IsolineSimplifier() = default;
+	IsolineSimplifier(std::vector<Isoline<K>> isolines);
+	std::vector<Isoline<K>> simplify();
 
-typedef CGAL::Exact_predicates_inexact_constructions_kernel K;
-typedef CGAL::Segment_Delaunay_graph_filtered_traits_without_intersections_2<K, CGAL::Field_with_sqrt_tag> Gt;
-typedef CGAL::Segment_Delaunay_graph_hierarchy_2<Gt> SDG2;
+	std::vector<Isoline<K>> m_isolines;
+	PointToIsoline m_p_isoline;
+	PointToPoint m_p_prev;
+	PointToPoint m_p_next;
+	PointToIndex m_p_index;
+	SDG2 m_delaunay;
+	Separator m_separator;
+	Matching m_matching;
+	std::vector<SlopeLadder> m_slope_ladders;
 
-#endif //CARTOCROW_MEDIAL_AXIS_H
+  private:
+	void initialize_point_data();
+	void initialize_sdg();
+};
+}
+
+#endif //CARTOCROW_ISOLINE_SIMPLIFICATION_H
