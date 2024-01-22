@@ -34,8 +34,12 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 namespace cartocrow::renderer {
 
-IpeRenderer::IpeRenderer(std::shared_ptr<GeometryPainting> painting) {
-	m_paintings.push_back(painting);
+IpeRenderer::IpeRenderer(const std::shared_ptr<GeometryPainting>& painting) {
+	m_paintings.emplace_back(painting);
+}
+
+IpeRenderer::IpeRenderer(const std::shared_ptr<GeometryPainting>& painting, const std::string& name) {
+	m_paintings.emplace_back(painting, name);
 }
 
 void IpeRenderer::save(const std::filesystem::path& file) {
@@ -73,9 +77,13 @@ void IpeRenderer::save(const std::filesystem::path& file) {
 	m_page = new ipe::Page();
 	for (auto painting : m_paintings) {
 		pushStyle();
-		m_page->addLayer();
+		if (auto name = painting.name) {
+			m_page->addLayer(name->c_str());
+		} else {
+			m_page->addLayer();
+		}
 		m_layer = m_page->countLayers() - 1;
-		painting->paint(*this);
+		painting.m_painting->paint(*this);
 		popStyle();
 	}
 
@@ -224,8 +232,12 @@ ipe::AllAttributes IpeRenderer::getAttributesForStyle() const {
 	return attributes;
 }
 
-void IpeRenderer::addPainting(std::shared_ptr<GeometryPainting> painting) {
-	m_paintings.push_back(painting);
+void IpeRenderer::addPainting(const std::shared_ptr<GeometryPainting>& painting) {
+	m_paintings.emplace_back(painting);
+}
+
+void IpeRenderer::addPainting(const std::shared_ptr<GeometryPainting>& painting, const std::string& name) {
+	m_paintings.emplace_back(painting, name);
 }
 
 std::string IpeRenderer::escapeForLaTeX(const std::string& text) const {
