@@ -35,7 +35,7 @@ Gt::Segment_2 snap_endpoints(Gt::Segment_2 proj, Gt::Segment_2 original);
 Matching matching(const SDG2& delaunay, const Separator& separator, const PointToPoint& p_prev, const PointToPoint& p_next,
                   const PointToIsoline& p_isoline, const PointToIndex& p_index);
 std::vector<SlopeLadder> slope_ladders(const Matching& matching,
-                                      const std::vector<Isoline<K>>& isolines,
-                                      const PointToPoint& p_next);
+                                       const std::vector<Isoline<K>>& isolines,
+                                       const PointToPoint& p_next);
 }
 #endif //CARTOCROW_MEDIAL_AXIS_SEPARATOR_H

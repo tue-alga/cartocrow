@@ -99,7 +99,7 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 
 	auto* isolineIndex = new QSpinBox();
 	isolineIndex->setValue(0);
-	isolineIndex->setMaximum(20);
+	isolineIndex->setMaximum(100);
 	auto* isolineIndexLabel = new QLabel("Isoline index");
 	isolineIndexLabel->setBuddy(isolineIndex);
 	vLayout->addWidget(isolineIndexLabel);
