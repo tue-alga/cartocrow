@@ -72,7 +72,6 @@ class IpeRenderer : public GeometryRenderer {
 
   public:
 	/// Constructs a IpeRenderer for the given painting.
-	IpeRenderer(std::shared_ptr<GeometryPainting> painting);
 	IpeRenderer(const std::shared_ptr<GeometryPainting>& painting);
 	IpeRenderer(const std::shared_ptr<GeometryPainting>& painting, const std::string& name);
 
