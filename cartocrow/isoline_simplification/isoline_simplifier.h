@@ -29,12 +29,15 @@ class IsolineSimplifier {
 	IsolineSimplifier() = default;
 	IsolineSimplifier(std::vector<Isoline<K>> isolines);
 	std::vector<Isoline<K>> simplify();
+	void step();
 
 	std::vector<Isoline<K>> m_isolines;
+	std::vector<Isoline<K>> m_simplified_isolines;
 	PointToIsoline m_p_isoline;
 	PointToPoint m_p_prev;
 	PointToPoint m_p_next;
-	PointToIndex m_p_index;
+	PointToIndex m_p_order;
+	PointToIterator m_p_iterator;
 	SDG2 m_delaunay;
 	Separator m_separator;
 	Matching m_matching;
@@ -43,6 +46,8 @@ class IsolineSimplifier {
   private:
 	void initialize_point_data();
 	void initialize_sdg();
+	void collapse_edge(Gt::Segment_2 edge, Gt::Point_2 new_vertex);
+	void update_ladders();
 };
 }
 

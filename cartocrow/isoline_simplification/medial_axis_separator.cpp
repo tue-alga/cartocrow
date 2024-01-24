@@ -181,9 +181,9 @@ Separator medial_axis_separator(const SDG2& delaunay, const PointToIsoline& isol
 		if (p_iso != q_iso) {
 			Gt::Point_2 n;
 			if (next.contains(p_point)) {
-				n = *next.at(p_point);
+				n = next.at(p_point);
 			} else {
-				n = p_point + (p_point - *prev.at(p_point));
+				n = p_point + (p_point - prev.at(p_point));
 			}
 			if (CGAL::right_turn(p_point, n, point_of_Voronoi_edge(edge, delaunay))) {
 				edges[p_iso].push_back(edge);
@@ -239,7 +239,7 @@ Gt::Segment_2 snap_endpoints(Gt::Segment_2 proj, Gt::Segment_2 original) {
 }
 
 Matching matching(const SDG2& delaunay, const Separator& separator, const PointToPoint& p_prev, const PointToPoint& p_next,
-                  const PointToIsoline& p_isoline, const PointToIndex& p_index) {
+                  const PointToIsoline& p_isoline, const PointToIndex& p_index, bool do_snap) {
 	std::unordered_map<Gt::Point_2, MatchedTo> matching;
 
 	// Assumes point is in the Voronoi cell of site.
@@ -251,13 +251,13 @@ Matching matching(const SDG2& delaunay, const Separator& separator, const PointT
 			}
 			Gt::Point_2 prev;
 			if (p_prev.contains(p)) {
-				prev = *p_prev.at(p);
+				prev = p_prev.at(p);
 			} else {
-				prev = p + (p - *p_next.at(p));
+				prev = p + (p - p_next.at(p));
 			}
 			Gt::Point_2 next;
 			if (p_next.contains(p)) {
-				next = *p_next.at(p);
+				next = p_next.at(p);
 			} else {
 				next = p + (p - prev);
 			}
@@ -282,7 +282,7 @@ Matching matching(const SDG2& delaunay, const Separator& separator, const PointT
 		}
 	};
 
-	auto project_snap = [&delaunay](const SDG2::Site_2& site, const SDG2::Edge& edge) {
+	auto project_snap = [&delaunay, &do_snap](const SDG2::Site_2& site, const SDG2::Edge& edge) {
 	  	std::vector<Gt::Point_2> pts;
 		if (site.is_point()) {
 			pts.reserve(1);
@@ -290,15 +290,21 @@ Matching matching(const SDG2& delaunay, const Separator& separator, const PointT
 			return pts;
 		}
 
-		auto snap_proj_seg = snap_endpoints(std::get<Segment<K>>(site_projection(delaunay, edge, site)), site.segment());
+		Gt::Segment_2 seg;
+		auto proj_seg = std::get<Segment<K>>(site_projection(delaunay, edge, site));
+		if (do_snap) {
+			seg = snap_endpoints(proj_seg, site.segment());
+		} else {
+			seg = proj_seg;
+		}
 
-		if (snap_proj_seg.source() == snap_proj_seg.target()) {
+		if (seg.source() == seg.target()) {
 			pts.reserve(1);
-			pts.push_back(snap_proj_seg.source());
+			pts.push_back(seg.source());
 		} else {
 			pts.reserve(2);
-			pts.push_back(snap_proj_seg.source());
-			pts.push_back(snap_proj_seg.target());
+			pts.push_back(seg.source());
+			pts.push_back(seg.target());
 		}
 		return pts;
 	};
@@ -322,8 +328,8 @@ Matching matching(const SDG2& delaunay, const Separator& separator, const PointT
 			auto match = [&](int pi, int qi) {
 				auto pp = p_pts[pi];
 				auto qp = q_pts[qi];
-				matching[pp][sign_p][p_isoline.at(qp)].push_back(qp);
-				matching[qp][sign_q][p_isoline.at(pp)].push_back(pp);
+				matching[pp][sign_p][p_isoline.at(point_of_site(q))].push_back(qp);
+				matching[qp][sign_q][p_isoline.at(point_of_site(p))].push_back(pp);
 			};
 
 			if (i < q_pts.size()) {
@@ -339,8 +345,14 @@ Matching matching(const SDG2& delaunay, const Separator& separator, const PointT
 
 	for (auto& [_, ms] : matching)
 	for (auto& [_, mi] : ms)
-	for (auto& [_, pts] : mi)
-		std::sort(pts.begin(), pts.end(), [&p_index](Gt::Point_2& p, Gt::Point_2& q) { return p_index.at(p) < p_index.at(q); });
+	for (auto& [_, pts] : mi) {
+		if (do_snap) {
+			std::sort(pts.begin(), pts.end(), [&p_index](Gt::Point_2& p, Gt::Point_2& q) {
+				return p_index.at(p) < p_index.at(q);
+			});
+			pts.erase(std::unique(pts.begin(), pts.end()), pts.end());
+		}
+	}
 
 	return matching;
 }
@@ -352,7 +364,8 @@ std::vector<SlopeLadder> slope_ladders(const Matching& matching,
 	EdgeToSlopeLadder edge_ladder;
 
 	for (const auto& isoline : isolines) {
-		for (auto eit = isoline.edges_begin(); eit != isoline.edges_end(); ++eit) {
+		auto polyline = isoline.polyline();
+		for (auto eit = polyline.edges_begin(); eit != polyline.edges_end(); ++eit) {
 			Gt::Segment_2 seg = *eit;
 			if (edge_ladder.contains(seg)) continue;
 
@@ -392,19 +405,16 @@ std::vector<SlopeLadder> slope_ladders(const Matching& matching,
 
 				bool cap_ = sms.back() == tms.front();
 			  	bool cap_r = sms.front() == tms.back();
-			  	bool rung_ = p_next.contains(sms.back()) && *p_next.at(sms.back()) == tms.front();
-				bool rung_r = p_next.contains(tms.back()) && *p_next.at(tms.back()) == sms.front();
-				if (rung_) {
-					make_rung(sms.back(), tms.front());
-				}
-				else if (rung_r) {
-					make_rung(tms.back(), sms.front());
-				}
-				else if (cap_) {
+			  	bool rung_ = p_next.contains(sms.back()) && p_next.at(sms.back()) == tms.front();
+				bool rung_r = p_next.contains(tms.back()) && p_next.at(tms.back()) == sms.front();
+				if (cap_) {
 					slope_ladder.cap[dir] = sms.back();
-				}
-				else if (cap_r) {
+				} else if (cap_r) {
 					slope_ladder.cap[dir] = sms.front();
+				} else if (rung_) {
+					make_rung(sms.back(), tms.front());
+				} else if (rung_r) {
+					make_rung(tms.back(), sms.front());
 				}
 				return;
 			};

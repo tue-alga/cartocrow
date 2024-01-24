@@ -23,36 +23,34 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "../core/core.h"
 
 namespace cartocrow::isoline_simplification {
-    template <class K>
-    class Isoline {
-	  public:
-	    Isoline(std::vector<Point<K>> points, bool closed)
-	        : m_points(std::move(points)), m_closed(closed), m_polyline(m_points) {
-		    if (closed) {
-			    m_polyline.push_back(m_points.front());
-			    m_drawing_representation = Polygon<K>(m_points.begin(), m_points.end());
-		    } else {
-			    m_drawing_representation = m_polyline;
-		    }
-	    }
+template <class K>
+class Isoline {
+  public:
+	Isoline(std::vector<Point<K>> points, bool closed)
+		: m_points(points.begin(), points.end()), m_closed(closed) {
 
-	    std::vector<Point<K>> m_points;
-	    bool m_closed;
+	}
 
-	    std::variant<Polyline<K>, Polygon<K>> m_drawing_representation;
+	std::list<Point<K>> m_points;
+	bool m_closed;
 
-	    Polyline<K> m_polyline;
+	[[nodiscard]] Polygon<K> polygon() const { return std::get<Polygon<K>>(drawing_representation()); }
 
-	    [[nodiscard]] Polyline<K>::Edge_iterator edges_begin() const {
-		    return m_polyline.edges_begin();
-	    }
+	Polyline<K> polyline() const {
+		Polyline<K> pl(m_points.begin(), m_points.end());
+		if (m_closed)
+			pl.push_back(m_points.front());
+		return pl;
+	}
 
-	    [[nodiscard]] Polyline<K>::Edge_iterator edges_end() const {
-		    return m_polyline.edges_end();
-	    }
-
-	    [[nodiscard]] Polygon<K> polygon() const { return std::get<Polygon<K>>(m_drawing_representation); }
-    };
+	std::variant<Polyline<K>, Polygon<K>> drawing_representation() const {
+		if (m_closed) {
+			return Polygon<K>(m_points.begin(), m_points.end());
+		} else {
+			return polyline();
+		}
+	}
+};
 }
 
 #endif //CARTOCROW_ISOLINE_H

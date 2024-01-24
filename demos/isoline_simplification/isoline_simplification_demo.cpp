@@ -34,6 +34,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <QLabel>
 #include <QSpinBox>
 #include <QVBoxLayout>
+#include <QPushButton>
 #include <filesystem>
 #include <ipepath.h>
 #include <ranges>
@@ -111,6 +112,9 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 	auto* showVertices = new QCheckBox("Show isoline vertices");
 	vLayout->addWidget(showVertices);
 
+	auto* step_button = new QPushButton("Step");
+	vLayout->addWidget(step_button);
+
 	m_recalculate = [this, doMedial, doCGALSimplify, simplificationTarget, regionIndex, showVertices, isolineIndex]() {
 		recalculate(doMedial->checkState(), simplificationTarget->value(),
 					doCGALSimplify->checkState(), regionIndex->value(), showVertices->checkState(), isolineIndex->value());
@@ -130,6 +134,10 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 	connect(showGrid, &QCheckBox::stateChanged, [this](bool v) { m_renderer->setDrawAxes(v); });
 	connect(showVertices, &QCheckBox::stateChanged, m_recalculate);
 	connect(isolineIndex, QOverload<int>::of(&QSpinBox::valueChanged), m_recalculate);
+	connect(step_button, &QPushButton::clicked, [this]() {
+		m_isoline_simplifier.step();
+		m_recalculate();
+	});
 
 	std::shared_ptr<ipe::Document> document = IpeReader::loadIpeFile(dir + fileSelector->currentText().toStdString() + ".ipe");
 	ipe::Page* page = document->page(0);
@@ -145,12 +153,14 @@ void IsolineSimplificationDemo::recalculate(bool voronoi, int target, bool cgal_
 	// todo: split into repaint and separate recalculations like simplification, voronoi
 	m_renderer->clear();
 	m_cgal_simplified.clear();
+	IpeRenderer ipe_renderer;
 
-	std::vector<Isoline<K>>& isolines = m_isoline_simplifier.m_isolines;
+	std::vector<Isoline<K>>& isolines = m_isoline_simplifier.m_simplified_isolines;
 
 	auto medial_axis_p = std::make_shared<MedialAxisPainting>(m_isoline_simplifier.m_delaunay);
 	if (voronoi) {
 		m_renderer->addPainting(medial_axis_p, "Medial axis");
+		ipe_renderer.addPainting(medial_axis_p, "Medial axis");
 	}
 	CT ct;
 
@@ -183,10 +193,14 @@ void IsolineSimplificationDemo::recalculate(bool voronoi, int target, bool cgal_
 		m_renderer->addPainting(matching_p, "Matching");
 		m_renderer->addPainting(separator_p, "Separator");
 		m_renderer->addPainting(slope_ladder_p, "Slope ladders");
+
+		ipe_renderer.addPainting(separator_p, "Separator");
+		ipe_renderer.addPainting(slope_ladder_p, "Slope ladders");
 	}
 
 	auto isolines_p = std::make_shared<IsolinePainting>(isolines, show_vertices);
 	m_renderer->addPainting(isolines_p, "Isolines");
+	ipe_renderer.addPainting(isolines_p);
 
 	if (cgal_simplify) {
 		PS::simplify(ct, Cost(), Stop(target));
@@ -198,11 +212,12 @@ void IsolineSimplificationDemo::recalculate(bool voronoi, int target, bool cgal_
 			for (auto vit = ct.points_in_constraint_begin(*cit); vit != ct.points_in_constraint_end(*cit); ++vit) {
 				simplified_points.push_back(*vit);
 			}
-			m_cgal_simplified.emplace_back(std::move(simplified_points), isolines[i].m_closed);
+			m_cgal_simplified.emplace_back(simplified_points, isolines[i].m_closed);
 		}
 
 		auto cgal_simplified_p = std::make_shared<IsolinePainting>(m_cgal_simplified, show_vertices);
 		m_renderer->addPainting(cgal_simplified_p, "CGAL simplified isolines");
+		ipe_renderer.addPainting(cgal_simplified_p, "CGAL simplified isolines");
 	}
 
 	if (voronoi && region_index < isolines.size() && separator.contains(&isolines[region_index])) {
@@ -212,10 +227,7 @@ void IsolineSimplificationDemo::recalculate(bool voronoi, int target, bool cgal_
 
 	m_renderer->update();
 
-//	IpeRenderer ipeRenderer;
-//	ipeRenderer.addPainting(medial_axis_p);
-//	ipeRenderer.addPainting(isolines_p);
-//	ipeRenderer.save("/home/steven/Documents/cartocrow/output.ipe");
+//	ipe_renderer.save("/home/steven/Documents/cartocrow/output.ipe");
 }
 
 std::vector<Isoline<K>> isolinesInPage(ipe::Page* page) {
@@ -282,7 +294,7 @@ void IsolinePainting::paint(GeometryRenderer& renderer) const {
 	for (const auto& isoline : m_isolines) {
 		std::visit([&](auto&& v){
 			renderer.draw(v);
-		}, isoline.m_drawing_representation);
+		}, isoline.drawing_representation());
 	}
 }
 
@@ -314,7 +326,7 @@ void MatchingPainting::paint(GeometryRenderer& renderer) const {
 				renderer.draw(Segment<K>(p, q));
 			}
 		}
-		renderer.setStroke(Color(200, 50, 200), 1.25);
+		renderer.setStroke(Color(200, 50, 200), 3);
 		if (matched_to.contains(CGAL::RIGHT_TURN)) {
 			for (const auto& [_, pts] : matched_to.at(CGAL::RIGHT_TURN))
 			for (const auto& q : pts) {

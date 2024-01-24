@@ -1,6 +1,8 @@
 set(SOURCES
 	medial_axis_separator.cpp
 	isoline_simplifier.cpp
+	collapse.cpp
+	collapse.h
 )
 set(HEADERS
 	isoline.h

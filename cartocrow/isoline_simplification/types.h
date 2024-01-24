@@ -43,9 +43,10 @@ class SlopeLadder {
 	std::unordered_map<CGAL::Sign, Gt::Point_2> cap;
 };
 
-typedef std::unordered_map<Gt::Point_2, Gt::Point_2*> PointToPoint;
+typedef std::unordered_map<Gt::Point_2, Gt::Point_2> PointToPoint;
 typedef std::unordered_map<Gt::Point_2, Isoline<K>*> PointToIsoline;
 typedef std::unordered_map<Gt::Point_2, int> PointToIndex;
+typedef std::unordered_map<Gt::Point_2, std::list<Gt::Point_2>::iterator> PointToIterator;
 typedef std::unordered_map<Gt::Segment_2, SlopeLadder*> EdgeToSlopeLadder;
 }
 #endif //CARTOCROW_TYPES_H

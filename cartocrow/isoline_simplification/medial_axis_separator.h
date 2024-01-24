@@ -33,7 +33,7 @@ Separator medial_axis_separator(const SDG2& delaunay, const PointToIsoline& isol
 std::variant<Gt::Point_2, Gt::Segment_2> site_projection(const SDG2& delaunay, const SDG2::Edge& edge, const SDG2::Site_2& site);
 Gt::Segment_2 snap_endpoints(Gt::Segment_2 proj, Gt::Segment_2 original);
 Matching matching(const SDG2& delaunay, const Separator& separator, const PointToPoint& p_prev, const PointToPoint& p_next,
-                  const PointToIsoline& p_isoline, const PointToIndex& p_index);
+                  const PointToIsoline& p_isoline, const PointToIndex& p_index, bool do_snap);
 std::vector<SlopeLadder> slope_ladders(const Matching& matching,
                                        const std::vector<Isoline<K>>& isolines,
                                        const PointToPoint& p_next);
