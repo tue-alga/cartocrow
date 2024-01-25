@@ -40,7 +40,6 @@ class IsolineSimplifier {
 	PointToIsoline m_p_isoline;
 	PointToPoint m_p_prev;
 	PointToPoint m_p_next;
-	PointToIndex m_p_order;
 	PointToIterator m_p_iterator;
 	SDG2 m_delaunay;
 	Separator m_separator;

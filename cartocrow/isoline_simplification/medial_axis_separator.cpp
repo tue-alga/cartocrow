@@ -238,8 +238,8 @@ Gt::Segment_2 snap_endpoints(Gt::Segment_2 proj, Gt::Segment_2 original) {
 	return { start, end };
 }
 
-Matching matching(const SDG2& delaunay, const Separator& separator, const PointToPoint& p_prev, const PointToPoint& p_next,
-                  const PointToIsoline& p_isoline, const PointToIndex& p_index, bool do_snap) {
+Matching matching(const SDG2& delaunay, const Separator& separator, const PointToPoint& p_prev,
+                  const PointToPoint& p_next, const PointToIsoline& p_isoline, bool do_snap) {
 	std::unordered_map<Gt::Point_2, MatchedTo> matching;
 
 	// Assumes point is in the Voronoi cell of site.
@@ -347,8 +347,30 @@ Matching matching(const SDG2& delaunay, const Separator& separator, const PointT
 	for (auto& [_, mi] : ms)
 	for (auto& [_, pts] : mi) {
 		if (do_snap) {
-			std::sort(pts.begin(), pts.end(), [&p_index](Gt::Point_2& p, Gt::Point_2& q) {
-				return p_index.at(p) < p_index.at(q);
+			std::sort(pts.begin(), pts.end(), [&p_prev, &p_next](Gt::Point_2& p, Gt::Point_2& q) {
+				if (p == q) return false;
+				std::optional<Gt::Point_2> earlier;
+				if (p_prev.contains(p)) {
+					earlier = p_prev.at(p);
+				}
+			  	std::optional<Gt::Point_2> later;
+				if (p_next.contains(p)) {
+					later = p_next.at(p);
+				}
+
+				while (true) {
+					Gt::Point_2 q_pt = q;
+					if (earlier == q_pt)
+						return false;
+					if (later == q_pt)
+						return true;
+					if (earlier.has_value() && p_prev.contains(*earlier)) {
+						earlier = p_prev.at(*earlier);
+					}
+					if (later.has_value() && p_next.contains(*later)) {
+						later = p_next.at(*later);
+					}
+				}
 			});
 			pts.erase(std::unique(pts.begin(), pts.end()), pts.end());
 		}
