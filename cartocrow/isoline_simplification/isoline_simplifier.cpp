@@ -79,10 +79,16 @@ void IsolineSimplifier::collapse_edge(Gt::Segment_2 edge, Gt::Point_2 new_vertex
 	assert(a_iso == b_iso);
 	assert(m_p_next[a] == b && m_p_prev[b] == a);
 
+	std::cout << (a_iso->m_points.front() == a_iso->m_points.back()) << std::endl;
+	std::cout << (b_iso->m_points.front() == b_iso->m_points.back()) << std::endl;
+
 	// Remove points from isolines
-	auto new_it = a_iso->m_points.insert(a_it, new_vertex);
+	auto new_it = a_iso->m_points.insert(b_it, new_vertex);
 	a_iso->m_points.erase(a_it);
 	b_iso->m_points.erase(b_it);
+
+	std::cout << (a_iso->m_points.front() == a_iso->m_points.back()) << std::endl;
+	std::cout << (b_iso->m_points.front() == b_iso->m_points.back()) << std::endl;
 
 	// Update m_p_isoline
 	m_p_isoline[new_vertex] = a_iso;
@@ -141,25 +147,30 @@ void IsolineSimplifier::collapse_edge(Gt::Segment_2 edge, Gt::Point_2 new_vertex
 	m_delaunay.insert(SDG2::Site_2::construct_site_2(new_vertex));
 }
 
-void IsolineSimplifier::update_ladders() {
+void IsolineSimplifier::update_separator() {
 	// Naive slow: recompute
 	m_separator = medial_axis_separator(m_delaunay, m_p_isoline, m_p_prev, m_p_next);
+}
+
+void IsolineSimplifier::update_matching() {
+	// Naive slow: recompute
 	m_matching = matching(m_delaunay, m_separator, m_p_prev, m_p_next, m_p_isoline, m_p_order, true);
+}
+
+void IsolineSimplifier::update_ladders() {
+	// Naive slow: recompute
 	m_slope_ladders = slope_ladders(m_matching, m_simplified_isolines, m_p_next);
 }
 
 void IsolineSimplifier::step() {
-	static std::random_device rd;
-	static std::mt19937 gen(rd());
-	std::uniform_int_distribution dist(0, static_cast<int>(m_slope_ladders.size()));
+	static std::mt19937 gen(0);
+	std::uniform_int_distribution dist(0, static_cast<int>(m_slope_ladders.size() - 1));
 	int index = dist(gen);
 	auto slope_ladder = m_slope_ladders[index];
 	auto new_pts = collapse(slope_ladder, m_p_prev, m_p_next);
 	for (int i = 0; i < slope_ladder.rungs.size(); i++) {
 		collapse_edge(slope_ladder.rungs[i], new_pts[i]);
 	}
-	update_ladders();
-
 
 	// TODO:
 	// - remove vertices and segments of old slope ladder

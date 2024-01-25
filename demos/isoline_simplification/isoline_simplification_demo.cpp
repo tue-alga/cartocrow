@@ -112,8 +112,17 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 	auto* showVertices = new QCheckBox("Show isoline vertices");
 	vLayout->addWidget(showVertices);
 
-	auto* step_button = new QPushButton("Step");
+	auto* step_button = new QPushButton("Step && update");
 	vLayout->addWidget(step_button);
+
+	auto* step_only_button = new QPushButton("Step");
+	vLayout->addWidget(step_only_button);
+
+	auto* update_sm_button = new QPushButton("Update separator && matching");
+	vLayout->addWidget(update_sm_button);
+
+	auto* update_sl_button = new QPushButton("Update slope ladders");
+	vLayout->addWidget(update_sl_button);
 
 	m_recalculate = [this, doMedial, doCGALSimplify, simplificationTarget, regionIndex, showVertices, isolineIndex]() {
 		recalculate(doMedial->checkState(), simplificationTarget->value(),
@@ -136,6 +145,22 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 	connect(isolineIndex, QOverload<int>::of(&QSpinBox::valueChanged), m_recalculate);
 	connect(step_button, &QPushButton::clicked, [this]() {
 		m_isoline_simplifier.step();
+	  	m_isoline_simplifier.update_separator();
+	  	m_isoline_simplifier.update_matching();
+	  	m_isoline_simplifier.update_ladders();
+		m_recalculate();
+	});
+	connect(step_only_button, &QPushButton::clicked, [this]() {
+		m_isoline_simplifier.step();
+		m_recalculate();
+	});
+	connect(update_sm_button, &QPushButton::clicked, [this]() {
+	  	m_isoline_simplifier.update_separator();
+	  	m_isoline_simplifier.update_matching();
+	  	m_recalculate();
+	});
+	connect(update_sl_button, &QPushButton::clicked, [this]() {
+	    m_isoline_simplifier.update_ladders();
 		m_recalculate();
 	});
 
@@ -227,7 +252,7 @@ void IsolineSimplificationDemo::recalculate(bool voronoi, int target, bool cgal_
 
 	m_renderer->update();
 
-//	ipe_renderer.save("/home/steven/Documents/cartocrow/output.ipe");
+	ipe_renderer.save("/home/steven/Documents/cartocrow/output.ipe");
 }
 
 std::vector<Isoline<K>> isolinesInPage(ipe::Page* page) {

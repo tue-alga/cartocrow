@@ -321,8 +321,8 @@ Matching matching(const SDG2& delaunay, const Separator& separator, const PointT
 			auto sign_q = side(q, point_of_Voronoi_edge(edge, delaunay));
 
 			if (sign_p == sign_q) {
-				std::cout << "Strange: " << type_of_Voronoi_edge(edge, delaunay) << "  "
-						  << type_of_site(p) << "  " << type_of_site(q) << std::endl;
+//				std::cout << "Strange: " << type_of_Voronoi_edge(edge, delaunay) << "  "
+//						  << type_of_site(p) << "  " << type_of_site(q) << std::endl;
 			}
 
 			auto match = [&](int pi, int qi) {
@@ -367,12 +367,12 @@ std::vector<SlopeLadder> slope_ladders(const Matching& matching,
 		auto polyline = isoline.polyline();
 		for (auto eit = polyline.edges_begin(); eit != polyline.edges_end(); ++eit) {
 			Gt::Segment_2 seg = *eit;
-			if (edge_ladder.contains(seg)) continue;
+			if (edge_ladder.contains(seg) || edge_ladder.contains(seg.opposite())) continue;
 
 			Gt::Point_2 s = seg.source();
 			Gt::Point_2 t = seg.target();
 
-			const auto search = [&](const Gt::Point_2& s, const Gt::Point_2& t, CGAL::Sign dir, SlopeLadder& slope_ladder, const auto& search_f) {
+			const auto search = [&](const Gt::Point_2& s, const Gt::Point_2& t, CGAL::Sign initial_dir, CGAL::Sign dir, SlopeLadder& slope_ladder, const auto& search_f) {
 				if (!(matching.contains(s) && matching.contains(t))) return;
 				auto& s_matching = matching.at(s);
 				auto& t_matching = matching.at(t);
@@ -395,12 +395,25 @@ std::vector<SlopeLadder> slope_ladders(const Matching& matching,
 
 				auto make_rung = [&](const Gt::Point_2& a, const Gt::Point_2& b) {
 					edge_ladder[Segment<K>(a, b)] = &slope_ladder;
-					if (dir == CGAL::LEFT_TURN) {
+					if (initial_dir == CGAL::LEFT_TURN) {
 						slope_ladder.rungs.emplace_front(a, b);
 					} else {
 						slope_ladder.rungs.emplace_back(a, b);
 					}
-					search_f(a, b, dir, slope_ladder, search_f);
+					// Continue search in direction opposite of where we came from
+					CGAL::Sign new_dir;
+					bool found = false;
+					for (CGAL::Sign possible_dir : {CGAL::LEFT_TURN, CGAL::RIGHT_TURN}) {
+						if (matching.at(a).contains(possible_dir))
+						for (const auto& [_, pts] : matching.at(a).at(possible_dir))
+						for (const auto& pt : pts)
+						if (pt == s) {
+							new_dir = -possible_dir;
+							found = true;
+						}
+					}
+					assert(found);
+					search_f(a, b, initial_dir, new_dir, slope_ladder, search_f);
 				};
 
 				bool cap_ = sms.back() == tms.front();
@@ -408,13 +421,13 @@ std::vector<SlopeLadder> slope_ladders(const Matching& matching,
 			  	bool rung_ = p_next.contains(sms.back()) && p_next.at(sms.back()) == tms.front();
 				bool rung_r = p_next.contains(tms.back()) && p_next.at(tms.back()) == sms.front();
 				if (cap_) {
-					slope_ladder.cap[dir] = sms.back();
+					slope_ladder.cap[initial_dir] = sms.back();
 				} else if (cap_r) {
-					slope_ladder.cap[dir] = sms.front();
+					slope_ladder.cap[initial_dir] = sms.front();
 				} else if (rung_) {
 					make_rung(sms.back(), tms.front());
 				} else if (rung_r) {
-					make_rung(tms.back(), sms.front());
+					make_rung(sms.front(), tms.back());
 				}
 				return;
 			};
@@ -423,8 +436,8 @@ std::vector<SlopeLadder> slope_ladders(const Matching& matching,
 			slope_ladder.rungs.emplace_back(s, t);
 			edge_ladder[seg] = &slope_ladder;
 
-			search(s, t, CGAL::LEFT_TURN, slope_ladder, search);
-			search(s, t, CGAL::RIGHT_TURN, slope_ladder, search);
+			search(s, t, CGAL::LEFT_TURN, CGAL::LEFT_TURN, slope_ladder, search);
+			search(s, t, CGAL::RIGHT_TURN, CGAL::RIGHT_TURN, slope_ladder, search);
 		}
 	}
 
