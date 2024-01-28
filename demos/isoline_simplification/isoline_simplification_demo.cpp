@@ -132,7 +132,7 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 	connect(fileSelector, &QComboBox::currentTextChanged, [this, dir](const QString& name) {
 	    std::shared_ptr<ipe::Document> document = IpeReader::loadIpeFile(dir + name.toStdString() + ".ipe");
 	    ipe::Page* page = document->page(0);
-	    m_isoline_simplifier = IsolineSimplifier(isolinesInPage(page));
+	    m_isoline_simplifier = std::make_unique<IsolineSimplifier>(isolinesInPage(page));
 		m_recalculate();
 	});
 
@@ -144,29 +144,29 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 	connect(showVertices, &QCheckBox::stateChanged, m_recalculate);
 	connect(isolineIndex, QOverload<int>::of(&QSpinBox::valueChanged), m_recalculate);
 	connect(step_button, &QPushButton::clicked, [this]() {
-		m_isoline_simplifier.step();
-	  	m_isoline_simplifier.update_separator();
-	  	m_isoline_simplifier.update_matching();
-	  	m_isoline_simplifier.update_ladders();
+		m_isoline_simplifier->step();
+	  	m_isoline_simplifier->update_separator();
+	  	m_isoline_simplifier->update_matching();
+	  	m_isoline_simplifier->update_ladders();
 		m_recalculate();
 	});
 	connect(step_only_button, &QPushButton::clicked, [this]() {
-		m_isoline_simplifier.step();
+		m_isoline_simplifier->step();
 		m_recalculate();
 	});
 	connect(update_sm_button, &QPushButton::clicked, [this]() {
-	  	m_isoline_simplifier.update_separator();
-	  	m_isoline_simplifier.update_matching();
+	  	m_isoline_simplifier->update_separator();
+	  	m_isoline_simplifier->update_matching();
 	  	m_recalculate();
 	});
 	connect(update_sl_button, &QPushButton::clicked, [this]() {
-	    m_isoline_simplifier.update_ladders();
+	    m_isoline_simplifier->update_ladders();
 		m_recalculate();
 	});
 
 	std::shared_ptr<ipe::Document> document = IpeReader::loadIpeFile(dir + fileSelector->currentText().toStdString() + ".ipe");
 	ipe::Page* page = document->page(0);
-	m_isoline_simplifier = IsolineSimplifier(isolinesInPage(page));
+	m_isoline_simplifier = std::make_unique<IsolineSimplifier>(isolinesInPage(page));
 
 	m_renderer = new GeometryWidget();
 	m_renderer->setDrawAxes(showGrid->checkState());
@@ -180,54 +180,55 @@ void IsolineSimplificationDemo::recalculate(bool voronoi, int target, bool cgal_
 	m_cgal_simplified.clear();
 	IpeRenderer ipe_renderer;
 
-	std::vector<Isoline<K>>& isolines = m_isoline_simplifier.m_simplified_isolines;
+	std::vector<Isoline<K>>& isolines = m_isoline_simplifier->m_simplified_isolines;
 
-	auto medial_axis_p = std::make_shared<MedialAxisPainting>(m_isoline_simplifier.m_delaunay);
+	auto medial_axis_p = std::make_shared<MedialAxisPainting>(m_isoline_simplifier->m_delaunay);
 	if (voronoi) {
 		m_renderer->addPainting(medial_axis_p, "Medial axis");
 		ipe_renderer.addPainting(medial_axis_p, "Medial axis");
 	}
-	CT ct;
 
-	std::vector<CT::Constraint_id> ids;
+	const auto& separator = m_isoline_simplifier->m_separator;
 
-	for (const auto& isoline : isolines) {
-		if (isoline.m_closed) {
-			CT::Constraint_id id = ct.insert_constraint(isoline.polygon());
-			ids.push_back(id);
-		} else {
-			CT::Constraint_id id = ct.insert_constraint(isoline.m_points);
-			ids.push_back(id);
-		}
-	}
+	auto separator_p = std::make_shared<MedialAxisSeparatorPainting>(separator, m_isoline_simplifier->m_delaunay);
 
-	auto separator = medial_axis_separator(m_isoline_simplifier.m_delaunay, m_isoline_simplifier.m_p_isoline, m_isoline_simplifier.m_p_prev, m_isoline_simplifier.m_p_next);
-	// The following causes a segmentation fault for some reason
-//	auto separator = m_isoline_simplifier.m_separator;
-
-	auto separator_p = std::make_shared<MedialAxisSeparatorPainting>(separator, m_isoline_simplifier.m_delaunay);
-
-	auto matching_p = std::make_shared<MatchingPainting>(m_isoline_simplifier.m_matching,
+	auto matching_p = std::make_shared<MatchingPainting>(m_isoline_simplifier->m_matching,
 	                                                     [this, &isolines, isoline_index](Gt::Point_2 pt) {
-		                                                     return m_isoline_simplifier.m_p_isoline[pt] == &isolines[std::min(static_cast<int>(isolines.size() - 1), isoline_index)];
+		                                                     return m_isoline_simplifier->m_p_isoline.contains(pt) && m_isoline_simplifier->m_p_isoline.at(pt) == &isolines[std::min(static_cast<int>(isolines.size() - 1), isoline_index)];
 	                                                     });
 
-	auto slope_ladder_p = std::make_shared<SlopeLadderPainting>(m_isoline_simplifier.m_slope_ladders);
+	auto slope_ladder_p = std::make_shared<SlopeLadderPainting>(m_isoline_simplifier->m_slope_ladders);
+	auto collapse_p = std::make_shared<CollapsePainting>(*m_isoline_simplifier);
+//	auto changed_p = std::make_shared<ChangedPainting>(*m_isoline_simplifier.);
 
 	if (voronoi) {
 		m_renderer->addPainting(matching_p, "Matching");
-		m_renderer->addPainting(separator_p, "Separator");
+//		m_renderer->addPainting(separator_p, "Separator");
 		m_renderer->addPainting(slope_ladder_p, "Slope ladders");
 
-		ipe_renderer.addPainting(separator_p, "Separator");
+//		ipe_renderer.addPainting(separator_p, "Separator");
 		ipe_renderer.addPainting(slope_ladder_p, "Slope ladders");
 	}
 
 	auto isolines_p = std::make_shared<IsolinePainting>(isolines, show_vertices);
 	m_renderer->addPainting(isolines_p, "Isolines");
-	ipe_renderer.addPainting(isolines_p);
+	ipe_renderer.addPainting(isolines_p, "Isolines");
 
 	if (cgal_simplify) {
+		CT ct;
+
+		std::vector<CT::Constraint_id> ids;
+
+		for (const auto& isoline : isolines) {
+			if (isoline.m_closed) {
+				CT::Constraint_id id = ct.insert_constraint(isoline.polygon());
+				ids.push_back(id);
+			} else {
+				CT::Constraint_id id = ct.insert_constraint(isoline.m_points);
+				ids.push_back(id);
+			}
+		}
+
 		PS::simplify(ct, Cost(), Stop(target));
 		for(auto cit = ct.constraints_begin(); cit != ct.constraints_end(); ++cit) {
 			CT::Constraint_id id = *cit;
@@ -246,13 +247,16 @@ void IsolineSimplificationDemo::recalculate(bool voronoi, int target, bool cgal_
 	}
 
 	if (voronoi && region_index < isolines.size() && separator.contains(&isolines[region_index])) {
-		auto touched_p = std::make_shared<TouchedPainting>(separator[&isolines[region_index]], m_isoline_simplifier.m_delaunay);
-		m_renderer->addPainting(touched_p, "Touched");
+//		auto touched_p = std::make_shared<TouchedPainting>(separator.at(&isolines[region_index]), m_isoline_simplifier->m_delaunay);
+//		m_renderer->addPainting(touched_p, "Touched");
 	}
+
+	m_renderer->addPainting(collapse_p, "Collapse");
+	ipe_renderer.addPainting(collapse_p, "Collapse");
 
 	m_renderer->update();
 
-	ipe_renderer.save("/home/steven/Documents/cartocrow/output.ipe");
+//	ipe_renderer.save("/home/steven/Documents/cartocrow/output.ipe");
 }
 
 std::vector<Isoline<K>> isolinesInPage(ipe::Page* page) {
@@ -294,7 +298,7 @@ int main(int argc, char* argv[]) {
 	app.exec();
 }
 
-MedialAxisPainting::MedialAxisPainting(SDG2& delaunay): m_delaunay(delaunay) {}
+MedialAxisPainting::MedialAxisPainting(const SDG2& delaunay): m_delaunay(delaunay) {}
 
 void MedialAxisPainting::paint(GeometryRenderer& renderer) const {
 	renderer.setStroke(Color(150, 150, 150), 1);
@@ -302,10 +306,10 @@ void MedialAxisPainting::paint(GeometryRenderer& renderer) const {
 
 	renderer.setStroke(Color(150, 150, 150), 1);
 	auto voronoiDrawer = VoronoiDrawer<Gt>(&renderer);
-	draw_skeleton<VoronoiDrawer<Gt>, K>(m_delaunay, voronoiDrawer);
+	draw_dual<VoronoiDrawer<Gt>, K>(m_delaunay, voronoiDrawer);
 }
 
-IsolinePainting::IsolinePainting(std::vector<Isoline<K>>& isolines, bool show_vertices):
+IsolinePainting::IsolinePainting(const std::vector<Isoline<K>>& isolines, bool show_vertices):
       m_isolines(isolines), m_show_vertices(show_vertices) {}
 
 void IsolinePainting::paint(GeometryRenderer& renderer) const {
@@ -323,14 +327,13 @@ void IsolinePainting::paint(GeometryRenderer& renderer) const {
 	}
 }
 
-MedialAxisSeparatorPainting::MedialAxisSeparatorPainting(Separator separator, const SDG2& delaunay):
-      m_separator(std::move(separator)), m_delaunay(delaunay) {}
+MedialAxisSeparatorPainting::MedialAxisSeparatorPainting(const Separator& separator, const SDG2& delaunay):
+      m_separator(separator), m_delaunay(delaunay) {}
 
 void MedialAxisSeparatorPainting::paint(GeometryRenderer& renderer) const {
 	auto voronoiDrawer = VoronoiDrawer<Gt>(&renderer);
-	for (auto& [_, edges] : m_separator)
-	for (auto& edge : edges) {
-		m_delaunay.primal(edge);
+	for (const auto& [_, edges] : m_separator)
+	for (const auto& edge : edges) {
 		renderer.setStroke(Color(0, 0, 255), 2.5);
 		renderer.setMode(GeometryRenderer::stroke);
 		draw_dual_edge<VoronoiDrawer<Gt>, K>(m_delaunay, edge, voronoiDrawer);
@@ -380,28 +383,65 @@ void TouchedPainting::paint(GeometryRenderer& renderer) const {
 	}
 }
 
-SlopeLadderPainting::SlopeLadderPainting(const std::vector<SlopeLadder>& slope_ladders):
+SlopeLadderPainting::SlopeLadderPainting(const std::vector<std::shared_ptr<SlopeLadder>>& slope_ladders):
       m_slope_ladders(slope_ladders) {}
 
+void draw_slope_ladder(GeometryRenderer& renderer, const SlopeLadder& slope_ladder) {
+	std::vector<Gt::Point_2> pts;
+	for (const auto& p : slope_ladder.m_rungs) {
+		pts.push_back(p.source());
+	}
+	if (slope_ladder.m_cap.contains(CGAL::RIGHT_TURN)) {
+		pts.push_back(slope_ladder.m_cap.at(CGAL::RIGHT_TURN));
+	}
+	for (auto& rung : std::ranges::reverse_view(slope_ladder.m_rungs)) {
+		pts.push_back(rung.target());
+	}
+	if (slope_ladder.m_cap.contains(CGAL::LEFT_TURN)) {
+		pts.push_back(slope_ladder.m_cap.at(CGAL::LEFT_TURN));
+	}
+	renderer.setFill(Color(100, 0, 0));
+	renderer.setFillOpacity(20);
+	renderer.setStroke(Color(255, 20, 20), 2.0);
+	renderer.setMode(GeometryRenderer::fill | GeometryRenderer::stroke);
+	renderer.draw(Polygon<K>(pts.begin(), pts.end()));
+}
+
 void SlopeLadderPainting::paint(GeometryRenderer& renderer) const {
-	for (auto slope_ladder : m_slope_ladders) {
-		std::vector<Gt::Point_2> pts;
-		for (const auto& p : slope_ladder.rungs) {
-			pts.push_back(p.source());
+	for (const auto& slope_ladder : m_slope_ladders) {
+		if (slope_ladder->m_old) continue;
+		draw_slope_ladder(renderer, *slope_ladder);
+	}
+}
+
+CollapsePainting::CollapsePainting(const IsolineSimplifier& simplifier):
+      m_simplifier(simplifier) {}
+
+void CollapsePainting::paint(GeometryRenderer& renderer) const {
+	if (!m_simplifier.m_slope_ladders.empty()) {
+		const auto& slope_ladder = m_simplifier.m_slope_ladders.front();
+		if (!slope_ladder->m_old) {
+			renderer.setStroke(Color(255, 20, 20), 2.0);
+			draw_slope_ladder(renderer, *slope_ladder);
+			for (const auto& rung : slope_ladder->m_rungs) {
+				auto s = m_simplifier.m_p_prev.at(rung.source());
+				auto t = rung.source();
+				auto u = rung.target();
+				auto v = m_simplifier.m_p_next.at(rung.target());
+				auto l = area_preservation_line(s, t, u, v);
+				renderer.draw(l);
+				renderer.draw(l.projection(midpoint(rung)));
+			}
 		}
-		if (slope_ladder.cap.contains(CGAL::RIGHT_TURN)) {
-			pts.push_back(slope_ladder.cap[CGAL::RIGHT_TURN]);
+	}
+
+	for (const auto& v : m_simplifier.m_changed_vertices) {
+		const auto& site = v->site();
+		renderer.setStroke(Color(0, 200, 0), 5.0);
+		if (site.is_point()) {
+			renderer.draw(site.point());
+		} else {
+			renderer.draw(site.segment());
 		}
-		for (auto& rung : std::ranges::reverse_view(slope_ladder.rungs)) {
-			pts.push_back(rung.target());
-		}
-		if (slope_ladder.cap.contains(CGAL::LEFT_TURN)) {
-			pts.push_back(slope_ladder.cap[CGAL::LEFT_TURN]);
-		}
-		renderer.setFill(Color(100, 100, 100));
-		renderer.setFillOpacity(50);
-		renderer.setStroke(Color(255, 20, 20), 2.0);
-		renderer.setMode(GeometryRenderer::fill | GeometryRenderer::stroke);
-		renderer.draw(Polygon<K>(pts.begin(), pts.end()));
 	}
 }

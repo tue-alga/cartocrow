@@ -22,6 +22,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "isoline.h"
 #include "medial_axis_separator.h"
 #include "types.h"
+#include "collapse.h"
 
 namespace cartocrow::isoline_simplification {
 class IsolineSimplifier {
@@ -29,7 +30,7 @@ class IsolineSimplifier {
 	IsolineSimplifier() = default;
 	IsolineSimplifier(std::vector<Isoline<K>> isolines);
 	std::vector<Isoline<K>> simplify();
-	void step();
+	bool step();
 
 	void update_ladders();
 	void update_matching();
@@ -41,15 +42,23 @@ class IsolineSimplifier {
 	PointToPoint m_p_prev;
 	PointToPoint m_p_next;
 	PointToIterator m_p_iterator;
+	PointToSlopeLadders m_p_ladder;
+	EdgeToSlopeLadder m_e_ladder;
+	PointToVertex m_p_vertex;
+	EdgeToVertex m_e_vertex;
 	SDG2 m_delaunay;
 	Separator m_separator;
 	Matching m_matching;
-	std::vector<SlopeLadder> m_slope_ladders;
+	std::vector<std::shared_ptr<SlopeLadder>> m_slope_ladders;
+	std::unordered_set<SDG2::Vertex_handle> m_changed_vertices;
+	std::vector<Gt::Point_2> m_deleted_points;
 
   private:
 	void initialize_point_data();
 	void initialize_sdg();
-	void collapse_edge(Gt::Segment_2 edge, Gt::Point_2 new_vertex);
+	void initialize_slope_ladders();
+	void collapse_edge(Gt::Segment_2 vertex, Gt::Point_2 new_point);
+	void create_slope_ladder(Gt::Segment_2 seg, bool do_push_heap);
 };
 }
 

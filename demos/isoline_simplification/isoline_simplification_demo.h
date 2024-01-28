@@ -43,7 +43,7 @@ class IsolineSimplificationDemo : public QMainWindow {
 
   private:
 	std::vector<Isoline<K>> m_cgal_simplified;
-	IsolineSimplifier m_isoline_simplifier;
+	std::unique_ptr<IsolineSimplifier> m_isoline_simplifier;
 
 	GeometryWidget* m_renderer;
 	std::function<void()> m_recalculate;
@@ -53,36 +53,36 @@ std::vector<Isoline<K>> isolinesInPage(ipe::Page* page);
 
 class MedialAxisPainting : public GeometryPainting {
   public:
-	MedialAxisPainting(SDG2& delaunay);
+	MedialAxisPainting(const SDG2& delaunay);
 
   protected:
 	void paint(GeometryRenderer& renderer) const override;
 
   private:
-	SDG2& m_delaunay;
+	const SDG2& m_delaunay;
 };
 
 class IsolinePainting : public GeometryPainting {
   public:
-	IsolinePainting(std::vector<Isoline<K>>& isolines, bool show_vertices);
+	IsolinePainting(const std::vector<Isoline<K>>& isolines, bool show_vertices);
 
   protected:
 	void paint(GeometryRenderer& renderer) const override;
 
   private:
-	std::vector<Isoline<K>>& m_isolines;
+	const std::vector<Isoline<K>>& m_isolines;
 	bool m_show_vertices;
 };
 
 class MedialAxisSeparatorPainting : public GeometryPainting {
   public:
-	MedialAxisSeparatorPainting(Separator separator, const SDG2& delaunay);
+	MedialAxisSeparatorPainting(const Separator& separator, const SDG2& delaunay);
 
   protected:
 	void paint(GeometryRenderer& renderer) const override;
 
   private:
- 	Separator m_separator;
+ 	const Separator& m_separator;
 	const SDG2& m_delaunay;
 };
 
@@ -112,13 +112,24 @@ class TouchedPainting : public GeometryPainting {
 
 class SlopeLadderPainting : public GeometryPainting {
   public:
-	SlopeLadderPainting(const std::vector<SlopeLadder>& slope_ladders);
+	SlopeLadderPainting(const std::vector<std::shared_ptr<SlopeLadder>>& slope_ladders);
 
   protected:
 	void paint(GeometryRenderer& renderer) const override;
 
   private:
-	const std::vector<SlopeLadder>& m_slope_ladders;
+	const std::vector<std::shared_ptr<SlopeLadder>>& m_slope_ladders;
+};
+
+class CollapsePainting : public GeometryPainting {
+  public:
+	CollapsePainting(const IsolineSimplifier& simplifier);
+
+  protected:
+	void paint(GeometryRenderer& renderer) const override;
+
+  private:
+	const IsolineSimplifier& m_simplifier;
 };
 
 #endif //CARTOCROW_ISOLINE_SIMPLIFICATION_DEMO_H

@@ -88,4 +88,16 @@ Stream& draw_skeleton(const SDG& dg, Stream& str) {
 	return str;
 }
 
+template <class Stream,
+          class K,
+          class Gt  = CGAL::Segment_Delaunay_graph_filtered_traits_without_intersections_2<K, CGAL::Field_with_sqrt_tag>,
+          class SDG = CGAL::Segment_Delaunay_graph_hierarchy_2<Gt>>
+Stream& draw_dual(const SDG& dg, Stream& str) {
+	auto eit = dg.finite_edges_begin();
+	for (; eit != dg.finite_edges_end(); ++eit) {
+		draw_dual_edge<Stream, K>(dg, *eit, str);
+	}
+	return str;
+}
+
 #endif //CARTOCROW_MEDIAL_AXIS_HELPERS_H

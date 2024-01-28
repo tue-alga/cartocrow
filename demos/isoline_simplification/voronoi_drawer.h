@@ -60,12 +60,12 @@ class VoronoiDrawer {
 		// Geometric magic: the intersection of the tangents at points p and q of the parabola is
 		// the circumcenter of the focus and the projections of p and q on the directrix.
 		auto start_p = dir.projection(start);
-		auto end_p = dir.projection(start);
+		auto end_p = dir.projection(end);
 
 		// If the points are collinear CGAL::circumcenter throws an error; draw a segment instead.
 		if (CGAL::collinear(focus, start_p, end_p)) return *this << typename Gt::Segment_2(start, end);
 
-		auto control = CGAL::circumcenter(focus, dir.projection(start), dir.projection(end));
+		auto control = CGAL::circumcenter(focus, start_p, end_p);
 		auto bezier = BezierCurve(approximate(start), approximate(control), approximate(end));
 
 		m_renderer->draw(bezier);

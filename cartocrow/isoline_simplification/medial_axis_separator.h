@@ -33,9 +33,10 @@ Separator medial_axis_separator(const SDG2& delaunay, const PointToIsoline& isol
 std::variant<Gt::Point_2, Gt::Segment_2> site_projection(const SDG2& delaunay, const SDG2::Edge& edge, const SDG2::Site_2& site);
 Gt::Segment_2 snap_endpoints(Gt::Segment_2 proj, Gt::Segment_2 original);
 Matching matching(const SDG2& delaunay, const Separator& separator, const PointToPoint& p_prev,
-                  const PointToPoint& p_next, const PointToIsoline& p_isoline, bool do_snap);
-std::vector<SlopeLadder> slope_ladders(const Matching& matching,
-                                       const std::vector<Isoline<K>>& isolines,
-                                       const PointToPoint& p_next);
+                  const PointToPoint& p_next, const PointToIsoline& p_isoline);
+CGAL::Orientation side(const SDG2::Site_2& site, const SDG2::Point_2& point, const PointToPoint& p_prev, const PointToPoint& p_next);
+std::vector<Gt::Point_2> project_snap(const SDG2& delaunay, const SDG2::Site_2& site, const SDG2::Edge& edge);
+void create_matching(const SDG2& delaunay, const SDG2::Edge& edge, Matching& matching, const PointToPoint& p_prev, const PointToPoint& p_next, const PointToIsoline& p_isoline);
+std::function<bool(const Gt::Point_2&, const Gt::Point_2&)> compare_along_isoline(const PointToPoint& p_prev, const PointToPoint& p_next);
 }
 #endif //CARTOCROW_MEDIAL_AXIS_SEPARATOR_H
