@@ -200,14 +200,19 @@ void IsolineSimplifier::update_separator() {
 
 void IsolineSimplifier::update_matching() {
 	std::unordered_set<Gt::Point_2> updated_points;
+	std::unordered_set<SDG2::Vertex_handle> changed_vertices_and_endpoints;
+
 	for (const auto& vh : m_changed_vertices) {
 		const auto& site = vh->site();
+		changed_vertices_and_endpoints.insert(vh);
 		if (site.is_point()) {
 			updated_points.insert(site.point());
 		} else {
 			const auto& seg = site.segment();
 			updated_points.insert(seg.source());
 			updated_points.insert(seg.target());
+			changed_vertices_and_endpoints.insert(m_p_vertex.at(seg.source()));
+			changed_vertices_and_endpoints.insert(m_p_vertex.at(seg.target()));
 		}
 	}
 
@@ -225,7 +230,7 @@ void IsolineSimplifier::update_matching() {
 	}
 
 	std::vector<Gt::Point_2> modified_matchings;
-	for (const auto& vh : m_changed_vertices) {
+	for (const auto& vh : changed_vertices_and_endpoints) {
 		auto site_1 = vh->site();
 		auto iso_1 = m_p_isoline.at(point_of_site(site_1));
 
@@ -250,6 +255,13 @@ void IsolineSimplifier::update_matching() {
 						modified_matchings.push_back(seg.source());
 						modified_matchings.push_back(seg.target());
 					}
+					if (site_2.is_point()) {
+						modified_matchings.push_back(site_2.point());
+					} else {
+						auto seg = site_2.segment();
+						modified_matchings.push_back(seg.source());
+						modified_matchings.push_back(seg.target());
+					}
 				}
 			} while (++ic != ic_start);
 		}
@@ -264,7 +276,8 @@ void IsolineSimplifier::update_matching() {
 		pts.erase(std::unique(pts.begin(), pts.end()), pts.end());
 	}
 	// Naive slow: recompute
-//	m_matching = matching(m_delaunay, m_separator, m_p_prev, m_p_next, m_p_isoline, true);
+//	m_separator = medial_axis_separator(m_delaunay, m_p_isoline, m_p_prev, m_p_next);
+//	m_matching = matching(m_delaunay, m_separator, m_p_prev, m_p_next, m_p_isoline);
 }
 
 void IsolineSimplifier::update_ladders() {
@@ -342,8 +355,9 @@ bool IsolineSimplifier::step() {
 void IsolineSimplifier::create_slope_ladder(Gt::Segment_2 seg, bool do_push_heap) {
 	if (m_e_ladder.contains(seg) || m_e_ladder.contains(seg.opposite())) return;
 
-	Gt::Point_2 s = seg.source();
-	Gt::Point_2 t = seg.target();
+	bool reversed = m_p_next.contains(seg.target()) && m_p_next.at(seg.target()) == seg.source();
+	Gt::Point_2 s = reversed ? seg.target() : seg.source();
+	Gt::Point_2 t = reversed ? seg.source() : seg.target();
 
 	const auto search = [&](const Gt::Point_2& s, const Gt::Point_2& t, CGAL::Sign initial_dir, CGAL::Sign dir, std::shared_ptr<SlopeLadder> slope_ladder, const auto& search_f) {
 		if (!(m_matching.contains(s) && m_matching.contains(t))) return;
@@ -410,7 +424,11 @@ void IsolineSimplifier::create_slope_ladder(Gt::Segment_2 seg, bool do_push_heap
 	// emplace_back on m_slope_ladders gives issues for some reason unknown to me
 	std::shared_ptr<SlopeLadder> slope_ladder = std::make_shared<SlopeLadder>();
 	slope_ladder->m_rungs.emplace_back(s, t);
-	m_e_ladder[seg] = slope_ladder;
+	if (!reversed) {
+		m_e_ladder[seg] = slope_ladder;
+	} else {
+		m_e_ladder[seg.opposite()] = slope_ladder;
+	}
 	m_p_ladder[s].push_back(slope_ladder);
 	m_p_ladder[t].push_back(slope_ladder);
 
