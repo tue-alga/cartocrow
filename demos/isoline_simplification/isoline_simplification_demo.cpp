@@ -414,12 +414,14 @@ void SlopeLadderPainting::paint(GeometryRenderer& renderer) const {
 	}
 }
 
-CollapsePainting::CollapsePainting(const IsolineSimplifier& simplifier):
+CollapsePainting::CollapsePainting(IsolineSimplifier& simplifier):
       m_simplifier(simplifier) {}
 
 void CollapsePainting::paint(GeometryRenderer& renderer) const {
 	if (!m_simplifier.m_slope_ladders.empty()) {
-		const auto& slope_ladder = m_simplifier.m_slope_ladders.front();
+		auto next = m_simplifier.next_ladder();
+		if (!next.has_value()) return;
+		const auto& slope_ladder = *next;
 		if (!slope_ladder->m_old) {
 			renderer.setStroke(Color(255, 20, 20), 2.0);
 			draw_slope_ladder(renderer, *slope_ladder);

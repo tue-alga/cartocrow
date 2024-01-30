@@ -123,13 +123,13 @@ class SlopeLadderPainting : public GeometryPainting {
 
 class CollapsePainting : public GeometryPainting {
   public:
-	CollapsePainting(const IsolineSimplifier& simplifier);
+	CollapsePainting(IsolineSimplifier& simplifier);
 
   protected:
 	void paint(GeometryRenderer& renderer) const override;
 
   private:
-	const IsolineSimplifier& m_simplifier;
+	IsolineSimplifier& m_simplifier;
 };
 
 #endif //CARTOCROW_ISOLINE_SIMPLIFICATION_DEMO_H

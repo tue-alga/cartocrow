@@ -31,6 +31,7 @@ class IsolineSimplifier {
 	IsolineSimplifier(std::vector<Isoline<K>> isolines);
 	std::vector<Isoline<K>> simplify();
 	bool step();
+	std::optional<std::shared_ptr<SlopeLadder>> next_ladder();
 
 	void update_ladders();
 	void update_matching();
@@ -42,7 +43,7 @@ class IsolineSimplifier {
 	PointToPoint m_p_prev;
 	PointToPoint m_p_next;
 	PointToIterator m_p_iterator;
-	PointToSlopeLadders m_p_ladder;
+	PointToSlopeLadders m_p_ladder; // maps point to the ladders it is a cap of
 	EdgeToSlopeLadder m_e_ladder;
 	PointToVertex m_p_vertex;
 	EdgeToVertex m_e_vertex;
@@ -59,6 +60,7 @@ class IsolineSimplifier {
 	void initialize_slope_ladders();
 	void collapse_edge(Gt::Segment_2 vertex, Gt::Point_2 new_point);
 	void create_slope_ladder(Gt::Segment_2 seg, bool do_push_heap);
+	void check_valid();
 };
 }
 

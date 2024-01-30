@@ -184,7 +184,7 @@ Matching matching(const SDG2& delaunay, const Separator& separator, const PointT
 	for (auto& [_, ms] : matching)
 	for (auto& [_, mi] : ms)
 	for (auto& [_, pts] : mi) {
-		std::sort(pts.begin(), pts.end(), comparison_f);
+		std::sort(pts.begin(), pts.end());//, comparison_f);
 		pts.erase(std::unique(pts.begin(), pts.end()), pts.end());
 	}
 
