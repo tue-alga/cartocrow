@@ -29,7 +29,7 @@ class IsolineSimplifier {
   public:
 	IsolineSimplifier() = default;
 	IsolineSimplifier(std::vector<Isoline<K>> isolines);
-	std::vector<Isoline<K>> simplify();
+	void simplify(int target);
 	bool step();
 	std::optional<std::shared_ptr<SlopeLadder>> next_ladder();
 
@@ -53,6 +53,7 @@ class IsolineSimplifier {
 	std::vector<std::shared_ptr<SlopeLadder>> m_slope_ladders;
 	std::unordered_set<SDG2::Vertex_handle> m_changed_vertices;
 	std::vector<Gt::Point_2> m_deleted_points;
+	int m_current_complexity = 0;
 
   private:
 	void initialize_point_data();

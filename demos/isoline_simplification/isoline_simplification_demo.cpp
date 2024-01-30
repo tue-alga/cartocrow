@@ -75,6 +75,13 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 			fileSelector->addItem(QString::fromStdString(p.path().stem().string()));
 	}
 
+	std::shared_ptr<ipe::Document> document = IpeReader::loadIpeFile(dir + fileSelector->currentText().toStdString() + ".ipe");
+	ipe::Page* page = document->page(0);
+	m_isoline_simplifier = std::make_unique<IsolineSimplifier>(isolinesInPage(page));
+
+	auto* number_of_vertices = new QLabel(QString(("#Vertices: " + std::to_string(m_isoline_simplifier->m_current_complexity)).c_str()));
+	vLayout->addWidget(number_of_vertices);
+
 	auto* doMedial = new QCheckBox("Compute medial axis");
 	//	doMedial->setCheckState(Qt::Checked);
 	vLayout->addWidget(doMedial);
@@ -112,6 +119,9 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 	auto* showVertices = new QCheckBox("Show isoline vertices");
 	vLayout->addWidget(showVertices);
 
+	auto* simplify_button = new QPushButton("Simplify");
+	vLayout->addWidget(simplify_button);
+
 	auto* step_button = new QPushButton("Step && update");
 	vLayout->addWidget(step_button);
 
@@ -124,7 +134,8 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 	auto* update_sl_button = new QPushButton("Update slope ladders");
 	vLayout->addWidget(update_sl_button);
 
-	m_recalculate = [this, doMedial, doCGALSimplify, simplificationTarget, regionIndex, showVertices, isolineIndex]() {
+	m_recalculate = [this, doMedial, doCGALSimplify, simplificationTarget, regionIndex, showVertices, isolineIndex, number_of_vertices]() {
+		number_of_vertices->setText(QString(("#Vertices: " + std::to_string(m_isoline_simplifier->m_current_complexity)).c_str()));
 		recalculate(doMedial->checkState(), simplificationTarget->value(),
 					doCGALSimplify->checkState(), regionIndex->value(), showVertices->checkState(), isolineIndex->value());
 	};
@@ -144,11 +155,13 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 	connect(showVertices, &QCheckBox::stateChanged, m_recalculate);
 	connect(isolineIndex, QOverload<int>::of(&QSpinBox::valueChanged), m_recalculate);
 	connect(step_button, &QPushButton::clicked, [this]() {
-		m_isoline_simplifier->step();
-	  	m_isoline_simplifier->update_separator();
-	  	m_isoline_simplifier->update_matching();
-	  	m_isoline_simplifier->update_ladders();
-		m_recalculate();
+		bool progress = m_isoline_simplifier->step();
+		if (progress) {
+			m_isoline_simplifier->update_separator();
+			m_isoline_simplifier->update_matching();
+			m_isoline_simplifier->update_ladders();
+			m_recalculate();
+		}
 	});
 	connect(step_only_button, &QPushButton::clicked, [this]() {
 		m_isoline_simplifier->step();
@@ -163,10 +176,11 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 	    m_isoline_simplifier->update_ladders();
 		m_recalculate();
 	});
-
-	std::shared_ptr<ipe::Document> document = IpeReader::loadIpeFile(dir + fileSelector->currentText().toStdString() + ".ipe");
-	ipe::Page* page = document->page(0);
-	m_isoline_simplifier = std::make_unique<IsolineSimplifier>(isolinesInPage(page));
+	connect(simplify_button, &QPushButton::clicked, [this, simplificationTarget]() {
+		std::cout << "Target: " << simplificationTarget->value() << std::endl;
+		m_isoline_simplifier->simplify(simplificationTarget->value());
+	    m_recalculate();
+	});
 
 	m_renderer = new GeometryWidget();
 	m_renderer->setDrawAxes(showGrid->checkState());
@@ -297,6 +311,22 @@ int main(int argc, char* argv[]) {
 	demo.show();
 	app.exec();
 }
+
+//int main() {
+//	auto dir = std::string("/home/steven/Documents/cartocrow/inputs/");
+//
+//	std::shared_ptr<ipe::Document> document = IpeReader::loadIpeFile(dir + "antarctica_messy_150_a.ipe");
+//	ipe::Page* page = document->page(0);
+//	auto simplifier = IsolineSimplifier(isolinesInPage(page));
+//
+//	auto start = std::chrono::system_clock::now().time_since_epoch();
+//	simplifier.simplify(1000);
+//	auto end = std::chrono::system_clock::now().time_since_epoch();
+//
+//	const std::chrono::duration<double> duration = end - start;
+//
+//	std::cout << duration.count() << std::endl;
+//}
 
 MedialAxisPainting::MedialAxisPainting(const SDG2& delaunay): m_delaunay(delaunay) {}
 

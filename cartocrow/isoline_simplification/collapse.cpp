@@ -6,6 +6,7 @@
 
 namespace cartocrow::isoline_simplification {
 void SlopeLadder::compute_collapsed(const PointToPoint& p_prev, const PointToPoint& p_next) {
+	if (!m_valid) return;
 	for (const auto& rung : m_rungs) {
 		auto t = rung.source();
 		auto u = rung.target();

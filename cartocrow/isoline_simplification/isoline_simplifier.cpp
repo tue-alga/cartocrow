@@ -36,8 +36,10 @@ IsolineSimplifier::IsolineSimplifier(std::vector<Isoline<K>> isolines): m_isolin
 }
 
 void IsolineSimplifier::initialize_point_data() {
+	m_current_complexity = 0;
 	for (auto& isoline : m_simplified_isolines) {
 		for (auto pit = isoline.m_points.begin(); pit != isoline.m_points.end(); pit++) {
+			++m_current_complexity;
 			Gt::Point_2& p = *pit;
 			m_p_isoline[p] = &isoline;
 			m_p_iterator[p] = pit;
@@ -75,11 +77,17 @@ void IsolineSimplifier::initialize_sdg() {
 	}
 }
 
-std::vector<Isoline<K>> IsolineSimplifier::simplify() {
-	return m_isolines;
+void IsolineSimplifier::simplify(int target) {
+	while (m_current_complexity > target) {
+		if (!step()) return;
+		update_matching();
+		update_ladders();
+	}
 }
 
 void IsolineSimplifier::collapse_edge(Gt::Segment_2 edge, Gt::Point_2 new_point) {
+	--m_current_complexity;
+
 	auto insert_adj = [this](SDG2::Vertex_handle vertex) {
 		// the vertices that are inserted can probably be reduced / limited by using the fact that
 		// adjacent vertices of the same isoline do not affect the slope ladders.
@@ -289,6 +297,7 @@ void IsolineSimplifier::update_matching() {
 
 	for (const auto& pt : modified_matchings) {
 		std::vector<CGAL::Sign> to_remove_s;
+		if (!m_matching.contains(pt)) continue;
 		for (auto& [sign, mi] : m_matching.at(pt)) {
 			std::vector<Isoline<K>*> to_remove_i;
 			for (auto& [iso, pts] : mi) {
@@ -312,7 +321,6 @@ void IsolineSimplifier::update_matching() {
 }
 
 void IsolineSimplifier::update_ladders() {
-	// todo: fix bug in this ladder update code (recomputing from matching seems to work)
 	if (!m_slope_ladders.empty()) {
 		std::pop_heap(m_slope_ladders.begin(), m_slope_ladders.end(), slope_ladder_comp);
 		m_slope_ladders.pop_back();
