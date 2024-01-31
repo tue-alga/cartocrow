@@ -28,6 +28,7 @@ auto slope_ladder_comp = [](const std::shared_ptr<SlopeLadder>& sl1, const std::
 };
 
 IsolineSimplifier::IsolineSimplifier(std::vector<Isoline<K>> isolines): m_isolines(std::move(isolines)), m_simplified_isolines(m_isolines) {
+	clean_isolines();
 	initialize_sdg();
 	initialize_point_data();
 	m_separator = medial_axis_separator(m_delaunay, m_p_isoline, m_p_prev, m_p_next);
@@ -221,11 +222,6 @@ void IsolineSimplifier::collapse_edge(Gt::Segment_2 edge, Gt::Point_2 new_point)
 	m_p_next.erase(u);
 }
 
-void IsolineSimplifier::update_separator() {
-	// No need to update separator, todo: remove this method
-//	m_separator = medial_axis_separator(m_delaunay, m_p_isoline, m_p_prev, m_p_next);
-}
-
 void IsolineSimplifier::update_matching() {
 	std::unordered_set<Gt::Point_2> updated_points;
 	std::unordered_set<SDG2::Vertex_handle> changed_vertices_and_endpoints;
@@ -386,12 +382,17 @@ std::optional<std::shared_ptr<SlopeLadder>> IsolineSimplifier::next_ladder() {
 	// Non-valid slope ladders have very high cost so this means no valid slope ladders are left
 	if (!slope_ladder->m_valid) return std::nullopt;
 
-	while (slope_ladder->m_old) {
+	while (slope_ladder->m_old || check_ladder_intersections_naive(*slope_ladder)) {
 		if (m_slope_ladders.empty()) return std::nullopt;
 		std::pop_heap(m_slope_ladders.begin(), m_slope_ladders.end(), slope_ladder_comp);
-		m_slope_ladders.pop_back();
+		if (slope_ladder->m_old)
+			m_slope_ladders.pop_back();
 		slope_ladder = m_slope_ladders.front();
 		if (!slope_ladder->m_valid) return std::nullopt;
+	}
+
+	if (slope_ladder->m_old || check_ladder_intersections_naive(*slope_ladder)) {
+		return std::nullopt;
 	}
 
 	return slope_ladder;
@@ -399,6 +400,7 @@ std::optional<std::shared_ptr<SlopeLadder>> IsolineSimplifier::next_ladder() {
 
 bool IsolineSimplifier::step() {
 //	check_valid();
+	m_started = true;
 
 	auto next = next_ladder();
 	if (!next.has_value()) return false;
@@ -549,5 +551,77 @@ void IsolineSimplifier::check_valid() {
 			assert(m_p_isoline.at(*pit) == &isoline);
 		}
 	}
+}
+
+void IsolineSimplifier::clean_isolines() {
+	for (auto& isoline : m_simplified_isolines) {
+		isoline.m_points.erase(std::unique(isoline.m_points.begin(), isoline.m_points.end()), isoline.m_points.end());
+	}
+}
+
+bool IsolineSimplifier::check_ladder_intersections_naive(const SlopeLadder& ladder) {
+	assert(ladder.m_valid && !ladder.m_old);
+	std::unordered_set<Gt::Segment_2> edges_to_skip;
+	std::vector<Gt::Segment_2> new_edges;
+
+	for (int i = 0; i < ladder.m_rungs.size(); i++) {
+		const auto& rung = ladder.m_rungs.at(i);
+
+		bool reversed = m_p_next.at(rung.target()) == rung.source();
+		const auto& t = reversed ? rung.target() : rung.source();
+		const auto& u = reversed ? rung.source() : rung.target();
+		const auto& s = m_p_prev.at(t);
+		const auto& v = m_p_next.at(u);
+		const auto st = Gt::Segment_2(s, t);
+		const auto tu = Gt::Segment_2(t, u);
+		const auto uv = Gt::Segment_2(u, v);
+		edges_to_skip.insert(st);
+		edges_to_skip.insert(tu);
+		edges_to_skip.insert(uv);
+
+		const auto& p = ladder.m_collapsed.at(i);
+		const auto sp = Gt::Segment_2(s, p);
+		const auto pv = Gt::Segment_2(p, v);
+		new_edges.push_back(sp);
+		new_edges.push_back(pv);
+	}
+
+	for (const auto& isoline : m_simplified_isolines) {
+		auto polyline = isoline.polyline();
+		for (auto eit = polyline.edges_begin(); eit != polyline.edges_end(); eit++) {
+			const auto& edge = *eit;
+			if (edges_to_skip.contains(edge)) continue;
+			for (int i = 0; i < ladder.m_rungs.size(); i++) {
+				const auto& rung = ladder.m_rungs.at(i);
+				const auto& p = ladder.m_collapsed.at(i);
+				bool reversed = m_p_next.at(rung.target()) == rung.source();
+				const auto& t = reversed ? rung.target() : rung.source();
+				const auto& u = reversed ? rung.source() : rung.target();
+				const auto& s = m_p_prev.at(t);
+				const auto& v = m_p_next.at(u);
+				const auto sp = Gt::Segment_2(s, p);
+				const auto pv = Gt::Segment_2(p, v);
+				auto spi = intersection(sp, edge);
+				auto pvi = intersection(pv, edge);
+				if (spi.has_value() && !(spi->type() == typeid(Gt::Point_2) && boost::get<Gt::Point_2>(*spi) == s) ||
+				    pvi.has_value() && !(pvi->type() == typeid(Gt::Point_2) && boost::get<Gt::Point_2>(*pvi) == v))
+					return true;
+			}
+		}
+	}
+
+	for (const auto& e1 : new_edges) {
+		for (const auto& e2 : new_edges) {
+			if (e1 == e2) continue;
+			auto i = intersection(e1, e2);
+			if (i.has_value()) {
+				if (i->type() != typeid(Gt::Point_2)) return true;
+				auto p = boost::get<Gt::Point_2>(*i);
+				if (p != e1.source() && p != e1.target()) return true;
+			}
+		}
+	}
+
+	return false;
 }
 }

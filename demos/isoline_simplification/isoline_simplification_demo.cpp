@@ -82,9 +82,9 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 	auto* number_of_vertices = new QLabel(QString(("#Vertices: " + std::to_string(m_isoline_simplifier->m_current_complexity)).c_str()));
 	vLayout->addWidget(number_of_vertices);
 
-	auto* doMedial = new QCheckBox("Compute medial axis");
-	//	doMedial->setCheckState(Qt::Checked);
-	vLayout->addWidget(doMedial);
+	auto* debugInfo = new QCheckBox("Debug info");
+	//	debugInfo->setCheckState(Qt::Checked);
+	vLayout->addWidget(debugInfo);
 
 	auto* doCGALSimplify = new QCheckBox("CGAL simplify");
 	vLayout->addWidget(doCGALSimplify);
@@ -134,9 +134,9 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 	auto* update_sl_button = new QPushButton("Update slope ladders");
 	vLayout->addWidget(update_sl_button);
 
-	m_recalculate = [this, doMedial, doCGALSimplify, simplificationTarget, regionIndex, showVertices, isolineIndex, number_of_vertices]() {
+	m_recalculate = [this, debugInfo, doCGALSimplify, simplificationTarget, regionIndex, showVertices, isolineIndex, number_of_vertices]() {
 		number_of_vertices->setText(QString(("#Vertices: " + std::to_string(m_isoline_simplifier->m_current_complexity)).c_str()));
-		recalculate(doMedial->checkState(), simplificationTarget->value(),
+		recalculate(debugInfo->checkState(), simplificationTarget->value(),
 					doCGALSimplify->checkState(), regionIndex->value(), showVertices->checkState(), isolineIndex->value());
 	};
 
@@ -147,7 +147,7 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 		m_recalculate();
 	});
 
-	connect(doMedial, &QCheckBox::stateChanged, m_recalculate);
+	connect(debugInfo, &QCheckBox::stateChanged, m_recalculate);
 	connect(simplificationTarget, QOverload<int>::of(&QSpinBox::valueChanged), m_recalculate);
 	connect(doCGALSimplify, &QCheckBox::stateChanged, m_recalculate);
 	connect(regionIndex, QOverload<int>::of(&QSpinBox::valueChanged), m_recalculate);
@@ -157,7 +157,6 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 	connect(step_button, &QPushButton::clicked, [this]() {
 		bool progress = m_isoline_simplifier->step();
 		if (progress) {
-			m_isoline_simplifier->update_separator();
 			m_isoline_simplifier->update_matching();
 			m_isoline_simplifier->update_ladders();
 			m_recalculate();
@@ -168,7 +167,6 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 		m_recalculate();
 	});
 	connect(update_sm_button, &QPushButton::clicked, [this]() {
-	  	m_isoline_simplifier->update_separator();
 	  	m_isoline_simplifier->update_matching();
 	  	m_recalculate();
 	});
@@ -177,7 +175,6 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 		m_recalculate();
 	});
 	connect(simplify_button, &QPushButton::clicked, [this, simplificationTarget]() {
-		std::cout << "Target: " << simplificationTarget->value() << std::endl;
 		m_isoline_simplifier->simplify(simplificationTarget->value());
 	    m_recalculate();
 	});
@@ -188,18 +185,18 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 	m_recalculate();
 }
 
-void IsolineSimplificationDemo::recalculate(bool voronoi, int target, bool cgal_simplify, int region_index, bool show_vertices, int isoline_index) {
-	// todo: split into repaint and separate recalculations like simplification, voronoi
+void IsolineSimplificationDemo::recalculate(bool debugInfo, int target, bool cgal_simplify, int region_index, bool show_vertices, int isoline_index) {
+	// todo: split into repaint and separate recalculations like simplification, debugInfo
 	m_renderer->clear();
 	m_cgal_simplified.clear();
 	IpeRenderer ipe_renderer;
 
 	std::vector<Isoline<K>>& isolines = m_isoline_simplifier->m_simplified_isolines;
 
-	auto medial_axis_p = std::make_shared<MedialAxisPainting>(m_isoline_simplifier->m_delaunay);
-	if (voronoi) {
-		m_renderer->addPainting(medial_axis_p, "Medial axis");
-		ipe_renderer.addPainting(medial_axis_p, "Medial axis");
+	auto medial_axis_p = std::make_shared<VoronoiPainting>(m_isoline_simplifier->m_delaunay);
+	if (debugInfo) {
+		m_renderer->addPainting(medial_axis_p, "Voronoi diagram");
+		ipe_renderer.addPainting(medial_axis_p, "Voronoi diagram");
 	}
 
 	const auto& separator = m_isoline_simplifier->m_separator;
@@ -215,12 +212,14 @@ void IsolineSimplificationDemo::recalculate(bool voronoi, int target, bool cgal_
 	auto collapse_p = std::make_shared<CollapsePainting>(*m_isoline_simplifier);
 //	auto changed_p = std::make_shared<ChangedPainting>(*m_isoline_simplifier.);
 
-	if (voronoi) {
+	if (debugInfo) {
 		m_renderer->addPainting(matching_p, "Matching");
-//		m_renderer->addPainting(separator_p, "Separator");
+		if (!m_isoline_simplifier->m_started) {
+			m_renderer->addPainting(separator_p, "Separator");
+			ipe_renderer.addPainting(separator_p, "Separator");
+		}
 		m_renderer->addPainting(slope_ladder_p, "Slope ladders");
 
-//		ipe_renderer.addPainting(separator_p, "Separator");
 		ipe_renderer.addPainting(slope_ladder_p, "Slope ladders");
 	}
 
@@ -260,13 +259,15 @@ void IsolineSimplificationDemo::recalculate(bool voronoi, int target, bool cgal_
 		ipe_renderer.addPainting(cgal_simplified_p, "CGAL simplified isolines");
 	}
 
-	if (voronoi && region_index < isolines.size() && separator.contains(&isolines[region_index])) {
-//		auto touched_p = std::make_shared<TouchedPainting>(separator.at(&isolines[region_index]), m_isoline_simplifier->m_delaunay);
-//		m_renderer->addPainting(touched_p, "Touched");
+	if (!m_isoline_simplifier->m_started && debugInfo && region_index < isolines.size() && separator.contains(&isolines[region_index])) {
+		auto touched_p = std::make_shared<TouchedPainting>(separator.at(&isolines[region_index]), m_isoline_simplifier->m_delaunay);
+		m_renderer->addPainting(touched_p, "Touched");
 	}
 
-	m_renderer->addPainting(collapse_p, "Collapse");
-	ipe_renderer.addPainting(collapse_p, "Collapse");
+	if (debugInfo) {
+		m_renderer->addPainting(collapse_p, "Collapse");
+		ipe_renderer.addPainting(collapse_p, "Collapse");
+	}
 
 	m_renderer->update();
 
@@ -328,9 +329,9 @@ int main(int argc, char* argv[]) {
 //	std::cout << duration.count() << std::endl;
 //}
 
-MedialAxisPainting::MedialAxisPainting(const SDG2& delaunay): m_delaunay(delaunay) {}
+VoronoiPainting::VoronoiPainting(const SDG2& delaunay): m_delaunay(delaunay) {}
 
-void MedialAxisPainting::paint(GeometryRenderer& renderer) const {
+void VoronoiPainting::paint(GeometryRenderer& renderer) const {
 	renderer.setStroke(Color(150, 150, 150), 1);
 	renderer.setMode(GeometryRenderer::stroke);
 

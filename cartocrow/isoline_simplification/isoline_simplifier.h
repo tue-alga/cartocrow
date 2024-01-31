@@ -35,7 +35,6 @@ class IsolineSimplifier {
 
 	void update_ladders();
 	void update_matching();
-	void update_separator();
 
 	std::vector<Isoline<K>> m_isolines;
 	std::vector<Isoline<K>> m_simplified_isolines;
@@ -54,6 +53,7 @@ class IsolineSimplifier {
 	std::unordered_set<SDG2::Vertex_handle> m_changed_vertices;
 	std::vector<Gt::Point_2> m_deleted_points;
 	int m_current_complexity = 0;
+	bool m_started = false;
 
   private:
 	void initialize_point_data();
@@ -62,6 +62,9 @@ class IsolineSimplifier {
 	void collapse_edge(Gt::Segment_2 vertex, Gt::Point_2 new_point);
 	void create_slope_ladder(Gt::Segment_2 seg, bool do_push_heap);
 	void check_valid();
+	void clean_isolines();
+	bool check_ladder_intersections_naive(const SlopeLadder& ladder);
+
 };
 }
 

@@ -39,7 +39,7 @@ class IsolineSimplificationDemo : public QMainWindow {
 
   public:
 	IsolineSimplificationDemo();
-	void recalculate(bool voronoi, int target, bool cgal_simplify, int region_index, bool show_vertices, int isoline_index);
+	void recalculate(bool debugInfo, int target, bool cgal_simplify, int region_index, bool show_vertices, int isoline_index);
 
   private:
 	std::vector<Isoline<K>> m_cgal_simplified;
@@ -51,9 +51,9 @@ class IsolineSimplificationDemo : public QMainWindow {
 
 std::vector<Isoline<K>> isolinesInPage(ipe::Page* page);
 
-class MedialAxisPainting : public GeometryPainting {
+class VoronoiPainting : public GeometryPainting {
   public:
-	MedialAxisPainting(const SDG2& delaunay);
+	VoronoiPainting(const SDG2& delaunay);
 
   protected:
 	void paint(GeometryRenderer& renderer) const override;
