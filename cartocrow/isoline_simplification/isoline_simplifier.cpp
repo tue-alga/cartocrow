@@ -86,9 +86,7 @@ void IsolineSimplifier::simplify(int target) {
 	}
 }
 
-void IsolineSimplifier::collapse_edge(Gt::Segment_2 edge, Gt::Point_2 new_point) {
-	--m_current_complexity;
-
+void IsolineSimplifier::collapse_ladder(SlopeLadder& ladder) {
 	auto insert_adj = [this](SDG2::Vertex_handle vertex) {
 		// the vertices that are inserted can probably be reduced / limited by using the fact that
 		// adjacent vertices of the same isoline do not affect the slope ladders.
@@ -149,77 +147,111 @@ void IsolineSimplifier::collapse_edge(Gt::Segment_2 edge, Gt::Point_2 new_point)
 		return handle;
 	};
 
-	bool reversed = m_p_next[edge.target()] == edge.source();
-	const Gt::Point_2& t = reversed ? edge.target() : edge.source();
-	const Gt::Point_2& u = reversed ? edge.source() : edge.target();
-	assert(m_p_next[t] == u && m_p_prev[u] == t);
-	const Gt::Point_2& s = m_p_prev[t];
-	const Gt::Point_2& v = m_p_next[u];
-	const Gt::Segment_2 st = Gt::Segment_2(s, t);
-	const Gt::Segment_2 uv = Gt::Segment_2(u, v);
+	for (int i = 0; i < ladder.m_rungs.size(); i++) {
+		auto edge = ladder.m_rungs.at(i);
 
-	m_deleted_points.push_back(t);
-	m_deleted_points.push_back(u);
+		bool reversed = m_p_next.at(edge.target()) == edge.source();
+		const Gt::Point_2& t = reversed ? edge.target() : edge.source();
+		const Gt::Point_2& u = reversed ? edge.source() : edge.target();
+		assert(m_p_next.at(t) == u && m_p_prev.at(u) == t);
+		const Gt::Point_2& s = m_p_prev.at(t);
+		const Gt::Point_2& v = m_p_next.at(u);
+		const Gt::Segment_2 st = Gt::Segment_2(s, t);
+		const Gt::Segment_2 uv = Gt::Segment_2(u, v);
 
-	auto t_it = m_p_iterator.at(t);
-	auto u_it = m_p_iterator.at(u);
-	Isoline<K>* t_iso = m_p_isoline.at(t);
-	Isoline<K>* u_iso = m_p_isoline.at(u);
-	assert(t_iso == u_iso);
-
-	// Remove points from isolines
-	auto new_it = t_iso->m_points.insert(u_it, new_point);
-	t_iso->m_points.erase(t_it);
-	u_iso->m_points.erase(u_it);
-
-	// Update some ladder info
-	if (m_e_ladder.contains(st)) {
-		m_e_ladder.at(st)->m_old = true;
-		m_e_ladder.erase(st);
-	}
-	if (m_e_ladder.contains(uv)) {
-		m_e_ladder.at(uv)->m_old = true;
-		m_e_ladder.erase(uv);
-	}
-	if (m_e_ladder.contains(st.opposite())) {
-		m_e_ladder.at(st)->m_old = true;
-		m_e_ladder.erase(st);
-	}
-	if (m_e_ladder.contains(uv.opposite())) {
-		m_e_ladder.at(uv)->m_old = true;
-		m_e_ladder.erase(uv);
+		// Remove from Delaunay
+		delaunay_remove_e(edge);
+		delaunay_remove_e(st);
+		delaunay_remove_e(uv);
+		delaunay_remove_p(t);
+		delaunay_remove_p(u);
 	}
 
-	// Update m_p_iterator
-	m_p_iterator[new_point] = new_it;
-	m_p_iterator.erase(t);
-	m_p_iterator.erase(u);
+	for (int i = 0; i < ladder.m_rungs.size(); i++) {
+		auto edge = ladder.m_rungs.at(i);
+		auto new_point = ladder.m_collapsed.at(i);
 
-	// Update Delaunay
-	delaunay_remove_e(edge);
-	delaunay_remove_e(st);
-	delaunay_remove_e(uv);
-	delaunay_remove_p(t);
-	delaunay_remove_p(u);
+		bool reversed = m_p_next.at(edge.target()) == edge.source();
+		const Gt::Point_2& t = reversed ? edge.target() : edge.source();
+		const Gt::Point_2& u = reversed ? edge.source() : edge.target();
+		assert(m_p_next.at(t) == u && m_p_prev.at(u) == t);
+		const Gt::Point_2& s = m_p_prev.at(t);
+		const Gt::Point_2& v = m_p_next.at(u);
 
-	delaunay_insert_e(s, new_point, m_p_vertex.at(s));
-	auto seg_handle = delaunay_insert_e(new_point, v, m_p_vertex.at(v));
-	delaunay_insert_p(new_point, seg_handle);
+		// Insert into Delaunay
+		delaunay_insert_e(s, new_point, m_p_vertex.at(s));
+		auto seg_handle = delaunay_insert_e(new_point, v, m_p_vertex.at(v));
+		delaunay_insert_p(new_point, seg_handle);
+	}
 
-	// Update m_p_isoline
-	m_p_isoline[new_point] = t_iso;
-	m_p_isoline.erase(t);
-	m_p_isoline.erase(u);
+	// Update the rest
+	for (int i = 0; i < ladder.m_rungs.size(); i++) {
+		--m_current_complexity;
 
-	// Update prev and next
-	m_p_next[s] = new_point;
-	m_p_prev[new_point] = s;
-	m_p_prev.erase(t);
-	m_p_next.erase(t);
-	m_p_prev[v] = new_point;
-	m_p_next[new_point] = v;
-	m_p_prev.erase(u);
-	m_p_next.erase(u);
+		auto edge = ladder.m_rungs.at(i);
+		auto new_point = ladder.m_collapsed.at(i);
+
+		bool reversed = m_p_next.at(edge.target()) == edge.source();
+		const Gt::Point_2& t = reversed ? edge.target() : edge.source();
+		const Gt::Point_2& u = reversed ? edge.source() : edge.target();
+		assert(m_p_next.at(t) == u && m_p_prev.at(u) == t);
+		const Gt::Point_2& s = m_p_prev.at(t);
+		const Gt::Point_2& v = m_p_next.at(u);
+		const Gt::Segment_2 st = Gt::Segment_2(s, t);
+		const Gt::Segment_2 uv = Gt::Segment_2(u, v);
+
+		m_deleted_points.push_back(t);
+		m_deleted_points.push_back(u);
+
+		auto t_it = m_p_iterator.at(t);
+		auto u_it = m_p_iterator.at(u);
+		Isoline<K>* t_iso = m_p_isoline.at(t);
+		Isoline<K>* u_iso = m_p_isoline.at(u);
+		assert(t_iso == u_iso);
+
+		// Remove points from isolines
+		auto new_it = t_iso->m_points.insert(u_it, new_point);
+		t_iso->m_points.erase(t_it);
+		u_iso->m_points.erase(u_it);
+
+		// Update some ladder info
+		if (m_e_ladder.contains(st)) {
+			m_e_ladder.at(st)->m_old = true;
+			m_e_ladder.erase(st);
+		}
+		if (m_e_ladder.contains(uv)) {
+			m_e_ladder.at(uv)->m_old = true;
+			m_e_ladder.erase(uv);
+		}
+		if (m_e_ladder.contains(st.opposite())) {
+			m_e_ladder.at(st)->m_old = true;
+			m_e_ladder.erase(st);
+		}
+		if (m_e_ladder.contains(uv.opposite())) {
+			m_e_ladder.at(uv)->m_old = true;
+			m_e_ladder.erase(uv);
+		}
+
+		// Update m_p_iterator
+		m_p_iterator[new_point] = new_it;
+		m_p_iterator.erase(t);
+		m_p_iterator.erase(u);
+
+		// Update m_p_isoline
+		m_p_isoline[new_point] = t_iso;
+		m_p_isoline.erase(t);
+		m_p_isoline.erase(u);
+
+		// Update prev and next
+		m_p_next[s] = new_point;
+		m_p_prev[new_point] = s;
+		m_p_prev.erase(t);
+		m_p_next.erase(t);
+		m_p_prev[v] = new_point;
+		m_p_next[new_point] = v;
+		m_p_prev.erase(u);
+		m_p_next.erase(u);
+	}
 }
 
 void IsolineSimplifier::update_matching() {
@@ -374,26 +406,39 @@ void IsolineSimplifier::update_ladders() {
 }
 
 std::optional<std::shared_ptr<SlopeLadder>> IsolineSimplifier::next_ladder() {
-	if (m_slope_ladders.empty()) return std::nullopt;
+	if (m_slope_ladders.empty())
+		return std::nullopt;
 
 	// Note that m_slope_ladders is a heap
-	auto& slope_ladder = m_slope_ladders.front();
+	auto slope_ladder = m_slope_ladders.front();
 
 	// Non-valid slope ladders have very high cost so this means no valid slope ladders are left
-	if (!slope_ladder->m_valid) return std::nullopt;
+	if (!slope_ladder->m_valid)
+		return std::nullopt;
+
+	int n_temp_pops = 0;
 
 	while (slope_ladder->m_old || check_ladder_intersections_naive(*slope_ladder)) {
-		if (m_slope_ladders.empty()) return std::nullopt;
+		if (m_slope_ladders.empty())
+			return std::nullopt;
 		std::pop_heap(m_slope_ladders.begin(), m_slope_ladders.end(), slope_ladder_comp);
 		if (slope_ladder->m_old)
 			m_slope_ladders.pop_back();
+		else
+			++n_temp_pops;
 		slope_ladder = m_slope_ladders.front();
-		if (!slope_ladder->m_valid) return std::nullopt;
+		if (!slope_ladder->m_valid)
+			return std::nullopt;
+		if (n_temp_pops >= m_slope_ladders.size())
+			return std::nullopt;
 	}
 
 	if (slope_ladder->m_old || check_ladder_intersections_naive(*slope_ladder)) {
 		return std::nullopt;
 	}
+
+	for (int i = 0; i < n_temp_pops; i++)
+		std::push_heap(m_slope_ladders.begin(), m_slope_ladders.end(), slope_ladder_comp);
 
 	return slope_ladder;
 }
@@ -407,10 +452,7 @@ bool IsolineSimplifier::step() {
 	auto slope_ladder = *next;
 
 	m_changed_vertices.clear();
-
-	for (int i = 0; i < slope_ladder->m_rungs.size(); i++) {
-		collapse_edge(slope_ladder->m_rungs[i], slope_ladder->m_collapsed[i]);
-	}
+	collapse_ladder(*slope_ladder);
 
 	slope_ladder->m_old = true;
 
@@ -615,9 +657,11 @@ bool IsolineSimplifier::check_ladder_intersections_naive(const SlopeLadder& ladd
 			if (e1 == e2) continue;
 			auto i = intersection(e1, e2);
 			if (i.has_value()) {
-				if (i->type() != typeid(Gt::Point_2)) return true;
+				if (i->type() != typeid(Gt::Point_2))
+					return true;
 				auto p = boost::get<Gt::Point_2>(*i);
-				if (p != e1.source() && p != e1.target()) return true;
+				if (p != e1.source() && p != e1.target())
+					return true;
 			}
 		}
 	}

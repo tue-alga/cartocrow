@@ -59,7 +59,7 @@ class IsolineSimplifier {
 	void initialize_point_data();
 	void initialize_sdg();
 	void initialize_slope_ladders();
-	void collapse_edge(Gt::Segment_2 vertex, Gt::Point_2 new_point);
+	void collapse_ladder(SlopeLadder& ladder);
 	void create_slope_ladder(Gt::Segment_2 seg, bool do_push_heap);
 	void check_valid();
 	void clean_isolines();
