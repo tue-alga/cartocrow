@@ -54,6 +54,7 @@ class IsolineSimplifier {
 	std::vector<Gt::Point_2> m_deleted_points;
 	int m_current_complexity = 0;
 	bool m_started = false;
+	bool check_ladder_intersections_naive(const SlopeLadder& ladder);
 
   private:
 	void initialize_point_data();
@@ -63,7 +64,6 @@ class IsolineSimplifier {
 	void create_slope_ladder(Gt::Segment_2 seg, bool do_push_heap);
 	void check_valid();
 	void clean_isolines();
-	bool check_ladder_intersections_naive(const SlopeLadder& ladder);
 
 };
 }

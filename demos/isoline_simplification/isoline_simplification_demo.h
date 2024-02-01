@@ -44,10 +44,13 @@ class IsolineSimplificationDemo : public QMainWindow {
   private:
 	std::vector<Isoline<K>> m_cgal_simplified;
 	std::unique_ptr<IsolineSimplifier> m_isoline_simplifier;
+	std::optional<std::shared_ptr<SlopeLadder>> m_debug_ladder;
 
 	GeometryWidget* m_renderer;
 	std::function<void()> m_recalculate;
 };
+
+Polygon<K> slope_ladder_polygon(const SlopeLadder& slope_ladder);
 
 std::vector<Isoline<K>> isolinesInPage(ipe::Page* page);
 
@@ -130,6 +133,18 @@ class CollapsePainting : public GeometryPainting {
 
   private:
 	IsolineSimplifier& m_simplifier;
+};
+
+class DebugLadderPainting : public GeometryPainting {
+  public:
+	DebugLadderPainting(IsolineSimplifier& simplifier, SlopeLadder& ladder);
+
+  protected:
+	void paint(GeometryRenderer& renderer) const override;
+
+  private:
+	IsolineSimplifier& m_simplifier;
+	SlopeLadder& m_ladder;
 };
 
 #endif //CARTOCROW_ISOLINE_SIMPLIFICATION_DEMO_H

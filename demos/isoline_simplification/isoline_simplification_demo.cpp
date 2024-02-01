@@ -128,25 +128,32 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 	auto* step_only_button = new QPushButton("Step");
 	vLayout->addWidget(step_only_button);
 
-	auto* update_sm_button = new QPushButton("Update separator && matching");
+	auto* update_sm_button = new QPushButton("Update matching");
 	vLayout->addWidget(update_sm_button);
 
 	auto* update_sl_button = new QPushButton("Update slope ladders");
 	vLayout->addWidget(update_sl_button);
 
+	auto* debug_text = new QLabel("");
+	vLayout->addWidget(debug_text);
+
+	m_renderer = new GeometryWidget();
+	m_renderer->setDrawAxes(showGrid->checkState());
+	setCentralWidget(m_renderer);
+
 	m_recalculate = [this, debugInfo, doCGALSimplify, simplificationTarget, regionIndex, showVertices, isolineIndex, number_of_vertices]() {
 		number_of_vertices->setText(QString(("#Vertices: " + std::to_string(m_isoline_simplifier->m_current_complexity)).c_str()));
 		recalculate(debugInfo->checkState(), simplificationTarget->value(),
-					doCGALSimplify->checkState(), regionIndex->value(), showVertices->checkState(), isolineIndex->value());
+		            doCGALSimplify->checkState(), regionIndex->value(), showVertices->checkState(), isolineIndex->value());
 	};
 
 	connect(fileSelector, &QComboBox::currentTextChanged, [this, dir](const QString& name) {
-	    std::shared_ptr<ipe::Document> document = IpeReader::loadIpeFile(dir + name.toStdString() + ".ipe");
-	    ipe::Page* page = document->page(0);
-	    m_isoline_simplifier = std::make_unique<IsolineSimplifier>(isolinesInPage(page));
+		std::shared_ptr<ipe::Document> document = IpeReader::loadIpeFile(dir + name.toStdString() + ".ipe");
+		ipe::Page* page = document->page(0);
+		m_isoline_simplifier = std::make_unique<IsolineSimplifier>(isolinesInPage(page));
+		m_debug_ladder = std::nullopt;
 		m_recalculate();
 	});
-
 	connect(debugInfo, &QCheckBox::stateChanged, m_recalculate);
 	connect(simplificationTarget, QOverload<int>::of(&QSpinBox::valueChanged), m_recalculate);
 	connect(doCGALSimplify, &QCheckBox::stateChanged, m_recalculate);
@@ -159,29 +166,49 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 		if (progress) {
 			m_isoline_simplifier->update_matching();
 			m_isoline_simplifier->update_ladders();
-			m_recalculate();
 		}
+	  	m_recalculate();
 	});
 	connect(step_only_button, &QPushButton::clicked, [this]() {
 		m_isoline_simplifier->step();
 		m_recalculate();
 	});
 	connect(update_sm_button, &QPushButton::clicked, [this]() {
-	  	m_isoline_simplifier->update_matching();
-	  	m_recalculate();
+		m_isoline_simplifier->update_matching();
+		m_recalculate();
 	});
 	connect(update_sl_button, &QPushButton::clicked, [this]() {
-	    m_isoline_simplifier->update_ladders();
+		m_isoline_simplifier->update_ladders();
 		m_recalculate();
 	});
 	connect(simplify_button, &QPushButton::clicked, [this, simplificationTarget]() {
 		m_isoline_simplifier->simplify(simplificationTarget->value());
-	    m_recalculate();
+		m_recalculate();
+	});
+	connect(m_renderer, &GeometryWidget::clicked, [this, debug_text](auto pt) {
+		auto it = std::find_if(m_isoline_simplifier->m_slope_ladders.begin(), m_isoline_simplifier->m_slope_ladders.end(), [&pt](const std::shared_ptr<SlopeLadder>& ladder) {
+			if (ladder->m_old) return false;
+			auto poly = slope_ladder_polygon(*ladder);
+			return poly.has_on_bounded_side(pt);
+		});
+		if (it == m_isoline_simplifier->m_slope_ladders.end() || *it == m_debug_ladder) {
+			m_debug_ladder = std::nullopt;
+			debug_text->setText("");
+		} else {
+			auto ladder = *it;
+			m_debug_ladder = ladder;
+
+			auto valid_text = "Valid: " + std::to_string(ladder->m_valid);
+			auto intersected_text = !ladder->m_valid ? "" : "\nIntersected: " + std::to_string(m_isoline_simplifier->check_ladder_intersections_naive(*ladder));
+			auto cost_text = "\nCost: " + std::to_string(ladder->m_cost);
+			auto old_text = "\nOld: " + std::to_string(ladder->m_old);
+
+			debug_text->setText(QString((valid_text + intersected_text + cost_text + old_text).c_str()));
+		}
+
+		m_recalculate();
 	});
 
-	m_renderer = new GeometryWidget();
-	m_renderer->setDrawAxes(showGrid->checkState());
-	setCentralWidget(m_renderer);
 	m_recalculate();
 }
 
@@ -267,6 +294,12 @@ void IsolineSimplificationDemo::recalculate(bool debugInfo, int target, bool cga
 	if (debugInfo) {
 		m_renderer->addPainting(collapse_p, "Collapse");
 		ipe_renderer.addPainting(collapse_p, "Collapse");
+	}
+
+	if (m_debug_ladder.has_value()) {
+		auto ladder = *m_debug_ladder;
+		auto debug_ladder_p = std::make_shared<DebugLadderPainting>(*m_isoline_simplifier, *ladder);
+		m_renderer->addPainting(debug_ladder_p, "Debug ladder painting");
 	}
 
 	m_renderer->update();
@@ -417,7 +450,7 @@ void TouchedPainting::paint(GeometryRenderer& renderer) const {
 SlopeLadderPainting::SlopeLadderPainting(const std::vector<std::shared_ptr<SlopeLadder>>& slope_ladders):
       m_slope_ladders(slope_ladders) {}
 
-void draw_slope_ladder(GeometryRenderer& renderer, const SlopeLadder& slope_ladder) {
+Polygon<K> slope_ladder_polygon(const SlopeLadder& slope_ladder) {
 	std::vector<Gt::Point_2> pts;
 	for (const auto& p : slope_ladder.m_rungs) {
 		pts.push_back(p.source());
@@ -431,11 +464,35 @@ void draw_slope_ladder(GeometryRenderer& renderer, const SlopeLadder& slope_ladd
 	if (slope_ladder.m_cap.contains(CGAL::LEFT_TURN)) {
 		pts.push_back(slope_ladder.m_cap.at(CGAL::LEFT_TURN));
 	}
+	return Polygon<K>(pts.begin(), pts.end());
+}
+
+void draw_slope_ladder(GeometryRenderer& renderer, const SlopeLadder& slope_ladder) {
+	auto poly = slope_ladder_polygon(slope_ladder);
 	renderer.setFill(Color(100, 0, 0));
 	renderer.setFillOpacity(20);
 	renderer.setStroke(Color(255, 20, 20), 2.0);
 	renderer.setMode(GeometryRenderer::fill | GeometryRenderer::stroke);
-	renderer.draw(Polygon<K>(pts.begin(), pts.end()));
+	renderer.draw(poly);
+}
+
+void draw_ladder_collapse(GeometryRenderer& renderer, IsolineSimplifier simplifier, const SlopeLadder& slope_ladder) {
+	for (int i = 0; i < slope_ladder.m_rungs.size(); i++) {
+		const auto& rung = slope_ladder.m_rungs.at(i);
+		const auto& p = slope_ladder.m_collapsed.at(i);
+		auto s = simplifier.m_p_prev.at(rung.source());
+		auto t = rung.source();
+		auto u = rung.target();
+		auto v = simplifier.m_p_next.at(rung.target());
+		auto l = area_preservation_line(s, t, u, v);
+		renderer.setStroke(Color(60, 60, 60), 2.0);
+		renderer.draw(l);
+
+		renderer.setStroke(Color(255, 165, 0), 4.0);
+		renderer.draw(Gt::Segment_2(s, p));
+		renderer.draw(Gt::Segment_2(p, v));
+		renderer.draw(p);
+	}
 }
 
 void SlopeLadderPainting::paint(GeometryRenderer& renderer) const {
@@ -449,24 +506,16 @@ CollapsePainting::CollapsePainting(IsolineSimplifier& simplifier):
       m_simplifier(simplifier) {}
 
 void CollapsePainting::paint(GeometryRenderer& renderer) const {
-	if (!m_simplifier.m_slope_ladders.empty()) {
-		auto next = m_simplifier.next_ladder();
-		if (!next.has_value()) return;
-		const auto& slope_ladder = *next;
-		if (!slope_ladder->m_old) {
-			renderer.setStroke(Color(255, 20, 20), 2.0);
-			draw_slope_ladder(renderer, *slope_ladder);
-			for (const auto& rung : slope_ladder->m_rungs) {
-				auto s = m_simplifier.m_p_prev.at(rung.source());
-				auto t = rung.source();
-				auto u = rung.target();
-				auto v = m_simplifier.m_p_next.at(rung.target());
-				auto l = area_preservation_line(s, t, u, v);
-				renderer.draw(l);
-				renderer.draw(l.projection(midpoint(rung)));
-			}
-		}
-	}
+//	if (!m_simplifier.m_slope_ladders.empty()) {
+//		auto next = m_simplifier.next_ladder();
+//		if (!next.has_value()) return;
+//		const auto& slope_ladder = *next;
+//		if (!slope_ladder->m_old) {
+//			renderer.setStroke(Color(255, 20, 20), 2.0);
+//			draw_slope_ladder(renderer, *slope_ladder);
+//			draw_ladder_collapse(renderer, m_simplifier, *slope_ladder);
+//		}
+//	}
 
 	for (const auto& v : m_simplifier.m_changed_vertices) {
 		const auto& site = v->site();
@@ -477,4 +526,13 @@ void CollapsePainting::paint(GeometryRenderer& renderer) const {
 			renderer.draw(site.segment());
 		}
 	}
+}
+
+DebugLadderPainting::DebugLadderPainting(IsolineSimplifier& simplifier, SlopeLadder& ladder):
+	m_simplifier(simplifier), m_ladder(ladder) {}
+
+void DebugLadderPainting::paint(GeometryRenderer& renderer) const {
+	if (!m_ladder.m_valid) return;
+	draw_slope_ladder(renderer, m_ladder);
+	draw_ladder_collapse(renderer, m_simplifier, m_ladder);
 }
