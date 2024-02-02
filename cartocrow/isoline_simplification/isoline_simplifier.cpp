@@ -82,7 +82,6 @@ void IsolineSimplifier::initialize_sdg() {
 
 void IsolineSimplifier::simplify(int target) {
 	while (m_current_complexity > target) {
-		std::cout << m_current_complexity << "\r" << std::flush;
 		if (!step()) return;
 		update_matching();
 		update_ladders();
@@ -417,6 +416,12 @@ std::optional<std::shared_ptr<SlopeLadder>> IsolineSimplifier::next_ladder() {
 	std::vector<std::shared_ptr<SlopeLadder>> temp;
 	std::optional<std::shared_ptr<SlopeLadder>> result;
 
+	if (!current->m_old && current->m_valid && check_ladder_intersections_Voronoi(*current)) std::cout << "Found intersection!" << std::endl;
+	if (!current->m_old && current->m_valid && check_ladder_intersections_naive(*current) != check_ladder_intersections_Voronoi(*current)) {
+		std::cout << "Intersection computation incorrect!" << std::endl;
+		std::cout << check_ladder_intersections_Voronoi(*current) << std::endl;
+	}
+
 	while (current->m_old || check_ladder_intersections_naive(*current)) {
 		if (m_slope_ladders.empty()) {
 			break;
@@ -631,7 +636,7 @@ void IsolineSimplifier::clean_isolines() {
 	}
 }
 
-bool IsolineSimplifier::check_ladder_intersections_naive(const SlopeLadder& ladder) {
+bool IsolineSimplifier::check_ladder_intersections_naive(const SlopeLadder& ladder) const {
 	assert(ladder.m_valid && !ladder.m_old);
 	std::unordered_set<Gt::Segment_2> edges_to_skip;
 	std::vector<Gt::Segment_2> new_edges;
@@ -680,6 +685,211 @@ bool IsolineSimplifier::check_ladder_intersections_naive(const SlopeLadder& ladd
 					return true;
 			}
 		}
+	}
+
+	for (const auto& e1 : new_edges) {
+		for (const auto& e2 : new_edges) {
+			if (e1 == e2) continue;
+			auto i = intersection(e1, e2);
+			if (i.has_value()) {
+				if (i->type() != typeid(Gt::Point_2))
+					return true;
+				auto p = boost::get<Gt::Point_2>(*i);
+				if (p != e1.source() && p != e1.target())
+					return true;
+			}
+		}
+	}
+
+	return false;
+}
+
+inline
+    CGAL::Sign incircle(const SDG2& sdg, const SDG2::Site_2 &t1, const SDG2::Site_2 &t2,
+             const SDG2::Site_2 &t3, const SDG2::Site_2 &q) {
+	return sdg.geom_traits().vertex_conflict_2_object()(t1, t2, t3, q);
+}
+
+inline
+    CGAL::Sign incircle(const SDG2& sdg, const SDG2::Site_2 &t1, const SDG2::Site_2 &t2,
+             const SDG2::Site_2 &q) {
+	return sdg.geom_traits().vertex_conflict_2_object()(t1, t2, q);
+}
+
+// https://github.com/CGAL/cgal/blob/96f698ca09b61b6ca7587d43b022a0db43519699/Segment_Delaunay_graph_2/include/CGAL/Segment_Delaunay_graph_2/Segment_Delaunay_graph_2_impl.h#L2320
+CGAL::Sign
+    incircle(const SDG2& sdg, const SDG2::Face_handle& f, const SDG2::Site_2& q)
+{
+	if ( !sdg.is_infinite(f) ) {
+		return incircle(sdg,
+		                f->vertex(0)->site(),
+		                f->vertex(1)->site(),
+		                f->vertex(2)->site(), q);
+	}
+
+	int inf_i(-1); // to avoid compiler warning
+	for (int i = 0; i < 3; i++) {
+		if ( sdg.is_infinite(f->vertex(i)) ) {
+			inf_i = i;
+			break;
+		}
+	}
+	return incircle(sdg, f->vertex( SDG2::ccw(inf_i) )->site(),
+	                f->vertex(  SDG2::cw(inf_i) )->site(), q );
+}
+
+Gt::Arrangement_type_2::result_type arrangement_type(const SDG2& sdg, const SDG2::Site_2& p, const SDG2::Site_2& q)
+{
+	typedef typename Gt::Arrangement_type_2  AT2;
+	typedef typename AT2::result_type                 Arrangement_type;
+
+	Arrangement_type res = sdg.geom_traits().arrangement_type_2_object()(p, q);
+
+	if ( res == AT2::TOUCH_INTERIOR_12 || res == AT2::TOUCH_INTERIOR_21 ||
+	    res == AT2::TOUCH_INTERIOR_11 || res == AT2::TOUCH_INTERIOR_22 ) {
+		return AT2::DISJOINT;
+	}
+	if ( res == AT2::TOUCH_11 || res == AT2::TOUCH_12 ||
+	    res == AT2::TOUCH_21 || res == AT2::TOUCH_22 ) {
+		return AT2::DISJOINT;
+	}
+
+	return res;
+}
+
+bool IsolineSimplifier::check_segment_intersections_Voronoi(const Gt::Segment_2 seg,
+                                                            const SDG2::Vertex_handle endpoint_handle,
+                                                            const std::unordered_set<SDG2::Vertex_handle>& allowed) const {
+	auto t = SDG2::Site_2::construct_site_2(seg.source(), seg.target());
+
+	auto check_intersections = [this, &allowed, &seg, &t, &endpoint_handle](SDG2::Vertex_handle vv) {
+		if (vv->is_segment() && !allowed.contains(vv)) {
+			bool intersects = arrangement_type(m_delaunay, t, vv->site()) == Gt::Arrangement_type_2::result_type::CROSSING;
+			if (intersects) {
+				std::cout << "!" << std::endl;
+				return true;
+			}
+//			auto inter = CGAL::intersection(vv->site().segment(), seg);
+//			if (inter.has_value()) {
+//				auto i = *inter;
+//				if (i.type() != typeid(Gt::Point_2) || boost::get<Gt::Point_2>(i) != endpoint_handle->site().point()) {
+//					return true;
+//				}
+//			}
+
+		}
+		return false;
+	};
+
+	auto vc_start = m_delaunay.incident_vertices(endpoint_handle);
+	auto vc = vc_start;
+	do {
+		SDG2::Vertex_handle vv(vc);
+		if (m_delaunay.is_infinite(vv)) {
+			++vc;
+			continue;
+		}
+
+		if (check_intersections(vv)) return true;
+		++vc;
+	} while (vc != vc_start);
+
+	// First, find one face that is in conflict with seg (i.e. seg is close to corresponding vertex of Voronoi diagram)
+	SDG2::Face_circulator fc_start = m_delaunay.incident_faces(endpoint_handle);
+	SDG2::Face_circulator fc = fc_start;
+	SDG2::Face_handle start_f;
+	CGAL::Sign s;
+
+	do {
+		SDG2::Face_handle f(fc);
+		s = incircle(m_delaunay, f, t);
+
+		if (s == CGAL::NEGATIVE) {
+			start_f = f;
+			break;
+		}
+		++fc;
+	} while (fc != fc_start);
+
+	assert(s == CGAL::NEGATIVE);
+
+	std::unordered_set<SDG2::Face_handle> visited;
+	std::stack<SDG2::Face_handle> face_stack;
+	face_stack.push(start_f);
+
+	while (!face_stack.empty()) {
+		const auto& curr_f = face_stack.top();
+		face_stack.pop();
+
+		// Already visited, so skip
+		if (visited.contains(curr_f)) {
+			continue;
+		}
+		visited.insert(curr_f);
+
+		for (int i = 0; i < 3; i++) {
+			auto n = curr_f->neighbor(i);
+			if (visited.contains(n)) continue;
+
+			for (int j = 0; j < 3; j++) {
+				if (check_intersections(n->vertex(j))) {
+					return true;
+				}
+			}
+
+			s = incircle(m_delaunay, n, t);
+			if (s != CGAL::POSITIVE) {
+				face_stack.push(n);
+			}
+		}
+	}
+
+	// If we are done and haven't found intersections then there are none.
+	return false;
+}
+
+bool IsolineSimplifier::check_ladder_intersections_Voronoi(const SlopeLadder& ladder) const {
+	assert(ladder.m_valid && !ladder.m_old);
+	std::unordered_set<SDG2::Vertex_handle> edges_to_skip;
+	std::vector<Gt::Segment_2> new_edges;
+
+	for (int i = 0; i < ladder.m_rungs.size(); i++) {
+		const auto& rung = ladder.m_rungs.at(i);
+
+		bool reversed = m_p_next.at(rung.target()) == rung.source();
+		const auto& t = reversed ? rung.target() : rung.source();
+		const auto& u = reversed ? rung.source() : rung.target();
+		const auto& s = m_p_prev.at(t);
+		const auto& v = m_p_next.at(u);
+		const auto st = Gt::Segment_2(s, t);
+		const auto tu = Gt::Segment_2(t, u);
+		const auto uv = Gt::Segment_2(u, v);
+		edges_to_skip.insert(m_e_vertex.at(st));
+		edges_to_skip.insert(m_e_vertex.at(tu));
+		edges_to_skip.insert(m_e_vertex.at(uv));
+
+		const auto& p = ladder.m_collapsed.at(i);
+		const auto sp = Gt::Segment_2(s, p);
+		const auto pv = Gt::Segment_2(p, v);
+		new_edges.push_back(sp);
+		new_edges.push_back(pv);
+	}
+
+	for (int i = 0; i < ladder.m_rungs.size(); i++) {
+		const auto& rung = ladder.m_rungs.at(i);
+
+		bool reversed = m_p_next.at(rung.target()) == rung.source();
+		const auto& t = reversed ? rung.target() : rung.source();
+		const auto& u = reversed ? rung.source() : rung.target();
+		const auto& s = m_p_prev.at(t);
+		const auto& v = m_p_next.at(u);
+
+		const auto& p = ladder.m_collapsed.at(i);
+		const auto sp = Gt::Segment_2(s, p);
+		const auto pv = Gt::Segment_2(p, v);
+
+		if (check_segment_intersections_Voronoi(sp, m_p_vertex.at(s), edges_to_skip)) return true;
+		if (check_segment_intersections_Voronoi(pv, m_p_vertex.at(v), edges_to_skip)) return true;
 	}
 
 	for (const auto& e1 : new_edges) {

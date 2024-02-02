@@ -54,7 +54,9 @@ class IsolineSimplifier {
 	std::vector<Gt::Point_2> m_deleted_points;
 	int m_current_complexity = 0;
 	bool m_started = false;
-	bool check_ladder_intersections_naive(const SlopeLadder& ladder);
+	bool check_ladder_intersections_naive(const SlopeLadder& ladder) const;
+	bool check_segment_intersections_Voronoi(Gt::Segment_2 seg, const SDG2::Vertex_handle endpoint_handle, const std::unordered_set<SDG2::Vertex_handle>& allowed) const;
+	bool check_ladder_intersections_Voronoi(const SlopeLadder& ladder) const;
 
   private:
 	void initialize_point_data();

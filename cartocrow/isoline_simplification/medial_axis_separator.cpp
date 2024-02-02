@@ -119,7 +119,7 @@ Separator medial_axis_separator(const SDG2& delaunay, const PointToIsoline& isol
 
 	for (auto eit = delaunay.finite_edges_begin(); eit != delaunay.finite_edges_end(); ++eit) {
 		SDG2::Edge edge = *eit;
-		auto [p, q] = defining_sites(edge)because of ;
+		auto [p, q] = defining_sites(edge);
 		SDG2::Point_2 p_point = point_of_site(p);
 		SDG2::Point_2 q_point = point_of_site(q);
 
