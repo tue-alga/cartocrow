@@ -72,14 +72,17 @@ void IsolineSimplifier::initialize_point_data() {
 }
 
 void IsolineSimplifier::initialize_sdg() {
+	std::vector<Gt::Segment_2> segments;
 	for (const auto& isoline : m_isolines) {
 		auto polyline = isoline.polyline();
-		m_delaunay.insert_segments(polyline.edges_begin(), polyline.edges_end());
+		std::copy(polyline.edges_begin(), polyline.edges_end(), std::back_inserter(segments));
 	}
+	m_delaunay.insert_segments(segments.begin(), segments.end());
 }
 
 void IsolineSimplifier::simplify(int target) {
 	while (m_current_complexity > target) {
+		std::cout << m_current_complexity << "\r" << std::flush;
 		if (!step()) return;
 		update_matching();
 		update_ladders();
@@ -224,12 +227,12 @@ void IsolineSimplifier::collapse_ladder(SlopeLadder& ladder) {
 			m_e_ladder.erase(uv);
 		}
 		if (m_e_ladder.contains(st.opposite())) {
-			m_e_ladder.at(st)->m_old = true;
-			m_e_ladder.erase(st);
+			m_e_ladder.at(st.opposite())->m_old = true;
+			m_e_ladder.erase(st.opposite());
 		}
 		if (m_e_ladder.contains(uv.opposite())) {
-			m_e_ladder.at(uv)->m_old = true;
-			m_e_ladder.erase(uv);
+			m_e_ladder.at(uv.opposite())->m_old = true;
+			m_e_ladder.erase(uv.opposite());
 		}
 
 		// Update m_p_iterator
@@ -601,8 +604,30 @@ void IsolineSimplifier::check_valid() {
 }
 
 void IsolineSimplifier::clean_isolines() {
+	for (int i = 0; i < m_simplified_isolines.size(); i++) {
+		for (int j = 0; j < m_simplified_isolines.size(); j++) {
+			if (i == j) continue;
+			auto& isoline1 = m_simplified_isolines.at(i);
+			auto& isoline2 = m_simplified_isolines.at(j);
+			if (isoline1.m_points.back() == isoline2.m_points.front()) {
+				isoline1.m_points.splice(isoline1.m_points.end(), isoline2.m_points);
+			}
+		}
+	}
+
+	erase_if(m_simplified_isolines, [](const auto& iso)  { return iso.m_points.empty(); });
+
 	for (auto& isoline : m_simplified_isolines) {
 		isoline.m_points.erase(std::unique(isoline.m_points.begin(), isoline.m_points.end()), isoline.m_points.end());
+		if (isoline.m_points.front() == isoline.m_points.back()) {
+			isoline.m_closed = true;
+		}
+	}
+
+	for (auto& isoline : m_simplified_isolines) {
+		if (isoline.m_closed && isoline.m_points.front() == isoline.m_points.back()) {
+			isoline.m_points.pop_back();
+		}
 	}
 }
 

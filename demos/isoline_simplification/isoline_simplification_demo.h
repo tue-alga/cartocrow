@@ -67,7 +67,7 @@ class VoronoiPainting : public GeometryPainting {
 
 class IsolinePainting : public GeometryPainting {
   public:
-	IsolinePainting(const std::vector<Isoline<K>>& isolines, bool show_vertices);
+	IsolinePainting(const std::vector<Isoline<K>>& isolines, bool show_vertices, bool light);
 
   protected:
 	void paint(GeometryRenderer& renderer) const override;
@@ -75,6 +75,7 @@ class IsolinePainting : public GeometryPainting {
   private:
 	const std::vector<Isoline<K>>& m_isolines;
 	bool m_show_vertices;
+	bool m_light;
 };
 
 class MedialAxisSeparatorPainting : public GeometryPainting {

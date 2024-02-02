@@ -42,6 +42,16 @@ SDG2::Point_2 point_of_site(const SDG2::Site_2& site) {
 	return point;
 }
 
+class Open_Parabola_segment_2 : public CGAL::Parabola_segment_2<Gt> {
+  public:
+	Gt::Point_2 get_p1() {
+		return p1;
+	}
+	Gt::Point_2 get_p2() {
+		return p2;
+	}
+};
+
 Gt::Point_2 point_of_Voronoi_edge(const SDG2::Edge& edge, const SDG2& delaunay) {
 	CGAL::Object o = delaunay.primal(edge);
 	typename Gt::Segment_2 s;
@@ -56,9 +66,15 @@ Gt::Point_2 point_of_Voronoi_edge(const SDG2::Edge& edge, const SDG2& delaunay) 
 	if (CGAL::assign(ps, o)) {
 		// Roundabout way to obtain start and end of parabolic segment because they are protected -_-
 		std::vector<typename Gt::Point_2> pts;
-		ps.generate_points(pts, (typename Gt::FT)(1000000));
-		auto start = pts.front();
-		point_on_Voronoi_edge = start;
+		// small-western-island results in a NaN value somehow...
+		Open_Parabola_segment_2 ops(ps);
+		if (!std::isnan(ops.get_p1().x())) {
+			point_on_Voronoi_edge = ops.get_p1();
+		} else if (!std::isnan(ops.get_p2().x())) {
+			point_on_Voronoi_edge = ops.get_p2();
+		} else {
+			throw std::runtime_error("Both endpoints of parabolic segment are NaN!");
+		}
 	}
 	if (CGAL::assign(l, o)) {
 		point_on_Voronoi_edge = l.point();
@@ -103,7 +119,7 @@ Separator medial_axis_separator(const SDG2& delaunay, const PointToIsoline& isol
 
 	for (auto eit = delaunay.finite_edges_begin(); eit != delaunay.finite_edges_end(); ++eit) {
 		SDG2::Edge edge = *eit;
-		auto [p, q] = defining_sites(edge);
+		auto [p, q] = defining_sites(edge)because of ;
 		SDG2::Point_2 p_point = point_of_site(p);
 		SDG2::Point_2 q_point = point_of_site(q);
 
@@ -145,11 +161,18 @@ std::variant<Gt::Point_2, Gt::Segment_2> site_projection(const SDG2& delaunay, c
 		}
 		if (CGAL::assign(ps, o)) {
 			// Roundabout way to obtain start and end of parabolic segment because they are protected -_-
-			std::vector<typename Gt::Point_2> pts;
-			ps.generate_points(pts, (typename Gt::FT)(1000000));
-			auto start = site.segment().supporting_line().projection(pts.front());
-			auto end = site.segment().supporting_line().projection(pts.back());
-			return { Segment<Inexact>(start, end) };
+			Open_Parabola_segment_2 ops(ps);
+			auto p1 = ops.get_p1();
+			auto p2 = ops.get_p2();
+
+			if (std::isnan(p1.x()) || std::isnan(p2.x())) {
+				return {Gt::Segment_2(Gt::Point_2(0.0, 0.0), Gt::Point_2(1.0, 0.0))};
+			}
+
+			auto start = site.segment().supporting_line().projection(p1);
+			auto end = site.segment().supporting_line().projection(p2);
+
+			return {Segment<Inexact>(start, end)};
 		}
 	}
 }

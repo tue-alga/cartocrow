@@ -75,6 +75,7 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 			fileSelector->addItem(QString::fromStdString(p.path().stem().string()));
 	}
 
+	std::cout << "Loading: " << fileSelector->currentText().toStdString() << std::endl;
 	std::shared_ptr<ipe::Document> document = IpeReader::loadIpeFile(dir + fileSelector->currentText().toStdString() + ".ipe");
 	ipe::Page* page = document->page(0);
 	m_isoline_simplifier = std::make_unique<IsolineSimplifier>(isolinesInPage(page));
@@ -91,7 +92,7 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 
 	auto* simplificationTarget = new QSpinBox();
 	simplificationTarget->setValue(50);
-	simplificationTarget->setMaximum(10000);
+	simplificationTarget->setMaximum(1000000);
 	auto* simplificationTargetLabel = new QLabel("#Target vertices");
 	simplificationTargetLabel->setBuddy(simplificationTarget);
 	vLayout->addWidget(simplificationTargetLabel);
@@ -218,7 +219,8 @@ void IsolineSimplificationDemo::recalculate(bool debugInfo, int target, bool cga
 	m_cgal_simplified.clear();
 	IpeRenderer ipe_renderer;
 
-	std::vector<Isoline<K>>& isolines = m_isoline_simplifier->m_simplified_isolines;
+	std::vector<Isoline<K>>& original_isolines = m_isoline_simplifier->m_isolines;
+	std::vector<Isoline<K>>& simplified_isolines = m_isoline_simplifier->m_simplified_isolines;
 
 	auto medial_axis_p = std::make_shared<VoronoiPainting>(m_isoline_simplifier->m_delaunay);
 	if (debugInfo) {
@@ -231,8 +233,8 @@ void IsolineSimplificationDemo::recalculate(bool debugInfo, int target, bool cga
 	auto separator_p = std::make_shared<MedialAxisSeparatorPainting>(separator, m_isoline_simplifier->m_delaunay);
 
 	auto matching_p = std::make_shared<MatchingPainting>(m_isoline_simplifier->m_matching,
-	                                                     [this, &isolines, isoline_index](Gt::Point_2 pt) {
-		                                                     return m_isoline_simplifier->m_p_isoline.contains(pt) && m_isoline_simplifier->m_p_isoline.at(pt) == &isolines[std::min(static_cast<int>(isolines.size() - 1), isoline_index)];
+	                                                     [this, &simplified_isolines, isoline_index](Gt::Point_2 pt) {
+		                                                     return m_isoline_simplifier->m_p_isoline.contains(pt) && m_isoline_simplifier->m_p_isoline.at(pt) == &simplified_isolines[std::min(static_cast<int>(simplified_isolines.size() - 1), isoline_index)];
 	                                                     });
 
 	auto slope_ladder_p = std::make_shared<SlopeLadderPainting>(m_isoline_simplifier->m_slope_ladders);
@@ -250,16 +252,19 @@ void IsolineSimplificationDemo::recalculate(bool debugInfo, int target, bool cga
 		ipe_renderer.addPainting(slope_ladder_p, "Slope ladders");
 	}
 
-	auto isolines_p = std::make_shared<IsolinePainting>(isolines, show_vertices);
-	m_renderer->addPainting(isolines_p, "Isolines");
-	ipe_renderer.addPainting(isolines_p, "Isolines");
+	auto original_isolines_p = std::make_shared<IsolinePainting>(m_isoline_simplifier->m_isolines, show_vertices, true);
+	auto isolines_p = std::make_shared<IsolinePainting>(simplified_isolines, show_vertices, false);
+	if (m_isoline_simplifier->m_started)
+		m_renderer->addPainting(original_isolines_p, "Original isolines");
+	m_renderer->addPainting(isolines_p, "Simplified isolines");
+	ipe_renderer.addPainting(isolines_p, "Simplified isolines");
 
 	if (cgal_simplify) {
 		CT ct;
 
 		std::vector<CT::Constraint_id> ids;
 
-		for (const auto& isoline : isolines) {
+		for (const auto& isoline : original_isolines) {
 			if (isoline.m_closed) {
 				CT::Constraint_id id = ct.insert_constraint(isoline.polygon());
 				ids.push_back(id);
@@ -278,16 +283,16 @@ void IsolineSimplificationDemo::recalculate(bool debugInfo, int target, bool cga
 			for (auto vit = ct.points_in_constraint_begin(*cit); vit != ct.points_in_constraint_end(*cit); ++vit) {
 				simplified_points.push_back(*vit);
 			}
-			m_cgal_simplified.emplace_back(simplified_points, isolines[i].m_closed);
+			m_cgal_simplified.emplace_back(simplified_points, simplified_isolines[i].m_closed);
 		}
 
-		auto cgal_simplified_p = std::make_shared<IsolinePainting>(m_cgal_simplified, show_vertices);
+		auto cgal_simplified_p = std::make_shared<IsolinePainting>(m_cgal_simplified, show_vertices, false);
 		m_renderer->addPainting(cgal_simplified_p, "CGAL simplified isolines");
 		ipe_renderer.addPainting(cgal_simplified_p, "CGAL simplified isolines");
 	}
 
-	if (!m_isoline_simplifier->m_started && debugInfo && region_index < isolines.size() && separator.contains(&isolines[region_index])) {
-		auto touched_p = std::make_shared<TouchedPainting>(separator.at(&isolines[region_index]), m_isoline_simplifier->m_delaunay);
+	if (!m_isoline_simplifier->m_started && debugInfo && region_index < simplified_isolines.size() && separator.contains(&simplified_isolines[region_index])) {
+		auto touched_p = std::make_shared<TouchedPainting>(separator.at(&simplified_isolines[region_index]), m_isoline_simplifier->m_delaunay);
 		m_renderer->addPainting(touched_p, "Touched");
 	}
 
@@ -349,12 +354,12 @@ int main(int argc, char* argv[]) {
 //int main() {
 //	auto dir = std::string("/home/steven/Documents/cartocrow/inputs/");
 //
-//	std::shared_ptr<ipe::Document> document = IpeReader::loadIpeFile(dir + "antarctica_messy_150_a.ipe");
+//	std::shared_ptr<ipe::Document> document = IpeReader::loadIpeFile(dir + "large-western-island.ipe");
 //	ipe::Page* page = document->page(0);
 //	auto simplifier = IsolineSimplifier(isolinesInPage(page));
 //
 //	auto start = std::chrono::system_clock::now().time_since_epoch();
-//	simplifier.simplify(1000);
+//	simplifier.simplify(139000);
 //	auto end = std::chrono::system_clock::now().time_since_epoch();
 //
 //	const std::chrono::duration<double> duration = end - start;
@@ -373,8 +378,8 @@ void VoronoiPainting::paint(GeometryRenderer& renderer) const {
 	draw_dual<VoronoiDrawer<Gt>, K>(m_delaunay, voronoiDrawer);
 }
 
-IsolinePainting::IsolinePainting(const std::vector<Isoline<K>>& isolines, bool show_vertices):
-      m_isolines(isolines), m_show_vertices(show_vertices) {}
+IsolinePainting::IsolinePainting(const std::vector<Isoline<K>>& isolines, bool show_vertices, bool light):
+      m_isolines(isolines), m_show_vertices(show_vertices), m_light(light) {}
 
 void IsolinePainting::paint(GeometryRenderer& renderer) const {
 	// Draw isolines
@@ -383,7 +388,11 @@ void IsolinePainting::paint(GeometryRenderer& renderer) const {
 	} else {
 		renderer.setMode(GeometryRenderer::stroke);
 	}
-	renderer.setStroke(Color(0, 0, 0), 3);
+	if (m_light) {
+		renderer.setStroke(Color(150, 150, 150), 1);
+	} else {
+		renderer.setStroke(Color(0, 0, 0), 1);
+	}
 	for (const auto& isoline : m_isolines) {
 		std::visit([&](auto&& v){
 			renderer.draw(v);
@@ -471,7 +480,7 @@ void draw_slope_ladder(GeometryRenderer& renderer, const SlopeLadder& slope_ladd
 	auto poly = slope_ladder_polygon(slope_ladder);
 	renderer.setFill(Color(100, 0, 0));
 	renderer.setFillOpacity(20);
-	renderer.setStroke(Color(255, 20, 20), 2.0);
+	renderer.setStroke(Color(255, 20, 20), 1.0);
 	renderer.setMode(GeometryRenderer::fill | GeometryRenderer::stroke);
 	renderer.draw(poly);
 }
