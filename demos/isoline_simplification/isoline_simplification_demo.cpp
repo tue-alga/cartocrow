@@ -108,7 +108,7 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 
 	auto* isolineIndex = new QSpinBox();
 	isolineIndex->setValue(0);
-	isolineIndex->setMaximum(100);
+	isolineIndex->setMaximum(10000);
 	auto* isolineIndexLabel = new QLabel("Isoline index");
 	isolineIndexLabel->setBuddy(isolineIndex);
 	vLayout->addWidget(isolineIndexLabel);
@@ -141,6 +141,9 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 	m_renderer = new GeometryWidget();
 	m_renderer->setDrawAxes(showGrid->checkState());
 	setCentralWidget(m_renderer);
+
+	m_renderer->setMinZoom(0.01);
+	m_renderer->setMaxZoom(1000.0);
 
 	m_recalculate = [this, debugInfo, doCGALSimplify, simplificationTarget, regionIndex, showVertices, isolineIndex, number_of_vertices]() {
 		number_of_vertices->setText(QString(("#Vertices: " + std::to_string(m_isoline_simplifier->m_current_complexity)).c_str()));
@@ -200,7 +203,7 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 			m_debug_ladder = ladder;
 
 			auto valid_text = "Valid: " + std::to_string(ladder->m_valid);
-			auto intersected_text = !ladder->m_valid ? "" : "\nIntersected: " + std::to_string(m_isoline_simplifier->check_ladder_intersections_naive(*ladder));
+			auto intersected_text = !ladder->m_valid ? "" : "\nIntersected: " + std::to_string(m_isoline_simplifier->check_ladder_intersections_Voronoi(*ladder));
 			auto cost_text = "\nCost: " + std::to_string(ladder->m_cost);
 			auto old_text = "\nOld: " + std::to_string(ladder->m_old);
 
@@ -359,7 +362,7 @@ int main(int argc, char* argv[]) {
 //	auto simplifier = IsolineSimplifier(isolinesInPage(page));
 //
 //	auto start = std::chrono::system_clock::now().time_since_epoch();
-//	simplifier.simplify(139000);
+//	simplifier.simplify(100000);
 //	auto end = std::chrono::system_clock::now().time_since_epoch();
 //
 //	const std::chrono::duration<double> duration = end - start;
@@ -489,10 +492,11 @@ void draw_ladder_collapse(GeometryRenderer& renderer, IsolineSimplifier simplifi
 	for (int i = 0; i < slope_ladder.m_rungs.size(); i++) {
 		const auto& rung = slope_ladder.m_rungs.at(i);
 		const auto& p = slope_ladder.m_collapsed.at(i);
-		auto s = simplifier.m_p_prev.at(rung.source());
-		auto t = rung.source();
-		auto u = rung.target();
-		auto v = simplifier.m_p_next.at(rung.target());
+		auto reversed = simplifier.m_p_next.contains(rung.target()) && simplifier.m_p_next.at(rung.target()) == rung.source();
+		auto t = reversed ? rung.target() : rung.source();
+		auto u = reversed ? rung.source() : rung.target();
+		auto s = simplifier.m_p_prev.at(t);
+		auto v = simplifier.m_p_next.at(u);
 		auto l = area_preservation_line(s, t, u, v);
 		renderer.setStroke(Color(60, 60, 60), 2.0);
 		renderer.draw(l);
@@ -541,7 +545,7 @@ DebugLadderPainting::DebugLadderPainting(IsolineSimplifier& simplifier, SlopeLad
 	m_simplifier(simplifier), m_ladder(ladder) {}
 
 void DebugLadderPainting::paint(GeometryRenderer& renderer) const {
-	if (!m_ladder.m_valid) return;
 	draw_slope_ladder(renderer, m_ladder);
+	if (!m_ladder.m_valid) return;
 	draw_ladder_collapse(renderer, m_simplifier, m_ladder);
 }

@@ -8,8 +8,9 @@ namespace cartocrow::isoline_simplification {
 void SlopeLadder::compute_collapsed(const PointToPoint& p_prev, const PointToPoint& p_next) {
 	if (!m_valid) return;
 	for (const auto& rung : m_rungs) {
-		auto t = rung.source();
-		auto u = rung.target();
+		auto reversed = p_next.contains(rung.target()) && p_next.at(rung.target()) == rung.source();
+		auto t = reversed ? rung.target() : rung.source();
+		auto u = reversed ? rung.source() : rung.target();
 		Gt::Point_2 s;
 		if (p_prev.contains(t)) {
 			s = p_prev.at(t);
@@ -143,6 +144,10 @@ Gt::Line_2 area_preservation_line(Gt::Point_2 s, Gt::Point_2 t, Gt::Point_2 u, G
 	double area = signed_area({s, v, u, t});
 	if (s == v) {
 		// This function should not be called in this case.
+		std::cerr << "s: " << s << std::endl;
+		std::cerr << "t: " << t << std::endl;
+		std::cerr << "u: " << u << std::endl;
+		std::cerr << "v: " << v << std::endl;
 		throw std::runtime_error("Cannot simplify an isoline of three vertices");
 	}
 	double base_length = sqrt(squared_distance(s, v));

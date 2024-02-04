@@ -104,6 +104,7 @@ std::string type_of_Voronoi_edge(const SDG2::Edge& edge, const SDG2& delaunay) {
 	if (CGAL::assign(r, o)) {
 		return "Ray";
 	}
+	return "Unknown";
 }
 
 std::string type_of_site(const SDG2::Site_2& site) {
@@ -150,10 +151,9 @@ std::variant<Gt::Point_2, Gt::Segment_2> site_projection(const SDG2& delaunay, c
 	} else {
 		typename Gt::Segment_2 s;
 		CGAL::Parabola_segment_2<Gt> ps;
-
 		CGAL::Object o = delaunay.primal(edge);
 
-		// Parabolic segment and line cases cannot occur because they require both sites to be a point (?)
+		// Ray and line cases cannot occur because they require both sites to be a point
 		if (CGAL::assign(s, o)) {
 			auto start = site.segment().supporting_line().projection(s.source());
 			auto end = site.segment().supporting_line().projection(s.end());
@@ -214,40 +214,43 @@ Matching matching(const SDG2& delaunay, const Separator& separator, const PointT
 	return matching;
 }
 
+CGAL::Orientation side(const SDG2::Point_2& p, const SDG2::Point_2& point, const PointToPoint& p_prev, const PointToPoint& p_next) {
+	if (!p_next.contains(p) && !p_prev.contains(p)) {
+		return CGAL::LEFT_TURN;
+	}
+	Gt::Point_2 prev;
+	if (p_prev.contains(p)) {
+		prev = p_prev.at(p);
+	} else {
+		prev = p + (p - p_next.at(p));
+	}
+	Gt::Point_2 next;
+	if (p_next.contains(p)) {
+		next = p_next.at(p);
+	} else {
+		next = p + (p - prev);
+	}
+	auto v1 = prev - p;
+	auto v2 = next - p;
+	auto l1 = Gt::Line_2(p, v1);
+	auto l2 = Gt::Line_2(p, v2);
+
+	Gt::Line_2 l3;
+	auto orient = CGAL::orientation(prev, p, next);
+	if (orient == CGAL::LEFT_TURN) {
+		l3 = CGAL::bisector(l1, l2).opposite().perpendicular(p);
+	} else if (orient == CGAL::RIGHT_TURN) {
+		l3 = CGAL::bisector(l1, l2).perpendicular(p);
+	} else {
+		l3 = Gt::Line_2(prev, next);
+	}
+	return CGAL::enum_cast<CGAL::Orientation>(l3.oriented_side(point));
+}
+
 /// Assumes point is in the Voronoi cell of site.
 CGAL::Orientation side(const SDG2::Site_2& site, const SDG2::Point_2& point, const PointToPoint& p_prev, const PointToPoint& p_next) {
 	if (site.is_point()) {
-		auto p = site.point();
-		if (!p_next.contains(p) && !p_prev.contains(p)) {
-			return CGAL::LEFT_TURN;
-		}
-		Gt::Point_2 prev;
-		if (p_prev.contains(p)) {
-			prev = p_prev.at(p);
-		} else {
-			prev = p + (p - p_next.at(p));
-		}
-		Gt::Point_2 next;
-		if (p_next.contains(p)) {
-			next = p_next.at(p);
-		} else {
-			next = p + (p - prev);
-		}
-		auto v1 = prev - p;
-		auto v2 = next - p;
-		auto l1 = Gt::Line_2(p, v1);
-		auto l2 = Gt::Line_2(p, v2);
-
-		Gt::Line_2 l3;
-		auto orient = CGAL::orientation(prev, p, next);
-		if (orient == CGAL::LEFT_TURN) {
-			l3 = CGAL::bisector(l1, l2).opposite().perpendicular(p);
-		} else if (orient == CGAL::RIGHT_TURN) {
-			l3 = CGAL::bisector(l1, l2).perpendicular(p);
-		} else {
-			l3 = Gt::Line_2(prev, next);
-		}
-		return CGAL::enum_cast<CGAL::Orientation>(l3.oriented_side(point));
+		return side(site.point(), point, p_prev, p_next);
 	} else {
 		auto s = site.segment();
 		return CGAL::orientation(s.source(), s.target(), point);
@@ -294,8 +297,11 @@ void create_matching(const SDG2& delaunay, const SDG2::Edge& edge, Matching& mat
 		auto match = [&](int pi, int qi) {
 			auto pp = p_pts[pi];
 			auto qp = q_pts[qi];
-			matching[pp][sign_p][p_isoline.at(point_of_site(q))].push_back(qp);
-			matching[qp][sign_q][p_isoline.at(point_of_site(p))].push_back(pp);
+			bool edge_case = !p_prev.contains(pp) || !p_prev.contains(qp) || !p_next.contains(pp) || !p_next.contains(qp);
+			if (!edge_case) {
+				matching[pp][sign_p][p_isoline.at(point_of_site(q))].push_back(qp);
+				matching[qp][sign_q][p_isoline.at(point_of_site(p))].push_back(pp);
+			}
 		};
 
 		if (i < q_pts.size()) {
