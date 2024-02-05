@@ -203,7 +203,7 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 			m_debug_ladder = ladder;
 
 			auto valid_text = "Valid: " + std::to_string(ladder->m_valid);
-			auto intersected_text = !ladder->m_valid ? "" : "\nIntersected: " + std::to_string(m_isoline_simplifier->check_ladder_intersections_Voronoi(*ladder));
+			auto intersected_text = !ladder->m_valid ? "" : "\nIntersected: " + std::to_string(m_isoline_simplifier->check_ladder_intersections_Voronoi(*ladder).has_value());
 			auto cost_text = "\nCost: " + std::to_string(ladder->m_cost);
 			auto old_text = "\nOld: " + std::to_string(ladder->m_old);
 
@@ -357,12 +357,12 @@ int main(int argc, char* argv[]) {
 //int main() {
 //	auto dir = std::string("/home/steven/Documents/cartocrow/inputs/");
 //
-//	std::shared_ptr<ipe::Document> document = IpeReader::loadIpeFile(dir + "large-western-island.ipe");
+//	std::shared_ptr<ipe::Document> document = IpeReader::loadIpeFile(dir + "output.ipe");
 //	ipe::Page* page = document->page(0);
 //	auto simplifier = IsolineSimplifier(isolinesInPage(page));
 //
 //	auto start = std::chrono::system_clock::now().time_since_epoch();
-//	simplifier.simplify(100000);
+//	simplifier.simplify(30000);
 //	auto end = std::chrono::system_clock::now().time_since_epoch();
 //
 //	const std::chrono::duration<double> duration = end - start;

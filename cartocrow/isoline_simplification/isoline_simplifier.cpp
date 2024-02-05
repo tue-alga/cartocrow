@@ -85,7 +85,7 @@ void IsolineSimplifier::initialize_sdg() {
 
 void IsolineSimplifier::simplify(int target) {
 	while (m_current_complexity > target) {
-		if (m_current_complexity % 100 == 0) {
+		if (m_current_complexity % 1000 == 0) {
 			std::cout << "\r#Vertices: " << m_current_complexity << std::flush;
 		}
 		if (!step()) return;
@@ -117,9 +117,10 @@ void IsolineSimplifier::collapse_ladder(SlopeLadder& ladder) {
 	  	m_changed_vertices.erase(vertex);
 	  	m_deleted_points.push_back(p);
 
-	  if (!m_delaunay.remove(vertex)) {
-			throw std::runtime_error("Delaunay removal failed!");
-		}
+	    if (!m_delaunay.remove(vertex)) {
+			std::cerr << "Likely point " << p << " is incident to a segment that has not yet been deleted." << std::endl;
+		    throw std::runtime_error("Delaunay point vertex removal failed!");
+	    }
 	};
 
 	auto delaunay_remove_e = [&insert_adj, this](const Gt::Segment_2& s) {
@@ -137,7 +138,7 @@ void IsolineSimplifier::collapse_ladder(SlopeLadder& ladder) {
 
 	  	m_changed_vertices.erase(seg_vertex);
 	    if (!m_delaunay.remove(seg_vertex)) {
-			throw std::runtime_error("Delaunay removal failed!");
+			throw std::runtime_error("Delaunay segment vertex removal failed!");
 		}
 	};
 
@@ -258,6 +259,22 @@ void IsolineSimplifier::collapse_ladder(SlopeLadder& ladder) {
 		m_p_next[new_point] = v;
 		m_p_prev.erase(u);
 		m_p_next.erase(u);
+
+		// Update intersects
+		const auto update_intersects_e = [this](Gt::Segment_2 seg) {
+			if (m_e_intersects.contains(seg)) {
+				for (const auto& l : m_e_intersects.at(seg)) {
+					l->m_intersects = false;
+				}
+			}
+		};
+
+		update_intersects_e(st);
+		update_intersects_e(st.opposite());
+		update_intersects_e(uv);
+		update_intersects_e(uv.opposite());
+		update_intersects_e(edge);
+		update_intersects_e(edge.opposite());
 	}
 }
 
@@ -419,21 +436,34 @@ std::optional<std::shared_ptr<SlopeLadder>> IsolineSimplifier::next_ladder() {
 	std::vector<std::shared_ptr<SlopeLadder>> temp;
 	std::optional<std::shared_ptr<SlopeLadder>> result;
 
-	while (current->m_old || check_ladder_intersections_Voronoi(*current)) {
-		if (m_slope_ladders.empty()) {
+	do {
+		if (current->m_old) {
+			std::pop_heap(m_slope_ladders.begin(), m_slope_ladders.end(), slope_ladder_comp);
+			m_slope_ladders.pop_back();
+		} else if (current->m_intersects) {
+			temp.push_back(current);
+			std::pop_heap(m_slope_ladders.begin(), m_slope_ladders.end(), slope_ladder_comp);
+			m_slope_ladders.pop_back();
+		} else if (IntersectionResult ir = check_ladder_intersections_Voronoi(*current)) {
+			auto irv = *ir;
+			// self-intersects
+			if (holds_alternative<std::monostate>(irv)) {
+			} else { // intersects another segment
+				Gt::Segment_2 intersected = std::get<Gt::Segment_2>(irv);
+				m_e_intersects[intersected].push_back(current);
+			}
+			current->m_intersects = true;
+			temp.push_back(current);
+			std::pop_heap(m_slope_ladders.begin(), m_slope_ladders.end(), slope_ladder_comp);
+			m_slope_ladders.pop_back();
+		} else {
 			break;
 		}
-		std::pop_heap(m_slope_ladders.begin(), m_slope_ladders.end(), slope_ladder_comp);
-
-		if (!current->m_old)
-			temp.push_back(m_slope_ladders.back());
-		m_slope_ladders.pop_back();
-
 		current = m_slope_ladders.front();
 		if (!current->m_valid) {
 			break;
 		}
-	}
+	} while (true);
 
 	if (!current->m_valid || current->m_old || check_ladder_intersections_Voronoi(*current)) {
 		result = std::nullopt;
@@ -831,7 +861,7 @@ Gt::Arrangement_type_2::result_type arrangement_type(const SDG2& sdg, const SDG2
 	return res;
 }
 
-bool IsolineSimplifier::check_segment_intersections_Voronoi(const Gt::Segment_2 seg,
+std::optional<Gt::Segment_2> IsolineSimplifier::check_segment_intersections_Voronoi(const Gt::Segment_2 seg,
                                                             const SDG2::Vertex_handle endpoint_handle,
                                                             const std::unordered_set<SDG2::Vertex_handle>& allowed) const {
 	auto t = SDG2::Site_2::construct_site_2(seg.source(), seg.target());
@@ -863,7 +893,7 @@ bool IsolineSimplifier::check_segment_intersections_Voronoi(const Gt::Segment_2 
 			continue;
 		}
 
-		if (check_intersections(vv) && !allowed.contains(vv)) return true;
+		if (check_intersections(vv) && !allowed.contains(vv)) return vv->site().segment();
 		++vc;
 	} while (vc != vc_start);
 
@@ -909,7 +939,7 @@ bool IsolineSimplifier::check_segment_intersections_Voronoi(const Gt::Segment_2 
 				auto vv = n->vertex(j);
 				if (check_intersections(vv)) {
 					if (!allowed.contains(vv))
-						return true;
+						return vv->site().segment();
 					else {
 						auto vfc_start = m_delaunay.incident_faces(vv);
 						auto vfc = vfc_start;
@@ -934,10 +964,10 @@ bool IsolineSimplifier::check_segment_intersections_Voronoi(const Gt::Segment_2 
 	}
 
 	// If we are done and haven't found intersections then there are none.
-	return false;
+	return std::nullopt;
 }
 
-bool IsolineSimplifier::check_ladder_intersections_Voronoi(const SlopeLadder& ladder) const {
+IntersectionResult IsolineSimplifier::check_ladder_intersections_Voronoi(const SlopeLadder& ladder) const {
 	assert(ladder.m_valid && !ladder.m_old);
 	std::unordered_set<SDG2::Vertex_handle> edges_to_skip;
 	std::vector<Gt::Segment_2> new_edges;
@@ -977,8 +1007,10 @@ bool IsolineSimplifier::check_ladder_intersections_Voronoi(const SlopeLadder& la
 		const auto sp = Gt::Segment_2(s, p);
 		const auto pv = Gt::Segment_2(p, v);
 
-		if (check_segment_intersections_Voronoi(sp, m_p_vertex.at(s), edges_to_skip)) return true;
-		if (check_segment_intersections_Voronoi(pv, m_p_vertex.at(v), edges_to_skip)) return true;
+		auto spi = check_segment_intersections_Voronoi(sp, m_p_vertex.at(s), edges_to_skip);
+		if (spi.has_value()) return spi;
+		auto pvi = check_segment_intersections_Voronoi(pv, m_p_vertex.at(v), edges_to_skip);
+		if (pvi.has_value()) return pvi;
 	}
 
 	for (const auto& e1 : new_edges) {
@@ -987,15 +1019,15 @@ bool IsolineSimplifier::check_ladder_intersections_Voronoi(const SlopeLadder& la
 			auto i = intersection(e1, e2);
 			if (i.has_value()) {
 				if (i->type() != typeid(Gt::Point_2))
-					return true;
+					return std::monostate();
 				auto p = boost::get<Gt::Point_2>(*i);
 				if (p != e1.source() && p != e1.target())
-					return true;
+					return std::monostate();
 			}
 		}
 	}
 
-	return false;
+	return std::nullopt;
 }
 
 void IsolineSimplifier::remove_ladder_e(Gt::Segment_2 seg) {

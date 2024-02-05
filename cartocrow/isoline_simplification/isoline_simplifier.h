@@ -25,6 +25,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "collapse.h"
 
 namespace cartocrow::isoline_simplification {
+typedef std::optional<std::variant<Gt::Segment_2, std::monostate>> IntersectionResult;
+
 class IsolineSimplifier {
   public:
 	IsolineSimplifier() = default;
@@ -43,9 +45,10 @@ class IsolineSimplifier {
 	PointToPoint m_p_next;
 	PointToIterator m_p_iterator;
 	PointToSlopeLadders m_p_ladder; // maps point to the ladders it is a cap of
-	EdgeToSlopeLadder m_e_ladder;
+	EdgeToSlopeLadders m_e_ladder;
 	PointToVertex m_p_vertex;
 	EdgeToVertex m_e_vertex;
+	EdgeToSlopeLadders m_e_intersects;
 	SDG2 m_delaunay;
 	Separator m_separator;
 	Matching m_matching;
@@ -55,8 +58,8 @@ class IsolineSimplifier {
 	int m_current_complexity = 0;
 	bool m_started = false;
 	bool check_ladder_intersections_naive(const SlopeLadder& ladder) const;
-	bool check_segment_intersections_Voronoi(Gt::Segment_2 seg, const SDG2::Vertex_handle endpoint_handle, const std::unordered_set<SDG2::Vertex_handle>& allowed) const;
-	bool check_ladder_intersections_Voronoi(const SlopeLadder& ladder) const;
+	std::optional<Gt::Segment_2> check_segment_intersections_Voronoi(Gt::Segment_2 seg, const SDG2::Vertex_handle endpoint_handle, const std::unordered_set<SDG2::Vertex_handle>& allowed) const;
+	IntersectionResult check_ladder_intersections_Voronoi(const SlopeLadder& ladder) const;
 
   private:
 	void initialize_point_data();
