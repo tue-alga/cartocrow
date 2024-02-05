@@ -66,7 +66,7 @@ class IsolineSimplifier {
 	void create_slope_ladder(Gt::Segment_2 seg, bool do_push_heap);
 	void check_valid();
 	void clean_isolines();
-
+	void remove_ladder_e(Gt::Segment_2 seg);
 };
 }
 

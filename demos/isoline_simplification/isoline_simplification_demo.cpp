@@ -222,7 +222,7 @@ void IsolineSimplificationDemo::recalculate(bool debugInfo, int target, bool cga
 	m_cgal_simplified.clear();
 	IpeRenderer ipe_renderer;
 
-	std::vector<Isoline<K>>& original_isolines = m_isoline_simplifier->m_isolines;
+	std::vector<Isoline<K>>& original_isolines = m_isoline_simplifier->m_simplified_isolines;
 	std::vector<Isoline<K>>& simplified_isolines = m_isoline_simplifier->m_simplified_isolines;
 
 	auto medial_axis_p = std::make_shared<VoronoiPainting>(m_isoline_simplifier->m_delaunay);

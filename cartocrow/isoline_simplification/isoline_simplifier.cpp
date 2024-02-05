@@ -85,7 +85,9 @@ void IsolineSimplifier::initialize_sdg() {
 
 void IsolineSimplifier::simplify(int target) {
 	while (m_current_complexity > target) {
-		std::cout << m_current_complexity << std::endl;
+		if (m_current_complexity % 100 == 0) {
+			std::cout << "\r#Vertices: " << m_current_complexity << std::flush;
+		}
 		if (!step()) return;
 		update_matching();
 		update_ladders();
@@ -219,35 +221,23 @@ void IsolineSimplifier::collapse_ladder(SlopeLadder& ladder) {
 		t_iso->m_points.erase(t_it);
 		u_iso->m_points.erase(u_it);
 
+		auto remove_ladder_p = [this](Gt::Point_2 point) {
+			if (m_p_ladder.contains(point)) {
+				for (const auto& l : m_p_ladder.at(point)) {
+					l->m_old = true;
+				}
+				m_p_ladder.erase(point);
+			}
+		};
+
 		// Update some ladder info
-		if (m_e_ladder.contains(st)) {
-			m_e_ladder.at(st)->m_old = true;
-			m_e_ladder.erase(st);
-		}
-		if (m_e_ladder.contains(uv)) {
-			m_e_ladder.at(uv)->m_old = true;
-			m_e_ladder.erase(uv);
-		}
-		if (m_e_ladder.contains(st.opposite())) {
-			m_e_ladder.at(st.opposite())->m_old = true;
-			m_e_ladder.erase(st.opposite());
-		}
-		if (m_e_ladder.contains(uv.opposite())) {
-			m_e_ladder.at(uv.opposite())->m_old = true;
-			m_e_ladder.erase(uv.opposite());
-		}
-		if (m_p_ladder.contains(t)) {
-			for (const auto& l : m_p_ladder.at(t)) {
-				l->m_old = true;
-			}
-			m_p_ladder.erase(t);
-		}
-		if (m_p_ladder.contains(u)) {
-			for (const auto& l : m_p_ladder.at(u)) {
-				l->m_old = true;
-			}
-			m_p_ladder.erase(u);
-		}
+		remove_ladder_e(st);
+		remove_ladder_e(uv);
+		remove_ladder_e(st.opposite());
+		remove_ladder_e(uv.opposite());
+
+		remove_ladder_p(t);
+		remove_ladder_p(u);
 
 		// Update m_p_iterator
 		m_p_iterator[new_point] = new_it;
@@ -372,14 +362,8 @@ void IsolineSimplifier::update_ladders() {
 		const auto& site = vh->site();
 		if (site.is_segment()) {
 			const auto& seg = site.segment();
-			if (m_e_ladder.contains(seg)) {
-				m_e_ladder.at(seg)->m_old = true;
-				m_e_ladder.erase(seg);
-			}
-			if (m_e_ladder.contains(seg.opposite())) {
-				m_e_ladder.at(seg.opposite())->m_old = true;
-				m_e_ladder.erase(seg.opposite());
-			}
+			remove_ladder_e(seg);
+			remove_ladder_e(seg.opposite());
 		}
 	}
 
@@ -489,7 +473,11 @@ bool IsolineSimplifier::step() {
 
 void IsolineSimplifier::create_slope_ladder(Gt::Segment_2 seg, bool do_push_heap) {
 	// Maybe make sure that the m_e_ladder and m_p_ladder maps never contains old ladders.
-	if (m_e_ladder.contains(seg) && !m_e_ladder.at(seg)->m_old || m_e_ladder.contains(seg.opposite()) && !m_e_ladder.at(seg.opposite())->m_old) return;
+	if (m_e_ladder.contains(seg) &&
+	        std::any_of(m_e_ladder.at(seg).begin(), m_e_ladder.at(seg).end(), [](const auto& l) { return !l->m_old; }) ||
+	    m_e_ladder.contains(seg.opposite()) &&
+			std::any_of(m_e_ladder.at(seg.opposite()).begin(), m_e_ladder.at(seg.opposite()).end(), [](const auto& l) { return !l->m_old; }))
+	    return;
 
 	bool reversed = m_p_next.contains(seg.target()) && m_p_next.at(seg.target()) == seg.source();
 	Gt::Point_2 s = reversed ? seg.target() : seg.source();
@@ -520,19 +508,19 @@ void IsolineSimplifier::create_slope_ladder(Gt::Segment_2 seg, bool do_push_heap
 			auto& tms = t_m.at(shared_isoline);
 
 			auto make_rung = [&](const Gt::Point_2& a, const Gt::Point_2& b) {
-				if (m_e_ladder.contains(Segment<K>(a, b)) && !m_e_ladder.at(Segment<K>(a, b))->m_old || m_e_ladder.contains(Segment<K>(b, a)) && !m_e_ladder.at(Segment<K>(b, a))->m_old) {
-					std::cerr << "Encountered segment that is already part of a slope ladder" << std::endl;
-					std::cerr << "a: " << a << " b: " << b << std::endl;
-					std::cerr << "Encountered from s: " << s << " t: " << t << std::endl;
-					std::cerr << "Original slope ladder: ";
-					if (m_e_ladder.contains(Segment<K>(a, b))) {
-						std::cerr << m_e_ladder.at(Segment<K>(a, b))->m_rungs[0] << std::endl;
-					}
-					if (m_e_ladder.contains(Segment<K>(b, a))) {
-						std::cerr << m_e_ladder.at(Segment<K>(b, a))->m_rungs[0] << std::endl;
-					}
-				}
-				m_e_ladder[Segment<K>(a, b)] = slope_ladder;
+//				if (m_e_ladder.contains(Segment<K>(a, b)) && !m_e_ladder.at(Segment<K>(a, b))->m_old || m_e_ladder.contains(Segment<K>(b, a)) && !m_e_ladder.at(Segment<K>(b, a))->m_old) {
+//					std::cerr << "Encountered segment that is already part of a slope ladder" << std::endl;
+//					std::cerr << "a: " << a << " b: " << b << std::endl;
+//					std::cerr << "Encountered from s: " << s << " t: " << t << std::endl;
+//					std::cerr << "Original slope ladder: ";
+//					if (m_e_ladder.contains(Segment<K>(a, b))) {
+//						std::cerr << m_e_ladder.at(Segment<K>(a, b))->m_rungs[0] << std::endl;
+//					}
+//					if (m_e_ladder.contains(Segment<K>(b, a))) {
+//						std::cerr << m_e_ladder.at(Segment<K>(b, a))->m_rungs[0] << std::endl;
+//					}
+//				}
+				m_e_ladder[Segment<K>(a, b)].push_back(slope_ladder);
 				if (initial_dir == CGAL::LEFT_TURN) {
 					slope_ladder->m_rungs.emplace_front(a, b);
 				} else {
@@ -640,9 +628,9 @@ void IsolineSimplifier::create_slope_ladder(Gt::Segment_2 seg, bool do_push_heap
 	std::shared_ptr<SlopeLadder> slope_ladder = std::make_shared<SlopeLadder>();
 	slope_ladder->m_rungs.emplace_back(s, t);
 	if (!reversed) {
-		m_e_ladder[seg] = slope_ladder;
+		m_e_ladder[seg].push_back(slope_ladder);
 	} else {
-		m_e_ladder[seg.opposite()] = slope_ladder;
+		m_e_ladder[seg.opposite()].push_back(slope_ladder);
 	}
 
 	search(s, t, CGAL::LEFT_TURN, CGAL::LEFT_TURN, slope_ladder, search);
@@ -1008,5 +996,14 @@ bool IsolineSimplifier::check_ladder_intersections_Voronoi(const SlopeLadder& la
 	}
 
 	return false;
+}
+
+void IsolineSimplifier::remove_ladder_e(Gt::Segment_2 seg) {
+	if (m_e_ladder.contains(seg)) {
+		for (const auto& ladder : m_e_ladder.at(seg)) {
+			ladder->m_old = true;
+		}
+		m_e_ladder.erase(seg);
+	}
 }
 }
