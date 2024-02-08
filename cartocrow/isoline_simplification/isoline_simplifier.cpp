@@ -1038,4 +1038,171 @@ void IsolineSimplifier::remove_ladder_e(Gt::Segment_2 seg) {
 		m_e_ladder.erase(seg);
 	}
 }
+
+class Open_Parabola_segment_2 : public CGAL::Parabola_segment_2<Gt> {
+  public:
+	Gt::Point_2 get_p1() {
+		return p1;
+	}
+	Gt::Point_2 get_p2() {
+		return p2;
+	}
+};
+
+bool intersects_primal(Gt::Segment_2 seg, const CGAL::Object& o) {
+	typename Gt::Segment_2 s;
+	typename Gt::Line_2 l;
+	typename Gt::Ray_2 r;
+	CGAL::Parabola_segment_2<Gt> ps;
+
+	if (CGAL::assign(s, o)) {
+		return CGAL::intersection(s, seg).has_value();
+	} else if (CGAL::assign(l, o)) {
+		return CGAL::intersection(l, seg).has_value();
+	} else if (CGAL::assign(r, o)) {
+		return CGAL::intersection(r, seg).has_value();
+	} else if (CGAL::assign(ps, o)) {
+		// todo: below is incorrect, fix it
+		// we can probably use ArrDirectionalTraits::Intersect_2 of Arr_conic_traits_2
+
+		Open_Parabola_segment_2 ops(ps);
+		auto s1 = ps.side_of_parabola(seg.source());
+		auto s2 = ps.side_of_parabola(seg.target());
+		if (s1 != s2) {
+			auto pt = s1 == CGAL::NEGATIVE ? seg.source() : seg.target();
+			if (CGAL::orientation(ps.origin(), ops.get_p1(), pt) != CGAL::orientation(ps.origin(), ops.get_p2(), pt)) {
+				return true;
+			}
+		}
+		auto proj = seg.supporting_line().projection(ps.origin());
+		if (seg.collinear_has_on(proj)) {
+			auto s3 = ps.side_of_parabola( ps.origin());
+			if (s3 != s1 || s3 != s2) {
+				auto pt = s3 == CGAL::NEGATIVE ? proj : seg.target();
+				if (CGAL::orientation(ps.origin(), ops.get_p1(), pt) != CGAL::orientation(ps.origin(), ops.get_p2(), pt)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+}
+
+std::unordered_set<SDG2::Vertex_handle> IsolineSimplifier::intersected_region(Gt::Segment_2 rung, Gt::Point_2 p) {
+	bool reversed = m_p_next.contains(rung.target()) && m_p_next.at(rung.target()) == rung.source();
+	Gt::Point_2 t = reversed ? rung.target() : rung.source();
+	Gt::Point_2 u = reversed ? rung.source() : rung.target();
+	Gt::Point_2 s = m_p_prev.at(t);
+	Gt::Point_2 v = m_p_next.at(u);
+	Gt::Segment_2 st(s, t);
+	Gt::Segment_2 tu(t, u);
+	Gt::Segment_2 uv(u, v);
+
+	Gt::Segment_2 sp(s, p);
+	Gt::Segment_2 pv(p, v);
+
+	std::unordered_set<SDG2::Vertex_handle> region;
+
+	region.insert(m_e_vertex.at(st));
+	region.insert(m_e_vertex.at(tu));
+	region.insert(m_e_vertex.at(uv));
+	region.insert(m_p_vertex.at(s));
+	region.insert(m_p_vertex.at(t));
+	region.insert(m_p_vertex.at(u));
+	region.insert(m_p_vertex.at(v));
+
+
+	auto add_intersected = [&](Gt::Point_2 s, Gt::Segment_2 sp) {
+		std::stack<SDG2::Vertex_handle> vertex_stack;
+		vertex_stack.push(m_p_vertex.at(s));
+		std::unordered_set<SDG2::Vertex_handle> visited;
+
+		while (!vertex_stack.empty()) {
+			auto current = vertex_stack.top();
+			vertex_stack.pop();
+
+			if (visited.contains(current)) {
+				continue;
+			}
+			visited.insert(current);
+			region.insert(current);
+
+			auto cit_start = m_delaunay.incident_edges(current);
+			auto cit = cit_start;
+
+			do {
+				SDG2::Edge e = *cit;
+
+				if (intersects_primal(sp, m_delaunay.primal(e))) {
+					SDG2::Vertex_handle a = e.first->vertex(SDG2::ccw(e.second));
+					SDG2::Vertex_handle b = e.first->vertex(SDG2::cw(e.second));
+					SDG2::Vertex_handle target = a == current ? b : a;
+					vertex_stack.push(target);
+				}
+
+				++cit;
+			} while (cit != cit_start);
+		}
+	};
+
+	add_intersected(s, sp);
+	add_intersected(v, pv);
+
+	return region;
+}
+
+std::vector<std::vector<SDG2::Edge>>
+IsolineSimplifier::boundaries(const std::unordered_set<SDG2::Vertex_handle>& region) const {
+	std::set<SDG2::Edge> edges;
+	std::unordered_map<SDG2::Face_handle, std::vector<SDG2::Edge>> f_edge;
+
+	for (const auto& vh : region) {
+		auto eit_start = m_delaunay.incident_edges(vh);
+		auto eit = eit_start;
+
+		do {
+			SDG2::Edge e = *eit;
+
+			SDG2::Vertex_handle a = e.first->vertex(SDG2::ccw(e.second));
+			SDG2::Vertex_handle b = e.first->vertex(SDG2::cw(e.second));
+			if (region.contains(a) != region.contains(b)) {
+				edges.insert(e);
+				f_edge[e.first].push_back(e);
+				f_edge[e.first->neighbor(e.second)].push_back(e);
+//				p_edge[a.]
+			}
+
+			++eit;
+		} while (eit != eit_start);
+	}
+
+	std::vector<std::vector<SDG2::Edge>> boundaries;
+	while (!edges.empty()) {
+		std::vector<SDG2::Edge> boundary;
+		auto start = *edges.begin();
+		auto e = start;
+
+		do {
+			boundary.push_back(e);
+			edges.erase(e);
+
+			auto& es = f_edge.at(e.first);
+			auto next = es[0] == e ? es[1] : es[0];
+			e = next;
+		} while (e != start);
+
+		boundaries.push_back(boundary);
+	}
+
+//	if (boundaries.size() == 1) return {};
+//	if (boundaries.size() > 1) {
+//		auto b1 = boundaries[0];
+//		auto b2 = boundaries[1];
+//		// todo: determine which one is the outer boundary
+//		// the interior of a non-outer boundary should be checked for vertices that lie on side
+//		// of the original part of the polyline but on another side of the new one
+//	}
+
+	return boundaries;
+}
 }

@@ -488,24 +488,71 @@ void draw_slope_ladder(GeometryRenderer& renderer, const SlopeLadder& slope_ladd
 	renderer.draw(poly);
 }
 
-void draw_ladder_collapse(GeometryRenderer& renderer, IsolineSimplifier simplifier, const SlopeLadder& slope_ladder) {
-	for (int i = 0; i < slope_ladder.m_rungs.size(); i++) {
-		const auto& rung = slope_ladder.m_rungs.at(i);
-		const auto& p = slope_ladder.m_collapsed.at(i);
-		auto reversed = simplifier.m_p_next.contains(rung.target()) && simplifier.m_p_next.at(rung.target()) == rung.source();
-		auto t = reversed ? rung.target() : rung.source();
-		auto u = reversed ? rung.source() : rung.target();
-		auto s = simplifier.m_p_prev.at(t);
-		auto v = simplifier.m_p_next.at(u);
-		auto l = area_preservation_line(s, t, u, v);
-		renderer.setStroke(Color(60, 60, 60), 2.0);
-		renderer.draw(l);
+void draw_ladder_collapse(GeometryRenderer& renderer, IsolineSimplifier& simplifier, const SlopeLadder& slope_ladder) {
+//	for (int i = 0; i < slope_ladder.m_rungs.size(); i++) {
+//		const auto& rung = slope_ladder.m_rungs.at(i);
+//		const auto& p = slope_ladder.m_collapsed.at(i);
+//		auto reversed = simplifier.m_p_next.contains(rung.target()) && simplifier.m_p_next.at(rung.target()) == rung.source();
+//		auto t = reversed ? rung.target() : rung.source();
+//		auto u = reversed ? rung.source() : rung.target();
+//		auto s = simplifier.m_p_prev.at(t);
+//		auto v = simplifier.m_p_next.at(u);
+//		auto l = area_preservation_line(s, t, u, v);
+//		renderer.setStroke(Color(60, 60, 60), 2.0);
+//		renderer.draw(l);
+//
+//		renderer.setStroke(Color(255, 165, 0), 4.0);
+//		renderer.draw(Gt::Segment_2(s, p));
+//		renderer.draw(Gt::Segment_2(p, v));
+//		renderer.draw(p);
+//
+//	}
 
-		renderer.setStroke(Color(255, 165, 0), 4.0);
-		renderer.draw(Gt::Segment_2(s, p));
-		renderer.draw(Gt::Segment_2(p, v));
-		renderer.draw(p);
+	auto rung = slope_ladder.m_rungs.front();
+	auto p = slope_ladder.m_collapsed.front();
+
+			auto reversed = simplifier.m_p_next.contains(rung.target()) && simplifier.m_p_next.at(rung.target()) == rung.source();
+			auto t = reversed ? rung.target() : rung.source();
+			auto u = reversed ? rung.source() : rung.target();
+			auto s = simplifier.m_p_prev.at(t);
+			auto v = simplifier.m_p_next.at(u);
+			auto l = area_preservation_line(s, t, u, v);
+			renderer.setStroke(Color(60, 60, 60), 2.0);
+			renderer.draw(l);
+
+			renderer.setStroke(Color(255, 165, 0), 4.0);
+			renderer.draw(Gt::Segment_2(s, p));
+			renderer.draw(Gt::Segment_2(p, v));
+			renderer.draw(p);
+
+
+
+	auto vhs = simplifier.intersected_region(rung, p);
+	auto boundaries = simplifier.boundaries(vhs);
+
+	auto voronoi_drawer = VoronoiDrawer<Gt>(&renderer);
+
+	for (const auto& vh : vhs) {
+		auto eit_start = simplifier.m_delaunay.incident_edges(vh);
+		auto eit = eit_start;
+		do {
+			renderer.setStroke(Color(0, 0, 0), 2.0);
+			draw_dual_edge<VoronoiDrawer<Gt>, K>(simplifier.m_delaunay, *eit, voronoi_drawer);
+			++eit;
+		} while (eit != eit_start);
 	}
+
+	for (const auto& e : boundaries[0]) {
+		renderer.setStroke(Color(200, 0, 0), 4.0);
+		draw_dual_edge<VoronoiDrawer<Gt>, K>(simplifier.m_delaunay, e, voronoi_drawer);
+	}
+	if (boundaries.size() > 1) {
+		for (const auto& e : boundaries[1]) {
+			renderer.setStroke(Color(0, 200, 0), 4.0);
+			draw_dual_edge<VoronoiDrawer<Gt>, K>(simplifier.m_delaunay, e, voronoi_drawer);
+		}
+	}
+
 }
 
 void SlopeLadderPainting::paint(GeometryRenderer& renderer) const {

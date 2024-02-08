@@ -60,6 +60,9 @@ class IsolineSimplifier {
 	bool check_ladder_intersections_naive(const SlopeLadder& ladder) const;
 	std::optional<Gt::Segment_2> check_segment_intersections_Voronoi(Gt::Segment_2 seg, const SDG2::Vertex_handle endpoint_handle, const std::unordered_set<SDG2::Vertex_handle>& allowed) const;
 	IntersectionResult check_ladder_intersections_Voronoi(const SlopeLadder& ladder) const;
+	std::unordered_set<SDG2::Vertex_handle> intersected_region(Gt::Segment_2 rung, Gt::Point_2 p);
+	std::vector<std::vector<SDG2::Edge>>
+	boundaries(const std::unordered_set<SDG2::Vertex_handle>& region) const;
 
   private:
 	void initialize_point_data();
