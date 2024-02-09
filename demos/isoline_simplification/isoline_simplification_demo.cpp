@@ -56,7 +56,7 @@ using namespace cartocrow::renderer;
 using namespace cartocrow::isoline_simplification;
 
 IsolineSimplificationDemo::IsolineSimplificationDemo() {
-	auto dir = std::string("/home/steven/Documents/cartocrow/inputs/");
+	auto dir = std::string("/home/steven/Documents/cartocrow/inputs/debug/");
 	setWindowTitle("Isoline simplification");
 
 	auto* dockWidget = new QDockWidget();
@@ -166,6 +166,7 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 	connect(showVertices, &QCheckBox::stateChanged, m_recalculate);
 	connect(isolineIndex, QOverload<int>::of(&QSpinBox::valueChanged), m_recalculate);
 	connect(step_button, &QPushButton::clicked, [this]() {
+	    m_debug_ladder = std::nullopt;
 		bool progress = m_isoline_simplifier->step();
 		if (progress) {
 			m_isoline_simplifier->update_matching();
@@ -174,6 +175,7 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 	  	m_recalculate();
 	});
 	connect(step_only_button, &QPushButton::clicked, [this]() {
+	    m_debug_ladder = std::nullopt;
 		m_isoline_simplifier->step();
 		m_recalculate();
 	});
@@ -186,6 +188,7 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 		m_recalculate();
 	});
 	connect(simplify_button, &QPushButton::clicked, [this, simplificationTarget]() {
+	  	m_debug_ladder = std::nullopt;
 		m_isoline_simplifier->simplify(simplificationTarget->value());
 		m_recalculate();
 	});
@@ -204,10 +207,11 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 
 			auto valid_text = "Valid: " + std::to_string(ladder->m_valid);
 			auto intersected_text = !ladder->m_valid ? "" : "\nIntersected: " + std::to_string(m_isoline_simplifier->check_ladder_intersections_Voronoi(*ladder).has_value());
+			auto topology_text =  !ladder->m_valid ? "" : "\nChanges topology: " + std::to_string(m_isoline_simplifier->check_ladder_collapse_topology(*ladder));
 			auto cost_text = "\nCost: " + std::to_string(ladder->m_cost);
 			auto old_text = "\nOld: " + std::to_string(ladder->m_old);
 
-			debug_text->setText(QString((valid_text + intersected_text + cost_text + old_text).c_str()));
+			debug_text->setText(QString((valid_text + intersected_text + topology_text + cost_text + old_text).c_str()));
 		}
 
 		m_recalculate();
@@ -312,7 +316,7 @@ void IsolineSimplificationDemo::recalculate(bool debugInfo, int target, bool cga
 
 	m_renderer->update();
 
-//	ipe_renderer.save("/home/steven/Documents/cartocrow/output.ipe");
+	ipe_renderer.save("/home/steven/Documents/cartocrow/output.ipe");
 }
 
 std::vector<Isoline<K>> isolinesInPage(ipe::Page* page) {
@@ -355,14 +359,14 @@ int main(int argc, char* argv[]) {
 }
 
 //int main() {
-//	auto dir = std::string("/home/steven/Documents/cartocrow/inputs/");
+//	auto dir = std::string("/home/steven/Documents/cartocrow/inputs/debug/");
 //
-//	std::shared_ptr<ipe::Document> document = IpeReader::loadIpeFile(dir + "output.ipe");
+//	std::shared_ptr<ipe::Document> document = IpeReader::loadIpeFile(dir + "messy150m.ipe");
 //	ipe::Page* page = document->page(0);
 //	auto simplifier = IsolineSimplifier(isolinesInPage(page));
 //
 //	auto start = std::chrono::system_clock::now().time_since_epoch();
-//	simplifier.simplify(30000);
+//	simplifier.simplify(2980);
 //	auto end = std::chrono::system_clock::now().time_since_epoch();
 //
 //	const std::chrono::duration<double> duration = end - start;
@@ -508,51 +512,54 @@ void draw_ladder_collapse(GeometryRenderer& renderer, IsolineSimplifier& simplif
 //
 //	}
 
-	auto rung = slope_ladder.m_rungs.front();
-	auto p = slope_ladder.m_collapsed.front();
+	for (int i = 0; i < slope_ladder.m_rungs.size(); i++) {
+		const auto& rung = slope_ladder.m_rungs.at(i);
+		const auto& p = slope_ladder.m_collapsed.at(i);
 
-			auto reversed = simplifier.m_p_next.contains(rung.target()) && simplifier.m_p_next.at(rung.target()) == rung.source();
-			auto t = reversed ? rung.target() : rung.source();
-			auto u = reversed ? rung.source() : rung.target();
-			auto s = simplifier.m_p_prev.at(t);
-			auto v = simplifier.m_p_next.at(u);
-			auto l = area_preservation_line(s, t, u, v);
-			renderer.setStroke(Color(60, 60, 60), 2.0);
-			renderer.draw(l);
+		auto reversed = simplifier.m_p_next.contains(rung.target()) &&
+						simplifier.m_p_next.at(rung.target()) == rung.source();
+		auto t = reversed ? rung.target() : rung.source();
+		auto u = reversed ? rung.source() : rung.target();
+		auto s = simplifier.m_p_prev.at(t);
+		auto v = simplifier.m_p_next.at(u);
+		auto l = area_preservation_line(s, t, u, v);
+		renderer.setStroke(Color(60, 60, 60), 2.0);
+		renderer.draw(l);
 
-			renderer.setStroke(Color(255, 165, 0), 4.0);
-			renderer.draw(Gt::Segment_2(s, p));
-			renderer.draw(Gt::Segment_2(p, v));
-			renderer.draw(p);
+		renderer.setStroke(Color(255, 165, 0), 4.0);
+		renderer.draw(Gt::Segment_2(s, p));
+		renderer.draw(Gt::Segment_2(p, v));
+		renderer.draw(p);
 
+		auto vhs = simplifier.intersected_region(rung, p);
+		auto [boundaries, outer] = simplifier.boundaries(vhs);
+		std::cout << boundaries.size() << std::endl;
 
+		auto voronoi_drawer = VoronoiDrawer<Gt>(&renderer);
 
-	auto vhs = simplifier.intersected_region(rung, p);
-	auto boundaries = simplifier.boundaries(vhs);
+		for (const auto& vh : vhs) {
+			auto eit_start = simplifier.m_delaunay.incident_edges(vh);
+			auto eit = eit_start;
+			do {
+				renderer.setStroke(Color(0, 0, 0), 2.0);
+				draw_dual_edge<VoronoiDrawer<Gt>, K>(simplifier.m_delaunay, *eit, voronoi_drawer);
+				++eit;
+			} while (eit != eit_start);
+		}
 
-	auto voronoi_drawer = VoronoiDrawer<Gt>(&renderer);
-
-	for (const auto& vh : vhs) {
-		auto eit_start = simplifier.m_delaunay.incident_edges(vh);
-		auto eit = eit_start;
-		do {
-			renderer.setStroke(Color(0, 0, 0), 2.0);
-			draw_dual_edge<VoronoiDrawer<Gt>, K>(simplifier.m_delaunay, *eit, voronoi_drawer);
-			++eit;
-		} while (eit != eit_start);
-	}
-
-	for (const auto& e : boundaries[0]) {
-		renderer.setStroke(Color(200, 0, 0), 4.0);
-		draw_dual_edge<VoronoiDrawer<Gt>, K>(simplifier.m_delaunay, e, voronoi_drawer);
-	}
-	if (boundaries.size() > 1) {
-		for (const auto& e : boundaries[1]) {
-			renderer.setStroke(Color(0, 200, 0), 4.0);
+		for (const auto& e : boundaries[outer]) {
+			renderer.setStroke(Color(200, 0, 0), 4.0);
 			draw_dual_edge<VoronoiDrawer<Gt>, K>(simplifier.m_delaunay, e, voronoi_drawer);
 		}
+		for (int j = 0; j < boundaries.size(); ++j) {
+			if (j == outer)
+				continue;
+			for (const auto& e : boundaries[j]) {
+				renderer.setStroke(Color(0, 200, 0), 4.0);
+				draw_dual_edge<VoronoiDrawer<Gt>, K>(simplifier.m_delaunay, e, voronoi_drawer);
+			}
+		}
 	}
-
 }
 
 void SlopeLadderPainting::paint(GeometryRenderer& renderer) const {

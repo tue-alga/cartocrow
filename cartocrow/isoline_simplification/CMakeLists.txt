@@ -3,12 +3,14 @@ set(SOURCES
 	isoline_simplifier.cpp
 	collapse.cpp
 	collapse.h
+	ipe_bezier_wrapper.cpp
 )
 set(HEADERS
 	isoline.h
     types.h
 	medial_axis_separator.h
 	isoline_simplifier.h
+	ipe_bezier_wrapper.h
 )
 
 add_library(isoline_simplification ${SOURCES})

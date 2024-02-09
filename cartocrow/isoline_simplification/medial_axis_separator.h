@@ -39,5 +39,6 @@ CGAL::Orientation side(const SDG2::Site_2& site, const SDG2::Point_2& point, con
 std::vector<Gt::Point_2> project_snap(const SDG2& delaunay, const SDG2::Site_2& site, const SDG2::Edge& edge);
 void create_matching(const SDG2& delaunay, const SDG2::Edge& edge, Matching& matching, const PointToPoint& p_prev, const PointToPoint& p_next, const PointToIsoline& p_isoline);
 std::function<bool(const Gt::Point_2&, const Gt::Point_2&)> compare_along_isoline(const PointToPoint& p_prev, const PointToPoint& p_next);
+Gt::Point_2 point_of_Voronoi_edge(const SDG2::Edge& edge, const SDG2& delaunay);
 }
 #endif //CARTOCROW_MEDIAL_AXIS_SEPARATOR_H

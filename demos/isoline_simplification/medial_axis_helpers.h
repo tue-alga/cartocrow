@@ -55,6 +55,7 @@ Stream& draw_dual_edge(const SDG& dg, typename SDG::Edge e, Stream& str)
 	typename Gt::Ray_2     r;
 	CGAL::Parabola_segment_2<Gt> ps;
 
+	if (dg.is_infinite(e)) return str;
 	CGAL::Object o = dg.primal(e);
 
 	if (CGAL::assign(l, o))   str << l;
