@@ -21,6 +21,17 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "medial_axis_separator.h"
 #include "collapse.h"
 #include <random>
+#include <CGAL/Arr_conic_traits_2.h>
+#include <CGAL/Cartesian.h>
+#include <CGAL/CORE_algebraic_number_traits.h>
+
+typedef CGAL::CORE_algebraic_number_traits Nt_traits;
+typedef Nt_traits::Rational Rational;
+typedef Nt_traits::Algebraic Algebraic;
+typedef CGAL::Cartesian<Rational> Rat_kernel;
+typedef CGAL::Cartesian<Algebraic> Alg_kernel;
+typedef CGAL::Arr_conic_traits_2<Rat_kernel, Alg_kernel, Nt_traits>
+    C_Traits_2;
 
 namespace cartocrow::isoline_simplification {
 auto slope_ladder_comp = [](const std::shared_ptr<SlopeLadder>& sl1, const std::shared_ptr<SlopeLadder>& sl2) {
@@ -1064,27 +1075,79 @@ bool intersects_primal(Gt::Segment_2 seg, const CGAL::Object& o) {
 	} else if (CGAL::assign(ps, o)) {
 		// todo: below is incorrect, fix it
 		// we can probably use ArrDirectionalTraits::Intersect_2 of Arr_conic_traits_2
-
 		Open_Parabola_segment_2 ops(ps);
-		auto s1 = ps.side_of_parabola(seg.source());
-		auto s2 = ps.side_of_parabola(seg.target());
-		if (s1 != s2) {
-			auto pt = s1 == CGAL::NEGATIVE ? seg.source() : seg.target();
-			if (CGAL::orientation(ps.origin(), ops.get_p1(), pt) != CGAL::orientation(ps.origin(), ops.get_p2(), pt)) {
-				return true;
-			}
+
+		C_Traits_2 traits;
+		typedef C_Traits_2::Curve_2 Conic_Arc;
+		typedef C_Traits_2::Rational Q;
+		typedef C_Traits_2::Rat_point_2 QP;
+		auto d = ps.line();
+		auto f = ps.origin();
+		auto a = d.a();
+		auto b = d.b();
+		auto c = d.c();
+		auto den = a * a + b * b;
+		Q r = (a * a) / den - 1;
+		Q s = (b * b) / den - 1;
+		Q t = (2 * a * b) / den;
+		Q u = (2 * a * c) / den + 2 * f.x();
+		Q v = (2 * b * c) / den + 2 * f.y();
+		Q w = (c * c) / den  - f.x() * f.x() - f.y() * f.y();
+		auto p1 = ops.get_p1();
+		auto p2 = ops.get_p2();
+
+		auto l1 = Gt::Line_2(f, p1);
+		auto l2 = Gt::Line_2(f, p2);
+
+		// check if these endpoints and orientation are fine
+		Conic_Arc arc(r, s, t, u, v, w, CGAL::orientation(f, p1, p2),
+		              C_Traits_2::Point_2(p1.x(), p1.y()),
+		              Q(0), Q(0), Q(0), Q(l1.a()), Q(l1.b()), Q(l1.c()),
+		              C_Traits_2::Point_2(p2.x(), p2.y()),
+		              Q(0), Q(0), Q(0), Q(l2.a()), Q(l2.b()), Q(l2.c()));
+		std::cout << "Source: " << arc.source() << std::endl;
+		std::cout << "Real source: " << p1 << std::endl;
+		std::cout << "Target: " << arc.target() << std::endl;
+		std::cout << "Real target: " << p2 << std::endl;
+
+		C_Traits_2::Rat_segment_2 r_seg(QP(seg.source().x(), seg.source().y()), QP(seg.target().x(), seg.target().y()));
+
+		auto mmo = traits.make_x_monotone_2_object();
+
+		std::vector<boost::variant<C_Traits_2::Point_2 , C_Traits_2::X_monotone_curve_2>> xmonotone_arcs;
+		std::vector<boost::variant<C_Traits_2::Point_2 , C_Traits_2::X_monotone_curve_2>> xmonotone_seg;
+		mmo(arc, std::back_inserter(xmonotone_arcs));
+		mmo(r_seg, std::back_inserter(xmonotone_seg));
+
+		std::vector<boost::variant<std::pair<C_Traits_2::Point_2, unsigned int>, C_Traits_2::X_monotone_curve_2>> inters;
+		auto io = traits.intersect_2_object();
+		for (int i = 0; i < xmonotone_arcs.size(); ++i) {
+			io(boost::get<C_Traits_2::X_monotone_curve_2>(xmonotone_arcs[i]), boost::get<C_Traits_2::X_monotone_curve_2>(xmonotone_seg[0]), std::back_inserter(inters));
 		}
-		auto proj = seg.supporting_line().projection(ps.origin());
-		if (seg.collinear_has_on(proj)) {
-			auto s3 = ps.side_of_parabola( ps.origin());
-			if (s3 != s1 || s3 != s2) {
-				auto pt = s3 == CGAL::NEGATIVE ? proj : seg.target();
-				if (CGAL::orientation(ps.origin(), ops.get_p1(), pt) != CGAL::orientation(ps.origin(), ops.get_p2(), pt)) {
-					return true;
-				}
-			}
-		}
-		return false;
+
+		std::cout << inters.size() << std::endl;
+
+		return !inters.empty();
+
+//		auto s1 = ps.side_of_parabola(seg.source());
+//		auto s2 = ps.side_of_parabola(seg.target());
+//		if (s1 != s2) {
+//			auto pt = s1 == CGAL::NEGATIVE ? seg.source() : seg.target();
+//			if (CGAL::orientation(ps.origin(), ops.get_p1(), pt) != CGAL::orientation(ps.origin(), ops.get_p2(), pt)) {
+//				return true;
+//			}
+//		}
+//		auto proj = seg.supporting_line().projection(ps.origin());
+//		if (seg.collinear_has_on(proj)) {
+//			auto s3 = ps.side_of_parabola( ps.origin());
+//			if (s3 != s1 || s3 != s2) {
+//				auto pt = s3 == CGAL::NEGATIVE ? proj : seg.target();
+//				if (CGAL::orientation(ps.origin(), ops.get_p1(), pt) != CGAL::orientation(ps.origin(), ops.get_p2(), pt)) {
+//					return true;
+//				}
+//			}
+//		}
+//		return false;
 	}
 }
 

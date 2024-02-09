@@ -20,8 +20,6 @@ class SlopeLadder {
 	bool m_intersects = false;
 	void compute_cost(const PointToPoint& p_prev, const PointToPoint& p_next);
 	void compute_collapsed(const PointToPoint& p_prev, const PointToPoint& p_next);
-
-	// todo: keep track of blocking number
 };
 
 typedef std::unordered_map<Gt::Point_2, std::vector<std::shared_ptr<SlopeLadder>>> PointToSlopeLadders;
