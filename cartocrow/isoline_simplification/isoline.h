@@ -26,6 +26,8 @@ namespace cartocrow::isoline_simplification {
 template <class K>
 class Isoline {
   public:
+	Isoline() = default;
+
 	Isoline(std::vector<Point<K>> points, bool closed)
 		: m_points(points.begin(), points.end()), m_closed(closed) {
 

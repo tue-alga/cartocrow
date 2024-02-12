@@ -21,12 +21,10 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "cartocrow/core/ipe_reader.h"
 #include "cartocrow/isoline_simplification/isoline.h"
 #include "cartocrow/isoline_simplification/medial_axis_separator.h"
+#include "cartocrow/isoline_simplification/ipe_bezier_wrapper.h"
 #include "cartocrow/renderer/ipe_renderer.h"
 #include "medial_axis_helpers.h"
 #include "voronoi_drawer.h"
-#include <CGAL/Constrained_Delaunay_triangulation_2.h>
-#include <CGAL/Constrained_triangulation_plus_2.h>
-#include <CGAL/Polyline_simplification_2/simplify.h>
 #include <QApplication>
 #include <QCheckBox>
 #include <QComboBox>
@@ -40,23 +38,13 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <ranges>
 #include <utility>
 
-namespace PS = CGAL::Polyline_simplification_2;
-typedef PS::Stop_below_count_threshold Stop;
-typedef PS::Squared_distance_cost      Cost;
-
-typedef PS::Vertex_base_2<K> Vb;
-typedef CGAL::Constrained_triangulation_face_base_2<K> Fb;
-typedef CGAL::Triangulation_data_structure_2<Vb, Fb> TDS;
-typedef CGAL::Constrained_Delaunay_triangulation_2<K, TDS, CGAL::Exact_predicates_tag> CDT;
-typedef CGAL::Constrained_triangulation_plus_2<CDT>     CT;
-
 namespace fs = std::filesystem;
 using namespace cartocrow;
 using namespace cartocrow::renderer;
 using namespace cartocrow::isoline_simplification;
 
 IsolineSimplificationDemo::IsolineSimplificationDemo() {
-	auto dir = std::string("/home/steven/Documents/cartocrow/inputs/debug/");
+	auto dir = std::string("/home/steven/Documents/cartocrow/inputs/");
 	setWindowTitle("Isoline simplification");
 
 	auto* dockWidget = new QDockWidget();
@@ -120,6 +108,22 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 	auto* showVertices = new QCheckBox("Show isoline vertices");
 	vLayout->addWidget(showVertices);
 
+	auto* collapse_selector = new QComboBox();
+	collapse_selector->addItem("Midpoint");
+	collapse_selector->addItem("Spline");
+	collapse_selector->addItem("Harmony line");
+	collapse_selector->addItem("Minimize symmetric difference");
+	vLayout->addWidget(collapse_selector);
+
+	auto* angle_filter_input = new QDoubleSpinBox();
+	angle_filter_input->setValue(M_PI/6);
+	angle_filter_input->setMinimum(0);
+	angle_filter_input->setMaximum(M_PI);
+	auto* angle_filter_input_label = new QLabel("Angle filter");
+	angle_filter_input_label->setBuddy(angle_filter_input);
+	vLayout->addWidget(angle_filter_input_label);
+	vLayout->addWidget(angle_filter_input);
+
 	auto* simplify_button = new QPushButton("Simplify");
 	vLayout->addWidget(simplify_button);
 
@@ -135,8 +139,14 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 	auto* update_sl_button = new QPushButton("Update slope ladders");
 	vLayout->addWidget(update_sl_button);
 
+	auto* reload_button = new QPushButton("Reload");
+	vLayout->addWidget(reload_button);
+
 	auto* debug_text = new QLabel("");
 	vLayout->addWidget(debug_text);
+
+	auto* measure_text = new QLabel("");
+	vLayout->addWidget(measure_text);
 
 	m_renderer = new GeometryWidget();
 	m_renderer->setDrawAxes(showGrid->checkState());
@@ -145,26 +155,54 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 	m_renderer->setMinZoom(0.01);
 	m_renderer->setMaxZoom(1000.0);
 
-	m_recalculate = [this, debugInfo, doCGALSimplify, simplificationTarget, regionIndex, showVertices, isolineIndex, number_of_vertices]() {
+	m_recalculate = [this, debugInfo, doCGALSimplify, simplificationTarget, regionIndex, showVertices, isolineIndex, number_of_vertices, angle_filter_input, measure_text]() {
+		m_isoline_simplifier->m_angle_filter = angle_filter_input->value();
 		number_of_vertices->setText(QString(("#Vertices: " + std::to_string(m_isoline_simplifier->m_current_complexity)).c_str()));
+		measure_text->setText(QString(("Symmetric difference: " + std::to_string(m_isoline_simplifier->symmetric_difference())).c_str()));
 		recalculate(debugInfo->checkState(), simplificationTarget->value(),
 		            doCGALSimplify->checkState(), regionIndex->value(), showVertices->checkState(), isolineIndex->value());
 	};
 
-	connect(fileSelector, &QComboBox::currentTextChanged, [this, dir](const QString& name) {
-		std::shared_ptr<ipe::Document> document = IpeReader::loadIpeFile(dir + name.toStdString() + ".ipe");
+	m_reload = [this, dir, angle_filter_input, collapse_selector, fileSelector]() {
+		std::shared_ptr<ipe::Document> document = IpeReader::loadIpeFile(dir + fileSelector->currentText().toStdString() + ".ipe");
 		ipe::Page* page = document->page(0);
-		m_isoline_simplifier = std::make_unique<IsolineSimplifier>(isolinesInPage(page));
+		Collapse collapse;
+		switch (collapse_selector->currentIndex()) {
+		case 0: {
+			collapse = midpoint_collapse;
+			break;
+		}
+		case 1: {
+			collapse = spline_collapse;
+			break;
+		}
+		case 2: {
+			std::cerr << "Not yet implemented" << std::endl;
+			break;
+		}
+		case 3: {
+			collapse = min_sym_diff_collapse;
+			break;
+		}
+		default: {
+			std::cerr << "Not yet implemented" << std::endl;
+			break;
+		}
+		}
+		m_isoline_simplifier = std::make_unique<IsolineSimplifier>(isolinesInPage(page), angle_filter_input->value(), collapse);
 		m_debug_ladder = std::nullopt;
 		m_recalculate();
-	});
+	};
+	connect(fileSelector, &QComboBox::currentTextChanged, m_reload);
 	connect(debugInfo, &QCheckBox::stateChanged, m_recalculate);
 	connect(simplificationTarget, QOverload<int>::of(&QSpinBox::valueChanged), m_recalculate);
-	connect(doCGALSimplify, &QCheckBox::stateChanged, m_recalculate);
+	connect(doCGALSimplify, &QCheckBox::stateChanged, m_reload);
 	connect(regionIndex, QOverload<int>::of(&QSpinBox::valueChanged), m_recalculate);
 	connect(showGrid, &QCheckBox::stateChanged, [this](bool v) { m_renderer->setDrawAxes(v); });
 	connect(showVertices, &QCheckBox::stateChanged, m_recalculate);
 	connect(isolineIndex, QOverload<int>::of(&QSpinBox::valueChanged), m_recalculate);
+	connect(angle_filter_input, QOverload<double>::of(&QDoubleSpinBox::valueChanged), m_recalculate);
+	connect(collapse_selector, &QComboBox::currentTextChanged, m_reload);
 	connect(step_button, &QPushButton::clicked, [this]() {
 	    m_debug_ladder = std::nullopt;
 		bool progress = m_isoline_simplifier->step();
@@ -187,11 +225,18 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 		m_isoline_simplifier->update_ladders();
 		m_recalculate();
 	});
-	connect(simplify_button, &QPushButton::clicked, [this, simplificationTarget]() {
+	connect(simplify_button, &QPushButton::clicked, [this, simplificationTarget, doCGALSimplify]() {
 	  	m_debug_ladder = std::nullopt;
-		m_isoline_simplifier->simplify(simplificationTarget->value());
+		int target = simplificationTarget->value();
+		if (doCGALSimplify->isChecked()) {
+			m_isoline_simplifier->dyken_simplify(target);
+		} else {
+			m_isoline_simplifier->simplify(target);
+		}
+
 		m_recalculate();
 	});
+	connect(reload_button, &QPushButton::clicked, m_reload);
 	connect(m_renderer, &GeometryWidget::clicked, [this, debug_text](auto pt) {
 		auto it = std::find_if(m_isoline_simplifier->m_slope_ladders.begin(), m_isoline_simplifier->m_slope_ladders.end(), [&pt](const std::shared_ptr<SlopeLadder>& ladder) {
 			if (ladder->m_old) return false;
@@ -220,10 +265,10 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 	m_recalculate();
 }
 
-void IsolineSimplificationDemo::recalculate(bool debugInfo, int target, bool cgal_simplify, int region_index, bool show_vertices, int isoline_index) {
+void IsolineSimplificationDemo::recalculate(bool debugInfo, int target, bool cgal_simplify, int region_index,
+                                            bool show_vertices, int isoline_index) {
 	// todo: split into repaint and separate recalculations like simplification, debugInfo
 	m_renderer->clear();
-	m_cgal_simplified.clear();
 	IpeRenderer ipe_renderer;
 
 	std::vector<Isoline<K>>& original_isolines = m_isoline_simplifier->m_simplified_isolines;
@@ -232,7 +277,7 @@ void IsolineSimplificationDemo::recalculate(bool debugInfo, int target, bool cga
 	auto medial_axis_p = std::make_shared<VoronoiPainting>(m_isoline_simplifier->m_delaunay);
 	if (debugInfo) {
 		m_renderer->addPainting(medial_axis_p, "Voronoi diagram");
-		ipe_renderer.addPainting(medial_axis_p, "Voronoi diagram");
+//		ipe_renderer.addPainting(medial_axis_p, "Voronoi diagram");
 	}
 
 	const auto& separator = m_isoline_simplifier->m_separator;
@@ -252,50 +297,36 @@ void IsolineSimplificationDemo::recalculate(bool debugInfo, int target, bool cga
 		m_renderer->addPainting(matching_p, "Matching");
 		if (!m_isoline_simplifier->m_started) {
 			m_renderer->addPainting(separator_p, "Separator");
-			ipe_renderer.addPainting(separator_p, "Separator");
+//			ipe_renderer.addPainting(separator_p, "Separator");
 		}
 		m_renderer->addPainting(slope_ladder_p, "Slope ladders");
 
-		ipe_renderer.addPainting(slope_ladder_p, "Slope ladders");
+		ipe_renderer.addPainting(slope_ladder_p, "Slope_ladders");
 	}
+
+//	auto vdp = std::make_shared<VoronoiExceptMedialPainting>(*m_isoline_simplifier);
+//	auto map = std::make_shared<MedialAxisExceptSeparatorPainting>(*m_isoline_simplifier);
+//	m_renderer->addPainting(vdp, "Voronoi");
+//	m_renderer->addPainting(map, "Medial axis");
+//	m_renderer->addPainting(separator_p, "Separator");
+
+//	ipe_renderer.addPainting(vdp, "Voronoi");
+//	ipe_renderer.addPainting(map, "Medial_axis");
+//	ipe_renderer.addPainting(separator_p, "Separator");
 
 	auto original_isolines_p = std::make_shared<IsolinePainting>(m_isoline_simplifier->m_isolines, show_vertices, true);
 	auto isolines_p = std::make_shared<IsolinePainting>(simplified_isolines, show_vertices, false);
 	if (m_isoline_simplifier->m_started)
 		m_renderer->addPainting(original_isolines_p, "Original isolines");
 	m_renderer->addPainting(isolines_p, "Simplified isolines");
-	ipe_renderer.addPainting(isolines_p, "Simplified isolines");
+//	ipe_renderer.addPainting(isolines_p, "Simplified_isolines");
 
 	if (cgal_simplify) {
-		CT ct;
 
-		std::vector<CT::Constraint_id> ids;
 
-		for (const auto& isoline : original_isolines) {
-			if (isoline.m_closed) {
-				CT::Constraint_id id = ct.insert_constraint(isoline.polygon());
-				ids.push_back(id);
-			} else {
-				CT::Constraint_id id = ct.insert_constraint(isoline.m_points);
-				ids.push_back(id);
-			}
-		}
-
-		PS::simplify(ct, Cost(), Stop(target));
-		for(auto cit = ct.constraints_begin(); cit != ct.constraints_end(); ++cit) {
-			CT::Constraint_id id = *cit;
-			auto i = std::distance(ids.begin(), std::find(ids.begin(), ids.end(), id));
-
-			std::vector<Point<K>> simplified_points;
-			for (auto vit = ct.points_in_constraint_begin(*cit); vit != ct.points_in_constraint_end(*cit); ++vit) {
-				simplified_points.push_back(*vit);
-			}
-			m_cgal_simplified.emplace_back(simplified_points, simplified_isolines[i].m_closed);
-		}
-
-		auto cgal_simplified_p = std::make_shared<IsolinePainting>(m_cgal_simplified, show_vertices, false);
-		m_renderer->addPainting(cgal_simplified_p, "CGAL simplified isolines");
-		ipe_renderer.addPainting(cgal_simplified_p, "CGAL simplified isolines");
+//		auto cgal_simplified_p = std::make_shared<IsolinePainting>(m_cgal_simplified, show_vertices, false);
+//		m_renderer->addPainting(cgal_simplified_p, "CGAL simplified isolines");
+//		ipe_renderer.addPainting(cgal_simplified_p, "CGAL simplified isolines");
 	}
 
 	if (!m_isoline_simplifier->m_started && debugInfo && region_index < simplified_isolines.size() && separator.contains(&simplified_isolines[region_index])) {
@@ -305,7 +336,7 @@ void IsolineSimplificationDemo::recalculate(bool debugInfo, int target, bool cga
 
 	if (debugInfo) {
 		m_renderer->addPainting(collapse_p, "Collapse");
-		ipe_renderer.addPainting(collapse_p, "Collapse");
+//		ipe_renderer.addPainting(collapse_p, "Collapse");
 	}
 
 	if (m_debug_ladder.has_value()) {
@@ -316,7 +347,7 @@ void IsolineSimplificationDemo::recalculate(bool debugInfo, int target, bool cga
 
 	m_renderer->update();
 
-	ipe_renderer.save("/home/steven/Documents/cartocrow/output.ipe");
+//	ipe_renderer.save("/home/steven/Documents/cartocrow/output.ipe");
 }
 
 std::vector<Isoline<K>> isolinesInPage(ipe::Page* page) {
@@ -359,19 +390,20 @@ int main(int argc, char* argv[]) {
 }
 
 //int main() {
-//	auto dir = std::string("/home/steven/Documents/cartocrow/inputs/debug/");
+//	auto dir = std::string("/home/steven/Documents/cartocrow/inputs/");
 //
 //	std::shared_ptr<ipe::Document> document = IpeReader::loadIpeFile(dir + "messy150m.ipe");
 //	ipe::Page* page = document->page(0);
-//	auto simplifier = IsolineSimplifier(isolinesInPage(page));
+//	auto simplifier = IsolineSimplifier(isolinesInPage(page), M_PI/6, min_sym_diff_collapse);
 //
 //	auto start = std::chrono::system_clock::now().time_since_epoch();
-//	simplifier.simplify(2980);
+//	simplifier.simplify(6000);
 //	auto end = std::chrono::system_clock::now().time_since_epoch();
 //
 //	const std::chrono::duration<double> duration = end - start;
 //
-//	std::cout << duration.count() << std::endl;
+//	std::cout << std::endl << simplifier.m_intersection_checks << std::endl;
+//	std::cout << std::endl << duration.count() << std::endl;
 //}
 
 VoronoiPainting::VoronoiPainting(const SDG2& delaunay): m_delaunay(delaunay) {}
@@ -379,8 +411,6 @@ VoronoiPainting::VoronoiPainting(const SDG2& delaunay): m_delaunay(delaunay) {}
 void VoronoiPainting::paint(GeometryRenderer& renderer) const {
 	renderer.setStroke(Color(150, 150, 150), 1);
 	renderer.setMode(GeometryRenderer::stroke);
-
-	renderer.setStroke(Color(150, 150, 150), 1);
 	auto voronoiDrawer = VoronoiDrawer<Gt>(&renderer);
 	draw_dual<VoronoiDrawer<Gt>, K>(m_delaunay, voronoiDrawer);
 }
@@ -398,7 +428,7 @@ void IsolinePainting::paint(GeometryRenderer& renderer) const {
 	if (m_light) {
 		renderer.setStroke(Color(150, 150, 150), 1);
 	} else {
-		renderer.setStroke(Color(0, 0, 0), 1);
+		renderer.setStroke(Color(0, 0, 0), 2);
 	}
 	for (const auto& isoline : m_isolines) {
 		std::visit([&](auto&& v){
@@ -414,7 +444,7 @@ void MedialAxisSeparatorPainting::paint(GeometryRenderer& renderer) const {
 	auto voronoiDrawer = VoronoiDrawer<Gt>(&renderer);
 	for (const auto& [_, edges] : m_separator)
 	for (const auto& edge : edges) {
-		renderer.setStroke(Color(0, 0, 255), 2.5);
+		renderer.setStroke(Color(30, 119, 179), 2.5);
 		renderer.setMode(GeometryRenderer::stroke);
 		draw_dual_edge<VoronoiDrawer<Gt>, K>(m_delaunay, edge, voronoiDrawer);
 	}
@@ -492,10 +522,10 @@ void draw_slope_ladder(GeometryRenderer& renderer, const SlopeLadder& slope_ladd
 	renderer.draw(poly);
 }
 
-void draw_ladder_collapse(GeometryRenderer& renderer, IsolineSimplifier& simplifier, const SlopeLadder& slope_ladder) {
-//	for (int i = 0; i < slope_ladder.m_rungs.size(); i++) {
-//		const auto& rung = slope_ladder.m_rungs.at(i);
-//		const auto& p = slope_ladder.m_collapsed.at(i);
+void draw_ladder_collapse(GeometryRenderer& renderer, IsolineSimplifier& simplifier, const SlopeLadder& ladder) {
+//	for (int i = 0; i < ladder.m_rungs.size(); i++) {
+//		const auto& rung = ladder.m_rungs.at(i);
+//		const auto& p = ladder.m_collapsed.at(i);
 //		auto reversed = simplifier.m_p_next.contains(rung.target()) && simplifier.m_p_next.at(rung.target()) == rung.source();
 //		auto t = reversed ? rung.target() : rung.source();
 //		auto u = reversed ? rung.source() : rung.target();
@@ -512,9 +542,39 @@ void draw_ladder_collapse(GeometryRenderer& renderer, IsolineSimplifier& simplif
 //
 //	}
 
-	for (int i = 0; i < slope_ladder.m_rungs.size(); i++) {
-		const auto& rung = slope_ladder.m_rungs.at(i);
-		const auto& p = slope_ladder.m_collapsed.at(i);
+	std::vector<ipe::Vector> midpoints;
+	if (ladder.m_cap.contains(CGAL::LEFT_TURN)) {
+		midpoints.push_back(pv(ladder.m_cap.at(CGAL::LEFT_TURN)));
+	}
+	for (const auto& rung : ladder.m_rungs) {
+		midpoints.push_back(pv(midpoint(rung)));
+	}
+	if (ladder.m_cap.contains(CGAL::RIGHT_TURN)) {
+		midpoints.push_back(pv(ladder.m_cap.at(CGAL::RIGHT_TURN)));
+	}
+
+	if (midpoints.size() > 1) {
+		ipe::Curve curve;
+		curve.appendSpline(midpoints);
+		if (curve.countSegments() > 1) {
+			throw std::runtime_error("Expected only one segment in spline.");
+		}
+		std::vector<ipe::Bezier> bzs;
+		auto curved_segment = curve.segment(0);
+		curved_segment.beziers(bzs);
+
+		BezierSpline spline;
+		for (const auto& bz : bzs) {
+			spline.appendCurve(vp(bz.iV[0]), vp(bz.iV[1]), vp(bz.iV[2]), vp(bz.iV[3]));
+		}
+		renderer.setMode(GeometryRenderer::stroke);
+		renderer.setStroke(Color(20, 20, 255), 3.0);
+		renderer.draw(spline);
+	}
+
+	for (int i = 0; i < ladder.m_rungs.size(); i++) {
+		const auto& rung = ladder.m_rungs.at(i);
+		const auto& p = ladder.m_collapsed.at(i);
 
 		auto reversed = simplifier.m_p_next.contains(rung.target()) &&
 						simplifier.m_p_next.at(rung.target()) == rung.source();
@@ -531,41 +591,58 @@ void draw_ladder_collapse(GeometryRenderer& renderer, IsolineSimplifier& simplif
 		renderer.draw(Gt::Segment_2(p, v));
 		renderer.draw(p);
 
-		auto vhs = simplifier.intersected_region(rung, p);
-		auto [boundaries, outer] = simplifier.boundaries(vhs);
-		std::cout << boundaries.size() << std::endl;
-
-		auto voronoi_drawer = VoronoiDrawer<Gt>(&renderer);
-
-		for (const auto& vh : vhs) {
-			auto eit_start = simplifier.m_delaunay.incident_edges(vh);
-			auto eit = eit_start;
-			do {
-				renderer.setStroke(Color(0, 0, 0), 2.0);
-				draw_dual_edge<VoronoiDrawer<Gt>, K>(simplifier.m_delaunay, *eit, voronoi_drawer);
-				++eit;
-			} while (eit != eit_start);
-		}
-
-		for (const auto& e : boundaries[outer]) {
-			renderer.setStroke(Color(200, 0, 0), 4.0);
-			draw_dual_edge<VoronoiDrawer<Gt>, K>(simplifier.m_delaunay, e, voronoi_drawer);
-		}
-		for (int j = 0; j < boundaries.size(); ++j) {
-			if (j == outer)
-				continue;
-			for (const auto& e : boundaries[j]) {
-				renderer.setStroke(Color(0, 200, 0), 4.0);
-				draw_dual_edge<VoronoiDrawer<Gt>, K>(simplifier.m_delaunay, e, voronoi_drawer);
-			}
-		}
+//		auto vhs = simplifier.intersected_region(rung, p);
+//		auto [boundaries, outer] = simplifier.boundaries(vhs);
+//
+//		auto voronoi_drawer = VoronoiDrawer<Gt>(&renderer);
+//
+//		for (const auto& vh : vhs) {
+//			auto eit_start = simplifier.m_delaunay.incident_edges(vh);
+//			auto eit = eit_start;
+//			do {
+//				renderer.setStroke(Color(0, 0, 0), 2.0);
+//				draw_dual_edge<VoronoiDrawer<Gt>, K>(simplifier.m_delaunay, *eit, voronoi_drawer);
+//				++eit;
+//			} while (eit != eit_start);
+//		}
+//
+//		for (const auto& e : boundaries[outer]) {
+//			renderer.setStroke(Color(200, 0, 0), 4.0);
+//			draw_dual_edge<VoronoiDrawer<Gt>, K>(simplifier.m_delaunay, e, voronoi_drawer);
+//		}
+//		for (int j = 0; j < boundaries.size(); ++j) {
+//			if (j == outer)
+//				continue;
+//			for (const auto& e : boundaries[j]) {
+//				renderer.setStroke(Color(0, 200, 0), 4.0);
+//				draw_dual_edge<VoronoiDrawer<Gt>, K>(simplifier.m_delaunay, e, voronoi_drawer);
+//			}
+//		}
 	}
 }
 
 void SlopeLadderPainting::paint(GeometryRenderer& renderer) const {
+	std::unordered_set<Gt::Segment_2> edges;
 	for (const auto& slope_ladder : m_slope_ladders) {
 		if (slope_ladder->m_old) continue;
-		draw_slope_ladder(renderer, *slope_ladder);
+		auto poly = slope_ladder_polygon(*slope_ladder);
+		for (auto eit = poly.edges_begin(); eit != poly.edges_end(); eit++) {
+			Gt::Segment_2 e = *eit;
+			if (!edges.contains(e) && !edges.contains(e.opposite())) {
+				edges.insert(e);
+			}
+		}
+		renderer.setMode(GeometryRenderer::fill);
+		renderer.setFill(Color(252, 190, 110));
+		renderer.setFillOpacity(25);
+		renderer.draw(poly);
+//		draw_slope_ladder(renderer, *slope_ladder);
+	}
+
+	for (const auto& e : edges) {
+		renderer.setStroke(Color(255, 126, 0), 1.0);
+		renderer.setMode(GeometryRenderer::stroke);
+		renderer.draw(e);
 	}
 }
 
@@ -573,16 +650,16 @@ CollapsePainting::CollapsePainting(IsolineSimplifier& simplifier):
       m_simplifier(simplifier) {}
 
 void CollapsePainting::paint(GeometryRenderer& renderer) const {
-//	if (!m_simplifier.m_slope_ladders.empty()) {
-//		auto next = m_simplifier.next_ladder();
-//		if (!next.has_value()) return;
-//		const auto& slope_ladder = *next;
-//		if (!slope_ladder->m_old) {
-//			renderer.setStroke(Color(255, 20, 20), 2.0);
-//			draw_slope_ladder(renderer, *slope_ladder);
-//			draw_ladder_collapse(renderer, m_simplifier, *slope_ladder);
-//		}
-//	}
+	if (!m_simplifier.m_slope_ladders.empty()) {
+		auto next = m_simplifier.get_next_ladder();
+		if (!next.has_value()) return;
+		const auto& slope_ladder = *next;
+		if (!slope_ladder->m_old) {
+			renderer.setStroke(Color(255, 20, 20), 2.0);
+			draw_slope_ladder(renderer, *slope_ladder);
+			draw_ladder_collapse(renderer, m_simplifier, *slope_ladder);
+		}
+	}
 
 	for (const auto& v : m_simplifier.m_changed_vertices) {
 		const auto& site = v->site();
@@ -602,4 +679,52 @@ void DebugLadderPainting::paint(GeometryRenderer& renderer) const {
 	draw_slope_ladder(renderer, m_ladder);
 	if (!m_ladder.m_valid) return;
 	draw_ladder_collapse(renderer, m_simplifier, m_ladder);
+}
+
+MedialAxisExceptSeparatorPainting::MedialAxisExceptSeparatorPainting(IsolineSimplifier& simplifier):
+      m_simplifier(simplifier) {}
+
+void MedialAxisExceptSeparatorPainting::paint(GeometryRenderer& renderer) const {
+	auto& del = m_simplifier.m_delaunay;
+	for (auto eit = del.finite_edges_begin(); eit != del.finite_edges_end(); eit++) {
+		auto vd = VoronoiDrawer<Gt>(&renderer);
+		auto edge = *eit;
+		auto [p, q] = defining_sites(edge);
+		SDG2::Point_2 p_point = point_of_site(p);
+		SDG2::Point_2 q_point = point_of_site(q);
+
+		bool is_endpoint_of_seg =
+		    ( p.is_segment() && q.is_point() &&
+		     is_endpoint_of_segment<K>(del, q, p) ) ||
+		    ( p.is_point() && q.is_segment() &&
+		     is_endpoint_of_segment<K>(del, p, q) );
+
+		if (!is_endpoint_of_seg && m_simplifier.m_p_isoline.at(p_point) == m_simplifier.m_p_isoline.at(q_point)) {
+			renderer.setStroke(Color(210, 210, 210), 1.0);
+			draw_dual_edge<VoronoiDrawer<Gt>, K>(del, *eit, vd);
+		}
+	}
+}
+
+VoronoiExceptMedialPainting::VoronoiExceptMedialPainting(IsolineSimplifier& simplifier):
+      m_simplifier(simplifier) {
+
+}
+
+void VoronoiExceptMedialPainting::paint(GeometryRenderer& renderer) const {
+	auto& del = m_simplifier.m_delaunay;
+	for (auto eit = del.finite_edges_begin(); eit != del.finite_edges_end(); eit++) {
+		auto vd = VoronoiDrawer<Gt>(&renderer);
+		auto edge = *eit;
+		auto [p, q] = defining_sites(edge);
+
+		bool is_endpoint_of_seg =
+		    (p.is_segment() && q.is_point() && is_endpoint_of_segment<K>(del, q, p)) ||
+		    (p.is_point() && q.is_segment() && is_endpoint_of_segment<K>(del, p, q));
+
+		if (is_endpoint_of_seg) {
+			renderer.setStroke(Color(210, 210, 210), 1);
+			draw_dual_edge<VoronoiDrawer<Gt>, K>(del, *eit, vd);
+		}
+	}
 }

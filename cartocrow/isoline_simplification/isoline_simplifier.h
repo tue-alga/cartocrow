@@ -29,11 +29,11 @@ typedef std::optional<std::variant<Gt::Segment_2, std::monostate>> IntersectionR
 
 class IsolineSimplifier {
   public:
-	IsolineSimplifier() = default;
-	IsolineSimplifier(std::vector<Isoline<K>> isolines);
+	IsolineSimplifier(std::vector<Isoline<K>> isolines, double angle_filter = M_PI/6, Collapse collapse = spline_collapse);
 	void simplify(int target);
+	void dyken_simplify(int target);
 	bool step();
-	std::optional<std::shared_ptr<SlopeLadder>> next_ladder();
+	std::optional<std::shared_ptr<SlopeLadder>> get_next_ladder();
 
 	void update_ladders();
 	void update_matching();
@@ -57,14 +57,16 @@ class IsolineSimplifier {
 	std::vector<Gt::Point_2> m_deleted_points;
 	int m_current_complexity = 0;
 	bool m_started = false;
+	double m_angle_filter = M_PI / 6;
 	bool check_ladder_intersections_naive(const SlopeLadder& ladder) const;
-	std::optional<Gt::Segment_2> check_segment_intersections_Voronoi(Gt::Segment_2 seg, const SDG2::Vertex_handle endpoint_handle, const std::unordered_set<SDG2::Vertex_handle>& allowed) const;
-	IntersectionResult check_ladder_intersections_Voronoi(const SlopeLadder& ladder) const;
+	std::optional<Gt::Segment_2> check_segment_intersections_Voronoi(const Gt::Segment_2 seg, const SDG2::Vertex_handle endpoint_handle, const std::unordered_set<SDG2::Vertex_handle>& allowed);
+	IntersectionResult check_ladder_intersections_Voronoi(const SlopeLadder& ladder);
 	std::unordered_set<SDG2::Vertex_handle> intersected_region(Gt::Segment_2 rung, Gt::Point_2 p);
 	std::pair<std::vector<std::vector<SDG2::Edge>>, int>
 	boundaries(const std::unordered_set<SDG2::Vertex_handle>& region) const;
 	bool check_rung_collapse_topology(Gt::Segment_2 rung, Gt::Point_2 p, std::unordered_set<Gt::Point_2>& allowed);
 	bool check_ladder_collapse_topology(const SlopeLadder& ladder);
+	double symmetric_difference() const;
 
   private:
 	void initialize_point_data();
@@ -75,6 +77,9 @@ class IsolineSimplifier {
 	void check_valid();
 	void clean_isolines();
 	void remove_ladder_e(Gt::Segment_2 seg);
+	std::optional<std::shared_ptr<SlopeLadder>> next_ladder();
+
+	Collapse m_collapse_ladder = midpoint_collapse;
 };
 }
 

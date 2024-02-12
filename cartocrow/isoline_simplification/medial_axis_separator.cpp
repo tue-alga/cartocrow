@@ -194,12 +194,12 @@ Gt::Segment_2 snap_endpoints(Gt::Segment_2 proj, Gt::Segment_2 original) {
 }
 
 Matching matching(const SDG2& delaunay, const Separator& separator, const PointToPoint& p_prev,
-                  const PointToPoint& p_next, const PointToIsoline& p_isoline) {
+                  const PointToPoint& p_next, const PointToIsoline& p_isoline, const double angle_filter) {
 	std::unordered_map<Gt::Point_2, MatchedTo> matching;
 
 	for (auto& [_, edges]: separator)
 	for (auto edge : edges) {
-		create_matching(delaunay, edge, matching, p_prev, p_next, p_isoline);
+		create_matching(delaunay, edge, matching, p_prev, p_next, p_isoline, angle_filter);
 	}
 
 	auto comparison_f = compare_along_isoline(p_prev, p_next);
@@ -214,9 +214,9 @@ Matching matching(const SDG2& delaunay, const Separator& separator, const PointT
 	return matching;
 }
 
-CGAL::Orientation side(const SDG2::Point_2& p, const SDG2::Point_2& point, const PointToPoint& p_prev, const PointToPoint& p_next) {
+Gt::Line_2 supporting_line(const SDG2::Point_2& p, const PointToPoint& p_prev, const PointToPoint& p_next) {
 	if (!p_next.contains(p) && !p_prev.contains(p)) {
-		return CGAL::LEFT_TURN;
+		throw std::runtime_error("Point should have next or prev.");
 	}
 	Gt::Point_2 prev;
 	if (p_prev.contains(p)) {
@@ -244,7 +244,24 @@ CGAL::Orientation side(const SDG2::Point_2& p, const SDG2::Point_2& point, const
 	} else {
 		l3 = Gt::Line_2(prev, next);
 	}
-	return CGAL::enum_cast<CGAL::Orientation>(l3.oriented_side(point));
+	return l3;
+
+}
+
+Gt::Line_2 supporting_line(const SDG2::Site_2& site, const PointToPoint& p_prev, const PointToPoint& p_next) {
+	if (site.is_point()) {
+		return supporting_line(site.point(), p_prev, p_next);
+	} else {
+		return site.segment().supporting_line();
+	}
+}
+
+CGAL::Orientation side(const SDG2::Point_2& p, const SDG2::Point_2& point, const PointToPoint& p_prev, const PointToPoint& p_next) {
+	if (!p_next.contains(p) && !p_prev.contains(p)) {
+		return CGAL::LEFT_TURN;
+	}
+	auto l = supporting_line(p, p_prev, p_next);
+	return CGAL::enum_cast<CGAL::Orientation>(l.oriented_side(point));
 }
 
 /// Assumes point is in the Voronoi cell of site.
@@ -279,8 +296,23 @@ std::vector<Gt::Point_2> project_snap(const SDG2& delaunay, const SDG2::Site_2& 
 	return pts;
 }
 
-void create_matching(const SDG2& delaunay, const SDG2::Edge& edge, Matching& matching, const PointToPoint& p_prev, const PointToPoint& p_next, const PointToIsoline& p_isoline) {
+void create_matching(const SDG2& delaunay, const SDG2::Edge& edge, Matching& matching, const PointToPoint& p_prev,
+                     const PointToPoint& p_next, const PointToIsoline& p_isoline, const double angle_filter) {
 	auto [p, q] = defining_sites(edge);
+
+	auto pl = supporting_line(p, p_prev, p_next);
+	auto ql = supporting_line(q, p_prev, p_next);
+
+	auto pv = pl.to_vector();
+	auto qv = ql.to_vector();
+	auto angle = acos((pv * qv) / (sqrt(pv.squared_length()) * sqrt(qv.squared_length())));
+	if (angle > M_PI/2) {
+		angle = M_PI - angle;
+	}
+	if (angle > angle_filter) {
+		return;
+	}
+
 	auto p_pts = project_snap(delaunay, p, edge);
 	auto q_pts = project_snap(delaunay, q, edge);
 
@@ -288,11 +320,6 @@ void create_matching(const SDG2& delaunay, const SDG2::Edge& edge, Matching& mat
 		// Below fails on the ends of open isolines.
 		auto sign_p = side(p, point_of_Voronoi_edge(edge, delaunay), p_prev, p_next);
 		auto sign_q = side(q, point_of_Voronoi_edge(edge, delaunay), p_prev, p_next);
-
-		if (sign_p == sign_q) {
-			//				std::cout << "Strange: " << type_of_Voronoi_edge(edge, delaunay) << "  "
-			//						  << type_of_site(p) << "  " << type_of_site(q) << std::endl;
-		}
 
 		auto match = [&](int pi, int qi) {
 			auto pp = p_pts[pi];

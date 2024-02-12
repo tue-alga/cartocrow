@@ -31,6 +31,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 namespace cartocrow::isoline_simplification {
 typedef CGAL::Exact_predicates_inexact_constructions_kernel K;
 typedef CGAL::Segment_Delaunay_graph_filtered_traits_without_intersections_2<K, CGAL::Field_with_sqrt_tag> Gt;
+//typedef CGAL::Segment_Delaunay_graph_traits_without_intersections_2<K, CGAL::Field_with_sqrt_tag> Gt;
 //typedef CGAL::Segment_Delaunay_graph_hierarchy_2<Gt> SDG2;
 typedef CGAL::Segment_Delaunay_graph_2<Gt> SDG2;
 

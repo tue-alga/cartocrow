@@ -4,6 +4,8 @@ set(SOURCES
 	collapse.cpp
 	collapse.h
 	ipe_bezier_wrapper.cpp
+	symmetric_difference.cpp
+	symmetric_difference.h
 )
 set(HEADERS
 	isoline.h

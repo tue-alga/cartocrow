@@ -3,11 +3,15 @@
 //
 
 #include "collapse.h"
+#include "ipeshape.h"
+#include "ipegeo.h"
+#include "ipe_bezier_wrapper.h"
 
 namespace cartocrow::isoline_simplification {
-void SlopeLadder::compute_collapsed(const PointToPoint& p_prev, const PointToPoint& p_next) {
-	if (!m_valid) return;
-	for (const auto& rung : m_rungs) {
+void midpoint_collapse(SlopeLadder& ladder, const PointToPoint& p_prev, const PointToPoint& p_next) {
+	ladder.m_collapsed.clear();
+	if (!ladder.m_valid) return;
+	for (const auto& rung : ladder.m_rungs) {
 		auto reversed = p_next.contains(rung.target()) && p_next.at(rung.target()) == rung.source();
 		auto t = reversed ? rung.target() : rung.source();
 		auto u = reversed ? rung.source() : rung.target();
@@ -26,7 +30,154 @@ void SlopeLadder::compute_collapsed(const PointToPoint& p_prev, const PointToPoi
 
 		Gt::Line_2 l = area_preservation_line(s, t, u, v);
 		Gt::Point_2 new_vertex = l.projection(midpoint(rung));
-		m_collapsed.push_back(new_vertex);
+		ladder.m_collapsed.push_back(new_vertex);
+	}
+}
+
+void spline_collapse(SlopeLadder& ladder, const PointToPoint& p_prev, const PointToPoint& p_next) {
+	ladder.m_collapsed.clear();
+	if (!ladder.m_valid) return;
+
+
+	std::vector<ipe::Vector> midpoints;
+	if (ladder.m_cap.contains(CGAL::LEFT_TURN)) {
+		midpoints.push_back(pv(ladder.m_cap.at(CGAL::LEFT_TURN)));
+	}
+	for (const auto& rung : ladder.m_rungs) {
+		midpoints.push_back(pv(midpoint(rung)));
+	}
+	if (ladder.m_cap.contains(CGAL::RIGHT_TURN)) {
+		midpoints.push_back(pv(ladder.m_cap.at(CGAL::RIGHT_TURN)));
+	}
+
+	ipe::Curve curve;
+	curve.appendSpline(midpoints);
+	if (curve.countSegments() > 1) {
+		throw std::runtime_error("Expected only one segment in spline.");
+	}
+
+	std::vector<ipe::Bezier> bzs;
+	auto curved_segment = curve.segment(0);
+	curved_segment.beziers(bzs);
+
+	auto intersection = [&bzs](Gt::Line_2 l) {
+		ipe::Line line = ipe::Line::through(pv(l.point(0)), pv(l.point(1)));
+		std::vector<ipe::Vector> inters;
+		for (auto& b : bzs) {
+			b.intersect(line, inters);
+		}
+		if (inters.size() != 1) {
+//			std::cerr << "Expected one spline--line intersection but encountered: " << inters.size() << std::endl;
+			return std::optional<Gt::Point_2>();
+		}
+		return std::optional(vp(inters.front()));
+	};
+
+	for (int i = 0; i < ladder.m_rungs.size(); i++) {
+		const auto& rung = ladder.m_rungs[i];
+		auto reversed = p_next.contains(rung.target()) && p_next.at(rung.target()) == rung.source();
+		auto t = reversed ? rung.target() : rung.source();
+		auto u = reversed ? rung.source() : rung.target();
+		Gt::Point_2 s;
+		if (p_prev.contains(t)) {
+			s = p_prev.at(t);
+		} else {
+			return;
+		}
+		Gt::Point_2 v;
+		if (p_next.contains(u)) {
+			v = p_next.at(u);
+		} else {
+			return;
+		}
+
+		Gt::Line_2 l = area_preservation_line(s, t, u, v);
+		Gt::Point_2 new_vertex;
+		if (i == 0 && !ladder.m_cap.contains(CGAL::LEFT_TURN) || i == ladder.m_rungs.size() - 1 && !ladder.m_cap.contains(CGAL::RIGHT_TURN)) {
+//		if (midpoints.size() == 1) {
+			new_vertex = l.projection(midpoint(rung));
+		} else {
+			auto inter = intersection(l);
+			new_vertex = inter.has_value() ? *inter : l.projection(midpoint(rung));
+		}
+		ladder.m_collapsed.push_back(new_vertex);
+	}
+}
+
+void min_sym_diff_collapse(SlopeLadder& ladder, const PointToPoint& p_prev, const PointToPoint& p_next) {
+	ladder.m_collapsed.clear();
+	if (!ladder.m_valid) return;
+	for (const auto& rung : ladder.m_rungs) {
+		auto reversed = p_next.contains(rung.target()) && p_next.at(rung.target()) == rung.source();
+		auto t = reversed ? rung.target() : rung.source();
+		auto u = reversed ? rung.source() : rung.target();
+		Gt::Point_2 s;
+		if (p_prev.contains(t)) {
+			s = p_prev.at(t);
+		} else {
+			return;
+		}
+		Gt::Point_2 v;
+		if (p_next.contains(u)) {
+			v = p_next.at(u);
+		} else {
+			return;
+		}
+
+		Gt::Line_2 l = area_preservation_line(s, t, u, v);
+		Gt::Line_2 svl(s, v);
+		Gt::Line_2 stl(s, t);
+		Gt::Line_2 uvl(u, v);
+		Gt::Point_2 new_vertex;
+		// todo: handle degenerate cases
+		// todo: seems that new_vertex may be equal to s or v, causing issues
+		if (svl.oriented_side(t) == svl.oriented_side(u)) {
+			if (squared_distance(svl, t) > squared_distance(svl, u)) {
+				auto i = *intersection(l, stl);
+				new_vertex = *boost::get<Gt::Point_2>(&i);
+			} else {
+				auto i = *intersection(l, uvl);
+				new_vertex = *boost::get<Gt::Point_2>(&i);
+			}
+		} else {
+			if (svl.oriented_side(t) == svl.oriented_side(l.point())) {
+				auto i = *intersection(l, stl);
+				new_vertex = *boost::get<Gt::Point_2>(&i);
+			} else {
+				auto i = *intersection(l, uvl);
+				new_vertex = *boost::get<Gt::Point_2>(&i);
+			}
+		}
+		if (new_vertex == s || new_vertex == v) {
+			new_vertex = midpoint(s, v);
+		}
+		ladder.m_collapsed.push_back(new_vertex);
+	}
+}
+
+void harmony_line_collapse(SlopeLadder& ladder, const PointToPoint& p_prev, const PointToPoint& p_next) {
+	ladder.m_collapsed.clear();
+	if (!ladder.m_valid) return;
+	for (const auto& rung : ladder.m_rungs) {
+		auto reversed = p_next.contains(rung.target()) && p_next.at(rung.target()) == rung.source();
+		auto t = reversed ? rung.target() : rung.source();
+		auto u = reversed ? rung.source() : rung.target();
+		Gt::Point_2 s;
+		if (p_prev.contains(t)) {
+			s = p_prev.at(t);
+		} else {
+			return;
+		}
+		Gt::Point_2 v;
+		if (p_next.contains(u)) {
+			v = p_next.at(u);
+		} else {
+			return;
+		}
+
+		Gt::Line_2 l = area_preservation_line(s, t, u, v);
+		Gt::Point_2 new_vertex = l.projection(midpoint(rung));
+		ladder.m_collapsed.push_back(new_vertex);
 	}
 }
 
@@ -150,14 +301,12 @@ Gt::Line_2 area_preservation_line(Gt::Point_2 s, Gt::Point_2 t, Gt::Point_2 u, G
 		std::cerr << "v: " << v << std::endl;
 		throw std::runtime_error("Cannot simplify an isoline of three vertices");
 	}
-	double base_length = sqrt(squared_distance(s, v));
-	double height = 2 * area / base_length;
-	Gt::Line_2 base(s, v);
-	// TODO: This assumes that the orientation of closed isolines is clockwise
-	auto vec = base.direction().perpendicular(CGAL::LEFT_TURN).vector();
-	vec /= sqrt(vec.squared_length());
-	vec *= height;
-	CGAL::Aff_transformation_2<K> translate(CGAL::TRANSLATION, vec);
-	return base.transform(translate);
+	// From the paper:
+	// Simplification of polylines by segment collapse: minimizing areal displacement while preserving area
+	// Barry J. Kronenfeld, Lawrence V. Stanislawski, Barbara P. Buttenfield & Tyler Brockmeyer
+	auto a = v.y() - s.y();
+	auto b = s.x() - v.x();
+	auto c = -t.y() * s.x() + (s.y() - u.y()) * t.x() + (t.y() - v.y()) * u.x() + u.y() * v.x();
+	return Gt::Line_2(a, b, c);
 }
 }

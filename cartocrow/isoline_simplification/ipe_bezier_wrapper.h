@@ -27,5 +27,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 namespace cartocrow::isoline_simplification {
 std::vector<Gt::Point_2> parabola_intersections(Gt::Segment_2 seg, Gt::Line_2 dir,
                                                 Gt::Point_2 focus, Gt::Point_2 p1, Gt::Point_2 p2);
+ipe::Vector pv(Gt::Point_2 p);
+Gt::Point_2 vp(ipe::Vector p);
 }
 #endif //CARTOCROW_IPE_BEZIER_WRAPPER_H

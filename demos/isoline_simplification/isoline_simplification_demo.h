@@ -48,6 +48,7 @@ class IsolineSimplificationDemo : public QMainWindow {
 
 	GeometryWidget* m_renderer;
 	std::function<void()> m_recalculate;
+	std::function<void()> m_reload;
 };
 
 Polygon<K> slope_ladder_polygon(const SlopeLadder& slope_ladder);
@@ -146,6 +147,28 @@ class DebugLadderPainting : public GeometryPainting {
   private:
 	IsolineSimplifier& m_simplifier;
 	SlopeLadder& m_ladder;
+};
+
+class MedialAxisExceptSeparatorPainting : public GeometryPainting {
+  public:
+	MedialAxisExceptSeparatorPainting(IsolineSimplifier& simplifier);
+
+  protected:
+	void paint(GeometryRenderer& renderer) const override;
+
+  private:
+	IsolineSimplifier& m_simplifier;
+};
+
+class VoronoiExceptMedialPainting : public GeometryPainting {
+  public:
+	VoronoiExceptMedialPainting(IsolineSimplifier& simplifier);
+
+  protected:
+	void paint(GeometryRenderer& renderer) const override;
+
+  private:
+	IsolineSimplifier& m_simplifier;
 };
 
 #endif //CARTOCROW_ISOLINE_SIMPLIFICATION_DEMO_H
