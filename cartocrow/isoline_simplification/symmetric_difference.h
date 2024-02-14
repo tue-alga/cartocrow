@@ -9,6 +9,6 @@
 #include "isoline.h"
 
 namespace cartocrow::isoline_simplification {
-double symmetric_difference(const Isoline<K>& isoline1, const Isoline<K>& isoline2);
+double symmetric_difference(const Isoline<K>& original, const Isoline<K>& simplified);
 }
 #endif //CARTOCROW_SYMMETRIC_DIFFERENCE_H

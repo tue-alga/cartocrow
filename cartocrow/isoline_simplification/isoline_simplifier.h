@@ -67,6 +67,8 @@ class IsolineSimplifier {
 	bool check_rung_collapse_topology(Gt::Segment_2 rung, Gt::Point_2 p, std::unordered_set<Gt::Point_2>& allowed);
 	bool check_ladder_collapse_topology(const SlopeLadder& ladder);
 	double symmetric_difference() const;
+	int ladder_count(bool recompute);
+	void clear();
 
   private:
 	void initialize_point_data();
@@ -78,13 +80,10 @@ class IsolineSimplifier {
 	void clean_isolines();
 	void remove_ladder_e(Gt::Segment_2 seg);
 	std::optional<std::shared_ptr<SlopeLadder>> next_ladder();
+//	std::optional<std::shared_ptr<SlopeLadder>> naive_next_ladder();
 
 	LadderCollapse m_collapse_ladder;
 };
-std::optional<Gt::Segment_2> check_segment_intersections_Voronoi(const SDG2& delaunay, const Gt::Segment_2 seg,
-                                                                 const SDG2::Vertex_handle endpoint_handle,
-                                                                 const std::unordered_set<SDG2::Vertex_handle>& allowed,
-                                                                 const std::optional<SDG2::Vertex_handle> collinear_vertex);
 }
 
 #endif //CARTOCROW_ISOLINE_SIMPLIFICATION_H

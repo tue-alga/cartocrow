@@ -55,7 +55,7 @@ IsolineSimplifier::IsolineSimplifier(std::vector<Isoline<K>> isolines, double an
 	initialize_sdg();
 	initialize_point_data();
 	m_separator = medial_axis_separator(m_delaunay, m_p_isoline, m_p_prev, m_p_next);
-	m_matching = matching(m_delaunay, m_separator, m_p_prev, m_p_next, m_p_isoline, m_angle_filter);
+	m_matching = matching(m_delaunay, m_separator, m_p_prev, m_p_next, m_p_isoline, m_p_vertex, m_angle_filter);
 	initialize_slope_ladders();
 }
 
@@ -86,6 +86,15 @@ void IsolineSimplifier::initialize_point_data() {
 			}
 		}
 	}
+}
+
+void IsolineSimplifier::initialize_sdg() {
+	std::vector<Gt::Segment_2> segments;
+	for (const auto& isoline : m_simplified_isolines) {
+		auto polyline = isoline.polyline();
+		std::copy(polyline.edges_begin(), polyline.edges_end(), std::back_inserter(segments));
+	}
+	m_delaunay.insert_segments(segments.begin(), segments.end());
 
 	for (auto vit = m_delaunay.finite_vertices_begin(); vit != m_delaunay.finite_vertices_end(); vit++) {
 		auto site = vit->site();
@@ -95,15 +104,6 @@ void IsolineSimplifier::initialize_point_data() {
 			m_e_vertex[site.segment()] = vit;
 		}
 	}
-}
-
-void IsolineSimplifier::initialize_sdg() {
-	std::vector<Gt::Segment_2> segments;
-	for (const auto& isoline : m_isolines) {
-		auto polyline = isoline.polyline();
-		std::copy(polyline.edges_begin(), polyline.edges_end(), std::back_inserter(segments));
-	}
-	m_delaunay.insert_segments(segments.begin(), segments.end());
 }
 
 void IsolineSimplifier::simplify(int target) {
@@ -179,9 +179,17 @@ void IsolineSimplifier::collapse_ladder(SlopeLadder& ladder) {
 	  	m_deleted_points.push_back(p);
 
 	    if (!m_delaunay.remove(vertex)) {
-			std::cerr << "Likely point " << p << " is incident to a segment that has not yet been deleted." << std::endl;
-		    throw std::runtime_error("Delaunay point vertex removal failed!");
+			std::cerr << "\nPoint removal failed\nLikely point " << p << " is incident to a segment that has not yet been deleted." << std::endl;
+			std::cerr << "Rebuilding delaunay triangulation..." << std::endl;
+			initialize_sdg();
+			return false;
+
+//		    throw std::runtime_error("Delaunay point vertex removal failed!");
+
+//			std::cerr << "Likely point " << p << " is incident to a segment that has not yet been deleted." << std::endl;
+
 	    }
+		return true;
 	};
 
 	auto delaunay_remove_e = [&insert_adj, this](const Gt::Segment_2& s) {
@@ -219,33 +227,46 @@ void IsolineSimplifier::collapse_ladder(SlopeLadder& ladder) {
 		return handle;
 	};
 
-	for (int i = 0; i < ladder.m_rungs.size(); i++) {
-		auto edge = ladder.m_rungs.at(i);
+	int iters = 0;
+	while (iters < 10) {
+		bool success = true;
+		for (int i = 0; i < ladder.m_rungs.size(); i++) {
+			auto edge = ladder.m_rungs.at(i);
 
-		bool reversed = m_p_next.contains(edge.target()) && m_p_next.at(edge.target()) == edge.source();
-		const Gt::Point_2& t = reversed ? edge.target() : edge.source();
-		const Gt::Point_2& u = reversed ? edge.source() : edge.target();
-		if (!(m_p_next.at(t) == u && m_p_prev.at(u) == t)) {
-			std::cout << reversed << std::endl;
-			std::cout << t << std::endl;
-			std::cout << u << std::endl;
-			std::cout << m_p_next.at(t) << std::endl;
-			std::cout << m_p_prev.at(u) << std::endl;
-			std::cout << m_p_prev.at(t) << std::endl;
-			std::cout << m_p_next.at(u) << std::endl;
+			bool reversed =
+			    m_p_next.contains(edge.target()) && m_p_next.at(edge.target()) == edge.source();
+			const Gt::Point_2& t = reversed ? edge.target() : edge.source();
+			const Gt::Point_2& u = reversed ? edge.source() : edge.target();
+			if (!(m_p_next.at(t) == u && m_p_prev.at(u) == t)) {
+				std::cout << reversed << std::endl;
+				std::cout << t << std::endl;
+				std::cout << u << std::endl;
+				std::cout << m_p_next.at(t) << std::endl;
+				std::cout << m_p_prev.at(u) << std::endl;
+				std::cout << m_p_prev.at(t) << std::endl;
+				std::cout << m_p_next.at(u) << std::endl;
+			}
+			assert(m_p_next.at(t) == u && m_p_prev.at(u) == t);
+			const Gt::Point_2& s = m_p_prev.at(t);
+			const Gt::Point_2& v = m_p_next.at(u);
+			const Gt::Segment_2 st = Gt::Segment_2(s, t);
+			const Gt::Segment_2 uv = Gt::Segment_2(u, v);
+
+			// Remove from Delaunay
+			delaunay_remove_e(edge);
+			delaunay_remove_e(st);
+			delaunay_remove_e(uv);
+			if (!delaunay_remove_p(t)) {
+				success = false;
+				break;
+			}
+			if (!delaunay_remove_p(u)) {
+				success = false;
+				break;
+			}
 		}
-		assert(m_p_next.at(t) == u && m_p_prev.at(u) == t);
-		const Gt::Point_2& s = m_p_prev.at(t);
-		const Gt::Point_2& v = m_p_next.at(u);
-		const Gt::Segment_2 st = Gt::Segment_2(s, t);
-		const Gt::Segment_2 uv = Gt::Segment_2(u, v);
-
-		// Remove from Delaunay
-		delaunay_remove_e(edge);
-		delaunay_remove_e(st);
-		delaunay_remove_e(uv);
-		delaunay_remove_p(t);
-		delaunay_remove_p(u);
+		if (success) break;
+		++iters;
 	}
 
 	for (int i = 0; i < ladder.m_rungs.size(); i++) {
@@ -417,7 +438,7 @@ void IsolineSimplifier::update_matching() {
 				auto site_2 = target->site();
 				auto iso_2 = m_p_isoline.at(point_of_site(site_2));
 				if (iso_1 == iso_2) continue;
-				create_matching(m_delaunay, edge, m_matching, m_p_prev, m_p_next, m_p_isoline, m_angle_filter);
+				create_matching(m_delaunay, edge, m_matching, m_p_prev, m_p_next, m_p_isoline, m_p_vertex, m_angle_filter);
 				if (site_1.is_point()) {
 					modified_matchings.push_back(site_1.point());
 				} else {
@@ -491,27 +512,85 @@ void IsolineSimplifier::update_ladders() {
 		}
 	}
 
+	auto check_subset = [](const std::shared_ptr<SlopeLadder>& sub, const std::shared_ptr<SlopeLadder>& super) {
+		for (auto sign : {CGAL::LEFT_TURN, CGAL::RIGHT_TURN}) {
+			if (sub->m_cap.contains(sign)) {
+				if (!super->m_cap.contains(sign))
+					return false;
+				if (super->m_cap.at(sign) != sub->m_cap.at(sign))
+					return false;
+			}
+		}
+		for (const auto& rung : sub->m_rungs) {
+			auto contained = std::find_if(super->m_rungs.begin(), super->m_rungs.end(), [&rung](const Gt::Segment_2& other_rung) {
+				return rung == other_rung || rung == other_rung.opposite();
+			}) != super->m_rungs.end();
+			if (!contained) return false;
+		}
+		return true;
+	};
+
+	auto remove_subset_ladders = [this, &check_subset](Gt::Segment_2 seg) {
+		if (!m_e_ladder.contains(seg)) return;
+		for (const auto& ladder : m_e_ladder.at(seg)) {
+			if (ladder->m_old) continue;
+			std::unordered_set<std::shared_ptr<SlopeLadder>> other_ladders;
+
+			for (const auto& rung : ladder->m_rungs) {
+				if (m_e_ladder.contains(rung)) {
+					for (const auto& other_ladder : m_e_ladder.at(rung)) {
+						if (other_ladder->m_old) continue;
+						if (other_ladder != ladder) {
+							other_ladders.insert(other_ladder);
+						}
+					}
+				}
+				if (m_e_ladder.contains(rung.opposite())) {
+					for (const auto& other_ladder : m_e_ladder.at(rung.opposite())) {
+						if (other_ladder->m_old) continue;
+						if (other_ladder != ladder) {
+							other_ladders.insert(other_ladder);
+						}
+					}
+				}
+			}
+
+			for (const auto& other_ladder : other_ladders) {
+				if (check_subset(other_ladder, ladder)) {
+					other_ladder->m_old = true;
+				}
+			}
+		}
+	};
+
 	for (const auto& vh : m_changed_vertices) {
 		const auto& site = vh->site();
 		if (site.is_point()) {
 			auto p = site.point();
 			if (m_p_prev.contains(p)) {
-				create_slope_ladder(Gt::Segment_2(m_p_prev.at(p), p), true);
+				Gt::Segment_2 seg(m_p_prev.at(p), p);
+				create_slope_ladder(seg, true);
+				remove_subset_ladders(seg);
+				remove_subset_ladders(seg.opposite());
 			}
 			if (m_p_next.contains(p)) {
-				create_slope_ladder(Gt::Segment_2(p, m_p_next.at(p)), true);
+				Gt::Segment_2 seg(p, m_p_next.at(p));
+				create_slope_ladder(seg, true);
+				remove_subset_ladders(seg);
+				remove_subset_ladders(seg.opposite());
 			}
 		} else {
 			create_slope_ladder(site.segment(), true);
+			remove_subset_ladders(site.segment());
+			remove_subset_ladders(site.segment().opposite());
 		}
 	}
 
 	for (const auto& seg : additional_segments) {
 		create_slope_ladder(seg, true);
+		remove_subset_ladders(seg);
+		remove_subset_ladders(seg.opposite());
 	}
-
-	// todo: check whether existing ladders at an edge are subsets of new ladders.
-	// during initialization this cannot happen but during updating it may
 }
 
 // same as next_ladder() but does not pop the next ladder from the heap.
@@ -617,7 +696,8 @@ std::optional<std::shared_ptr<SlopeLadder>> IsolineSimplifier::next_ladder() {
 			temp.push_back(current);
 			std::pop_heap(m_slope_ladders.begin(), m_slope_ladders.end(), slope_ladder_comp);
 			m_slope_ladders.pop_back();
-		} else if (IntersectionResult ir = check_ladder_intersections_Voronoi(*current)) {
+		}
+		else if (IntersectionResult ir = check_ladder_intersections_Voronoi(*current)) {
 			auto irv = *ir;
 			// self-intersects
 			if (holds_alternative<std::monostate>(irv)) {
@@ -671,7 +751,6 @@ bool IsolineSimplifier::step() {
 	if (!next.has_value()) return false;
 	auto slope_ladder = *next;
 //	std::cout << "Ladder size: " << slope_ladder->m_rungs.size() << std::endl;
-//	std::cout << "Cost: " << slope_ladder->m_cost << std::endl;
 
 	m_changed_vertices.clear();
 	m_deleted_points.clear();
@@ -987,168 +1066,6 @@ bool IsolineSimplifier::check_ladder_intersections_naive(const SlopeLadder& ladd
 	}
 
 	return false;
-}
-
-inline
-    CGAL::Sign incircle(const SDG2& sdg, const SDG2::Site_2 &t1, const SDG2::Site_2 &t2,
-             const SDG2::Site_2 &t3, const SDG2::Site_2 &q) {
-	return sdg.geom_traits().vertex_conflict_2_object()(t1, t2, t3, q);
-}
-
-inline
-    CGAL::Sign incircle(const SDG2& sdg, const SDG2::Site_2 &t1, const SDG2::Site_2 &t2,
-             const SDG2::Site_2 &q) {
-	return sdg.geom_traits().vertex_conflict_2_object()(t1, t2, q);
-}
-
-// https://github.com/CGAL/cgal/blob/96f698ca09b61b6ca7587d43b022a0db43519699/Segment_Delaunay_graph_2/include/CGAL/Segment_Delaunay_graph_2/Segment_Delaunay_graph_2_impl.h#L2320
-CGAL::Sign
-    incircle(const SDG2& sdg, const SDG2::Face_handle& f, const SDG2::Site_2& q)
-{
-	if ( !sdg.is_infinite(f) ) {
-		return incircle(sdg,
-		                f->vertex(0)->site(),
-		                f->vertex(1)->site(),
-		                f->vertex(2)->site(), q);
-	}
-
-	int inf_i(-1); // to avoid compiler warning
-	for (int i = 0; i < 3; i++) {
-		if ( sdg.is_infinite(f->vertex(i)) ) {
-			inf_i = i;
-			break;
-		}
-	}
-	return incircle(sdg, f->vertex( SDG2::ccw(inf_i) )->site(),
-	                f->vertex(  SDG2::cw(inf_i) )->site(), q );
-}
-
-Gt::Arrangement_type_2::result_type arrangement_type(const SDG2& sdg, const SDG2::Site_2& p, const SDG2::Site_2& q)
-{
-	typedef typename Gt::Arrangement_type_2  AT2;
-	typedef typename AT2::result_type                 Arrangement_type;
-
-	Arrangement_type res = sdg.geom_traits().arrangement_type_2_object()(p, q);
-
-	if ( res == AT2::TOUCH_INTERIOR_12 || res == AT2::TOUCH_INTERIOR_21 ||
-	    res == AT2::TOUCH_INTERIOR_11 || res == AT2::TOUCH_INTERIOR_22 ) {
-		return AT2::DISJOINT;
-	}
-	if ( res == AT2::TOUCH_11 || res == AT2::TOUCH_12 ||
-	    res == AT2::TOUCH_21 || res == AT2::TOUCH_22 ) {
-		return AT2::DISJOINT;
-	}
-
-	return res;
-}
-
-std::optional<Gt::Segment_2> check_segment_intersections_Voronoi(const SDG2& delaunay, const Gt::Segment_2 seg,
-        const SDG2::Vertex_handle endpoint_handle, const std::unordered_set<SDG2::Vertex_handle>& allowed,
-        const std::optional<SDG2::Vertex_handle> collinear_vertex) {
-	auto t = SDG2::Site_2::construct_site_2(seg.source(), seg.target());
-
-	auto check_intersections = [&t, &delaunay](SDG2::Vertex_handle vv) {
-		if (!delaunay.is_infinite(vv) && vv->is_segment()) {
-			bool intersects = arrangement_type(delaunay, t, vv->site()) == Gt::Arrangement_type_2::result_type::CROSSING;
-			if (intersects) {
-				return true;
-			}
-		}
-		return false;
-	};
-
-	auto c_incircle = [&collinear_vertex](const SDG2& sdg, const SDG2::Face_handle& f, const SDG2::Site_2& q){
-		if (collinear_vertex.has_value()) {
-			for (int i = 0; i < 3; i++) {
-				if (f->vertex(i) == collinear_vertex) {
-					return CGAL::NEGATIVE;
-				}
-			}
-		}
-		return incircle(sdg, f, q);
-	};
-
-	auto vc_start = delaunay.incident_vertices(endpoint_handle);
-	auto vc = vc_start;
-	do {
-		SDG2::Vertex_handle vv(vc);
-		if (delaunay.is_infinite(vv)) {
-			++vc;
-			continue;
-		}
-
-		if (check_intersections(vv) && !allowed.contains(vv)) return vv->site().segment();
-		++vc;
-	} while (vc != vc_start);
-
-	// First, find one face that is in conflict with seg (i.e. seg is close to corresponding vertex of Voronoi diagram)
-	SDG2::Face_circulator fc_start = delaunay.incident_faces(endpoint_handle);
-	SDG2::Face_circulator fc = fc_start;
-	SDG2::Face_handle start_f;
-	CGAL::Sign s;
-
-	do {
-		SDG2::Face_handle f(fc);
-		s = c_incircle(delaunay, f, t);
-
-		if (s != CGAL::POSITIVE) {
-			start_f = f;
-			break;
-		}
-		++fc;
-	} while (fc != fc_start);
-
-	assert(s != CGAL::POSITIVE);
-
-	std::unordered_set<SDG2::Face_handle> visited;
-	std::stack<SDG2::Face_handle> face_stack;
-	std::unordered_set<SDG2::Face_handle> positive;
-	face_stack.push(start_f);
-
-	while (!face_stack.empty()) {
-		const auto curr_f = face_stack.top();
-		face_stack.pop();
-
-		// Already visited, so skip
-		if (visited.contains(curr_f)) {
-			continue;
-		}
-		visited.insert(curr_f);
-
-		for (int i = 0; i < 3; i++) {
-			auto n = curr_f->neighbor(i);
-			if (visited.contains(n)) continue;
-
-			for (int j = 0; j < 3; j++) {
-				auto vv = n->vertex(j);
-				if (check_intersections(vv)) {
-					if (!allowed.contains(vv))
-						return vv->site().segment();
-					else {
-						auto vfc_start = delaunay.incident_faces(vv);
-						auto vfc = vfc_start;
-						do {
-							SDG2::Face_handle f(vfc);
-							face_stack.push(f);
-							++vfc;
-						} while (vfc != vfc_start);
-					}
-				}
-			}
-
-			s = c_incircle(delaunay, n, t);
-
-			if (positive.contains(curr_f) && s == CGAL::POSITIVE) continue;
-
-			face_stack.push(n);
-			if (s == CGAL::POSITIVE) {
-				positive.insert(n);
-			}
-		}
-	}
-
-	// If we are done and haven't found intersections then there are none.
-	return std::nullopt;
 }
 
 IntersectionResult IsolineSimplifier::check_ladder_intersections_Voronoi(const SlopeLadder& ladder) {
@@ -1537,5 +1454,33 @@ double IsolineSimplifier::symmetric_difference() const {
 		total += ::cartocrow::isoline_simplification::symmetric_difference(m_isolines[i], m_simplified_isolines[i]);
 	}
 	return total;
+}
+
+void IsolineSimplifier::clear() {
+	m_delaunay.clear();
+	m_p_isoline.clear();
+	m_p_prev.clear();
+	m_p_next.clear();
+	m_p_iterator.clear();
+	m_p_ladder.clear();
+	m_e_ladder.clear();
+	m_p_vertex.clear();
+	m_e_vertex.clear();
+	m_e_intersects.clear();
+	m_delaunay.clear();
+	m_separator.clear();
+	m_matching.clear();
+	m_slope_ladders.clear();
+}
+
+int IsolineSimplifier::ladder_count(bool recompute) {
+	clear();
+	initialize_sdg();
+	initialize_point_data();
+	m_separator = medial_axis_separator(m_delaunay, m_p_isoline, m_p_prev, m_p_next);
+	m_matching = matching(m_delaunay, m_separator, m_p_prev, m_p_next, m_p_isoline, m_p_vertex,
+	                     m_angle_filter);
+	initialize_slope_ladders();
+	return m_slope_ladders.size();
 }
 }

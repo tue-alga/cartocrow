@@ -194,12 +194,13 @@ Gt::Segment_2 snap_endpoints(Gt::Segment_2 proj, Gt::Segment_2 original) {
 }
 
 Matching matching(const SDG2& delaunay, const Separator& separator, const PointToPoint& p_prev,
-                  const PointToPoint& p_next, const PointToIsoline& p_isoline, const double angle_filter) {
+                  const PointToPoint& p_next, const PointToIsoline& p_isoline, const PointToVertex& p_vertex,
+                  const double angle_filter) {
 	std::unordered_map<Gt::Point_2, MatchedTo> matching;
 
 	for (auto& [_, edges]: separator)
 	for (auto edge : edges) {
-		create_matching(delaunay, edge, matching, p_prev, p_next, p_isoline, angle_filter);
+		create_matching(delaunay, edge, matching, p_prev, p_next, p_isoline, p_vertex, angle_filter);
 	}
 
 	auto comparison_f = compare_along_isoline(p_prev, p_next);
@@ -296,8 +297,172 @@ std::vector<Gt::Point_2> project_snap(const SDG2& delaunay, const SDG2::Site_2& 
 	return pts;
 }
 
+inline
+    CGAL::Sign incircle(const SDG2& sdg, const SDG2::Site_2 &t1, const SDG2::Site_2 &t2,
+             const SDG2::Site_2 &t3, const SDG2::Site_2 &q) {
+	return sdg.geom_traits().vertex_conflict_2_object()(t1, t2, t3, q);
+}
+
+inline
+    CGAL::Sign incircle(const SDG2& sdg, const SDG2::Site_2 &t1, const SDG2::Site_2 &t2,
+             const SDG2::Site_2 &q) {
+	return sdg.geom_traits().vertex_conflict_2_object()(t1, t2, q);
+}
+
+// https://github.com/CGAL/cgal/blob/96f698ca09b61b6ca7587d43b022a0db43519699/Segment_Delaunay_graph_2/include/CGAL/Segment_Delaunay_graph_2/Segment_Delaunay_graph_2_impl.h#L2320
+CGAL::Sign
+incircle(const SDG2& sdg, const SDG2::Face_handle& f, const SDG2::Site_2& q)
+{
+	if ( !sdg.is_infinite(f) ) {
+		return incircle(sdg,
+		                f->vertex(0)->site(),
+		                f->vertex(1)->site(),
+		                f->vertex(2)->site(), q);
+	}
+
+	int inf_i(-1); // to avoid compiler warning
+	for (int i = 0; i < 3; i++) {
+		if ( sdg.is_infinite(f->vertex(i)) ) {
+			inf_i = i;
+			break;
+		}
+	}
+	return incircle(sdg, f->vertex( SDG2::ccw(inf_i) )->site(),
+	                f->vertex(  SDG2::cw(inf_i) )->site(), q );
+}
+
+Gt::Arrangement_type_2::result_type arrangement_type(const SDG2& sdg, const SDG2::Site_2& p, const SDG2::Site_2& q)
+{
+	typedef typename Gt::Arrangement_type_2  AT2;
+	typedef typename AT2::result_type                 Arrangement_type;
+
+	Arrangement_type res = sdg.geom_traits().arrangement_type_2_object()(p, q);
+
+	if ( res == AT2::TOUCH_INTERIOR_12 || res == AT2::TOUCH_INTERIOR_21 ||
+	    res == AT2::TOUCH_INTERIOR_11 || res == AT2::TOUCH_INTERIOR_22 ) {
+		return AT2::DISJOINT;
+	}
+	if ( res == AT2::TOUCH_11 || res == AT2::TOUCH_12 ||
+	    res == AT2::TOUCH_21 || res == AT2::TOUCH_22 ) {
+		return AT2::DISJOINT;
+	}
+
+	return res;
+}
+
+std::optional<Gt::Segment_2> check_segment_intersections_Voronoi(const SDG2& delaunay, const Gt::Segment_2 seg,
+                                                                 const SDG2::Vertex_handle endpoint_handle,
+                                                                 const std::unordered_set<SDG2::Vertex_handle>& allowed = std::unordered_set<SDG2::Vertex_handle>(),
+                                                                 const std::optional<SDG2::Vertex_handle> collinear_vertex = std::nullopt) {
+	auto t = SDG2::Site_2::construct_site_2(seg.source(), seg.target());
+
+	auto check_intersections = [&t, &delaunay](SDG2::Vertex_handle vv) {
+		if (!delaunay.is_infinite(vv) && vv->is_segment()) {
+			bool intersects = arrangement_type(delaunay, t, vv->site()) == Gt::Arrangement_type_2::result_type::CROSSING;
+			if (intersects) {
+				return true;
+			}
+		}
+		return false;
+	};
+
+	auto c_incircle = [&collinear_vertex](const SDG2& sdg, const SDG2::Face_handle& f, const SDG2::Site_2& q){
+		if (collinear_vertex.has_value()) {
+			for (int i = 0; i < 3; i++) {
+				if (f->vertex(i) == collinear_vertex) {
+					return CGAL::NEGATIVE;
+				}
+			}
+		}
+		return incircle(sdg, f, q);
+	};
+
+	auto vc_start = delaunay.incident_vertices(endpoint_handle);
+	auto vc = vc_start;
+	do {
+		SDG2::Vertex_handle vv(vc);
+		if (delaunay.is_infinite(vv)) {
+			++vc;
+			continue;
+		}
+
+		if (check_intersections(vv) && !allowed.contains(vv)) return vv->site().segment();
+		++vc;
+	} while (vc != vc_start);
+
+	// First, find one face that is in conflict with seg (i.e. seg is close to corresponding vertex of Voronoi diagram)
+	SDG2::Face_circulator fc_start = delaunay.incident_faces(endpoint_handle);
+	SDG2::Face_circulator fc = fc_start;
+	SDG2::Face_handle start_f;
+	CGAL::Sign s;
+
+	do {
+		SDG2::Face_handle f(fc);
+		s = c_incircle(delaunay, f, t);
+
+		if (s != CGAL::POSITIVE) {
+			start_f = f;
+			break;
+		}
+		++fc;
+	} while (fc != fc_start);
+
+	assert(s != CGAL::POSITIVE);
+
+	std::unordered_set<SDG2::Face_handle> visited;
+	std::stack<SDG2::Face_handle> face_stack;
+	std::unordered_set<SDG2::Face_handle> positive;
+	face_stack.push(start_f);
+
+	while (!face_stack.empty()) {
+		const auto curr_f = face_stack.top();
+		face_stack.pop();
+
+		// Already visited, so skip
+		if (visited.contains(curr_f)) {
+			continue;
+		}
+		visited.insert(curr_f);
+
+		for (int i = 0; i < 3; i++) {
+			auto n = curr_f->neighbor(i);
+			if (visited.contains(n)) continue;
+
+			for (int j = 0; j < 3; j++) {
+				auto vv = n->vertex(j);
+				if (check_intersections(vv)) {
+					if (!allowed.contains(vv))
+						return vv->site().segment();
+					else {
+						auto vfc_start = delaunay.incident_faces(vv);
+						auto vfc = vfc_start;
+						do {
+							SDG2::Face_handle f(vfc);
+							face_stack.push(f);
+							++vfc;
+						} while (vfc != vfc_start);
+					}
+				}
+			}
+
+			s = c_incircle(delaunay, n, t);
+
+			if (positive.contains(curr_f) && s == CGAL::POSITIVE) continue;
+
+			face_stack.push(n);
+			if (s == CGAL::POSITIVE) {
+				positive.insert(n);
+			}
+		}
+	}
+
+	// If we are done and haven't found intersections then there are none.
+	return std::nullopt;
+}
+
 void create_matching(const SDG2& delaunay, const SDG2::Edge& edge, Matching& matching, const PointToPoint& p_prev,
-                     const PointToPoint& p_next, const PointToIsoline& p_isoline, const double angle_filter) {
+                     const PointToPoint& p_next, const PointToIsoline& p_isoline, const PointToVertex& p_vertex,
+                     const double angle_filter) {
 	auto [p, q] = defining_sites(edge);
 
 	auto pl = supporting_line(p, p_prev, p_next);
@@ -325,7 +490,8 @@ void create_matching(const SDG2& delaunay, const SDG2::Edge& edge, Matching& mat
 			auto pp = p_pts[pi];
 			auto qp = q_pts[qi];
 			bool edge_case = !p_prev.contains(pp) || !p_prev.contains(qp) || !p_next.contains(pp) || !p_next.contains(qp);
-			if (!edge_case) {
+			bool intersects = check_segment_intersections_Voronoi(delaunay, Gt::Segment_2(pp, qp), p_vertex.at(pp)).has_value();
+			if (!edge_case && !intersects) {
 				matching[pp][sign_p][p_isoline.at(point_of_site(q))].push_back(qp);
 				matching[qp][sign_q][p_isoline.at(point_of_site(p))].push_back(pp);
 			}

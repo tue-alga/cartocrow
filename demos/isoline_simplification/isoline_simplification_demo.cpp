@@ -44,7 +44,7 @@ using namespace cartocrow::renderer;
 using namespace cartocrow::isoline_simplification;
 
 IsolineSimplificationDemo::IsolineSimplificationDemo() {
-	auto dir = std::string("/home/steven/Documents/cartocrow/inputs/");
+	auto dir = std::string("/home/steven/Documents/cartocrow/inputs/large/");
 	setWindowTitle("Isoline simplification");
 
 	auto* dockWidget = new QDockWidget();
@@ -110,10 +110,9 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 
 	auto* collapse_selector = new QComboBox();
 	collapse_selector->addItem("Midpoint");
+	collapse_selector->addItem("Minimize symmetric difference");
 	collapse_selector->addItem("Spline midpoint");
 	collapse_selector->addItem("Spline min. symmetric diff.");
-	collapse_selector->addItem("Harmony line");
-	collapse_selector->addItem("Minimize symmetric difference");
 	vLayout->addWidget(collapse_selector);
 
 	auto* angle_filter_input = new QDoubleSpinBox();
@@ -157,9 +156,13 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 	m_renderer->setMaxZoom(1000.0);
 
 	m_recalculate = [this, debugInfo, doCGALSimplify, simplificationTarget, regionIndex, showVertices, isolineIndex, number_of_vertices, angle_filter_input, measure_text]() {
-		m_isoline_simplifier->m_angle_filter = angle_filter_input->value();
 		number_of_vertices->setText(QString(("#Vertices: " + std::to_string(m_isoline_simplifier->m_current_complexity)).c_str()));
-		measure_text->setText(QString(("Symmetric difference: " + std::to_string(m_isoline_simplifier->symmetric_difference())).c_str()));
+		// todo: check
+		m_isoline_simplifier->m_angle_filter = M_PI / 6;
+		auto measure_text_string = "Symmetric difference: " + std::to_string(m_isoline_simplifier->symmetric_difference()) +
+		    "\n#Ladders: " + std::to_string(m_isoline_simplifier->ladder_count(doCGALSimplify->isChecked()));
+	    m_isoline_simplifier->m_angle_filter = angle_filter_input->value();
+		measure_text->setText(QString(measure_text_string.c_str()));
 		recalculate(debugInfo->checkState(), simplificationTarget->value(),
 		            doCGALSimplify->checkState(), regionIndex->value(), showVertices->checkState(), isolineIndex->value());
 	};
@@ -174,23 +177,19 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 			break;
 		}
 		case 1: {
-			collapse = spline_collapse(projected_midpoint);
-			break;
-		}
-		case 2: {
-			collapse = spline_collapse(min_sym_diff_point);
-			break;
-		}
-		case 3: {
-			std::cerr << "Not yet implemented" << std::endl;
-			break;
-		}
-		case 4: {
 			collapse = min_sym_diff_collapse;
 			break;
 		}
+		case 2: {
+			collapse = spline_collapse(projected_midpoint);
+			break;
+		}
+		case 3: {
+			collapse = spline_collapse(min_sym_diff_point);
+			break;
+		}
 		default: {
-			std::cerr << "Not yet implemented" << std::endl;
+			std::cerr << "Not yet implemented: " << collapse_selector->currentText().toStdString() << " " << collapse_selector->currentIndex() << std::endl;
 			break;
 		}
 		}
@@ -295,7 +294,7 @@ void IsolineSimplificationDemo::recalculate(bool debugInfo, int target, bool cga
 	                                                     });
 
 	auto slope_ladder_p = std::make_shared<SlopeLadderPainting>(m_isoline_simplifier->m_slope_ladders);
-	auto collapse_p = std::make_shared<CollapsePainting>(*m_isoline_simplifier);
+//	auto collapse_p = std::make_shared<CollapsePainting>(*m_isoline_simplifier);
 //	auto changed_p = std::make_shared<ChangedPainting>(*m_isoline_simplifier.);
 
 	if (debugInfo) {
@@ -340,7 +339,7 @@ void IsolineSimplificationDemo::recalculate(bool debugInfo, int target, bool cga
 	}
 
 	if (debugInfo) {
-		m_renderer->addPainting(collapse_p, "LadderCollapse");
+//		m_renderer->addPainting(collapse_p, "LadderCollapse");
 //		ipe_renderer.addPainting(collapse_p, "LadderCollapse");
 	}
 
@@ -408,6 +407,141 @@ int main(int argc, char* argv[]) {
 //	const std::chrono::duration<double> duration = end - start;
 //
 //	std::cout << std::endl << duration.count() << std::endl;
+//}
+
+//int main() {
+//	std::vector<CGAL::Point_2<K>> points1;
+//	std::vector<CGAL::Point_2<K>> points2;
+//	std::vector<CGAL::Point_2<K>> points3;
+//
+////	points1.emplace_back(22.3969, 93.1914);
+////	points1.emplace_back(23.6548, 95.6021);
+////	points1.emplace_back(27.8419, 94.5151);
+////	points1.emplace_back(26.7312, 88.9916);
+////
+////	points2.emplace_back(22.1502, 94.4831);
+////	Gt::Point_2 s(23.9491, 97.2822);
+////	points2.push_back(s);
+////	Gt::Point_2 t(26.2174, 95.7656);
+////	points2.push_back(t);
+////	Gt::Point_2 u(26.7982, 96.4668);
+////	points2.push_back(u);
+////	Gt::Point_2 v(29.5491, 101.4);
+////	points2.push_back(v);
+////
+////	points3.emplace_back(20.6136, 95.8987);
+////	points3.emplace_back(23.3992, 98.7507);
+////	points3.emplace_back(24.8233, 102.603);
+//
+//	points1.emplace_back(22.3969, 94.1914);
+//	points1.emplace_back(23.6548, 96.6021);
+//	points1.emplace_back(27.8419, 94.5151);
+//	points1.emplace_back(26.7312, 88.9916);
+//
+//	points2.emplace_back(22.1502, 94.4831);
+//	Gt::Point_2 s(23.9491, 97.2822);
+//	points2.push_back(s);
+//	Gt::Point_2 t(26.2174, 95.7656);
+//	points2.push_back(t);
+//	Gt::Point_2 u(26.7982, 96.4668);
+//	points2.push_back(u);
+//	Gt::Point_2 v(29.5491, 101.4);
+//	points2.push_back(v);
+//
+//	points3.emplace_back(21.6136, 94.8987);
+//	points3.emplace_back(24.3992, 97.7507);
+//	points3.emplace_back(25.8233, 101.603);
+//
+//	SDG2 delaunay;
+//	auto insert_polyline = [&delaunay](const std::vector<Gt::Point_2>& pts) {
+//		std::vector<Gt::Segment_2> segments;
+//		for (int i = 0; i < pts.size()-1; i++) {
+//			segments.emplace_back(pts[i], pts[i+1]);
+//		}
+//		delaunay.insert_segments(segments.begin(), segments.end());
+//	};
+//	insert_polyline(points1);
+//	insert_polyline(points2);
+//	insert_polyline(points3);
+//
+//	std::unordered_map<Gt::Point_2, SDG2::Vertex_handle> p_vertex;
+//	std::unordered_map<Gt::Segment_2, SDG2::Vertex_handle> e_vertex;
+//
+//	for (auto vit = delaunay.finite_vertices_begin(); vit != delaunay.finite_vertices_end(); vit++) {
+//		auto site = vit->site();
+//		if (site.is_point()) {
+//			p_vertex[site.point()] = vit;
+//		} else {
+//			e_vertex[site.segment()] = vit;
+//		}
+//	}
+//
+//	Gt::Segment_2 st(s, t);
+//	Gt::Segment_2 tu(t, u);
+//	Gt::Segment_2 uv(u, v);
+//
+//	auto print_incident_vertices = [&](SDG2::Vertex_handle vertex) {
+////	  	auto fit_start = delaunay.incident_faces(p_vertex.at(u));
+////		auto fit = fit_start;
+////	  	std::cout << "-------------" << std::endl;
+////		do {
+////			auto vit_start = delaunay.incident_vertices(vertex, fit);
+//	 	    auto vit_start = delaunay.incident_vertices(vertex);
+//			auto vit = vit_start;
+//
+//
+//			std::cout << "-------------" << std::endl;
+//			do {
+//				if (!delaunay.is_infinite(vit)) {
+//					auto v = *vit;
+////				    if (v.is_segment() && v.site().segment() == uv) {
+////						std::cout << "---special---" << std::endl;
+////					    auto f = v.face();
+////					    for (int i = 0; i < 3; i++) {
+////						    std::cout << f->vertex(i)->site() << std::endl;
+////					    }
+////						std::cout << "---special end---" << std::endl;
+////				    }
+//					std::cout << v.site() << std::endl;
+//				}
+//				++vit;
+//			} while (vit != vit_start);
+////
+////			++fit;
+////		} while (fit != fit_start);
+//	};
+//
+//	print_incident_vertices(p_vertex.at(u));
+//
+//	std::cout << "Removing: " << tu << std::endl;
+//	std::cout << delaunay.remove(e_vertex.at(tu)) << std::endl;
+//	std::cout << "Removing: " << st << std::endl;
+//	std::cout << delaunay.remove(e_vertex.at(st)) << std::endl;
+//
+//	std::cout << "normal?" << std::endl;
+//	for (int i = 0; i < 3; i++) {
+//		std::cout << p_vertex.at(t)->face()->neighbor(2)->vertex(i)->site() << std::endl;
+//	}
+//	std::cout << "Removing: " << uv << std::endl;
+//	std::cout << delaunay.remove(e_vertex.at(uv)) << std::endl;
+////	print_incident_vertices(e_vertex.at(uv));
+////	print_incident_vertices(p_vertex.at(u));
+//
+//	std::cout << "Weird" << std::endl;
+//	for (int i = 0; i < 3; i++) {
+//		std::cout << p_vertex.at(t)->face()->neighbor(2)->vertex(i)->site() << std::endl;
+//	}
+////	std::cout << "Removing: " << t << std::endl;
+////	std::cout << delaunay.remove(p_vertex.at(t)) << std::endl;
+//
+//
+////	print_incident_vertices(p_vertex.at(u));
+//
+//
+////	std::cout << "Removing: " << u << std::endl;
+////	std::cout << delaunay.remove(p_vertex.at(u)) << std::endl;
+//
+//	return 0;
 //}
 
 VoronoiPainting::VoronoiPainting(const SDG2& delaunay): m_delaunay(delaunay) {}

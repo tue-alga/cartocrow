@@ -98,8 +98,7 @@ Gt::Point_2 min_sym_diff_point(Gt::Point_2 s, Gt::Point_2 t, Gt::Point_2 u, Gt::
 	Gt::Line_2 stl(s, t);
 	Gt::Line_2 uvl(u, v);
 	Gt::Point_2 new_vertex;
-	// todo: handle degenerate cases
-	// todo: seems that new_vertex may be equal to s or v, causing issues
+	// degenerate cases seem to never occur
 	if (svl.oriented_side(t) == svl.oriented_side(u)) {
 		if (squared_distance(svl, t) > squared_distance(svl, u)) {
 			auto i = *intersection(l, stl);
