@@ -83,7 +83,8 @@ class IsolineSimplifier {
 };
 std::optional<Gt::Segment_2> check_segment_intersections_Voronoi(const SDG2& delaunay, const Gt::Segment_2 seg,
                                                                  const SDG2::Vertex_handle endpoint_handle,
-                                                                 const std::unordered_set<SDG2::Vertex_handle>& allowed);
+                                                                 const std::unordered_set<SDG2::Vertex_handle>& allowed,
+                                                                 const std::optional<SDG2::Vertex_handle> collinear_vertex);
 }
 
 #endif //CARTOCROW_ISOLINE_SIMPLIFICATION_H

@@ -1043,10 +1043,11 @@ Gt::Arrangement_type_2::result_type arrangement_type(const SDG2& sdg, const SDG2
 }
 
 std::optional<Gt::Segment_2> check_segment_intersections_Voronoi(const SDG2& delaunay, const Gt::Segment_2 seg,
-        const SDG2::Vertex_handle endpoint_handle, const std::unordered_set<SDG2::Vertex_handle>& allowed) {
+        const SDG2::Vertex_handle endpoint_handle, const std::unordered_set<SDG2::Vertex_handle>& allowed,
+        const std::optional<SDG2::Vertex_handle> collinear_vertex) {
 	auto t = SDG2::Site_2::construct_site_2(seg.source(), seg.target());
 
-	auto check_intersections = [&t, &endpoint_handle, &delaunay](SDG2::Vertex_handle vv) {
+	auto check_intersections = [&t, &delaunay](SDG2::Vertex_handle vv) {
 		if (!delaunay.is_infinite(vv) && vv->is_segment()) {
 			bool intersects = arrangement_type(delaunay, t, vv->site()) == Gt::Arrangement_type_2::result_type::CROSSING;
 			if (intersects) {
@@ -1054,6 +1055,17 @@ std::optional<Gt::Segment_2> check_segment_intersections_Voronoi(const SDG2& del
 			}
 		}
 		return false;
+	};
+
+	auto c_incircle = [&collinear_vertex](const SDG2& sdg, const SDG2::Face_handle& f, const SDG2::Site_2& q){
+		if (collinear_vertex.has_value()) {
+			for (int i = 0; i < 3; i++) {
+				if (f->vertex(i) == collinear_vertex) {
+					return CGAL::NEGATIVE;
+				}
+			}
+		}
+		return incircle(sdg, f, q);
 	};
 
 	auto vc_start = delaunay.incident_vertices(endpoint_handle);
@@ -1077,7 +1089,7 @@ std::optional<Gt::Segment_2> check_segment_intersections_Voronoi(const SDG2& del
 
 	do {
 		SDG2::Face_handle f(fc);
-		s = incircle(delaunay, f, t);
+		s = c_incircle(delaunay, f, t);
 
 		if (s != CGAL::POSITIVE) {
 			start_f = f;
@@ -1124,7 +1136,7 @@ std::optional<Gt::Segment_2> check_segment_intersections_Voronoi(const SDG2& del
 				}
 			}
 
-			s = incircle(delaunay, n, t);
+			s = c_incircle(delaunay, n, t);
 
 			if (positive.contains(curr_f) && s == CGAL::POSITIVE) continue;
 
@@ -1178,10 +1190,21 @@ IntersectionResult IsolineSimplifier::check_ladder_intersections_Voronoi(const S
 		const auto& p = ladder.m_collapsed.at(i);
 		const auto sp = Gt::Segment_2(s, p);
 		const auto pv = Gt::Segment_2(p, v);
+		Gt::Segment_2 st(s, t);
+		Gt::Segment_2 uv(u, v);
 
-		auto spi = check_segment_intersections_Voronoi(m_delaunay, sp, m_p_vertex.at(s), edges_to_skip);
+		std::optional<SDG2::Vertex_handle> st_coll;
+		if (squared_distance(st.supporting_line(), p) < 1E-9) {
+			st_coll = m_e_vertex.at(st);
+		}
+		auto spi = check_segment_intersections_Voronoi(m_delaunay, sp, m_p_vertex.at(s), edges_to_skip, st_coll);
 		if (spi.has_value()) return spi;
-		auto pvi = check_segment_intersections_Voronoi(m_delaunay, pv, m_p_vertex.at(v), edges_to_skip);
+
+		std::optional<SDG2::Vertex_handle> uv_coll;
+		if (squared_distance(uv.supporting_line(), p) < 1E-9) {
+			uv_coll = m_e_vertex.at(uv);
+		}
+		auto pvi = check_segment_intersections_Voronoi(m_delaunay, pv, m_p_vertex.at(v), edges_to_skip, uv_coll);
 		if (pvi.has_value()) return pvi;
 	}
 
