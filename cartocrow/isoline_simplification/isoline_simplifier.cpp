@@ -47,7 +47,8 @@ auto slope_ladder_comp = [](const std::shared_ptr<SlopeLadder>& sl1, const std::
 	return sl1->m_cost > sl2->m_cost;
 };
 
-IsolineSimplifier::IsolineSimplifier(std::vector<Isoline<K>> isolines, double angle_filter, Collapse collapse):
+IsolineSimplifier::IsolineSimplifier(std::vector<Isoline<K>> isolines, double angle_filter,
+                                     LadderCollapse collapse):
       m_isolines(std::move(isolines)), m_angle_filter(angle_filter),  m_collapse_ladder(std::move(collapse)) {
 	clean_isolines();
 	m_simplified_isolines = m_isolines;
@@ -107,9 +108,9 @@ void IsolineSimplifier::initialize_sdg() {
 
 void IsolineSimplifier::simplify(int target) {
 	while (m_current_complexity > target) {
-//		if (m_current_complexity % 1000 == 0) {
-//			std::cout << "\r#Vertices: " << m_current_complexity << std::flush;
-//		}
+		if (m_current_complexity % 1000 == 0) {
+			std::cout << "\r#Vertices: " << m_current_complexity << std::flush;
+		}
 		if (!step()) return;
 		update_matching();
 		update_ladders();
@@ -374,6 +375,17 @@ void IsolineSimplifier::update_matching() {
 	}
 
 	for (const auto& p : m_deleted_points) {
+		// The below should not be necessary, but this prevents a rare crash on large-western-island under
+		// minimize symmetric difference collapse.
+		if (m_matching.contains(p)) {
+			for (auto& [sign, mi] : m_matching.at(p)) {
+				for (auto& [iso, pts] : mi) {
+					for (auto& pt : pts) {
+						updated_points.insert(pt);
+					}
+				}
+			}
+		}
 		m_matching.erase(p);
 	}
 
@@ -1030,33 +1042,25 @@ Gt::Arrangement_type_2::result_type arrangement_type(const SDG2& sdg, const SDG2
 	return res;
 }
 
-std::optional<Gt::Segment_2> IsolineSimplifier::check_segment_intersections_Voronoi(const Gt::Segment_2 seg,
+std::optional<Gt::Segment_2> check_segment_intersections_Voronoi(const SDG2& delaunay, const Gt::Segment_2 seg,
         const SDG2::Vertex_handle endpoint_handle, const std::unordered_set<SDG2::Vertex_handle>& allowed) {
 	auto t = SDG2::Site_2::construct_site_2(seg.source(), seg.target());
 
-	auto check_intersections = [this, &allowed, &seg, &t, &endpoint_handle](SDG2::Vertex_handle vv) {
-		if (!m_delaunay.is_infinite(vv) && vv->is_segment()) {
-			bool intersects = arrangement_type(m_delaunay, t, vv->site()) == Gt::Arrangement_type_2::result_type::CROSSING;
+	auto check_intersections = [&t, &endpoint_handle, &delaunay](SDG2::Vertex_handle vv) {
+		if (!delaunay.is_infinite(vv) && vv->is_segment()) {
+			bool intersects = arrangement_type(delaunay, t, vv->site()) == Gt::Arrangement_type_2::result_type::CROSSING;
 			if (intersects) {
 				return true;
 			}
-//			auto inter = CGAL::intersection(vv->site().segment(), seg);
-//			if (inter.has_value()) {
-//				auto i = *inter;
-//				if (i.type() != typeid(Gt::Point_2) || boost::get<Gt::Point_2>(i) != endpoint_handle->site().point()) {
-//					return true;
-//				}
-//			}
-
 		}
 		return false;
 	};
 
-	auto vc_start = m_delaunay.incident_vertices(endpoint_handle);
+	auto vc_start = delaunay.incident_vertices(endpoint_handle);
 	auto vc = vc_start;
 	do {
 		SDG2::Vertex_handle vv(vc);
-		if (m_delaunay.is_infinite(vv)) {
+		if (delaunay.is_infinite(vv)) {
 			++vc;
 			continue;
 		}
@@ -1066,14 +1070,14 @@ std::optional<Gt::Segment_2> IsolineSimplifier::check_segment_intersections_Voro
 	} while (vc != vc_start);
 
 	// First, find one face that is in conflict with seg (i.e. seg is close to corresponding vertex of Voronoi diagram)
-	SDG2::Face_circulator fc_start = m_delaunay.incident_faces(endpoint_handle);
+	SDG2::Face_circulator fc_start = delaunay.incident_faces(endpoint_handle);
 	SDG2::Face_circulator fc = fc_start;
 	SDG2::Face_handle start_f;
 	CGAL::Sign s;
 
 	do {
 		SDG2::Face_handle f(fc);
-		s = incircle(m_delaunay, f, t);
+		s = incircle(delaunay, f, t);
 
 		if (s != CGAL::POSITIVE) {
 			start_f = f;
@@ -1109,7 +1113,7 @@ std::optional<Gt::Segment_2> IsolineSimplifier::check_segment_intersections_Voro
 					if (!allowed.contains(vv))
 						return vv->site().segment();
 					else {
-						auto vfc_start = m_delaunay.incident_faces(vv);
+						auto vfc_start = delaunay.incident_faces(vv);
 						auto vfc = vfc_start;
 						do {
 							SDG2::Face_handle f(vfc);
@@ -1120,7 +1124,7 @@ std::optional<Gt::Segment_2> IsolineSimplifier::check_segment_intersections_Voro
 				}
 			}
 
-			s = incircle(m_delaunay, n, t);
+			s = incircle(delaunay, n, t);
 
 			if (positive.contains(curr_f) && s == CGAL::POSITIVE) continue;
 
@@ -1175,9 +1179,9 @@ IntersectionResult IsolineSimplifier::check_ladder_intersections_Voronoi(const S
 		const auto sp = Gt::Segment_2(s, p);
 		const auto pv = Gt::Segment_2(p, v);
 
-		auto spi = check_segment_intersections_Voronoi(sp, m_p_vertex.at(s), edges_to_skip);
+		auto spi = check_segment_intersections_Voronoi(m_delaunay, sp, m_p_vertex.at(s), edges_to_skip);
 		if (spi.has_value()) return spi;
-		auto pvi = check_segment_intersections_Voronoi(pv, m_p_vertex.at(v), edges_to_skip);
+		auto pvi = check_segment_intersections_Voronoi(m_delaunay, pv, m_p_vertex.at(v), edges_to_skip);
 		if (pvi.has_value()) return pvi;
 	}
 
@@ -1254,69 +1258,6 @@ std::vector<Gt::Point_2> intersections_primal(Gt::Segment_2 seg, const CGAL::Obj
 	} else if (CGAL::assign(ps, o)) {
 		Open_Parabola_segment_2 ops(ps);
 		return parabola_intersections(seg, ps.line(), ps.center(), ops.get_p1(), ops.get_p2());
-
-//
-//		C_Traits_2 traits;
-//		typedef C_Traits_2::Curve_2 Conic_Arc;
-//		typedef C_Traits_2::Rational Q;
-//		typedef C_Traits_2::Rat_point_2 QP;
-//		auto d = ps.line();
-//		auto f = ps.center();
-//		auto a = d.a();
-//		auto b = d.b();
-//		auto c = d.c();
-//		auto den = a * a + b * b;
-//		double dr = (a * a) / den - 1;
-//		double ds = (b * b) / den - 1;
-//		double dt = (2 * a * b) / den;
-//		double du = (2 * a * c) / den + 2 * f.x();
-//		double dv = (2 * b * c) / den + 2 * f.y();
-//		double dw = (c * c) / den  - f.x() * f.x() - f.y() * f.y();
-//
-//		Q r = dr;
-//		Q s = ds;
-//		Q t = dt;
-//		Q u = du;
-//		Q v = dv;
-//		Q w = dw;
-//
-//		auto p1 = ops.get_p1();
-//		auto p2 = ops.get_p2();
-//
-//		auto l1 = Gt::Line_2(f, p1);
-//		auto l2 = Gt::Line_2(f, p2);
-//
-//		Conic_Arc arc(r, s, t, u, v, w, CGAL::orientation(f, p1, p2),
-//		              C_Traits_2::Point_2(p1.x(), p1.y()),
-//		              Q(0), Q(0), Q(0), Q(l1.a()), Q(l1.b()), Q(l1.c()),
-//		              C_Traits_2::Point_2(p2.x(), p2.y()),
-//		              //x²  y²    xy    x          y          1
-//		              Q(0), Q(0), Q(0), Q(l2.a()), Q(l2.b()), Q(l2.c()));
-//
-//		C_Traits_2::Rat_segment_2 r_seg(QP(seg.source().x(), seg.source().y()), QP(seg.target().x(), seg.target().y()));
-//
-//		auto mmo = traits.make_x_monotone_2_object();
-//
-//		std::vector<boost::variant<C_Traits_2::Point_2 , C_Traits_2::X_monotone_curve_2>> xmonotone_arcs;
-//		std::vector<boost::variant<C_Traits_2::Point_2 , C_Traits_2::X_monotone_curve_2>> xmonotone_seg;
-//		mmo(arc, std::back_inserter(xmonotone_arcs));
-//		mmo(r_seg, std::back_inserter(xmonotone_seg));
-//
-//		std::vector<boost::variant<std::pair<C_Traits_2::Point_2, unsigned int>, C_Traits_2::X_monotone_curve_2>> inters;
-//		auto io = traits.intersect_2_object();
-//		for (auto xmonotone_arc : xmonotone_arcs) {
-//			if (xmonotone_arc.which() == 1 && xmonotone_seg[0].which() == 1)
-//				io(boost::get<C_Traits_2::X_monotone_curve_2>(xmonotone_arc), boost::get<C_Traits_2::X_monotone_curve_2>(xmonotone_seg[0]), std::back_inserter(inters));
-//		}
-//
-//		for (auto i : inters) {
-//			if (i.which() == 0) {
-//				auto apt = boost::get<std::pair<C_Traits_2::Point_2, unsigned int>>(i).first;
-//				intersections.emplace_back(CGAL::to_double(apt.x()), CGAL::to_double(apt.y()));
-//			}
-//		}
-//
-//		return intersections;
 	}
 }
 

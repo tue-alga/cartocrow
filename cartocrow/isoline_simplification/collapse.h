@@ -21,10 +21,14 @@ class SlopeLadder {
 	void compute_cost(const PointToPoint& p_prev, const PointToPoint& p_next);
 };
 
-typedef std::function<void(SlopeLadder& ladder, const PointToPoint& p_prev, const PointToPoint& p_next)> Collapse;
+typedef std::function<void(SlopeLadder& ladder, const PointToPoint& p_prev, const PointToPoint& p_next)> LadderCollapse;
+typedef std::function<Gt::Point_2(Gt::Point_2& s, Gt::Point_2& t, Gt::Point_2& u, Gt::Point_2& v)> RungCollapse;
 
+Gt::Point_2 min_sym_diff_point(Gt::Point_2 s, Gt::Point_2 t, Gt::Point_2 u, Gt::Point_2 v);
+Gt::Point_2 projected_midpoint(Gt::Point_2 s, Gt::Point_2 t, Gt::Point_2 u, Gt::Point_2 v);
+
+LadderCollapse spline_collapse(const RungCollapse& rung_collapse);
 void midpoint_collapse(SlopeLadder& ladder, const PointToPoint& p_prev, const PointToPoint& p_next);
-void spline_collapse(SlopeLadder& ladder, const PointToPoint& p_prev, const PointToPoint& p_next);
 void min_sym_diff_collapse(SlopeLadder& ladder, const PointToPoint& p_prev, const PointToPoint& p_next);
 
 typedef std::unordered_map<Gt::Point_2, std::vector<std::shared_ptr<SlopeLadder>>> PointToSlopeLadders;

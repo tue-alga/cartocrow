@@ -110,7 +110,8 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 
 	auto* collapse_selector = new QComboBox();
 	collapse_selector->addItem("Midpoint");
-	collapse_selector->addItem("Spline");
+	collapse_selector->addItem("Spline midpoint");
+	collapse_selector->addItem("Spline min. symmetric diff.");
 	collapse_selector->addItem("Harmony line");
 	collapse_selector->addItem("Minimize symmetric difference");
 	vLayout->addWidget(collapse_selector);
@@ -166,21 +167,25 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 	m_reload = [this, dir, angle_filter_input, collapse_selector, fileSelector]() {
 		std::shared_ptr<ipe::Document> document = IpeReader::loadIpeFile(dir + fileSelector->currentText().toStdString() + ".ipe");
 		ipe::Page* page = document->page(0);
-		Collapse collapse;
+		LadderCollapse collapse;
 		switch (collapse_selector->currentIndex()) {
 		case 0: {
 			collapse = midpoint_collapse;
 			break;
 		}
 		case 1: {
-			collapse = spline_collapse;
+			collapse = spline_collapse(projected_midpoint);
 			break;
 		}
 		case 2: {
-			std::cerr << "Not yet implemented" << std::endl;
+			collapse = spline_collapse(min_sym_diff_point);
 			break;
 		}
 		case 3: {
+			std::cerr << "Not yet implemented" << std::endl;
+			break;
+		}
+		case 4: {
 			collapse = min_sym_diff_collapse;
 			break;
 		}
@@ -335,8 +340,8 @@ void IsolineSimplificationDemo::recalculate(bool debugInfo, int target, bool cga
 	}
 
 	if (debugInfo) {
-		m_renderer->addPainting(collapse_p, "Collapse");
-//		ipe_renderer.addPainting(collapse_p, "Collapse");
+		m_renderer->addPainting(collapse_p, "LadderCollapse");
+//		ipe_renderer.addPainting(collapse_p, "LadderCollapse");
 	}
 
 	if (m_debug_ladder.has_value()) {
@@ -392,17 +397,16 @@ int main(int argc, char* argv[]) {
 //int main() {
 //	auto dir = std::string("/home/steven/Documents/cartocrow/inputs/");
 //
-//	std::shared_ptr<ipe::Document> document = IpeReader::loadIpeFile(dir + "messy150m.ipe");
+//	std::shared_ptr<ipe::Document> document = IpeReader::loadIpeFile(dir + "large-western-island.ipe");
 //	ipe::Page* page = document->page(0);
 //	auto simplifier = IsolineSimplifier(isolinesInPage(page), M_PI/6, min_sym_diff_collapse);
 //
 //	auto start = std::chrono::system_clock::now().time_since_epoch();
-//	simplifier.simplify(6000);
+//	simplifier.simplify(1);
 //	auto end = std::chrono::system_clock::now().time_since_epoch();
 //
 //	const std::chrono::duration<double> duration = end - start;
 //
-//	std::cout << std::endl << simplifier.m_intersection_checks << std::endl;
 //	std::cout << std::endl << duration.count() << std::endl;
 //}
 
@@ -428,7 +432,7 @@ void IsolinePainting::paint(GeometryRenderer& renderer) const {
 	if (m_light) {
 		renderer.setStroke(Color(150, 150, 150), 1);
 	} else {
-		renderer.setStroke(Color(0, 0, 0), 2);
+		renderer.setStroke(Color(0, 0, 0), 1);
 	}
 	for (const auto& isoline : m_isolines) {
 		std::visit([&](auto&& v){
@@ -542,20 +546,27 @@ void draw_ladder_collapse(GeometryRenderer& renderer, IsolineSimplifier& simplif
 //
 //	}
 
-	std::vector<ipe::Vector> midpoints;
+	std::vector<ipe::Vector> control_points;
 	if (ladder.m_cap.contains(CGAL::LEFT_TURN)) {
-		midpoints.push_back(pv(ladder.m_cap.at(CGAL::LEFT_TURN)));
+		control_points.push_back(pv(ladder.m_cap.at(CGAL::LEFT_TURN)));
 	}
 	for (const auto& rung : ladder.m_rungs) {
-		midpoints.push_back(pv(midpoint(rung)));
+		auto& p_next = simplifier.m_p_next;
+		auto& p_prev = simplifier.m_p_prev;
+		auto reversed = p_next.contains(rung.target()) && p_next.at(rung.target()) == rung.source();
+		auto t = reversed ? rung.target() : rung.source();
+		auto u = reversed ? rung.source() : rung.target();
+		Gt::Point_2 s = p_prev.at(t);
+		Gt::Point_2 v = p_next.at(u);
+		control_points.push_back(pv(min_sym_diff_point(s, t, u, v)));
 	}
 	if (ladder.m_cap.contains(CGAL::RIGHT_TURN)) {
-		midpoints.push_back(pv(ladder.m_cap.at(CGAL::RIGHT_TURN)));
+		control_points.push_back(pv(ladder.m_cap.at(CGAL::RIGHT_TURN)));
 	}
 
-	if (midpoints.size() > 1) {
+	if (control_points.size() > 1) {
 		ipe::Curve curve;
-		curve.appendSpline(midpoints);
+		curve.appendSpline(control_points);
 		if (curve.countSegments() > 1) {
 			throw std::runtime_error("Expected only one segment in spline.");
 		}
@@ -570,6 +581,11 @@ void draw_ladder_collapse(GeometryRenderer& renderer, IsolineSimplifier& simplif
 		renderer.setMode(GeometryRenderer::stroke);
 		renderer.setStroke(Color(20, 20, 255), 3.0);
 		renderer.draw(spline);
+	}
+
+	for (auto& cp : control_points) {
+		renderer.setStroke(Color(100, 0, 0), 3.0);
+		renderer.draw(vp(cp));
 	}
 
 	for (int i = 0; i < ladder.m_rungs.size(); i++) {

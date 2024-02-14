@@ -3,6 +3,8 @@
 //
 
 #include "collapse.h"
+
+#include <utility>
 #include "ipeshape.h"
 #include "ipegeo.h"
 #include "ipe_bezier_wrapper.h"
@@ -15,93 +17,117 @@ void midpoint_collapse(SlopeLadder& ladder, const PointToPoint& p_prev, const Po
 		auto reversed = p_next.contains(rung.target()) && p_next.at(rung.target()) == rung.source();
 		auto t = reversed ? rung.target() : rung.source();
 		auto u = reversed ? rung.source() : rung.target();
-		Gt::Point_2 s;
-		if (p_prev.contains(t)) {
-			s = p_prev.at(t);
-		} else {
-			return;
-		}
-		Gt::Point_2 v;
-		if (p_next.contains(u)) {
-			v = p_next.at(u);
-		} else {
-			return;
-		}
+		Gt::Point_2 s = p_prev.at(t);
+		Gt::Point_2 v = p_next.at(u);
 
-		Gt::Line_2 l = area_preservation_line(s, t, u, v);
-		Gt::Point_2 new_vertex = l.projection(midpoint(rung));
-		ladder.m_collapsed.push_back(new_vertex);
+		ladder.m_collapsed.push_back(projected_midpoint(s, t, u, v));
 	}
 }
 
-void spline_collapse(SlopeLadder& ladder, const PointToPoint& p_prev, const PointToPoint& p_next) {
-	ladder.m_collapsed.clear();
-	if (!ladder.m_valid) return;
+LadderCollapse spline_collapse(const RungCollapse& rung_collapse) {
+	return [rung_collapse](SlopeLadder& ladder, const PointToPoint& p_prev, const PointToPoint& p_next) {
+		ladder.m_collapsed.clear();
+		if (!ladder.m_valid)
+			return;
 
-
-	std::vector<ipe::Vector> midpoints;
-	if (ladder.m_cap.contains(CGAL::LEFT_TURN)) {
-		midpoints.push_back(pv(ladder.m_cap.at(CGAL::LEFT_TURN)));
-	}
-	for (const auto& rung : ladder.m_rungs) {
-		midpoints.push_back(pv(midpoint(rung)));
-	}
-	if (ladder.m_cap.contains(CGAL::RIGHT_TURN)) {
-		midpoints.push_back(pv(ladder.m_cap.at(CGAL::RIGHT_TURN)));
-	}
-
-	ipe::Curve curve;
-	curve.appendSpline(midpoints);
-	if (curve.countSegments() > 1) {
-		throw std::runtime_error("Expected only one segment in spline.");
-	}
-
-	std::vector<ipe::Bezier> bzs;
-	auto curved_segment = curve.segment(0);
-	curved_segment.beziers(bzs);
-
-	auto intersection = [&bzs](Gt::Line_2 l) {
-		ipe::Line line = ipe::Line::through(pv(l.point(0)), pv(l.point(1)));
-		std::vector<ipe::Vector> inters;
-		for (auto& b : bzs) {
-			b.intersect(line, inters);
+		std::vector<ipe::Vector> control_points;
+		if (ladder.m_cap.contains(CGAL::LEFT_TURN)) {
+			control_points.push_back(pv(ladder.m_cap.at(CGAL::LEFT_TURN)));
 		}
-		if (inters.size() != 1) {
-//			std::cerr << "Expected one spline--line intersection but encountered: " << inters.size() << std::endl;
-			return std::optional<Gt::Point_2>();
+		for (const auto& rung : ladder.m_rungs) {
+			auto reversed = p_next.contains(rung.target()) && p_next.at(rung.target()) == rung.source();
+			auto t = reversed ? rung.target() : rung.source();
+			auto u = reversed ? rung.source() : rung.target();
+			Gt::Point_2 s = p_prev.at(t);
+			Gt::Point_2 v = p_next.at(u);
+			control_points.push_back(pv(rung_collapse(s, t, u, v)));
 		}
-		return std::optional(vp(inters.front()));
+		if (ladder.m_cap.contains(CGAL::RIGHT_TURN)) {
+			control_points.push_back(pv(ladder.m_cap.at(CGAL::RIGHT_TURN)));
+		}
+
+		ipe::Curve curve;
+		curve.appendSpline(control_points);
+		if (curve.countSegments() > 1) {
+			throw std::runtime_error("Expected only one segment in spline.");
+		}
+
+		std::vector<ipe::Bezier> bzs;
+		auto curved_segment = curve.segment(0);
+		curved_segment.beziers(bzs);
+
+		auto intersection = [&bzs](Gt::Line_2 l) {
+			ipe::Line line = ipe::Line::through(pv(l.point(0)), pv(l.point(1)));
+			std::vector<ipe::Vector> inters;
+			for (auto& b : bzs) {
+				b.intersect(line, inters);
+			}
+			if (inters.size() != 1) {
+				//			std::cerr << "Expected one spline--line intersection but encountered: " << inters.size() << std::endl;
+				return std::optional<Gt::Point_2>();
+			}
+			return std::optional(vp(inters.front()));
+		};
+
+		for (int i = 0; i < ladder.m_rungs.size(); i++) {
+			const auto& rung = ladder.m_rungs[i];
+			auto reversed = p_next.contains(rung.target()) && p_next.at(rung.target()) == rung.source();
+			auto t = reversed ? rung.target() : rung.source();
+			auto u = reversed ? rung.source() : rung.target();
+			Gt::Point_2 s = p_prev.at(t);
+			Gt::Point_2 v = p_next.at(u);
+			Gt::Line_2 l = area_preservation_line(s, t, u, v);
+			Gt::Point_2 new_vertex;
+			if (i == 0 && !ladder.m_cap.contains(CGAL::LEFT_TURN) ||
+			    i == ladder.m_rungs.size() - 1 && !ladder.m_cap.contains(CGAL::RIGHT_TURN)) {
+				//		if (control_points.size() == 1) {
+//				new_vertex = l.projection(midpoint(rung));
+				new_vertex = rung_collapse(s, t, u, v);
+			} else {
+				auto inter = intersection(l);
+				new_vertex = inter.has_value() ? *inter : rung_collapse(s, t, u, v);
+			}
+			ladder.m_collapsed.push_back(new_vertex);
+		}
 	};
+}
 
-	for (int i = 0; i < ladder.m_rungs.size(); i++) {
-		const auto& rung = ladder.m_rungs[i];
-		auto reversed = p_next.contains(rung.target()) && p_next.at(rung.target()) == rung.source();
-		auto t = reversed ? rung.target() : rung.source();
-		auto u = reversed ? rung.source() : rung.target();
-		Gt::Point_2 s;
-		if (p_prev.contains(t)) {
-			s = p_prev.at(t);
+Gt::Point_2 min_sym_diff_point(Gt::Point_2 s, Gt::Point_2 t, Gt::Point_2 u, Gt::Point_2 v) {
+	Gt::Line_2 l = area_preservation_line(s, t, u, v);
+	Gt::Line_2 svl(s, v);
+	Gt::Line_2 stl(s, t);
+	Gt::Line_2 uvl(u, v);
+	Gt::Point_2 new_vertex;
+	// todo: handle degenerate cases
+	// todo: seems that new_vertex may be equal to s or v, causing issues
+	if (svl.oriented_side(t) == svl.oriented_side(u)) {
+		if (squared_distance(svl, t) > squared_distance(svl, u)) {
+			auto i = *intersection(l, stl);
+			new_vertex = *boost::get<Gt::Point_2>(&i);
 		} else {
-			return;
+			auto i = *intersection(l, uvl);
+			new_vertex = *boost::get<Gt::Point_2>(&i);
 		}
-		Gt::Point_2 v;
-		if (p_next.contains(u)) {
-			v = p_next.at(u);
+	} else {
+		if (svl.oriented_side(t) == svl.oriented_side(l.point())) {
+			auto i = *intersection(l, stl);
+			new_vertex = *boost::get<Gt::Point_2>(&i);
 		} else {
-			return;
+			auto i = *intersection(l, uvl);
+			new_vertex = *boost::get<Gt::Point_2>(&i);
 		}
-
-		Gt::Line_2 l = area_preservation_line(s, t, u, v);
-		Gt::Point_2 new_vertex;
-		if (i == 0 && !ladder.m_cap.contains(CGAL::LEFT_TURN) || i == ladder.m_rungs.size() - 1 && !ladder.m_cap.contains(CGAL::RIGHT_TURN)) {
-//		if (midpoints.size() == 1) {
-			new_vertex = l.projection(midpoint(rung));
-		} else {
-			auto inter = intersection(l);
-			new_vertex = inter.has_value() ? *inter : l.projection(midpoint(rung));
-		}
-		ladder.m_collapsed.push_back(new_vertex);
 	}
+	// If nearly collinear use midpoint
+	auto dist_threshold = 0.0001 * squared_distance(s, v);
+	if (squared_distance(new_vertex, s) < dist_threshold || squared_distance(new_vertex, v) < dist_threshold) {
+		new_vertex = l.projection(midpoint(s, v));
+	}
+	return new_vertex;
+}
+
+Gt::Point_2 projected_midpoint(Gt::Point_2 s, Gt::Point_2 t, Gt::Point_2 u, Gt::Point_2 v) {
+	Gt::Line_2 l = area_preservation_line(s, t, u, v);
+	return l.projection(midpoint(t, u));
 }
 
 void min_sym_diff_collapse(SlopeLadder& ladder, const PointToPoint& p_prev, const PointToPoint& p_next) {
@@ -124,56 +150,90 @@ void min_sym_diff_collapse(SlopeLadder& ladder, const PointToPoint& p_prev, cons
 			return;
 		}
 
-		Gt::Line_2 l = area_preservation_line(s, t, u, v);
-		Gt::Line_2 svl(s, v);
-		Gt::Line_2 stl(s, t);
-		Gt::Line_2 uvl(u, v);
-		Gt::Point_2 new_vertex;
-		// todo: handle degenerate cases
-		// todo: seems that new_vertex may be equal to s or v, causing issues
-		if (svl.oriented_side(t) == svl.oriented_side(u)) {
-			if (squared_distance(svl, t) > squared_distance(svl, u)) {
-				auto i = *intersection(l, stl);
-				new_vertex = *boost::get<Gt::Point_2>(&i);
-			} else {
-				auto i = *intersection(l, uvl);
-				new_vertex = *boost::get<Gt::Point_2>(&i);
-			}
-		} else {
-			if (svl.oriented_side(t) == svl.oriented_side(l.point())) {
-				auto i = *intersection(l, stl);
-				new_vertex = *boost::get<Gt::Point_2>(&i);
-			} else {
-				auto i = *intersection(l, uvl);
-				new_vertex = *boost::get<Gt::Point_2>(&i);
-			}
-		}
-		if (new_vertex == s || new_vertex == v) {
-			new_vertex = midpoint(s, v);
-		}
-		ladder.m_collapsed.push_back(new_vertex);
+		ladder.m_collapsed.push_back(min_sym_diff_point(s, t, u, v));
 	}
 }
 
-void harmony_line_collapse(SlopeLadder& ladder, const PointToPoint& p_prev, const PointToPoint& p_next) {
+bool point_order_on_line(Gt::Line_2 l, Gt::Point_2 a, Gt::Point_2 b) {
+	auto dir_line = l.to_vector();
+	auto dir_pts = b - a;
+	return dir_line * dir_pts > 0;
+}
+
+void harmony_line_collapse(SlopeLadder& ladder, const PointToPoint& p_prev, const PointToPoint& p_next, int n_samples = 500) {
 	ladder.m_collapsed.clear();
 	if (!ladder.m_valid) return;
+
+	// Compute sample line
+	Gt::Line_2 sample_line;
+	Gt::Line_2 initial_harmony_line;
+	if (ladder.m_rungs.size() == 1) {
+		auto& rung = ladder.m_rungs.front();
+		auto reversed = p_next.contains(rung.target()) && p_next.at(rung.target()) == rung.source();
+		auto t = reversed ? rung.target() : rung.source();
+		auto u = reversed ? rung.source() : rung.target();
+		Gt::Point_2 s = p_prev.at(t);
+		Gt::Point_2 v = p_next.at(u);
+		sample_line = area_preservation_line(s, t, u, v);
+		initial_harmony_line = sample_line.perpendicular(midpoint(t, u));
+	} else {
+		auto& first_rung = ladder.m_rungs.front();
+		auto& last_rung = ladder.m_rungs.back();
+		initial_harmony_line = Gt::Line_2(midpoint(first_rung), midpoint(last_rung));
+		sample_line =
+		    initial_harmony_line.perpendicular(midpoint(midpoint(first_rung), midpoint(last_rung)));
+	}
+
+	std::optional<Gt::Point_2> first;
+	std::optional<Gt::Point_2> last;
 	for (const auto& rung : ladder.m_rungs) {
 		auto reversed = p_next.contains(rung.target()) && p_next.at(rung.target()) == rung.source();
 		auto t = reversed ? rung.target() : rung.source();
 		auto u = reversed ? rung.source() : rung.target();
-		Gt::Point_2 s;
-		if (p_prev.contains(t)) {
-			s = p_prev.at(t);
-		} else {
-			return;
+		Gt::Point_2 s = p_prev.at(t);
+		Gt::Point_2 v = p_next.at(u);
+		auto area_l = area_preservation_line(s, t, u, v);
+		for (auto& p : {s, t, u, v}) {
+			auto pt = sample_line.projection(area_l.projection(p));
+			if (!first.has_value() || point_order_on_line(area_l, pt, *first)) {
+				first = pt;
+			}
+			if (!last.has_value() || point_order_on_line(area_l, *last, pt)) {
+				last = pt;
+			}
 		}
-		Gt::Point_2 v;
-		if (p_next.contains(u)) {
-			v = p_next.at(u);
-		} else {
-			return;
+	}
+
+	K::Vector_2 step_v = (*last - *first) / (n_samples - 1);
+
+	double best_score = std::numeric_limits<double>::infinity();
+	Gt::Line_2 best_line;
+
+	for (int i = 0; i < n_samples; i++) {
+		K::Vector_2 offset = i * step_v;
+		Gt::Point_2 pt = *first + offset;
+		Gt::Line_2 harmony_line(pt, initial_harmony_line.direction());
+
+		for (const auto& rung : ladder.m_rungs) {
+			auto reversed = p_next.contains(rung.target()) && p_next.at(rung.target()) == rung.source();
+			auto t = reversed ? rung.target() : rung.source();
+			auto u = reversed ? rung.source() : rung.target();
+			Gt::Point_2 s = p_prev.at(t);
+			Gt::Point_2 v = p_next.at(u);
+
+			Gt::Line_2 l = area_preservation_line(s, t, u, v);
+			auto inter = *intersection(harmony_line, l);
+			Gt::Point_2 new_vertex = *boost::get<Gt::Point_2>(&inter);
 		}
+	}
+
+	for (const auto& rung : ladder.m_rungs) {
+		auto reversed = p_next.contains(rung.target()) && p_next.at(rung.target()) == rung.source();
+		auto t = reversed ? rung.target() : rung.source();
+		auto u = reversed ? rung.source() : rung.target();
+		Gt::Point_2 s = p_prev.at(t);
+		Gt::Point_2 v = p_next.at(u);
+
 
 		Gt::Line_2 l = area_preservation_line(s, t, u, v);
 		Gt::Point_2 new_vertex = l.projection(midpoint(rung));
