@@ -44,7 +44,7 @@ using namespace cartocrow::renderer;
 using namespace cartocrow::isoline_simplification;
 
 IsolineSimplificationDemo::IsolineSimplificationDemo() {
-	std::string dir("/home/steven/Documents/cartocrow/inputs/small/");
+	std::string dir("/home/steven/Documents/cartocrow/inputs/large/");
 	std::string output_dir("/home/steven/Documents/cartocrow/output/");
 	setWindowTitle("Isoline simplification");
 
@@ -176,11 +176,7 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 
 	m_recalculate = [this, debugInfo, doCGALSimplify, simplificationTarget, regionIndex, showVertices, isolineIndex, number_of_vertices, angle_filter_input, measure_text]() {
 		number_of_vertices->setText(QString(("#Vertices: " + std::to_string(m_isoline_simplifier->m_current_complexity)).c_str()));
-		auto temp_simplifier = IsolineSimplifier(m_isoline_simplifier->m_simplified_isolines);
-		auto measure_text_string = "Symmetric difference: " + std::to_string(m_isoline_simplifier->symmetric_difference()) +
-		    "\n#Ladders: " + std::to_string(temp_simplifier.ladder_count());
 	    m_isoline_simplifier->m_angle_filter = angle_filter_input->value();
-		measure_text->setText(QString(measure_text_string.c_str()));
 		recalculate(debugInfo->checkState(), simplificationTarget->value(),
 		            doCGALSimplify->checkState(), regionIndex->value(), showVertices->checkState(), isolineIndex->value());
 	};
@@ -247,7 +243,7 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 		m_isoline_simplifier->update_ladders();
 		m_recalculate();
 	});
-	connect(simplify_button, &QPushButton::clicked, [this, simplificationTarget, doCGALSimplify]() {
+	connect(simplify_button, &QPushButton::clicked, [this, simplificationTarget, doCGALSimplify, measure_text]() {
 	  	m_debug_ladder = std::nullopt;
 		int target = simplificationTarget->value();
 		if (doCGALSimplify->isChecked()) {
@@ -256,6 +252,10 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 			m_isoline_simplifier->simplify(target);
 		}
 
+		auto temp_simplifier = IsolineSimplifier(m_isoline_simplifier->m_simplified_isolines);
+		auto measure_text_string = "Symmetric difference: " + std::to_string(m_isoline_simplifier->symmetric_difference()) +
+		                           "\n#Ladders: " + std::to_string(temp_simplifier.ladder_count());
+		measure_text->setText(QString(measure_text_string.c_str()));
 		m_recalculate();
 	});
 	connect(reload_button, &QPushButton::clicked, m_reload);
