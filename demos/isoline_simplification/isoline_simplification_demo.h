@@ -49,6 +49,7 @@ class IsolineSimplificationDemo : public QMainWindow {
 	GeometryWidget* m_renderer;
 	std::function<void()> m_recalculate;
 	std::function<void()> m_reload;
+	std::function<void()> m_save;
 };
 
 Polygon<K> slope_ladder_polygon(const SlopeLadder& slope_ladder);
@@ -68,7 +69,7 @@ class VoronoiPainting : public GeometryPainting {
 
 class IsolinePainting : public GeometryPainting {
   public:
-	IsolinePainting(const std::vector<Isoline<K>>& isolines, bool show_vertices, bool light);
+	IsolinePainting(const std::vector<Isoline<K>>& isolines, bool show_vertices, bool light, bool ipe);
 
   protected:
 	void paint(GeometryRenderer& renderer) const override;
@@ -77,6 +78,7 @@ class IsolinePainting : public GeometryPainting {
 	const std::vector<Isoline<K>>& m_isolines;
 	bool m_show_vertices;
 	bool m_light;
+	bool m_ipe;
 };
 
 class MedialAxisSeparatorPainting : public GeometryPainting {

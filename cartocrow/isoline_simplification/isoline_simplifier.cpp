@@ -1473,7 +1473,7 @@ void IsolineSimplifier::clear() {
 	m_slope_ladders.clear();
 }
 
-int IsolineSimplifier::ladder_count(bool recompute) {
+int IsolineSimplifier::ladder_count() {
 	clear();
 	initialize_sdg();
 	initialize_point_data();

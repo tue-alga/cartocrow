@@ -67,7 +67,7 @@ class IsolineSimplifier {
 	bool check_rung_collapse_topology(Gt::Segment_2 rung, Gt::Point_2 p, std::unordered_set<Gt::Point_2>& allowed);
 	bool check_ladder_collapse_topology(const SlopeLadder& ladder);
 	double symmetric_difference() const;
-	int ladder_count(bool recompute);
+	int ladder_count();
 	void clear();
 
   private:

@@ -44,7 +44,8 @@ using namespace cartocrow::renderer;
 using namespace cartocrow::isoline_simplification;
 
 IsolineSimplificationDemo::IsolineSimplificationDemo() {
-	auto dir = std::string("/home/steven/Documents/cartocrow/inputs/large/");
+	std::string dir("/home/steven/Documents/cartocrow/inputs/small/");
+	std::string output_dir("/home/steven/Documents/cartocrow/output/");
 	setWindowTitle("Isoline simplification");
 
 	auto* dockWidget = new QDockWidget();
@@ -142,6 +143,9 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 	auto* reload_button = new QPushButton("Reload");
 	vLayout->addWidget(reload_button);
 
+	auto* save_button = new QPushButton("Save");
+	vLayout->addWidget(save_button);
+
 	auto* debug_text = new QLabel("");
 	vLayout->addWidget(debug_text);
 
@@ -155,12 +159,26 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 	m_renderer->setMinZoom(0.01);
 	m_renderer->setMaxZoom(1000.0);
 
+	m_save = [this, showVertices, output_dir, fileSelector, collapse_selector, measure_text]() {
+		auto& isolines = m_isoline_simplifier->m_simplified_isolines;
+	  	IpeRenderer ipe_renderer;
+	    auto isolines_p = std::make_shared<IsolinePainting>(isolines, showVertices->isChecked(), false, true);
+	    ipe_renderer.addPainting(isolines_p, "Simplified_isolines");
+		std::string file_name(fileSelector->currentText().toStdString() + "_" +
+		                      std::to_string(m_isoline_simplifier->m_current_complexity) + "_" +
+		                      collapse_selector->currentText().toStdString());
+	   	ipe_renderer.save(output_dir + file_name + ".ipe");
+		std::ofstream meta_data_file;
+		meta_data_file.open(output_dir + file_name + "_meta" + ".txt");
+		meta_data_file << measure_text->text().toStdString();
+		meta_data_file.close();
+	};
+
 	m_recalculate = [this, debugInfo, doCGALSimplify, simplificationTarget, regionIndex, showVertices, isolineIndex, number_of_vertices, angle_filter_input, measure_text]() {
 		number_of_vertices->setText(QString(("#Vertices: " + std::to_string(m_isoline_simplifier->m_current_complexity)).c_str()));
-		// todo: check
-		m_isoline_simplifier->m_angle_filter = M_PI / 6;
+		auto temp_simplifier = IsolineSimplifier(m_isoline_simplifier->m_simplified_isolines);
 		auto measure_text_string = "Symmetric difference: " + std::to_string(m_isoline_simplifier->symmetric_difference()) +
-		    "\n#Ladders: " + std::to_string(m_isoline_simplifier->ladder_count(doCGALSimplify->isChecked()));
+		    "\n#Ladders: " + std::to_string(temp_simplifier.ladder_count());
 	    m_isoline_simplifier->m_angle_filter = angle_filter_input->value();
 		measure_text->setText(QString(measure_text_string.c_str()));
 		recalculate(debugInfo->checkState(), simplificationTarget->value(),
@@ -241,6 +259,7 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 		m_recalculate();
 	});
 	connect(reload_button, &QPushButton::clicked, m_reload);
+	connect(save_button, &QPushButton::clicked, m_save);
 	connect(m_renderer, &GeometryWidget::clicked, [this, debug_text](auto pt) {
 		auto it = std::find_if(m_isoline_simplifier->m_slope_ladders.begin(), m_isoline_simplifier->m_slope_ladders.end(), [&pt](const std::shared_ptr<SlopeLadder>& ladder) {
 			if (ladder->m_old) return false;
@@ -294,7 +313,7 @@ void IsolineSimplificationDemo::recalculate(bool debugInfo, int target, bool cga
 	                                                     });
 
 	auto slope_ladder_p = std::make_shared<SlopeLadderPainting>(m_isoline_simplifier->m_slope_ladders);
-//	auto collapse_p = std::make_shared<CollapsePainting>(*m_isoline_simplifier);
+	auto collapse_p = std::make_shared<CollapsePainting>(*m_isoline_simplifier);
 //	auto changed_p = std::make_shared<ChangedPainting>(*m_isoline_simplifier.);
 
 	if (debugInfo) {
@@ -318,8 +337,8 @@ void IsolineSimplificationDemo::recalculate(bool debugInfo, int target, bool cga
 //	ipe_renderer.addPainting(map, "Medial_axis");
 //	ipe_renderer.addPainting(separator_p, "Separator");
 
-	auto original_isolines_p = std::make_shared<IsolinePainting>(m_isoline_simplifier->m_isolines, show_vertices, true);
-	auto isolines_p = std::make_shared<IsolinePainting>(simplified_isolines, show_vertices, false);
+	auto original_isolines_p = std::make_shared<IsolinePainting>(m_isoline_simplifier->m_isolines, show_vertices, true, false);
+	auto isolines_p = std::make_shared<IsolinePainting>(simplified_isolines, show_vertices, false, false);
 	if (m_isoline_simplifier->m_started)
 		m_renderer->addPainting(original_isolines_p, "Original isolines");
 	m_renderer->addPainting(isolines_p, "Simplified isolines");
@@ -339,7 +358,7 @@ void IsolineSimplificationDemo::recalculate(bool debugInfo, int target, bool cga
 	}
 
 	if (debugInfo) {
-//		m_renderer->addPainting(collapse_p, "LadderCollapse");
+		m_renderer->addPainting(collapse_p, "Ladder collapse");
 //		ipe_renderer.addPainting(collapse_p, "LadderCollapse");
 	}
 
@@ -553,8 +572,8 @@ void VoronoiPainting::paint(GeometryRenderer& renderer) const {
 	draw_dual<VoronoiDrawer<Gt>, K>(m_delaunay, voronoiDrawer);
 }
 
-IsolinePainting::IsolinePainting(const std::vector<Isoline<K>>& isolines, bool show_vertices, bool light):
-      m_isolines(isolines), m_show_vertices(show_vertices), m_light(light) {}
+IsolinePainting::IsolinePainting(const std::vector<Isoline<K>>& isolines, bool show_vertices, bool light, bool ipe):
+      m_isolines(isolines), m_show_vertices(show_vertices), m_light(light), m_ipe(ipe) {}
 
 void IsolinePainting::paint(GeometryRenderer& renderer) const {
 	// Draw isolines
@@ -563,10 +582,13 @@ void IsolinePainting::paint(GeometryRenderer& renderer) const {
 	} else {
 		renderer.setMode(GeometryRenderer::stroke);
 	}
+
+	double stroke_weight = m_ipe ? 0.4 : 1;
+
 	if (m_light) {
-		renderer.setStroke(Color(150, 150, 150), 1);
+		renderer.setStroke(Color(150, 150, 150), stroke_weight);
 	} else {
-		renderer.setStroke(Color(0, 0, 0), 1);
+		renderer.setStroke(Color(0, 0, 0), stroke_weight);
 	}
 	for (const auto& isoline : m_isolines) {
 		std::visit([&](auto&& v){
@@ -692,7 +714,8 @@ void draw_ladder_collapse(GeometryRenderer& renderer, IsolineSimplifier& simplif
 		auto u = reversed ? rung.source() : rung.target();
 		Gt::Point_2 s = p_prev.at(t);
 		Gt::Point_2 v = p_next.at(u);
-		control_points.push_back(pv(min_sym_diff_point(s, t, u, v)));
+//		control_points.push_back(pv(min_sym_diff_point(s, t, u, v)));
+		control_points.push_back(pv(projected_midpoint(s, t, u, v)));
 	}
 	if (ladder.m_cap.contains(CGAL::RIGHT_TURN)) {
 		control_points.push_back(pv(ladder.m_cap.at(CGAL::RIGHT_TURN)));
