@@ -10,90 +10,168 @@
 #include "ipe_bezier_wrapper.h"
 
 namespace cartocrow::isoline_simplification {
-void midpoint_collapse(SlopeLadder& ladder, const PointToPoint& p_prev, const PointToPoint& p_next) {
+SplineCollapse::SplineCollapse(const RungCollapse& rung_collapse, int repetitions): m_rung_collapse(rung_collapse),
+      m_repetitions(repetitions) {};
+
+std::vector<ipe::Bezier> SplineCollapse::controls_to_beziers(const std::vector<ipe::Vector>& control_points) const {
+	ipe::Curve curve;
+	curve.appendSpline(control_points);
+	if (curve.countSegments() > 1) {
+		throw std::runtime_error("Expected only one segment in spline.");
+	}
+
+	std::vector<ipe::Bezier> bzs;
+	auto curved_segment = curve.segment(0);
+	curved_segment.beziers(bzs);
+	return bzs;
+}
+
+std::optional<Gt::Point_2> SplineCollapse::intersection(const std::vector<ipe::Bezier>& bzs, const Gt::Line_2& l) const {
+	ipe::Line line = ipe::Line::through(pv(l.point(0)), pv(l.point(1)));
+	std::vector<ipe::Vector> inters;
+	for (auto& b : bzs) {
+		b.intersect(line, inters);
+	}
+	if (inters.size() != 1) {
+		//			std::cerr << "Expected one spline--line intersection but encountered: " << inters.size() << std::endl;
+		return std::optional<Gt::Point_2>();
+	}
+	return std::optional(vp(inters.front()));
+}
+
+std::vector<ipe::Vector> SplineCollapse::controls_from_intersections(const std::vector<Gt::Line_2>& lines,
+                                            const std::optional<ipe::Vector>& start,
+                                            const std::vector<ipe::Vector>& control_points,
+                                            const std::optional<ipe::Vector>& end) const {
+	std::vector<ipe::Vector> new_controls;
+	std::vector<ipe::Vector> all_controls;
+	if (start.has_value()) {
+		all_controls.push_back(*start);
+	}
+	for (const auto& cp : control_points) {
+		all_controls.push_back(cp);
+	}
+	if (end.has_value()) {
+		all_controls.push_back(*end);
+	}
+	auto bzs = controls_to_beziers(all_controls);
+	for (int i = 0; i < lines.size(); i++) {
+		auto& l = lines.at(i);
+		Gt::Point_2 new_vertex;
+
+		auto inter = intersection(bzs, l);
+		new_vertex = inter.has_value() ? *inter : vp(control_points.at(i));
+		new_controls.push_back(pv(new_vertex));
+	}
+	return new_controls;
+}
+
+void SplineCollapse::operator()(SlopeLadder& ladder, const PointToPoint& p_prev, const PointToPoint& p_next) {
 	ladder.m_collapsed.clear();
-	if (!ladder.m_valid) return;
+	if (!ladder.m_valid)
+		return;
+
+	std::optional<ipe::Vector> start;
+	if (ladder.m_cap.contains(CGAL::LEFT_TURN)) {
+		start = pv(ladder.m_cap.at(CGAL::LEFT_TURN));
+	}
+
+	std::vector<ipe::Vector> initial_controls;
+	std::vector<Gt::Line_2> lines;
 	for (const auto& rung : ladder.m_rungs) {
 		auto reversed = p_next.contains(rung.target()) && p_next.at(rung.target()) == rung.source();
 		auto t = reversed ? rung.target() : rung.source();
 		auto u = reversed ? rung.source() : rung.target();
 		Gt::Point_2 s = p_prev.at(t);
 		Gt::Point_2 v = p_next.at(u);
+		lines.emplace_back(area_preservation_line(s, t, u, v));
+		initial_controls.push_back(pv(m_rung_collapse(s, t, u, v, lines.back())));
+	}
 
-		ladder.m_collapsed.push_back(projected_midpoint(s, t, u, v));
+	std::optional<ipe::Vector> end;
+	if (ladder.m_cap.contains(CGAL::RIGHT_TURN)) {
+		end = pv(ladder.m_cap.at(CGAL::RIGHT_TURN));
+	}
+
+	if (initial_controls.size() > 1 || start.has_value() || end.has_value()) {
+		for (int i = 0; i < m_repetitions; i++) {
+			initial_controls = controls_from_intersections(lines, start, initial_controls, end);
+		}
+	}
+	ladder.m_collapsed.clear();
+	std::transform(initial_controls.begin(), initial_controls.end(),
+	               std::back_inserter(ladder.m_collapsed),
+	               [](const ipe::Vector& v) { return vp(v); });
+}
+
+SplineCollapsePainting::SplineCollapsePainting(const SlopeLadder& ladder, const PointToPoint& p_prev, const PointToPoint& p_next, SplineCollapse spline_collapse) :
+ 	m_ladder(ladder), m_p_prev(p_prev), m_p_next(p_next), m_spline_collapse(std::move(spline_collapse)) {  }
+
+std::shared_ptr<renderer::GeometryPainting> SplineCollapse::painting(const SlopeLadder& ladder, const PointToPoint& p_prev, const PointToPoint& p_next) {
+	return std::make_shared<SplineCollapsePainting>(ladder, p_prev, p_next, *this);
+}
+
+void SplineCollapsePainting::paint(cartocrow::renderer::GeometryRenderer& renderer) const {
+	if (!m_ladder.m_valid)
+		return;
+
+	std::optional<ipe::Vector> start;
+	if (m_ladder.m_cap.contains(CGAL::LEFT_TURN)) {
+		start = pv(m_ladder.m_cap.at(CGAL::LEFT_TURN));
+	}
+
+	std::vector<ipe::Vector> initial_controls;
+	std::vector<Gt::Line_2> lines;
+	for (const auto& rung : m_ladder.m_rungs) {
+		auto reversed = m_p_next.contains(rung.target()) && m_p_next.at(rung.target()) == rung.source();
+		auto t = reversed ? rung.target() : rung.source();
+		auto u = reversed ? rung.source() : rung.target();
+		Gt::Point_2 s = m_p_prev.at(t);
+		Gt::Point_2 v = m_p_next.at(u);
+		lines.emplace_back(area_preservation_line(s, t, u, v));
+		initial_controls.push_back(pv(m_spline_collapse.m_rung_collapse(s, t, u, v, lines.back())));
+	}
+
+	std::optional<ipe::Vector> end;
+	if (m_ladder.m_cap.contains(CGAL::RIGHT_TURN)) {
+		end = pv(m_ladder.m_cap.at(CGAL::RIGHT_TURN));
+	}
+
+	std::vector<ipe::Vector> controls = initial_controls;
+	if (initial_controls.size() > 1 || start.has_value() || end.has_value()) {
+		for (int i = 0; i < m_spline_collapse.m_repetitions - 1; i++) { // note the -1 for drawing purposes
+			controls = m_spline_collapse.controls_from_intersections(lines, start, controls, end);
+		}
+	}
+
+	if (controls.size() > 1 || start.has_value() || end.has_value()) {
+		std::vector<ipe::Vector> all_controls;
+		if (start.has_value()) {
+			all_controls.push_back(*start);
+		}
+		for (const auto& cp : controls) {
+			all_controls.push_back(cp);
+		}
+		if (end.has_value()) {
+			all_controls.push_back(*end);
+		}
+		auto bzs = m_spline_collapse.controls_to_beziers(all_controls);
+		BezierSpline spline;
+		for (const auto& bz : bzs) {
+			spline.appendCurve(vp(bz.iV[0]), vp(bz.iV[1]), vp(bz.iV[2]), vp(bz.iV[3]));
+		}
+		renderer.setMode(renderer::GeometryRenderer::stroke);
+		renderer.setStroke(Color(20, 20, 255), 3.0);
+		renderer.draw(spline);
+	}
+
+	for (auto& cp : initial_controls) {
+		renderer.setStroke(Color(100, 0, 0), 3.0);
+		renderer.draw(vp(cp));
 	}
 }
 
-LadderCollapse spline_collapse(const RungCollapse& rung_collapse) {
-	return [rung_collapse](SlopeLadder& ladder, const PointToPoint& p_prev, const PointToPoint& p_next) {
-		ladder.m_collapsed.clear();
-		if (!ladder.m_valid)
-			return;
-
-		std::vector<ipe::Vector> control_points;
-		if (ladder.m_cap.contains(CGAL::LEFT_TURN)) {
-			control_points.push_back(pv(ladder.m_cap.at(CGAL::LEFT_TURN)));
-		}
-		for (const auto& rung : ladder.m_rungs) {
-			auto reversed = p_next.contains(rung.target()) && p_next.at(rung.target()) == rung.source();
-			auto t = reversed ? rung.target() : rung.source();
-			auto u = reversed ? rung.source() : rung.target();
-			Gt::Point_2 s = p_prev.at(t);
-			Gt::Point_2 v = p_next.at(u);
-			control_points.push_back(pv(rung_collapse(s, t, u, v)));
-		}
-		if (ladder.m_cap.contains(CGAL::RIGHT_TURN)) {
-			control_points.push_back(pv(ladder.m_cap.at(CGAL::RIGHT_TURN)));
-		}
-
-		ipe::Curve curve;
-		curve.appendSpline(control_points);
-		if (curve.countSegments() > 1) {
-			throw std::runtime_error("Expected only one segment in spline.");
-		}
-
-		std::vector<ipe::Bezier> bzs;
-		auto curved_segment = curve.segment(0);
-		curved_segment.beziers(bzs);
-
-		auto intersection = [&bzs](Gt::Line_2 l) {
-			ipe::Line line = ipe::Line::through(pv(l.point(0)), pv(l.point(1)));
-			std::vector<ipe::Vector> inters;
-			for (auto& b : bzs) {
-				b.intersect(line, inters);
-			}
-			if (inters.size() != 1) {
-				//			std::cerr << "Expected one spline--line intersection but encountered: " << inters.size() << std::endl;
-				return std::optional<Gt::Point_2>();
-			}
-			return std::optional(vp(inters.front()));
-		};
-
-		for (int i = 0; i < ladder.m_rungs.size(); i++) {
-			const auto& rung = ladder.m_rungs[i];
-			auto reversed = p_next.contains(rung.target()) && p_next.at(rung.target()) == rung.source();
-			auto t = reversed ? rung.target() : rung.source();
-			auto u = reversed ? rung.source() : rung.target();
-			Gt::Point_2 s = p_prev.at(t);
-			Gt::Point_2 v = p_next.at(u);
-			Gt::Line_2 l = area_preservation_line(s, t, u, v);
-			Gt::Point_2 new_vertex;
-			if (i == 0 && !ladder.m_cap.contains(CGAL::LEFT_TURN) ||
-			    i == ladder.m_rungs.size() - 1 && !ladder.m_cap.contains(CGAL::RIGHT_TURN)) {
-				//		if (control_points.size() == 1) {
-//				new_vertex = l.projection(midpoint(rung));
-				new_vertex = rung_collapse(s, t, u, v);
-			} else {
-				auto inter = intersection(l);
-				new_vertex = inter.has_value() ? *inter : rung_collapse(s, t, u, v);
-			}
-			ladder.m_collapsed.push_back(new_vertex);
-		}
-	};
-}
-
-Gt::Point_2 min_sym_diff_point(Gt::Point_2 s, Gt::Point_2 t, Gt::Point_2 u, Gt::Point_2 v) {
-	Gt::Line_2 l = area_preservation_line(s, t, u, v);
+Gt::Point_2 min_sym_diff_point(Gt::Point_2 s, Gt::Point_2 t, Gt::Point_2 u, Gt::Point_2 v, Gt::Line_2 l) {
 	Gt::Line_2 svl(s, v);
 	Gt::Line_2 stl(s, t);
 	Gt::Line_2 uvl(u, v);
@@ -124,12 +202,11 @@ Gt::Point_2 min_sym_diff_point(Gt::Point_2 s, Gt::Point_2 t, Gt::Point_2 u, Gt::
 	return new_vertex;
 }
 
-Gt::Point_2 projected_midpoint(Gt::Point_2 s, Gt::Point_2 t, Gt::Point_2 u, Gt::Point_2 v) {
-	Gt::Line_2 l = area_preservation_line(s, t, u, v);
+Gt::Point_2 projected_midpoint(Gt::Point_2 s, Gt::Point_2 t, Gt::Point_2 u, Gt::Point_2 v, Gt::Line_2 l) {
 	return l.projection(midpoint(t, u));
 }
 
-void min_sym_diff_collapse(SlopeLadder& ladder, const PointToPoint& p_prev, const PointToPoint& p_next) {
+void MinSymDiffCollapse::operator()(SlopeLadder& ladder, const PointToPoint& p_prev, const PointToPoint& p_next) {
 	ladder.m_collapsed.clear();
 	if (!ladder.m_valid) return;
 	for (const auto& rung : ladder.m_rungs) {
@@ -149,8 +226,37 @@ void min_sym_diff_collapse(SlopeLadder& ladder, const PointToPoint& p_prev, cons
 			return;
 		}
 
-		ladder.m_collapsed.push_back(min_sym_diff_point(s, t, u, v));
+		ladder.m_collapsed.push_back(min_sym_diff_point(s, t, u, v, area_preservation_line(s, t, u, v)));
 	}
+}
+
+std::shared_ptr<renderer::GeometryPainting> MinSymDiffCollapse::painting(const SlopeLadder& ladder, const PointToPoint& p_prev, const PointToPoint& p_next) {
+	return std::make_shared<PointCollapsePainting>(ladder, p_prev, p_next);
+}
+
+void MidpointCollapse::operator()(SlopeLadder& ladder, const PointToPoint& p_prev, const PointToPoint& p_next) {
+	ladder.m_collapsed.clear();
+	if (!ladder.m_valid) return;
+	for (const auto& rung : ladder.m_rungs) {
+		auto reversed = p_next.contains(rung.target()) && p_next.at(rung.target()) == rung.source();
+		auto t = reversed ? rung.target() : rung.source();
+		auto u = reversed ? rung.source() : rung.target();
+		Gt::Point_2 s = p_prev.at(t);
+		Gt::Point_2 v = p_next.at(u);
+
+		ladder.m_collapsed.push_back(projected_midpoint(s, t, u, v, area_preservation_line(s, t, u, v)));
+	}
+}
+
+std::shared_ptr<renderer::GeometryPainting> MidpointCollapse::painting(const SlopeLadder& ladder, const PointToPoint& p_prev, const PointToPoint& p_next) {
+	return std::make_shared<PointCollapsePainting>(ladder, p_prev, p_next);
+}
+
+PointCollapsePainting::PointCollapsePainting(const SlopeLadder& ladder, const PointToPoint& p_prev, const PointToPoint& p_next) :
+      m_ladder(ladder), m_p_prev(p_prev), m_p_next(p_next) {}
+
+void PointCollapsePainting::paint(renderer::GeometryRenderer& renderer) const {
+
 }
 
 bool point_order_on_line(Gt::Line_2 l, Gt::Point_2 a, Gt::Point_2 b) {

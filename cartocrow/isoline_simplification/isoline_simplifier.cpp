@@ -48,7 +48,7 @@ auto slope_ladder_comp = [](const std::shared_ptr<SlopeLadder>& sl1, const std::
 };
 
 IsolineSimplifier::IsolineSimplifier(std::vector<Isoline<K>> isolines, double angle_filter,
-                                     LadderCollapse collapse):
+                                     std::shared_ptr<LadderCollapse> collapse):
       m_isolines(std::move(isolines)), m_angle_filter(angle_filter),  m_collapse_ladder(std::move(collapse)) {
 	clean_isolines();
 	m_simplified_isolines = m_isolines;
@@ -934,7 +934,7 @@ void IsolineSimplifier::create_slope_ladder(Gt::Segment_2 seg, bool do_push_heap
 		}
 	}
 
-	m_collapse_ladder(*slope_ladder, m_p_prev, m_p_next);
+	(*m_collapse_ladder)(*slope_ladder, m_p_prev, m_p_next);
 	slope_ladder->compute_cost(m_p_prev, m_p_next);
 
 	m_slope_ladders.push_back(slope_ladder);

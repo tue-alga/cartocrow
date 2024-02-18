@@ -44,7 +44,7 @@ using namespace cartocrow::renderer;
 using namespace cartocrow::isoline_simplification;
 
 IsolineSimplificationDemo::IsolineSimplificationDemo() {
-	std::string dir("/home/steven/Documents/cartocrow/inputs/large/");
+	std::string dir("/home/steven/Documents/cartocrow/inputs/small/");
 	std::string output_dir("/home/steven/Documents/cartocrow/output/");
 	setWindowTitle("Isoline simplification");
 
@@ -113,7 +113,7 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 	collapse_selector->addItem("Midpoint");
 	collapse_selector->addItem("Minimize symmetric difference");
 	collapse_selector->addItem("Spline midpoint");
-	collapse_selector->addItem("Spline min. symmetric diff.");
+//	collapse_selector->addItem("Spline min. symmetric diff.");
 	vLayout->addWidget(collapse_selector);
 
 	auto* angle_filter_input = new QDoubleSpinBox();
@@ -184,24 +184,24 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 	m_reload = [this, dir, angle_filter_input, collapse_selector, fileSelector]() {
 		std::shared_ptr<ipe::Document> document = IpeReader::loadIpeFile(dir + fileSelector->currentText().toStdString() + ".ipe");
 		ipe::Page* page = document->page(0);
-		LadderCollapse collapse;
+		std::shared_ptr<LadderCollapse> collapse;
 		switch (collapse_selector->currentIndex()) {
 		case 0: {
-			collapse = midpoint_collapse;
+			collapse = std::make_shared<MidpointCollapse>();
 			break;
 		}
 		case 1: {
-			collapse = min_sym_diff_collapse;
+			collapse = std::make_shared<MinSymDiffCollapse>();
 			break;
 		}
 		case 2: {
-			collapse = spline_collapse(projected_midpoint);
+			collapse = std::make_shared<SplineCollapse>(projected_midpoint, 3);
 			break;
 		}
-		case 3: {
-			collapse = spline_collapse(min_sym_diff_point);
-			break;
-		}
+//		case 3: {
+//			collapse = spline_collapse(min_sym_diff_point, 3);
+//			break;
+//		}
 		default: {
 			std::cerr << "Not yet implemented: " << collapse_selector->currentText().toStdString() << " " << collapse_selector->currentIndex() << std::endl;
 			break;
@@ -702,48 +702,7 @@ void draw_ladder_collapse(GeometryRenderer& renderer, IsolineSimplifier& simplif
 //
 //	}
 
-	std::vector<ipe::Vector> control_points;
-	if (ladder.m_cap.contains(CGAL::LEFT_TURN)) {
-		control_points.push_back(pv(ladder.m_cap.at(CGAL::LEFT_TURN)));
-	}
-	for (const auto& rung : ladder.m_rungs) {
-		auto& p_next = simplifier.m_p_next;
-		auto& p_prev = simplifier.m_p_prev;
-		auto reversed = p_next.contains(rung.target()) && p_next.at(rung.target()) == rung.source();
-		auto t = reversed ? rung.target() : rung.source();
-		auto u = reversed ? rung.source() : rung.target();
-		Gt::Point_2 s = p_prev.at(t);
-		Gt::Point_2 v = p_next.at(u);
-//		control_points.push_back(pv(min_sym_diff_point(s, t, u, v)));
-		control_points.push_back(pv(projected_midpoint(s, t, u, v)));
-	}
-	if (ladder.m_cap.contains(CGAL::RIGHT_TURN)) {
-		control_points.push_back(pv(ladder.m_cap.at(CGAL::RIGHT_TURN)));
-	}
-
-	if (control_points.size() > 1) {
-		ipe::Curve curve;
-		curve.appendSpline(control_points);
-		if (curve.countSegments() > 1) {
-			throw std::runtime_error("Expected only one segment in spline.");
-		}
-		std::vector<ipe::Bezier> bzs;
-		auto curved_segment = curve.segment(0);
-		curved_segment.beziers(bzs);
-
-		BezierSpline spline;
-		for (const auto& bz : bzs) {
-			spline.appendCurve(vp(bz.iV[0]), vp(bz.iV[1]), vp(bz.iV[2]), vp(bz.iV[3]));
-		}
-		renderer.setMode(GeometryRenderer::stroke);
-		renderer.setStroke(Color(20, 20, 255), 3.0);
-		renderer.draw(spline);
-	}
-
-	for (auto& cp : control_points) {
-		renderer.setStroke(Color(100, 0, 0), 3.0);
-		renderer.draw(vp(cp));
-	}
+	simplifier.m_collapse_ladder->painting(ladder, simplifier.m_p_prev, simplifier.m_p_next)->paint(renderer);
 
 	for (int i = 0; i < ladder.m_rungs.size(); i++) {
 		const auto& rung = ladder.m_rungs.at(i);
@@ -763,34 +722,6 @@ void draw_ladder_collapse(GeometryRenderer& renderer, IsolineSimplifier& simplif
 		renderer.draw(Gt::Segment_2(s, p));
 		renderer.draw(Gt::Segment_2(p, v));
 		renderer.draw(p);
-
-//		auto vhs = simplifier.intersected_region(rung, p);
-//		auto [boundaries, outer] = simplifier.boundaries(vhs);
-//
-//		auto voronoi_drawer = VoronoiDrawer<Gt>(&renderer);
-//
-//		for (const auto& vh : vhs) {
-//			auto eit_start = simplifier.m_delaunay.incident_edges(vh);
-//			auto eit = eit_start;
-//			do {
-//				renderer.setStroke(Color(0, 0, 0), 2.0);
-//				draw_dual_edge<VoronoiDrawer<Gt>, K>(simplifier.m_delaunay, *eit, voronoi_drawer);
-//				++eit;
-//			} while (eit != eit_start);
-//		}
-//
-//		for (const auto& e : boundaries[outer]) {
-//			renderer.setStroke(Color(200, 0, 0), 4.0);
-//			draw_dual_edge<VoronoiDrawer<Gt>, K>(simplifier.m_delaunay, e, voronoi_drawer);
-//		}
-//		for (int j = 0; j < boundaries.size(); ++j) {
-//			if (j == outer)
-//				continue;
-//			for (const auto& e : boundaries[j]) {
-//				renderer.setStroke(Color(0, 200, 0), 4.0);
-//				draw_dual_edge<VoronoiDrawer<Gt>, K>(simplifier.m_delaunay, e, voronoi_drawer);
-//			}
-//		}
 	}
 }
 
