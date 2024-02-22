@@ -195,12 +195,12 @@ Gt::Segment_2 snap_endpoints(Gt::Segment_2 proj, Gt::Segment_2 original) {
 
 Matching matching(const SDG2& delaunay, const Separator& separator, const PointToPoint& p_prev,
                   const PointToPoint& p_next, const PointToIsoline& p_isoline, const PointToVertex& p_vertex,
-                  const double angle_filter) {
+                  const double angle_filter, const double alignment_filter) {
 	std::unordered_map<Gt::Point_2, MatchedTo> matching;
 
 	for (auto& [_, edges]: separator)
 	for (auto edge : edges) {
-		create_matching(delaunay, edge, matching, p_prev, p_next, p_isoline, p_vertex, angle_filter);
+		create_matching(delaunay, edge, matching, p_prev, p_next, p_isoline, p_vertex, angle_filter, alignment_filter);
 	}
 
 	auto comparison_f = compare_along_isoline(p_prev, p_next);
@@ -246,7 +246,6 @@ Gt::Line_2 supporting_line(const SDG2::Point_2& p, const PointToPoint& p_prev, c
 		l3 = Gt::Line_2(prev, next);
 	}
 	return l3;
-
 }
 
 Gt::Line_2 supporting_line(const SDG2::Site_2& site, const PointToPoint& p_prev, const PointToPoint& p_next) {
@@ -462,7 +461,7 @@ std::optional<Gt::Segment_2> check_segment_intersections_Voronoi(const SDG2& del
 
 void create_matching(const SDG2& delaunay, const SDG2::Edge& edge, Matching& matching, const PointToPoint& p_prev,
                      const PointToPoint& p_next, const PointToIsoline& p_isoline, const PointToVertex& p_vertex,
-                     const double angle_filter) {
+                     const double angle_filter, const double alignment_filter) {
 	auto [p, q] = defining_sites(edge);
 
 	auto pl = supporting_line(p, p_prev, p_next);
@@ -490,8 +489,9 @@ void create_matching(const SDG2& delaunay, const SDG2::Edge& edge, Matching& mat
 			auto pp = p_pts[pi];
 			auto qp = q_pts[qi];
 			bool edge_case = !p_prev.contains(pp) || !p_prev.contains(qp) || !p_next.contains(pp) || !p_next.contains(qp);
-			bool intersects = check_segment_intersections_Voronoi(delaunay, Gt::Segment_2(pp, qp), p_vertex.at(pp)).has_value();
-			if (!edge_case && !intersects) {
+//			bool intersects = check_segment_intersections_Voronoi(delaunay, Gt::Segment_2(pp, qp), p_vertex.at(pp)).has_value();
+			bool aligned = vertex_alignment(p_prev, p_next, pp, qp, sign_p, sign_q) < alignment_filter;
+			if (!edge_case && aligned) {
 				matching[pp][sign_p][p_isoline.at(point_of_site(q))].push_back(qp);
 				matching[qp][sign_q][p_isoline.at(point_of_site(p))].push_back(pp);
 			}
@@ -534,5 +534,26 @@ std::function<bool(const Gt::Point_2&, const Gt::Point_2&)> compare_along_isolin
 			}
 		}
 	};
+}
+
+K::Vector_2 normal(const SDG2::Point_2& p, const PointToPoint& p_prev, const PointToPoint& p_next, CGAL::Sign side) {
+	auto l = supporting_line(p, p_prev, p_next);
+	auto candidate = l.perpendicular(p);
+	if (l.oriented_side(p + candidate.to_vector()) == side) {
+		return candidate.to_vector();
+	} else {
+	    return candidate.opposite().to_vector();
+	}
+}
+
+double vertex_alignment(const PointToPoint& p_prev, const PointToPoint& p_next, Gt::Point_2 u, Gt::Point_2 v, CGAL::Sign uv_side, CGAL::Sign vu_side) {
+	auto n_u = normal(u, p_prev, p_next, uv_side);
+	auto n_v = normal(v, p_prev, p_next, vu_side);
+	auto uv = v - u;
+	auto vu = u - v;
+	auto uv_l = sqrt(uv.squared_length());
+	auto angle_u = acos((n_u * uv) / (sqrt(n_u.squared_length()) * uv_l));
+	auto angle_v = acos((n_v * vu) / (sqrt(n_v.squared_length()) * uv_l));
+	return angle_u + angle_v;
 }
 }

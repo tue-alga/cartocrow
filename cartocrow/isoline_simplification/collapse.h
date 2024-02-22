@@ -39,13 +39,14 @@ Gt::Point_2 projected_midpoint(Gt::Point_2 s, Gt::Point_2 t, Gt::Point_2 u, Gt::
 //LadderCollapse spline_collapse(const RungCollapse& rung_collapse, int repititions);
 class SplineCollapse : public LadderCollapse {
   public:
-	SplineCollapse(const RungCollapse& rung_collapse, int repetitions);
+	SplineCollapse(const RungCollapse& rung_collapse, int repetitions, int samples = 50);
 	void operator()(SlopeLadder& ladder, const PointToPoint& p_prev, const PointToPoint& p_next) override;
 	std::shared_ptr<renderer::GeometryPainting> painting(const SlopeLadder& ladder, const PointToPoint& p_prev, const PointToPoint& p_next) override;
 
 	RungCollapse m_rung_collapse;
 
 	int m_repetitions;
+	int m_samples;
 
 	std::vector<ipe::Vector> controls_from_intersections(const std::vector<Gt::Line_2>& lines,
 																	     const std::optional<ipe::Vector>& start,
@@ -53,6 +54,7 @@ class SplineCollapse : public LadderCollapse {
 																	     const std::optional<ipe::Vector>& end) const;
 	std::vector<ipe::Bezier> controls_to_beziers(const std::vector<ipe::Vector>& control_points) const;
 	std::optional<Gt::Point_2> intersection(const std::vector<ipe::Bezier>& bzs, const Gt::Line_2& l) const;
+	double cost(const SlopeLadder& ladder, const PointToPoint& p_prev, const PointToPoint& p_next, const std::vector<ipe::Vector>& new_vertices) const;
 };
 
 class SplineCollapsePainting : public renderer::GeometryPainting {
@@ -94,6 +96,26 @@ class MinSymDiffCollapse : public LadderCollapse {
 	std::shared_ptr<renderer::GeometryPainting> painting(const SlopeLadder& ladder, const PointToPoint& p_prev, const PointToPoint& p_next) override;
 };
 
+class HarmonyLineCollapse : public LadderCollapse {
+  public:
+	explicit HarmonyLineCollapse(int samples = 50);
+	void operator()(SlopeLadder& ladder, const PointToPoint& p_prev, const PointToPoint& p_next) override;
+	std::shared_ptr<renderer::GeometryPainting> painting(const SlopeLadder& ladder, const PointToPoint& p_prev, const PointToPoint& p_next) override;
+
+	int m_samples;
+};
+
+class HarmonyLinePainting : public renderer::GeometryPainting {
+  public:
+	HarmonyLinePainting(const SlopeLadder& ladder, const PointToPoint& p_prev, const PointToPoint& p_next, const HarmonyLineCollapse& line_collapse);
+	void paint(renderer::GeometryRenderer &renderer) const override;
+
+	const int m_samples;
+	const SlopeLadder& m_ladder;
+	const PointToPoint& m_p_prev;
+	const PointToPoint& m_p_next;
+};
+
 //void min_sym_diff_collapse(SlopeLadder& ladder, const PointToPoint& p_prev, const PointToPoint& p_next);
 
 typedef std::unordered_map<Gt::Point_2, std::vector<std::shared_ptr<SlopeLadder>>> PointToSlopeLadders;
@@ -103,5 +125,6 @@ Gt::Line_2 area_preservation_line(Gt::Point_2 s, Gt::Point_2 t, Gt::Point_2 u, G
 double symmetric_difference(const Gt::Point_2& s, const Gt::Point_2& t, const Gt::Point_2& u, const Gt::Point_2& v, const Gt::Point_2& p);
 double signed_area(const std::vector<Gt::Point_2>& pts);
 double area(const std::vector<Gt::Point_2>& pts);
+bool point_order_on_line(Gt::Line_2 l, Gt::Point_2 a, Gt::Point_2 b);
 }
 #endif //CARTOCROW_COLLAPSE_H

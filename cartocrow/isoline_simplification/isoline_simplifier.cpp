@@ -47,15 +47,15 @@ auto slope_ladder_comp = [](const std::shared_ptr<SlopeLadder>& sl1, const std::
 	return sl1->m_cost > sl2->m_cost;
 };
 
-IsolineSimplifier::IsolineSimplifier(std::vector<Isoline<K>> isolines, double angle_filter,
+IsolineSimplifier::IsolineSimplifier(std::vector<Isoline<K>> isolines, double angle_filter, double alignment_filter,
                                      std::shared_ptr<LadderCollapse> collapse):
-      m_isolines(std::move(isolines)), m_angle_filter(angle_filter),  m_collapse_ladder(std::move(collapse)) {
+      m_isolines(std::move(isolines)), m_angle_filter(angle_filter), m_alignment_filter(alignment_filter), m_collapse_ladder(std::move(collapse)) {
 	clean_isolines();
 	m_simplified_isolines = m_isolines;
 	initialize_sdg();
 	initialize_point_data();
 	m_separator = medial_axis_separator(m_delaunay, m_p_isoline, m_p_prev, m_p_next);
-	m_matching = matching(m_delaunay, m_separator, m_p_prev, m_p_next, m_p_isoline, m_p_vertex, m_angle_filter);
+	m_matching = matching(m_delaunay, m_separator, m_p_prev, m_p_next, m_p_isoline, m_p_vertex, m_angle_filter, m_alignment_filter);
 	initialize_slope_ladders();
 }
 
@@ -438,7 +438,7 @@ void IsolineSimplifier::update_matching() {
 				auto site_2 = target->site();
 				auto iso_2 = m_p_isoline.at(point_of_site(site_2));
 				if (iso_1 == iso_2) continue;
-				create_matching(m_delaunay, edge, m_matching, m_p_prev, m_p_next, m_p_isoline, m_p_vertex, m_angle_filter);
+				create_matching(m_delaunay, edge, m_matching, m_p_prev, m_p_next, m_p_isoline, m_p_vertex, m_angle_filter, m_alignment_filter);
 				if (site_1.is_point()) {
 					modified_matchings.push_back(site_1.point());
 				} else {
@@ -1479,7 +1479,7 @@ int IsolineSimplifier::ladder_count() {
 	initialize_point_data();
 	m_separator = medial_axis_separator(m_delaunay, m_p_isoline, m_p_prev, m_p_next);
 	m_matching = matching(m_delaunay, m_separator, m_p_prev, m_p_next, m_p_isoline, m_p_vertex,
-	                     m_angle_filter);
+	                     m_angle_filter, m_alignment_filter);
 	initialize_slope_ladders();
 	return m_slope_ladders.size();
 }

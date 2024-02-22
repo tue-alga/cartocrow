@@ -10,8 +10,8 @@
 #include "ipe_bezier_wrapper.h"
 
 namespace cartocrow::isoline_simplification {
-SplineCollapse::SplineCollapse(const RungCollapse& rung_collapse, int repetitions): m_rung_collapse(rung_collapse),
-      m_repetitions(repetitions) {};
+SplineCollapse::SplineCollapse(const RungCollapse& rung_collapse, int repetitions, int samples):
+      m_rung_collapse(rung_collapse), m_repetitions(repetitions), m_samples(samples) {};
 
 std::vector<ipe::Bezier> SplineCollapse::controls_to_beziers(const std::vector<ipe::Vector>& control_points) const {
 	ipe::Curve curve;
@@ -66,40 +66,110 @@ std::vector<ipe::Vector> SplineCollapse::controls_from_intersections(const std::
 	return new_controls;
 }
 
-void SplineCollapse::operator()(SlopeLadder& ladder, const PointToPoint& p_prev, const PointToPoint& p_next) {
-	ladder.m_collapsed.clear();
-	if (!ladder.m_valid)
-		return;
+double SplineCollapse::cost(const SlopeLadder& ladder, const PointToPoint& p_prev, const PointToPoint& p_next, const std::vector<ipe::Vector>& new_vertices) const {
+	double cost = 0.0;
 
-	std::optional<ipe::Vector> start;
-	if (ladder.m_cap.contains(CGAL::LEFT_TURN)) {
-		start = pv(ladder.m_cap.at(CGAL::LEFT_TURN));
-	}
-
-	std::vector<ipe::Vector> initial_controls;
-	std::vector<Gt::Line_2> lines;
-	for (const auto& rung : ladder.m_rungs) {
+	for (int i = 0; i < ladder.m_rungs.size(); i++) {
+		const auto& rung = ladder.m_rungs[i];
 		auto reversed = p_next.contains(rung.target()) && p_next.at(rung.target()) == rung.source();
 		auto t = reversed ? rung.target() : rung.source();
 		auto u = reversed ? rung.source() : rung.target();
 		Gt::Point_2 s = p_prev.at(t);
 		Gt::Point_2 v = p_next.at(u);
-		lines.emplace_back(area_preservation_line(s, t, u, v));
-		initial_controls.push_back(pv(m_rung_collapse(s, t, u, v, lines.back())));
+		cost += symmetric_difference(s, t, u, v, vp(new_vertices[i]));
 	}
+
+	return cost;
+}
+
+void SplineCollapse::operator()(SlopeLadder& ladder, const PointToPoint& p_prev, const PointToPoint& p_next) {
+	if (!ladder.m_valid)
+		return;
+
+	std::optional<ipe::Vector> start;
+//	if (ladder.m_cap.contains(CGAL::LEFT_TURN)) {
+//		start = pv(ladder.m_cap.at(CGAL::LEFT_TURN));
+//	}
 
 	std::optional<ipe::Vector> end;
-	if (ladder.m_cap.contains(CGAL::RIGHT_TURN)) {
-		end = pv(ladder.m_cap.at(CGAL::RIGHT_TURN));
+//	if (ladder.m_cap.contains(CGAL::RIGHT_TURN)) {
+//		end = pv(ladder.m_cap.at(CGAL::RIGHT_TURN));
+//	}
+
+	std::vector<ipe::Vector> best_controls;
+	double best_cost = std::numeric_limits<double>::infinity();
+
+	std::vector<std::pair<Gt::Point_2, Gt::Point_2>> intervals;
+	double left_dist = std::numeric_limits<double>::infinity();
+	double right_dist = std::numeric_limits<double>::infinity();
+	std::vector<Gt::Line_2> lines;
+	for (const auto& rung : ladder.m_rungs) {
+		auto reversed =
+		    p_next.contains(rung.target()) && p_next.at(rung.target()) == rung.source();
+		auto t = reversed ? rung.target() : rung.source();
+		auto u = reversed ? rung.source() : rung.target();
+		Gt::Point_2 s = p_prev.at(t);
+		Gt::Point_2 v = p_next.at(u);
+		auto area_l = area_preservation_line(s, t, u, v);
+		lines.push_back(area_l);
+
+		std::optional<Gt::Point_2> first;
+		std::optional<Gt::Point_2> last;
+
+		for (auto p : {s, t, u, v}) {
+			auto proj = area_l.projection(p);
+			if (!first.has_value() || point_order_on_line(area_l, proj, *first)) {
+				first = proj;
+			}
+			if (!last.has_value() || point_order_on_line(area_l, *last, proj)) {
+				last = proj;
+			}
+		}
+
+		auto mid = area_l.projection(midpoint(rung));
+		double this_left_dist = sqrt((mid - *first).squared_length());
+		double this_right_dist = sqrt((*last - mid).squared_length());
+		if (this_left_dist < left_dist) {
+			left_dist = this_left_dist;
+		}
+		if (this_right_dist < right_dist) {
+			right_dist = this_right_dist;
+		}
+		intervals.emplace_back(*first, *last);
 	}
 
-	if (initial_controls.size() > 1 || start.has_value() || end.has_value()) {
-		for (int i = 0; i < m_repetitions; i++) {
-			initial_controls = controls_from_intersections(lines, start, initial_controls, end);
+	for (int i = 0; i < m_samples; i++) {
+		std::vector<ipe::Vector> initial_controls;
+		for (int j = 0; j < ladder.m_rungs.size(); j++) {
+			const auto& rung = ladder.m_rungs[j];
+			const double step = (left_dist + right_dist) / (m_samples - 1);
+			const auto& [a, b] = intervals[j];
+			const auto diff = (b - a);
+			int cutoff = left_dist / (left_dist + right_dist) * m_samples;
+			auto mid = lines[j].projection(midpoint(rung));
+			const auto step_v = diff / sqrt(diff.squared_length()) * step;
+			if (i <= cutoff) {
+				initial_controls.push_back(pv(mid - step_v * i));
+			} else {
+				initial_controls.push_back(pv(mid + step_v * (i - cutoff)));
+			}
+		}
+
+		if (initial_controls.size() > 1 || start.has_value() || end.has_value()) {
+			for (int j = 0; j < m_repetitions; j++) {
+				initial_controls = controls_from_intersections(lines, start, initial_controls, end);
+			}
+		}
+
+		double the_cost = cost(ladder, p_prev, p_next, initial_controls);
+		if (the_cost < best_cost) {
+			best_controls = initial_controls;
+			best_cost = the_cost;
 		}
 	}
+
 	ladder.m_collapsed.clear();
-	std::transform(initial_controls.begin(), initial_controls.end(),
+	std::transform(best_controls.begin(), best_controls.end(),
 	               std::back_inserter(ladder.m_collapsed),
 	               [](const ipe::Vector& v) { return vp(v); });
 }
@@ -116,11 +186,54 @@ void SplineCollapsePainting::paint(cartocrow::renderer::GeometryRenderer& render
 		return;
 
 	std::optional<ipe::Vector> start;
-	if (m_ladder.m_cap.contains(CGAL::LEFT_TURN)) {
-		start = pv(m_ladder.m_cap.at(CGAL::LEFT_TURN));
-	}
+//	if (m_ladder.m_cap.contains(CGAL::LEFT_TURN)) {
+//		start = pv(m_ladder.m_cap.at(CGAL::LEFT_TURN));
+//	}
 
-	std::vector<ipe::Vector> initial_controls;
+	std::optional<ipe::Vector> end;
+//	if (m_ladder.m_cap.contains(CGAL::RIGHT_TURN)) {
+//		end = pv(m_ladder.m_cap.at(CGAL::RIGHT_TURN));
+//	}
+
+	auto draw_controls = [&](std::vector<ipe::Vector>& controls, bool best) {
+		renderer.setMode(renderer::GeometryRenderer::stroke);
+		if (!best) {
+			renderer.setStroke(Color(20, 20, 255), 1.0);
+			renderer.setStrokeOpacity(100);
+		} else {
+			renderer.setStroke(Color(20, 20, 255), 3.0);
+		}
+
+	    for (const auto& v : controls) {
+	  	  renderer.draw(vp(v));
+	    }
+
+		if (controls.size() > 1 || start.has_value() || end.has_value()) {
+			std::vector<ipe::Vector> all_controls;
+			if (start.has_value()) {
+				all_controls.push_back(*start);
+			}
+			for (const auto& cp : controls) {
+				all_controls.push_back(cp);
+			}
+			if (end.has_value()) {
+				all_controls.push_back(*end);
+			}
+			auto bzs = m_spline_collapse.controls_to_beziers(all_controls);
+			BezierSpline spline;
+			for (const auto& bz : bzs) {
+				spline.appendCurve(vp(bz.iV[0]), vp(bz.iV[1]), vp(bz.iV[2]), vp(bz.iV[3]));
+			}
+			renderer.draw(spline);
+		}
+	};
+
+	std::vector<ipe::Vector> best_controls;
+	double best_cost = std::numeric_limits<double>::infinity();
+
+	std::vector<std::pair<Gt::Point_2, Gt::Point_2>> intervals;
+	double left_dist = std::numeric_limits<double>::infinity();
+	double right_dist = std::numeric_limits<double>::infinity();
 	std::vector<Gt::Line_2> lines;
 	for (const auto& rung : m_ladder.m_rungs) {
 		auto reversed = m_p_next.contains(rung.target()) && m_p_next.at(rung.target()) == rung.source();
@@ -129,46 +242,128 @@ void SplineCollapsePainting::paint(cartocrow::renderer::GeometryRenderer& render
 		Gt::Point_2 s = m_p_prev.at(t);
 		Gt::Point_2 v = m_p_next.at(u);
 		lines.emplace_back(area_preservation_line(s, t, u, v));
-		initial_controls.push_back(pv(m_spline_collapse.m_rung_collapse(s, t, u, v, lines.back())));
+		auto& area_l = lines.back();
+
+		std::optional<Gt::Point_2> first;
+		std::optional<Gt::Point_2> last;
+
+		for (auto p : {s, t, u, v}) {
+			auto proj = area_l.projection(p);
+			if (!first.has_value() || point_order_on_line(area_l, proj, *first)) {
+				first = proj;
+			}
+			if (!last.has_value() || point_order_on_line(area_l, *last, proj)) {
+				last = proj;
+			}
+		}
+
+		auto mid = area_l.projection(midpoint(rung));
+		double this_left_dist = sqrt((mid - *first).squared_length());
+		double this_right_dist = sqrt((*last - mid).squared_length());
+		if (this_left_dist < left_dist) {
+			left_dist = this_left_dist;
+		}
+		if (this_right_dist < right_dist) {
+			right_dist = this_right_dist;
+		}
+		intervals.emplace_back(*first, *last);
 	}
 
-	std::optional<ipe::Vector> end;
-	if (m_ladder.m_cap.contains(CGAL::RIGHT_TURN)) {
-		end = pv(m_ladder.m_cap.at(CGAL::RIGHT_TURN));
+	for (int i = 0; i < m_spline_collapse.m_samples; i++) {
+		std::vector<ipe::Vector> initial_controls;
+		for (int j = 0; j < m_ladder.m_rungs.size(); j++) {
+			const auto& rung = m_ladder.m_rungs[j];
+			const double step = (left_dist + right_dist) / (m_spline_collapse.m_samples - 1);
+			const auto& [a, b] = intervals[j];
+			const auto diff = (b - a);
+			int cutoff = left_dist / (left_dist + right_dist) * m_spline_collapse.m_samples;
+			auto mid = lines[j].projection(midpoint(rung));
+			const auto step_v = diff / sqrt(diff.squared_length()) * step;
+			if (i <= cutoff) {
+				initial_controls.push_back(pv(mid - step_v * i));
+			} else {
+				initial_controls.push_back(pv(mid + step_v * (i - cutoff)));
+			}
+		}
+
+		if (initial_controls.size() > 1 || start.has_value() || end.has_value()) {
+			for (int j = 0; j < m_spline_collapse.m_repetitions - 1; j++) { // note the -1 for drawing purposes
+				initial_controls = m_spline_collapse.controls_from_intersections(lines, start, initial_controls, end);
+			}
+		}
+
+		double the_cost = m_spline_collapse.cost(m_ladder, m_p_prev, m_p_next, initial_controls);
+		if (the_cost < best_cost) {
+			best_controls = initial_controls;
+			best_cost = the_cost;
+		}
+
+		draw_controls(initial_controls, false);
 	}
 
-	std::vector<ipe::Vector> controls = initial_controls;
-	if (initial_controls.size() > 1 || start.has_value() || end.has_value()) {
-		for (int i = 0; i < m_spline_collapse.m_repetitions - 1; i++) { // note the -1 for drawing purposes
-			controls = m_spline_collapse.controls_from_intersections(lines, start, controls, end);
-		}
-	}
+	draw_controls(best_controls, true);
 
-	if (controls.size() > 1 || start.has_value() || end.has_value()) {
-		std::vector<ipe::Vector> all_controls;
-		if (start.has_value()) {
-			all_controls.push_back(*start);
-		}
-		for (const auto& cp : controls) {
-			all_controls.push_back(cp);
-		}
-		if (end.has_value()) {
-			all_controls.push_back(*end);
-		}
-		auto bzs = m_spline_collapse.controls_to_beziers(all_controls);
-		BezierSpline spline;
-		for (const auto& bz : bzs) {
-			spline.appendCurve(vp(bz.iV[0]), vp(bz.iV[1]), vp(bz.iV[2]), vp(bz.iV[3]));
-		}
-		renderer.setMode(renderer::GeometryRenderer::stroke);
-		renderer.setStroke(Color(20, 20, 255), 3.0);
-		renderer.draw(spline);
-	}
 
-	for (auto& cp : initial_controls) {
-		renderer.setStroke(Color(100, 0, 0), 3.0);
-		renderer.draw(vp(cp));
-	}
+
+
+
+
+
+
+		//	std::optional<ipe::Vector> start;
+//	if (m_ladder.m_cap.contains(CGAL::LEFT_TURN)) {
+//		start = pv(m_ladder.m_cap.at(CGAL::LEFT_TURN));
+//	}
+//
+//	std::vector<ipe::Vector> initial_controls;
+//	std::vector<Gt::Line_2> lines;
+//	for (const auto& rung : m_ladder.m_rungs) {
+//		auto reversed = m_p_next.contains(rung.target()) && m_p_next.at(rung.target()) == rung.source();
+//		auto t = reversed ? rung.target() : rung.source();
+//		auto u = reversed ? rung.source() : rung.target();
+//		Gt::Point_2 s = m_p_prev.at(t);
+//		Gt::Point_2 v = m_p_next.at(u);
+//		lines.emplace_back(area_preservation_line(s, t, u, v));
+//		initial_controls.push_back(pv(m_spline_collapse.m_rung_collapse(s, t, u, v, lines.back())));
+//	}
+//
+//	std::optional<ipe::Vector> end;
+//	if (m_ladder.m_cap.contains(CGAL::RIGHT_TURN)) {
+//		end = pv(m_ladder.m_cap.at(CGAL::RIGHT_TURN));
+//	}
+//
+//	std::vector<ipe::Vector> controls = initial_controls;
+//	if (initial_controls.size() > 1 || start.has_value() || end.has_value()) {
+//		for (int i = 0; i < m_spline_collapse.m_repetitions - 1; i++) { // note the -1 for drawing purposes
+//			controls = m_spline_collapse.controls_from_intersections(lines, start, controls, end);
+//		}
+//	}
+//
+//	if (controls.size() > 1 || start.has_value() || end.has_value()) {
+//		std::vector<ipe::Vector> all_controls;
+//		if (start.has_value()) {
+//			all_controls.push_back(*start);
+//		}
+//		for (const auto& cp : controls) {
+//			all_controls.push_back(cp);
+//		}
+//		if (end.has_value()) {
+//			all_controls.push_back(*end);
+//		}
+//		auto bzs = m_spline_collapse.controls_to_beziers(all_controls);
+//		BezierSpline spline;
+//		for (const auto& bz : bzs) {
+//			spline.appendCurve(vp(bz.iV[0]), vp(bz.iV[1]), vp(bz.iV[2]), vp(bz.iV[3]));
+//		}
+//		renderer.setMode(renderer::GeometryRenderer::stroke);
+//		renderer.setStroke(Color(20, 20, 255), 3.0);
+//		renderer.draw(spline);
+//	}
+//
+//	for (auto& cp : initial_controls) {
+//		renderer.setStroke(Color(100, 0, 0), 3.0);
+//		renderer.draw(vp(cp));
+//	}
 }
 
 Gt::Point_2 min_sym_diff_point(Gt::Point_2 s, Gt::Point_2 t, Gt::Point_2 u, Gt::Point_2 v, Gt::Line_2 l) {
@@ -265,7 +460,96 @@ bool point_order_on_line(Gt::Line_2 l, Gt::Point_2 a, Gt::Point_2 b) {
 	return dir_line * dir_pts > 0;
 }
 
-void harmony_line_collapse(SlopeLadder& ladder, const PointToPoint& p_prev, const PointToPoint& p_next, int n_samples = 500) {
+HarmonyLinePainting::HarmonyLinePainting(const SlopeLadder& ladder, const PointToPoint& p_prev, const PointToPoint& p_next, const HarmonyLineCollapse& line_collapse) :
+	m_ladder(ladder), m_p_prev(p_prev), m_p_next(p_next), m_samples(line_collapse.m_samples) {}
+
+void HarmonyLinePainting::paint(renderer::GeometryRenderer& renderer) const {
+	if (!m_ladder.m_valid) return;
+
+	// Compute sample line
+	Gt::Line_2 sample_line;
+	Gt::Line_2 initial_harmony_line;
+	if (m_ladder.m_rungs.size() == 1) {
+		auto& rung = m_ladder.m_rungs.front();
+		auto reversed = m_p_next.contains(rung.target()) && m_p_next.at(rung.target()) == rung.source();
+		auto t = reversed ? rung.target() : rung.source();
+		auto u = reversed ? rung.source() : rung.target();
+		Gt::Point_2 s = m_p_prev.at(t);
+		Gt::Point_2 v = m_p_next.at(u);
+		sample_line = area_preservation_line(s, t, u, v);
+		initial_harmony_line = sample_line.perpendicular(midpoint(t, u));
+	} else {
+		auto& first_rung = m_ladder.m_rungs.front();
+		auto& last_rung = m_ladder.m_rungs.back();
+		initial_harmony_line = Gt::Line_2(midpoint(first_rung), midpoint(last_rung));
+		sample_line = initial_harmony_line.perpendicular(midpoint(midpoint(first_rung), midpoint(last_rung)));
+	}
+
+	std::optional<Gt::Point_2> first;
+	std::optional<Gt::Point_2> last;
+	for (const auto& rung : m_ladder.m_rungs) {
+		auto reversed = m_p_next.contains(rung.target()) && m_p_next.at(rung.target()) == rung.source();
+		auto t = reversed ? rung.target() : rung.source();
+		auto u = reversed ? rung.source() : rung.target();
+		Gt::Point_2 s = m_p_prev.at(t);
+		Gt::Point_2 v = m_p_next.at(u);
+		auto area_l = area_preservation_line(s, t, u, v);
+		for (auto& p : {s, t, u, v}) {
+			auto pt = sample_line.projection(area_l.projection(p));
+			if (!first.has_value() || point_order_on_line(sample_line, pt, *first)) {
+				first = pt;
+			}
+			if (!last.has_value() || point_order_on_line(sample_line, *last, pt)) {
+				last = pt;
+			}
+		}
+	}
+
+	K::Vector_2 step_v = (*last - *first) / (m_samples - 1);
+
+	double best_cost = std::numeric_limits<double>::infinity();
+	Gt::Line_2 best_line;
+
+	for (int i = 0; i < m_samples; i++) {
+		K::Vector_2 offset = i * step_v;
+		Gt::Point_2 pt = *first + offset;
+		Gt::Line_2 harmony_line(pt, initial_harmony_line.direction());
+
+		renderer.setMode(renderer::GeometryRenderer::stroke);
+		renderer.setStroke(Color(20, 20, 255), 1.0);
+		renderer.setStrokeOpacity(100);
+		renderer.draw(harmony_line);
+
+		double cost = 0.0;
+
+		for (const auto& rung : m_ladder.m_rungs) {
+			auto reversed = m_p_next.contains(rung.target()) && m_p_next.at(rung.target()) == rung.source();
+			auto t = reversed ? rung.target() : rung.source();
+			auto u = reversed ? rung.source() : rung.target();
+			Gt::Point_2 s = m_p_prev.at(t);
+			Gt::Point_2 v = m_p_next.at(u);
+
+			Gt::Line_2 l = area_preservation_line(s, t, u, v);
+			auto inter = *intersection(harmony_line, l);
+			Gt::Point_2 new_vertex = *boost::get<Gt::Point_2>(&inter);
+
+			cost += symmetric_difference(s, t, u, v, new_vertex);
+		}
+
+		if (cost < best_cost) {
+			best_line = harmony_line;
+			best_cost = cost;
+		}
+	}
+
+	renderer.setMode(renderer::GeometryRenderer::stroke);
+	renderer.setStroke(Color(20, 20, 255), 3.0);
+	renderer.draw(best_line);
+}
+
+HarmonyLineCollapse::HarmonyLineCollapse(int samples): m_samples(samples) {}
+
+void HarmonyLineCollapse::operator()(SlopeLadder& ladder, const PointToPoint& p_prev, const PointToPoint& p_next) {
 	ladder.m_collapsed.clear();
 	if (!ladder.m_valid) return;
 
@@ -309,15 +593,17 @@ void harmony_line_collapse(SlopeLadder& ladder, const PointToPoint& p_prev, cons
 		}
 	}
 
-	K::Vector_2 step_v = (*last - *first) / (n_samples - 1);
+	K::Vector_2 step_v = (*last - *first) / (m_samples - 1);
 
-	double best_score = std::numeric_limits<double>::infinity();
+	double best_cost = std::numeric_limits<double>::infinity();
 	Gt::Line_2 best_line;
 
-	for (int i = 0; i < n_samples; i++) {
+	for (int i = 0; i < m_samples; i++) {
 		K::Vector_2 offset = i * step_v;
 		Gt::Point_2 pt = *first + offset;
 		Gt::Line_2 harmony_line(pt, initial_harmony_line.direction());
+
+		double cost = 0.0;
 
 		for (const auto& rung : ladder.m_rungs) {
 			auto reversed = p_next.contains(rung.target()) && p_next.at(rung.target()) == rung.source();
@@ -329,6 +615,13 @@ void harmony_line_collapse(SlopeLadder& ladder, const PointToPoint& p_prev, cons
 			Gt::Line_2 l = area_preservation_line(s, t, u, v);
 			auto inter = *intersection(harmony_line, l);
 			Gt::Point_2 new_vertex = *boost::get<Gt::Point_2>(&inter);
+
+			cost += symmetric_difference(s, t, u, v, new_vertex);
+		}
+
+		if (cost < best_cost) {
+			best_line = harmony_line;
+			best_cost = cost;
 		}
 	}
 
@@ -341,9 +634,14 @@ void harmony_line_collapse(SlopeLadder& ladder, const PointToPoint& p_prev, cons
 
 
 		Gt::Line_2 l = area_preservation_line(s, t, u, v);
-		Gt::Point_2 new_vertex = l.projection(midpoint(rung));
+		auto inter = *intersection(best_line, l);
+		Gt::Point_2 new_vertex = *boost::get<Gt::Point_2>(&inter);
 		ladder.m_collapsed.push_back(new_vertex);
 	}
+}
+
+std::shared_ptr<renderer::GeometryPainting> HarmonyLineCollapse::painting(const SlopeLadder& ladder, const PointToPoint& p_prev, const PointToPoint& p_next) {
+	return std::make_shared<HarmonyLinePainting>(ladder, p_prev, p_next, *this);
 }
 
 double symmetric_difference(const Gt::Point_2& s, const Gt::Point_2& t, const Gt::Point_2& u, const Gt::Point_2& v, const Gt::Point_2& p) {

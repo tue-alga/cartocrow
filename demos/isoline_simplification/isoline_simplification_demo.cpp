@@ -112,9 +112,26 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 	auto* collapse_selector = new QComboBox();
 	collapse_selector->addItem("Midpoint");
 	collapse_selector->addItem("Minimize symmetric difference");
-	collapse_selector->addItem("Spline midpoint");
+	collapse_selector->addItem("Spline");
+	collapse_selector->addItem("Harmony line");
 //	collapse_selector->addItem("Spline min. symmetric diff.");
 	vLayout->addWidget(collapse_selector);
+
+	auto* sampleCount = new QSpinBox();
+	sampleCount->setValue(50);
+	sampleCount->setMaximum(500);
+	auto* sampleCountLabel = new QLabel("Sample count");
+	sampleCountLabel->setBuddy(sampleCount);
+	vLayout->addWidget(sampleCountLabel);
+	vLayout->addWidget(sampleCount);
+
+	auto* splineRepetitions = new QSpinBox();
+	splineRepetitions->setValue(3);
+	splineRepetitions->setMaximum(10);
+	auto* splineRepetitionsLabel = new QLabel("Spline repetitions");
+	splineRepetitionsLabel->setBuddy(splineRepetitions);
+	vLayout->addWidget(splineRepetitionsLabel);
+	vLayout->addWidget(splineRepetitions);
 
 	auto* angle_filter_input = new QDoubleSpinBox();
 	angle_filter_input->setValue(M_PI/6);
@@ -124,6 +141,15 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 	angle_filter_input_label->setBuddy(angle_filter_input);
 	vLayout->addWidget(angle_filter_input_label);
 	vLayout->addWidget(angle_filter_input);
+
+	auto* alignment_filter_input = new QDoubleSpinBox();
+	alignment_filter_input->setValue(M_PI/2);
+	alignment_filter_input->setMinimum(0);
+	alignment_filter_input->setMaximum(2*M_PI);
+	auto* alignment_filter_input_label = new QLabel("Alignment filter");
+	alignment_filter_input_label->setBuddy(alignment_filter_input);
+	vLayout->addWidget(alignment_filter_input_label);
+	vLayout->addWidget(alignment_filter_input);
 
 	auto* simplify_button = new QPushButton("Simplify");
 	vLayout->addWidget(simplify_button);
@@ -174,14 +200,13 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 		meta_data_file.close();
 	};
 
-	m_recalculate = [this, debugInfo, doCGALSimplify, simplificationTarget, regionIndex, showVertices, isolineIndex, number_of_vertices, angle_filter_input, measure_text]() {
+	m_recalculate = [this, debugInfo, doCGALSimplify, simplificationTarget, regionIndex, showVertices, isolineIndex, number_of_vertices]() {
 		number_of_vertices->setText(QString(("#Vertices: " + std::to_string(m_isoline_simplifier->m_current_complexity)).c_str()));
-	    m_isoline_simplifier->m_angle_filter = angle_filter_input->value();
 		recalculate(debugInfo->checkState(), simplificationTarget->value(),
 		            doCGALSimplify->checkState(), regionIndex->value(), showVertices->checkState(), isolineIndex->value());
 	};
 
-	m_reload = [this, dir, angle_filter_input, collapse_selector, fileSelector]() {
+	m_reload = [this, dir, angle_filter_input, alignment_filter_input, collapse_selector, fileSelector, splineRepetitions, sampleCount]() {
 		std::shared_ptr<ipe::Document> document = IpeReader::loadIpeFile(dir + fileSelector->currentText().toStdString() + ".ipe");
 		ipe::Page* page = document->page(0);
 		std::shared_ptr<LadderCollapse> collapse;
@@ -195,19 +220,19 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 			break;
 		}
 		case 2: {
-			collapse = std::make_shared<SplineCollapse>(projected_midpoint, 3);
+			collapse = std::make_shared<SplineCollapse>(projected_midpoint, splineRepetitions->value(), sampleCount->value());
 			break;
 		}
-//		case 3: {
-//			collapse = spline_collapse(min_sym_diff_point, 3);
-//			break;
-//		}
+		case 3: {
+			collapse = std::make_shared<HarmonyLineCollapse>(sampleCount->value());
+			break;
+		}
 		default: {
 			std::cerr << "Not yet implemented: " << collapse_selector->currentText().toStdString() << " " << collapse_selector->currentIndex() << std::endl;
 			break;
 		}
 		}
-		m_isoline_simplifier = std::make_unique<IsolineSimplifier>(isolinesInPage(page), angle_filter_input->value(), collapse);
+		m_isoline_simplifier = std::make_unique<IsolineSimplifier>(isolinesInPage(page), angle_filter_input->value(), alignment_filter_input->value(), collapse);
 		m_debug_ladder = std::nullopt;
 		m_recalculate();
 	};
@@ -221,6 +246,8 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 	connect(isolineIndex, QOverload<int>::of(&QSpinBox::valueChanged), m_recalculate);
 	connect(angle_filter_input, QOverload<double>::of(&QDoubleSpinBox::valueChanged), m_recalculate);
 	connect(collapse_selector, &QComboBox::currentTextChanged, m_reload);
+//	connect(splineRepetitions, QOverload<int>::of(&QSpinBox::valueChanged), m_reload);
+//	connect(sampleCount, QOverload<int>::of(&QSpinBox::valueChanged), m_reload);
 	connect(step_button, &QPushButton::clicked, [this]() {
 	    m_debug_ladder = std::nullopt;
 		bool progress = m_isoline_simplifier->step();

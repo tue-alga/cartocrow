@@ -29,7 +29,7 @@ typedef std::optional<std::variant<Gt::Segment_2, std::monostate>> IntersectionR
 
 class IsolineSimplifier {
   public:
-	IsolineSimplifier(std::vector<Isoline<K>> isolines, double angle_filter = M_PI/6,
+	IsolineSimplifier(std::vector<Isoline<K>> isolines, double angle_filter = M_PI/6, double alignment_filter = M_PI/3,
 	                  std::shared_ptr<LadderCollapse> collapse = std::make_shared<SplineCollapse>(projected_midpoint, 3));
 	void simplify(int target);
 	void dyken_simplify(int target);
@@ -58,7 +58,8 @@ class IsolineSimplifier {
 	std::vector<Gt::Point_2> m_deleted_points;
 	int m_current_complexity = 0;
 	bool m_started = false;
-	double m_angle_filter = M_PI / 6;
+	double m_angle_filter;
+	double m_alignment_filter;
 	std::shared_ptr<LadderCollapse> m_collapse_ladder;
 	bool check_ladder_intersections_naive(const SlopeLadder& ladder) const;
 	IntersectionResult check_ladder_intersections_Voronoi(const SlopeLadder& ladder);
