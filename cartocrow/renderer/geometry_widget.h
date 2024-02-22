@@ -173,6 +173,7 @@ class GeometryWidget : public QWidget, public GeometryRenderer {
 	void popStyle() override;
 	void setMode(int mode) override;
 	void setStroke(Color color, double width) override;
+	void setStrokeOpacity(int alpha) override;
 	void setFill(Color color) override;
 	void setFillOpacity(int alpha) override;
 
