@@ -44,7 +44,7 @@ using namespace cartocrow::renderer;
 using namespace cartocrow::isoline_simplification;
 
 IsolineSimplificationDemo::IsolineSimplificationDemo() {
-	std::string dir("/home/steven/Documents/cartocrow/inputs/small/");
+	std::string dir("/home/steven/Documents/cartocrow/inputs/crashes/");
 	std::string output_dir("/home/steven/Documents/cartocrow/output/");
 	setWindowTitle("Isoline simplification");
 
@@ -114,11 +114,12 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 	collapse_selector->addItem("Minimize symmetric difference");
 	collapse_selector->addItem("Spline");
 	collapse_selector->addItem("Harmony line");
-//	collapse_selector->addItem("Spline min. symmetric diff.");
+	collapse_selector->addItem("(Sp)line hybrid");
+	collapse_selector->setCurrentIndex(4);
 	vLayout->addWidget(collapse_selector);
 
 	auto* sampleCount = new QSpinBox();
-	sampleCount->setValue(50);
+	sampleCount->setValue(10);
 	sampleCount->setMaximum(500);
 	auto* sampleCountLabel = new QLabel("Sample count");
 	sampleCountLabel->setBuddy(sampleCount);
@@ -143,7 +144,7 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 	vLayout->addWidget(angle_filter_input);
 
 	auto* alignment_filter_input = new QDoubleSpinBox();
-	alignment_filter_input->setValue(M_PI/2);
+	alignment_filter_input->setValue(2*M_PI);
 	alignment_filter_input->setMinimum(0);
 	alignment_filter_input->setMaximum(2*M_PI);
 	auto* alignment_filter_input_label = new QLabel("Alignment filter");
@@ -220,11 +221,15 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 			break;
 		}
 		case 2: {
-			collapse = std::make_shared<SplineCollapse>(projected_midpoint, splineRepetitions->value(), sampleCount->value());
+			collapse = std::make_shared<SplineCollapse>(splineRepetitions->value(), sampleCount->value());
 			break;
 		}
 		case 3: {
 			collapse = std::make_shared<HarmonyLineCollapse>(sampleCount->value());
+			break;
+		}
+		case 4: {
+			collapse = std::make_shared<LineSplineHybridCollapse>(SplineCollapse(splineRepetitions->value(), sampleCount->value()), HarmonyLineCollapse(sampleCount->value()));
 			break;
 		}
 		default: {
@@ -280,8 +285,13 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 		}
 
 		auto temp_simplifier = IsolineSimplifier(m_isoline_simplifier->m_simplified_isolines);
-		auto measure_text_string = "Symmetric difference: " + std::to_string(m_isoline_simplifier->symmetric_difference()) +
-		                           "\n#Ladders: " + std::to_string(temp_simplifier.ladder_count());
+
+		auto [avg_align, max_align] = temp_simplifier.average_max_vertex_alignment();
+		auto measure_text_string = "Symmetric difference: " + std::to_string(m_isoline_simplifier->total_symmetric_difference()) +
+		                           "\n#Ladders: " + std::to_string(temp_simplifier.ladder_count()) +
+		                           "\nAvg alignment: " + std::to_string(avg_align) +
+		                           "\nMax alignment: " + std::to_string(max_align);
+
 		measure_text->setText(QString(measure_text_string.c_str()));
 		m_recalculate();
 	});
@@ -312,7 +322,7 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 		m_recalculate();
 	});
 
-	m_recalculate();
+	m_reload();
 }
 
 void IsolineSimplificationDemo::recalculate(bool debugInfo, int target, bool cgal_simplify, int region_index,
@@ -432,22 +442,83 @@ std::vector<Isoline<K>> isolinesInPage(ipe::Page* page) {
 	return isolines;
 }
 
-int main(int argc, char* argv[]) {
-	QApplication app(argc, argv);
-	IsolineSimplificationDemo demo;
-	demo.show();
-	app.exec();
+//int main(int argc, char* argv[]) {
+//	QApplication app(argc, argv);
+//	IsolineSimplificationDemo demo;
+//	demo.show();
+//	app.exec();
+//}
+
+int main() {
+	auto dir = std::string("/home/steven/Documents/cartocrow/inputs/crashes/");
+	auto output_dir = std::string("/home/steven/Documents/cartocrow/output/");
+
+	std::vector<std::string> filenames;
+
+	std::string ext(".ipe");
+	for (auto &p : fs::recursive_directory_iterator(dir))
+	{
+		if (p.path().extension() == ext) {
+			filenames.push_back(p.path().stem().string());
+		}
+	}
+
+	// todo: also save metadata for start of simplification
+
+	for (const std::string& fn : filenames) {
+		try {
+			std::cout << "Input file: " << fn << std::endl;
+			std::shared_ptr<ipe::Document> document = IpeReader::loadIpeFile(dir + fn + ".ipe");
+			ipe::Page* page = document->page(0);
+			auto isolines = isolinesInPage(page);
+			auto collapse = std::make_shared<LineSplineHybridCollapse>(SplineCollapse(3, 10),
+			                                                           HarmonyLineCollapse(10));
+			auto collapse_name = "LineSplineHybrid";
+			auto simplifier = IsolineSimplifier(isolines, M_PI / 6, 10.0, collapse);
+
+			bool progress = true;
+
+			while (progress) {
+				int power = std::floor(std::log2(simplifier.m_current_complexity - 1));
+				int target = 1 << power;
+				std::cout << "\nCurrent target: " << target << std::endl;
+				progress = simplifier.simplify(target);
+
+				IpeRenderer ipe_renderer;
+				auto isolines_p = std::make_shared<IsolinePainting>(simplifier.m_simplified_isolines,
+				                                                    false, false, true);
+				ipe_renderer.addPainting(isolines_p, "Simplified_isolines");
+				std::string file_name(fn + "_" + std::to_string(target) + "_" +
+				                      std::to_string(simplifier.m_current_complexity) + "_" +
+				                      collapse_name);
+				ipe_renderer.save(output_dir + file_name + ".ipe");
+				std::ofstream meta_data_file;
+				meta_data_file.open(output_dir + file_name + "_meta" + ".txt");
+				meta_data_file << "Symmetric_difference: " << simplifier.total_symmetric_difference()
+				               << std::endl;
+				auto temp_simplifier = IsolineSimplifier(simplifier.m_simplified_isolines);
+				meta_data_file << "Ladders: " << temp_simplifier.m_slope_ladders.size() << std::endl;
+				auto [avg_alignment, max_alignment] = simplifier.average_max_vertex_alignment();
+				meta_data_file << "Avg_alignment: " << avg_alignment << std::endl;
+				meta_data_file << "Max_alignment: " << max_alignment << std::endl;
+				meta_data_file.close();
+			}
+		} catch(...) {
+			std::cerr << "Problem with input " << fn << std::endl;
+		}
+	}
 }
 
 //int main() {
-//	auto dir = std::string("/home/steven/Documents/cartocrow/inputs/");
+//	auto dir = std::string("/home/steven/Documents/cartocrow/inputs/large/");
 //
 //	std::shared_ptr<ipe::Document> document = IpeReader::loadIpeFile(dir + "large-western-island.ipe");
 //	ipe::Page* page = document->page(0);
-//	auto simplifier = IsolineSimplifier(isolinesInPage(page), M_PI/6, min_sym_diff_collapse);
+//	auto collapse = std::make_shared<LineSplineHybridCollapse>(SplineCollapse(3, 10), HarmonyLineCollapse(10));
+//	auto simplifier = IsolineSimplifier(isolinesInPage(page), M_PI / 6, 10.0, collapse);
 //
 //	auto start = std::chrono::system_clock::now().time_since_epoch();
-//	simplifier.simplify(1);
+//	simplifier.simplify(100000);
 //	auto end = std::chrono::system_clock::now().time_since_epoch();
 //
 //	const std::chrono::duration<double> duration = end - start;

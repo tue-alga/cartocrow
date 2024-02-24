@@ -89,6 +89,9 @@ void IsolineSimplifier::initialize_point_data() {
 }
 
 void IsolineSimplifier::initialize_sdg() {
+	m_delaunay.clear();
+	m_e_vertex.clear();
+	m_p_vertex.clear();
 	std::vector<Gt::Segment_2> segments;
 	for (const auto& isoline : m_simplified_isolines) {
 		auto polyline = isoline.polyline();
@@ -106,15 +109,16 @@ void IsolineSimplifier::initialize_sdg() {
 	}
 }
 
-void IsolineSimplifier::simplify(int target) {
+bool IsolineSimplifier::simplify(int target) {
 	while (m_current_complexity > target) {
 		if (m_current_complexity % 1000 == 0) {
 			std::cout << "\r#Vertices: " << m_current_complexity << std::flush;
 		}
-		if (!step()) return;
+		if (!step()) return false;
 		update_matching();
 		update_ladders();
 	}
+	return true;
 }
 
 void IsolineSimplifier::dyken_simplify(int target) {
@@ -181,7 +185,10 @@ void IsolineSimplifier::collapse_ladder(SlopeLadder& ladder) {
 	    if (!m_delaunay.remove(vertex)) {
 			std::cerr << "\nPoint removal failed\nLikely point " << p << " is incident to a segment that has not yet been deleted." << std::endl;
 			std::cerr << "Rebuilding delaunay triangulation..." << std::endl;
+
 			initialize_sdg();
+			m_deleted_points.clear();
+			m_changed_vertices.clear();
 			return false;
 
 //		    throw std::runtime_error("Delaunay point vertex removal failed!");
@@ -198,6 +205,7 @@ void IsolineSimplifier::collapse_ladder(SlopeLadder& ladder) {
 			if (m_e_vertex.contains(s.opposite())) {
 				seg = s.opposite();
 			} else {
+				std::cerr << "\nSegment: " << s << std::endl;
 				throw std::runtime_error("Segment that should be removed is not part of the Delaunay graph!");
 			}
 		}
@@ -255,11 +263,11 @@ void IsolineSimplifier::collapse_ladder(SlopeLadder& ladder) {
 			// Remove from Delaunay
 			delaunay_remove_e(edge);
 			delaunay_remove_e(st);
-			delaunay_remove_e(uv);
 			if (!delaunay_remove_p(t)) {
 				success = false;
 				break;
 			}
+			delaunay_remove_e(uv);
 			if (!delaunay_remove_p(u)) {
 				success = false;
 				break;
@@ -1448,12 +1456,51 @@ bool IsolineSimplifier::check_rung_collapse_topology(Gt::Segment_2 rung, Gt::Poi
 	return false;
 }
 
-double IsolineSimplifier::symmetric_difference() const {
+double IsolineSimplifier::total_symmetric_difference() const {
 	double total = 0;
 	for (int i = 0; i < m_isolines.size(); i++) {
-		total += ::cartocrow::isoline_simplification::symmetric_difference(m_isolines[i], m_simplified_isolines[i]);
+		total += symmetric_difference(m_isolines[i], m_simplified_isolines[i]);
 	}
 	return total;
+}
+
+std::pair<double, double> IsolineSimplifier::average_max_vertex_alignment() const {
+	double total = 0.0;
+	double max = 0.0;
+	int count = 0;
+
+	for (auto& [u, sign_map] : m_matching) {
+		for (auto& [sign_u, mi] : sign_map) {
+			for (auto& [iso, vs] : mi) {
+				for (auto& v : vs) {
+					CGAL::Sign sign_v;
+					bool found = false;
+					for (CGAL::Sign possible_sign_v : {CGAL::LEFT_TURN, CGAL::RIGHT_TURN}) {
+						if (m_matching.at(v).contains(possible_sign_v))
+							for (const auto& [_, pts] : m_matching.at(v).at(possible_sign_v))
+								for (const auto& pt : pts)
+									if (pt == u) {
+										sign_v = possible_sign_v;
+										found = true;
+									}
+					}
+					if (!found) {
+						std::cerr << "u: " << u << std::endl;
+						std::cerr << "v: " << v << std::endl;
+						throw std::runtime_error(
+						    "Point u matches to v but not the other way around.");
+					}
+
+					double alignment = vertex_alignment(m_p_prev, m_p_next, u, v, sign_u, sign_v);
+					max = std::max(max, alignment);
+					total += alignment;
+					count += 1;
+				}
+			}
+		}
+	}
+
+	return { total / count, max };
 }
 
 void IsolineSimplifier::clear() {

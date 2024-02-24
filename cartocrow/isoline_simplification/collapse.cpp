@@ -10,8 +10,7 @@
 #include "ipe_bezier_wrapper.h"
 
 namespace cartocrow::isoline_simplification {
-SplineCollapse::SplineCollapse(const RungCollapse& rung_collapse, int repetitions, int samples):
-      m_rung_collapse(rung_collapse), m_repetitions(repetitions), m_samples(samples) {};
+SplineCollapse::SplineCollapse(int repetitions, int samples) : m_repetitions(repetitions), m_samples(samples) {};
 
 std::vector<ipe::Bezier> SplineCollapse::controls_to_beziers(const std::vector<ipe::Vector>& control_points) const {
 	ipe::Curve curve;
@@ -85,6 +84,12 @@ double SplineCollapse::cost(const SlopeLadder& ladder, const PointToPoint& p_pre
 void SplineCollapse::operator()(SlopeLadder& ladder, const PointToPoint& p_prev, const PointToPoint& p_next) {
 	if (!ladder.m_valid)
 		return;
+
+	if (ladder.m_rungs.size() == 1) {
+		MinSymDiffCollapse msdf;
+		msdf(ladder, p_prev, p_next);
+		return;
+	}
 
 	std::optional<ipe::Vector> start;
 //	if (ladder.m_cap.contains(CGAL::LEFT_TURN)) {
@@ -161,6 +166,25 @@ void SplineCollapse::operator()(SlopeLadder& ladder, const PointToPoint& p_prev,
 			}
 		}
 
+		bool too_close = false;
+		for (int j = 0; j < ladder.m_rungs.size(); j++) {
+			const auto& rung = ladder.m_rungs[j];
+			auto reversed =
+			    p_next.contains(rung.target()) && p_next.at(rung.target()) == rung.source();
+			auto t = reversed ? rung.target() : rung.source();
+			auto u = reversed ? rung.source() : rung.target();
+			Gt::Point_2 s = p_prev.at(t);
+			Gt::Point_2 v = p_next.at(u);
+			auto p = vp(initial_controls.at(j));
+			if (CGAL::squared_distance(s, p) < 1E-6 || CGAL::squared_distance(p, v) < 1E-6) {
+				too_close = true;
+			}
+		}
+
+		if (too_close) {
+			continue;
+		}
+
 		double the_cost = cost(ladder, p_prev, p_next, initial_controls);
 		if (the_cost < best_cost) {
 			best_controls = initial_controls;
@@ -168,10 +192,15 @@ void SplineCollapse::operator()(SlopeLadder& ladder, const PointToPoint& p_prev,
 		}
 	}
 
-	ladder.m_collapsed.clear();
-	std::transform(best_controls.begin(), best_controls.end(),
-	               std::back_inserter(ladder.m_collapsed),
-	               [](const ipe::Vector& v) { return vp(v); });
+	if (isinf(best_cost)) {
+		std::cerr << "All samples of spline are too close to s and v. Falling back to midpoint." << std::endl;
+		MidpointCollapse()(ladder, p_prev, p_next);
+	} else {
+		ladder.m_collapsed.clear();
+		std::transform(best_controls.begin(), best_controls.end(),
+		               std::back_inserter(ladder.m_collapsed),
+		               [](const ipe::Vector& v) { return vp(v); });
+	}
 }
 
 SplineCollapsePainting::SplineCollapsePainting(const SlopeLadder& ladder, const PointToPoint& p_prev, const PointToPoint& p_next, SplineCollapse spline_collapse) :
@@ -375,18 +404,34 @@ Gt::Point_2 min_sym_diff_point(Gt::Point_2 s, Gt::Point_2 t, Gt::Point_2 u, Gt::
 	if (svl.oriented_side(t) == svl.oriented_side(u)) {
 		if (squared_distance(svl, t) > squared_distance(svl, u)) {
 			auto i = *intersection(l, stl);
-			new_vertex = *boost::get<Gt::Point_2>(&i);
+			if (i.type() == typeid(Gt::Point_2)) {
+				new_vertex = *boost::get<Gt::Point_2>(&i);
+			} else {
+				new_vertex = midpoint(s, v);
+			}
 		} else {
 			auto i = *intersection(l, uvl);
-			new_vertex = *boost::get<Gt::Point_2>(&i);
+			if (i.type() == typeid(Gt::Point_2)) {
+				new_vertex = *boost::get<Gt::Point_2>(&i);
+			} else {
+				new_vertex = midpoint(s, v);
+			}
 		}
 	} else {
 		if (svl.oriented_side(t) == svl.oriented_side(l.point())) {
 			auto i = *intersection(l, stl);
-			new_vertex = *boost::get<Gt::Point_2>(&i);
+			if (i.type() == typeid(Gt::Point_2)) {
+				new_vertex = *boost::get<Gt::Point_2>(&i);
+			} else {
+				new_vertex = midpoint(s, v);
+			}
 		} else {
 			auto i = *intersection(l, uvl);
-			new_vertex = *boost::get<Gt::Point_2>(&i);
+			if (i.type() == typeid(Gt::Point_2)) {
+				new_vertex = *boost::get<Gt::Point_2>(&i);
+			} else {
+				new_vertex = midpoint(s, v);
+			}
 		}
 	}
 	// If nearly collinear use midpoint
@@ -529,11 +574,9 @@ void HarmonyLinePainting::paint(renderer::GeometryRenderer& renderer) const {
 			Gt::Point_2 s = m_p_prev.at(t);
 			Gt::Point_2 v = m_p_next.at(u);
 
-			Gt::Line_2 l = area_preservation_line(s, t, u, v);
-			auto inter = *intersection(harmony_line, l);
-			Gt::Point_2 new_vertex = *boost::get<Gt::Point_2>(&inter);
+			auto [p, snapped] = HarmonyLineCollapse::new_vertex(harmony_line, s, t, u, v);
 
-			cost += symmetric_difference(s, t, u, v, new_vertex);
+			cost += symmetric_difference(s, t, u, v, p);
 		}
 
 		if (cost < best_cost) {
@@ -549,9 +592,41 @@ void HarmonyLinePainting::paint(renderer::GeometryRenderer& renderer) const {
 
 HarmonyLineCollapse::HarmonyLineCollapse(int samples): m_samples(samples) {}
 
+std::pair<Gt::Point_2, bool> HarmonyLineCollapse::new_vertex(const Gt::Line_2& harmony_line, const Gt::Point_2& s, const Gt::Point_2& t, const Gt::Point_2& u, const Gt::Point_2& v) {
+	auto area_line = area_preservation_line(s, t, u, v);
+	auto inter = *intersection(harmony_line, area_line);
+	Gt::Point_2 new_vertex = *boost::get<Gt::Point_2>(&inter);
+
+	std::optional<Gt::Point_2> first;
+	std::optional<Gt::Point_2> last;
+
+	for (const auto& p : {s, t, u, v}) {
+		auto pt = area_line.projection(p);
+		if (!first.has_value() || point_order_on_line(area_line, pt, *first)) {
+			first = pt;
+		}
+		if (!last.has_value() || point_order_on_line(area_line, *last, pt)) {
+			last = pt;
+		}
+	}
+
+	if (point_order_on_line(area_line, new_vertex, *first)) {
+		return { *first, true };
+	} else if (point_order_on_line(area_line, *last, new_vertex)) {
+		return { *last, true };
+	} else {
+		return { new_vertex, false };
+	}
+}
+
 void HarmonyLineCollapse::operator()(SlopeLadder& ladder, const PointToPoint& p_prev, const PointToPoint& p_next) {
 	ladder.m_collapsed.clear();
 	if (!ladder.m_valid) return;
+	if (ladder.m_rungs.size() == 1) {
+		MinSymDiffCollapse msdf;
+		msdf(ladder, p_prev, p_next);
+		return;
+	}
 
 	// Compute sample line
 	Gt::Line_2 sample_line;
@@ -612,11 +687,12 @@ void HarmonyLineCollapse::operator()(SlopeLadder& ladder, const PointToPoint& p_
 			Gt::Point_2 s = p_prev.at(t);
 			Gt::Point_2 v = p_next.at(u);
 
-			Gt::Line_2 l = area_preservation_line(s, t, u, v);
-			auto inter = *intersection(harmony_line, l);
-			Gt::Point_2 new_vertex = *boost::get<Gt::Point_2>(&inter);
+			auto [p, snapped] = HarmonyLineCollapse::new_vertex(harmony_line, s, t, u, v);
+			if (CGAL::squared_distance(s, p) < 1E-6 || CGAL::squared_distance(p, v) < 1E-6) {
+				p = projected_midpoint(s, t, u, v, area_preservation_line(s, t, u, v));
+			}
 
-			cost += symmetric_difference(s, t, u, v, new_vertex);
+			cost += symmetric_difference(s, t, u, v, p);
 		}
 
 		if (cost < best_cost) {
@@ -633,10 +709,8 @@ void HarmonyLineCollapse::operator()(SlopeLadder& ladder, const PointToPoint& p_
 		Gt::Point_2 v = p_next.at(u);
 
 
-		Gt::Line_2 l = area_preservation_line(s, t, u, v);
-		auto inter = *intersection(best_line, l);
-		Gt::Point_2 new_vertex = *boost::get<Gt::Point_2>(&inter);
-		ladder.m_collapsed.push_back(new_vertex);
+		Gt::Point_2 p = new_vertex(best_line, s, t, u, v).first;
+		ladder.m_collapsed.push_back(p);
 	}
 }
 
@@ -755,7 +829,6 @@ double area(const std::vector<Gt::Point_2>& pts) {
 }
 
 Gt::Line_2 area_preservation_line(Gt::Point_2 s, Gt::Point_2 t, Gt::Point_2 u, Gt::Point_2 v) {
-	double area = signed_area({s, v, u, t});
 	if (s == v) {
 		// This function should not be called in this case.
 		std::cerr << "s: " << s << std::endl;
@@ -771,5 +844,56 @@ Gt::Line_2 area_preservation_line(Gt::Point_2 s, Gt::Point_2 t, Gt::Point_2 u, G
 	auto b = s.x() - v.x();
 	auto c = -t.y() * s.x() + (s.y() - u.y()) * t.x() + (t.y() - v.y()) * u.x() + u.y() * v.x();
 	return Gt::Line_2(a, b, c);
+}
+
+LineSplineHybridCollapse::LineSplineHybridCollapse(SplineCollapse spline_collapse, HarmonyLineCollapse line_collapse) :
+      m_spline_collapse(std::move(spline_collapse)), m_line_collapse(std::move(line_collapse)) {};
+
+void LineSplineHybridCollapse::operator()(SlopeLadder& ladder, const PointToPoint& p_prev, const PointToPoint& p_next) {
+	if (!ladder.m_valid) return;
+	if (do_line_collapse(ladder, p_prev, p_next)) {
+		m_line_collapse(ladder, p_prev, p_next);
+	} else {
+		m_spline_collapse(ladder, p_prev, p_next);
+	}
+}
+
+std::shared_ptr<renderer::GeometryPainting> LineSplineHybridCollapse::painting(const SlopeLadder& ladder, const PointToPoint& p_prev, const PointToPoint& p_next) {
+	if (do_line_collapse(ladder, p_prev, p_next)) {
+		return std::make_shared<HarmonyLinePainting>(ladder, p_prev, p_next, m_line_collapse);
+	} else {
+		return std::make_shared<SplineCollapsePainting>(ladder, p_prev, p_next, m_spline_collapse);
+	}
+}
+
+bool LineSplineHybridCollapse::do_line_collapse(const SlopeLadder& ladder, const PointToPoint& p_prev, const PointToPoint& p_next) {
+	if (!ladder.m_valid) return false;
+	Gt::Line_2 sample_line;
+	Gt::Line_2 initial_harmony_line;
+	if (ladder.m_rungs.size() == 1) {
+		auto& rung = ladder.m_rungs.front();
+		auto reversed = p_next.contains(rung.target()) && p_next.at(rung.target()) == rung.source();
+		auto t = reversed ? rung.target() : rung.source();
+		auto u = reversed ? rung.source() : rung.target();
+		Gt::Point_2 s = p_prev.at(t);
+		Gt::Point_2 v = p_next.at(u);
+		sample_line = area_preservation_line(s, t, u, v);
+		initial_harmony_line = sample_line.perpendicular(midpoint(t, u));
+	} else {
+		auto& first_rung = ladder.m_rungs.front();
+		auto& last_rung = ladder.m_rungs.back();
+		initial_harmony_line = Gt::Line_2(midpoint(first_rung), midpoint(last_rung));
+		sample_line = initial_harmony_line.perpendicular(midpoint(midpoint(first_rung), midpoint(last_rung)));
+	}
+
+	bool intersects_all_rungs = true;
+	for (const auto& rung : ladder.m_rungs) {
+		if (!intersection(rung, initial_harmony_line).has_value()) {
+			intersects_all_rungs = false;
+			break;
+		}
+	}
+
+	return intersects_all_rungs;
 }
 }

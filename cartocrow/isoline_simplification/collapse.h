@@ -39,11 +39,9 @@ Gt::Point_2 projected_midpoint(Gt::Point_2 s, Gt::Point_2 t, Gt::Point_2 u, Gt::
 //LadderCollapse spline_collapse(const RungCollapse& rung_collapse, int repititions);
 class SplineCollapse : public LadderCollapse {
   public:
-	SplineCollapse(const RungCollapse& rung_collapse, int repetitions, int samples = 50);
+	SplineCollapse(int repetitions, int samples = 50);
 	void operator()(SlopeLadder& ladder, const PointToPoint& p_prev, const PointToPoint& p_next) override;
 	std::shared_ptr<renderer::GeometryPainting> painting(const SlopeLadder& ladder, const PointToPoint& p_prev, const PointToPoint& p_next) override;
-
-	RungCollapse m_rung_collapse;
 
 	int m_repetitions;
 	int m_samples;
@@ -102,7 +100,22 @@ class HarmonyLineCollapse : public LadderCollapse {
 	void operator()(SlopeLadder& ladder, const PointToPoint& p_prev, const PointToPoint& p_next) override;
 	std::shared_ptr<renderer::GeometryPainting> painting(const SlopeLadder& ladder, const PointToPoint& p_prev, const PointToPoint& p_next) override;
 
+	static std::pair<Gt::Point_2, bool> new_vertex(const Gt::Line_2& harmony_line, const Gt::Point_2& s, const Gt::Point_2& t, const Gt::Point_2& u, const Gt::Point_2& v);
+
 	int m_samples;
+};
+
+class LineSplineHybridCollapse : public LadderCollapse {
+  public:
+	LineSplineHybridCollapse(SplineCollapse spline_collapse, HarmonyLineCollapse line_collapse);
+	void operator()(SlopeLadder& ladder, const PointToPoint& p_prev, const PointToPoint& p_next) override;
+	std::shared_ptr<renderer::GeometryPainting> painting(const SlopeLadder& ladder, const PointToPoint& p_prev, const PointToPoint& p_next) override;
+
+	SplineCollapse m_spline_collapse;
+	HarmonyLineCollapse m_line_collapse;
+
+  private:
+	static bool do_line_collapse(const SlopeLadder& ladder, const PointToPoint& p_prev, const PointToPoint& p_next);
 };
 
 class HarmonyLinePainting : public renderer::GeometryPainting {
