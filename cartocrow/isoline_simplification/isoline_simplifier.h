@@ -23,13 +23,23 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "medial_axis_separator.h"
 #include "types.h"
 #include "collapse.h"
+#include <boost/heap/d_ary_heap.hpp>
 
 namespace cartocrow::isoline_simplification {
+struct slope_ladder_comp {
+	inline bool operator()(const std::shared_ptr<SlopeLadder>& sl1, const std::shared_ptr<SlopeLadder>& sl2) const {
+		return sl1->m_cost > sl2->m_cost;
+	}
+};
+
 typedef std::optional<std::variant<Gt::Segment_2, std::monostate>> IntersectionResult;
+
+typedef boost::heap::d_ary_heap<std::shared_ptr<SlopeLadder>, boost::heap::arity<2>, boost::heap::compare<slope_ladder_comp>, boost::heap::mutable_<true>> Heap;
+typedef std::unordered_map<std::shared_ptr<SlopeLadder>, Heap::handle_type> LadderToHandle;
 
 class IsolineSimplifier {
   public:
-	IsolineSimplifier(std::vector<Isoline<K>> isolines, double angle_filter = M_PI/6, double alignment_filter = M_PI/3,
+	IsolineSimplifier(std::vector<Isoline<K>> isolines, double angle_filter = M_PI/6, double alignment_filter = 100.0,
 	                  std::shared_ptr<LadderCollapse> collapse = std::make_shared<SplineCollapse>(3));
 	bool simplify(int target);
 	void dyken_simplify(int target);
@@ -53,7 +63,9 @@ class IsolineSimplifier {
 	SDG2 m_delaunay;
 	Separator m_separator;
 	Matching m_matching;
-	std::vector<std::shared_ptr<SlopeLadder>> m_slope_ladders;
+//	std::vector<std::shared_ptr<SlopeLadder>> m_slope_ladders;
+	Heap m_slope_ladders;
+	LadderToHandle m_ladder_heap_handle;
 	std::unordered_set<SDG2::Vertex_handle> m_changed_vertices;
 	std::vector<Gt::Point_2> m_deleted_points;
 	int m_current_complexity = 0;
@@ -78,7 +90,7 @@ class IsolineSimplifier {
 	void initialize_sdg();
 	void initialize_slope_ladders();
 	void collapse_ladder(SlopeLadder& ladder);
-	void create_slope_ladder(Gt::Segment_2 seg, bool do_push_heap);
+	void create_slope_ladder(Gt::Segment_2 seg);
 	void check_valid();
 	void clean_isolines();
 	void remove_ladder_e(Gt::Segment_2 seg);

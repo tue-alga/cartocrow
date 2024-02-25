@@ -44,7 +44,7 @@ using namespace cartocrow::renderer;
 using namespace cartocrow::isoline_simplification;
 
 IsolineSimplificationDemo::IsolineSimplificationDemo() {
-	std::string dir("/home/steven/Documents/cartocrow/inputs/crashes/");
+	std::string dir("/home/steven/Documents/cartocrow/inputs/small/");
 	std::string output_dir("/home/steven/Documents/cartocrow/output/");
 	setWindowTitle("Isoline simplification");
 
@@ -450,7 +450,7 @@ std::vector<Isoline<K>> isolinesInPage(ipe::Page* page) {
 //}
 
 int main() {
-	auto dir = std::string("/home/steven/Documents/cartocrow/inputs/crashes/");
+	auto dir = std::string("/home/steven/Documents/cartocrow/inputs/large/");
 	auto output_dir = std::string("/home/steven/Documents/cartocrow/output/");
 
 	std::vector<std::string> filenames;
@@ -463,48 +463,74 @@ int main() {
 		}
 	}
 
-	// todo: also save metadata for start of simplification
+	std::vector<std::pair<std::shared_ptr<LadderCollapse>, std::string>> single_collapses({
+		std::pair(std::make_shared<MidpointCollapse>(), "Midpoint"),
+		std::pair(std::make_shared<MinSymDiffCollapse>(), "SymDiff") });
 
-	for (const std::string& fn : filenames) {
-		try {
-			std::cout << "Input file: " << fn << std::endl;
-			std::shared_ptr<ipe::Document> document = IpeReader::loadIpeFile(dir + fn + ".ipe");
-			ipe::Page* page = document->page(0);
-			auto isolines = isolinesInPage(page);
-			auto collapse = std::make_shared<LineSplineHybridCollapse>(SplineCollapse(3, 10),
-			                                                           HarmonyLineCollapse(10));
-			auto collapse_name = "LineSplineHybrid";
-			auto simplifier = IsolineSimplifier(isolines, M_PI / 6, 10.0, collapse);
+	std::vector<std::pair<std::shared_ptr<LadderCollapse>, std::string>> multi_collapses({
+		std::pair(std::make_shared<HarmonyLineCollapse>(15), "Line"),
+		std::pair(std::make_shared<SplineCollapse>(3, 15), "Spline"),
+		std::pair(std::make_shared<LineSplineHybridCollapse>(SplineCollapse(3, 15),
+		                                           HarmonyLineCollapse(15)), "LineSplineHybrid")
+	});
 
-			bool progress = true;
+	std::vector<std::pair<std::shared_ptr<LadderCollapse>, std::string>> all_collapses;
+	std::copy(single_collapses.begin(), single_collapses.end(), std::back_inserter(all_collapses));
+	std::copy(multi_collapses.begin(), multi_collapses.end(), std::back_inserter(all_collapses));
 
-			while (progress) {
-				int power = std::floor(std::log2(simplifier.m_current_complexity - 1));
-				int target = 1 << power;
-				std::cout << "\nCurrent target: " << target << std::endl;
-				progress = simplifier.simplify(target);
+	for (auto& pair : all_collapses) {
+		auto& [collapse, collapse_name] = pair;
+		bool single_collapse = std::find(single_collapses.begin(), single_collapses.end(), pair) != single_collapses.end();
+		std::vector<double> angle_filters = single_collapse ? std::vector({-1.0, M_PI / 6, 10.0}) : std::vector({M_PI / 6, 10.0});
+		for (auto& angle_filter : angle_filters) {
+			for (const std::string& fn : filenames) {
+				try {
+					std::cout << "\nInput file: " << fn << std::endl;
+					std::shared_ptr<ipe::Document> document =
+					    IpeReader::loadIpeFile(dir + fn + ".ipe");
+					ipe::Page* page = document->page(0);
+					auto isolines = isolinesInPage(page);
+					//				auto collapse = std::make_shared<LineSplineHybridCollapse>(SplineCollapse(3, 10),
+					//				                                                           HarmonyLineCollapse(10));
+					//				auto collapse_name = "LineSplineHybrid";
+					auto simplifier = IsolineSimplifier(isolines, angle_filter, 10.0, collapse);
 
-				IpeRenderer ipe_renderer;
-				auto isolines_p = std::make_shared<IsolinePainting>(simplifier.m_simplified_isolines,
-				                                                    false, false, true);
-				ipe_renderer.addPainting(isolines_p, "Simplified_isolines");
-				std::string file_name(fn + "_" + std::to_string(target) + "_" +
-				                      std::to_string(simplifier.m_current_complexity) + "_" +
-				                      collapse_name);
-				ipe_renderer.save(output_dir + file_name + ".ipe");
-				std::ofstream meta_data_file;
-				meta_data_file.open(output_dir + file_name + "_meta" + ".txt");
-				meta_data_file << "Symmetric_difference: " << simplifier.total_symmetric_difference()
-				               << std::endl;
-				auto temp_simplifier = IsolineSimplifier(simplifier.m_simplified_isolines);
-				meta_data_file << "Ladders: " << temp_simplifier.m_slope_ladders.size() << std::endl;
-				auto [avg_alignment, max_alignment] = simplifier.average_max_vertex_alignment();
-				meta_data_file << "Avg_alignment: " << avg_alignment << std::endl;
-				meta_data_file << "Max_alignment: " << max_alignment << std::endl;
-				meta_data_file.close();
+					bool progress = true;
+					int target = simplifier.m_current_complexity;
+
+					while (progress) {
+						std::cout << "\nCurrent target: " << target << std::endl;
+						progress = simplifier.simplify(target);
+
+						IpeRenderer ipe_renderer;
+						auto isolines_p = std::make_shared<IsolinePainting>(
+						    simplifier.m_simplified_isolines, false, false, true);
+						ipe_renderer.addPainting(isolines_p, "Simplified_isolines");
+						std::string file_name(fn + "_" + std::to_string(target) +
+//						                      "_" + collapse_name + (single_collapse ? ("_" + std::to_string(angle_filter)) : ""));
+											  "_" + collapse_name + "_" + std::to_string(angle_filter) +
+											  "_" + std::to_string(simplifier.m_current_complexity));
+						ipe_renderer.save(output_dir + file_name + ".ipe");
+						std::ofstream meta_data_file;
+						meta_data_file.open(output_dir + file_name + "_meta" + ".txt");
+						meta_data_file
+						    << "Symmetric_difference: " << simplifier.total_symmetric_difference()
+						    << std::endl;
+						auto temp_simplifier = IsolineSimplifier(simplifier.m_simplified_isolines, 100.0, 100.0);
+						meta_data_file << "Ladders: " << temp_simplifier.m_slope_ladders.size()
+						               << std::endl;
+						auto [avg_alignment, max_alignment] =
+						    temp_simplifier.average_max_vertex_alignment();
+						meta_data_file << "Avg_alignment: " << avg_alignment << std::endl;
+						meta_data_file << "Max_alignment: " << max_alignment << std::endl;
+						meta_data_file.close();
+						int power = std::floor(std::log2(simplifier.m_current_complexity - 1));
+						target = 1 << power;
+					}
+				} catch (...) {
+					std::cerr << "Problem with input " << fn << std::endl;
+				}
 			}
-		} catch(...) {
-			std::cerr << "Problem with input " << fn << std::endl;
 		}
 	}
 }
@@ -512,13 +538,14 @@ int main() {
 //int main() {
 //	auto dir = std::string("/home/steven/Documents/cartocrow/inputs/large/");
 //
-//	std::shared_ptr<ipe::Document> document = IpeReader::loadIpeFile(dir + "large-western-island.ipe");
+//	std::shared_ptr<ipe::Document> document = IpeReader::loadIpeFile(dir + "mt_range_40m.ipe");
 //	ipe::Page* page = document->page(0);
-//	auto collapse = std::make_shared<LineSplineHybridCollapse>(SplineCollapse(3, 10), HarmonyLineCollapse(10));
-//	auto simplifier = IsolineSimplifier(isolinesInPage(page), M_PI / 6, 10.0, collapse);
+////	auto collapse = std::make_shared<LineSplineHybridCollapse>(SplineCollapse(3, 10), HarmonyLineCollapse(10));
+//	auto collapse = std::make_shared<MidpointCollapse>();
+//	auto simplifier = IsolineSimplifier(isolinesInPage(page), -1.0, 10.0, collapse);
 //
 //	auto start = std::chrono::system_clock::now().time_since_epoch();
-//	simplifier.simplify(100000);
+//	simplifier.simplify(1);
 //	auto end = std::chrono::system_clock::now().time_since_epoch();
 //
 //	const std::chrono::duration<double> duration = end - start;
@@ -751,7 +778,7 @@ void TouchedPainting::paint(GeometryRenderer& renderer) const {
 	}
 }
 
-SlopeLadderPainting::SlopeLadderPainting(const std::vector<std::shared_ptr<SlopeLadder>>& slope_ladders):
+SlopeLadderPainting::SlopeLadderPainting(const Heap& slope_ladders):
       m_slope_ladders(slope_ladders) {}
 
 Polygon<K> slope_ladder_polygon(const SlopeLadder& slope_ladder) {

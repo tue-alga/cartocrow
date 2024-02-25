@@ -119,13 +119,13 @@ class TouchedPainting : public GeometryPainting {
 
 class SlopeLadderPainting : public GeometryPainting {
   public:
-	SlopeLadderPainting(const std::vector<std::shared_ptr<SlopeLadder>>& slope_ladders);
+	SlopeLadderPainting(const Heap& slope_ladders);
 
   protected:
 	void paint(GeometryRenderer& renderer) const override;
 
   private:
-	const std::vector<std::shared_ptr<SlopeLadder>>& m_slope_ladders;
+	const Heap& m_slope_ladders;
 };
 
 class CollapsePainting : public GeometryPainting {

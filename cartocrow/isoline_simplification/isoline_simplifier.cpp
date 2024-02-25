@@ -43,10 +43,6 @@ typedef CGAL::Triangulation_data_structure_2<Vb, Fb> TDS;
 typedef CGAL::Constrained_Delaunay_triangulation_2<K, TDS, CGAL::Exact_predicates_tag> CDT;
 typedef CGAL::Constrained_triangulation_plus_2<CDT>     CT;
 
-auto slope_ladder_comp = [](const std::shared_ptr<SlopeLadder>& sl1, const std::shared_ptr<SlopeLadder>& sl2) {
-	return sl1->m_cost > sl2->m_cost;
-};
-
 IsolineSimplifier::IsolineSimplifier(std::vector<Isoline<K>> isolines, double angle_filter, double alignment_filter,
                                      std::shared_ptr<LadderCollapse> collapse):
       m_isolines(std::move(isolines)), m_angle_filter(angle_filter), m_alignment_filter(alignment_filter), m_collapse_ladder(std::move(collapse)) {
@@ -371,7 +367,11 @@ void IsolineSimplifier::collapse_ladder(SlopeLadder& ladder) {
 		const auto update_intersects_e = [this](Gt::Segment_2 seg) {
 			if (m_e_intersects.contains(seg)) {
 				for (const auto& l : m_e_intersects.at(seg)) {
-					l->m_intersects = false;
+					if (!l->m_old) {
+						l->m_intersects = false;
+						l->compute_cost(m_p_prev, m_p_next);
+						m_slope_ladders.increase(m_ladder_heap_handle.at(l));
+					}
 				}
 			}
 		};
@@ -577,25 +577,25 @@ void IsolineSimplifier::update_ladders() {
 			auto p = site.point();
 			if (m_p_prev.contains(p)) {
 				Gt::Segment_2 seg(m_p_prev.at(p), p);
-				create_slope_ladder(seg, true);
+				create_slope_ladder(seg);
 				remove_subset_ladders(seg);
 				remove_subset_ladders(seg.opposite());
 			}
 			if (m_p_next.contains(p)) {
 				Gt::Segment_2 seg(p, m_p_next.at(p));
-				create_slope_ladder(seg, true);
+				create_slope_ladder(seg);
 				remove_subset_ladders(seg);
 				remove_subset_ladders(seg.opposite());
 			}
 		} else {
-			create_slope_ladder(site.segment(), true);
+			create_slope_ladder(site.segment());
 			remove_subset_ladders(site.segment());
 			remove_subset_ladders(site.segment().opposite());
 		}
 	}
 
 	for (const auto& seg : additional_segments) {
-		create_slope_ladder(seg, true);
+		create_slope_ladder(seg);
 		remove_subset_ladders(seg);
 		remove_subset_ladders(seg.opposite());
 	}
@@ -607,7 +607,7 @@ std::optional<std::shared_ptr<SlopeLadder>> IsolineSimplifier::get_next_ladder()
 		return std::nullopt;
 
 	// Note that m_slope_ladders is a heap
-	auto current = m_slope_ladders.front();
+	auto current = m_slope_ladders.top();
 
 	// Non-valid slope ladders have very high cost so this means no valid slope ladders are left
 	if (!current->m_valid)
@@ -620,12 +620,12 @@ std::optional<std::shared_ptr<SlopeLadder>> IsolineSimplifier::get_next_ladder()
 
 	do {
 		if (current->m_old) {
-			std::pop_heap(m_slope_ladders.begin(), m_slope_ladders.end(), slope_ladder_comp);
-			m_slope_ladders.pop_back();
+			m_ladder_heap_handle.erase(current);
+			m_slope_ladders.pop();
 		} else if (current->m_intersects) {
 			temp.push_back(current);
-			std::pop_heap(m_slope_ladders.begin(), m_slope_ladders.end(), slope_ladder_comp);
-			m_slope_ladders.pop_back();
+			m_ladder_heap_handle.erase(current);
+			m_slope_ladders.pop();
 		} else if (IntersectionResult ir = check_ladder_intersections_Voronoi(*current)) {
 			auto irv = *ir;
 			// self-intersects
@@ -636,19 +636,19 @@ std::optional<std::shared_ptr<SlopeLadder>> IsolineSimplifier::get_next_ladder()
 			}
 			current->m_intersects = true;
 			temp.push_back(current);
-			std::pop_heap(m_slope_ladders.begin(), m_slope_ladders.end(), slope_ladder_comp);
-			m_slope_ladders.pop_back();
+			m_ladder_heap_handle.erase(current);
+			m_slope_ladders.pop();
 		}
 		else if (check_ladder_collapse_topology(*current)) {
 			temp.push_back(current);
-			std::pop_heap(m_slope_ladders.begin(), m_slope_ladders.end(), slope_ladder_comp);
-			m_slope_ladders.pop_back();
+			m_ladder_heap_handle.erase(current);
+			m_slope_ladders.pop();
 		}
 		else {
 			found = true;
 			break;
 		}
-		current = m_slope_ladders.front();
+		current = m_slope_ladders.top();
 		if (!current->m_valid) {
 			break;
 		}
@@ -661,8 +661,7 @@ std::optional<std::shared_ptr<SlopeLadder>> IsolineSimplifier::get_next_ladder()
 	}
 
 	for (const auto& ladder : temp) {
-		m_slope_ladders.push_back(ladder);
-		std::push_heap(m_slope_ladders.begin(), m_slope_ladders.end(), slope_ladder_comp);
+		m_ladder_heap_handle[ladder] = m_slope_ladders.push(ladder);
 	}
 
 	return result;
@@ -673,7 +672,7 @@ std::optional<std::shared_ptr<SlopeLadder>> IsolineSimplifier::next_ladder() {
 		return std::nullopt;
 
 	// Note that m_slope_ladders is a heap
-	auto current = m_slope_ladders.front();
+	auto current = m_slope_ladders.top();
 
 	// Non-valid slope ladders have very high cost so this means no valid slope ladders are left
 	if (!current->m_valid)
@@ -693,17 +692,17 @@ std::optional<std::shared_ptr<SlopeLadder>> IsolineSimplifier::next_ladder() {
 		}
 
 		if (current->m_old) {
-			std::pop_heap(m_slope_ladders.begin(), m_slope_ladders.end(), slope_ladder_comp);
-			m_slope_ladders.pop_back();
+			m_ladder_heap_handle.erase(current);
+			m_slope_ladders.pop();
 		} else if (old_but_not_correctly_updated) {
 			std::cerr << "Incorrectly updated" << std::endl;
-			std::pop_heap(m_slope_ladders.begin(), m_slope_ladders.end(), slope_ladder_comp);
-			m_slope_ladders.pop_back();
+			m_ladder_heap_handle.erase(current);
+			m_slope_ladders.pop();
 		}
 		else if (current->m_intersects) {
 			temp.push_back(current);
-			std::pop_heap(m_slope_ladders.begin(), m_slope_ladders.end(), slope_ladder_comp);
-			m_slope_ladders.pop_back();
+			m_ladder_heap_handle.erase(current);
+			m_slope_ladders.pop();
 		}
 		else if (IntersectionResult ir = check_ladder_intersections_Voronoi(*current)) {
 			auto irv = *ir;
@@ -714,20 +713,21 @@ std::optional<std::shared_ptr<SlopeLadder>> IsolineSimplifier::next_ladder() {
 				m_e_intersects[intersected].push_back(current);
 			}
 			current->m_intersects = true;
+			current->m_cost = std::numeric_limits<double>::infinity();
 			temp.push_back(current);
-			std::pop_heap(m_slope_ladders.begin(), m_slope_ladders.end(), slope_ladder_comp);
-			m_slope_ladders.pop_back();
+			m_ladder_heap_handle.erase(current);
+			m_slope_ladders.pop();
 		}
 		else if (check_ladder_collapse_topology(*current)) {
 			temp.push_back(current);
-			std::pop_heap(m_slope_ladders.begin(), m_slope_ladders.end(), slope_ladder_comp);
-			m_slope_ladders.pop_back();
+			m_ladder_heap_handle.erase(current);
+			m_slope_ladders.pop();
 		}
 		else {
 			found = true;
 			break;
 		}
-		current = m_slope_ladders.front();
+		current = m_slope_ladders.top();
 		if (!current->m_valid) {
 			break;
 		}
@@ -740,13 +740,12 @@ std::optional<std::shared_ptr<SlopeLadder>> IsolineSimplifier::next_ladder() {
 	}
 
 	if (result.has_value()) {
-		std::pop_heap(m_slope_ladders.begin(), m_slope_ladders.end(), slope_ladder_comp);
-		m_slope_ladders.pop_back();
+		m_ladder_heap_handle.erase(current);
+		m_slope_ladders.pop();
 	}
 
 	for (const auto& ladder : temp) {
-		m_slope_ladders.push_back(ladder);
-		std::push_heap(m_slope_ladders.begin(), m_slope_ladders.end(), slope_ladder_comp);
+		m_ladder_heap_handle[ladder] = m_slope_ladders.push(ladder);
 	}
 
 	return result;
@@ -769,7 +768,7 @@ bool IsolineSimplifier::step() {
 	return true;
 }
 
-void IsolineSimplifier::create_slope_ladder(Gt::Segment_2 seg, bool do_push_heap) {
+void IsolineSimplifier::create_slope_ladder(Gt::Segment_2 seg) {
 	// Maybe make sure that the m_e_ladder and m_p_ladder maps never contains old ladders.
 	if (m_e_ladder.contains(seg) &&
 	        std::any_of(m_e_ladder.at(seg).begin(), m_e_ladder.at(seg).end(), [](const auto& l) { return !l->m_old; }) ||
@@ -945,21 +944,16 @@ void IsolineSimplifier::create_slope_ladder(Gt::Segment_2 seg, bool do_push_heap
 	(*m_collapse_ladder)(*slope_ladder, m_p_prev, m_p_next);
 	slope_ladder->compute_cost(m_p_prev, m_p_next);
 
-	m_slope_ladders.push_back(slope_ladder);
-
-	if (do_push_heap) {
-		std::push_heap(m_slope_ladders.begin(), m_slope_ladders.end(), slope_ladder_comp);
-	}
+	m_ladder_heap_handle[slope_ladder] = m_slope_ladders.push(slope_ladder);
 }
 
 void IsolineSimplifier::initialize_slope_ladders() {
 	for (const auto& isoline : m_simplified_isolines) {
 		auto polyline = isoline.polyline();
 		for (auto eit = polyline.edges_begin(); eit != polyline.edges_end(); ++eit) {
-			create_slope_ladder(*eit, false);
+			create_slope_ladder(*eit);
 		}
 	}
-	std::make_heap(m_slope_ladders.begin(), m_slope_ladders.end(), slope_ladder_comp);
 }
 
 void IsolineSimplifier::check_valid() {
