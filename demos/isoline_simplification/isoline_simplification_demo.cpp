@@ -37,6 +37,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <ipepath.h>
 #include <ranges>
 #include <utility>
+#include <CGAL/bounding_box.h>
 
 namespace fs = std::filesystem;
 using namespace cartocrow;
@@ -44,7 +45,7 @@ using namespace cartocrow::renderer;
 using namespace cartocrow::isoline_simplification;
 
 IsolineSimplificationDemo::IsolineSimplificationDemo() {
-	std::string dir("/home/steven/Documents/cartocrow/inputs/small/");
+	std::string dir("/home/steven/Documents/cartocrow/inputs/large/");
 	std::string output_dir("/home/steven/Documents/cartocrow/output/");
 	setWindowTitle("Isoline simplification");
 
@@ -119,7 +120,7 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 	vLayout->addWidget(collapse_selector);
 
 	auto* sampleCount = new QSpinBox();
-	sampleCount->setValue(10);
+	sampleCount->setValue(15);
 	sampleCount->setMaximum(500);
 	auto* sampleCountLabel = new QLabel("Sample count");
 	sampleCountLabel->setBuddy(sampleCount);
@@ -135,7 +136,7 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 	vLayout->addWidget(splineRepetitions);
 
 	auto* angle_filter_input = new QDoubleSpinBox();
-	angle_filter_input->setValue(M_PI/6);
+	angle_filter_input->setValue(10.0);
 	angle_filter_input->setMinimum(0);
 	angle_filter_input->setMaximum(M_PI);
 	auto* angle_filter_input_label = new QLabel("Angle filter");
@@ -151,6 +152,15 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 	alignment_filter_input_label->setBuddy(alignment_filter_input);
 	vLayout->addWidget(alignment_filter_input_label);
 	vLayout->addWidget(alignment_filter_input);
+
+	auto* dyken_r = new QDoubleSpinBox();
+	dyken_r->setValue(1);
+	dyken_r->setMinimum(0);
+	dyken_r->setMaximum(10);
+	auto* dyken_r_label = new QLabel("Dyken's parameter R");
+	dyken_r_label->setBuddy(dyken_r);
+	vLayout->addWidget(dyken_r_label);
+	vLayout->addWidget(dyken_r);
 
 	auto* simplify_button = new QPushButton("Simplify");
 	vLayout->addWidget(simplify_button);
@@ -275,11 +285,11 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 		m_isoline_simplifier->update_ladders();
 		m_recalculate();
 	});
-	connect(simplify_button, &QPushButton::clicked, [this, simplificationTarget, doCGALSimplify, measure_text]() {
+	connect(simplify_button, &QPushButton::clicked, [this, simplificationTarget, doCGALSimplify, measure_text, dyken_r]() {
 	  	m_debug_ladder = std::nullopt;
 		int target = simplificationTarget->value();
 		if (doCGALSimplify->isChecked()) {
-			m_isoline_simplifier->dyken_simplify(target);
+			m_isoline_simplifier->dyken_simplify(target, dyken_r->value());
 		} else {
 			m_isoline_simplifier->simplify(target);
 		}
@@ -442,14 +452,96 @@ std::vector<Isoline<K>> isolinesInPage(ipe::Page* page) {
 	return isolines;
 }
 
-//int main(int argc, char* argv[]) {
-//	QApplication app(argc, argv);
-//	IsolineSimplificationDemo demo;
-//	demo.show();
-//	app.exec();
-//}
+int measure_running_time() {
+	auto dir = std::string("/home/steven/Documents/cartocrow/inputs/small/");
+	auto output_dir = std::string("/home/steven/Documents/cartocrow/output-time/");
+	const int iters = 10;
+	auto collapse = std::make_shared<LineSplineHybridCollapse>(SplineCollapse(3, 15),
+	                                                           HarmonyLineCollapse(15));
 
-int main() {
+	std::vector<std::string> filenames;
+
+	std::string ext(".ipe");
+	for (auto &p : fs::recursive_directory_iterator(dir))
+	{
+		if (p.path().extension() == ext) {
+			filenames.push_back(p.path().stem().string());
+		}
+	}
+
+	for (const std::string& fn : filenames) {
+		if (fn.empty()) continue;
+		std::cout << fn << std::endl;
+		std::ofstream time_file;
+		time_file.open(output_dir + fn + "_time" + ".txt");
+
+		std::shared_ptr<ipe::Document> document = IpeReader::loadIpeFile(dir + fn + ".ipe");
+		ipe::Page* page = document->page(0);
+		auto isolines = isolinesInPage(page);
+
+		for (int i = 0; i < iters; i++) {
+			std::cout << i << std::endl;
+			auto start = std::chrono::system_clock::now().time_since_epoch();
+			auto simplifier = IsolineSimplifier(isolines, 10.0, 10.0, collapse);
+			auto initialization = std::chrono::system_clock::now().time_since_epoch();
+			int start_complexity = simplifier.m_current_complexity;
+			simplifier.simplify(1, false);
+			auto end = std::chrono::system_clock::now().time_since_epoch();
+
+			const std::chrono::duration<double> duration = end - start;
+			const std::chrono::duration<double> simplification = end - initialization;
+
+			if (i == 0) {
+				time_file << start_complexity << std::endl;
+				time_file << simplifier.m_current_complexity << std::endl;
+				time_file << std::endl;
+			}
+			time_file << duration.count() << std::endl;
+			time_file << simplification.count() << std::endl;
+		}
+
+		time_file.close();
+	}
+}
+
+int run_gui(int argc, char* argv[]) {
+	QApplication app(argc, argv);
+	IsolineSimplificationDemo demo;
+	demo.show();
+	app.exec();
+}
+
+int computes_bbs() {
+	auto dir = std::string("/home/steven/Documents/cartocrow/inputs/small/");
+	auto output_dir = std::string("/home/steven/Documents/cartocrow/output/");
+
+	std::vector<std::string> filenames;
+
+	std::string ext(".ipe");
+	for (auto &p : fs::recursive_directory_iterator(dir))
+	{
+		if (p.path().extension() == ext) {
+			filenames.push_back(p.path().stem().string());
+		}
+	}
+
+	for (const std::string& fn : filenames) {
+		std::shared_ptr<ipe::Document> document = IpeReader::loadIpeFile(dir + fn + ".ipe");
+		ipe::Page* page = document->page(0);
+		auto isolines = isolinesInPage(page);
+		std::vector<Gt::Point_2> all_points;
+		for (const auto& isoline : isolines) {
+			std::copy(isoline.m_points.begin(), isoline.m_points.end(), std::back_inserter(all_points));
+			auto bb = CGAL::bounding_box(all_points.begin(), all_points.end());
+			std::ofstream bb_file;
+			bb_file.open(output_dir + fn + "_bb" + ".txt");
+			bb_file << bb.area() << std::endl;
+			bb_file.close();
+		}
+	}
+}
+
+int measure_ladder_collapses() {
 	auto dir = std::string("/home/steven/Documents/cartocrow/inputs/large/");
 	auto output_dir = std::string("/home/steven/Documents/cartocrow/output/");
 
@@ -500,7 +592,7 @@ int main() {
 
 					while (progress) {
 						std::cout << "\nCurrent target: " << target << std::endl;
-						progress = simplifier.simplify(target);
+						progress = simplifier.simplify(target, true);
 
 						IpeRenderer ipe_renderer;
 						auto isolines_p = std::make_shared<IsolinePainting>(
@@ -533,6 +625,74 @@ int main() {
 			}
 		}
 	}
+}
+
+int measure_dyken() {
+	auto dir = std::string("/home/steven/Documents/cartocrow/inputs/large/");
+	auto output_dir = std::string("/home/steven/Documents/cartocrow/output/");
+
+	std::vector<std::string> filenames;
+
+	std::string ext(".ipe");
+	for (auto &p : fs::recursive_directory_iterator(dir))
+	{
+		if (p.path().extension() == ext) {
+			filenames.push_back(p.path().stem().string());
+		}
+	}
+
+	for (const std::string& fn : filenames) {
+		try {
+			std::cout << "\nInput file: " << fn << std::endl;
+			std::shared_ptr<ipe::Document> document =
+				IpeReader::loadIpeFile(dir + fn + ".ipe");
+			ipe::Page* page = document->page(0);
+			auto isolines = isolinesInPage(page);
+			auto simplifier = IsolineSimplifier(isolines);
+
+			bool progress = true;
+			int target = simplifier.m_current_complexity;
+			bool first = true;
+
+			while (progress) {
+				std::cout << "\nCurrent target: " << target << std::endl;
+				bool made_progress = simplifier.dyken_simplify(target) && simplifier.m_current_complexity <= target;
+				progress = first || made_progress;
+				first = false;
+
+				IpeRenderer ipe_renderer;
+				auto isolines_p = std::make_shared<IsolinePainting>(
+					simplifier.m_simplified_isolines, false, false, true);
+				ipe_renderer.addPainting(isolines_p, "Simplified_isolines");
+				std::string file_name(fn + "_" + std::to_string(target) +
+									  "_" + "dyken" +
+									  "_" + std::to_string(simplifier.m_current_complexity));
+				ipe_renderer.save(output_dir + file_name + ".ipe");
+				std::ofstream meta_data_file;
+				meta_data_file.open(output_dir + file_name + "_meta" + ".txt");
+				meta_data_file
+					<< "Symmetric_difference: " << simplifier.total_symmetric_difference()
+					<< std::endl;
+				auto temp_simplifier = IsolineSimplifier(simplifier.m_simplified_isolines, 100.0, 100.0);
+				meta_data_file << "Ladders: " << temp_simplifier.m_slope_ladders.size()
+							   << std::endl;
+				auto [avg_alignment, max_alignment] =
+					temp_simplifier.average_max_vertex_alignment();
+				meta_data_file << "Avg_alignment: " << avg_alignment << std::endl;
+				meta_data_file << "Max_alignment: " << max_alignment << std::endl;
+				meta_data_file.close();
+				int power = std::floor(std::log2(simplifier.m_current_complexity - 1));
+				target = 1 << power;
+			}
+		} catch (...) {
+			std::cerr << "Problem with input " << fn << std::endl;
+		}
+	}
+}
+
+int main(int argc, char* argv[]) {
+//	measure_running_time();
+    run_gui(argc, argv);
 }
 
 //int main() {

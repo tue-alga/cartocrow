@@ -41,8 +41,8 @@ class IsolineSimplifier {
   public:
 	IsolineSimplifier(std::vector<Isoline<K>> isolines, double angle_filter = M_PI/6, double alignment_filter = 100.0,
 	                  std::shared_ptr<LadderCollapse> collapse = std::make_shared<SplineCollapse>(3));
-	bool simplify(int target);
-	void dyken_simplify(int target);
+	bool simplify(int target, bool debug = false);
+	bool dyken_simplify(int target, double sep_dist = 1);
 	bool step();
 	std::optional<std::shared_ptr<SlopeLadder>> get_next_ladder();
 

@@ -49,6 +49,7 @@ void IpeRenderer::save(const std::filesystem::path& file) {
 	layout.iOrigin = ipe::Vector(0, 0);
 	layout.iPaperSize = ipe::Vector(1000, 1000);
 	layout.iFrameSize = ipe::Vector(1000, 1000);
+	layout.iCrop = true;
 
 	std::string diskMarkDefinition =
 	    "<ipestyle name=\"marks\">\n"

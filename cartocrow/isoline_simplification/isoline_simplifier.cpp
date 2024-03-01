@@ -105,9 +105,9 @@ void IsolineSimplifier::initialize_sdg() {
 	}
 }
 
-bool IsolineSimplifier::simplify(int target) {
+bool IsolineSimplifier::simplify(int target, bool debug) {
 	while (m_current_complexity > target) {
-		if (m_current_complexity % 1000 == 0) {
+		if (debug && m_current_complexity % 1000 == 0) {
 			std::cout << "\r#Vertices: " << m_current_complexity << std::flush;
 		}
 		if (!step()) return false;
@@ -117,8 +117,9 @@ bool IsolineSimplifier::simplify(int target) {
 	return true;
 }
 
-void IsolineSimplifier::dyken_simplify(int target) {
+bool IsolineSimplifier::dyken_simplify(int target, double sep_dist) {
 	m_started = true;
+	int start_complexity = m_current_complexity;
 
 	CT ct;
 
@@ -136,8 +137,7 @@ void IsolineSimplifier::dyken_simplify(int target) {
 
 	std::vector<Isoline<K>> result(m_simplified_isolines.size());
 
-	// todo: set hybrid cost parameter properly
-	m_current_complexity -= PS::simplify(ct, Cost(1), Stop(target));
+	m_current_complexity -= PS::simplify(ct, Cost(sep_dist), Stop(target));
 	for(auto cit = ct.constraints_begin(); cit != ct.constraints_end(); ++cit) {
 		CT::Constraint_id id = *cit;
 		auto i = std::distance(ids.begin(), std::find(ids.begin(), ids.end(), id));
@@ -153,6 +153,8 @@ void IsolineSimplifier::dyken_simplify(int target) {
 	}
 
 	m_simplified_isolines = result;
+
+	return start_complexity != m_current_complexity;
 }
 
 void IsolineSimplifier::collapse_ladder(SlopeLadder& ladder) {
