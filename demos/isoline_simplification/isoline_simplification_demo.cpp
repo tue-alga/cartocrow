@@ -45,7 +45,7 @@ using namespace cartocrow::renderer;
 using namespace cartocrow::isoline_simplification;
 
 IsolineSimplificationDemo::IsolineSimplificationDemo() {
-	std::string dir("/home/steven/Documents/cartocrow/inputs/large/");
+	std::string dir("/home/steven/Documents/cartocrow/inputs/current/");
 	std::string output_dir("/home/steven/Documents/cartocrow/output/");
 	setWindowTitle("Isoline simplification");
 
@@ -199,8 +199,29 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 	m_save = [this, showVertices, output_dir, fileSelector, collapse_selector, measure_text]() {
 		auto& isolines = m_isoline_simplifier->m_simplified_isolines;
 	  	IpeRenderer ipe_renderer;
+		auto separator_p = std::make_shared<MedialAxisSeparatorPainting>(m_isoline_simplifier->m_separator, m_isoline_simplifier->m_delaunay);
+		auto slope_ladder_p = std::make_shared<SlopeLadderPainting>(m_isoline_simplifier->m_slope_ladders);
+	  	auto matching_p = std::make_shared<CompleteMatchingPainting>(m_isoline_simplifier->m_matching);
 	    auto isolines_p = std::make_shared<IsolinePainting>(isolines, showVertices->isChecked(), false, true);
+
+		auto vdp = std::make_shared<VoronoiExceptMedialPainting>(*m_isoline_simplifier);
+		auto map = std::make_shared<MedialAxisExceptSeparatorPainting>(*m_isoline_simplifier);
+
+		ipe_renderer.addPainting(vdp, "Voronoi");
+		ipe_renderer.addPainting(map, "Medial_axis");
+	  	if (!m_isoline_simplifier->m_started) {
+			ipe_renderer.addPainting(separator_p, "Separator");
+	  	}
+		ipe_renderer.addPainting(slope_ladder_p, "Slope_ladders");
+		ipe_renderer.addPainting(matching_p, "Matching");
 	    ipe_renderer.addPainting(isolines_p, "Simplified_isolines");
+
+		if (m_debug_ladder.has_value()) {
+			auto ladder = *m_debug_ladder;
+			auto debug_ladder_p = std::make_shared<DebugLadderPainting>(*m_isoline_simplifier, *ladder);
+			ipe_renderer.addPainting(debug_ladder_p, "Debug_ladder_painting");
+		}
+
 		std::string file_name(fileSelector->currentText().toStdString() + "_" +
 		                      std::to_string(m_isoline_simplifier->m_current_complexity) + "_" +
 		                      collapse_selector->currentText().toStdString());
@@ -354,10 +375,11 @@ void IsolineSimplificationDemo::recalculate(bool debugInfo, int target, bool cga
 
 	auto separator_p = std::make_shared<MedialAxisSeparatorPainting>(separator, m_isoline_simplifier->m_delaunay);
 
-	auto matching_p = std::make_shared<MatchingPainting>(m_isoline_simplifier->m_matching,
-	                                                     [this, &simplified_isolines, isoline_index](Gt::Point_2 pt) {
-		                                                     return m_isoline_simplifier->m_p_isoline.contains(pt) && m_isoline_simplifier->m_p_isoline.at(pt) == &simplified_isolines[std::min(static_cast<int>(simplified_isolines.size() - 1), isoline_index)];
-	                                                     });
+//	auto matching_p = std::make_shared<MatchingPainting>(m_isoline_simplifier->m_matching,
+//	                                                     [this, &simplified_isolines, isoline_index](Gt::Point_2 pt) {
+//		                                                     return m_isoline_simplifier->m_p_isoline.contains(pt) && m_isoline_simplifier->m_p_isoline.at(pt) == &simplified_isolines[std::min(static_cast<int>(simplified_isolines.size() - 1), isoline_index)];
+//	                                                     });
+	auto matching_p = std::make_shared<CompleteMatchingPainting>(m_isoline_simplifier->m_matching);
 
 	auto slope_ladder_p = std::make_shared<SlopeLadderPainting>(m_isoline_simplifier->m_slope_ladders);
 	auto collapse_p = std::make_shared<CollapsePainting>(*m_isoline_simplifier);
@@ -889,7 +911,12 @@ void MedialAxisSeparatorPainting::paint(GeometryRenderer& renderer) const {
 	auto voronoiDrawer = VoronoiDrawer<Gt>(&renderer);
 	for (const auto& [_, edges] : m_separator)
 	for (const auto& edge : edges) {
-		renderer.setStroke(Color(30, 119, 179), 2.5);
+		auto [s, t] = defining_sites(edge);
+//		if (s.is_point() && t.is_segment() || s.is_segment() && t.is_point()) {
+//			renderer.setStroke(Color(51, 159, 43), 2.5);
+//		} else {
+			renderer.setStroke(Color(30, 119, 179), 2.5);
+//		}
 		renderer.setMode(GeometryRenderer::stroke);
 		draw_dual_edge<VoronoiDrawer<Gt>, K>(m_delaunay, edge, voronoiDrawer);
 	}
@@ -1026,6 +1053,39 @@ void SlopeLadderPainting::paint(GeometryRenderer& renderer) const {
 		renderer.setFillOpacity(25);
 		renderer.draw(poly);
 //		draw_slope_ladder(renderer, *slope_ladder);
+	}
+
+//	for (const auto& e : edges) {
+//		renderer.setStroke(Color(255, 126, 0), 1.0);
+//		renderer.setMode(GeometryRenderer::stroke);
+//		renderer.draw(e);
+//	}
+}
+
+CompleteMatchingPainting::CompleteMatchingPainting(Matching& matching): m_matching(matching) {}
+
+void CompleteMatchingPainting::paint(GeometryRenderer& renderer) const {
+	std::unordered_set<Gt::Segment_2> edges;
+
+	for (const auto& [p, matched_to] : m_matching) {
+		if (matched_to.contains(CGAL::LEFT_TURN)) {
+			for (const auto& [_, pts] : matched_to.at(CGAL::LEFT_TURN))
+				for (const auto& q : pts) {
+					Gt::Segment_2 seg(p, q);
+					if (!edges.contains(seg) && !edges.contains(seg.opposite())) {
+						edges.insert(seg);
+					}
+				}
+		}
+		if (matched_to.contains(CGAL::RIGHT_TURN)) {
+			for (const auto& [_, pts] : matched_to.at(CGAL::RIGHT_TURN))
+				for (const auto& q : pts) {
+					Gt::Segment_2 seg(p, q);
+					if (!edges.contains(seg) && !edges.contains(seg.opposite())) {
+						edges.insert(seg);
+					}
+				}
+		}
 	}
 
 	for (const auto& e : edges) {

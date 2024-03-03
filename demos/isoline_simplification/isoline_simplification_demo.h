@@ -105,6 +105,17 @@ class MatchingPainting : public GeometryPainting {
 	std::function<bool(Gt::Point_2)> m_predicate;
 };
 
+class CompleteMatchingPainting : public GeometryPainting {
+  public:
+	CompleteMatchingPainting(Matching& matching);
+
+  protected:
+	void paint(GeometryRenderer& renderer) const override;
+
+  private:
+	Matching& m_matching;
+};
+
 class TouchedPainting : public GeometryPainting {
   public:
 	TouchedPainting(std::vector<SDG2::Edge> edges, const SDG2& delaunay);
