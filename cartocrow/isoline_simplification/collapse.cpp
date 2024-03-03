@@ -111,10 +111,10 @@ void SplineCollapse::operator()(SlopeLadder& ladder, const PointToPoint& p_prev,
 	for (const auto& rung : ladder.m_rungs) {
 		auto reversed =
 		    p_next.contains(rung.target()) && p_next.at(rung.target()) == rung.source();
-		auto t = reversed ? rung.target() : rung.source();
-		auto u = reversed ? rung.source() : rung.target();
-		Gt::Point_2 s = p_prev.at(t);
-		Gt::Point_2 v = p_next.at(u);
+		auto t = rung.source();
+		auto u = rung.target();
+		Gt::Point_2 s = reversed ? p_next.at(u) : p_prev.at(t);
+		Gt::Point_2 v = reversed ? p_prev.at(t) : p_next.at(u);
 		auto area_l = area_preservation_line(s, t, u, v);
 		lines.push_back(area_l);
 
@@ -266,10 +266,10 @@ void SplineCollapsePainting::paint(cartocrow::renderer::GeometryRenderer& render
 	std::vector<Gt::Line_2> lines;
 	for (const auto& rung : m_ladder.m_rungs) {
 		auto reversed = m_p_next.contains(rung.target()) && m_p_next.at(rung.target()) == rung.source();
-		auto t = reversed ? rung.target() : rung.source();
-		auto u = reversed ? rung.source() : rung.target();
-		Gt::Point_2 s = m_p_prev.at(t);
-		Gt::Point_2 v = m_p_next.at(u);
+		auto t = rung.source();
+		auto u = rung.target();
+		Gt::Point_2 s = reversed ? m_p_next.at(u) : m_p_prev.at(t);
+		Gt::Point_2 v = reversed ? m_p_prev.at(t) : m_p_next.at(u);
 		lines.emplace_back(area_preservation_line(s, t, u, v));
 		auto& area_l = lines.back();
 
