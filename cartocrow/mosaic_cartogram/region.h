@@ -30,7 +30,7 @@ struct LandRegion {
 	PolygonWithHoles<Exact> shape;
 	/// An approximation of the desired final shape of this region. It is centered at the origin,
 	/// scaled according to the desired number of tiles, and its contour lines are normalized such
-	/// that the additional area is equal to 6 tiles.
+	/// that the additional area is equal to one tile.
 	EllipseAtOrigin guidingShape;
 	/// The adjacent regions in clockwise order.
 	std::vector<std::reference_wrapper<LandRegion>> neighbors;

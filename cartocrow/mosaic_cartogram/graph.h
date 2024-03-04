@@ -51,7 +51,7 @@ class Graph {
 	/// Runtime: O(1)
 	virtual void addEdgeUnsafe(int u, int v) { m_adj[u].push_back(v); }
 
-	/// Adds an edge from \c u to \c v, unless it already exists or it's a loop.
+	/// Adds an edge from \c u to \c v, unless it already exists or it's a self-loop.
 	/// Runtime: O(deg(u))
 	/// \return whether an edge was added
 	bool addEdge(int u, int v);

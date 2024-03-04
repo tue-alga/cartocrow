@@ -75,9 +75,9 @@ void absorbMoldova(RegionArrangement &arr) {
 			remove.push_back(e);
 	for (auto e : remove) {
 		auto f = arr.remove_edge(e);
-		f->set_data("UKR");  // TODO: this is only necessary once
+		f->set_data("UKR");  // this is actually only necessary once
 	}
-	std::cout << "removed " << remove.size() << " edges to absorb MDA into UKR" << std::endl;
+	std::cerr << "[info] removed " << remove.size() << " edges to absorb MDA into UKR" << std::endl;
 }
 
 int labelSeaRegions(RegionArrangement &arr) {
@@ -155,7 +155,7 @@ int triangulate(RegionArrangement &arr, const std::vector<Point<Exact>> &salient
 	}
 
 	// (temp) debug message
-	std::cout << "added " << numberOfBisectorsAdded << " bisectors for " << salientPoints.size() << " salient points (and 3 outer points)" << std::endl;
+	std::cerr << "[info] added " << numberOfBisectorsAdded << " bisectors for " << salientPoints.size() << " salient points (and 3 outer points)" << std::endl;
 
 	// remove all non-anchor deg=1 vertices until none are left
 	// TODO: use queue of candidates to improve runtime

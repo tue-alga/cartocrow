@@ -43,6 +43,8 @@ class MosaicCartogram {
   private:
 	Parameters m_parameters;
 	const std::shared_ptr<RegionMap> m_inputMap;
+	/// A mapping from region names (in the input map) to the corresponding user-supplied values.
+	/// After \ref computeLandRegions(), these raw values should not be used anymore.
 	const std::unordered_map<std::string, Number<Inexact>> m_dataValues;
 	std::vector<Point<Exact>> m_salientPoints;
 
@@ -59,12 +61,12 @@ class MosaicCartogram {
 		return std::round(value / m_parameters.unitValue);
 	}
 	template <class K>
-	EllipseAtOrigin getGuidingShape(const PolygonWithHoles<K> &polygon, int tileCount) const {
+	EllipseAtOrigin computeGuidingShape(const PolygonWithHoles<K> &polygon, int tileCount) const {
 		const double a = m_parameters.tileArea();
 		return Ellipse::fit(polygon.outer_boundary())
 			.translateToOrigin()
 			.scaleTo(tileCount * a)
-			.normalizeContours(6 * a);  // area of a 1-tile (hexagonal) neighborhood
+			.normalizeContours(a);
 	}
 
 	bool isLandRegion(const int index) const {
@@ -103,7 +105,8 @@ class MosaicCartogram {
 	/// Step 0. Check parameters, region names, and region data.
 	void validate() const;
 	/// Step 1. Transforms \c m_inputMap to \c m_landRegions such that each region is contiguous,
-	/// i.e., consists of one polygon (possibly with holes).
+	/// i.e., consists of one polygon (possibly with holes). All properties of each land region are
+	/// set, except \c neighbors, which is computed during step 3.
 	void computeLandRegions();
 	/// Step 2. Construct arrangement from the contiguous regions, and create sea regions such that
 	/// the dual is triangular.

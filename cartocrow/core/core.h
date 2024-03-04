@@ -80,6 +80,9 @@ template <class K> using Arrangement = CGAL::Arrangement_2<CGAL::Arr_segment_tra
  */
 constexpr const Number<Inexact> M_EPSILON = 0.0000001;
 
+/// Converts a number from exact representation to an approximation in inexact
+/// representation.
+Number<Inexact> approximate(const Number<Exact>& p);
 /// Converts a point from exact representation to an approximation in inexact
 /// representation.
 Point<Inexact> approximate(const Point<Exact>& p);
@@ -121,6 +124,10 @@ struct Color {
 	int g;
 	/// Blue component (integer 0-255).
 	int b;
+
+	/// Returns a new color that is darker (\f$0 \le f < 1\f$) or lighter
+	/// (\f$1 < f \le 2\f$).
+	Color shaded(double f) const;
 };
 
 /// Wraps the given number \f$n\f$ to the interval \f$[a, b)\f$.

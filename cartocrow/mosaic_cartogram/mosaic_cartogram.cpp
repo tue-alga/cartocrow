@@ -44,7 +44,8 @@ void MosaicCartogram::computeArrangement() {
 	// add sea regions such that dual is triangular
 	m_seaRegionCount = triangulate(m_arrangement, m_salientPoints);
 
-	// (temp)
+	// (temp) since Moldova was removed during triangulation, we remove the corresponding land
+	// region as well (and then reassign indices)
 	m_landRegions.erase(m_landRegions.begin() + m_landIndices.at("MDA"));
 	m_landIndices.clear();
 	int i = 0;
@@ -96,7 +97,7 @@ void MosaicCartogram::computeDual() {
 void MosaicCartogram::computeLandRegions() {
 	// POD for internal use
 	struct Part {
-		PolygonWithHoles<Exact> *shape;
+		const PolygonWithHoles<Exact> *shape;  // pointer to avoid copies (has no ownership!)
 		Number<Exact> area;
 		Number<Inexact> value;
 		int tiles;
@@ -104,7 +105,11 @@ void MosaicCartogram::computeLandRegions() {
 
 	for (const auto &[name, region] : *m_inputMap) {
 		const Number<Inexact> value = m_dataValues.at(name);  // already validated
-		int tiles = getTileCount(value);  // TODO: what if 0?
+		int tiles = getTileCount(value);
+		if (!tiles) {
+			// TODO: how to handle?
+			std::cerr << "[warning] " << name << " is too small\n";
+		}
 
 		std::vector<PolygonWithHoles<Exact>> polygons;
 		region.shape.polygons_with_holes(std::back_inserter(polygons));
@@ -113,7 +118,7 @@ void MosaicCartogram::computeLandRegions() {
 		if (polygons.size() == 1) {
 			const auto &p = polygons[0];
 			m_landRegions.push_back({
-				0, name, std::nullopt, value, tiles, region.color, p, getGuidingShape(p, tiles)
+				0, name, std::nullopt, value, tiles, region.color, p, computeGuidingShape(p, tiles)
 			});
 			continue;
 		}
@@ -121,7 +126,7 @@ void MosaicCartogram::computeLandRegions() {
 		// compute area of each part
 		std::vector<Part> parts;
 		Number<Exact> totalArea = 0;
-		for (auto &p : polygons) {
+		for (const auto &p : polygons) {
 			const auto a = area(p);
 			parts.push_back({ &p, a });
 			totalArea += a;
@@ -132,9 +137,10 @@ void MosaicCartogram::computeLandRegions() {
 			return p1.area > p2.area;
 		});
 
-		// allocate tiles (TODO: improve)
+		// allocate tiles
+		// TODO: improve, like e.g. seats are assigned in parliament
 		for (auto &p : parts) {
-			p.value = value * CGAL::to_double(p.area / totalArea);
+			p.value = approximate(p.area / totalArea * value);
 			const int n = std::min(getTileCount(p.value), tiles);
 			p.tiles = n;
 			tiles -= n;
@@ -142,9 +148,10 @@ void MosaicCartogram::computeLandRegions() {
 		parts[0].tiles += tiles;  // assign any remaining tiles to the largest part
 
 		int i = 0;
-		for (auto &p : parts) {
+		for (const auto &p : parts) {
 			if (!p.tiles) {
 				// TODO: redistribute remaining value?
+				// TODO: how to handle holes? (if they're not adjacent to sea)
 				std::cerr << "[warning] " << parts.size() - i << " subregion(s) of " << name
 				          << " are too small and have been removed\n";
 				break;
@@ -157,13 +164,13 @@ void MosaicCartogram::computeLandRegions() {
 				p.tiles,
 				region.color,
 				*p.shape,
-				getGuidingShape(*p.shape, p.tiles)
+				computeGuidingShape(*p.shape, p.tiles)
 			});
 		}
 	}
 	std::cerr << std::flush;
 
-	// set indices based on lexicographic order of names
+	// sort land regions by name and assign indices in that order
 	std::sort(m_landRegions.begin(), m_landRegions.end(), [](const auto &r1, const auto &r2) {
 		return r1.name < r2.name;
 	});
@@ -176,8 +183,8 @@ void MosaicCartogram::computeLandRegions() {
 
 void MosaicCartogram::computeTileMap() {
 	std::vector<Point<Exact>> centroids(getRegionCount());
-	for (auto f : m_arrangement.face_handles()) {
-		std::string label = f->data();
+	for (const auto f : m_arrangement.face_handles()) {
+		const std::string label = f->data();
 		if (!label.empty()) centroids[getRegionIndex(label)] = centroid(f);
 	}
 
@@ -218,8 +225,8 @@ void MosaicCartogram::validate() const {
 	for (const auto &[name, region] : m_dataValues)
 		if (!m_inputMap->contains(name))
 			ignored.push_back(name);
-	std::sort(ignored.begin(), ignored.end());
 	if (!ignored.empty()) {
+		std::sort(ignored.begin(), ignored.end());
 		std::cerr << "[warning] For the following regions, data was provided, but they are not on the map:";
 		for (const auto &s : ignored) std::cerr << ' ' << s << ',';
 		std::cerr << "\b " << std::endl;
