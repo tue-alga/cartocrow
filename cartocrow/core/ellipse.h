@@ -57,7 +57,7 @@ class EllipseAtOrigin : public Ellipse {
 	EllipseAtOrigin(double a, double b, double c, double f) : Ellipse(a, b, c, 0, 0, f) {}
 
 	double area() const;
-	EllipseAtOrigin normalizeContours(double deltaArea) const;
+	EllipseAtOrigin normalizeContours(double deltaArea = 1) const;
 	Parameters parameters() const override;
 	double radius(double slope) const;
 	EllipseAtOrigin scaleTo(double area) const;

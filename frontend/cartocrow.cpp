@@ -134,17 +134,24 @@ int main(int argc, char* argv[]) {
 		);
 
 		// read parameters
-		auto &p = cartogram->parameters();
-		auto &projectParams = projectData["parameters"];
-		p.tileRadius = projectParams.value("tileRadius", 1);  // optional (default = 1)
-		p.unitValue  = projectParams.value("unitValue", -1);  // required
+		const auto &p = projectData["parameters"];
+		auto &paramsComputation = cartogram->parameters();
+		mosaic_cartogram::Painting::Options paramsPainting;
+
+		paramsComputation.unitValue = p.value("unitValue", -1);  // required
+		paramsPainting.tileArea     = p.value("tileArea",   1);  // optional (default = 1)
+
+		paramsComputation.validate();
+		paramsPainting.validate();
 
 		// compute cartogram
 		cartogram->compute();
 
 		// initialize painting
-		mosaic_cartogram::Painting::Options options;
-		painting = std::make_shared<mosaic_cartogram::Painting>(cartogram, options);
+		painting = std::make_shared<mosaic_cartogram::Painting>(
+			cartogram,
+			std::move(paramsPainting)
+		);
 	} else {
 		std::cerr << "Unknown type \"" << projectData["type"] << "\" specified\n";
 	}

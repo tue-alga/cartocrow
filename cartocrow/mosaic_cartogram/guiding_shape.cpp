@@ -1,12 +1,16 @@
 #include "guiding_shape.h"
 
-#include <CGAL/number_utils.h>
+#include <numbers>
 
 #include "../core/centroid.h"
 
 namespace cartocrow::mosaic_cartogram {
 
-GuidingPair::GuidingPair(const LandRegion &region1, const LandRegion &region2, const Parameters &params) {
+GuidingPair::GuidingPair(const LandRegion &region1, const LandRegion &region2) {
+	// internally, tiles have unit area
+	// here, we approximate tiles by circles, and those have radius sqrt(1/pi)
+	static constexpr double tileRadius = std::numbers::inv_sqrtpi_v<double>;
+
 	const Point<Exact> centroid1 = centroid(region1.shape);
 	const Point<Exact> centroid2 = centroid(region2.shape);
 
@@ -26,8 +30,8 @@ GuidingPair::GuidingPair(const LandRegion &region1, const LandRegion &region2, c
 	// -1 if `region1` lies left of `region2`, else +1  (w.r.t. their centroids)
 	const int direction = centroid1.x() < centroid2.x() ? -1 : +1;
 
-	const double dx1 = dx * (guide1.radius(m) - params.tileRadius) *  direction;
-	const double dx2 = dx * (guide2.radius(m) - params.tileRadius) * -direction;
+	const double dx1 = dx * (guide1.radius(m) - tileRadius) *  direction;
+	const double dx2 = dx * (guide2.radius(m) - tileRadius) * -direction;
 
 	// new (relative) centers for guiding shapes, equivalent to:
 	// moving them along  y = m x  such that they overlap the diameter of one tile w.r.t. this line

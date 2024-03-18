@@ -60,13 +60,13 @@ class MosaicCartogram {
 	int getTileCount(double value) const {
 		return std::round(value / m_parameters.unitValue);
 	}
-	template <class K>
+	template<typename K>
 	EllipseAtOrigin computeGuidingShape(const PolygonWithHoles<K> &polygon, int tileCount) const {
-		const double a = m_parameters.tileArea();
+		// internally, we define tiles to have unit area
 		return Ellipse::fit(polygon.outer_boundary())
 			.translateToOrigin()
-			.scaleTo(tileCount * a)
-			.normalizeContours(a);
+			.scaleTo(tileCount)
+			.normalizeContours();
 	}
 
 	bool isLandRegion(const int index) const {

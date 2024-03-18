@@ -196,13 +196,10 @@ void MosaicCartogram::computeTileMap() {
 		centroids
 	);
 
-	m_tileMap = HexagonalMap(vd, m_landRegions, m_seaRegionCount, m_parameters);
+	m_tileMap = HexagonalMap(vd, m_landRegions, m_seaRegionCount);
 }
 
 void MosaicCartogram::validate() const {
-	// validate parameter values
-	m_parameters.validate();
-
 	// validate region names and data values
 	for (const auto &[name, region] : *m_inputMap) {
 		if (name.empty()) {

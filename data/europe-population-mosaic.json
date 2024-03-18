@@ -55,7 +55,7 @@
 		"VAT": 801
 	},
 	"parameters": {
-		"tileRadius": 5,
+		"tileArea": 100,
 		"unitValue": 680000
 	}
 }

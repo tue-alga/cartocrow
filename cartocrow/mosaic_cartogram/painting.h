@@ -1,35 +1,73 @@
 #ifndef CARTOCROW_MOSAIC_CARTOGRAM_PAINTING
 #define CARTOCROW_MOSAIC_CARTOGRAM_PAINTING
 
+#include <functional>
+#include <memory>
+
+#include "../core/core.h"
 #include "../renderer/geometry_painting.h"
 #include "../renderer/geometry_renderer.h"
 #include "mosaic_cartogram.h"
+#include "tile_map.h"
 
 namespace cartocrow::mosaic_cartogram {
 
 /// The \ref renderer::GeometryPainting "GeometryPainting" for a \ref MosaicCartogram.
 class Painting : public renderer::GeometryPainting {
 
+	// TODO: generalize to also support square tiles
+
+	using Coordinate = HexagonalMap::Coordinate;
+	using Renderer = renderer::GeometryRenderer;
+
   public:
-	/// Options that determine what to draw in the painting.
+	/// Options that determine what to draw in the painting and how.
 	struct Options {
-		/// Default constructor.
-		Options();
-		/// TODO: Placeholder option that must be replaced later.
-		int placeholder;
+
+		Color colorBorder = {  32,  32,  32 };
+		Color colorLand   = {  34, 139,  34 };  // forest green
+		Color colorSea    = { 175, 238, 238 };  // pale turquoise
+
+		/// The area of one tile. This essentially controls the scale of the painting (compared to
+		/// the internal representation, which uses unit areas).
+		Number<Inexact> tileArea;
+
+		/// Checks whether the parameters are valid. If not, an exception is thrown.
+		void validate() const;
+
 	};
 
-	/// Creates a new painting for the given mosaic cartogram.
-	Painting(std::shared_ptr<MosaicCartogram> mosaicCartogram, Options options = {});
+  private:
+	/// A function that maps a tile coordinate to a color. Used as a parameter for painting, so
+	/// different "views" can be drawn with the same function.
+	using ColorFunction = std::function<Color(Coordinate)>;
 
-  protected:
-	void paint(renderer::GeometryRenderer& renderer) const override;
+	std::shared_ptr<MosaicCartogram> m_mosaicCartogram;
+	Options m_options;
+
+	/// The factor with which to scale (the inradius and exradius of) the unit hexagon to attain the
+	/// user-supplied area.
+	Number<Inexact> tileScale;
+	/// The hexagon used for painting. Its centroid is at the origin.
+	Polygon<Inexact> tileShape;
+
+  public:
+	Painting(std::shared_ptr<MosaicCartogram> mosaicCartogram, Options &&options);
+
+	void paint(Renderer &renderer) const override;
 
   private:
-	/// The mosaic cartogram we are drawing.
-	std::shared_ptr<MosaicCartogram> m_mosaicCartogram;
-	/// The drawing options.
-	Options m_options;
+	const HexagonalMap& map() const { return m_mosaicCartogram->m_tileMap; }
+
+	Point<Inexact> getCentroid(Coordinate c) const;
+
+	// implementations of `ColorFunction`
+	Color getColorDefault(Coordinate c) const;
+	Color getColorUniform(Coordinate c) const;
+
+	void paintTile(Renderer &renderer, Coordinate c) const;
+	void paint(Renderer &renderer, ColorFunction tileColor) const;
+
 };
 
 } // namespace cartocrow::mosaic_cartogram

@@ -4,7 +4,7 @@
 #include <array>
 #include <functional>
 #include <optional>
-#include <stdint.h>
+#include <ostream>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
@@ -12,18 +12,29 @@
 
 #include "../core/core.h"
 #include "../core/ellipse.h"
-#include "../renderer/geometry_renderer.h"
+#include "graph.h"
 #include "guiding_shape.h"
-#include "parameters.h"
 #include "region.h"
 #include "visibility_drawing.h"
 
 namespace cartocrow::mosaic_cartogram {
 
 // TODO: make base class and separate subclass SquareMap
+// TODO: fix member visibilities and befriend Painting
 
 class HexagonalMap {
   public:
+
+	template<typename T>
+	using opt_ref = std::optional<std::reference_wrapper<T>>;
+
+	/// The radius of the inscribed circle of the unit hexagon (i.e., the largest circle that fits).
+	/// Also known as the apothem.
+	static constexpr Number<Inexact> tileInradius = 0.537284965911770959776669078352965289L;
+	/// The radius of the circumcircle of the unit hexagon (i.e., the circle that passes through all
+	/// six vertices). Also known as the circumradius, and equal to the side length.
+	static constexpr Number<Inexact> tileExradius = 0.620403239401399732627479164655489392L;
+
 	struct CoordinateHash;  // forward declaration
 
 	/// To represent a position in the hexagonal tiling, we use barycentric coordinates. These are
@@ -35,6 +46,8 @@ class HexagonalMap {
 	/// position. Hence, (0,0,0) represents the same position as (1,1,1). In general, (x,y,z) and
 	/// (x+a, y+a, z+a) represent the same position. Therefore, we can normalize (x,y,z) to
 	/// (x-z, y-z, 0). This class only stores normalized coordinates.
+	///
+	/// This class is immutable.
 	struct Coordinate {
 		friend CoordinateHash;
 
@@ -50,15 +63,17 @@ class HexagonalMap {
 		Coordinate(int x, int y) : m_x(x), m_y(y) {}
 		Coordinate(int x, int y, int z) : Coordinate(x-z, y-z) {}
 
-		bool operator==(const Coordinate &c) const { return m_x == c.m_x && m_y == c.m_y; }
+		bool operator==(Coordinate c) const {
+			return m_x == c.m_x && m_y == c.m_y;
+		}
 
 		std::array<Coordinate, 6> neighbors() const;
 
-		friend std::ostream& operator<<(std::ostream &os, const Coordinate &c);
+		friend std::ostream& operator<<(std::ostream &os, Coordinate c);
 	};
 
 	struct CoordinateHash {
-		size_t operator()(const Coordinate &c) const noexcept {
+		size_t operator()(Coordinate c) const noexcept {
 			constexpr int width = SIZE_WIDTH >> 1;
 			constexpr int offset = 1 << (width >> 1);
 
@@ -73,68 +88,73 @@ class HexagonalMap {
 	};
 
 	struct Configuration {
-		std::optional<std::reference_wrapper<const LandRegion>> region;
-		std::unordered_set<Coordinate, CoordinateHash> tiles;
+		using TileSet = std::unordered_set<Coordinate, CoordinateHash>;
 
-		int desire() const { return region ? region->get().targetTileCount - tiles.size() : 0; }
-		int id() const { return region.value().get().id; }  // throws exception if `region` has no value
-		bool isSea() const { return !region.has_value(); }
+		int index;
+		opt_ref<const LandRegion> region;
+		TileSet tiles, boundary;
+
+		// implement iterators so we can use foreach loops
+		TileSet::const_iterator begin() const noexcept { return tiles.begin(); }
+		TileSet::const_iterator   end() const noexcept { return tiles.end();   }
+
+		bool contains(Coordinate c) const {
+			return tiles.contains(c);
+		}
+		int desire() const {
+			return region ? region->get().targetTileCount - tiles.size() : 0;
+		}
+		int id() const {
+			return region.value().get().id;  // throws exception if `region` has no value
+		}
+		bool isSea() const {
+			return !region.has_value();
+		}
+		int size() const {
+			return tiles.size();
+		}
+
+		bool isAdjacent(Coordinate c) const;
+		bool remainsContiguousWithout(Coordinate c) const;
 	};
 
-	/// A function that returns a color given a tile coordinate. Used as a parameter for painting,
-	/// so different "views" can be drawn with the same function.
-	using ColorFunction = std::function<Color(const Coordinate&)>;
-
-	static constexpr Color COLOR_BORDER = { 32,  32,  32};
-	static constexpr Color COLOR_LAND   = { 34, 139,  34};  // forest green
-	static constexpr Color COLOR_SEA    = {175, 238, 238};  // pale turquoise
-
-	/// The radius of the circumcircle (i.e., the circle that passes through all six vertices). Also
-	/// known as the circumradius, and equal to the side length.
-	Number<Inexact> exradius;
-	/// The radius of the inscribed circle (i.e., the largest circle that can be contained in the
-	/// hexagon). Also known as the apothem.
-	Number<Inexact> inradius;
-	/// The area of one hexagon.
-	Number<Inexact> tileArea;
-	/// The hexagon used for painting. The bottom left point of its bounding box is at the origin.
-	Polygon<Inexact> tileShape;
+	struct Transfer {
+		Coordinate tile;
+		double score;  // higher is better
+	};
 
 	std::vector<std::unordered_map<int, GuidingPair>> guidingPairs;
 
-	std::unordered_map<Coordinate, int, CoordinateHash> tiles;
 	std::vector<Configuration> configurations;
 
+	/// The mapping from tiles (coordinates) to the configurations they belong to.
+	std::unordered_map<Coordinate, int, CoordinateHash> tiles;
+
+	/// A graph that stores the adjacencies between configurations: there is an edge (u,v) iff the
+	/// u-th configuration is adjacent to the v-th configuration. This also stores adjacencies to
+	/// and from sea regions, in contrast to \ref LandRegion::neighbors.
+	UndirectedGraph configGraph;
+
 	HexagonalMap() {}
-	HexagonalMap(const VisibilityDrawing &initial, const std::vector<LandRegion> &landRegions,
-	             int seaRegionCount, const Parameters &params);
+	HexagonalMap(const VisibilityDrawing &initial,
+	             const std::vector<LandRegion> &landRegions,
+	             int seaRegionCount);
 
-	Configuration& getConfiguration(const Coordinate &c) {
-		return configurations[tiles.at(c)];
-	}
-	const Configuration& getConfiguration(const Coordinate &c) const {
-		return configurations[tiles.at(c)];
-	}
+	static Point<Inexact> getCentroid(Coordinate c);
+	static Point<Inexact> getCentroid(const Configuration &config);
 
-	Point<Inexact> getCentroid(const Coordinate &c) const;
-	Point<Inexact> getCentroid(const Configuration &config) const;
+	// TODO: `opt_ref` instead of pointer?
+	const Configuration* getConfiguration(Coordinate c) const;
+	Configuration* getConfiguration(Coordinate c);
 
 	std::pair<Ellipse, Ellipse> getGuidingPair(const Configuration &config1, const Configuration &config2) const;
 
-	Color getColorDefault(const Coordinate &c) const {
-		const Configuration &config = getConfiguration(c);
-		return config.isSea() ? Color{255, 255, 255} : config.region->get().color;
-	}
-	Color getColorUniform(const Coordinate &c) const {
-		return getConfiguration(c).isSea() ? COLOR_SEA : COLOR_LAND;
-	}
+	std::vector<Coordinate> getTransferCandidates(const Configuration &source, const Configuration &target) const;
+	std::optional<Transfer> getBestTransfer(const Configuration &source, const Configuration &target) const;
 
-	// TODO: move to painting.cpp
-	void paintTile(renderer::GeometryRenderer &renderer, const Coordinate &c) const;
-	void paint(renderer::GeometryRenderer &renderer, ColorFunction tileColor) const;
-	void paint(renderer::GeometryRenderer &renderer) const {
-		paint(renderer, std::bind(&HexagonalMap::getColorUniform, this, std::placeholders::_1));
-	}
+	/*
+	void transfer(const Coordinate &c, Configuration &target);
+	*/
 };
 
 } // namespace cartocrow::mosaic_cartogram
