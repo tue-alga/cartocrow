@@ -67,7 +67,11 @@ class Painting : public renderer::GeometryPainting {
 
 	void paintMark(Renderer &renderer, Coordinate c) const;
 	void paintTile(Renderer &renderer, Coordinate c) const;
-	void paint(Renderer &renderer, ColorFunction tileColor) const;
+
+	void paintMap(Renderer &renderer, ColorFunction tileColor) const;
+
+	/// Debug function to visualize the score computation between two regions.
+	void paintGuidingPair(Renderer &renderer, const std::string &sourceName, const std::string &targetName) const;
 
 };
 

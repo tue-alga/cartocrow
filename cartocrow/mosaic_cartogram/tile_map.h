@@ -28,14 +28,14 @@ class HexagonalMap {
 	template<typename T>
 	using opt_ref = std::optional<std::reference_wrapper<T>>;
 
+	struct CoordinateHash;  // forward declaration
+
 	/// The radius of the inscribed circle of the unit hexagon (i.e., the largest circle that fits).
 	/// Also known as the apothem.
 	static constexpr Number<Inexact> tileInradius = 0.537284965911770959776669078352965289L;
 	/// The radius of the circumcircle of the unit hexagon (i.e., the circle that passes through all
 	/// six vertices). Also known as the circumradius, and equal to the side length.
 	static constexpr Number<Inexact> tileExradius = 0.620403239401399732627479164655489392L;
-
-	struct CoordinateHash;  // forward declaration
 
 	/// To represent a position in the hexagonal tiling, we use barycentric coordinates. These are
 	/// of the form (x,y,z). A step towards the right increases x, towards the top-left increases y,
@@ -86,6 +86,9 @@ class HexagonalMap {
 			return x + (y << width);
 		}
 	};
+
+	template<typename T>
+	using CoordinateMap = std::unordered_map<Coordinate, T, CoordinateHash>;
 
 	/// Invariant: all tiles are connected and there are no holes. We say the configuration is \a contiguous.
 	struct Configuration {
@@ -138,7 +141,7 @@ class HexagonalMap {
 	std::vector<Configuration> configurations;
 
 	/// The mapping from tiles (coordinates) to the configurations they belong to.
-	std::unordered_map<Coordinate, int, CoordinateHash> tiles;
+	CoordinateMap<int> tiles;
 
 	/// A graph that stores the adjacencies between configurations: there is an edge (u,v) iff the
 	/// u-th configuration is adjacent to the v-th configuration. This also stores adjacencies to
@@ -160,8 +163,14 @@ class HexagonalMap {
 	const Configuration* getConfiguration(Coordinate c) const;
 	Configuration* getConfiguration(Coordinate c);
 
+	/// Get the guiding shape for a land region.
 	Ellipse getGuidingShape(const Configuration &config) const;
+	/// Get the pair of guiding shapes for two adjacent land regions. This is not equivalent to
+	/// getting two separate guiding shapes! This pair has the correct relative positions (of the
+	/// original regions) and is centered on the joint centroid.
 	std::pair<Ellipse, Ellipse> getGuidingPair(const Configuration &config1, const Configuration &config2) const;
+	/// Get the pair of guiding shapes for any two regions.
+	std::pair<std::optional<Ellipse>, std::optional<Ellipse>> getGuidingShapes(const Configuration &config1, const Configuration &config2) const;
 
 	std::vector<Coordinate> computeTransferCandidates(const Configuration &source, const Configuration &target) const;
 	std::vector<Transfer> computeAllTransfers(const Configuration &source, const Configuration &target) const;

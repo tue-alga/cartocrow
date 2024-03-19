@@ -131,34 +131,39 @@ HexagonalMap::Configuration* HexagonalMap::getConfiguration(const Coordinate c) 
 }
 
 Ellipse HexagonalMap::getGuidingShape(const Configuration &config) const {
-	if (config.isSea())
-		throw std::invalid_argument("Sea regions do not have a guiding shape");
-
 	return config.region->get().guidingShape
 			.translate(getCentroid(config) - CGAL::ORIGIN)
 			.normalizeSign();
 }
 
 std::pair<Ellipse, Ellipse> HexagonalMap::getGuidingPair(const Configuration &c1, const Configuration &c2) const {
-	if (c1.isSea() || c2.isSea())
-		throw std::invalid_argument("Sea regions do not have a guiding shape");
-
-	int id1 = c1.index;
-	int id2 = c2.index;
-
-	if (id1 == id2)
-		throw std::invalid_argument("A guiding pair only exists for distinct regions");
-
 	// compute centroid of union of configurations
 	const int size1 = c1.size();
 	const int size2 = c2.size();
 	const auto centroid = (size1 * (getCentroid(c1) - CGAL::ORIGIN)
 	                     + size2 * (getCentroid(c2) - CGAL::ORIGIN)) / (size1 + size2);
 
-	// get precomputed guiding pair and translate to `centroid`
+	int id1 = c1.index;
+	int id2 = c2.index;
 	if (id1 > id2) std::swap(id1, id2);
-	const auto p = guidingPairs[id1].at(id2).translate(centroid);  // throws exception if regions are not neighbors
+
+	// get precomputed guiding pair and translate to `centroid`
+	const auto p = guidingPairs[id1].at(id2).translate(centroid);
 	return id1 == c1.index ? p : std::make_pair(p.second, p.first);
+}
+
+std::pair<std::optional<Ellipse>, std::optional<Ellipse>> HexagonalMap::getGuidingShapes(const Configuration &c1, const Configuration &c2) const {
+	if (!configGraph.containsEdge(c1.index, c2.index))
+		throw std::invalid_argument("A guiding pair only exists for two distinct, adjacent regions");
+
+	std::optional<Ellipse> g1, g2;
+	if (c1.isLand() && c2.isLand()) {
+		std::tie(g1, g2) = getGuidingPair(c1, c2);
+	} else {
+		if (c1.isLand()) g1 = getGuidingShape(c1);
+		if (c2.isLand()) g2 = getGuidingShape(c2);
+	}
+	return { g1, g2 };
 }
 
 /// Checks whether \c config1 is adjacent to \c config2 via tiles other than \c ignore (which is part of \c config1).
@@ -225,16 +230,8 @@ std::vector<HexagonalMap::Transfer> HexagonalMap::computeAllTransfers(const Conf
 	std::vector<Transfer> transfers;
 	transfers.reserve(candidates.size());
 
-	// get guiding shapes at the correct positions
-	std::optional<Ellipse> guideSource, guideTarget;
-	if (source.isLand() && target.isLand()) {
-		std::tie(guideSource, guideTarget) = getGuidingPair(source, target);
-	} else {
-		if (source.isLand()) guideSource = getGuidingShape(source);
-		if (target.isLand()) guideTarget = getGuidingShape(target);
-	}
-
 	// compute score for each candidate
+	const auto [guideSource, guideTarget] = getGuidingShapes(source, target);
 	for (const Coordinate c : candidates) {
 		const Point<Inexact> p = getCentroid(c);
 
