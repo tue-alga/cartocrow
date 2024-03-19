@@ -30,6 +30,12 @@ Painting::Painting(std::shared_ptr<MosaicCartogram> mosaicCartogram, Options &&o
 
 void Painting::paint(Renderer &renderer) const {
 	paint(renderer, std::bind(&Painting::getColorDefault, this, std::placeholders::_1));
+
+	/*
+	for (const auto &config : map().configurations)
+		for (const auto c : config.boundary)
+			paintMark(renderer, c);
+	*/
 }
 
 Point<Inexact> Painting::getCentroid(Coordinate c) const {
@@ -44,6 +50,18 @@ Color Painting::getColorDefault(Coordinate c) const {
 Color Painting::getColorUniform(Coordinate c) const {
 	const auto config = map().getConfiguration(c);
 	return !config || config->isSea() ? m_options.colorSea : m_options.colorLand;
+}
+
+void Painting::paintMark(Renderer &renderer, Coordinate c) const {
+	const Point<Inexact> p = getCentroid(c);
+	const Number<Inexact> x = p.x(), y = p.y();
+	const Number<Inexact> w = tileScale / 5;
+
+	renderer.setMode(Renderer::stroke);
+	renderer.setStroke(m_options.colorBorder, w);
+
+	renderer.draw(Segment<Inexact>(Point<Inexact>(x-w, y-w), Point<Inexact>(x+w, y+w)));
+	renderer.draw(Segment<Inexact>(Point<Inexact>(x-w, y+w), Point<Inexact>(x+w, y-w)));
 }
 
 void Painting::paintTile(Renderer &renderer, Coordinate c) const {

@@ -65,6 +65,7 @@ class Painting : public renderer::GeometryPainting {
 	Color getColorDefault(Coordinate c) const;
 	Color getColorUniform(Coordinate c) const;
 
+	void paintMark(Renderer &renderer, Coordinate c) const;
 	void paintTile(Renderer &renderer, Coordinate c) const;
 	void paint(Renderer &renderer, ColorFunction tileColor) const;
 

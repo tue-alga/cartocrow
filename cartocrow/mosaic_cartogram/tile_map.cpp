@@ -1,6 +1,5 @@
 #include "tile_map.h"
 
-#include <cmath>
 #include <stdexcept>
 #include <CGAL/Origin.h>
 
@@ -22,6 +21,14 @@ std::ostream& operator<<(std::ostream &os, HexagonalMap::Coordinate c) {
 	return os << '(' << c.m_x << ", " << c.m_y << ')';
 }
 
+bool HexagonalMap::Configuration::containsInteriorly(const Coordinate c) const {
+	if (!contains(c)) return false;
+	for (const Coordinate d : c.neighbors())
+		if (!contains(d))
+			return false;
+	return true;
+}
+
 bool HexagonalMap::Configuration::isAdjacent(const Coordinate c) const {
 	if (contains(c)) return false;
 	for (const Coordinate d : c.neighbors())
@@ -31,8 +38,21 @@ bool HexagonalMap::Configuration::isAdjacent(const Coordinate c) const {
 }
 
 bool HexagonalMap::Configuration::remainsContiguousWithout(const Coordinate c) const {
-	// TODO
-	return true;
+	if (!contains(c)) return true;  // no effect
+	if (!boundary.contains(c)) return false;  // this would create a hole
+
+	bool open = false;
+	int openings = 0;
+	for (const Coordinate d : c.neighbors()) {
+		if (contains(d)) {
+			open = false;
+		} else if (!open) {
+			open = true;
+			openings++;
+		}
+	}
+
+	return openings <= 1;  // otherwise the config would be split in twain (at least)
 }
 
 HexagonalMap::HexagonalMap(const VisibilityDrawing &initial,
@@ -110,12 +130,21 @@ HexagonalMap::Configuration* HexagonalMap::getConfiguration(const Coordinate c) 
 	return const_cast<Configuration*>(std::as_const(*this).getConfiguration(c));
 }
 
+Ellipse HexagonalMap::getGuidingShape(const Configuration &config) const {
+	if (config.isSea())
+		throw std::invalid_argument("Sea regions do not have a guiding shape");
+
+	return config.region->get().guidingShape
+			.translate(getCentroid(config) - CGAL::ORIGIN)
+			.normalizeSign();
+}
+
 std::pair<Ellipse, Ellipse> HexagonalMap::getGuidingPair(const Configuration &c1, const Configuration &c2) const {
 	if (c1.isSea() || c2.isSea())
 		throw std::invalid_argument("Sea regions do not have a guiding shape");
 
-	int id1 = c1.id();
-	int id2 = c2.id();
+	int id1 = c1.index;
+	int id2 = c2.index;
 
 	if (id1 == id2)
 		throw std::invalid_argument("A guiding pair only exists for distinct regions");
@@ -129,7 +158,7 @@ std::pair<Ellipse, Ellipse> HexagonalMap::getGuidingPair(const Configuration &c1
 	// get precomputed guiding pair and translate to `centroid`
 	if (id1 > id2) std::swap(id1, id2);
 	const auto p = guidingPairs[id1].at(id2).translate(centroid);  // throws exception if regions are not neighbors
-	return id1 == c1.id() ? p : std::make_pair(p.second, p.first);
+	return id1 == c1.index ? p : std::make_pair(p.second, p.first);
 }
 
 /// Checks whether \c config1 is adjacent to \c config2 via tiles other than \c ignore (which is part of \c config1).
@@ -140,7 +169,10 @@ bool adjacent(const HexagonalMap::Configuration &config1, const HexagonalMap::Co
 	return false;
 }
 
-std::vector<HexagonalMap::Coordinate> HexagonalMap::getTransferCandidates(const Configuration &source, const Configuration &target) const {
+std::vector<HexagonalMap::Coordinate> HexagonalMap::computeTransferCandidates(const Configuration &source, const Configuration &target) const {
+	if (source.index == target.index)
+		throw std::invalid_argument("Tiles cannot be transferred from a configuration to itself");
+
 	// the candidates must:
 	// 1. be part of `source`
 	// 2. be adjacent to `target`
@@ -186,28 +218,87 @@ std::vector<HexagonalMap::Coordinate> HexagonalMap::getTransferCandidates(const 
 	return candidates;
 }
 
-std::optional<HexagonalMap::Transfer> HexagonalMap::getBestTransfer(const Configuration &source, const Configuration &target) const {
-	if (source.isSea() || target.isSea()) {
-		// TODO
-		throw std::runtime_error("Transfers between non-land configurations are not yet implemented");
+std::vector<HexagonalMap::Transfer> HexagonalMap::computeAllTransfers(const Configuration &source, const Configuration &target) const {
+	const auto candidates = computeTransferCandidates(source, target);
+	if (candidates.empty()) return {};
+
+	std::vector<Transfer> transfers;
+	transfers.reserve(candidates.size());
+
+	// get guiding shapes at the correct positions
+	std::optional<Ellipse> guideSource, guideTarget;
+	if (source.isLand() && target.isLand()) {
+		std::tie(guideSource, guideTarget) = getGuidingPair(source, target);
+	} else {
+		if (source.isLand()) guideSource = getGuidingShape(source);
+		if (target.isLand()) guideTarget = getGuidingShape(target);
 	}
 
-	const std::vector<Coordinate> candidates = getTransferCandidates(source, target);
-	if (candidates.empty()) return std::nullopt;
-
-	const auto [gs, gt] = getGuidingPair(source, target);
-	const double threshold = 2.0 * source.region->get().targetTileCount;
-
-	const Coordinate *bestTile = nullptr;
-	double bestScore;
-
+	// compute score for each candidate
 	for (const Coordinate c : candidates) {
 		const Point<Inexact> p = getCentroid(c);
-		const double score = std::min(gs.evaluate(p), threshold) - gt.evaluate(p);
-		if (!bestTile || score > bestScore) bestTile = &c, bestScore = score;
+
+		// TODO: promote "roundness" of sea regions?
+		double score = 0;
+		if (guideSource) score -= guideSource->evaluate(p);
+		if (guideTarget) score += guideTarget->evaluate(p);
+
+		transfers.emplace_back(c, target.index, score);
 	}
 
-	return Transfer{*bestTile, bestScore};
+	return transfers;
+}
+
+std::optional<HexagonalMap::Transfer> HexagonalMap::computeBestTransfer(const Configuration &source, const Configuration &target) const {
+	const auto transfers = computeAllTransfers(source, target);
+	if (transfers.empty()) return std::nullopt;
+
+	const Transfer *best = nullptr;
+	for (const Transfer &t : transfers)
+		if (!best || t.score < best->score)  // minimize
+			best = &t;
+
+	return *best;
+}
+
+std::optional<HexagonalMap::Transfer> HexagonalMap::computeBestTransfer() const {
+	std::optional<Transfer> best;
+
+	for (const auto [i, j] : configGraph.getEdges()) {
+		const Configuration &a = configurations[i];
+		const Configuration &b = configurations[j];
+		if (b.desire() - a.desire() <= 0) continue;  // (temp)
+		const auto t = computeBestTransfer(a, b);
+		if (t && (!best || t->score < best->score)) best = t;
+	}
+
+	return best;
+}
+
+void HexagonalMap::perform(const Transfer &transfer) {
+	Configuration &source = configurations[tiles[transfer.tile]];
+	Configuration &target = configurations[transfer.targetIndex];
+
+	tiles[transfer.tile] = target.index;
+
+	source.tiles.erase(transfer.tile);
+	source.boundary.erase(transfer.tile);
+
+	target.tiles.insert(transfer.tile);
+	target.boundary.insert(transfer.tile);
+
+	// maintain boundary of source and target
+	for (const Coordinate c : transfer.tile.neighbors()) {
+		const auto it = tiles.find(c);
+		if (it == tiles.end()) continue;
+		if (it->second == source.index) {
+			source.boundary.insert(c);
+		} else if (it->second == target.index && target.containsInteriorly(c)) {
+			target.boundary.erase(c);
+		}
+	}
+
+	// TODO: if source is sea, insert new tile
 }
 
 } // namespace cartocrow::mosaic_cartogram

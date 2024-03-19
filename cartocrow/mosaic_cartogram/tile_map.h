@@ -87,6 +87,7 @@ class HexagonalMap {
 		}
 	};
 
+	/// Invariant: all tiles are connected and there are no holes. We say the configuration is \a contiguous.
 	struct Configuration {
 		using TileSet = std::unordered_set<Coordinate, CoordinateHash>;
 
@@ -104,23 +105,32 @@ class HexagonalMap {
 		int desire() const {
 			return region ? region->get().targetTileCount - tiles.size() : 0;
 		}
-		int id() const {
-			return region.value().get().id;  // throws exception if `region` has no value
+		bool isLand() const {
+			return region.has_value();
 		}
 		bool isSea() const {
 			return !region.has_value();
+		}
+		std::string label() const {
+			return region ? region->get().name : "sea";
 		}
 		int size() const {
 			return tiles.size();
 		}
 
+		bool containsInteriorly(Coordinate c) const;
 		bool isAdjacent(Coordinate c) const;
 		bool remainsContiguousWithout(Coordinate c) const;
 	};
 
 	struct Transfer {
 		Coordinate tile;
-		double score;  // higher is better
+		int targetIndex;
+		double score;  // lower is better
+
+		bool operator<(const Transfer &t) const {
+			return score < t.score;
+		}
 	};
 
 	std::vector<std::unordered_map<int, GuidingPair>> guidingPairs;
@@ -143,18 +153,23 @@ class HexagonalMap {
 	static Point<Inexact> getCentroid(Coordinate c);
 	static Point<Inexact> getCentroid(const Configuration &config);
 
+	int getNumberOfLandRegions() const { return guidingPairs.size() + 1; }
+	int getNumberOfSeaRegions() const { return configurations.size() - getNumberOfLandRegions(); }
+
 	// TODO: `opt_ref` instead of pointer?
 	const Configuration* getConfiguration(Coordinate c) const;
 	Configuration* getConfiguration(Coordinate c);
 
+	Ellipse getGuidingShape(const Configuration &config) const;
 	std::pair<Ellipse, Ellipse> getGuidingPair(const Configuration &config1, const Configuration &config2) const;
 
-	std::vector<Coordinate> getTransferCandidates(const Configuration &source, const Configuration &target) const;
-	std::optional<Transfer> getBestTransfer(const Configuration &source, const Configuration &target) const;
+	std::vector<Coordinate> computeTransferCandidates(const Configuration &source, const Configuration &target) const;
+	std::vector<Transfer> computeAllTransfers(const Configuration &source, const Configuration &target) const;
+	std::optional<Transfer> computeBestTransfer(const Configuration &source, const Configuration &target) const;
+	std::optional<Transfer> computeBestTransfer() const;
 
-	/*
-	void transfer(const Coordinate &c, Configuration &target);
-	*/
+	void perform(const Transfer &transfer);
+
 };
 
 } // namespace cartocrow::mosaic_cartogram
