@@ -41,9 +41,11 @@ bool HexagonalMap::Configuration::remainsContiguousWithout(const Coordinate c) c
 	if (!contains(c)) return true;  // no effect
 	if (!boundary.contains(c)) return false;  // this would create a hole
 
-	bool open = false;
+	const auto neighbors = c.neighbors();
+
+	bool open = !contains(neighbors.back());  // check if already open (we count the opening later)
 	int openings = 0;
-	for (const Coordinate d : c.neighbors()) {
+	for (const Coordinate d : neighbors) {
 		if (contains(d)) {
 			open = false;
 		} else if (!open) {
@@ -53,6 +55,7 @@ bool HexagonalMap::Configuration::remainsContiguousWithout(const Coordinate c) c
 	}
 
 	return openings <= 1;  // otherwise the config would be split in twain (at least)
+	                       // if all neighbors are outside, we incorrectly find `openings == 0`, but this still yields the correct conclusion
 }
 
 HexagonalMap::HexagonalMap(const VisibilityDrawing &initial,
@@ -264,7 +267,7 @@ std::optional<HexagonalMap::Transfer> HexagonalMap::computeBestTransfer() const 
 	for (const auto [i, j] : configGraph.getEdges()) {
 		const Configuration &a = configurations[i];
 		const Configuration &b = configurations[j];
-		if (b.desire() - a.desire() <= 0) continue;  // (temp)
+	//	if (b.desire() - a.desire() <= 0) continue;
 		const auto t = computeBestTransfer(a, b);
 		if (t && (!best || t->score < best->score)) best = t;
 	}
