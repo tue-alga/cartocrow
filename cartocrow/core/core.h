@@ -22,6 +22,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 07-11-2019
 #ifndef CARTOCROW_CORE_CORE_H
 #define CARTOCROW_CORE_CORE_H
 
+#include "polyline.h"
 #include <CGAL/Arr_segment_traits_2.h>
 #include <CGAL/Arrangement_2.h>
 #include <CGAL/Bbox_2.h>
@@ -57,6 +58,8 @@ template <class K> using Circle = CGAL::Circle_2<K>;
 template <class K> using Line = CGAL::Line_2<K>;
 /// A line segment in the plane. See \ref CGAL::Segment_2.
 template <class K> using Segment = CGAL::Segment_2<K>;
+/// A ray in the plane. See \ref CGAL::Ray_2.
+template <class K> using Ray = CGAL::Ray_2<K>;
 
 /// A polygon in the plane. See \ref CGAL::Polygon_2.
 template <class K> using Polygon = CGAL::Polygon_2<K>;
@@ -82,28 +85,82 @@ constexpr const Number<Inexact> M_EPSILON = 0.0000001;
 
 /// Converts a point from exact representation to an approximation in inexact
 /// representation.
-Point<Inexact> approximate(const Point<Exact>& p);
+template <class K>
+Point<Inexact> approximate(const Point<K>& p) {
+	return Point<Inexact>(CGAL::to_double(p.x()), CGAL::to_double(p.y()));
+}
 /// Converts a vector from exact representation to an approximation in inexact
 /// representation.
-Vector<Inexact> approximate(const Vector<Exact>& p);
+template <class K>
+Vector<Inexact> approximate(const Vector<K>& v) {
+	return Vector<Inexact>(CGAL::to_double(v.x()), CGAL::to_double(v.y()));
+}
 /// Converts a circle from exact representation to an approximation in inexact
 /// representation.
-Circle<Inexact> approximate(const Circle<Exact>& p);
+template <class K>
+Circle<Inexact> approximate(const Circle<K>& c) {
+	return Circle<Inexact>(approximate(c.center()), CGAL::to_double(c.squared_radius()));
+}
 /// Converts a line from exact representation to an approximation in inexact
 /// representation.
-Line<Inexact> approximate(const Line<Exact>& p);
+template <class K>
+Line<Inexact> approximate(const Line<K>& l) {
+	return Line<Inexact>(CGAL::to_double(l.a()), CGAL::to_double(l.b()), CGAL::to_double(l.c()));
+}
+/// Converts a ray from exact representation to an approximation in inexact
+/// representation.
+template <class K>
+Ray<Inexact> approximate(const Ray<K>& r) {
+	return Ray<Inexact>(approximate(r.source()), approximate(r.second_point()));
+}
 /// Converts a line segment from exact representation to an approximation in
 /// inexact representation.
-Segment<Inexact> approximate(const Segment<Exact>& p);
+template <class K>
+Segment<Inexact> approximate(const Segment<K>& s) {
+	return Segment<Inexact>(approximate(s.start()), approximate(s.end()));
+}
 /// Converts a polygon from exact representation to an approximation in inexact
 /// representation.
-Polygon<Inexact> approximate(const Polygon<Exact>& p);
+template <class K>
+Polygon<Inexact> approximate(const Polygon<K>& p) {
+	Polygon<Inexact> result;
+	for (auto v = p.vertices_begin(); v < p.vertices_end(); ++v) {
+		result.push_back(approximate(*v));
+	}
+	return result;
+}
 /// Converts a polygon with holes from exact representation to an approximation
 /// in inexact representation.
-PolygonWithHoles<Inexact> approximate(const PolygonWithHoles<Exact>& p);
+template <class K>
+PolygonWithHoles<Inexact> approximate(const PolygonWithHoles<K>& p) {
+	PolygonWithHoles<Inexact> result(approximate(p.outer_boundary()));
+	for (auto hole = p.holes_begin(); hole < p.holes_end(); ++hole) {
+		result.add_hole(approximate(*hole));
+	}
+	return result;
+}
 /// Converts a polygon set from exact representation to an approximation in
 /// inexact representation.
-PolygonSet<Inexact> approximate(const PolygonSet<Exact>& p);
+template <class K>
+PolygonSet<Inexact> approximate(const PolygonSet<K>& p) {
+	PolygonSet<Inexact> result;
+	std::vector<PolygonWithHoles<Exact>> polygons;
+	p.polygons_with_holes(std::back_inserter(polygons));
+	for (auto polygon : polygons) {
+		result.insert(approximate(polygon));
+	}
+	return result;
+}
+/// Converts a polyline from exact representation to an approximation in
+/// inexact representation.
+template <class K>
+Polyline<Inexact> approximate(const Polyline<K>& p) {
+	Polyline<Inexact> result;
+	for (auto v = p.vertices_begin(); v < p.vertices_end(); ++v) {
+		result.push_back(approximate(*v));
+	}
+	return result;
+}
 
 /// An RGB color. Used for storing the color of elements to be drawn.
 struct Color {

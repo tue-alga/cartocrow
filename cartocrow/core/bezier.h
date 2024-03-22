@@ -27,7 +27,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 08-09-2020
 
 #include "../core/core.h"
 
-namespace cartocrow::necklace_map {
+namespace cartocrow {
 
 /// A cubic Bezier curve.
 /**
@@ -39,6 +39,9 @@ class BezierCurve {
 	/// Constructs a cubic Bezier curve based on four control points.
 	BezierCurve(const Point<Inexact>& source, const Point<Inexact>& source_control,
 	            const Point<Inexact>& target_control, const Point<Inexact>& target);
+
+	/// Constructs a cubic Bezier curve from a quadratic Bezier curve consisting of three control points.
+	BezierCurve(const Point<Inexact>& source, const Point<Inexact>& control, const Point<Inexact>& target);
 
 	/// Returns the source of this curve.
 	Point<Inexact> source() const;
@@ -57,6 +60,8 @@ class BezierCurve {
 	size_t intersectRay(const Point<Inexact>& source, const Point<Inexact>& target,
 	                    Point<Inexact>* intersections, Number<Inexact>* intersection_t) const;
 
+	BezierCurve transform(const CGAL::Aff_transformation_2<Inexact> &t) const;
+
   protected:
 	// TODO control points stored as Vectors instead of Points
 	std::array<Vector<Inexact>, 4> m_controlPoints;
@@ -69,29 +74,31 @@ class BezierSpline {
 
 	BezierSpline();
 
-	bool IsValid() const;
+	bool isValid() const;
 
-	bool IsEmpty() const;
+	bool isEmpty() const;
 
-	bool IsContinuous() const;
+	bool isContinuous() const;
 
-	bool IsClosed() const;
+	bool isClosed() const;
 
-	bool ToCircle(Circle<Inexact>& circle, const Number<Inexact>& epsilon = 0.01) const;
+	bool toCircle(Circle<Inexact>& circle, const Number<Inexact>& epsilon = 0.01) const;
 
 	const CurveSet& curves() const;
 
 	CurveSet& curves();
 
-	void AppendCurve(const Point<Inexact>& source, const Point<Inexact>& source_control,
+	void appendCurve(const Point<Inexact>& source, const Point<Inexact>& source_control,
 	                 const Point<Inexact>& target_control, const Point<Inexact>& target);
 
-	void AppendCurve(const Point<Inexact>& source_control, const Point<Inexact>& target_control,
+	void appendCurve(BezierCurve curve);
+
+	void appendCurve(const Point<Inexact>& source_control, const Point<Inexact>& target_control,
 	                 const Point<Inexact>& target);
 
-	void Reverse();
+	void reverse();
 
-	Box ComputeBoundingBox() const;
+	Box computeBoundingBox() const;
 
   private:
 	CurveSet curves_;

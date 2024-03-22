@@ -22,26 +22,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 namespace cartocrow::renderer {
 
-void GeometryRenderer::draw(const Point<Exact>& p) {
-	draw(approximate(p));
-}
-
-void GeometryRenderer::draw(const Segment<Exact>& s) {
-	draw(approximate(s));
-}
-
-void GeometryRenderer::draw(const Polygon<Exact>& p) {
-	draw(approximate(p));
-}
-
-void GeometryRenderer::draw(const PolygonWithHoles<Exact>& p) {
-	draw(approximate(p));
-}
-
-void GeometryRenderer::draw(const Circle<Exact>& c) {
-	draw(approximate(c));
-}
-
 void GeometryRenderer::draw(const PolygonSet<Inexact>& ps) {
 	std::vector<PolygonWithHoles<Inexact>> polygons;
 	ps.polygons_with_holes(std::back_inserter(polygons));
@@ -50,12 +30,10 @@ void GeometryRenderer::draw(const PolygonSet<Inexact>& ps) {
 	}
 }
 
-void GeometryRenderer::draw(const PolygonSet<Exact>& ps) {
-	draw(approximate(ps));
-}
-
-void GeometryRenderer::drawText(const Point<Exact>& p, const std::string& s) {
-	drawText(approximate(p), s);
+void GeometryRenderer::draw(const BezierCurve& c) {
+	BezierSpline spline;
+	spline.appendCurve(c);
+	draw(spline);
 }
 
 } // namespace cartocrow::renderer

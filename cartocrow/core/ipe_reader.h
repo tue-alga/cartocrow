@@ -23,8 +23,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <filesystem>
 #include <memory>
 
-//#include "cartocrow/core/bezier_spline.h"
 #include "core.h"
+#include "bezier.h"
 
 #include <ipeattributes.h>
 #include <ipedoc.h>
@@ -50,8 +50,7 @@ class IpeReader {
 	static PolygonSet<Exact> convertShapeToPolygonSet(const ipe::Shape& shape,
 	                                                  const ipe::Matrix& matrix);
 	/// Converts an Ipe path to a Bézier spline.
-	// TODO
-	//static BezierSpline convertPathToSpline(const ipe::SubPath& path, const ipe::Matrix& matrix);
+	static BezierSpline convertPathToSpline(const ipe::SubPath& path, const ipe::Matrix& matrix);
 };
 
 } // namespace cartocrow

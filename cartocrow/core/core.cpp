@@ -24,52 +24,6 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 05-12-2019
 
 namespace cartocrow {
 
-Point<Inexact> approximate(const Point<Exact>& p) {
-	return Point<Inexact>(CGAL::to_double(p.x()), CGAL::to_double(p.y()));
-}
-
-Vector<Inexact> approximate(const Vector<Exact>& v) {
-	return Vector<Inexact>(CGAL::to_double(v.x()), CGAL::to_double(v.y()));
-}
-
-Circle<Inexact> approximate(const Circle<Exact>& c) {
-	return Circle<Inexact>(approximate(c.center()), CGAL::to_double(c.squared_radius()));
-}
-
-Line<Inexact> approximate(const Line<Exact>& l) {
-	return Line<Inexact>(CGAL::to_double(l.a()), CGAL::to_double(l.b()), CGAL::to_double(l.c()));
-}
-
-Segment<Inexact> approximate(const Segment<Exact>& s) {
-	return Segment<Inexact>(approximate(s.start()), approximate(s.end()));
-}
-
-Polygon<Inexact> approximate(const Polygon<Exact>& p) {
-	Polygon<Inexact> result;
-	for (auto v = p.vertices_begin(); v < p.vertices_end(); ++v) {
-		result.push_back(approximate(*v));
-	}
-	return result;
-}
-
-PolygonWithHoles<Inexact> approximate(const PolygonWithHoles<Exact>& p) {
-	PolygonWithHoles<Inexact> result(approximate(p.outer_boundary()));
-	for (auto hole = p.holes_begin(); hole < p.holes_end(); ++hole) {
-		result.add_hole(approximate(*hole));
-	}
-	return result;
-}
-
-PolygonSet<Inexact> approximate(const PolygonSet<Exact>& p) {
-	PolygonSet<Inexact> result;
-	std::vector<PolygonWithHoles<Exact>> polygons;
-	p.polygons_with_holes(std::back_inserter(polygons));
-	for (auto polygon : polygons) {
-		result.insert(approximate(polygon));
-	}
-	return result;
-}
-
 Number<Inexact> wrapAngle(Number<Inexact> alpha, Number<Inexact> beta) {
 	return wrap<Inexact>(alpha, beta, beta + M_2xPI);
 }

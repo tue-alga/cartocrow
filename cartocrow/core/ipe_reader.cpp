@@ -19,6 +19,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "ipe_reader.h"
 
+#include "bezier.h"
+
 #include <CGAL/Boolean_set_operations_2/Gps_polygon_validation.h>
 
 #include <ipebase.h>
@@ -110,21 +112,20 @@ PolygonSet<Exact> IpeReader::convertShapeToPolygonSet(const ipe::Shape& shape,
 	return set;
 }
 
-// TODO
-/*BezierSpline IpeReader::convertPathToSpline(const ipe::SubPath& path, const ipe::Matrix& matrix) {
+BezierSpline IpeReader::convertPathToSpline(const ipe::SubPath& path, const ipe::Matrix& matrix) {
 	BezierSpline spline;
 	if (path.type() == ipe::SubPath::EClosedSpline) {
 		std::vector<ipe::Bezier> beziers;
 		path.asClosedSpline()->beziers(beziers);
 		for (auto bezier : beziers) {
-			spline.AppendCurve(
-			    Point(bezier.iV[0].x, bezier.iV[0].y), Point(bezier.iV[1].x, bezier.iV[1].y),
-			    Point(bezier.iV[2].x, bezier.iV[2].y), Point(bezier.iV[3].x, bezier.iV[3].y));
+			spline.appendCurve(
+			    Point<Inexact>(bezier.iV[0].x, bezier.iV[0].y), Point<Inexact>(bezier.iV[1].x, bezier.iV[1].y),
+			    Point<Inexact>(bezier.iV[2].x, bezier.iV[2].y), Point<Inexact>(bezier.iV[3].x, bezier.iV[3].y));
 		}
 	} else {
 		throw std::runtime_error("Only closed splines are supported for spline conversion");
 	}
 	return spline;
-}*/
+}
 
 } // namespace cartocrow

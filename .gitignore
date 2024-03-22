@@ -10,3 +10,8 @@ doc/tags/
 compile_commands.json
 out/
 CMakeSettings.json
+.idea/
+cmake-build-debug/
+cmake-build-release/
+html/
+latex/

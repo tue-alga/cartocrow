@@ -25,7 +25,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 08-09-2020
 
 #include <glog/logging.h>
 
-namespace cartocrow::necklace_map {
+namespace cartocrow {
 
 BezierCurve::BezierCurve(const Point<Inexact>& source, const Point<Inexact>& source_control,
                          const Point<Inexact>& target_control, const Point<Inexact>& target)
@@ -187,6 +187,15 @@ size_t BezierCurve::intersectRay(const Point<Inexact>& source, const Point<Inexa
 	return num;
 }
 
+BezierCurve BezierCurve::transform(const CGAL::Aff_transformation_2<Inexact> &t) const {
+	return { source().transform(t), sourceControl().transform(t),
+	        targetControl().transform(t), target().transform(t) };
+}
+BezierCurve::BezierCurve(const Point<Inexact>& source, const Point<Inexact>& control,
+                         const Point<Inexact>& target)
+    : BezierCurve(source, CGAL::ORIGIN + (source - CGAL::ORIGIN) / 3 + 2 * (control - CGAL::ORIGIN) / 3,
+                  CGAL::ORIGIN + (target - CGAL::ORIGIN) / 3 + 2 * (control - CGAL::ORIGIN) / 3, target) {}
+
 /**@class BezierSpline
  * @brief A cubic Bezier spline.
  */
@@ -204,8 +213,8 @@ BezierSpline::BezierSpline() : bounding_box_() {}
  * For the spline to be valid it must not be degenerate, i.e. its points must not all be the same.
  * @return whether the spline is valid.
  */
-bool BezierSpline::IsValid() const {
-	if (IsEmpty()) {
+bool BezierSpline::isValid() const {
+	if (isEmpty()) {
 		return false;
 	}
 
@@ -222,7 +231,7 @@ bool BezierSpline::IsValid() const {
 /**@brief Check whether the spline is empty, i.e. it has no curves.
  * @return whether the spline is empty.
  */
-bool BezierSpline::IsEmpty() const {
+bool BezierSpline::isEmpty() const {
 	return curves_.empty();
 }
 
@@ -231,7 +240,7 @@ bool BezierSpline::IsEmpty() const {
  * The spline is continuous if each next curve starts where the previous one ends.
  * @return whether the spline is continuous.
  */
-bool BezierSpline::IsContinuous() const {
+bool BezierSpline::isContinuous() const {
 	Point<Inexact> prev = curves_.front().source();
 	for (const BezierCurve& curve : curves_) {
 		const Point<Inexact> next = curve.source();
@@ -248,8 +257,8 @@ bool BezierSpline::IsContinuous() const {
  * The spline is closed if each next curve starts where the previous one ends and the first curve starts where the last curve ends.
  * @return whether the spline is closed.
  */
-bool BezierSpline::IsClosed() const {
-	return IsContinuous() && curves_.front().source() == curves_.back().target();
+bool BezierSpline::isClosed() const {
+	return isContinuous() && curves_.front().source() == curves_.back().target();
 }
 
 /**@brief Convert the spline to a circle, and check whether this conversion is appropriate.
@@ -259,7 +268,7 @@ bool BezierSpline::IsClosed() const {
  * @param epsilon the maximum allowed ratio between distances to the circumcenter.
  * @return whether the circle is appropriate.
  */
-bool BezierSpline::ToCircle(Circle<Inexact>& circle, const Number<Inexact>& epsilon /*= 0.01*/) const {
+bool BezierSpline::toCircle(Circle<Inexact>& circle, const Number<Inexact>& epsilon /*= 0.01*/) const {
 	Vector<Inexact> sum(0, 0);
 	for (const BezierCurve& curve : curves_) {
 		const Point<Inexact> center =
@@ -280,10 +289,10 @@ bool BezierSpline::ToCircle(Circle<Inexact>& circle, const Number<Inexact>& epsi
 			squared_distance_max = std::max(squared_distance_max, squared_distance);
 		}
 
-		inline Number<Inexact> SquaredRadius() const {
+		inline Number<Inexact> squaredRadius() const {
 			return (squared_distance_min + squared_distance_max) / 2.0;
 		}
-		inline Number<Inexact> DistanceRatio() const {
+		inline Number<Inexact> distanceRatio() const {
 			return squared_distance_max / squared_distance_min;
 		}
 
@@ -303,9 +312,9 @@ bool BezierSpline::ToCircle(Circle<Inexact>& circle, const Number<Inexact>& epsi
 
 		squared_distance(curve.target());
 	}
-	circle = Circle<Inexact>(kernel, squared_distance.SquaredRadius());
+	circle = Circle<Inexact>(kernel, squared_distance.squaredRadius());
 
-	return squared_distance.DistanceRatio() <= (1 + epsilon);
+	return squared_distance.distanceRatio() <= (1 + epsilon);
 }
 
 /**@brief Access the curves of the spline.
@@ -328,9 +337,13 @@ BezierSpline::CurveSet& BezierSpline::curves() {
  * @param target_control the second control point of the curve.
  * @param target the target point of the curve.
  */
-void BezierSpline::AppendCurve(const Point<Inexact>& source, const Point<Inexact>& source_control,
+void BezierSpline::appendCurve(const Point<Inexact>& source, const Point<Inexact>& source_control,
                                const Point<Inexact>& target_control, const Point<Inexact>& target) {
 	curves_.emplace_back(source, source_control, target_control, target);
+}
+
+void BezierSpline::appendCurve(BezierCurve curve) {
+	curves_.push_back(curve);
 }
 
 /**@brief Add a Bezier curve to the end of the spline.
@@ -342,18 +355,18 @@ void BezierSpline::AppendCurve(const Point<Inexact>& source, const Point<Inexact
  * @param target_control the second control point of the curve.
  * @param target the target point of the curve.
  */
-void BezierSpline::AppendCurve(const Point<Inexact>& source_control,
+void BezierSpline::appendCurve(const Point<Inexact>& source_control,
                                const Point<Inexact>& target_control, const Point<Inexact>& target) {
 	CHECK(!curves_.empty());
 	const Point<Inexact>& source = curves_.back().target();
-	AppendCurve(source, source_control, target_control, target);
+	appendCurve(source, source_control, target_control, target);
 }
 
-/**@brief Reverse the spline.
+/**@brief reverse the spline.
  *
  * This involves reversing the order of the curves, as well as reversing the direction of each curve.
  */
-void BezierSpline::Reverse() {
+void BezierSpline::reverse() {
 	CurveSet reverse;
 	for (CurveSet::reverse_iterator curve_iter = curves_.rbegin(); curve_iter != curves_.rend();
 	     ++curve_iter) {
@@ -369,7 +382,7 @@ void BezierSpline::Reverse() {
  * The complete spline is guaranteed to be inside this estimated box.
  * @return the bounding box of the spline.
  */
-Box BezierSpline::ComputeBoundingBox() const {
+Box BezierSpline::computeBoundingBox() const {
 	if (bounding_box_.xmax() <= bounding_box_.xmin() || bounding_box_.ymax() <= bounding_box_.ymin()) {
 		// Computing the exact bounding box is more complex than required.
 		// There are several obvious approaches to interpolate the bounding box (with its own disadvantages):
