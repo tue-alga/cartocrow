@@ -18,12 +18,12 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include "isoline_simplifier.h"
-#include "medial_axis_separator.h"
 #include "collapse.h"
 #include "symmetric_difference.h"
+#include "voronoi_helpers.h"
 #include <CGAL/Arr_conic_traits_2.h>
-#include <CGAL/Cartesian.h>
 #include <CGAL/CORE_algebraic_number_traits.h>
+#include <CGAL/Cartesian.h>
 
 #include <CGAL/Constrained_Delaunay_triangulation_2.h>
 #include <CGAL/Constrained_triangulation_plus_2.h>

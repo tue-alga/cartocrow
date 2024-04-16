@@ -19,25 +19,25 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "isoline_simplification_demo.h"
 #include "cartocrow/core/ipe_reader.h"
-#include "cartocrow/isoline_simplification/isoline.h"
-#include "cartocrow/isoline_simplification/medial_axis_separator.h"
 #include "cartocrow/isoline_simplification/ipe_bezier_wrapper.h"
+#include "cartocrow/isoline_simplification/isoline.h"
+#include "cartocrow/isoline_simplification/voronoi_helpers.h"
 #include "cartocrow/renderer/ipe_renderer.h"
 #include "medial_axis_helpers.h"
 #include "voronoi_drawer.h"
+#include <CGAL/bounding_box.h>
 #include <QApplication>
 #include <QCheckBox>
 #include <QComboBox>
 #include <QDockWidget>
 #include <QLabel>
+#include <QPushButton>
 #include <QSpinBox>
 #include <QVBoxLayout>
-#include <QPushButton>
 #include <filesystem>
 #include <ipepath.h>
 #include <ranges>
 #include <utility>
-#include <CGAL/bounding_box.h>
 
 namespace fs = std::filesystem;
 using namespace cartocrow;
@@ -56,7 +56,12 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 	vLayout->setAlignment(Qt::AlignTop);
 	dockWidget->setWidget(vWidget);
 
+	auto* basicOptions = new QLabel("<h3><b>Basic options</b></h3>");
+	vLayout->addWidget(basicOptions);
 	auto* fileSelector = new QComboBox();
+	auto* fileSelectorLabel = new QLabel("Input file");
+	fileSelectorLabel->setBuddy(fileSelector);
+	vLayout->addWidget(fileSelectorLabel);
 	vLayout->addWidget(fileSelector);
 	std::string ext(".ipe");
 	for (auto &p : fs::recursive_directory_iterator(dir))
@@ -73,13 +78,6 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 	auto* number_of_vertices = new QLabel(QString(("#Vertices: " + std::to_string(m_isoline_simplifier->m_current_complexity)).c_str()));
 	vLayout->addWidget(number_of_vertices);
 
-	auto* debugInfo = new QCheckBox("Debug info");
-	//	debugInfo->setCheckState(Qt::Checked);
-	vLayout->addWidget(debugInfo);
-
-	auto* doCGALSimplify = new QCheckBox("CGAL simplify");
-	vLayout->addWidget(doCGALSimplify);
-
 	auto* simplificationTarget = new QSpinBox();
 	simplificationTarget->setValue(50);
 	simplificationTarget->setMaximum(1000000);
@@ -88,21 +86,26 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 	vLayout->addWidget(simplificationTargetLabel);
 	vLayout->addWidget(simplificationTarget);
 
-	auto* regionIndex = new QSpinBox();
-	regionIndex->setValue(0);
-	regionIndex->setMaximum(20);
-	auto* regionIndexLabel = new QLabel("Region index");
-	regionIndexLabel->setBuddy(regionIndex);
-	vLayout->addWidget(regionIndexLabel);
-	vLayout->addWidget(regionIndex);
+	auto* simplify_button = new QPushButton("Simplify");
+	vLayout->addWidget(simplify_button);
 
-	auto* isolineIndex = new QSpinBox();
-	isolineIndex->setValue(0);
-	isolineIndex->setMaximum(10000);
-	auto* isolineIndexLabel = new QLabel("Isoline index");
-	isolineIndexLabel->setBuddy(isolineIndex);
-	vLayout->addWidget(isolineIndexLabel);
-	vLayout->addWidget(isolineIndex);
+	auto* reload_button = new QPushButton("Reload");
+	vLayout->addWidget(reload_button);
+
+	auto* save_button = new QPushButton("Save");
+	vLayout->addWidget(save_button);
+
+	auto* spacer = new QSpacerItem(1, 30);
+	vLayout->addItem(spacer);
+
+	auto* detailedOptions = new QLabel("<h3><b>Detailed options</b></h3>");
+	vLayout->addWidget(detailedOptions);
+	auto* debugInfo = new QCheckBox("Debug info");
+	//	debugInfo->setCheckState(Qt::Checked);
+	vLayout->addWidget(debugInfo);
+
+	auto* doCGALSimplify = new QCheckBox("Use Dyken et al. method");
+	vLayout->addWidget(doCGALSimplify);
 
 	auto* showGrid = new QCheckBox("Show grid");
 	vLayout->addWidget(showGrid);
@@ -110,7 +113,10 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 	auto* showVertices = new QCheckBox("Show isoline vertices");
 	vLayout->addWidget(showVertices);
 
+	auto* collapse_label = new QLabel("Ladder collapse method");
 	auto* collapse_selector = new QComboBox();
+	collapse_label->setBuddy(collapse_selector);
+	vLayout->addWidget(collapse_label);
 	collapse_selector->addItem("Midpoint");
 	collapse_selector->addItem("Minimize symmetric difference");
 	collapse_selector->addItem("Spline");
@@ -162,27 +168,6 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 	vLayout->addWidget(dyken_r_label);
 	vLayout->addWidget(dyken_r);
 
-	auto* simplify_button = new QPushButton("Simplify");
-	vLayout->addWidget(simplify_button);
-
-	auto* step_button = new QPushButton("Step && update");
-	vLayout->addWidget(step_button);
-
-	auto* step_only_button = new QPushButton("Step");
-	vLayout->addWidget(step_only_button);
-
-	auto* update_sm_button = new QPushButton("Update matching");
-	vLayout->addWidget(update_sm_button);
-
-	auto* update_sl_button = new QPushButton("Update slope ladders");
-	vLayout->addWidget(update_sl_button);
-
-	auto* reload_button = new QPushButton("Reload");
-	vLayout->addWidget(reload_button);
-
-	auto* save_button = new QPushButton("Save");
-	vLayout->addWidget(save_button);
-
 	auto* debug_text = new QLabel("");
 	vLayout->addWidget(debug_text);
 
@@ -196,24 +181,30 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 	m_renderer->setMinZoom(0.01);
 	m_renderer->setMaxZoom(1000.0);
 
-	m_save = [this, showVertices, output_dir, fileSelector, collapse_selector, measure_text]() {
+	m_save = [this, debugInfo, showVertices, output_dir, fileSelector, collapse_selector, measure_text]() {
 		auto& isolines = m_isoline_simplifier->m_simplified_isolines;
 	  	IpeRenderer ipe_renderer;
-		auto separator_p = std::make_shared<MedialAxisSeparatorPainting>(m_isoline_simplifier->m_separator, m_isoline_simplifier->m_delaunay);
-		auto slope_ladder_p = std::make_shared<SlopeLadderPainting>(m_isoline_simplifier->m_slope_ladders);
-	  	auto matching_p = std::make_shared<CompleteMatchingPainting>(m_isoline_simplifier->m_matching);
-	    auto isolines_p = std::make_shared<IsolinePainting>(isolines, showVertices->isChecked(), false, true);
+	  	auto isolines_p = std::make_shared<IsolinePainting>(isolines, showVertices->isChecked(), false, true);
 
-		auto vdp = std::make_shared<VoronoiExceptMedialPainting>(*m_isoline_simplifier);
-		auto map = std::make_shared<MedialAxisExceptSeparatorPainting>(*m_isoline_simplifier);
+	  	if (debugInfo->isChecked()) {
+			auto separator_p = std::make_shared<MedialAxisSeparatorPainting>(
+			    m_isoline_simplifier->m_separator, m_isoline_simplifier->m_delaunay);
+			auto slope_ladder_p =
+			    std::make_shared<SlopeLadderPainting>(m_isoline_simplifier->m_slope_ladders);
+			auto matching_p =
+			    std::make_shared<CompleteMatchingPainting>(m_isoline_simplifier->m_matching);
 
-		ipe_renderer.addPainting(vdp, "Voronoi");
-		ipe_renderer.addPainting(map, "Medial_axis");
-	  	if (!m_isoline_simplifier->m_started) {
-			ipe_renderer.addPainting(separator_p, "Separator");
-	  	}
-		ipe_renderer.addPainting(slope_ladder_p, "Slope_ladders");
-		ipe_renderer.addPainting(matching_p, "Matching");
+			auto vdp = std::make_shared<VoronoiExceptMedialPainting>(*m_isoline_simplifier);
+			auto map = std::make_shared<MedialAxisExceptSeparatorPainting>(*m_isoline_simplifier);
+
+			ipe_renderer.addPainting(vdp, "Voronoi");
+			ipe_renderer.addPainting(map, "Medial_axis");
+			if (!m_isoline_simplifier->m_started) {
+				ipe_renderer.addPainting(separator_p, "Separator");
+			}
+			ipe_renderer.addPainting(slope_ladder_p, "Slope_ladders");
+			ipe_renderer.addPainting(matching_p, "Matching");
+		}
 	    ipe_renderer.addPainting(isolines_p, "Simplified_isolines");
 
 		if (m_debug_ladder.has_value()) {
@@ -232,10 +223,10 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 		meta_data_file.close();
 	};
 
-	m_recalculate = [this, debugInfo, doCGALSimplify, simplificationTarget, regionIndex, showVertices, isolineIndex, number_of_vertices]() {
+	m_recalculate = [this, debugInfo, doCGALSimplify, simplificationTarget, showVertices, number_of_vertices]() {
 		number_of_vertices->setText(QString(("#Vertices: " + std::to_string(m_isoline_simplifier->m_current_complexity)).c_str()));
 		recalculate(debugInfo->checkState(), simplificationTarget->value(),
-		            doCGALSimplify->checkState(), regionIndex->value(), showVertices->checkState(), isolineIndex->value());
+		            doCGALSimplify->checkState(), showVertices->checkState());
 	};
 
 	m_reload = [this, dir, angle_filter_input, alignment_filter_input, collapse_selector, fileSelector, splineRepetitions, sampleCount]() {
@@ -276,36 +267,34 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 	connect(debugInfo, &QCheckBox::stateChanged, m_recalculate);
 	connect(simplificationTarget, QOverload<int>::of(&QSpinBox::valueChanged), m_recalculate);
 	connect(doCGALSimplify, &QCheckBox::stateChanged, m_reload);
-	connect(regionIndex, QOverload<int>::of(&QSpinBox::valueChanged), m_recalculate);
 	connect(showGrid, &QCheckBox::stateChanged, [this](bool v) { m_renderer->setDrawAxes(v); });
 	connect(showVertices, &QCheckBox::stateChanged, m_recalculate);
-	connect(isolineIndex, QOverload<int>::of(&QSpinBox::valueChanged), m_recalculate);
 	connect(angle_filter_input, QOverload<double>::of(&QDoubleSpinBox::valueChanged), m_recalculate);
 	connect(collapse_selector, &QComboBox::currentTextChanged, m_reload);
 //	connect(splineRepetitions, QOverload<int>::of(&QSpinBox::valueChanged), m_reload);
 //	connect(sampleCount, QOverload<int>::of(&QSpinBox::valueChanged), m_reload);
-	connect(step_button, &QPushButton::clicked, [this]() {
-	    m_debug_ladder = std::nullopt;
-		bool progress = m_isoline_simplifier->step();
-		if (progress) {
-			m_isoline_simplifier->update_matching();
-			m_isoline_simplifier->update_ladders();
-		}
-	  	m_recalculate();
-	});
-	connect(step_only_button, &QPushButton::clicked, [this]() {
-	    m_debug_ladder = std::nullopt;
-		m_isoline_simplifier->step();
-		m_recalculate();
-	});
-	connect(update_sm_button, &QPushButton::clicked, [this]() {
-		m_isoline_simplifier->update_matching();
-		m_recalculate();
-	});
-	connect(update_sl_button, &QPushButton::clicked, [this]() {
-		m_isoline_simplifier->update_ladders();
-		m_recalculate();
-	});
+//	connect(step_button, &QPushButton::clicked, [this]() {
+//	    m_debug_ladder = std::nullopt;
+//		bool progress = m_isoline_simplifier->step();
+//		if (progress) {
+//			m_isoline_simplifier->update_matching();
+//			m_isoline_simplifier->update_ladders();
+//		}
+//	  	m_recalculate();
+//	});
+//	connect(step_only_button, &QPushButton::clicked, [this]() {
+//	    m_debug_ladder = std::nullopt;
+//		m_isoline_simplifier->step();
+//		m_recalculate();
+//	});
+//	connect(update_sm_button, &QPushButton::clicked, [this]() {
+//		m_isoline_simplifier->update_matching();
+//		m_recalculate();
+//	});
+//	connect(update_sl_button, &QPushButton::clicked, [this]() {
+//		m_isoline_simplifier->update_ladders();
+//		m_recalculate();
+//	});
 	connect(simplify_button, &QPushButton::clicked, [this, simplificationTarget, doCGALSimplify, measure_text, dyken_r]() {
 	  	m_debug_ladder = std::nullopt;
 		int target = simplificationTarget->value();
@@ -356,8 +345,7 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 	m_reload();
 }
 
-void IsolineSimplificationDemo::recalculate(bool debugInfo, int target, bool cgal_simplify, int region_index,
-                                            bool show_vertices, int isoline_index) {
+void IsolineSimplificationDemo::recalculate(bool debugInfo, int target, bool cgal_simplify, bool show_vertices) {
 	// todo: split into repaint and separate recalculations like simplification, debugInfo
 	m_renderer->clear();
 	IpeRenderer ipe_renderer;
@@ -419,11 +407,6 @@ void IsolineSimplificationDemo::recalculate(bool debugInfo, int target, bool cga
 //		auto cgal_simplified_p = std::make_shared<IsolinePainting>(m_cgal_simplified, show_vertices, false);
 //		m_renderer->addPainting(cgal_simplified_p, "CGAL simplified isolines");
 //		ipe_renderer.addPainting(cgal_simplified_p, "CGAL simplified isolines");
-	}
-
-	if (!m_isoline_simplifier->m_started && debugInfo && region_index < simplified_isolines.size() && separator.contains(&simplified_isolines[region_index])) {
-		auto touched_p = std::make_shared<TouchedPainting>(separator.at(&simplified_isolines[region_index]), m_isoline_simplifier->m_delaunay);
-		m_renderer->addPainting(touched_p, "Touched");
 	}
 
 	if (debugInfo) {

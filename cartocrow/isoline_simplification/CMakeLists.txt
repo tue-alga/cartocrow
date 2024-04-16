@@ -1,5 +1,5 @@
 set(SOURCES
-	medial_axis_separator.cpp
+	voronoi_helpers.cpp
 	isoline_simplifier.cpp
 	collapse.cpp
 	collapse.h
@@ -10,7 +10,7 @@ set(SOURCES
 set(HEADERS
 	isoline.h
     types.h
-	medial_axis_separator.h
+    voronoi_helpers.h
 	isoline_simplifier.h
 	ipe_bezier_wrapper.h
 )

@@ -19,10 +19,10 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #ifndef CARTOCROW_ISOLINE_SIMPLIFICATION_H
 #define CARTOCROW_ISOLINE_SIMPLIFICATION_H
-#include "isoline.h"
-#include "medial_axis_separator.h"
-#include "types.h"
 #include "collapse.h"
+#include "isoline.h"
+#include "types.h"
+#include "voronoi_helpers.h"
 #include <boost/heap/d_ary_heap.hpp>
 
 namespace cartocrow::isoline_simplification {

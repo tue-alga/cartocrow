@@ -24,8 +24,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "cartocrow/core/ipe_reader.h"
 #include "cartocrow/isoline_simplification/isoline.h"
 #include "cartocrow/isoline_simplification/isoline_simplifier.h"
-#include "cartocrow/isoline_simplification/medial_axis_separator.h"
 #include "cartocrow/isoline_simplification/types.h"
+#include "cartocrow/isoline_simplification/voronoi_helpers.h"
 #include "cartocrow/renderer/geometry_painting.h"
 #include "cartocrow/renderer/geometry_widget.h"
 #include <QMainWindow>
@@ -39,7 +39,7 @@ class IsolineSimplificationDemo : public QMainWindow {
 
   public:
 	IsolineSimplificationDemo();
-	void recalculate(bool debugInfo, int target, bool cgal_simplify, int region_index, bool show_vertices, int isoline_index);
+	void recalculate(bool debugInfo, int target, bool cgal_simplify, bool show_vertices);
 
   private:
 	std::vector<Isoline<K>> m_cgal_simplified;

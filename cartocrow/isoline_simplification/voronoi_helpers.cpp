@@ -17,8 +17,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "medial_axis_separator.h"
 #include "types.h"
+#include "voronoi_helpers.h"
 #include <CGAL/Segment_Delaunay_graph_adaptation_traits_2.h>
 #include <CGAL/Voronoi_diagram_2.h>
 #include <unordered_set>
