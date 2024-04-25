@@ -330,7 +330,9 @@ void IpeRenderer::addPainting(const std::shared_ptr<GeometryPainting>& painting)
 }
 
 void IpeRenderer::addPainting(const std::shared_ptr<GeometryPainting>& painting, const std::string& name) {
-	m_paintings.emplace_back(painting, name);
+	std::string spaceless;
+	std::replace_copy(name.begin(), name.end(), std::back_inserter(spaceless), ' ', '_');
+	m_paintings.emplace_back(painting, spaceless);
 }
 
 std::string IpeRenderer::escapeForLaTeX(const std::string& text) const {
