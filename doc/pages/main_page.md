@@ -36,6 +36,10 @@ CartoCrow consists of the following modules.
   _Author: Wouter Meulemans_
 \image html simplification-example.png
 
+* The **isoline_simplification** module implements \ref cartocrow::isoline_simplification::IsolineSimplifier "an algorithm" \cite scalable_harmonious_simplification_cosit to simplify isolines simultaneously such that common features are maintained.  
+  _Author: Steven van den Broek_
+\image html harmonious-simplification.svg
+
 ### Utilities
 
 * The **core** module contains the basic primitives and utilities that are in use throughout the library. This includes a list of type aliases for basic [CGAL](https://cgal.org) types (\ref cartocrow::Point<K> "Point", \ref cartocrow::Circle<K> "Circle", \ref cartocrow::Polygon<K> "Polygon", etc.) and tools to read maps from Ipe files (\ref cartocrow::RegionList "RegionList").  

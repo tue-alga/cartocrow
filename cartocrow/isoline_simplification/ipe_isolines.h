@@ -17,13 +17,15 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef CARTOCROW_SYMMETRIC_DIFFERENCE_H
-#define CARTOCROW_SYMMETRIC_DIFFERENCE_H
+#ifndef CARTOCROW_IPE_ISOLINES_H
+#define CARTOCROW_IPE_ISOLINES_H
 
+#include "../core/ipe_reader.h"
 #include "types.h"
-#include "isoline.h"
 
 namespace cartocrow::isoline_simplification {
-double symmetric_difference(const Isoline<K>& original, const Isoline<K>& simplified);
+std::vector<Isoline<K>> ipeToIsolines(const std::filesystem::path& file);
+std::vector<Isoline<K>> isolinesInPage(ipe::Page* page);
 }
-#endif //CARTOCROW_SYMMETRIC_DIFFERENCE_H
+
+#endif //CARTOCROW_IPE_ISOLINES_H

@@ -1,7 +1,7 @@
 /*
 The CartoCrow library implements algorithmic geo-visualization methods,
 developed at TU Eindhoven.
-Copyright (C) 2021  Netherlands eScience Center and TU Eindhoven
+Copyright (C) 2024 TU Eindhoven
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

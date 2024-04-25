@@ -1,7 +1,7 @@
 /*
 The CartoCrow library implements algorithmic geo-visualization methods,
 developed at TU Eindhoven.
-Copyright (C) 2021  Netherlands eScience Center and TU Eindhoven
+Copyright (C) 2024 TU Eindhoven
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -39,7 +39,7 @@ class IsolineSimplificationDemo : public QMainWindow {
 
   public:
 	IsolineSimplificationDemo();
-	void recalculate(bool debugInfo, int target, bool cgal_simplify, bool show_vertices);
+	void recalculate(bool debugInfo, bool show_vertices);
 
   private:
 	std::vector<Isoline<K>> m_cgal_simplified;
@@ -50,11 +50,11 @@ class IsolineSimplificationDemo : public QMainWindow {
 	std::function<void()> m_recalculate;
 	std::function<void()> m_reload;
 	std::function<void()> m_save;
+	std::optional<std::string> m_dir;
+	std::optional<std::string> m_output_dir;
 };
 
 Polygon<K> slope_ladder_polygon(const SlopeLadder& slope_ladder);
-
-std::vector<Isoline<K>> isolinesInPage(ipe::Page* page);
 
 class VoronoiPainting : public GeometryPainting {
   public:
@@ -114,18 +114,6 @@ class CompleteMatchingPainting : public GeometryPainting {
 
   private:
 	Matching& m_matching;
-};
-
-class TouchedPainting : public GeometryPainting {
-  public:
-	TouchedPainting(std::vector<SDG2::Edge> edges, const SDG2& delaunay);
-
-  protected:
-	void paint(GeometryRenderer& renderer) const override;
-
-  private:
-	std::vector<SDG2::Edge> m_edges;
-	const SDG2& m_delaunay;
 };
 
 class SlopeLadderPainting : public GeometryPainting {

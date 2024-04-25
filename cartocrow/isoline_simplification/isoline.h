@@ -1,7 +1,7 @@
 /*
 The CartoCrow library implements algorithmic geo-visualization methods,
 developed at TU Eindhoven.
-Copyright (C) 2021  Netherlands eScience Center and TU Eindhoven
+Copyright (C) 2024 TU Eindhoven
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -23,6 +23,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "../core/core.h"
 
 namespace cartocrow::isoline_simplification {
+/// An object of this class represent an isoline.
+/// This can be viewed as wrapper around the \ref Polyline and \ref Polygon classes.
+/// The points are stored as a public linked list for convenient and efficient removal and insertion.
 template <class K>
 class Isoline {
   public:

@@ -17,13 +17,22 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef CARTOCROW_SYMMETRIC_DIFFERENCE_H
-#define CARTOCROW_SYMMETRIC_DIFFERENCE_H
+#ifndef CARTOCROW_SIMPLE_ISOLINE_PAINTING_H
+#define CARTOCROW_SIMPLE_ISOLINE_PAINTING_H
 
-#include "types.h"
+#include "cartocrow/renderer/geometry_painting.h"
 #include "isoline.h"
+#include "types.h"
 
 namespace cartocrow::isoline_simplification {
-double symmetric_difference(const Isoline<K>& original, const Isoline<K>& simplified);
+class SimpleIsolinePainting : public renderer::GeometryPainting {
+  public:
+	SimpleIsolinePainting(std::vector<Isoline<K>> isolines);
+	void paint(renderer::GeometryRenderer& renderer) const override;
+
+  private:
+	std::vector<Isoline<K>> m_isolines;
+};
 }
-#endif //CARTOCROW_SYMMETRIC_DIFFERENCE_H
+
+#endif //CARTOCROW_SIMPLE_ISOLINE_PAINTING_H

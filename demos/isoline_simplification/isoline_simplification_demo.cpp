@@ -1,7 +1,7 @@
 /*
 The CartoCrow library implements algorithmic geo-visualization methods,
 developed at TU Eindhoven.
-Copyright (C) 2021  Netherlands eScience Center and TU Eindhoven
+Copyright (C) 2024 TU Eindhoven
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -19,8 +19,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "isoline_simplification_demo.h"
 #include "cartocrow/core/ipe_reader.h"
-#include "cartocrow/isoline_simplification/ipe_bezier_wrapper.h"
 #include "cartocrow/isoline_simplification/isoline.h"
+#include "cartocrow/isoline_simplification/ipe_isolines.h"
 #include "cartocrow/isoline_simplification/voronoi_helpers.h"
 #include "cartocrow/renderer/ipe_renderer.h"
 #include "medial_axis_helpers.h"
@@ -30,6 +30,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <QCheckBox>
 #include <QComboBox>
 #include <QDockWidget>
+#include <QFileDialog>
 #include <QLabel>
 #include <QPushButton>
 #include <QSpinBox>
@@ -45,8 +46,6 @@ using namespace cartocrow::renderer;
 using namespace cartocrow::isoline_simplification;
 
 IsolineSimplificationDemo::IsolineSimplificationDemo() {
-	std::string dir("/home/steven/Documents/cartocrow/inputs/current/");
-	std::string output_dir("/home/steven/Documents/cartocrow/output/");
 	setWindowTitle("Isoline simplification");
 
 	auto* dockWidget = new QDockWidget();
@@ -56,26 +55,19 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 	vLayout->setAlignment(Qt::AlignTop);
 	dockWidget->setWidget(vWidget);
 
-	auto* basicOptions = new QLabel("<h3><b>Basic options</b></h3>");
+	auto* basicOptions = new QLabel("<h3>Basic options</h3>");
 	vLayout->addWidget(basicOptions);
+	auto* directorySelector = new QPushButton("Select input directory");
+	vLayout->addWidget(directorySelector);
 	auto* fileSelector = new QComboBox();
 	auto* fileSelectorLabel = new QLabel("Input file");
 	fileSelectorLabel->setBuddy(fileSelector);
 	vLayout->addWidget(fileSelectorLabel);
 	vLayout->addWidget(fileSelector);
-	std::string ext(".ipe");
-	for (auto &p : fs::recursive_directory_iterator(dir))
-	{
-		if (p.path().extension() == ext)
-			fileSelector->addItem(QString::fromStdString(p.path().stem().string()));
-	}
 
-	std::cout << "Loading: " << fileSelector->currentText().toStdString() << std::endl;
-	std::shared_ptr<ipe::Document> document = IpeReader::loadIpeFile(dir + fileSelector->currentText().toStdString() + ".ipe");
-	ipe::Page* page = document->page(0);
-	m_isoline_simplifier = std::make_unique<IsolineSimplifier>(isolinesInPage(page));
+	m_isoline_simplifier = std::make_unique<IsolineSimplifier>();
 
-	auto* number_of_vertices = new QLabel(QString(("#Vertices: " + std::to_string(m_isoline_simplifier->m_current_complexity)).c_str()));
+	    auto* number_of_vertices = new QLabel(QString(("#Vertices: " + std::to_string(m_isoline_simplifier->m_current_complexity)).c_str()));
 	vLayout->addWidget(number_of_vertices);
 
 	auto* simplificationTarget = new QSpinBox();
@@ -92,20 +84,19 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 	auto* reload_button = new QPushButton("Reload");
 	vLayout->addWidget(reload_button);
 
-	auto* save_button = new QPushButton("Save");
-	vLayout->addWidget(save_button);
-
 	auto* spacer = new QSpacerItem(1, 30);
 	vLayout->addItem(spacer);
 
-	auto* detailedOptions = new QLabel("<h3><b>Detailed options</b></h3>");
+	auto* detailedOptions = new QLabel("<h3>Detailed options</h3>");
 	vLayout->addWidget(detailedOptions);
 	auto* debugInfo = new QCheckBox("Debug info");
-	//	debugInfo->setCheckState(Qt::Checked);
 	vLayout->addWidget(debugInfo);
 
-	auto* doCGALSimplify = new QCheckBox("Use Dyken et al. method");
-	vLayout->addWidget(doCGALSimplify);
+	auto* doDykenSimplify = new QCheckBox("Use Dyken et al. method");
+	vLayout->addWidget(doDykenSimplify);
+
+	auto* disableLadders = new QCheckBox("Disable ladders");
+	vLayout->addWidget(disableLadders);
 
 	auto* showGrid = new QCheckBox("Show grid");
 	vLayout->addWidget(showGrid);
@@ -141,24 +132,6 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 	vLayout->addWidget(splineRepetitionsLabel);
 	vLayout->addWidget(splineRepetitions);
 
-	auto* angle_filter_input = new QDoubleSpinBox();
-	angle_filter_input->setValue(10.0);
-	angle_filter_input->setMinimum(0);
-	angle_filter_input->setMaximum(M_PI);
-	auto* angle_filter_input_label = new QLabel("Angle filter");
-	angle_filter_input_label->setBuddy(angle_filter_input);
-	vLayout->addWidget(angle_filter_input_label);
-	vLayout->addWidget(angle_filter_input);
-
-	auto* alignment_filter_input = new QDoubleSpinBox();
-	alignment_filter_input->setValue(2*M_PI);
-	alignment_filter_input->setMinimum(0);
-	alignment_filter_input->setMaximum(2*M_PI);
-	auto* alignment_filter_input_label = new QLabel("Alignment filter");
-	alignment_filter_input_label->setBuddy(alignment_filter_input);
-	vLayout->addWidget(alignment_filter_input_label);
-	vLayout->addWidget(alignment_filter_input);
-
 	auto* dyken_r = new QDoubleSpinBox();
 	dyken_r->setValue(1);
 	dyken_r->setMinimum(0);
@@ -167,6 +140,15 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 	dyken_r_label->setBuddy(dyken_r);
 	vLayout->addWidget(dyken_r_label);
 	vLayout->addWidget(dyken_r);
+
+	auto* step_button = new QPushButton("Step");
+	vLayout->addWidget(step_button);
+
+	auto* outputDirectorySelector = new QPushButton("Select output directory");
+	vLayout->addWidget(outputDirectorySelector);
+
+	auto* save_button = new QPushButton("Save");
+	vLayout->addWidget(save_button);
 
 	auto* debug_text = new QLabel("");
 	vLayout->addWidget(debug_text);
@@ -181,7 +163,10 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 	m_renderer->setMinZoom(0.01);
 	m_renderer->setMaxZoom(1000.0);
 
-	m_save = [this, debugInfo, showVertices, output_dir, fileSelector, collapse_selector, measure_text]() {
+	m_save = [this, debugInfo, showVertices, fileSelector, collapse_selector, measure_text]() {
+		if (!m_output_dir.has_value()) return;
+		if (m_output_dir == "") return;
+
 		auto& isolines = m_isoline_simplifier->m_simplified_isolines;
 	  	IpeRenderer ipe_renderer;
 	  	auto isolines_p = std::make_shared<IsolinePainting>(isolines, showVertices->isChecked(), false, true);
@@ -216,22 +201,21 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 		std::string file_name(fileSelector->currentText().toStdString() + "_" +
 		                      std::to_string(m_isoline_simplifier->m_current_complexity) + "_" +
 		                      collapse_selector->currentText().toStdString());
-	   	ipe_renderer.save(output_dir + file_name + ".ipe");
+	   	ipe_renderer.save(*m_output_dir + "/" + file_name + ".ipe");
 		std::ofstream meta_data_file;
-		meta_data_file.open(output_dir + file_name + "_meta" + ".txt");
+		meta_data_file.open(*m_output_dir + "/" + file_name + "_meta" + ".txt");
 		meta_data_file << measure_text->text().toStdString();
 		meta_data_file.close();
 	};
 
-	m_recalculate = [this, debugInfo, doCGALSimplify, simplificationTarget, showVertices, number_of_vertices]() {
+	m_recalculate = [this, debugInfo, doDykenSimplify, simplificationTarget, showVertices, number_of_vertices]() {
 		number_of_vertices->setText(QString(("#Vertices: " + std::to_string(m_isoline_simplifier->m_current_complexity)).c_str()));
-		recalculate(debugInfo->checkState(), simplificationTarget->value(),
-		            doCGALSimplify->checkState(), showVertices->checkState());
+		recalculate(debugInfo->checkState(), showVertices->checkState());
 	};
 
-	m_reload = [this, dir, angle_filter_input, alignment_filter_input, collapse_selector, fileSelector, splineRepetitions, sampleCount]() {
-		std::shared_ptr<ipe::Document> document = IpeReader::loadIpeFile(dir + fileSelector->currentText().toStdString() + ".ipe");
-		ipe::Page* page = document->page(0);
+	m_reload = [this, collapse_selector, fileSelector, splineRepetitions, sampleCount,
+	            disableLadders]() {
+		if (!m_dir.has_value()) return;
 		std::shared_ptr<LadderCollapse> collapse;
 		switch (collapse_selector->currentIndex()) {
 		case 0: {
@@ -259,46 +243,71 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 			break;
 		}
 		}
-		m_isoline_simplifier = std::make_unique<IsolineSimplifier>(isolinesInPage(page), angle_filter_input->value(), alignment_filter_input->value(), collapse);
+		auto ipe_file = *m_dir + "/" + fileSelector->currentText().toStdString() + ".ipe";
+		if (disableLadders->isChecked()) {
+			m_isoline_simplifier = std::make_unique<IsolineSimplifier>(ipeToIsolines(ipe_file), collapse, -1.0, -1.0);
+		} else {
+			m_isoline_simplifier = std::make_unique<IsolineSimplifier>(ipeToIsolines(ipe_file), collapse);
+		}
 		m_debug_ladder = std::nullopt;
 		m_recalculate();
 	};
+
+	connect(directorySelector, &QPushButton::clicked, [this, fileSelector]() {
+		QString start_dir;
+		if (m_dir.has_value() && m_dir != "") {
+			start_dir = QString::fromStdString(*m_dir);
+		} else {
+			start_dir = ".";
+		}
+
+		m_dir = QFileDialog::getExistingDirectory(this, tr("Select directory with input isolines"),
+		                                                     start_dir,
+		                                                     QFileDialog::ShowDirsOnly
+															 | QFileDialog::DontResolveSymlinks).toStdString();
+
+		if (m_dir == "") return;
+
+		fileSelector->clear();
+		for (auto &p : fs::directory_iterator(*m_dir)) {
+			if (p.path().extension() == ".ipe")
+				fileSelector->addItem(QString::fromStdString(p.path().stem().string()));
+		}
+	});
+	connect(outputDirectorySelector, &QPushButton::clicked, [this]() {
+		QString start_dir;
+		if (m_output_dir.has_value() && m_output_dir != "") {
+			start_dir = QString::fromStdString(*m_output_dir);
+		} else {
+			start_dir = ".";
+		}
+
+		m_output_dir = QFileDialog::getExistingDirectory(this, tr("Select directory in which to place output files"),
+		                                          start_dir,
+		                                          QFileDialog::ShowDirsOnly
+		                                              | QFileDialog::DontResolveSymlinks).toStdString();
+	});
 	connect(fileSelector, &QComboBox::currentTextChanged, m_reload);
 	connect(debugInfo, &QCheckBox::stateChanged, m_recalculate);
 	connect(simplificationTarget, QOverload<int>::of(&QSpinBox::valueChanged), m_recalculate);
-	connect(doCGALSimplify, &QCheckBox::stateChanged, m_reload);
+	connect(doDykenSimplify, &QCheckBox::stateChanged, m_reload);
+	connect(disableLadders, &QCheckBox::stateChanged, m_reload);
 	connect(showGrid, &QCheckBox::stateChanged, [this](bool v) { m_renderer->setDrawAxes(v); });
 	connect(showVertices, &QCheckBox::stateChanged, m_recalculate);
-	connect(angle_filter_input, QOverload<double>::of(&QDoubleSpinBox::valueChanged), m_recalculate);
 	connect(collapse_selector, &QComboBox::currentTextChanged, m_reload);
-//	connect(splineRepetitions, QOverload<int>::of(&QSpinBox::valueChanged), m_reload);
-//	connect(sampleCount, QOverload<int>::of(&QSpinBox::valueChanged), m_reload);
-//	connect(step_button, &QPushButton::clicked, [this]() {
-//	    m_debug_ladder = std::nullopt;
-//		bool progress = m_isoline_simplifier->step();
-//		if (progress) {
-//			m_isoline_simplifier->update_matching();
-//			m_isoline_simplifier->update_ladders();
-//		}
-//	  	m_recalculate();
-//	});
-//	connect(step_only_button, &QPushButton::clicked, [this]() {
-//	    m_debug_ladder = std::nullopt;
-//		m_isoline_simplifier->step();
-//		m_recalculate();
-//	});
-//	connect(update_sm_button, &QPushButton::clicked, [this]() {
-//		m_isoline_simplifier->update_matching();
-//		m_recalculate();
-//	});
-//	connect(update_sl_button, &QPushButton::clicked, [this]() {
-//		m_isoline_simplifier->update_ladders();
-//		m_recalculate();
-//	});
-	connect(simplify_button, &QPushButton::clicked, [this, simplificationTarget, doCGALSimplify, measure_text, dyken_r]() {
+	connect(step_button, &QPushButton::clicked, [this]() {
+	    m_debug_ladder = std::nullopt;
+		bool progress = m_isoline_simplifier->step();
+		if (progress) {
+			m_isoline_simplifier->update_matching();
+			m_isoline_simplifier->update_ladders();
+		}
+	  	m_recalculate();
+	});
+	connect(simplify_button, &QPushButton::clicked, [this, simplificationTarget, doDykenSimplify, measure_text, dyken_r]() {
 	  	m_debug_ladder = std::nullopt;
 		int target = simplificationTarget->value();
-		if (doCGALSimplify->isChecked()) {
+		if (doDykenSimplify->isChecked()) {
 			m_isoline_simplifier->dyken_simplify(target, dyken_r->value());
 		} else {
 			m_isoline_simplifier->simplify(target);
@@ -345,73 +354,39 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 	m_reload();
 }
 
-void IsolineSimplificationDemo::recalculate(bool debugInfo, int target, bool cgal_simplify, bool show_vertices) {
-	// todo: split into repaint and separate recalculations like simplification, debugInfo
+void IsolineSimplificationDemo::recalculate(bool debugInfo, bool show_vertices) {
 	m_renderer->clear();
-	IpeRenderer ipe_renderer;
 
-	std::vector<Isoline<K>>& original_isolines = m_isoline_simplifier->m_simplified_isolines;
 	std::vector<Isoline<K>>& simplified_isolines = m_isoline_simplifier->m_simplified_isolines;
 
 	auto medial_axis_p = std::make_shared<VoronoiPainting>(m_isoline_simplifier->m_delaunay);
 	if (debugInfo) {
 		m_renderer->addPainting(medial_axis_p, "Voronoi diagram");
-//		ipe_renderer.addPainting(medial_axis_p, "Voronoi diagram");
 	}
 
 	const auto& separator = m_isoline_simplifier->m_separator;
 
 	auto separator_p = std::make_shared<MedialAxisSeparatorPainting>(separator, m_isoline_simplifier->m_delaunay);
-
-//	auto matching_p = std::make_shared<MatchingPainting>(m_isoline_simplifier->m_matching,
-//	                                                     [this, &simplified_isolines, isoline_index](Gt::Point_2 pt) {
-//		                                                     return m_isoline_simplifier->m_p_isoline.contains(pt) && m_isoline_simplifier->m_p_isoline.at(pt) == &simplified_isolines[std::min(static_cast<int>(simplified_isolines.size() - 1), isoline_index)];
-//	                                                     });
 	auto matching_p = std::make_shared<CompleteMatchingPainting>(m_isoline_simplifier->m_matching);
-
 	auto slope_ladder_p = std::make_shared<SlopeLadderPainting>(m_isoline_simplifier->m_slope_ladders);
 	auto collapse_p = std::make_shared<CollapsePainting>(*m_isoline_simplifier);
-//	auto changed_p = std::make_shared<ChangedPainting>(*m_isoline_simplifier.);
 
 	if (debugInfo) {
 		m_renderer->addPainting(matching_p, "Matching");
 		if (!m_isoline_simplifier->m_started) {
 			m_renderer->addPainting(separator_p, "Separator");
-//			ipe_renderer.addPainting(separator_p, "Separator");
 		}
 		m_renderer->addPainting(slope_ladder_p, "Slope ladders");
-
-		ipe_renderer.addPainting(slope_ladder_p, "Slope_ladders");
 	}
-
-//	auto vdp = std::make_shared<VoronoiExceptMedialPainting>(*m_isoline_simplifier);
-//	auto map = std::make_shared<MedialAxisExceptSeparatorPainting>(*m_isoline_simplifier);
-//	m_renderer->addPainting(vdp, "Voronoi");
-//	m_renderer->addPainting(map, "Medial axis");
-//	m_renderer->addPainting(separator_p, "Separator");
-
-//	ipe_renderer.addPainting(vdp, "Voronoi");
-//	ipe_renderer.addPainting(map, "Medial_axis");
-//	ipe_renderer.addPainting(separator_p, "Separator");
 
 	auto original_isolines_p = std::make_shared<IsolinePainting>(m_isoline_simplifier->m_isolines, show_vertices, true, false);
 	auto isolines_p = std::make_shared<IsolinePainting>(simplified_isolines, show_vertices, false, false);
 	if (m_isoline_simplifier->m_started)
 		m_renderer->addPainting(original_isolines_p, "Original isolines");
 	m_renderer->addPainting(isolines_p, "Simplified isolines");
-//	ipe_renderer.addPainting(isolines_p, "Simplified_isolines");
-
-	if (cgal_simplify) {
-
-
-//		auto cgal_simplified_p = std::make_shared<IsolinePainting>(m_cgal_simplified, show_vertices, false);
-//		m_renderer->addPainting(cgal_simplified_p, "CGAL simplified isolines");
-//		ipe_renderer.addPainting(cgal_simplified_p, "CGAL simplified isolines");
-	}
 
 	if (debugInfo) {
 		m_renderer->addPainting(collapse_p, "Ladder collapse");
-//		ipe_renderer.addPainting(collapse_p, "LadderCollapse");
 	}
 
 	if (m_debug_ladder.has_value()) {
@@ -421,437 +396,14 @@ void IsolineSimplificationDemo::recalculate(bool debugInfo, int target, bool cga
 	}
 
 	m_renderer->update();
-
-//	ipe_renderer.save("/home/steven/Documents/cartocrow/output.ipe");
 }
 
-std::vector<Isoline<K>> isolinesInPage(ipe::Page* page) {
-	auto isolines = std::vector<Isoline<K>>();
-
-	for (int i = 0; i < page->count(); i++) {
-		auto object = page->object(i);
-		if (object->type() != ipe::Object::Type::EPath) continue;
-		auto path = object->asPath();
-		auto matrix = object->matrix();
-		auto shape = path->shape();
-		for (int j = 0; j < shape.countSubPaths(); j++) {
-			auto subpath = shape.subPath(j);
-			if (subpath->type() != ipe::SubPath::Type::ECurve) continue;
-			auto curve = subpath->asCurve();
-
-			std::vector<Point<K>> points;
-
-			for (int k = 0; k < curve->countSegments(); k++) {
-				auto segment = curve->segment(k);
-				auto start = matrix * segment.cp(0);
-				points.emplace_back(start.x, start.y);
-			}
-
-			auto last = matrix * curve->segment(curve->countSegments()-1).last();
-			points.emplace_back(last.x, last.y);
-
-			isolines.emplace_back(points, curve->closed());
-		}
-	}
-
-	return isolines;
-}
-
-int measure_running_time() {
-	auto dir = std::string("/home/steven/Documents/cartocrow/inputs/small/");
-	auto output_dir = std::string("/home/steven/Documents/cartocrow/output-time/");
-	const int iters = 10;
-	auto collapse = std::make_shared<LineSplineHybridCollapse>(SplineCollapse(3, 15),
-	                                                           HarmonyLineCollapse(15));
-
-	std::vector<std::string> filenames;
-
-	std::string ext(".ipe");
-	for (auto &p : fs::recursive_directory_iterator(dir))
-	{
-		if (p.path().extension() == ext) {
-			filenames.push_back(p.path().stem().string());
-		}
-	}
-
-	for (const std::string& fn : filenames) {
-		if (fn.empty()) continue;
-		std::cout << fn << std::endl;
-		std::ofstream time_file;
-		time_file.open(output_dir + fn + "_time" + ".txt");
-
-		std::shared_ptr<ipe::Document> document = IpeReader::loadIpeFile(dir + fn + ".ipe");
-		ipe::Page* page = document->page(0);
-		auto isolines = isolinesInPage(page);
-
-		for (int i = 0; i < iters; i++) {
-			std::cout << i << std::endl;
-			auto start = std::chrono::system_clock::now().time_since_epoch();
-			auto simplifier = IsolineSimplifier(isolines, 10.0, 10.0, collapse);
-			auto initialization = std::chrono::system_clock::now().time_since_epoch();
-			int start_complexity = simplifier.m_current_complexity;
-			simplifier.simplify(1, false);
-			auto end = std::chrono::system_clock::now().time_since_epoch();
-
-			const std::chrono::duration<double> duration = end - start;
-			const std::chrono::duration<double> simplification = end - initialization;
-
-			if (i == 0) {
-				time_file << start_complexity << std::endl;
-				time_file << simplifier.m_current_complexity << std::endl;
-				time_file << std::endl;
-			}
-			time_file << duration.count() << std::endl;
-			time_file << simplification.count() << std::endl;
-		}
-
-		time_file.close();
-	}
-}
-
-int run_gui(int argc, char* argv[]) {
+int main(int argc, char* argv[]) {
 	QApplication app(argc, argv);
 	IsolineSimplificationDemo demo;
 	demo.show();
 	app.exec();
 }
-
-int computes_bbs() {
-	auto dir = std::string("/home/steven/Documents/cartocrow/inputs/small/");
-	auto output_dir = std::string("/home/steven/Documents/cartocrow/output/");
-
-	std::vector<std::string> filenames;
-
-	std::string ext(".ipe");
-	for (auto &p : fs::recursive_directory_iterator(dir))
-	{
-		if (p.path().extension() == ext) {
-			filenames.push_back(p.path().stem().string());
-		}
-	}
-
-	for (const std::string& fn : filenames) {
-		std::shared_ptr<ipe::Document> document = IpeReader::loadIpeFile(dir + fn + ".ipe");
-		ipe::Page* page = document->page(0);
-		auto isolines = isolinesInPage(page);
-		std::vector<Gt::Point_2> all_points;
-		for (const auto& isoline : isolines) {
-			std::copy(isoline.m_points.begin(), isoline.m_points.end(), std::back_inserter(all_points));
-			auto bb = CGAL::bounding_box(all_points.begin(), all_points.end());
-			std::ofstream bb_file;
-			bb_file.open(output_dir + fn + "_bb" + ".txt");
-			bb_file << bb.area() << std::endl;
-			bb_file.close();
-		}
-	}
-}
-
-int measure_ladder_collapses() {
-	auto dir = std::string("/home/steven/Documents/cartocrow/inputs/large/");
-	auto output_dir = std::string("/home/steven/Documents/cartocrow/output/");
-
-	std::vector<std::string> filenames;
-
-	std::string ext(".ipe");
-	for (auto &p : fs::recursive_directory_iterator(dir))
-	{
-		if (p.path().extension() == ext) {
-			filenames.push_back(p.path().stem().string());
-		}
-	}
-
-	std::vector<std::pair<std::shared_ptr<LadderCollapse>, std::string>> single_collapses({
-		std::pair(std::make_shared<MidpointCollapse>(), "Midpoint"),
-		std::pair(std::make_shared<MinSymDiffCollapse>(), "SymDiff") });
-
-	std::vector<std::pair<std::shared_ptr<LadderCollapse>, std::string>> multi_collapses({
-		std::pair(std::make_shared<HarmonyLineCollapse>(15), "Line"),
-		std::pair(std::make_shared<SplineCollapse>(3, 15), "Spline"),
-		std::pair(std::make_shared<LineSplineHybridCollapse>(SplineCollapse(3, 15),
-		                                           HarmonyLineCollapse(15)), "LineSplineHybrid")
-	});
-
-	std::vector<std::pair<std::shared_ptr<LadderCollapse>, std::string>> all_collapses;
-	std::copy(single_collapses.begin(), single_collapses.end(), std::back_inserter(all_collapses));
-	std::copy(multi_collapses.begin(), multi_collapses.end(), std::back_inserter(all_collapses));
-
-	for (auto& pair : all_collapses) {
-		auto& [collapse, collapse_name] = pair;
-		bool single_collapse = std::find(single_collapses.begin(), single_collapses.end(), pair) != single_collapses.end();
-		std::vector<double> angle_filters = single_collapse ? std::vector({-1.0, M_PI / 6, 10.0}) : std::vector({M_PI / 6, 10.0});
-		for (auto& angle_filter : angle_filters) {
-			for (const std::string& fn : filenames) {
-				try {
-					std::cout << "\nInput file: " << fn << std::endl;
-					std::shared_ptr<ipe::Document> document =
-					    IpeReader::loadIpeFile(dir + fn + ".ipe");
-					ipe::Page* page = document->page(0);
-					auto isolines = isolinesInPage(page);
-					//				auto collapse = std::make_shared<LineSplineHybridCollapse>(SplineCollapse(3, 10),
-					//				                                                           HarmonyLineCollapse(10));
-					//				auto collapse_name = "LineSplineHybrid";
-					auto simplifier = IsolineSimplifier(isolines, angle_filter, 10.0, collapse);
-
-					bool progress = true;
-					int target = simplifier.m_current_complexity;
-
-					while (progress) {
-						std::cout << "\nCurrent target: " << target << std::endl;
-						progress = simplifier.simplify(target, true);
-
-						IpeRenderer ipe_renderer;
-						auto isolines_p = std::make_shared<IsolinePainting>(
-						    simplifier.m_simplified_isolines, false, false, true);
-						ipe_renderer.addPainting(isolines_p, "Simplified_isolines");
-						std::string file_name(fn + "_" + std::to_string(target) +
-//						                      "_" + collapse_name + (single_collapse ? ("_" + std::to_string(angle_filter)) : ""));
-											  "_" + collapse_name + "_" + std::to_string(angle_filter) +
-											  "_" + std::to_string(simplifier.m_current_complexity));
-						ipe_renderer.save(output_dir + file_name + ".ipe");
-						std::ofstream meta_data_file;
-						meta_data_file.open(output_dir + file_name + "_meta" + ".txt");
-						meta_data_file
-						    << "Symmetric_difference: " << simplifier.total_symmetric_difference()
-						    << std::endl;
-						auto temp_simplifier = IsolineSimplifier(simplifier.m_simplified_isolines, 100.0, 100.0);
-						meta_data_file << "Ladders: " << temp_simplifier.m_slope_ladders.size()
-						               << std::endl;
-						auto [avg_alignment, max_alignment] =
-						    temp_simplifier.average_max_vertex_alignment();
-						meta_data_file << "Avg_alignment: " << avg_alignment << std::endl;
-						meta_data_file << "Max_alignment: " << max_alignment << std::endl;
-						meta_data_file.close();
-						int power = std::floor(std::log2(simplifier.m_current_complexity - 1));
-						target = 1 << power;
-					}
-				} catch (...) {
-					std::cerr << "Problem with input " << fn << std::endl;
-				}
-			}
-		}
-	}
-}
-
-int measure_dyken() {
-	auto dir = std::string("/home/steven/Documents/cartocrow/inputs/large/");
-	auto output_dir = std::string("/home/steven/Documents/cartocrow/output/");
-
-	std::vector<std::string> filenames;
-
-	std::string ext(".ipe");
-	for (auto &p : fs::recursive_directory_iterator(dir))
-	{
-		if (p.path().extension() == ext) {
-			filenames.push_back(p.path().stem().string());
-		}
-	}
-
-	for (const std::string& fn : filenames) {
-		try {
-			std::cout << "\nInput file: " << fn << std::endl;
-			std::shared_ptr<ipe::Document> document =
-				IpeReader::loadIpeFile(dir + fn + ".ipe");
-			ipe::Page* page = document->page(0);
-			auto isolines = isolinesInPage(page);
-			auto simplifier = IsolineSimplifier(isolines);
-
-			bool progress = true;
-			int target = simplifier.m_current_complexity;
-			bool first = true;
-
-			while (progress) {
-				std::cout << "\nCurrent target: " << target << std::endl;
-				bool made_progress = simplifier.dyken_simplify(target) && simplifier.m_current_complexity <= target;
-				progress = first || made_progress;
-				first = false;
-
-				IpeRenderer ipe_renderer;
-				auto isolines_p = std::make_shared<IsolinePainting>(
-					simplifier.m_simplified_isolines, false, false, true);
-				ipe_renderer.addPainting(isolines_p, "Simplified_isolines");
-				std::string file_name(fn + "_" + std::to_string(target) +
-									  "_" + "dyken" +
-									  "_" + std::to_string(simplifier.m_current_complexity));
-				ipe_renderer.save(output_dir + file_name + ".ipe");
-				std::ofstream meta_data_file;
-				meta_data_file.open(output_dir + file_name + "_meta" + ".txt");
-				meta_data_file
-					<< "Symmetric_difference: " << simplifier.total_symmetric_difference()
-					<< std::endl;
-				auto temp_simplifier = IsolineSimplifier(simplifier.m_simplified_isolines, 100.0, 100.0);
-				meta_data_file << "Ladders: " << temp_simplifier.m_slope_ladders.size()
-							   << std::endl;
-				auto [avg_alignment, max_alignment] =
-					temp_simplifier.average_max_vertex_alignment();
-				meta_data_file << "Avg_alignment: " << avg_alignment << std::endl;
-				meta_data_file << "Max_alignment: " << max_alignment << std::endl;
-				meta_data_file.close();
-				int power = std::floor(std::log2(simplifier.m_current_complexity - 1));
-				target = 1 << power;
-			}
-		} catch (...) {
-			std::cerr << "Problem with input " << fn << std::endl;
-		}
-	}
-}
-
-int main(int argc, char* argv[]) {
-//	measure_running_time();
-    run_gui(argc, argv);
-}
-
-//int main() {
-//	auto dir = std::string("/home/steven/Documents/cartocrow/inputs/large/");
-//
-//	std::shared_ptr<ipe::Document> document = IpeReader::loadIpeFile(dir + "mt_range_40m.ipe");
-//	ipe::Page* page = document->page(0);
-////	auto collapse = std::make_shared<LineSplineHybridCollapse>(SplineCollapse(3, 10), HarmonyLineCollapse(10));
-//	auto collapse = std::make_shared<MidpointCollapse>();
-//	auto simplifier = IsolineSimplifier(isolinesInPage(page), -1.0, 10.0, collapse);
-//
-//	auto start = std::chrono::system_clock::now().time_since_epoch();
-//	simplifier.simplify(1);
-//	auto end = std::chrono::system_clock::now().time_since_epoch();
-//
-//	const std::chrono::duration<double> duration = end - start;
-//
-//	std::cout << std::endl << duration.count() << std::endl;
-//}
-
-//int main() {
-//	std::vector<CGAL::Point_2<K>> points1;
-//	std::vector<CGAL::Point_2<K>> points2;
-//	std::vector<CGAL::Point_2<K>> points3;
-//
-////	points1.emplace_back(22.3969, 93.1914);
-////	points1.emplace_back(23.6548, 95.6021);
-////	points1.emplace_back(27.8419, 94.5151);
-////	points1.emplace_back(26.7312, 88.9916);
-////
-////	points2.emplace_back(22.1502, 94.4831);
-////	Gt::Point_2 s(23.9491, 97.2822);
-////	points2.push_back(s);
-////	Gt::Point_2 t(26.2174, 95.7656);
-////	points2.push_back(t);
-////	Gt::Point_2 u(26.7982, 96.4668);
-////	points2.push_back(u);
-////	Gt::Point_2 v(29.5491, 101.4);
-////	points2.push_back(v);
-////
-////	points3.emplace_back(20.6136, 95.8987);
-////	points3.emplace_back(23.3992, 98.7507);
-////	points3.emplace_back(24.8233, 102.603);
-//
-//	points1.emplace_back(22.3969, 94.1914);
-//	points1.emplace_back(23.6548, 96.6021);
-//	points1.emplace_back(27.8419, 94.5151);
-//	points1.emplace_back(26.7312, 88.9916);
-//
-//	points2.emplace_back(22.1502, 94.4831);
-//	Gt::Point_2 s(23.9491, 97.2822);
-//	points2.push_back(s);
-//	Gt::Point_2 t(26.2174, 95.7656);
-//	points2.push_back(t);
-//	Gt::Point_2 u(26.7982, 96.4668);
-//	points2.push_back(u);
-//	Gt::Point_2 v(29.5491, 101.4);
-//	points2.push_back(v);
-//
-//	points3.emplace_back(21.6136, 94.8987);
-//	points3.emplace_back(24.3992, 97.7507);
-//	points3.emplace_back(25.8233, 101.603);
-//
-//	SDG2 delaunay;
-//	auto insert_polyline = [&delaunay](const std::vector<Gt::Point_2>& pts) {
-//		std::vector<Gt::Segment_2> segments;
-//		for (int i = 0; i < pts.size()-1; i++) {
-//			segments.emplace_back(pts[i], pts[i+1]);
-//		}
-//		delaunay.insert_segments(segments.begin(), segments.end());
-//	};
-//	insert_polyline(points1);
-//	insert_polyline(points2);
-//	insert_polyline(points3);
-//
-//	std::unordered_map<Gt::Point_2, SDG2::Vertex_handle> p_vertex;
-//	std::unordered_map<Gt::Segment_2, SDG2::Vertex_handle> e_vertex;
-//
-//	for (auto vit = delaunay.finite_vertices_begin(); vit != delaunay.finite_vertices_end(); vit++) {
-//		auto site = vit->site();
-//		if (site.is_point()) {
-//			p_vertex[site.point()] = vit;
-//		} else {
-//			e_vertex[site.segment()] = vit;
-//		}
-//	}
-//
-//	Gt::Segment_2 st(s, t);
-//	Gt::Segment_2 tu(t, u);
-//	Gt::Segment_2 uv(u, v);
-//
-//	auto print_incident_vertices = [&](SDG2::Vertex_handle vertex) {
-////	  	auto fit_start = delaunay.incident_faces(p_vertex.at(u));
-////		auto fit = fit_start;
-////	  	std::cout << "-------------" << std::endl;
-////		do {
-////			auto vit_start = delaunay.incident_vertices(vertex, fit);
-//	 	    auto vit_start = delaunay.incident_vertices(vertex);
-//			auto vit = vit_start;
-//
-//
-//			std::cout << "-------------" << std::endl;
-//			do {
-//				if (!delaunay.is_infinite(vit)) {
-//					auto v = *vit;
-////				    if (v.is_segment() && v.site().segment() == uv) {
-////						std::cout << "---special---" << std::endl;
-////					    auto f = v.face();
-////					    for (int i = 0; i < 3; i++) {
-////						    std::cout << f->vertex(i)->site() << std::endl;
-////					    }
-////						std::cout << "---special end---" << std::endl;
-////				    }
-//					std::cout << v.site() << std::endl;
-//				}
-//				++vit;
-//			} while (vit != vit_start);
-////
-////			++fit;
-////		} while (fit != fit_start);
-//	};
-//
-//	print_incident_vertices(p_vertex.at(u));
-//
-//	std::cout << "Removing: " << tu << std::endl;
-//	std::cout << delaunay.remove(e_vertex.at(tu)) << std::endl;
-//	std::cout << "Removing: " << st << std::endl;
-//	std::cout << delaunay.remove(e_vertex.at(st)) << std::endl;
-//
-//	std::cout << "normal?" << std::endl;
-//	for (int i = 0; i < 3; i++) {
-//		std::cout << p_vertex.at(t)->face()->neighbor(2)->vertex(i)->site() << std::endl;
-//	}
-//	std::cout << "Removing: " << uv << std::endl;
-//	std::cout << delaunay.remove(e_vertex.at(uv)) << std::endl;
-////	print_incident_vertices(e_vertex.at(uv));
-////	print_incident_vertices(p_vertex.at(u));
-//
-//	std::cout << "Weird" << std::endl;
-//	for (int i = 0; i < 3; i++) {
-//		std::cout << p_vertex.at(t)->face()->neighbor(2)->vertex(i)->site() << std::endl;
-//	}
-////	std::cout << "Removing: " << t << std::endl;
-////	std::cout << delaunay.remove(p_vertex.at(t)) << std::endl;
-//
-//
-////	print_incident_vertices(p_vertex.at(u));
-//
-//
-////	std::cout << "Removing: " << u << std::endl;
-////	std::cout << delaunay.remove(p_vertex.at(u)) << std::endl;
-//
-//	return 0;
-//}
 
 VoronoiPainting::VoronoiPainting(const SDG2& delaunay): m_delaunay(delaunay) {}
 
@@ -866,7 +418,6 @@ IsolinePainting::IsolinePainting(const std::vector<Isoline<K>>& isolines, bool s
       m_isolines(isolines), m_show_vertices(show_vertices), m_light(light), m_ipe(ipe) {}
 
 void IsolinePainting::paint(GeometryRenderer& renderer) const {
-	// Draw isolines
 	if (m_show_vertices) {
 		renderer.setMode(GeometryRenderer::stroke | GeometryRenderer::vertices);
 	} else {
@@ -894,12 +445,7 @@ void MedialAxisSeparatorPainting::paint(GeometryRenderer& renderer) const {
 	auto voronoiDrawer = VoronoiDrawer<Gt>(&renderer);
 	for (const auto& [_, edges] : m_separator)
 	for (const auto& edge : edges) {
-		auto [s, t] = defining_sites(edge);
-//		if (s.is_point() && t.is_segment() || s.is_segment() && t.is_point()) {
-//			renderer.setStroke(Color(51, 159, 43), 2.5);
-//		} else {
-			renderer.setStroke(Color(30, 119, 179), 2.5);
-//		}
+		renderer.setStroke(Color(30, 119, 179), 2.5);
 		renderer.setMode(GeometryRenderer::stroke);
 		draw_dual_edge<VoronoiDrawer<Gt>, K>(m_delaunay, edge, voronoiDrawer);
 	}
@@ -926,25 +472,6 @@ void MatchingPainting::paint(GeometryRenderer& renderer) const {
 				renderer.draw(Segment<K>(p, q));
 			}
 		}
-	}
-}
-
-TouchedPainting::TouchedPainting(std::vector<SDG2::Edge> edges, const SDG2& delaunay):
-      m_edges(std::move(edges)), m_delaunay(delaunay) {}
-
-void TouchedPainting::paint(GeometryRenderer& renderer) const {
-	for (auto edge : m_edges) {
-		auto draw_site = [&renderer, &edge, this](SDG2::Site_2 site) {
-			auto point_or_segment = site_projection(m_delaunay, edge, site);
-			std::visit([&renderer](auto v) { renderer.draw(v); }, point_or_segment);
-		};
-
-		SDG2::Site_2 p = edge.first->vertex(SDG2::cw(edge.second))->site();
-		SDG2::Site_2 q = edge.first->vertex(SDG2::ccw(edge.second))->site();
-
-		renderer.setStroke(Color(0, 255, 0), 4.0);
-		draw_site(p);
-		draw_site(q);
 	}
 }
 
@@ -978,25 +505,6 @@ void draw_slope_ladder(GeometryRenderer& renderer, const SlopeLadder& slope_ladd
 }
 
 void draw_ladder_collapse(GeometryRenderer& renderer, IsolineSimplifier& simplifier, const SlopeLadder& ladder) {
-//	for (int i = 0; i < ladder.m_rungs.size(); i++) {
-//		const auto& rung = ladder.m_rungs.at(i);
-//		const auto& p = ladder.m_collapsed.at(i);
-//		auto reversed = simplifier.m_p_next.contains(rung.target()) && simplifier.m_p_next.at(rung.target()) == rung.source();
-//		auto t = reversed ? rung.target() : rung.source();
-//		auto u = reversed ? rung.source() : rung.target();
-//		auto s = simplifier.m_p_prev.at(t);
-//		auto v = simplifier.m_p_next.at(u);
-//		auto l = area_preservation_line(s, t, u, v);
-//		renderer.setStroke(Color(60, 60, 60), 2.0);
-//		renderer.draw(l);
-//
-//		renderer.setStroke(Color(255, 165, 0), 4.0);
-//		renderer.draw(Gt::Segment_2(s, p));
-//		renderer.draw(Gt::Segment_2(p, v));
-//		renderer.draw(p);
-//
-//	}
-
 	simplifier.m_collapse_ladder->painting(ladder, simplifier.m_p_prev, simplifier.m_p_next)->paint(renderer);
 
 	for (int i = 0; i < ladder.m_rungs.size(); i++) {
@@ -1035,14 +543,7 @@ void SlopeLadderPainting::paint(GeometryRenderer& renderer) const {
 		renderer.setFill(Color(252, 190, 110));
 		renderer.setFillOpacity(25);
 		renderer.draw(poly);
-//		draw_slope_ladder(renderer, *slope_ladder);
 	}
-
-//	for (const auto& e : edges) {
-//		renderer.setStroke(Color(255, 126, 0), 1.0);
-//		renderer.setMode(GeometryRenderer::stroke);
-//		renderer.draw(e);
-//	}
 }
 
 CompleteMatchingPainting::CompleteMatchingPainting(Matching& matching): m_matching(matching) {}
@@ -1140,7 +641,6 @@ void MedialAxisExceptSeparatorPainting::paint(GeometryRenderer& renderer) const 
 
 VoronoiExceptMedialPainting::VoronoiExceptMedialPainting(IsolineSimplifier& simplifier):
       m_simplifier(simplifier) {
-
 }
 
 void VoronoiExceptMedialPainting::paint(GeometryRenderer& renderer) const {

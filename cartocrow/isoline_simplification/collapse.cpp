@@ -1,6 +1,21 @@
-//
-// Created by steven on 1/23/24.
-//
+/*
+The CartoCrow library implements algorithmic geo-visualization methods,
+developed at TU Eindhoven.
+Copyright (C) 2024 TU Eindhoven
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3f of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
 
 #include "collapse.h"
 
@@ -214,6 +229,12 @@ void SplineCollapsePainting::paint(cartocrow::renderer::GeometryRenderer& render
 	if (!m_ladder.m_valid)
 		return;
 
+	if (m_ladder.m_rungs.size() == 1) {
+		MinSymDiffCollapse msdf;
+		msdf.painting(m_ladder, m_p_prev, m_p_next)->paint(renderer);
+		return;
+	}
+
 	std::optional<ipe::Vector> start;
 //	if (m_ladder.m_cap.contains(CGAL::LEFT_TURN)) {
 //		start = pv(m_ladder.m_cap.at(CGAL::LEFT_TURN));
@@ -331,68 +352,6 @@ void SplineCollapsePainting::paint(cartocrow::renderer::GeometryRenderer& render
 	}
 
 	draw_controls(best_controls, true);
-
-
-
-
-
-
-
-
-		//	std::optional<ipe::Vector> start;
-//	if (m_ladder.m_cap.contains(CGAL::LEFT_TURN)) {
-//		start = pv(m_ladder.m_cap.at(CGAL::LEFT_TURN));
-//	}
-//
-//	std::vector<ipe::Vector> initial_controls;
-//	std::vector<Gt::Line_2> lines;
-//	for (const auto& rung : m_ladder.m_rungs) {
-//		auto reversed = m_p_next.contains(rung.target()) && m_p_next.at(rung.target()) == rung.source();
-//		auto t = reversed ? rung.target() : rung.source();
-//		auto u = reversed ? rung.source() : rung.target();
-//		Gt::Point_2 s = m_p_prev.at(t);
-//		Gt::Point_2 v = m_p_next.at(u);
-//		lines.emplace_back(area_preservation_line(s, t, u, v));
-//		initial_controls.push_back(pv(m_spline_collapse.m_rung_collapse(s, t, u, v, lines.back())));
-//	}
-//
-//	std::optional<ipe::Vector> end;
-//	if (m_ladder.m_cap.contains(CGAL::RIGHT_TURN)) {
-//		end = pv(m_ladder.m_cap.at(CGAL::RIGHT_TURN));
-//	}
-//
-//	std::vector<ipe::Vector> controls = initial_controls;
-//	if (initial_controls.size() > 1 || start.has_value() || end.has_value()) {
-//		for (int i = 0; i < m_spline_collapse.m_repetitions - 1; i++) { // note the -1 for drawing purposes
-//			controls = m_spline_collapse.controls_from_intersections(lines, start, controls, end);
-//		}
-//	}
-//
-//	if (controls.size() > 1 || start.has_value() || end.has_value()) {
-//		std::vector<ipe::Vector> all_controls;
-//		if (start.has_value()) {
-//			all_controls.push_back(*start);
-//		}
-//		for (const auto& cp : controls) {
-//			all_controls.push_back(cp);
-//		}
-//		if (end.has_value()) {
-//			all_controls.push_back(*end);
-//		}
-//		auto bzs = m_spline_collapse.controls_to_beziers(all_controls);
-//		BezierSpline spline;
-//		for (const auto& bz : bzs) {
-//			spline.appendCurve(vp(bz.iV[0]), vp(bz.iV[1]), vp(bz.iV[2]), vp(bz.iV[3]));
-//		}
-//		renderer.setMode(renderer::GeometryRenderer::stroke);
-//		renderer.setStroke(Color(20, 20, 255), 3.0);
-//		renderer.draw(spline);
-//	}
-//
-//	for (auto& cp : initial_controls) {
-//		renderer.setStroke(Color(100, 0, 0), 3.0);
-//		renderer.draw(vp(cp));
-//	}
 }
 
 Gt::Point_2 min_sym_diff_point(Gt::Point_2 s, Gt::Point_2 t, Gt::Point_2 u, Gt::Point_2 v, Gt::Line_2 l) {
@@ -510,6 +469,11 @@ HarmonyLinePainting::HarmonyLinePainting(const SlopeLadder& ladder, const PointT
 
 void HarmonyLinePainting::paint(renderer::GeometryRenderer& renderer) const {
 	if (!m_ladder.m_valid) return;
+	if (m_ladder.m_rungs.size() == 1) {
+		MinSymDiffCollapse msdf;
+		msdf.painting(m_ladder, m_p_prev, m_p_next)->paint(renderer);
+		return;
+	}
 
 	// Compute sample line
 	Gt::Line_2 sample_line;

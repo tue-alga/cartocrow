@@ -2,10 +2,10 @@ set(SOURCES
 	voronoi_helpers.cpp
 	isoline_simplifier.cpp
 	collapse.cpp
-	collapse.h
 	ipe_bezier_wrapper.cpp
 	symmetric_difference.cpp
-	symmetric_difference.h
+	simple_isoline_painting.cpp
+	ipe_isolines.cpp
 )
 set(HEADERS
 	isoline.h
@@ -13,6 +13,10 @@ set(HEADERS
     voronoi_helpers.h
 	isoline_simplifier.h
 	ipe_bezier_wrapper.h
+	collapse.h
+	ipe_isolines.h
+	simple_isoline_painting.h
+	symmetric_difference.h
 )
 
 add_library(isoline_simplification ${SOURCES})

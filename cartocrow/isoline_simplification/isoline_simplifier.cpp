@@ -1,7 +1,7 @@
 /*
 The CartoCrow library implements algorithmic geo-visualization methods,
 developed at TU Eindhoven.
-Copyright (C) 2021  Netherlands eScience Center and TU Eindhoven
+Copyright (C) 2024 TU Eindhoven
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -43,8 +43,8 @@ typedef CGAL::Triangulation_data_structure_2<Vb, Fb> TDS;
 typedef CGAL::Constrained_Delaunay_triangulation_2<K, TDS, CGAL::Exact_predicates_tag> CDT;
 typedef CGAL::Constrained_triangulation_plus_2<CDT>     CT;
 
-IsolineSimplifier::IsolineSimplifier(std::vector<Isoline<K>> isolines, double angle_filter, double alignment_filter,
-                                     std::shared_ptr<LadderCollapse> collapse):
+IsolineSimplifier::IsolineSimplifier(std::vector<Isoline<K>> isolines, std::shared_ptr<LadderCollapse> collapse,
+                                     double angle_filter, double alignment_filter):
       m_isolines(std::move(isolines)), m_angle_filter(angle_filter), m_alignment_filter(alignment_filter), m_collapse_ladder(std::move(collapse)) {
 	clean_isolines();
 	m_simplified_isolines = m_isolines;
@@ -954,24 +954,6 @@ void IsolineSimplifier::initialize_slope_ladders() {
 		auto polyline = isoline.polyline();
 		for (auto eit = polyline.edges_begin(); eit != polyline.edges_end(); ++eit) {
 			create_slope_ladder(*eit);
-		}
-	}
-}
-
-void IsolineSimplifier::check_valid() {
-	for (const auto& isoline : m_simplified_isolines) {
-		for (auto pit = isoline.m_points.begin(); pit != isoline.m_points.end(); pit++) {
-			if (pit != isoline.m_points.begin()) {
-				auto prev = pit;
-				prev--;
-				assert(m_p_prev.at(*pit) == *prev);
-			}
-			if (pit != --isoline.m_points.end()) {
-				auto next = pit;
-				next++;
-				assert(m_p_next.at(*pit) == *next);
-			}
-			assert(m_p_isoline.at(*pit) == &isoline);
 		}
 	}
 }
