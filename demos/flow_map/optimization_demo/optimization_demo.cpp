@@ -46,11 +46,14 @@ OptimizationDemo::OptimizationDemo() {
 
 	for (int i = 0; i < 40; i++) {
 		m_places.push_back(std::make_shared<Point<Inexact>>(
-		    static_cast<float>(std::rand()) / RAND_MAX * 200 - 100,
-		    static_cast<float>(std::rand()) / RAND_MAX * 200 - 100));
+		    static_cast<float>(std::rand()) / RAND_MAX * 50 - 25,
+		    static_cast<float>(std::rand()) / RAND_MAX * 50 - 25));
 	}
 
 	m_renderer = new GeometryWidget();
+	m_renderer->zoomIn();
+	m_renderer->zoomIn();
+	m_renderer->zoomIn();
 	m_renderer->setMaxZoom(10000);
 	m_renderer->setGridMode(GeometryWidget::GridMode::POLAR);
 	setCentralWidget(m_renderer);
@@ -131,9 +134,9 @@ void OptimizationDemo::recalculate() {
 	m_iterationCount = 0;
 	auto tree = std::make_shared<SpiralTree>(Point<Inexact>(0, 0), m_alpha);
 	for (const auto& place : m_places) {
-		tree->addPlace("", *place, 1);
+		tree->addPlace("", *place, 0.1f);
 	}
-	//tree->addShields();
+	tree->addShields();
 
 	ReachableRegionAlgorithm::ReachableRegion reachableRegion = ReachableRegionAlgorithm(tree).run();
 	SpiralTreeObstructedAlgorithm(tree, reachableRegion).run();
@@ -154,9 +157,10 @@ void OptimizationDemo::recalculate() {
 }
 
 void OptimizationDemo::updateCostLabel() {
-	m_costGraph->addStep(
-	    {0, m_smoothTree->computeSmoothingCost(), m_smoothTree->computeAngleRestrictionCost(),
-	     m_smoothTree->computeBalancingCost(), m_smoothTree->computeStraighteningCost()});
+	m_costGraph->addStep({m_smoothTree->computeObstacleCost(), m_smoothTree->computeSmoothingCost(),
+	                      m_smoothTree->computeAngleRestrictionCost(),
+	                      m_smoothTree->computeBalancingCost(),
+	                      m_smoothTree->computeStraighteningCost()});
 	Number<Inexact> cost = m_smoothTree->computeCost();
 	m_costLabel->setText(
 	    QString("Iteration %1 | Cost function: %2")
