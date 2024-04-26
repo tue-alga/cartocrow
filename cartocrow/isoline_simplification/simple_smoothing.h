@@ -17,21 +17,13 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef CARTOCROW_IPE_BEZIER_WRAPPER_H
-#define CARTOCROW_IPE_BEZIER_WRAPPER_H
-
-#include "ipeshape.h"
-#include "ipegeo.h"
+#ifndef CARTOCROW_SIMPLE_SMOOTHING_H
+#define CARTOCROW_SIMPLE_SMOOTHING_H
 #include "types.h"
 #include "../core/bezier.h"
 
 namespace cartocrow::isoline_simplification {
-std::vector<Gt::Point_2> parabola_intersections(Gt::Segment_2 seg, Gt::Line_2 dir,
-                                                Gt::Point_2 focus, Gt::Point_2 p1, Gt::Point_2 p2);
-ipe::Vector pv(Gt::Point_2 p);
-Gt::Point_2 vp(ipe::Vector p);
-
-BezierCurve parse_ipe_bezier(const ipe::Bezier& bz);
-BezierSpline parse_ipe_beziers(const std::vector<ipe::Bezier>& bzs);
+BezierSpline simple_smoothing(const Isoline<K>& iso);
 }
-#endif //CARTOCROW_IPE_BEZIER_WRAPPER_H
+
+#endif //CARTOCROW_SIMPLE_SMOOTHING_H

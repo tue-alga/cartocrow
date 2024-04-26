@@ -6,6 +6,7 @@ set(SOURCES
 	symmetric_difference.cpp
 	simple_isoline_painting.cpp
 	ipe_isolines.cpp
+	simple_smoothing.cpp
 )
 set(HEADERS
 	isoline.h
@@ -17,6 +18,7 @@ set(HEADERS
 	ipe_isolines.h
 	simple_isoline_painting.h
 	symmetric_difference.h
+	simple_smoothing.h
 )
 
 add_library(isoline_simplification ${SOURCES})

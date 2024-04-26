@@ -22,6 +22,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "cartocrow/isoline_simplification/isoline.h"
 #include "cartocrow/isoline_simplification/ipe_isolines.h"
 #include "cartocrow/isoline_simplification/voronoi_helpers.h"
+#include "cartocrow/isoline_simplification/simple_smoothing.h"
 #include "cartocrow/renderer/ipe_renderer.h"
 #include "medial_axis_helpers.h"
 #include "voronoi_drawer.h"
@@ -98,6 +99,9 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 	auto* disableLadders = new QCheckBox("Disable ladders");
 	vLayout->addWidget(disableLadders);
 
+	auto* applySmoothing = new QCheckBox("Apply basic smoothing");
+	vLayout->addWidget(applySmoothing);
+
 	auto* showGrid = new QCheckBox("Show grid");
 	vLayout->addWidget(showGrid);
 
@@ -163,13 +167,14 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 	m_renderer->setMinZoom(0.01);
 	m_renderer->setMaxZoom(1000.0);
 
-	m_save = [this, debugInfo, showVertices, fileSelector, collapse_selector, measure_text]() {
+	m_save = [this, debugInfo, showVertices, fileSelector, collapse_selector, measure_text, applySmoothing]() {
 		if (!m_output_dir.has_value()) return;
 		if (m_output_dir == "") return;
 
 		auto& isolines = m_isoline_simplifier->m_simplified_isolines;
 	  	IpeRenderer ipe_renderer;
-	  	auto isolines_p = std::make_shared<IsolinePainting>(isolines, showVertices->isChecked(), false, true);
+	  	auto isolines_p = std::make_shared<IsolinePainting>(isolines, showVertices->isChecked(), false, true,
+		                                                    applySmoothing->isChecked());
 
 	  	if (debugInfo->isChecked()) {
 			auto separator_p = std::make_shared<MedialAxisSeparatorPainting>(
@@ -208,9 +213,9 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 		meta_data_file.close();
 	};
 
-	m_recalculate = [this, debugInfo, doDykenSimplify, simplificationTarget, showVertices, number_of_vertices]() {
+	m_recalculate = [this, debugInfo, doDykenSimplify, simplificationTarget, showVertices, number_of_vertices, applySmoothing]() {
 		number_of_vertices->setText(QString(("#Vertices: " + std::to_string(m_isoline_simplifier->m_current_complexity)).c_str()));
-		recalculate(debugInfo->checkState(), showVertices->checkState());
+		recalculate(debugInfo->checkState(), showVertices->checkState(), applySmoothing->checkState());
 	};
 
 	m_reload = [this, collapse_selector, fileSelector, splineRepetitions, sampleCount,
@@ -292,6 +297,7 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 	connect(simplificationTarget, QOverload<int>::of(&QSpinBox::valueChanged), m_recalculate);
 	connect(doDykenSimplify, &QCheckBox::stateChanged, m_reload);
 	connect(disableLadders, &QCheckBox::stateChanged, m_reload);
+	connect(applySmoothing, &QCheckBox::stateChanged, m_recalculate);
 	connect(showGrid, &QCheckBox::stateChanged, [this](bool v) { m_renderer->setDrawAxes(v); });
 	connect(showVertices, &QCheckBox::stateChanged, m_recalculate);
 	connect(collapse_selector, &QComboBox::currentTextChanged, m_reload);
@@ -326,7 +332,8 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 	});
 	connect(reload_button, &QPushButton::clicked, m_reload);
 	connect(save_button, &QPushButton::clicked, m_save);
-	connect(m_renderer, &GeometryWidget::clicked, [this, debug_text](auto pt) {
+	connect(m_renderer, &GeometryWidget::clicked, [this, debug_text, debugInfo](auto pt) {
+		if (!debugInfo->isChecked()) return;
 		auto it = std::find_if(m_isoline_simplifier->m_slope_ladders.begin(), m_isoline_simplifier->m_slope_ladders.end(), [&pt](const std::shared_ptr<SlopeLadder>& ladder) {
 			if (ladder->m_old) return false;
 			auto poly = slope_ladder_polygon(*ladder);
@@ -354,7 +361,7 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 	m_reload();
 }
 
-void IsolineSimplificationDemo::recalculate(bool debugInfo, bool show_vertices) {
+void IsolineSimplificationDemo::recalculate(bool debugInfo, bool show_vertices, bool applySmoothing) {
 	m_renderer->clear();
 
 	std::vector<Isoline<K>>& simplified_isolines = m_isoline_simplifier->m_simplified_isolines;
@@ -379,8 +386,9 @@ void IsolineSimplificationDemo::recalculate(bool debugInfo, bool show_vertices) 
 		m_renderer->addPainting(slope_ladder_p, "Slope ladders");
 	}
 
-	auto original_isolines_p = std::make_shared<IsolinePainting>(m_isoline_simplifier->m_isolines, show_vertices, true, false);
-	auto isolines_p = std::make_shared<IsolinePainting>(simplified_isolines, show_vertices, false, false);
+	auto original_isolines_p = std::make_shared<IsolinePainting>(m_isoline_simplifier->m_isolines, show_vertices, true,
+	                                                             false, applySmoothing);
+	auto isolines_p = std::make_shared<IsolinePainting>(simplified_isolines, show_vertices, false, false, applySmoothing);
 	if (m_isoline_simplifier->m_started)
 		m_renderer->addPainting(original_isolines_p, "Original isolines");
 	m_renderer->addPainting(isolines_p, "Simplified isolines");
@@ -414,8 +422,10 @@ void VoronoiPainting::paint(GeometryRenderer& renderer) const {
 	draw_dual<VoronoiDrawer<Gt>, K>(m_delaunay, voronoiDrawer);
 }
 
-IsolinePainting::IsolinePainting(const std::vector<Isoline<K>>& isolines, bool show_vertices, bool light, bool ipe):
-      m_isolines(isolines), m_show_vertices(show_vertices), m_light(light), m_ipe(ipe) {}
+IsolinePainting::IsolinePainting(const std::vector<Isoline<K>>& isolines, bool show_vertices, bool light, bool ipe,
+                                 bool apply_smoothing):
+      m_isolines(isolines), m_show_vertices(show_vertices), m_light(light), m_ipe(ipe),
+      m_apply_smoothing(apply_smoothing) {}
 
 void IsolinePainting::paint(GeometryRenderer& renderer) const {
 	if (m_show_vertices) {
@@ -432,10 +442,13 @@ void IsolinePainting::paint(GeometryRenderer& renderer) const {
 		renderer.setStroke(Color(0, 0, 0), stroke_weight);
 	}
 	for (const auto& isoline : m_isolines) {
-		std::visit([&](auto&& v){
-			renderer.draw(v);
-		}, isoline.drawing_representation());
+		if (m_apply_smoothing) {
+			renderer.draw(simple_smoothing(isoline));
+		} else {
+			std::visit([&](auto&& v) { renderer.draw(v); }, isoline.drawing_representation());
+		}
 	}
+
 }
 
 MedialAxisSeparatorPainting::MedialAxisSeparatorPainting(const Separator& separator, const SDG2& delaunay):

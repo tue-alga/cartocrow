@@ -39,7 +39,7 @@ class IsolineSimplificationDemo : public QMainWindow {
 
   public:
 	IsolineSimplificationDemo();
-	void recalculate(bool debugInfo, bool show_vertices);
+	void recalculate(bool debugInfo, bool show_vertices, bool applySmoothing);
 
   private:
 	std::vector<Isoline<K>> m_cgal_simplified;
@@ -69,7 +69,8 @@ class VoronoiPainting : public GeometryPainting {
 
 class IsolinePainting : public GeometryPainting {
   public:
-	IsolinePainting(const std::vector<Isoline<K>>& isolines, bool show_vertices, bool light, bool ipe);
+	IsolinePainting(const std::vector<Isoline<K>>& isolines, bool show_vertices, bool light, bool ipe,
+	                bool apply_smoothing);
 
   protected:
 	void paint(GeometryRenderer& renderer) const override;
@@ -79,6 +80,7 @@ class IsolinePainting : public GeometryPainting {
 	bool m_show_vertices;
 	bool m_light;
 	bool m_ipe;
+	bool m_apply_smoothing;
 };
 
 class MedialAxisSeparatorPainting : public GeometryPainting {

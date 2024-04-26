@@ -62,4 +62,16 @@ std::vector<Gt::Point_2> parabola_intersections(Gt::Segment_2 seg, Gt::Line_2 di
 	}
 	return pts;
 }
+
+BezierCurve parse_ipe_bezier(const ipe::Bezier& bz) {
+	return { vp(bz.iV[0]), vp(bz.iV[1]), vp(bz.iV[2]), vp(bz.iV[3]) };
+}
+
+BezierSpline parse_ipe_beziers(const std::vector<ipe::Bezier>& bzs) {
+	BezierSpline spline;
+	for (const auto& bz : bzs) {
+		spline.appendCurve(parse_ipe_bezier(bz));
+	}
+	return spline;
+}
 }
