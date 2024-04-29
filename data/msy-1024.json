@@ -1,0 +1,5 @@
+{
+  "type": "isoline_simplification",
+  "isolines": "isolines/messy150m.ipe",
+  "target": 1024
+}
