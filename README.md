@@ -134,7 +134,7 @@ On Ubuntu, most dependencies can be obtained from the repository:
 
 ```sh
 sudo apt install build-essential cmake
-sudo apt install libcgal-dev nlohmann-json3-dev
+sudo apt install libcgal-dev nlohmann-json3-dev qtbase5-dev
 ```
 
 The remaining dependencies need to be built manually.

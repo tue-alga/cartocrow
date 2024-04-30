@@ -75,6 +75,7 @@ class IpeRenderer : public GeometryRenderer {
 
 	/// Constructs a IpeRenderer for the given painting.
 	IpeRenderer(const std::shared_ptr<GeometryPainting>& painting);
+	IpeRenderer(const std::shared_ptr<GeometryPainting>& painting, const std::string& name);
 
 	/// Saves the painting to an Ipe file with the given name.
 	void save(const std::filesystem::path& file);
@@ -97,7 +98,8 @@ class IpeRenderer : public GeometryRenderer {
 	void setFill(Color color) override;
 	void setFillOpacity(int alpha) override;
 
-	void addPainting(std::shared_ptr<GeometryPainting> painting);
+	void addPainting(const std::shared_ptr<GeometryPainting>& painting);
+	void addPainting(const std::shared_ptr<GeometryPainting>& painting, const std::string& name);
 
   private:
 	/// Converts a polygon to an Ipe curve.
@@ -111,8 +113,15 @@ class IpeRenderer : public GeometryRenderer {
 	/// an Ipe file.
 	std::string escapeForLaTeX(const std::string& text) const;
 
+	struct DrawnPainting {
+		/// The painting itself.
+		std::shared_ptr<GeometryPainting> m_painting;
+		/// The name of the painting displayed as a layer name in ipe.
+		std::optional<std::string> name;
+	};
+
 	/// The paintings we're drawing.
-	std::vector<std::shared_ptr<GeometryPainting>> m_paintings;
+	std::vector<DrawnPainting> m_paintings;
 	/// The current drawing style.
 	IpeRendererStyle m_style;
 	/// A stack of drawing styles, used by \ref pushStyle() and \ref popStyle()
