@@ -221,6 +221,8 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 	m_reload = [this, collapse_selector, fileSelector, splineRepetitions, sampleCount,
 	            disableLadders]() {
 		if (!m_dir.has_value()) return;
+	    if (m_dir == "") return;
+		if (fileSelector->currentText().toStdString() == "") return;
 		std::shared_ptr<LadderCollapse> collapse;
 		switch (collapse_selector->currentIndex()) {
 		case 0: {
