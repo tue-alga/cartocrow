@@ -36,6 +36,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <QPushButton>
 #include <QSpinBox>
 #include <QVBoxLayout>
+#include <QMessageBox>
 #include <filesystem>
 #include <ipepath.h>
 #include <ranges>
@@ -168,8 +169,12 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 	m_renderer->setMaxZoom(1000.0);
 
 	m_save = [this, debugInfo, showVertices, fileSelector, collapse_selector, measure_text, applySmoothing]() {
-		if (!m_output_dir.has_value()) return;
-		if (m_output_dir == "") return;
+		if (!m_output_dir.has_value() || m_output_dir == "") {
+			QMessageBox msgBox;
+			msgBox.setText("Please select an output directory.");
+			msgBox.exec();
+			return;
+		}
 
 		auto& isolines = m_isoline_simplifier->m_simplified_isolines;
 	  	IpeRenderer ipe_renderer;
