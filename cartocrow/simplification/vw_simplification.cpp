@@ -20,8 +20,6 @@ Created by Wouter Meulemans (w.meulemans@tue.nl) on 31-08-2021
 
 #include "vw_simplification.h"
 
-#include <glog/logging.h>
-
 namespace cartocrow::vw_simplification {
 
 VWSimplification::VWSimplification(std::shared_ptr<std::vector<Point<Exact>>> pts) {
