@@ -35,11 +35,11 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 namespace cartocrow::renderer {
 
 IpeRenderer::IpeRenderer(const std::shared_ptr<GeometryPainting>& painting) {
-	m_paintings.emplace_back(painting);
+	m_paintings.push_back(DrawnPainting{painting});
 }
 
 IpeRenderer::IpeRenderer(const std::shared_ptr<GeometryPainting>& painting, const std::string& name) {
-	m_paintings.emplace_back(painting, name);
+	m_paintings.push_back(DrawnPainting{painting, name});
 }
 
 void IpeRenderer::save(const std::filesystem::path& file) {
@@ -113,12 +113,63 @@ void IpeRenderer::draw(const Segment<Inexact>& s) {
 	}
 }
 
+void IpeRenderer::draw(const Line<Inexact>& l) {
+	// Crop to document size
+	auto bounds = CGAL::Iso_rectangle_2<Inexact>(CGAL::ORIGIN, Point<Inexact>(1000.0, 1000.0));
+	auto result = intersection(l, bounds);
+	if (result) {
+		if (const Segment<Inexact>* s = boost::get<Segment<Inexact>>(&*result)) {
+			int oldMode = m_style.m_mode;
+			setMode(oldMode & ~vertices);
+			draw(*s);
+			setMode(oldMode);
+		}
+	}
+}
+
+void IpeRenderer::draw(const Ray<Inexact>& r) {
+	// Crop to document size
+	auto bounds = CGAL::Iso_rectangle_2<Inexact>(CGAL::ORIGIN, Point<Inexact>(1000.0, 1000.0));
+	auto result = intersection(r, bounds);
+	if (result) {
+		if (const Segment<Inexact>* s = boost::get<Segment<Inexact>>(&*result)) {
+			int oldMode = m_style.m_mode;
+			setMode(oldMode & ~vertices);
+			draw(*s);
+			setMode(oldMode);
+		}
+		if (m_style.m_mode & vertices) {
+			draw(r.source());
+		}
+	}
+}
+
+void IpeRenderer::draw(const Polyline<Inexact>& p) {
+	ipe::Curve* curve = convertPolylineToCurve(p);
+	ipe::Shape* shape = new ipe::Shape();
+	shape->appendSubPath(curve);
+	ipe::Path* path = new ipe::Path(getAttributesForStyle(), *shape);
+	m_page->append(ipe::TSelect::ENotSelected, m_layer, path);
+
+	if (m_style.m_mode & vertices) {
+		for (auto v = p.vertices_begin(); v != p.vertices_end(); v++) {
+			draw(*v);
+		}
+	}
+}
+
 void IpeRenderer::draw(const Polygon<Inexact>& p) {
 	ipe::Curve* curve = convertPolygonToCurve(p);
 	ipe::Shape* shape = new ipe::Shape();
 	shape->appendSubPath(curve);
 	ipe::Path* path = new ipe::Path(getAttributesForStyle(), *shape);
 	m_page->append(ipe::TSelect::ENotSelected, m_layer, path);
+
+	if (m_style.m_mode & vertices) {
+		for (auto v = p.vertices_begin(); v != p.vertices_end(); v++) {
+			draw(*v);
+		}
+	}
 }
 
 void IpeRenderer::draw(const PolygonWithHoles<Inexact>& p) {
@@ -131,6 +182,17 @@ void IpeRenderer::draw(const PolygonWithHoles<Inexact>& p) {
 	}
 	ipe::Path* path = new ipe::Path(getAttributesForStyle(), *shape);
 	m_page->append(ipe::TSelect::ENotSelected, m_layer, path);
+
+	if (m_style.m_mode & vertices) {
+		for (auto v = p.outer_boundary().vertices_begin(); v != p.outer_boundary().vertices_end(); v++) {
+			draw(*v);
+		}
+		for (auto h = p.holes_begin(); h != p.holes_end(); h++) {
+			for (auto v = h->vertices_begin(); v != h->vertices_end(); v++) {
+				draw(*v);
+			}
+		}
+	}
 }
 
 void IpeRenderer::draw(const Circle<Inexact>& c) {
@@ -144,7 +206,7 @@ void IpeRenderer::draw(const Circle<Inexact>& c) {
 	m_page->append(ipe::TSelect::ENotSelected, m_layer, path);
 }
 
-/*void IpeRenderer::draw(const BezierSpline& s) {
+void IpeRenderer::draw(const BezierSpline& s) {
 	ipe::Curve* curve = new ipe::Curve();
 	for (BezierCurve c : s.curves()) {
 		std::vector<ipe::Vector> coords;
@@ -158,7 +220,14 @@ void IpeRenderer::draw(const Circle<Inexact>& c) {
 	shape->appendSubPath(curve);
 	ipe::Path* path = new ipe::Path(getAttributesForStyle(), *shape);
 	m_page->append(ipe::TSelect::ENotSelected, m_layer, path);
-}*/
+
+	if (m_style.m_mode & vertices) {
+		for (BezierCurve c : s.curves()) {
+			draw(c.source());
+		}
+		draw(s.curves().back().target());
+	}
+}
 
 void IpeRenderer::drawText(const Point<Inexact>& p, const std::string& text) {
 	ipe::String labelText = escapeForLaTeX(text).data();
@@ -216,6 +285,15 @@ ipe::Curve* IpeRenderer::convertPolygonToCurve(const Polygon<Inexact>& p) const 
 	return curve;
 }
 
+ipe::Curve* IpeRenderer::convertPolylineToCurve(const Polyline<Inexact>& p) const {
+	ipe::Curve* curve = new ipe::Curve();
+	for (auto edge = p.edges_begin(); edge != p.edges_end(); edge++) {
+		curve->appendSegment(ipe::Vector(edge->start().x(), edge->start().y()),
+		                     ipe::Vector(edge->end().x(), edge->end().y()));
+	}
+	return curve;
+}
+
 ipe::AllAttributes IpeRenderer::getAttributesForStyle() const {
 	ipe::AllAttributes attributes;
 	if ((m_style.m_mode & GeometryRenderer::fill) && (m_style.m_mode & GeometryRenderer::stroke)) {
@@ -233,13 +311,13 @@ ipe::AllAttributes IpeRenderer::getAttributesForStyle() const {
 }
 
 void IpeRenderer::addPainting(const std::shared_ptr<GeometryPainting>& painting) {
-	m_paintings.emplace_back(painting);
+	m_paintings.push_back(DrawnPainting{painting});
 }
 
 void IpeRenderer::addPainting(const std::shared_ptr<GeometryPainting>& painting, const std::string& name) {
 	std::string spaceless;
 	std::replace_copy(name.begin(), name.end(), std::back_inserter(spaceless), ' ', '_');
-	m_paintings.emplace_back(painting, spaceless);
+	m_paintings.push_back(DrawnPainting{painting, spaceless});
 }
 
 std::string IpeRenderer::escapeForLaTeX(const std::string& text) const {
