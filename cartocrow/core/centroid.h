@@ -26,7 +26,6 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 05-12-2019
 
 #include <CGAL/Kernel/global_functions_2.h>
 #include <CGAL/Origin.h>
-#include <glog/logging.h>
 #include <numeric>
 #include <stdexcept>
 
