@@ -82,7 +82,7 @@ template <class K, class InputIterator> class SegmentIterator:
 
 template <class K> class Polyline {
   public:
-	typedef std::vector<CGAL::Point_2<K>>::const_iterator Vertex_iterator;
+	typedef typename std::vector<CGAL::Point_2<K>>::const_iterator Vertex_iterator;
 	typedef SegmentIterator<K, typename std::vector<typename CGAL::Point_2<K>>::const_iterator> Edge_iterator;
 	Polyline() = default;
 
