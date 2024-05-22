@@ -423,7 +423,7 @@ int main(int argc, char* argv[]) {
 VoronoiPainting::VoronoiPainting(const SDG2& delaunay): m_delaunay(delaunay) {}
 
 void VoronoiPainting::paint(GeometryRenderer& renderer) const {
-	renderer.setStroke(Color(150, 150, 150), 1);
+	renderer.setStroke(Color{150, 150, 150}, 1);
 	renderer.setMode(GeometryRenderer::stroke);
 	auto voronoiDrawer = VoronoiDrawer<Gt>(&renderer);
 	draw_dual<VoronoiDrawer<Gt>, K>(m_delaunay, voronoiDrawer);
@@ -444,9 +444,9 @@ void IsolinePainting::paint(GeometryRenderer& renderer) const {
 	double stroke_weight = m_ipe ? 0.4 : 1;
 
 	if (m_light) {
-		renderer.setStroke(Color(150, 150, 150), stroke_weight);
+		renderer.setStroke(Color{150, 150, 150}, stroke_weight);
 	} else {
-		renderer.setStroke(Color(0, 0, 0), stroke_weight);
+		renderer.setStroke(Color{0, 0, 0}, stroke_weight);
 	}
 	for (const auto& isoline : m_isolines) {
 		if (m_apply_smoothing) {
@@ -465,7 +465,7 @@ void MedialAxisSeparatorPainting::paint(GeometryRenderer& renderer) const {
 	auto voronoiDrawer = VoronoiDrawer<Gt>(&renderer);
 	for (const auto& [_, edges] : m_separator)
 	for (const auto& edge : edges) {
-		renderer.setStroke(Color(30, 119, 179), 2.5);
+		renderer.setStroke(Color{30, 119, 179}, 2.5);
 		renderer.setMode(GeometryRenderer::stroke);
 		draw_dual_edge<VoronoiDrawer<Gt>, K>(m_delaunay, edge, voronoiDrawer);
 	}
@@ -478,14 +478,14 @@ void MatchingPainting::paint(GeometryRenderer& renderer) const {
 	renderer.setMode(GeometryRenderer::stroke);
 	for (const auto& [p, matched_to] : m_matching) {
 		if (!m_predicate(p)) continue;
-		renderer.setStroke(Color(50, 200, 200), 3);
+		renderer.setStroke(Color{50, 200, 200}, 3);
 		if (matched_to.contains(CGAL::LEFT_TURN)) {
 			for (const auto& [_, pts] : matched_to.at(CGAL::LEFT_TURN))
 			for (const auto& q : pts) {
 				renderer.draw(Segment<K>(p, q));
 			}
 		}
-		renderer.setStroke(Color(200, 50, 200), 3);
+		renderer.setStroke(Color{200, 50, 200}, 3);
 		if (matched_to.contains(CGAL::RIGHT_TURN)) {
 			for (const auto& [_, pts] : matched_to.at(CGAL::RIGHT_TURN))
 			for (const auto& q : pts) {
@@ -517,9 +517,9 @@ Polygon<K> slope_ladder_polygon(const SlopeLadder& slope_ladder) {
 
 void draw_slope_ladder(GeometryRenderer& renderer, const SlopeLadder& slope_ladder) {
 	auto poly = slope_ladder_polygon(slope_ladder);
-	renderer.setFill(Color(100, 0, 0));
+	renderer.setFill(Color{100, 0, 0});
 	renderer.setFillOpacity(20);
-	renderer.setStroke(Color(255, 20, 20), 1.0);
+	renderer.setStroke(Color{255, 20, 20}, 1.0);
 	renderer.setMode(GeometryRenderer::fill | GeometryRenderer::stroke);
 	renderer.draw(poly);
 }
@@ -538,10 +538,10 @@ void draw_ladder_collapse(GeometryRenderer& renderer, IsolineSimplifier& simplif
 		auto s = simplifier.m_p_prev.at(t);
 		auto v = simplifier.m_p_next.at(u);
 		auto l = area_preservation_line(s, t, u, v);
-		renderer.setStroke(Color(60, 60, 60), 2.0);
+		renderer.setStroke(Color{60, 60, 60}, 2.0);
 		renderer.draw(l);
 
-		renderer.setStroke(Color(255, 165, 0), 4.0);
+		renderer.setStroke(Color{255, 165, 0}, 4.0);
 		renderer.draw(Gt::Segment_2(s, p));
 		renderer.draw(Gt::Segment_2(p, v));
 		renderer.draw(p);
@@ -560,7 +560,7 @@ void SlopeLadderPainting::paint(GeometryRenderer& renderer) const {
 			}
 		}
 		renderer.setMode(GeometryRenderer::fill);
-		renderer.setFill(Color(252, 190, 110));
+		renderer.setFill(Color{252, 190, 110});
 		renderer.setFillOpacity(25);
 		renderer.draw(poly);
 	}
@@ -593,7 +593,7 @@ void CompleteMatchingPainting::paint(GeometryRenderer& renderer) const {
 	}
 
 	for (const auto& e : edges) {
-		renderer.setStroke(Color(255, 126, 0), 1.0);
+		renderer.setStroke(Color{255, 126, 0}, 1.0);
 		renderer.setMode(GeometryRenderer::stroke);
 		renderer.draw(e);
 	}
@@ -608,7 +608,7 @@ void CollapsePainting::paint(GeometryRenderer& renderer) const {
 		if (!next.has_value()) return;
 		const auto& slope_ladder = *next;
 		if (!slope_ladder->m_old) {
-			renderer.setStroke(Color(255, 20, 20), 2.0);
+			renderer.setStroke(Color{255, 20, 20}, 2.0);
 			draw_slope_ladder(renderer, *slope_ladder);
 			draw_ladder_collapse(renderer, m_simplifier, *slope_ladder);
 		}
@@ -616,7 +616,7 @@ void CollapsePainting::paint(GeometryRenderer& renderer) const {
 
 	for (const auto& v : m_simplifier.m_changed_vertices) {
 		const auto& site = v->site();
-		renderer.setStroke(Color(0, 200, 0), 5.0);
+		renderer.setStroke(Color{0, 200, 0}, 5.0);
 		if (site.is_point()) {
 			renderer.draw(site.point());
 		} else {
@@ -653,7 +653,7 @@ void MedialAxisExceptSeparatorPainting::paint(GeometryRenderer& renderer) const 
 		     is_endpoint_of_segment<K>(del, p, q) );
 
 		if (!is_endpoint_of_seg && m_simplifier.m_p_isoline.at(p_point) == m_simplifier.m_p_isoline.at(q_point)) {
-			renderer.setStroke(Color(210, 210, 210), 1.0);
+			renderer.setStroke(Color{210, 210, 210}, 1.0);
 			draw_dual_edge<VoronoiDrawer<Gt>, K>(del, *eit, vd);
 		}
 	}
@@ -675,7 +675,7 @@ void VoronoiExceptMedialPainting::paint(GeometryRenderer& renderer) const {
 		    (p.is_point() && q.is_segment() && is_endpoint_of_segment<K>(del, p, q));
 
 		if (is_endpoint_of_seg) {
-			renderer.setStroke(Color(210, 210, 210), 1);
+			renderer.setStroke(Color{210, 210, 210}, 1);
 			draw_dual_edge<VoronoiDrawer<Gt>, K>(del, *eit, vd);
 		}
 	}
