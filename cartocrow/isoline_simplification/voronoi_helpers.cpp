@@ -159,7 +159,7 @@ std::variant<Gt::Point_2, Gt::Segment_2> site_projection(const SDG2& delaunay, c
 			auto end = site.segment().supporting_line().projection(s.end());
 			return { Segment<Inexact>(start, end) };
 		}
-		if (CGAL::assign(ps, o)) {
+		else if (CGAL::assign(ps, o)) {
 			// Roundabout way to obtain start and end of parabolic segment because they are protected -_-
 			Open_Parabola_segment_2 ops{ps};
 			auto p1 = ops.get_p1();
@@ -173,6 +173,10 @@ std::variant<Gt::Point_2, Gt::Segment_2> site_projection(const SDG2& delaunay, c
 			auto end = site.segment().supporting_line().projection(p2);
 
 			return {Segment<Inexact>(start, end)};
+		}
+		else {
+			throw std::runtime_error("Impossible: a segment Voronoi edge is neither a line segment nor a parabolic "
+			                         "segment, but at least one of its sites is a line segment.");
 		}
 	}
 }
@@ -462,7 +466,8 @@ std::optional<Gt::Segment_2> check_segment_intersections_Voronoi(const SDG2& del
 void create_matching(const SDG2& delaunay, const SDG2::Edge& edge, Matching& matching, const PointToPoint& p_prev,
                      const PointToPoint& p_next, const PointToIsoline& p_isoline, const PointToVertex& p_vertex,
                      const double angle_filter, const double alignment_filter) {
-	auto [p, q] = defining_sites(edge);
+	SDG2::Site_2 p, q;
+	std::tie(p, q) = defining_sites(edge);
 
 	auto pl = supporting_line(p, p_prev, p_next);
 	auto ql = supporting_line(q, p_prev, p_next);
