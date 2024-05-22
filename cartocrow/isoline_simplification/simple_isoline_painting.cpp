@@ -25,7 +25,7 @@ SimpleIsolinePainting::SimpleIsolinePainting(std::vector<Isoline<K>> isolines)
 
 void SimpleIsolinePainting::paint(renderer::GeometryRenderer& renderer) const {
 	renderer.setMode(renderer::GeometryRenderer::stroke);
-	renderer.setStroke(Color(0, 0, 0), 1.0);
+	renderer.setStroke(Color{0, 0, 0}, 1.0);
 
 	for (const auto& isoline : m_isolines) {
 		std::visit([&](auto&& v) { renderer.draw(v); }, isoline.drawing_representation());

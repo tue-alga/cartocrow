@@ -67,7 +67,7 @@ Gt::Point_2 point_of_Voronoi_edge(const SDG2::Edge& edge, const SDG2& delaunay) 
 		// Roundabout way to obtain start and end of parabolic segment because they are protected -_-
 		std::vector<typename Gt::Point_2> pts;
 		// small-western-island results in a NaN value somehow...
-		Open_Parabola_segment_2 ops(ps);
+		Open_Parabola_segment_2 ops{ps};
 		if (!std::isnan(ops.get_p1().x())) {
 			point_on_Voronoi_edge = ops.get_p1();
 		} else if (!std::isnan(ops.get_p2().x())) {
@@ -161,7 +161,7 @@ std::variant<Gt::Point_2, Gt::Segment_2> site_projection(const SDG2& delaunay, c
 		}
 		if (CGAL::assign(ps, o)) {
 			// Roundabout way to obtain start and end of parabolic segment because they are protected -_-
-			Open_Parabola_segment_2 ops(ps);
+			Open_Parabola_segment_2 ops{ps};
 			auto p1 = ops.get_p1();
 			auto p2 = ops.get_p2();
 

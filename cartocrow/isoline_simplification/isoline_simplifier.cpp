@@ -1182,7 +1182,7 @@ std::vector<Gt::Point_2> intersections_primal(Gt::Segment_2 seg, const CGAL::Obj
 		}
 		return intersections;
 	} else if (CGAL::assign(ps, o)) {
-		Open_Parabola_segment_2 ops(ps);
+		Open_Parabola_segment_2 ops{ps};
 		return parabola_intersections(seg, ps.line(), ps.center(), ops.get_p1(), ops.get_p2());
 	}
 }

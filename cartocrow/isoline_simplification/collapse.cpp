@@ -248,10 +248,10 @@ void SplineCollapsePainting::paint(cartocrow::renderer::GeometryRenderer& render
 	auto draw_controls = [&](std::vector<ipe::Vector>& controls, bool best) {
 		renderer.setMode(renderer::GeometryRenderer::stroke);
 		if (!best) {
-			renderer.setStroke(Color(20, 20, 255), 1.0);
+			renderer.setStroke(Color{20, 20, 255}, 1.0);
 			renderer.setStrokeOpacity(100);
 		} else {
-			renderer.setStroke(Color(20, 20, 255), 3.0);
+			renderer.setStroke(Color{20, 20, 255}, 3.0);
 		}
 
 	    for (const auto& v : controls) {
@@ -525,7 +525,7 @@ void HarmonyLinePainting::paint(renderer::GeometryRenderer& renderer) const {
 		Gt::Line_2 harmony_line(pt, initial_harmony_line.direction());
 
 		renderer.setMode(renderer::GeometryRenderer::stroke);
-		renderer.setStroke(Color(20, 20, 255), 1.0);
+		renderer.setStroke(Color{20, 20, 255}, 1.0);
 		renderer.setStrokeOpacity(100);
 		renderer.draw(harmony_line);
 
@@ -550,7 +550,7 @@ void HarmonyLinePainting::paint(renderer::GeometryRenderer& renderer) const {
 	}
 
 	renderer.setMode(renderer::GeometryRenderer::stroke);
-	renderer.setStroke(Color(20, 20, 255), 3.0);
+	renderer.setStroke(Color{20, 20, 255}, 3.0);
 	renderer.draw(best_line);
 }
 
