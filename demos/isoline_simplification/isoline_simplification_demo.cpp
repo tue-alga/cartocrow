@@ -471,7 +471,7 @@ void MedialAxisSeparatorPainting::paint(GeometryRenderer& renderer) const {
 	}
 }
 
-MatchingPainting::MatchingPainting(Matching& matching, std::function<bool(Gt::Point_2)> predicate):
+MatchingPainting::MatchingPainting(Matching& matching, std::function<bool(Point<K>)> predicate):
       m_matching(matching), m_predicate(std::move(predicate)) {}
 
 void MatchingPainting::paint(GeometryRenderer& renderer) const {
@@ -499,7 +499,7 @@ SlopeLadderPainting::SlopeLadderPainting(const Heap& slope_ladders):
       m_slope_ladders(slope_ladders) {}
 
 Polygon<K> slope_ladder_polygon(const SlopeLadder& slope_ladder) {
-	std::vector<Gt::Point_2> pts;
+	std::vector<Point<K>> pts;
 	for (const auto& p : slope_ladder.m_rungs) {
 		pts.push_back(p.source());
 	}
@@ -542,19 +542,19 @@ void draw_ladder_collapse(GeometryRenderer& renderer, IsolineSimplifier& simplif
 		renderer.draw(l);
 
 		renderer.setStroke(Color{255, 165, 0}, 4.0);
-		renderer.draw(Gt::Segment_2(s, p));
-		renderer.draw(Gt::Segment_2(p, v));
+		renderer.draw(Segment<K>(s, p));
+		renderer.draw(Segment<K>(p, v));
 		renderer.draw(p);
 	}
 }
 
 void SlopeLadderPainting::paint(GeometryRenderer& renderer) const {
-	std::unordered_set<Gt::Segment_2> edges;
+	std::unordered_set<Segment<K>> edges;
 	for (const auto& slope_ladder : m_slope_ladders) {
 		if (slope_ladder->m_old) continue;
 		auto poly = slope_ladder_polygon(*slope_ladder);
 		for (auto eit = poly.edges_begin(); eit != poly.edges_end(); eit++) {
-			Gt::Segment_2 e = *eit;
+			Segment<K> e = *eit;
 			if (!edges.contains(e) && !edges.contains(e.opposite())) {
 				edges.insert(e);
 			}
@@ -569,13 +569,13 @@ void SlopeLadderPainting::paint(GeometryRenderer& renderer) const {
 CompleteMatchingPainting::CompleteMatchingPainting(Matching& matching): m_matching(matching) {}
 
 void CompleteMatchingPainting::paint(GeometryRenderer& renderer) const {
-	std::unordered_set<Gt::Segment_2> edges;
+	std::unordered_set<Segment<K>> edges;
 
 	for (const auto& [p, matched_to] : m_matching) {
 		if (matched_to.contains(CGAL::LEFT_TURN)) {
 			for (const auto& [_, pts] : matched_to.at(CGAL::LEFT_TURN))
 				for (const auto& q : pts) {
-					Gt::Segment_2 seg(p, q);
+					Segment<K> seg(p, q);
 					if (!edges.contains(seg) && !edges.contains(seg.opposite())) {
 						edges.insert(seg);
 					}
@@ -584,7 +584,7 @@ void CompleteMatchingPainting::paint(GeometryRenderer& renderer) const {
 		if (matched_to.contains(CGAL::RIGHT_TURN)) {
 			for (const auto& [_, pts] : matched_to.at(CGAL::RIGHT_TURN))
 				for (const auto& q : pts) {
-					Gt::Segment_2 seg(p, q);
+					Segment<K> seg(p, q);
 					if (!edges.contains(seg) && !edges.contains(seg.opposite())) {
 						edges.insert(seg);
 					}

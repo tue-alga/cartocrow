@@ -44,28 +44,28 @@ SDG2::Point_2 point_of_site(const SDG2::Site_2& site) {
 
 class Open_Parabola_segment_2 : public CGAL::Parabola_segment_2<Gt> {
   public:
-	Gt::Point_2 get_p1() {
+	Point<K> get_p1() {
 		return p1;
 	}
-	Gt::Point_2 get_p2() {
+	Point<K> get_p2() {
 		return p2;
 	}
 };
 
-Gt::Point_2 point_of_Voronoi_edge(const SDG2::Edge& edge, const SDG2& delaunay) {
+Point<K> point_of_Voronoi_edge(const SDG2::Edge& edge, const SDG2& delaunay) {
 	CGAL::Object o = delaunay.primal(edge);
-	typename Gt::Segment_2 s;
-	typename Gt::Line_2 l;
-	typename Gt::Ray_2 r;
+	Segment<K> s;
+	Line<K> l;
+	Ray<K> r;
 	CGAL::Parabola_segment_2<Gt> ps;
 
-	Gt::Point_2 point_on_Voronoi_edge;
+	Point<K> point_on_Voronoi_edge;
 	if (CGAL::assign(s, o)) {
 		point_on_Voronoi_edge = midpoint(s);
 	}
 	if (CGAL::assign(ps, o)) {
 		// Roundabout way to obtain start and end of parabolic segment because they are protected -_-
-		std::vector<typename Gt::Point_2> pts;
+		std::vector<Point<K>> pts;
 		// small-western-island results in a NaN value somehow...
 		Open_Parabola_segment_2 ops{ps};
 		if (!std::isnan(ops.get_p1().x())) {
@@ -87,9 +87,9 @@ Gt::Point_2 point_of_Voronoi_edge(const SDG2::Edge& edge, const SDG2& delaunay) 
 
 std::string type_of_Voronoi_edge(const SDG2::Edge& edge, const SDG2& delaunay) {
 	CGAL::Object o = delaunay.primal(edge);
-	typename Gt::Segment_2 s;
-	typename Gt::Line_2 l;
-	typename Gt::Ray_2 r;
+	Segment<K> s;
+	Line<K> l;
+	Ray<K> r;
 	CGAL::Parabola_segment_2<Gt> ps;
 
 	if (CGAL::assign(s, o)) {
@@ -128,7 +128,7 @@ Separator medial_axis_separator(const SDG2& delaunay, const PointToIsoline& isol
 		auto q_iso = isoline.at(q_point);
 
 		if (p_iso != q_iso) {
-			Gt::Point_2 n;
+			Point<K> n;
 			if (next.contains(p_point)) {
 				n = next.at(p_point);
 			} else {
@@ -145,11 +145,11 @@ Separator medial_axis_separator(const SDG2& delaunay, const PointToIsoline& isol
 	return edges;
 }
 
-std::variant<Gt::Point_2, Gt::Segment_2> site_projection(const SDG2& delaunay, const SDG2::Edge& edge, const SDG2::Site_2& site) {
+std::variant<Point<K>, Segment<K>> site_projection(const SDG2& delaunay, const SDG2::Edge& edge, const SDG2::Site_2& site) {
 	if (site.is_point()) {
 		return { site.point() };
 	} else {
-		typename Gt::Segment_2 s;
+		Segment<K> s;
 		CGAL::Parabola_segment_2<Gt> ps;
 		CGAL::Object o = delaunay.primal(edge);
 
@@ -166,7 +166,7 @@ std::variant<Gt::Point_2, Gt::Segment_2> site_projection(const SDG2& delaunay, c
 			auto p2 = ops.get_p2();
 
 			if (std::isnan(p1.x()) || std::isnan(p2.x())) {
-				return {Gt::Segment_2(Gt::Point_2(0.0, 0.0), Gt::Point_2(1.0, 0.0))};
+				return {Segment<K>(Point<K>(0.0, 0.0), Point<K>(1.0, 0.0))};
 			}
 
 			auto start = site.segment().supporting_line().projection(p1);
@@ -181,14 +181,14 @@ std::variant<Gt::Point_2, Gt::Segment_2> site_projection(const SDG2& delaunay, c
 	}
 }
 
-Gt::Segment_2 snap_endpoints(Gt::Segment_2 proj, Gt::Segment_2 original) {
-	Gt::Point_2 start;
+Segment<K> snap_endpoints(Segment<K> proj, Segment<K> original) {
+	Point<K> start;
 	if (compare_distance_to_point(proj.source(), original.source(), original.target()) == CGAL::SMALLER) {
 		start = original.source();
 	} else {
 		start = original.target();
 	}
-	Gt::Point_2 end;
+	Point<K> end;
 	if (compare_distance_to_point(proj.target(), original.source(), original.target()) == CGAL::SMALLER) {
 		end = original.source();
 	} else {
@@ -200,7 +200,7 @@ Gt::Segment_2 snap_endpoints(Gt::Segment_2 proj, Gt::Segment_2 original) {
 Matching matching(const SDG2& delaunay, const Separator& separator, const PointToPoint& p_prev,
                   const PointToPoint& p_next, const PointToIsoline& p_isoline, const PointToVertex& p_vertex,
                   const double angle_filter, const double alignment_filter) {
-	std::unordered_map<Gt::Point_2, MatchedTo> matching;
+	std::unordered_map<Point<K>, MatchedTo> matching;
 
 	for (auto& [_, edges]: separator)
 	for (auto edge : edges) {
@@ -219,17 +219,17 @@ Matching matching(const SDG2& delaunay, const Separator& separator, const PointT
 	return matching;
 }
 
-Gt::Line_2 supporting_line(const SDG2::Point_2& p, const PointToPoint& p_prev, const PointToPoint& p_next) {
+Line<K> supporting_line(const SDG2::Point_2& p, const PointToPoint& p_prev, const PointToPoint& p_next) {
 	if (!p_next.contains(p) && !p_prev.contains(p)) {
 		throw std::runtime_error("Point should have next or prev.");
 	}
-	Gt::Point_2 prev;
+	Point<K> prev;
 	if (p_prev.contains(p)) {
 		prev = p_prev.at(p);
 	} else {
 		prev = p + (p - p_next.at(p));
 	}
-	Gt::Point_2 next;
+	Point<K> next;
 	if (p_next.contains(p)) {
 		next = p_next.at(p);
 	} else {
@@ -237,22 +237,22 @@ Gt::Line_2 supporting_line(const SDG2::Point_2& p, const PointToPoint& p_prev, c
 	}
 	auto v1 = prev - p;
 	auto v2 = next - p;
-	auto l1 = Gt::Line_2(p, v1);
-	auto l2 = Gt::Line_2(p, v2);
+	auto l1 = Line<K>(p, v1);
+	auto l2 = Line<K>(p, v2);
 
-	Gt::Line_2 l3;
+	Line<K> l3;
 	auto orient = CGAL::orientation(prev, p, next);
 	if (orient == CGAL::LEFT_TURN) {
 		l3 = CGAL::bisector(l1, l2).opposite().perpendicular(p);
 	} else if (orient == CGAL::RIGHT_TURN) {
 		l3 = CGAL::bisector(l1, l2).perpendicular(p);
 	} else {
-		l3 = Gt::Line_2(prev, next);
+		l3 = Line<K>(prev, next);
 	}
 	return l3;
 }
 
-Gt::Line_2 supporting_line(const SDG2::Site_2& site, const PointToPoint& p_prev, const PointToPoint& p_next) {
+Line<K> supporting_line(const SDG2::Site_2& site, const PointToPoint& p_prev, const PointToPoint& p_next) {
 	if (site.is_point()) {
 		return supporting_line(site.point(), p_prev, p_next);
 	} else {
@@ -278,8 +278,8 @@ CGAL::Orientation side(const SDG2::Site_2& site, const SDG2::Point_2& point, con
 	}
 }
 
-std::vector<Gt::Point_2> project_snap(const SDG2& delaunay, const SDG2::Site_2& site, const SDG2::Edge& edge) {
-	std::vector<Gt::Point_2> pts;
+std::vector<Point<K>> project_snap(const SDG2& delaunay, const SDG2::Site_2& site, const SDG2::Edge& edge) {
+	std::vector<Point<K>> pts;
 	if (site.is_point()) {
 		pts.reserve(1);
 		pts.push_back(site.point());
@@ -287,7 +287,7 @@ std::vector<Gt::Point_2> project_snap(const SDG2& delaunay, const SDG2::Site_2& 
 	}
 
 	auto proj_seg = std::get<Segment<K>>(site_projection(delaunay, edge, site));
-	Gt::Segment_2 seg = snap_endpoints(proj_seg, site.segment());
+	Segment<K> seg = snap_endpoints(proj_seg, site.segment());
 
 	if (seg.source() == seg.target()) {
 		pts.reserve(1);
@@ -353,7 +353,7 @@ Gt::Arrangement_type_2::result_type arrangement_type(const SDG2& sdg, const SDG2
 	return res;
 }
 
-std::optional<Gt::Segment_2> check_segment_intersections_Voronoi(const SDG2& delaunay, const Gt::Segment_2 seg,
+std::optional<Segment<K>> check_segment_intersections_Voronoi(const SDG2& delaunay, const Segment<K> seg,
                                                                  const SDG2::Vertex_handle endpoint_handle,
                                                                  const std::unordered_set<SDG2::Vertex_handle>& allowed = std::unordered_set<SDG2::Vertex_handle>(),
                                                                  const std::optional<SDG2::Vertex_handle> collinear_vertex = std::nullopt) {
@@ -494,7 +494,7 @@ void create_matching(const SDG2& delaunay, const SDG2::Edge& edge, Matching& mat
 			auto pp = p_pts[pi];
 			auto qp = q_pts[qi];
 			bool edge_case = !p_prev.contains(pp) || !p_prev.contains(qp) || !p_next.contains(pp) || !p_next.contains(qp);
-//			bool intersects = check_segment_intersections_Voronoi(delaunay, Gt::Segment_2(pp, qp), p_vertex.at(pp)).has_value();
+//			bool intersects = check_segment_intersections_Voronoi(delaunay, Segment<K>(pp, qp), p_vertex.at(pp)).has_value();
 			bool aligned = vertex_alignment(p_prev, p_next, pp, qp, sign_p, sign_q) < alignment_filter;
 			if (!edge_case && aligned) {
 				matching[pp][sign_p][p_isoline.at(point_of_site(q))].push_back(qp);
@@ -513,20 +513,20 @@ void create_matching(const SDG2& delaunay, const SDG2::Edge& edge, Matching& mat
 	}
 }
 
-std::function<bool(const Gt::Point_2&, const Gt::Point_2&)> compare_along_isoline(const PointToPoint& p_prev, const PointToPoint& p_next) {
-	return [&p_prev, &p_next](const Gt::Point_2& p, const Gt::Point_2& q) {
+std::function<bool(const Point<K>&, const Point<K>&)> compare_along_isoline(const PointToPoint& p_prev, const PointToPoint& p_next) {
+	return [&p_prev, &p_next](const Point<K>& p, const Point<K>& q) {
 		if (p == q) return false;
-		std::optional<Gt::Point_2> earlier;
+		std::optional<Point<K>> earlier;
 		if (p_prev.contains(p)) {
 			earlier = p_prev.at(p);
 		}
-		std::optional<Gt::Point_2> later;
+		std::optional<Point<K>> later;
 		if (p_next.contains(p)) {
 			later = p_next.at(p);
 		}
 
 		while (true) {
-			Gt::Point_2 q_pt = q;
+			Point<K> q_pt = q;
 			if (earlier == q_pt)
 				return false;
 			if (later == q_pt)
@@ -551,7 +551,7 @@ K::Vector_2 normal(const SDG2::Point_2& p, const PointToPoint& p_prev, const Poi
 	}
 }
 
-double vertex_alignment(const PointToPoint& p_prev, const PointToPoint& p_next, Gt::Point_2 u, Gt::Point_2 v, CGAL::Sign uv_side, CGAL::Sign vu_side) {
+double vertex_alignment(const PointToPoint& p_prev, const PointToPoint& p_next, Point<K> u, Point<K> v, CGAL::Sign uv_side, CGAL::Sign vu_side) {
 	auto n_u = normal(u, p_prev, p_next, uv_side);
 	auto n_v = normal(v, p_prev, p_next, vu_side);
 	auto uv = v - u;

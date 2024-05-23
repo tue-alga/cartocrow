@@ -30,17 +30,17 @@ class VoronoiDrawer {
 
 	explicit VoronoiDrawer(cartocrow::renderer::GeometryRenderer* renderer): m_renderer(renderer) {};
 
-	VoronoiDrawer& operator<<(const Gt::Segment_2& s) {
+	VoronoiDrawer& operator<<(const Segment<K>& s) {
 		m_renderer->draw(s);
 		return *this;
 	}
 
-	VoronoiDrawer& operator<<(const Gt::Line_2& l) {
+	VoronoiDrawer& operator<<(const Line<K>& l) {
 		m_renderer->draw(l);
 		return *this;
 	}
 
-	VoronoiDrawer& operator<<(const Gt::Ray_2& r){
+	VoronoiDrawer& operator<<(const Ray<K>& r){
 		m_renderer->draw(r);
 		return *this;
 	}
@@ -52,7 +52,7 @@ class VoronoiDrawer {
 		auto focus = p.center();
 
 		// Roundabout way to obtain start and end of parabolic segment because they are protected -_-
-		std::vector<typename Gt::Point_2> pts;
+		std::vector<Point<K>> pts;
 		p.generate_points(pts, (typename Gt::FT)(1000000));
 		auto start = pts.front();
 		auto end = pts.back();
@@ -63,7 +63,7 @@ class VoronoiDrawer {
 		auto end_p = dir.projection(end);
 
 		// If the points are collinear CGAL::circumcenter throws an error; draw a segment instead.
-		if (CGAL::collinear(focus, start_p, end_p)) return *this << typename Gt::Segment_2(start, end);
+		if (CGAL::collinear(focus, start_p, end_p)) return *this << Segment<K>(start, end);
 
 		auto control = CGAL::circumcenter(focus, start_p, end_p);
 		auto bezier = BezierCurve(approximate(start), approximate(control), approximate(end));

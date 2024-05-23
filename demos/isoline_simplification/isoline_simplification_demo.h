@@ -97,14 +97,14 @@ class MedialAxisSeparatorPainting : public GeometryPainting {
 
 class MatchingPainting : public GeometryPainting {
   public:
-	MatchingPainting(Matching& matching, std::function<bool(Gt::Point_2)> predicate);
+	MatchingPainting(Matching& matching, std::function<bool(Point<K>)> predicate);
 
   protected:
 	void paint(GeometryRenderer& renderer) const override;
 
   private:
 	Matching& m_matching;
-	std::function<bool(Gt::Point_2)> m_predicate;
+	std::function<bool(Point<K>)> m_predicate;
 };
 
 class CompleteMatchingPainting : public GeometryPainting {

@@ -50,9 +50,9 @@ template <class Stream,
           class SDG = CGAL::Segment_Delaunay_graph_hierarchy_2<Gt>>
 Stream& draw_dual_edge(const SDG& dg, typename SDG::Edge e, Stream& str)
 {
-	typename Gt::Line_2    l;
-	typename Gt::Segment_2 s;
-	typename Gt::Ray_2     r;
+	Line<K>    l;
+	Segment<K> s;
+	Ray<K>     r;
 	CGAL::Parabola_segment_2<Gt> ps;
 
 	if (dg.is_infinite(e)) return str;

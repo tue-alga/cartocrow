@@ -33,13 +33,13 @@ typedef CGAL::Exact_predicates_inexact_constructions_kernel K;
 typedef CGAL::Segment_Delaunay_graph_filtered_traits_without_intersections_2<K, CGAL::Field_with_sqrt_tag> Gt;
 typedef CGAL::Segment_Delaunay_graph_2<Gt> SDG2;
 
-typedef std::unordered_map<CGAL::Orientation, std::unordered_map<Isoline<K>*, std::vector<Gt::Point_2>>> MatchedTo;
-typedef std::unordered_map<Gt::Point_2, MatchedTo> Matching;
+typedef std::unordered_map<CGAL::Orientation, std::unordered_map<Isoline<K>*, std::vector<Point<K>>>> MatchedTo;
+typedef std::unordered_map<Point<K>, MatchedTo> Matching;
 
-typedef std::unordered_map<Gt::Point_2, Gt::Point_2> PointToPoint;
-typedef std::unordered_map<Gt::Point_2, Isoline<K>*> PointToIsoline;
-typedef std::unordered_map<Gt::Point_2, std::list<Gt::Point_2>::iterator> PointToIterator;
-typedef std::unordered_map<Gt::Point_2, SDG2::Vertex_handle> PointToVertex;
-typedef std::unordered_map<Gt::Segment_2, SDG2::Vertex_handle> EdgeToVertex;
+typedef std::unordered_map<Point<K>, Point<K>> PointToPoint;
+typedef std::unordered_map<Point<K>, Isoline<K>*> PointToIsoline;
+typedef std::unordered_map<Point<K>, std::list<Point<K>>::iterator> PointToIterator;
+typedef std::unordered_map<Point<K>, SDG2::Vertex_handle> PointToVertex;
+typedef std::unordered_map<Segment<K>, SDG2::Vertex_handle> EdgeToVertex;
 }
 #endif //CARTOCROW_TYPES_H

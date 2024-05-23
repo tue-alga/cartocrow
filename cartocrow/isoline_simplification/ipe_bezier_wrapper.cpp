@@ -20,15 +20,15 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "ipe_bezier_wrapper.h"
 
 namespace cartocrow::isoline_simplification {
-ipe::Vector pv(Gt::Point_2 p) {
+ipe::Vector pv(Point<K> p) {
 	return ipe::Vector(p.x(), p.y());
 }
 
-Gt::Point_2 vp(ipe::Vector v) {
-	return Gt::Point_2(v.x, v.y);
+Point<K> vp(ipe::Vector v) {
+	return Point<K>(v.x, v.y);
 }
 
-std::variant<ipe::Bezier, ipe::Segment> parabola_to_curve(Gt::Line_2 dir, Gt::Point_2 focus, Gt::Point_2 p1, Gt::Point_2 p2) {
+std::variant<ipe::Bezier, ipe::Segment> parabola_to_curve(Line<K> dir, Point<K> focus, Point<K> p1, Point<K> p2) {
 	auto start_p = dir.projection(p1);
 	auto end_p = dir.projection(p1);
 
@@ -41,8 +41,8 @@ std::variant<ipe::Bezier, ipe::Segment> parabola_to_curve(Gt::Line_2 dir, Gt::Po
 	}
 }
 
-std::vector<Gt::Point_2> parabola_intersections(Gt::Segment_2 seg, Gt::Line_2 dir, Gt::Point_2 focus, Gt::Point_2 p1, Gt::Point_2 p2) {
-	std::vector<Gt::Point_2> pts;
+std::vector<Point<K>> parabola_intersections(Segment<K> seg, Line<K> dir, Point<K> focus, Point<K> p1, Point<K> p2) {
+	std::vector<Point<K>> pts;
 	ipe::Segment ipe_seg(pv(seg.source()), pv(seg.target()));
 	auto curve = parabola_to_curve(dir, focus, p1, p2);
 	if (std::holds_alternative<ipe::Bezier>(curve)) {

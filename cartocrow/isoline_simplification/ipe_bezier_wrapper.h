@@ -26,10 +26,10 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "../core/bezier.h"
 
 namespace cartocrow::isoline_simplification {
-std::vector<Gt::Point_2> parabola_intersections(Gt::Segment_2 seg, Gt::Line_2 dir,
-                                                Gt::Point_2 focus, Gt::Point_2 p1, Gt::Point_2 p2);
-ipe::Vector pv(Gt::Point_2 p);
-Gt::Point_2 vp(ipe::Vector p);
+std::vector<Point<K>> parabola_intersections(Segment<K> seg, Line<K> dir,
+                                                Point<K> focus, Point<K> p1, Point<K> p2);
+ipe::Vector pv(Point<K> p);
+Point<K> vp(ipe::Vector p);
 
 BezierCurve parse_ipe_bezier(const ipe::Bezier& bz);
 BezierSpline parse_ipe_beziers(const std::vector<ipe::Bezier>& bzs);
