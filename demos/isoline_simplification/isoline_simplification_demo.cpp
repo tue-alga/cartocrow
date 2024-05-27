@@ -506,8 +506,8 @@ Polygon<K> slope_ladder_polygon(const SlopeLadder& slope_ladder) {
 	if (slope_ladder.m_cap.contains(CGAL::RIGHT_TURN)) {
 		pts.push_back(slope_ladder.m_cap.at(CGAL::RIGHT_TURN));
 	}
-	for (auto& rung : std::ranges::reverse_view(slope_ladder.m_rungs)) {
-		pts.push_back(rung.target());
+	for (int i = slope_ladder.m_rungs.size() - 1; i >= 0; i--) {
+		pts.push_back(slope_ladder.m_rungs[i].target());
 	}
 	if (slope_ladder.m_cap.contains(CGAL::LEFT_TURN)) {
 		pts.push_back(slope_ladder.m_cap.at(CGAL::LEFT_TURN));
