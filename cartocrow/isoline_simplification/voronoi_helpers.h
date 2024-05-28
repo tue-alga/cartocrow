@@ -20,6 +20,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "isoline.h"
 #include "types.h"
 #include <vector>
+#include "voronoi_helpers_cgal.h"
 
 #ifndef CARTOCROW_MEDIAL_AXIS_SEPARATOR_H
 #define CARTOCROW_MEDIAL_AXIS_SEPARATOR_H

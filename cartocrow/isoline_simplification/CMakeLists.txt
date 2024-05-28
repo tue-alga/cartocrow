@@ -7,6 +7,8 @@ set(SOURCES
 	simple_isoline_painting.cpp
 	ipe_isolines.cpp
 	simple_smoothing.cpp
+	voronoi_helpers_cgal.cpp
+	voronoi_helpers_cgal.h
 )
 set(HEADERS
 	isoline.h

@@ -1,21 +1,15 @@
-/*
-The CartoCrow library implements algorithmic geo-visualization methods,
-developed at TU Eindhoven.
-Copyright (C) 2024 TU Eindhoven
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
-*/
+// These functions are adapted from CGAL functions that fall under the following license.
+// Copyright (c) 2003,2004,2005,2006  INRIA Sophia-Antipolis (France).
+// All rights reserved.
+//
+// This file is part of CGAL (www.cgal.org).
+//
+// $URL: https://github.com/CGAL/cgal/blob/v5.4/Segment_Delaunay_graph_2/include/CGAL/Segment_Delaunay_graph_2.h $
+// $Id: Segment_Delaunay_graph_2.h 98e4718 2021-08-26T11:33:39+02:00 Sébastien Loriot
+// SPDX-License-Identifier: GPL-3.0-or-later OR LicenseRef-Commercial
+//
+//
+// Author(s)     : Menelaos Karavelas <mkaravel@iacm.forth.gr>
 
 #ifndef CARTOCROW_MEDIAL_AXIS_HELPERS_H
 #define CARTOCROW_MEDIAL_AXIS_HELPERS_H
