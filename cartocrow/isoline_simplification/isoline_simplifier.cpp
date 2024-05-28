@@ -1137,16 +1137,6 @@ void IsolineSimplifier::remove_ladder_e(Segment<K> seg) {
 	}
 }
 
-class Open_Parabola_segment_2 : public CGAL::Parabola_segment_2<Gt> {
-  public:
-	Point<K> get_p1() {
-		return p1;
-	}
-	Point<K> get_p2() {
-		return p2;
-	}
-};
-
 std::vector<Point<K>> intersections_primal(Segment<K> seg, const CGAL::Object& o) {
 	Segment<K> s;
 	Line<K> l;

@@ -42,16 +42,6 @@ SDG2::Point_2 point_of_site(const SDG2::Site_2& site) {
 	return point;
 }
 
-class Open_Parabola_segment_2 : public CGAL::Parabola_segment_2<Gt> {
-  public:
-	Point<K> get_p1() {
-		return p1;
-	}
-	Point<K> get_p2() {
-		return p2;
-	}
-};
-
 Point<K> point_of_Voronoi_edge(const SDG2::Edge& edge, const SDG2& delaunay) {
 	CGAL::Object o = delaunay.primal(edge);
 	Segment<K> s;

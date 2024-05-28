@@ -52,10 +52,9 @@ class VoronoiDrawer {
 		auto focus = p.center();
 
 		// Roundabout way to obtain start and end of parabolic segment because they are protected -_-
-		std::vector<Point<K>> pts;
-		p.generate_points(pts, (typename Gt::FT)(1000000));
-		auto start = pts.front();
-		auto end = pts.back();
+		Open_Parabola_segment_2 op{p};
+		auto start = op.get_p1();
+		auto end = op.get_p2();
 
 		// Geometric magic: the intersection of the tangents at points p and q of the parabola is
 		// the circumcenter of the focus and the projections of p and q on the directrix.
