@@ -13,7 +13,6 @@ target_link_libraries(
     isoline_simplification
     CGAL::CGAL
     Qt5::Widgets
-    glog::glog
 )
 
 install(TARGETS isoline_simplification DESTINATION ${INSTALL_BINARY_DIR})
