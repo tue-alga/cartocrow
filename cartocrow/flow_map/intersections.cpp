@@ -21,8 +21,6 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 26-02-2021
 
 #include "intersections.h"
 
-#include <glog/logging.h>
-
 namespace cartocrow::flow_map {
 namespace detail {
 
@@ -136,9 +134,9 @@ void intersect(const Spiral& spiral_1, const Spiral& spiral_2,
 	// remember that the spirals have an infinite number of intersections;
 	// we want the one farthest from the pole for which 0 < t
 	const Number<Inexact> t_1_positive = 0 < ddt_phi ? d_phi / ddt_phi : (d_phi - M_2xPI) / ddt_phi;
-	CHECK_LT(0, t_1_positive);
+	//CHECK_LT(0, t_1_positive);
 	//CHECK_LE(t_1, std::abs(M_PI / tan_alpha_1));
-	CHECK_LT(t_1_positive, t_period);
+	//CHECK_LT(t_1_positive, t_period);
 
 	intersections.push_back(spiral_1.evaluate(t_1_positive));
 	intersections.push_back(spiral_1.evaluate(t_1_positive - t_period));
