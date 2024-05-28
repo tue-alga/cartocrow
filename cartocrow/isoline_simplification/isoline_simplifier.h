@@ -168,8 +168,6 @@ class IsolineSimplifier {
 	void clean_isolines();
 	void remove_ladder_e(Segment<K> seg);
 	std::optional<std::shared_ptr<SlopeLadder>> next_ladder();
-//	std::optional<std::shared_ptr<SlopeLadder>> naive_next_ladder();
-
 };
 }
 

@@ -47,7 +47,6 @@ std::optional<Point<K>> SplineCollapse::intersection(const std::vector<ipe::Bezi
 		b.intersect(line, inters);
 	}
 	if (inters.size() != 1) {
-		//			std::cerr << "Expected one spline--line intersection but encountered: " << inters.size() << std::endl;
 		return std::optional<Point<K>>();
 	}
 	return std::optional(vp(inters.front()));

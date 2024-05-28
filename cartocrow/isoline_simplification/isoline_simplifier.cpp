@@ -181,20 +181,8 @@ void IsolineSimplifier::collapse_ladder(SlopeLadder& ladder) {
 	  	m_deleted_points.push_back(p);
 
 	    if (!m_delaunay.remove(vertex)) {
-			std::cerr << "\nPoint removal failed\nLikely point " << p << " is incident to a segment that has not yet been deleted." << std::endl;
-			std::cerr << "Rebuilding delaunay triangulation..." << std::endl;
-
-			initialize_sdg();
-			m_deleted_points.clear();
-			m_changed_vertices.clear();
-			return false;
-
-//		    throw std::runtime_error("Delaunay point vertex removal failed!");
-
-//			std::cerr << "Likely point " << p << " is incident to a segment that has not yet been deleted." << std::endl;
-
+			throw std::runtime_error("Point removal failed\nThe point is likely incident to a segment that has not yet been deleted.");
 	    }
-		return true;
 	};
 
 	auto delaunay_remove_e = [&insert_adj, this](const Segment<K>& s) {
@@ -233,48 +221,25 @@ void IsolineSimplifier::collapse_ladder(SlopeLadder& ladder) {
 		return handle;
 	};
 
-	int iters = 0;
-	while (iters < 10) {
-		bool success = true;
-		for (int i = 0; i < ladder.m_rungs.size(); i++) {
-			auto edge = ladder.m_rungs.at(i);
+	// Remove from Delaunay
+	for (auto edge : ladder.m_rungs) {
+		bool reversed =
+		    m_p_next.contains(edge.target()) && m_p_next.at(edge.target()) == edge.source();
+		const Point<K>& t = reversed ? edge.target() : edge.source();
+		const Point<K>& u = reversed ? edge.source() : edge.target();
+		const Point<K>& s = m_p_prev.at(t);
+		const Point<K>& v = m_p_next.at(u);
+		const Segment<K> st = Segment<K>(s, t);
+		const Segment<K> uv = Segment<K>(u, v);
 
-			bool reversed =
-			    m_p_next.contains(edge.target()) && m_p_next.at(edge.target()) == edge.source();
-			const Point<K>& t = reversed ? edge.target() : edge.source();
-			const Point<K>& u = reversed ? edge.source() : edge.target();
-			if (!(m_p_next.at(t) == u && m_p_prev.at(u) == t)) {
-				std::cout << reversed << std::endl;
-				std::cout << t << std::endl;
-				std::cout << u << std::endl;
-				std::cout << m_p_next.at(t) << std::endl;
-				std::cout << m_p_prev.at(u) << std::endl;
-				std::cout << m_p_prev.at(t) << std::endl;
-				std::cout << m_p_next.at(u) << std::endl;
-			}
-			assert(m_p_next.at(t) == u && m_p_prev.at(u) == t);
-			const Point<K>& s = m_p_prev.at(t);
-			const Point<K>& v = m_p_next.at(u);
-			const Segment<K> st = Segment<K>(s, t);
-			const Segment<K> uv = Segment<K>(u, v);
-
-			// Remove from Delaunay
-			delaunay_remove_e(edge);
-			delaunay_remove_e(st);
-			if (!delaunay_remove_p(t)) {
-				success = false;
-				break;
-			}
-			delaunay_remove_e(uv);
-			if (!delaunay_remove_p(u)) {
-				success = false;
-				break;
-			}
-		}
-		if (success) break;
-		++iters;
+		delaunay_remove_e(edge);
+		delaunay_remove_e(st);
+		delaunay_remove_p(t);
+		delaunay_remove_e(uv);
+		delaunay_remove_p(u);
 	}
 
+	// Insert into Delaunay
 	for (int i = 0; i < ladder.m_rungs.size(); i++) {
 		auto edge = ladder.m_rungs.at(i);
 		auto new_point = ladder.m_collapsed.at(i);
@@ -286,7 +251,6 @@ void IsolineSimplifier::collapse_ladder(SlopeLadder& ladder) {
 		const Point<K>& s = m_p_prev.at(t);
 		const Point<K>& v = m_p_next.at(u);
 
-		// Insert into Delaunay
 		delaunay_insert_e(s, new_point, m_p_vertex.at(s));
 		auto seg_handle = delaunay_insert_e(new_point, v, m_p_vertex.at(v));
 		delaunay_insert_p(new_point, seg_handle);
@@ -357,11 +321,11 @@ void IsolineSimplifier::collapse_ladder(SlopeLadder& ladder) {
 		m_p_prev[v] = new_point;
 		m_p_next[s] = new_point;
 		if (m_p_prev.contains(new_point)) {
-			std::cerr << "Collapsed to existing point!!!" << std::endl;
+			std::cerr << "Collapsed to existing point!" << std::endl;
 		}
 		m_p_prev[new_point] = s;
 		if (m_p_next.contains(new_point)) {
-			std::cerr << "Collapsed to existing point!!!" << std::endl;
+			std::cerr << "Collapsed to existing point!" << std::endl;
 		}
 		m_p_next[new_point] = v;
 
@@ -444,7 +408,6 @@ void IsolineSimplifier::update_matching() {
 				SDG2::Vertex_handle target = a == vh ? b : a;
 
 				if (!target->storage_site().is_defined()) continue;
-				//	if (changed_vertices_and_endpoints.contains(target)) {
 				auto site_2 = target->site();
 				auto iso_2 = m_p_isoline.at(point_of_site(site_2));
 				if (iso_1 == iso_2) continue;
@@ -473,7 +436,7 @@ void IsolineSimplifier::update_matching() {
 		for (auto& [sign, mi] : m_matching.at(pt)) {
 			std::vector<Isoline<K>*> to_remove_i;
 			for (auto& [iso, pts] : mi) {
-				std::sort(pts.begin(), pts.end());//, comparison_f);
+				std::sort(pts.begin(), pts.end());
 				pts.erase(std::unique(pts.begin(), pts.end()), pts.end());
 
 				if (pts.empty()) {
@@ -759,7 +722,6 @@ bool IsolineSimplifier::step() {
 	auto next = next_ladder();
 	if (!next.has_value()) return false;
 	auto slope_ladder = *next;
-//	std::cout << "Ladder size: " << slope_ladder->m_rungs.size() << std::endl;
 
 	m_changed_vertices.clear();
 	m_deleted_points.clear();
@@ -771,7 +733,6 @@ bool IsolineSimplifier::step() {
 }
 
 void IsolineSimplifier::create_slope_ladder(Segment<K> seg) {
-	// Maybe make sure that the m_e_ladder and m_p_ladder maps never contains old ladders.
 	if (m_e_ladder.contains(seg) &&
 	        std::any_of(m_e_ladder.at(seg).begin(), m_e_ladder.at(seg).end(), [](const auto& l) { return !l->m_old; }) ||
 	    m_e_ladder.contains(seg.opposite()) &&
@@ -807,18 +768,6 @@ void IsolineSimplifier::create_slope_ladder(Segment<K> seg) {
 			auto& tms = t_m.at(shared_isoline);
 
 			auto make_rung = [&](const Point<K>& a, const Point<K>& b) {
-//				if (m_e_ladder.contains(Segment<K>(a, b)) && !m_e_ladder.at(Segment<K>(a, b))->m_old || m_e_ladder.contains(Segment<K>(b, a)) && !m_e_ladder.at(Segment<K>(b, a))->m_old) {
-//					std::cerr << "Encountered segment that is already part of a slope ladder" << std::endl;
-//					std::cerr << "a: " << a << " b: " << b << std::endl;
-//					std::cerr << "Encountered from s: " << s << " t: " << t << std::endl;
-//					std::cerr << "Original slope ladder: ";
-//					if (m_e_ladder.contains(Segment<K>(a, b))) {
-//						std::cerr << m_e_ladder.at(Segment<K>(a, b))->m_rungs[0] << std::endl;
-//					}
-//					if (m_e_ladder.contains(Segment<K>(b, a))) {
-//						std::cerr << m_e_ladder.at(Segment<K>(b, a))->m_rungs[0] << std::endl;
-//					}
-//				}
 				m_e_ladder[Segment<K>(a, b)].push_back(slope_ladder);
 				if (initial_dir == CGAL::LEFT_TURN) {
 					slope_ladder->m_rungs.emplace_front(a, b);
@@ -827,17 +776,14 @@ void IsolineSimplifier::create_slope_ladder(Segment<K> seg) {
 				}
 				// Continue search in direction opposite of where we came from
 				CGAL::Sign new_dir;
-				bool found = false;
 				for (CGAL::Sign possible_dir : {CGAL::LEFT_TURN, CGAL::RIGHT_TURN}) {
 					if (m_matching.at(a).contains(possible_dir))
 						for (const auto& [_, pts] : m_matching.at(a).at(possible_dir))
 							for (const auto& pt : pts)
 								if (pt == s) {
 									new_dir = -possible_dir;
-									found = true;
 								}
 				}
-				assert(found);
 				search_f(a, b, initial_dir, new_dir, slope_ladder, search_f);
 			};
 

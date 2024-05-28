@@ -25,9 +25,9 @@ std::vector<Isoline<K>> ipeToIsolines(const std::filesystem::path& file) {
 	std::shared_ptr<ipe::Document> document = IpeReader::loadIpeFile(file);
 
 	if (document->countPages() == 0) {
-		throw std::runtime_error("Cannot read map from an Ipe file with no pages");
+		throw std::runtime_error("Cannot read isolines from an Ipe file with no pages");
 	} else if (document->countPages() > 1) {
-		throw std::runtime_error("Cannot read map from an Ipe file with more than one page");
+		throw std::runtime_error("Cannot read isolines from an Ipe file with more than one page");
 	}
 
 	ipe::Page* page = document->page(0);
