@@ -258,8 +258,7 @@ void IpeRenderer::setStroke(Color color, double width) {
 	m_style.m_strokeWidth = width;
 }
 
-// todo: merge with setFillOpacity
-void IpeRenderer::setStrokeOpacity(int alpha) {
+ipe::Attribute IpeRenderer::opacity_attribute(int alpha) {
 	// Ipe does not allow arbitrary opacity values; it only allows symbolic
 	// references to alpha values from the stylesheet.
 	// Therefore, we check if the requested opacity value already exists. If
@@ -269,6 +268,11 @@ void IpeRenderer::setStrokeOpacity(int alpha) {
 		m_alphaSheet->add(ipe::Kind::EOpacity, name,
 		                  ipe::Attribute(ipe::Fixed::fromDouble(alpha / 255.0)));
 	}
+	return name;
+}
+
+void IpeRenderer::setStrokeOpacity(int alpha) {
+	auto name = opacity_attribute(alpha);
 	m_style.m_strokeOpacity = name;
 }
 
@@ -278,15 +282,7 @@ void IpeRenderer::setFill(Color color) {
 }
 
 void IpeRenderer::setFillOpacity(int alpha) {
-	// Ipe does not allow arbitrary opacity values; it only allows symbolic
-	// references to alpha values from the stylesheet.
-	// Therefore, we check if the requested opacity value already exists. If
-	// not, we add it to the stylesheet.
-	ipe::Attribute name = ipe::Attribute(true, std::to_string(alpha).data());
-	if (!m_alphaSheet->has(ipe::Kind::EOpacity, name)) {
-		m_alphaSheet->add(ipe::Kind::EOpacity, name,
-		                  ipe::Attribute(ipe::Fixed::fromDouble(alpha / 255.0)));
-	}
+	auto name = opacity_attribute(alpha);
 	m_style.m_fillOpacity = name;
 }
 

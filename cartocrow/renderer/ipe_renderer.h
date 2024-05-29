@@ -114,6 +114,9 @@ class IpeRenderer : public GeometryRenderer {
 	/// `# $ % & { } _ ~ ^ \` so that the resulting string can safely be used in
 	/// an Ipe file.
 	std::string escapeForLaTeX(const std::string& text) const;
+	/// Get the attribute for an opacity value.
+	/// If there is not yet an attribute for this opacity then it is created and added to the alpha sheet.
+	ipe::Attribute opacity_attribute(int alpha);
 
 	struct DrawnPainting {
 		/// The painting itself.
