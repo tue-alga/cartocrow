@@ -208,12 +208,23 @@ IsolineSimplificationDemo::IsolineSimplificationDemo() {
 			ipe_renderer.addPainting(debug_ladder_p, "Debug_ladder_painting");
 		}
 
-		std::string file_name(fileSelector->currentText().toStdString() + "_" +
-		                      std::to_string(m_isoline_simplifier->m_current_complexity) + "_" +
-		                      collapse_selector->currentText().toStdString());
-	   	ipe_renderer.save(*m_output_dir + "/" + file_name + ".ipe");
+		// Output path
+		auto input_name = fileSelector->currentText().toStdString();
+		auto complexity = std::to_string(m_isoline_simplifier->m_current_complexity);
+		auto collapse_name = collapse_selector->currentText().toStdString();
+		std::filesystem::path base_path = *m_output_dir;
+		base_path /= input_name + "_" + complexity + "_" + collapse_name;
+
+		// Save ipe
+		std::filesystem::path ipe_path = base_path;
+		ipe_path += ".ipe";
+	   	ipe_renderer.save(ipe_path);
+
+		// Save metadata
 		std::ofstream meta_data_file;
-		meta_data_file.open(*m_output_dir + "/" + file_name + "_meta" + ".txt");
+	    std::filesystem::path meta_data_path = base_path;
+		meta_data_path += "_meta.txt";
+		meta_data_file.open(meta_data_path);
 		meta_data_file << measure_text->text().toStdString();
 		meta_data_file.close();
 	};
