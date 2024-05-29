@@ -49,6 +49,7 @@ void IpeRenderer::save(const std::filesystem::path& file) {
 	layout.iOrigin = ipe::Vector(0, 0);
 	layout.iPaperSize = ipe::Vector(1000, 1000);
 	layout.iFrameSize = ipe::Vector(1000, 1000);
+	layout.iCrop = true;
 
 	std::string diskMarkDefinition =
 	    "<ipestyle name=\"marks\">\n"
@@ -257,12 +258,7 @@ void IpeRenderer::setStroke(Color color, double width) {
 	m_style.m_strokeWidth = width;
 }
 
-void IpeRenderer::setFill(Color color) {
-	const double factor = 1000.0 / 255.0;
-	m_style.m_fillColor = ipe::Color(color.r * factor, color.g * factor, color.b * factor);
-}
-
-void IpeRenderer::setFillOpacity(int alpha) {
+ipe::Attribute IpeRenderer::opacity_attribute(int alpha) {
 	// Ipe does not allow arbitrary opacity values; it only allows symbolic
 	// references to alpha values from the stylesheet.
 	// Therefore, we check if the requested opacity value already exists. If
@@ -272,6 +268,21 @@ void IpeRenderer::setFillOpacity(int alpha) {
 		m_alphaSheet->add(ipe::Kind::EOpacity, name,
 		                  ipe::Attribute(ipe::Fixed::fromDouble(alpha / 255.0)));
 	}
+	return name;
+}
+
+void IpeRenderer::setStrokeOpacity(int alpha) {
+	auto name = opacity_attribute(alpha);
+	m_style.m_strokeOpacity = name;
+}
+
+void IpeRenderer::setFill(Color color) {
+	const double factor = 1000.0 / 255.0;
+	m_style.m_fillColor = ipe::Color(color.r * factor, color.g * factor, color.b * factor);
+}
+
+void IpeRenderer::setFillOpacity(int alpha) {
+	auto name = opacity_attribute(alpha);
 	m_style.m_fillOpacity = name;
 }
 

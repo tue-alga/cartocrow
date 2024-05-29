@@ -13,6 +13,7 @@ target_link_libraries(
     core
     flow_map
     necklace_map
+    isoline_simplification
     renderer
     CGAL::CGAL
     Qt5::Widgets

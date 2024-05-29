@@ -15,6 +15,7 @@ add_subdirectory(renderer)
 add_subdirectory(necklace_map)
 add_subdirectory(simplification)
 add_subdirectory(flow_map)
+add_subdirectory(isoline_simplification)
 
 add_library(cartocrow_lib INTERFACE)
 target_link_libraries(

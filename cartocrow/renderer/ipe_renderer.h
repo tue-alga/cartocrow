@@ -45,6 +45,7 @@ struct IpeRendererStyle {
 	ipe::Color m_fillColor = ipe::Color(0, 102, 203);
 	/// The opacity of filled shapes, as a symbolic Ipe attribute.
 	ipe::Attribute m_fillOpacity;
+	ipe::Attribute m_strokeOpacity;
 };
 
 /// Ipe specialization of the GeometryRenderer.
@@ -95,6 +96,7 @@ class IpeRenderer : public GeometryRenderer {
 	void popStyle() override;
 	void setMode(int mode) override;
 	void setStroke(Color color, double width) override;
+	void setStrokeOpacity(int alpha) override;
 	void setFill(Color color) override;
 	void setFillOpacity(int alpha) override;
 
@@ -112,6 +114,9 @@ class IpeRenderer : public GeometryRenderer {
 	/// `# $ % & { } _ ~ ^ \` so that the resulting string can safely be used in
 	/// an Ipe file.
 	std::string escapeForLaTeX(const std::string& text) const;
+	/// Get the attribute for an opacity value.
+	/// If there is not yet an attribute for this opacity then it is created and added to the alpha sheet.
+	ipe::Attribute opacity_attribute(int alpha);
 
 	struct DrawnPainting {
 		/// The painting itself.

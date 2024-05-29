@@ -117,6 +117,11 @@ void PaintingRenderer::setStroke(Color color, double width) {
 	m_objects.push_back(m_style);
 }
 
+void PaintingRenderer::setStrokeOpacity(int alpha) {
+	m_style.m_strokeOpacity = alpha;
+	m_objects.push_back(m_style);
+}
+
 void PaintingRenderer::setFill(Color color) {
 	m_style.m_fillColor = color;
 	m_objects.push_back(m_style);

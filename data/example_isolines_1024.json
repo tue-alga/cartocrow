@@ -1,0 +1,5 @@
+{
+  "type": "isoline_simplification",
+  "isolines": "example_isolines.ipe",
+  "target": 1024
+}

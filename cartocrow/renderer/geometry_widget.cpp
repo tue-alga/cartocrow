@@ -166,7 +166,7 @@ void GeometryWidget::paintEvent(QPaintEvent* event) {
 	if (m_drawAxes) {
 		drawAxes();
 	}
-	for (auto painting : m_paintings) {
+	for (const auto& painting : m_paintings) {
 		if (painting.visible) {
 			pushStyle();
 			painting.m_painting->paint(*this);
@@ -632,6 +632,10 @@ void GeometryWidget::setMode(int mode) {
 void GeometryWidget::setStroke(Color color, double width) {
 	m_style.m_strokeColor = QColor(color.r, color.g, color.b);
 	m_style.m_strokeWidth = width;
+}
+
+void GeometryWidget::setStrokeOpacity(int alpha) {
+	m_style.m_strokeColor.setAlpha(alpha);
 }
 
 void GeometryWidget::setFill(Color color) {
