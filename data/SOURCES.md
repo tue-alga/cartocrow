@@ -2,7 +2,7 @@
 
 The europe.ipe file is based on data from [naturalearthdata.com](https://www.naturalearthdata.com/).
 
-The file messy150m.ipe contains isolines generated from [The Reference Elevation Model of Antarctica (REMA)](https://www.pgc.umn.edu/data/rema/).
+The file example_isolines.ipe contains isolines generated from [The Reference Elevation Model of Antarctica (REMA)](https://www.pgc.umn.edu/data/rema/).
 These DEMs were provided by the Byrd Polar and Climate Research Center and the Polar Geospatial Center under NSF-OPP awards 1043681, 1542736, 1543501, 1559691, 1810976, and 2129685.
 See the end of the file for the relevant bibliography.
 
