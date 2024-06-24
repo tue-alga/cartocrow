@@ -72,12 +72,6 @@ HexagonalMap::HexagonalMap(const VisibilityDrawing &initial,
       configurations(landRegions.size() + seaRegionCount),
       configGraph(configurations.size()) {
 
-	// precompute all guiding pairs
-	for (const LandRegion &r1 : landRegions)
-		for (const LandRegion &r2 : r1.neighbors)
-			if (r1.id < r2.id)
-				guidingPairs[r1.id].insert({ r2.id, GuidingPair(r1, r2) });
-
 	// associate each configuration with corresponding region
 	for (const LandRegion &r : landRegions) configurations[r.id].region = r;
 
@@ -114,6 +108,43 @@ HexagonalMap::HexagonalMap(const VisibilityDrawing &initial,
 			}
 		}
 	}
+
+	// precompute all guiding pairs
+	for (const LandRegion &r1 : landRegions) {
+		for (const int i2 : configGraph.getNeighbors(r1.id)) {
+			if (r1.id > i2) continue;
+			const auto &c2 = configurations[i2];
+			if (c2.isSea()) continue;
+			guidingPairs[r1.id].insert({ i2, GuidingPair(r1, c2.region->get()) });
+		}
+	}
+
+
+
+
+
+	for (int step = 20; step; step--) {
+		const auto ts = computeBestTransferPath();
+		if (ts.empty()) {
+			std::cout << "no more valid transfers!" << std::endl;
+			break;
+		}
+
+		std::cout << "path of length " << ts.size() + 1 << " : ";
+		std::cout << configurations[tiles[ts.front().tile]].label();
+		for (const Transfer &t : ts) {
+			// const Configuration &source = configurations[tiles[t.tile]];
+			const Configuration &target = configurations[t.targetIndex];
+			std::cout << " -> " << target.label();
+			perform(t);
+		}
+		std::cout << '\n';
+	}
+
+	for (const Configuration &config : configurations)
+		if (config.isLand())
+			std::cout << config.label() << " : " << config.desire() << '\n';
+	std::cout << std::endl;
 }
 
 Point<Inexact> HexagonalMap::getCentroid(const Coordinate c) {

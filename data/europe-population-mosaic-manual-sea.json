@@ -57,6 +57,6 @@
 	"parameters": {
 		"tileArea": 100,
 		"unitValue": 680000,
-		"manualSea": true
+		"manualSeas": true
 	}
 }

@@ -1,10 +1,8 @@
 #ifndef CARTOCROW_MOSAIC_CARTOGRAM_MOSAIC_CARTOGRAM_H
 #define CARTOCROW_MOSAIC_CARTOGRAM_MOSAIC_CARTOGRAM_H
 
-#include <cctype>
 #include <functional>
 #include <optional>
-#include <stdexcept>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -49,9 +47,8 @@ class MosaicCartogram {
 	std::vector<Point<Exact>> m_salientPoints;
 
 	std::vector<LandRegion> m_landRegions;
-	std::unordered_map<std::string, int> m_landIndices;
-	/// The number of sea regions, excluding the three outer regions.
-	int m_seaRegionCount;
+	std::vector<SeaRegion> m_seaRegions;  // excluding the three outer regions
+	std::unordered_map<std::string, int> m_regionIndices;
 
 	RegionArrangement m_arrangement;
 	UndirectedGraph m_dual;
@@ -61,7 +58,7 @@ class MosaicCartogram {
 		return std::round(value / m_parameters.unitValue);
 	}
 	template<typename K>
-	EllipseAtOrigin computeGuidingShape(const PolygonWithHoles<K> &polygon, int tileCount) const {
+	EllipseAtOrigin computeGuidingShape(const PolygonWithHoles<K> &polygon, int tileCount = 1) const {
 		// internally, we define tiles to have unit area
 		return Ellipse::fit(polygon.outer_boundary())
 			.translateToOrigin()
@@ -69,37 +66,8 @@ class MosaicCartogram {
 			.normalizeContours();
 	}
 
-	bool isLandRegion(const int index) const {
-		return index < m_landRegions.size();
-	}
-	int getRegionCount() const {
-		return m_landRegions.size() + m_seaRegionCount + 3;
-	}
-	int getRegionIndex(const std::string &name) const {
-		// check if name belongs to land region
-		const auto it = m_landIndices.find(name);
-		if (it != m_landIndices.end()) return it->second;
-
-		// otherwise, it's a sea region (TODO: ugly)
-		int i = 0, e = 1;
-		for (auto c = name.rbegin(); std::isdigit(*c); ++c) i += e * (*c - '0'), e *= 10;
-		return m_landRegions.size() + (name[1] == 'o' ? m_seaRegionCount : 0) + i;
-	}
-	std::string getRegionName(const int index) const {
-		if (index < 0) throw std::out_of_range("No region exists with index " + std::to_string(index));
-
-		// land
-		if (isLandRegion(index)) return m_landRegions[index].name;
-
-		// ordinary sea
-		int i = index - m_landRegions.size();
-		if (i < m_seaRegionCount) return "_sea" + std::to_string(i);
-
-		// outer sea
-		i -= m_seaRegionCount;
-		if (i < 3) return "_outer" + std::to_string(i);
-
-		throw std::out_of_range("No region exists with index " + std::to_string(index));
+	int getNumberOfRegions() const {
+		return m_landRegions.size() + m_seaRegions.size() + 3;  // == m_regionIndices.size()
 	}
 
 	/// Step 0. Check parameters, region names, and region data.
@@ -121,6 +89,8 @@ class MosaicCartogram {
 	/// achieved by absorbing Moldova into Ukraine at the end of step 2. It should be replaced by a
 	/// generalized solution.
 	void absorbMoldova();
+
+	static int parseIntAtEnd(const std::string &s);
 };
 
 } // namespace cartocrow::mosaic_cartogram

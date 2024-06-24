@@ -146,6 +146,7 @@ template Ellipse Ellipse::fit<Inexact>(const Polygon<Inexact> &polygon);
 
 // based on Fitzgibbon et al. (1999)
 // TODO: implement improvements by Harker et al. (2008)?
+// TODO: do you need n >= 6?
 Ellipse leastSquares(const Eigen::ArrayX2d &boundary) {
 	const int n = boundary.rows();
 	const Eigen::ArrayXd xs = boundary.col(0);

@@ -12,7 +12,7 @@ struct Parameters {
 
 	/// Whether the sea and outer regions have already been added to the input map. This parameter
 	/// is optional and \c false by default.
-	bool manualSea;
+	bool manualSeas;
 
 	/// The value represented by one tile. This parameter is required.
 	Number<Inexact> unitValue;

@@ -87,8 +87,8 @@ void Painting::paintMap(Renderer &renderer, ColorFunction tileColor) const {
 }
 
 void Painting::paintGuidingPair(Renderer &renderer, const std::string &sourceName, const std::string &targetName) const {
-	const auto &source = map().configurations[m_mosaicCartogram->getRegionIndex(sourceName)];
-	const auto &target = map().configurations[m_mosaicCartogram->getRegionIndex(targetName)];
+	const auto &source = map().configurations[m_mosaicCartogram->m_regionIndices[sourceName]];
+	const auto &target = map().configurations[m_mosaicCartogram->m_regionIndices[targetName]];
 
 	auto [guideSource, guideTarget] = map().getGuidingShapes(source, target);
 	if (guideSource) guideSource = guideSource->stretch(1 / tileScale, 1 / tileScale);

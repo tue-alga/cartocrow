@@ -1,9 +1,12 @@
 #include "mosaic_cartogram.h"
 
 #include <algorithm>
+#include <cassert>
+#include <cctype>
 #include <cmath>
 #include <iterator>
 #include <stdexcept>
+#include <utility>
 #include <CGAL/number_utils.h>
 
 #include "../core/centroid.h"
@@ -31,59 +34,84 @@ void MosaicCartogram::absorbMoldova() {
 	std::cerr << "[info] removed " << remove.size() << " edges to absorb MDA into UKR" << std::endl;
 
 	// remove the corresponding land region as well (and then reassign indices)
-	m_landRegions.erase(m_landRegions.begin() + m_landIndices.at("MDA"));
-	m_landIndices.clear();
+	m_landRegions.erase(m_landRegions.begin() + m_regionIndices.at("MDA"));
+	m_regionIndices.erase("MDA");
 	int i = 0;
 	for (auto &r : m_landRegions) {
 		r.id = i++;
-		m_landIndices.insert({ r.name, r.id });
+		m_regionIndices[r.name] = r.id;
 	}
+	for (const auto &r : m_seaRegions) m_regionIndices[r.name()]--;
+	m_regionIndices["_outer0"]--;
+	m_regionIndices["_outer1"]--;
+	m_regionIndices["_outer2"]--;
 }
 
 void MosaicCartogram::computeArrangement() {
+	// gather sea regions
+	if (m_parameters.manualSeas) {
+		for (const auto &[name, region] : *m_inputMap) {
+			if (name.starts_with("_sea")) {
+				std::vector<PolygonWithHoles<Exact>> ps;
+				region.shape.polygons_with_holes(std::back_inserter(ps));
+
+				SeaRegion r;
+				r.id = parseIntAtEnd(name);
+				r.shape = ps[0];
+				r.guidingShape = computeGuidingShape(r.shape);
+				m_seaRegions.push_back(std::move(r));
+
+				assert(r.name() == name);
+				m_regionIndices.insert({ name, r.id + m_landRegions.size() });
+			}
+		}
+
+		const int i = m_landRegions.size() + m_seaRegions.size();
+		m_regionIndices.insert({ "_outer0", i   });
+		m_regionIndices.insert({ "_outer1", i+1 });
+		m_regionIndices.insert({ "_outer2", i+2 });
+	}
+
 	// construct arrangement from processed regions
 	RegionMap map;
 	for (const auto &r : m_landRegions) map.insert({ r.name, r.basic() });
-	if (m_parameters.manualSea)
-		for (const auto &[name, region] : *m_inputMap)
-			if (name.starts_with('_'))
-				map.insert({ name, region });
+	for (const auto &p : *m_inputMap)
+		if (p.first.starts_with('_'))
+			map.insert(p);
 	m_arrangement = regionMapToArrangement(map);
 
-	// (temp) ensure that all salient points exactly equal one vertex point
-	// this is necessary since the input map may contain "rounding errors"
-	for (auto pit = m_salientPoints.begin(); pit != m_salientPoints.end(); ++pit) {
-		const Point<Exact> *nearest = nullptr;
-		Number<Exact> nearestDistance;
+	if (!m_parameters.manualSeas) {
+		// ensure that all salient points exactly equal one vertex point
+		// this is necessary since the input map may contain "rounding errors"
+		for (auto pit = m_salientPoints.begin(); pit != m_salientPoints.end(); ++pit) {
+			const Point<Exact> *nearest = nullptr;
+			Number<Exact> nearestDistance;
 
-		for (const auto vit : m_arrangement.vertex_handles()) {
-			const Point<Exact> &q = vit->point();
-			const Number<Exact> d = CGAL::squared_distance(*pit, q);
-			if (!nearest || d < nearestDistance) nearest = &q, nearestDistance = d;
+			for (const auto vit : m_arrangement.vertex_handles()) {
+				const Point<Exact> &q = vit->point();
+				const Number<Exact> d = CGAL::squared_distance(*pit, q);
+				if (!nearest || d < nearestDistance) nearest = &q, nearestDistance = d;
+			}
+
+			*pit = *nearest;
 		}
 
-		*pit = *nearest;
-	}
-
-	if (m_parameters.manualSea) {
-		m_seaRegionCount = 0;
-		for (const auto &[name, region] : *m_inputMap) m_seaRegionCount += name.starts_with("_sea");
-	} else {
 		// add sea regions such that dual is triangular
-		m_seaRegionCount = triangulate(m_arrangement, m_salientPoints);
+		// TODO: update `m_seaRegions` and `m_regionIndices`
+		triangulate(m_arrangement, m_salientPoints);
 	}
 
 	absorbMoldova();
 }
 
 void MosaicCartogram::computeDual() {
-	m_dual = UndirectedGraph(getRegionCount());
+	m_dual = UndirectedGraph(getNumberOfRegions());
 	for (const auto fit : m_arrangement.face_handles()) {
 		if (fit->is_unbounded()) continue;  // all other faces (should) have a label
 
 		// get region index corresponding to face
 		const std::string &vName = fit->data();
-		const int v = getRegionIndex(vName);
+		const int v = m_regionIndices[vName];
 
 		auto circ = fit->outer_ccb();
 
@@ -98,20 +126,12 @@ void MosaicCartogram::computeDual() {
 		do {
 			const std::string &uName = curr->twin()->face()->data();
 			if (uName.empty()) continue;
-			const int u = getRegionIndex(uName);
+			const int u = m_regionIndices[uName];
 			if (std::find(adj.begin(), adj.end(), u) == adj.end()) adj.push_back(u);
 		} while (--curr != circ);  // in reverse order (so clockwise)
 
 		// add adjacencies to dual
 		m_dual.setAdjacenciesUnsafe(v, adj);
-
-		// if `v` is a land region, add adjacencies as neighbors
-		if (isLandRegion(v)) {
-			LandRegion &region = m_landRegions[v];
-			for (int u : adj)
-				if (isLandRegion(u))
-					region.neighbors.push_back(m_landRegions[u]);
-		}
 	}
 }
 
@@ -140,9 +160,14 @@ void MosaicCartogram::computeLandRegions() {
 		// simple case: the region is contiguous
 		if (polygons.size() == 1) {
 			const auto &p = polygons[0];
-			m_landRegions.push_back({
-				0, name, std::nullopt, value, tiles, region.color, p, computeGuidingShape(p, tiles)
-			});
+			LandRegion r;
+			r.name = name;
+			r.color = region.color;
+			r.dataValue = value;
+			r.targetTileCount = tiles;
+			r.shape = p;
+			r.guidingShape = computeGuidingShape(p, tiles);
+			m_landRegions.push_back(std::move(r));
 			continue;
 		}
 
@@ -179,16 +204,15 @@ void MosaicCartogram::computeLandRegions() {
 				          << " are too small and have been removed\n";
 				break;
 			}
-			m_landRegions.push_back({
-				0,
-				name + '_' + std::to_string(i++),
-				name,
-				p.value,
-				p.tiles,
-				region.color,
-				*p.shape,
-				computeGuidingShape(*p.shape, p.tiles)
-			});
+			LandRegion r;
+			r.name = name + '_' + std::to_string(i++);
+			r.superName = name;
+			r.color = region.color;
+			r.dataValue = p.value;
+			r.targetTileCount = p.tiles;
+			r.shape = *p.shape;
+			r.guidingShape = computeGuidingShape(*p.shape, p.tiles);
+			m_landRegions.push_back(std::move(r));
 		}
 	}
 	std::cerr << std::flush;
@@ -200,35 +224,39 @@ void MosaicCartogram::computeLandRegions() {
 	int i = 0;
 	for (auto &r : m_landRegions) {
 		r.id = i++;
-		m_landIndices.insert({ r.name, r.id });
+		m_regionIndices.insert({ r.name, r.id });
 	}
 }
 
 void MosaicCartogram::computeTileMap() {
-	std::vector<Point<Exact>> centroids(getRegionCount());
+	std::vector<Point<Exact>> centroids(getNumberOfRegions());
 	for (const auto f : m_arrangement.face_handles()) {
 		const std::string label = f->data();
-		if (!label.empty()) centroids[getRegionIndex(label)] = centroid(f);
+		if (!label.empty()) centroids[m_regionIndices[label]] = centroid(f);
 	}
 
 	VisibilityDrawing vd(
 		m_dual,
-		getRegionIndex("_outer0"),
-		getRegionIndex("_outer1"),
-		getRegionIndex("_outer2"),
+		m_regionIndices["_outer0"],
+		m_regionIndices["_outer1"],
+		m_regionIndices["_outer2"],
 		centroids
 	);
 
-	m_tileMap = HexagonalMap(vd, m_landRegions, m_seaRegionCount);
+	m_tileMap = HexagonalMap(vd, m_landRegions, m_seaRegions.size());
 }
 
 void MosaicCartogram::validate() const {
+	if (m_parameters.manualSeas != m_salientPoints.empty()) {
+		throw std::logic_error("There must be no salient points if and only if manual seas are specified");
+	}
+
 	// validate region names and data values
 	for (const auto &[name, region] : *m_inputMap) {
 		if (name.empty()) {
 			throw std::logic_error("Region names cannot be empty");
 		}
-		if (name.find('_', m_parameters.manualSea ? 1 : 0) != std::string::npos) {
+		if (name.find('_', m_parameters.manualSeas ? 1 : 0) != std::string::npos) {
 			throw std::logic_error("The region name '" + name + "' contains illegal underscores");
 		}
 		if (name[0] == '_') {
@@ -237,6 +265,11 @@ void MosaicCartogram::validate() const {
 			}
 			if (m_dataValues.contains(name)) {
 				throw std::logic_error("A data value is specified for region '" + name + "', but sea regions may not have a value");
+			}
+			std::vector<PolygonWithHoles<Exact>> ps;
+			region.shape.polygons_with_holes(std::back_inserter(ps));
+			if (ps.size() != 1 || ps[0].has_holes()) {
+				throw std::logic_error("Region '" + name + "' must consist of one polygon without holes");
 			}
 		} else {
 			if (!m_dataValues.contains(name)) {
@@ -260,6 +293,12 @@ void MosaicCartogram::validate() const {
 		for (const auto &s : ignored) std::cerr << ' ' << s << ',';
 		std::cerr << "\b " << std::endl;
 	}
+}
+
+int MosaicCartogram::parseIntAtEnd(const std::string &s) {
+	int n = 0, i = 1;
+	for (auto c = s.rbegin(); std::isdigit(*c); ++c) n += i * (*c - '0'), i *= 10;
+	return n;
 }
 
 } // namespace cartocrow::mosaic_cartogram
