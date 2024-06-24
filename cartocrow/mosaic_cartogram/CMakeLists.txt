@@ -9,6 +9,8 @@ set(SOURCES
 	visibility_drawing.cpp
 )
 set(HEADERS
+	edmonds_optimum_branching_impl.hpp
+	edmonds_optimum_branching.hpp
 	graph.h
 	guiding_shape.h
 	mosaic_cartogram.h

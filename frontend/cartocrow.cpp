@@ -138,8 +138,9 @@ int main(int argc, char* argv[]) {
 		auto &paramsComputation = cartogram->parameters();
 		mosaic_cartogram::Painting::Options paramsPainting;
 
-		paramsComputation.unitValue = p.value("unitValue", -1);  // required
-		paramsPainting.tileArea     = p.value("tileArea",   1);  // optional (default = 1)
+		paramsComputation.manualSea = p.value("manualSea", false);  // optional
+		paramsComputation.unitValue = p.value("unitValue",    -1);  // required
+		paramsPainting.tileArea     = p.value("tileArea",      1);  // optional
 
 		paramsComputation.validate();
 		paramsPainting.validate();

@@ -21,6 +21,7 @@ namespace cartocrow::mosaic_cartogram {
 
 // TODO: make base class and separate subclass SquareMap
 // TODO: fix member visibilities and befriend Painting
+// TODO: if there are not valid transfer paths, find a cycle instead
 
 class HexagonalMap {
   public:
@@ -89,18 +90,17 @@ class HexagonalMap {
 
 	template<typename T>
 	using CoordinateMap = std::unordered_map<Coordinate, T, CoordinateHash>;
+	using CoordinateSet = std::unordered_set<Coordinate, CoordinateHash>;
 
 	/// Invariant: all tiles are connected and there are no holes. We say the configuration is \a contiguous.
 	struct Configuration {
-		using TileSet = std::unordered_set<Coordinate, CoordinateHash>;
-
 		int index;
 		opt_ref<const LandRegion> region;
-		TileSet tiles, boundary;
+		CoordinateSet tiles, boundary;
 
 		// implement iterators so we can use foreach loops
-		TileSet::const_iterator begin() const noexcept { return tiles.begin(); }
-		TileSet::const_iterator   end() const noexcept { return tiles.end();   }
+		CoordinateSet::const_iterator begin() const noexcept { return tiles.begin(); }
+		CoordinateSet::const_iterator   end() const noexcept { return tiles.end();   }
 
 		bool contains(Coordinate c) const {
 			return tiles.contains(c);
@@ -121,8 +121,12 @@ class HexagonalMap {
 			return tiles.size();
 		}
 
-		bool containsInteriorly(Coordinate c) const;
+		/// Checks whether \c c and all its neighbors are contained in this configuration. This
+		/// function only queries \c tiles, not \c boundary.
+		bool containsInInterior(Coordinate c) const;
+
 		bool isAdjacent(Coordinate c) const;
+
 		bool remainsContiguousWithout(Coordinate c) const;
 	};
 
@@ -175,7 +179,7 @@ class HexagonalMap {
 	std::vector<Coordinate> computeTransferCandidates(const Configuration &source, const Configuration &target) const;
 	std::vector<Transfer> computeAllTransfers(const Configuration &source, const Configuration &target) const;
 	std::optional<Transfer> computeBestTransfer(const Configuration &source, const Configuration &target) const;
-	std::optional<Transfer> computeBestTransfer() const;
+	std::vector<HexagonalMap::Transfer> computeBestTransferPath() const;
 
 	void perform(const Transfer &transfer);
 

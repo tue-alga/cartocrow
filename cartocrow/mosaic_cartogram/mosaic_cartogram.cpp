@@ -4,7 +4,6 @@
 #include <cmath>
 #include <iterator>
 #include <stdexcept>
-#include <unordered_set>
 #include <CGAL/number_utils.h>
 
 #include "../core/centroid.h"
@@ -20,10 +19,35 @@ void MosaicCartogram::compute() {
 	computeTileMap();
 }
 
+void MosaicCartogram::absorbMoldova() {
+	std::vector<RegionArrangement::Edge_iterator> remove;
+	for (auto e : m_arrangement.edge_handles())
+		if (e->face()->data() == "MDA" && e->twin()->face()->data() == "UKR" || e->face()->data() == "UKR" && e->twin()->face()->data() == "MDA")
+			remove.push_back(e);
+	for (auto e : remove) {
+		auto f = m_arrangement.remove_edge(e);
+		f->set_data("UKR");  // this is actually only necessary once
+	}
+	std::cerr << "[info] removed " << remove.size() << " edges to absorb MDA into UKR" << std::endl;
+
+	// remove the corresponding land region as well (and then reassign indices)
+	m_landRegions.erase(m_landRegions.begin() + m_landIndices.at("MDA"));
+	m_landIndices.clear();
+	int i = 0;
+	for (auto &r : m_landRegions) {
+		r.id = i++;
+		m_landIndices.insert({ r.name, r.id });
+	}
+}
+
 void MosaicCartogram::computeArrangement() {
+	// construct arrangement from processed regions
 	RegionMap map;
-	map.reserve(m_landRegions.size());
 	for (const auto &r : m_landRegions) map.insert({ r.name, r.basic() });
+	if (m_parameters.manualSea)
+		for (const auto &[name, region] : *m_inputMap)
+			if (name.starts_with('_'))
+				map.insert({ name, region });
 	m_arrangement = regionMapToArrangement(map);
 
 	// (temp) ensure that all salient points exactly equal one vertex point
@@ -41,18 +65,15 @@ void MosaicCartogram::computeArrangement() {
 		*pit = *nearest;
 	}
 
-	// add sea regions such that dual is triangular
-	m_seaRegionCount = triangulate(m_arrangement, m_salientPoints);
-
-	// (temp) since Moldova was removed during triangulation, we remove the corresponding land
-	// region as well (and then reassign indices)
-	m_landRegions.erase(m_landRegions.begin() + m_landIndices.at("MDA"));
-	m_landIndices.clear();
-	int i = 0;
-	for (auto &r : m_landRegions) {
-		r.id = i++;
-		m_landIndices.insert({ r.name, r.id });
+	if (m_parameters.manualSea) {
+		m_seaRegionCount = 0;
+		for (const auto &[name, region] : *m_inputMap) m_seaRegionCount += name.starts_with("_sea");
+	} else {
+		// add sea regions such that dual is triangular
+		m_seaRegionCount = triangulate(m_arrangement, m_salientPoints);
 	}
+
+	absorbMoldova();
 }
 
 void MosaicCartogram::computeDual() {
@@ -104,6 +125,8 @@ void MosaicCartogram::computeLandRegions() {
 	};
 
 	for (const auto &[name, region] : *m_inputMap) {
+		if (name[0] == '_') continue;  // skip sea regions (if they were defined manually)
+
 		const Number<Inexact> value = m_dataValues.at(name);  // already validated
 		int tiles = getTileCount(value);
 		if (!tiles) {
@@ -205,15 +228,24 @@ void MosaicCartogram::validate() const {
 		if (name.empty()) {
 			throw std::logic_error("Region names cannot be empty");
 		}
-		if (name.find('_') != std::string::npos) {
-			throw std::logic_error("The region name '" + name + "' is illegal; it cannot contain underscores");
+		if (name.find('_', m_parameters.manualSea ? 1 : 0) != std::string::npos) {
+			throw std::logic_error("The region name '" + name + "' contains illegal underscores");
 		}
-		if (!m_dataValues.contains(name)) {
-			throw std::logic_error("No data value is specified for region '" + name + "'");
-		}
-		const double v = m_dataValues.at(name);
-		if (!std::isfinite(v) || v < 0) {
-			throw std::logic_error("Region '" + name + "' has an illegal data value; it must be non-negative");
+		if (name[0] == '_') {
+			if (!name.starts_with("_sea") && !name.starts_with("_outer")) {  // TODO: also validate numbering (format and missing values)
+				throw std::logic_error("The region name '" + name + "' is illegal; the only legal special names are '_sea' and '_outer'");
+			}
+			if (m_dataValues.contains(name)) {
+				throw std::logic_error("A data value is specified for region '" + name + "', but sea regions may not have a value");
+			}
+		} else {
+			if (!m_dataValues.contains(name)) {
+				throw std::logic_error("No data value is specified for region '" + name + "'");
+			}
+			const double v = m_dataValues.at(name);
+			if (!std::isfinite(v) || v < 0) {
+				throw std::logic_error("Region '" + name + "' has an illegal data value; it must be non-negative");
+			}
 		}
 	}
 

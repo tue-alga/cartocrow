@@ -116,6 +116,11 @@ class MosaicCartogram {
 	void computeDual();
 	/// Step 4. Compute an initial tile map using a visibility diagram and TODO.
 	void computeTileMap();
+
+	/// (temp) Fixes the only internal problem in Europe, i.e., Moldova having degree 2. This is
+	/// achieved by absorbing Moldova into Ukraine at the end of step 2. It should be replaced by a
+	/// generalized solution.
+	void absorbMoldova();
 };
 
 } // namespace cartocrow::mosaic_cartogram

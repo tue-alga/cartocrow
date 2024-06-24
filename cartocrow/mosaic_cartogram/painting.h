@@ -73,6 +73,8 @@ class Painting : public renderer::GeometryPainting {
 	/// Debug function to visualize the score computation between two regions.
 	void paintGuidingPair(Renderer &renderer, const std::string &sourceName, const std::string &targetName) const;
 
+	void paintTransfers(Renderer &renderer) const;
+
 };
 
 } // namespace cartocrow::mosaic_cartogram

@@ -130,4 +130,38 @@ void Painting::paintGuidingPair(Renderer &renderer, const std::string &sourceNam
 	if (guideTarget) renderer.draw(*guideTarget);
 }
 
+void Painting::paintTransfers(Renderer &renderer) const {
+	renderer.setMode(renderer::GeometryRenderer::stroke);
+	renderer.setStroke({139, 69, 19}, tileScale / 5);  // saddle brown
+	for (const auto [i, j] : map().configGraph.getEdges()) {
+		const auto &source = map().configurations[i];
+		const auto &target = map().configurations[j];
+		if (source.isSea() || target.isSea()) continue;
+
+		const auto t = map().computeBestTransfer(source, target);
+		if (t) {
+			renderer.setStroke(
+				t->score < 0 ? Color{0, 255, 0} : Color{255, 0, 0},
+				std::sqrt(std::abs(t->score)) / 10
+			);
+
+			auto sourceCentroid = map().getCentroid(source) - CGAL::ORIGIN;
+			auto targetCentroid = map().getCentroid(target) - CGAL::ORIGIN;
+
+			sourceCentroid *= tileScale;
+			targetCentroid *= tileScale;
+
+			auto normal = targetCentroid - sourceCentroid;
+			normal = Vector<Inexact>(normal.y(), -normal.x());
+			normal /= std::sqrt(normal.squared_length());
+			normal *= 2;
+
+			renderer.draw(Segment<Inexact>(
+				CGAL::ORIGIN + sourceCentroid + normal,
+				CGAL::ORIGIN + targetCentroid + normal
+			));
+		}
+	}
+}
+
 } // namespace cartocrow::mosaic_cartogram

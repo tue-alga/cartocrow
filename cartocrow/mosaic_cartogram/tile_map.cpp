@@ -1,7 +1,14 @@
 #include "tile_map.h"
 
+#include <iterator>
+#include <optional>
 #include <stdexcept>
+#include <boost/graph/adjacency_list.hpp>
+#include <boost/range/algorithm/copy.hpp>
+#include <boost/range/iterator_range_core.hpp>
 #include <CGAL/Origin.h>
+
+#include "edmonds_optimum_branching.hpp"
 
 namespace cartocrow::mosaic_cartogram {
 
@@ -21,7 +28,7 @@ std::ostream& operator<<(std::ostream &os, HexagonalMap::Coordinate c) {
 	return os << '(' << c.m_x << ", " << c.m_y << ')';
 }
 
-bool HexagonalMap::Configuration::containsInteriorly(const Coordinate c) const {
+bool HexagonalMap::Configuration::containsInInterior(const Coordinate c) const {
 	if (!contains(c)) return false;
 	for (const Coordinate d : c.neighbors())
 		if (!contains(d))
@@ -43,7 +50,7 @@ bool HexagonalMap::Configuration::remainsContiguousWithout(const Coordinate c) c
 
 	const auto neighbors = c.neighbors();
 
-	bool open = !contains(neighbors.back());  // check if already open (we count the opening later)
+	bool open = !contains(neighbors.back());  // check if already open (we count this opening later)
 	int openings = 0;
 	for (const Coordinate d : neighbors) {
 		if (contains(d)) {
@@ -261,18 +268,108 @@ std::optional<HexagonalMap::Transfer> HexagonalMap::computeBestTransfer(const Co
 	return *best;
 }
 
-std::optional<HexagonalMap::Transfer> HexagonalMap::computeBestTransfer() const {
-	std::optional<Transfer> best;
+// https://github.com/atofigh/edmonds-alg/blob/master/doc/examples/sparse-example.cpp
+std::vector<HexagonalMap::Transfer> HexagonalMap::computeBestTransferPath() const {
+	using BoostGraph = boost::adjacency_list<boost::vecS,
+	                                         boost::vecS,
+	                                         boost::directedS,
+	                                         boost::no_property,
+	                                         boost::property<boost::edge_weight_t, double>>;
+	using Vertex = boost::graph_traits<BoostGraph>::vertex_descriptor;
+	using Edge = boost::graph_traits<BoostGraph>::edge_descriptor;
 
+	const int n = configGraph.getNumberOfVertices();
+
+	// create (graph with) vertices
+	BoostGraph graph(n);
+	boost::property_map<BoostGraph, boost::vertex_index_t>::type vertexIndices = get(boost::vertex_index, graph);
+	boost::property_map<BoostGraph, boost::edge_weight_t>::type weights = get(boost::edge_weight, graph);
+
+	// copy vertices to vector
+	std::vector<Vertex> vs;
+	copy(boost::make_iterator_range(vertices(graph)), std::back_inserter(vs));
+
+	// create edges (which are a subset of the configuration graph, and weighted by score)
+	std::vector transfers(n, std::vector<std::optional<Transfer>>(n));
 	for (const auto [i, j] : configGraph.getEdges()) {
-		const Configuration &a = configurations[i];
-		const Configuration &b = configurations[j];
-	//	if (b.desire() - a.desire() <= 0) continue;
-		const auto t = computeBestTransfer(a, b);
-		if (t && (!best || t->score < best->score)) best = t;
+		const auto t = computeBestTransfer(configurations[i], configurations[j]);
+		if (t) {
+			transfers[i][j] = t;
+			add_edge(vs[i], vs[j], t->score, graph);
+		}
 	}
 
-	return best;
+	// internal structure for paths of transfers
+	struct Path {
+		std::vector<int> configs;
+		double score;
+
+		Path(const int source) : configs({ source }), score(-1e10) {}  // creates singleton
+
+		int length() const {
+			return configs.size();
+		}
+		bool operator<(const Path &p) const {
+			return length() <= p.length() && score < p.score;  // whether `this` is "strictly better" than `p`
+		}
+	};
+
+	std::optional<Path> best;
+	for (int source = 0; source < n; source++) {
+		const auto &sourceConfig = configurations[source];
+
+		// if the configuration wants to grow, it cannot be a source
+		if (sourceConfig.isLand() && sourceConfig.desire() >= 0) continue;
+
+		// using Edmonds' algorithm, compute minimum branching (a.k.a. spanning arborescence) with `source` as root
+		std::vector<Edge> branching;
+		edmonds_optimum_branching<false, true, 0>(
+			graph, vertexIndices, weights,
+			vs.begin() + source, vs.begin() + source + 1,
+			std::back_inserter(branching)
+		);
+
+		// convert edge list to adjacency list
+		std::vector<std::vector<std::pair<int, double>>> adj(n);
+		for (const auto &e : branching) {
+			adj[boost::source(e, graph)].push_back({ boost::target(e, graph), get(weights, e) });
+		}
+
+		// DFS to find the "minimum" path
+		std::vector<Path> queue { Path(source) };
+		while (!queue.empty()) {
+			const Path p = queue.back();
+			queue.pop_back();
+
+			// prune
+			if (best && p.length() >= best->length()) continue;
+
+			for (const auto [target, score] : adj[p.configs.back()]) {
+				Path q = p;
+				q.configs.push_back(target);
+				q.score = std::max(q.score, score);
+
+				const auto &targetConfig = configurations[target];
+				if (targetConfig.isSea() || targetConfig.desire() > 0)
+					if (sourceConfig.isLand() || targetConfig.isLand())  // TODO: remove this check
+						if (!best || q < *best)
+							best = q;
+
+				queue.push_back(q);
+			}
+		}
+	}
+
+	// convert path into list of transfers, and return it
+	std::vector<Transfer> result;
+	if (best) {
+		for (int i = 1; i < best->configs.size(); i++) {
+			const int a = best->configs[i-1];
+			const int b = best->configs[i];
+			result.push_back(*transfers[a][b]);
+		}
+	}
+	return result;
 }
 
 void HexagonalMap::perform(const Transfer &transfer) {
@@ -293,7 +390,7 @@ void HexagonalMap::perform(const Transfer &transfer) {
 		if (it == tiles.end()) continue;
 		if (it->second == source.index) {
 			source.boundary.insert(c);
-		} else if (it->second == target.index && target.containsInteriorly(c)) {
+		} else if (it->second == target.index && target.containsInInterior(c)) {
 			target.boundary.erase(c);
 		}
 	}

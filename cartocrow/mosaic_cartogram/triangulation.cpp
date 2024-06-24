@@ -67,19 +67,6 @@ PolygonWithHoles<Exact> arrangementToPolygon(const RegionArrangement &arr) {
 	return polygon;
 }
 
-// (temp) this fixes the only internal problem in Europe (i.e., that Moldova is a degree 2 vertex)
-void absorbMoldova(RegionArrangement &arr) {
-	std::vector<RegionArrangement::Edge_iterator> remove;
-	for (auto e : arr.edge_handles())
-		if (e->face()->data() == "MDA" && e->twin()->face()->data() == "UKR" || e->face()->data() == "UKR" && e->twin()->face()->data() == "MDA")
-			remove.push_back(e);
-	for (auto e : remove) {
-		auto f = arr.remove_edge(e);
-		f->set_data("UKR");  // this is actually only necessary once
-	}
-	std::cerr << "[info] removed " << remove.size() << " edges to absorb MDA into UKR" << std::endl;
-}
-
 int labelSeaRegions(RegionArrangement &arr) {
 	auto circ = arr.unbounded_face()->holes_begin()->ptr()->ccb();
 
@@ -173,7 +160,6 @@ int triangulate(RegionArrangement &arr, const std::vector<Point<Exact>> &salient
 		CGAL::insert(arr, Segment<Exact>(p1, p2));
 	}
 
-	absorbMoldova(arr);
 	return labelSeaRegions(arr);
 }
 
