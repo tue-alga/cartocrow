@@ -2,6 +2,7 @@
 #define CARTOCROW_MOSAIC_CARTOGRAM_MAP_H
 
 #include <array>
+#include <cassert>
 #include <functional>
 #include <optional>
 #include <ostream>
@@ -26,10 +27,12 @@ namespace cartocrow::mosaic_cartogram {
 class HexagonalMap {
   public:
 
-	template<typename T>
-	using opt_ref = std::optional<std::reference_wrapper<T>>;
-
 	struct CoordinateHash;  // forward declaration
+
+	/// Sea regions, like land regions, also have guiding shapes, to prevent snaking. However, the
+	/// shape of land regions is much more important, so scores for sea regions are multiplied by
+	/// this constant.
+	static constexpr double seaScoreModifier = .5;
 
 	/// The radius of the inscribed circle of the unit hexagon (i.e., the largest circle that fits).
 	/// Also known as the apothem.
@@ -95,7 +98,7 @@ class HexagonalMap {
 	/// Invariant: all tiles are connected and there are no holes. We say the configuration is \a contiguous.
 	struct Configuration {
 		int index;
-		opt_ref<const LandRegion> region;
+		const MosaicRegion *region;
 		CoordinateSet tiles, boundary;
 
 		// implement iterators so we can use foreach loops
@@ -106,16 +109,20 @@ class HexagonalMap {
 			return tiles.contains(c);
 		}
 		int desire() const {
-			return region ? region->get().targetTileCount - tiles.size() : 0;
+			return isLand() ? landRegion().targetTileCount - size() : 0;
 		}
 		bool isLand() const {
-			return region.has_value();
+			return region->type() == RegionType::Land;
 		}
 		bool isSea() const {
-			return !region.has_value();
+			return region->type() == RegionType::Sea;
 		}
 		std::string label() const {
-			return region ? region->get().name : "sea";
+			return region->name();
+		}
+		const LandRegion& landRegion() const {
+			assert(isLand());
+			return *dynamic_cast<const LandRegion*>(region);
 		}
 		int size() const {
 			return tiles.size();
@@ -155,7 +162,7 @@ class HexagonalMap {
 	HexagonalMap() {}
 	HexagonalMap(const VisibilityDrawing &initial,
 	             const std::vector<LandRegion> &landRegions,
-	             int seaRegionCount);
+	             const std::vector<SeaRegion> &seaRegions);
 
 	static Point<Inexact> getCentroid(Coordinate c);
 	static Point<Inexact> getCentroid(const Configuration &config);
@@ -163,18 +170,19 @@ class HexagonalMap {
 	int getNumberOfLandRegions() const { return guidingPairs.size() + 1; }
 	int getNumberOfSeaRegions() const { return configurations.size() - getNumberOfLandRegions(); }
 
-	// TODO: `opt_ref` instead of pointer?
+	// TODO: `std::optional<std::reference_wrapper<T>>` instead of pointer?
 	const Configuration* getConfiguration(Coordinate c) const;
 	Configuration* getConfiguration(Coordinate c);
 
-	/// Get the guiding shape for a land region.
+	/// Get the guiding shape for a land region (scaled to its desired size) or sea region (scaled
+	/// to its current size).
 	Ellipse getGuidingShape(const Configuration &config) const;
 	/// Get the pair of guiding shapes for two adjacent land regions. This is not equivalent to
 	/// getting two separate guiding shapes! This pair has the correct relative positions (of the
 	/// original regions) and is centered on the joint centroid.
 	std::pair<Ellipse, Ellipse> getGuidingPair(const Configuration &config1, const Configuration &config2) const;
 	/// Get the pair of guiding shapes for any two regions.
-	std::pair<std::optional<Ellipse>, std::optional<Ellipse>> getGuidingShapes(const Configuration &config1, const Configuration &config2) const;
+	std::pair<Ellipse, Ellipse> getGuidingShapes(const Configuration &config1, const Configuration &config2) const;
 
 	std::vector<Coordinate> computeTransferCandidates(const Configuration &source, const Configuration &target) const;
 	std::vector<Transfer> computeAllTransfers(const Configuration &source, const Configuration &target) const;

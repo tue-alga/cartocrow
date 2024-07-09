@@ -67,13 +67,14 @@ bool HexagonalMap::Configuration::remainsContiguousWithout(const Coordinate c) c
 
 HexagonalMap::HexagonalMap(const VisibilityDrawing &initial,
                            const std::vector<LandRegion> &landRegions,
-                           const int seaRegionCount)
+                           const std::vector<SeaRegion> &seaRegions)
     : guidingPairs(landRegions.size() - 1),
-      configurations(landRegions.size() + seaRegionCount),
+      configurations(landRegions.size() + seaRegions.size()),
       configGraph(configurations.size()) {
 
 	// associate each configuration with corresponding region
-	for (const LandRegion &r : landRegions) configurations[r.id].region = r;
+	for (const LandRegion &r : landRegions) configurations[r.id].region = &r;
+	for (const SeaRegion &r : seaRegions) configurations[r.id + landRegions.size()].region = &r;
 
 	// initialize tiles of each configuration
 	const int w = initial.grid.size()    - 2;  // the left and right columns contain only outer sea regions, which are ignored
@@ -115,7 +116,7 @@ HexagonalMap::HexagonalMap(const VisibilityDrawing &initial,
 			if (r1.id > i2) continue;
 			const auto &c2 = configurations[i2];
 			if (c2.isSea()) continue;
-			guidingPairs[r1.id].insert({ i2, GuidingPair(r1, c2.region->get()) });
+			guidingPairs[r1.id].insert({ i2, GuidingPair(r1, c2.landRegion()) });
 		}
 	}
 
@@ -172,9 +173,9 @@ HexagonalMap::Configuration* HexagonalMap::getConfiguration(const Coordinate c) 
 }
 
 Ellipse HexagonalMap::getGuidingShape(const Configuration &config) const {
-	return config.region->get().guidingShape
-			.translate(getCentroid(config) - CGAL::ORIGIN)
-			.normalizeSign();
+	auto gs = config.region->guidingShape;
+	if (config.isSea()) gs = gs.scaleTo(config.size());
+	return gs.translate(getCentroid(config) - CGAL::ORIGIN).normalizeSign();
 }
 
 std::pair<Ellipse, Ellipse> HexagonalMap::getGuidingPair(const Configuration &c1, const Configuration &c2) const {
@@ -193,18 +194,14 @@ std::pair<Ellipse, Ellipse> HexagonalMap::getGuidingPair(const Configuration &c1
 	return id1 == c1.index ? p : std::make_pair(p.second, p.first);
 }
 
-std::pair<std::optional<Ellipse>, std::optional<Ellipse>> HexagonalMap::getGuidingShapes(const Configuration &c1, const Configuration &c2) const {
+std::pair<Ellipse, Ellipse> HexagonalMap::getGuidingShapes(const Configuration &c1, const Configuration &c2) const {
 	if (!configGraph.containsEdge(c1.index, c2.index))
 		throw std::invalid_argument("A guiding pair only exists for two distinct, adjacent regions");
 
-	std::optional<Ellipse> g1, g2;
-	if (c1.isLand() && c2.isLand()) {
-		std::tie(g1, g2) = getGuidingPair(c1, c2);
-	} else {
-		if (c1.isLand()) g1 = getGuidingShape(c1);
-		if (c2.isLand()) g2 = getGuidingShape(c2);
-	}
-	return { g1, g2 };
+	if (c1.isLand() && c2.isLand())
+		return getGuidingPair(c1, c2);
+	else
+		return { getGuidingShape(c1), getGuidingShape(c2) };
 }
 
 /// Checks whether \c config1 is adjacent to \c config2 via tiles other than \c ignore (which is part of \c config1).
@@ -275,12 +272,8 @@ std::vector<HexagonalMap::Transfer> HexagonalMap::computeAllTransfers(const Conf
 	const auto [guideSource, guideTarget] = getGuidingShapes(source, target);
 	for (const Coordinate c : candidates) {
 		const Point<Inexact> p = getCentroid(c);
-
-		// TODO: promote "roundness" of sea regions?
-		double score = 0;
-		if (guideSource) score -= guideSource->evaluate(p);
-		if (guideTarget) score += guideTarget->evaluate(p);
-
+		const double score = guideTarget.evaluate(p) * (target.isSea() ? seaScoreModifier : 1)
+		                   - guideSource.evaluate(p) * (source.isSea() ? seaScoreModifier : 1);
 		transfers.emplace_back(c, target.index, score);
 	}
 

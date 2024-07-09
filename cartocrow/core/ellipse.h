@@ -36,6 +36,7 @@ class Ellipse {
 	Ellipse normalizeSign() const;
 	virtual Parameters parameters() const;
 	Ellipse stretch(double cx, double cy) const;
+	Ellipse stretch(double c) const { return stretch(c, c); }
 	Ellipse translate(double dx, double dy) const;
 	Ellipse translate(const Vector<Inexact> &v) const { return translate(v.x(), v.y()); }
 	Ellipse translateTo(double x, double y) const;

@@ -4,6 +4,7 @@
 #include <cassert>
 #include <cctype>
 #include <cmath>
+#include <iostream>
 #include <iterator>
 #include <stdexcept>
 #include <utility>
@@ -39,7 +40,7 @@ void MosaicCartogram::absorbMoldova() {
 	int i = 0;
 	for (auto &r : m_landRegions) {
 		r.id = i++;
-		m_regionIndices[r.name] = r.id;
+		m_regionIndices[r._name] = r.id;
 	}
 	for (const auto &r : m_seaRegions) m_regionIndices[r.name()]--;
 	m_regionIndices["_outer0"]--;
@@ -74,7 +75,7 @@ void MosaicCartogram::computeArrangement() {
 
 	// construct arrangement from processed regions
 	RegionMap map;
-	for (const auto &r : m_landRegions) map.insert({ r.name, r.basic() });
+	for (const auto &r : m_landRegions) map.insert({ r._name, r.basic() });
 	for (const auto &p : *m_inputMap)
 		if (p.first.starts_with('_'))
 			map.insert(p);
@@ -161,8 +162,8 @@ void MosaicCartogram::computeLandRegions() {
 		if (polygons.size() == 1) {
 			const auto &p = polygons[0];
 			LandRegion r;
-			r.name = name;
-			r.color = region.color;
+			r._name = name;
+			r._color = region.color;
 			r.dataValue = value;
 			r.targetTileCount = tiles;
 			r.shape = p;
@@ -205,9 +206,9 @@ void MosaicCartogram::computeLandRegions() {
 				break;
 			}
 			LandRegion r;
-			r.name = name + '_' + std::to_string(i++);
+			r._name = name + '_' + std::to_string(i++);
 			r.superName = name;
-			r.color = region.color;
+			r._color = region.color;
 			r.dataValue = p.value;
 			r.targetTileCount = p.tiles;
 			r.shape = *p.shape;
@@ -219,12 +220,12 @@ void MosaicCartogram::computeLandRegions() {
 
 	// sort land regions by name and assign indices in that order
 	std::sort(m_landRegions.begin(), m_landRegions.end(), [](const auto &r1, const auto &r2) {
-		return r1.name < r2.name;
+		return r1._name < r2._name;
 	});
 	int i = 0;
 	for (auto &r : m_landRegions) {
 		r.id = i++;
-		m_regionIndices.insert({ r.name, r.id });
+		m_regionIndices.insert({ r._name, r.id });
 	}
 }
 
@@ -243,7 +244,7 @@ void MosaicCartogram::computeTileMap() {
 		centroids
 	);
 
-	m_tileMap = HexagonalMap(vd, m_landRegions, m_seaRegions.size());
+	m_tileMap = HexagonalMap(vd, m_landRegions, m_seaRegions);
 }
 
 void MosaicCartogram::validate() const {

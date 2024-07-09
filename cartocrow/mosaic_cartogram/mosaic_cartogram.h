@@ -67,7 +67,7 @@ class MosaicCartogram {
 	}
 
 	int getNumberOfRegions() const {
-		return m_landRegions.size() + m_seaRegions.size() + 3;  // == m_regionIndices.size()
+		return m_regionIndices.size();  // == m_landRegions.size() + m_seaRegions.size() + 3
 	}
 
 	/// Step 0. Check parameters, region names, and region data.

@@ -49,7 +49,7 @@ Point<Inexact> Painting::getCentroid(Coordinate c) const {
 
 Color Painting::getColorDefault(Coordinate c) const {
 	const auto config = map().getConfiguration(c);
-	return !config || config->isSea() ? Color{255, 255, 255} : config->region->get().color;
+	return config ? config->region->color() : Color{255, 255, 255};
 }
 
 Color Painting::getColorUniform(Coordinate c) const {
@@ -91,8 +91,8 @@ void Painting::paintGuidingPair(Renderer &renderer, const std::string &sourceNam
 	const auto &target = map().configurations[m_mosaicCartogram->m_regionIndices[targetName]];
 
 	auto [guideSource, guideTarget] = map().getGuidingShapes(source, target);
-	if (guideSource) guideSource = guideSource->stretch(1 / tileScale, 1 / tileScale);
-	if (guideTarget) guideTarget = guideTarget->stretch(1 / tileScale, 1 / tileScale);
+	guideSource = guideSource.stretch(1 / tileScale);
+	guideTarget = guideTarget.stretch(1 / tileScale);
 
 	auto transfers = map().computeAllTransfers(source, target);
 	std::sort(transfers.begin(), transfers.end());  // best is first
@@ -126,8 +126,8 @@ void Painting::paintGuidingPair(Renderer &renderer, const std::string &sourceNam
 	// draw guiding shapes
 	renderer.setMode(renderer::GeometryRenderer::stroke);
 	renderer.setStroke({139, 69, 19}, tileScale / 5);  // saddle brown
-	if (guideSource) renderer.draw(*guideSource);
-	if (guideTarget) renderer.draw(*guideTarget);
+	renderer.draw(guideSource);
+	renderer.draw(guideTarget);
 }
 
 void Painting::paintTransfers(Renderer &renderer) const {
