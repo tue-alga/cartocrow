@@ -114,21 +114,21 @@ void Painting::paintGuidingPair(Renderer &renderer, const std::string &sourceNam
 	auto transfers = map().computeAllTransfers(source, target);
 	std::sort(transfers.begin(), transfers.end());  // best is first
 
-	// normalize all scores to [0.5, 1.5]
-	HexagonalMap::CoordinateMap<double> scores;
-	double minScore =  1e10,
-	       maxScore = -1e10;
+	// normalize all costs to [0.5, 1.5]
+	HexagonalMap::CoordinateMap<double> costs;
+	double minCost =  1e10,
+	       maxCost = -1e10;
 	for (const auto &t : transfers) {
-		minScore = std::min(minScore, t.score);
-		maxScore = std::max(maxScore, t.score);
+		minCost = std::min(minCost, t.cost);
+		maxCost = std::max(maxCost, t.cost);
 	}
 	for (const auto &t : transfers) {
-		scores.insert({ t.tile, 1.5 - (t.score - minScore) / (maxScore - minScore) });
+		costs.insert({ t.tile, 1.5 - (t.cost - minCost) / (maxCost - minCost) });
 	}
 
 	paintMap(renderer, [&](const Coordinate c) {
-		if (scores.contains(c))
-			return Color{255, 140, 0}.shaded(scores[c]);  // dark orange
+		if (costs.contains(c))
+			return Color{255, 140, 0}.shaded(costs[c]);  // dark orange
 		else if (source.contains(c))
 			return m_options.colorLand.shaded(.6);
 		else if (target.contains(c))
@@ -158,8 +158,8 @@ void Painting::paintTransfers(Renderer &renderer) const {
 		const auto t = map().computeBestTransfer(source, target);
 		if (t) {
 			renderer.setStroke(
-				t->score < 0 ? Color{0, 255, 0} : Color{255, 0, 0},
-				std::sqrt(std::abs(t->score)) / 10
+				t->cost < 0 ? Color{0, 255, 0} : Color{255, 0, 0},
+				std::sqrt(std::abs(t->cost)) / 10
 			);
 
 			auto sourceCentroid = map().getCentroid(source) - CGAL::ORIGIN;

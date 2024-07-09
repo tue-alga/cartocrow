@@ -30,9 +30,9 @@ class HexagonalMap {
 	struct CoordinateHash;  // forward declaration
 
 	/// Sea regions, like land regions, also have guiding shapes, to prevent snaking. However, the
-	/// shape of land regions is much more important, so scores for sea regions are multiplied by
+	/// shape of land regions is much more important, so costs for sea regions are multiplied by
 	/// this constant.
-	static constexpr double seaScoreModifier = .5;
+	static constexpr double seaCostModifier = .5;
 
 	/// The radius of the inscribed circle of the unit hexagon (i.e., the largest circle that fits).
 	/// Also known as the apothem.
@@ -140,10 +140,10 @@ class HexagonalMap {
 	struct Transfer {
 		Coordinate tile;
 		int targetIndex;
-		double score;  // lower is better
+		double cost;  // lower is better
 
 		bool operator<(const Transfer &t) const {
-			return score < t.score;
+			return cost < t.cost;
 		}
 	};
 

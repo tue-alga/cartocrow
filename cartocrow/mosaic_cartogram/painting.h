@@ -76,7 +76,7 @@ class Painting : public renderer::GeometryPainting {
 
 	void paintMap(Renderer &renderer, ColorFunction tileColor) const;
 
-	/// Debug function to visualize the score computation between two regions.
+	/// Debug function to visualize the cost computation between two regions.
 	void paintGuidingPair(Renderer &renderer, const std::string &sourceName, const std::string &targetName) const;
 
 	void paintTransfers(Renderer &renderer) const;

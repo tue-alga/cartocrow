@@ -268,13 +268,13 @@ std::vector<HexagonalMap::Transfer> HexagonalMap::computeAllTransfers(const Conf
 	std::vector<Transfer> transfers;
 	transfers.reserve(candidates.size());
 
-	// compute score for each candidate
+	// compute cost for each candidate
 	const auto [guideSource, guideTarget] = getGuidingShapes(source, target);
 	for (const Coordinate c : candidates) {
 		const Point<Inexact> p = getCentroid(c);
-		const double score = guideTarget.evaluate(p) * (target.isSea() ? seaScoreModifier : 1)
-		                   - guideSource.evaluate(p) * (source.isSea() ? seaScoreModifier : 1);
-		transfers.emplace_back(c, target.index, score);
+		const double cost = guideTarget.evaluate(p) * (target.isSea() ? seaCostModifier : 1)
+		                  - guideSource.evaluate(p) * (source.isSea() ? seaCostModifier : 1);
+		transfers.emplace_back(c, target.index, cost);
 	}
 
 	return transfers;
@@ -286,7 +286,7 @@ std::optional<HexagonalMap::Transfer> HexagonalMap::computeBestTransfer(const Co
 
 	const Transfer *best = nullptr;
 	for (const Transfer &t : transfers)
-		if (!best || t.score < best->score)  // minimize
+		if (!best || t.cost < best->cost)  // minimize
 			best = &t;
 
 	return *best;
@@ -313,28 +313,28 @@ std::vector<HexagonalMap::Transfer> HexagonalMap::computeBestTransferPath() cons
 	std::vector<Vertex> vs;
 	copy(boost::make_iterator_range(vertices(graph)), std::back_inserter(vs));
 
-	// create edges (which are a subset of the configuration graph, and weighted by score)
+	// create edges (which are a subset of the configuration graph, and weighted by cost)
 	std::vector transfers(n, std::vector<std::optional<Transfer>>(n));
 	for (const auto [i, j] : configGraph.getEdges()) {
 		const auto t = computeBestTransfer(configurations[i], configurations[j]);
 		if (t) {
 			transfers[i][j] = t;
-			add_edge(vs[i], vs[j], t->score, graph);
+			add_edge(vs[i], vs[j], t->cost, graph);
 		}
 	}
 
 	// internal structure for paths of transfers
 	struct Path {
 		std::vector<int> configs;
-		double score;
+		double cost;
 
-		Path(const int source) : configs({ source }), score(-1e10) {}  // creates singleton
+		Path(const int source) : configs({ source }), cost(-1e10) {}  // creates singleton
 
 		int length() const {
 			return configs.size();
 		}
 		bool operator<(const Path &p) const {
-			return length() <= p.length() && score < p.score;  // whether `this` is "strictly better" than `p`
+			return length() <= p.length() && cost < p.cost;  // whether `this` is "strictly better" than `p`
 		}
 	};
 
@@ -368,10 +368,10 @@ std::vector<HexagonalMap::Transfer> HexagonalMap::computeBestTransferPath() cons
 			// prune
 			if (best && p.length() >= best->length()) continue;
 
-			for (const auto [target, score] : adj[p.configs.back()]) {
+			for (const auto [target, cost] : adj[p.configs.back()]) {
 				Path q = p;
 				q.configs.push_back(target);
-				q.score = std::max(q.score, score);
+				q.cost = std::max(q.cost, cost);
 
 				const auto &targetConfig = configurations[target];
 				if (targetConfig.isSea() || targetConfig.desire() > 0)
