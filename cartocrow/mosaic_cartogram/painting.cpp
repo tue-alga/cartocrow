@@ -17,10 +17,9 @@ void Painting::Options::validate() const {
 }
 
 Painting::Painting(std::shared_ptr<MosaicCartogram> mosaicCartogram, Options &&options)
-    : m_mosaicCartogram(mosaicCartogram), m_options(options) {
-	// compute constants
-	tileScale = std::sqrt(options.tileArea);
-	for (int i = 0; i < 6; i++) {
+    : m_mosaicCartogram(mosaicCartogram), m_options(options),
+      tileScale(std::sqrt(m_options.tileArea)) {
+	for (int i = -1; i < 5; i++) {  // such that right edge is first
 		const auto a = (1 + 2*i) * std::numbers::pi / 6;
 		tileShape.push_back({
 			tileScale * HexagonalMap::tileExradius * std::cos(a),
@@ -47,6 +46,12 @@ Point<Inexact> Painting::getCentroid(Coordinate c) const {
 	return CGAL::ORIGIN + tileScale * (HexagonalMap::getCentroid(c) - CGAL::ORIGIN);
 }
 
+Polygon<Inexact> Painting::getTile(const Coordinate c) const {
+	// https://stackoverflow.com/a/45452642
+	CGAL::Aff_transformation_2<Inexact> t(CGAL::TRANSLATION, getCentroid(c) - CGAL::ORIGIN);
+	return CGAL::transform(t, tileShape);
+}
+
 Color Painting::getColorDefault(Coordinate c) const {
 	const auto config = map().getConfiguration(c);
 	return config ? config->region->color() : Color{255, 255, 255};
@@ -69,20 +74,32 @@ void Painting::paintMark(Renderer &renderer, Coordinate c) const {
 	renderer.draw(Segment<Inexact>(Point<Inexact>(x-w, y+w), Point<Inexact>(x+w, y-w)));
 }
 
-void Painting::paintTile(Renderer &renderer, Coordinate c) const {
-	// https://stackoverflow.com/a/45452642
-	CGAL::Aff_transformation_2<Inexact> t(CGAL::TRANSLATION, getCentroid(c) - CGAL::ORIGIN);
-	renderer.draw(CGAL::transform(t, tileShape));
+void Painting::paintBorders(Renderer &renderer, const Configuration &config) const {
+	for (const Coordinate c1 : config) {
+		const auto tile = getTile(c1);
+		auto edge = tile.edges_begin();
+		for (const Coordinate c2 : c1.neighbors()) {  // edges are in same order as neighbors!
+			if (!config.contains(c2)) renderer.draw(*edge);
+			++edge;
+		}
+	}
 }
 
 void Painting::paintMap(Renderer &renderer, ColorFunction tileColor) const {
+	// draw tiles
 	renderer.setMode(Renderer::fill | Renderer::stroke);
 	renderer.setStroke(m_options.colorBorder, tileScale / 10);
 	for (const auto &config : map().configurations) {
 		for (const Coordinate c : config) {
 			renderer.setFill(tileColor(c));
-			paintTile(renderer, c);
+			renderer.draw(getTile(c));
 		}
+	}
+
+	// optionally, draw borders between regions
+	if (m_options.drawBorders) {
+		renderer.setStroke(m_options.colorBorder, tileScale / 5);
+		for (const auto &config : map().configurations) paintBorders(renderer, config);
 	}
 }
 

@@ -17,6 +17,7 @@ class Painting : public renderer::GeometryPainting {
 
 	// TODO: generalize to also support square tiles
 
+	using Configuration = HexagonalMap::Configuration;
 	using Coordinate = HexagonalMap::Coordinate;
 	using Renderer = renderer::GeometryRenderer;
 
@@ -27,6 +28,10 @@ class Painting : public renderer::GeometryPainting {
 		Color colorBorder = {  32,  32,  32 };
 		Color colorLand   = {  34, 139,  34 };  // forest green
 		Color colorSea    = { 175, 238, 238 };  // pale turquoise
+
+		/// Whether to draw borders between regions with thicker lines. This option is optional and
+		/// \c false by default.
+		bool drawBorders;
 
 		/// The area of one tile. This essentially controls the scale of the painting (compared to
 		/// the internal representation, which uses unit areas).
@@ -60,13 +65,14 @@ class Painting : public renderer::GeometryPainting {
 	const HexagonalMap& map() const { return m_mosaicCartogram->m_tileMap; }
 
 	Point<Inexact> getCentroid(Coordinate c) const;
+	Polygon<Inexact> getTile(Coordinate c) const;
 
 	// implementations of `ColorFunction`
 	Color getColorDefault(Coordinate c) const;
 	Color getColorUniform(Coordinate c) const;
 
 	void paintMark(Renderer &renderer, Coordinate c) const;
-	void paintTile(Renderer &renderer, Coordinate c) const;
+	void paintBorders(Renderer &renderer, const Configuration &config) const;
 
 	void paintMap(Renderer &renderer, ColorFunction tileColor) const;
 

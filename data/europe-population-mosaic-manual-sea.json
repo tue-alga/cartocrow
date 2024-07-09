@@ -55,8 +55,9 @@
 		"VAT": 801
 	},
 	"parameters": {
+		"drawBorders": true,
+		"manualSeas": true,
 		"tileArea": 100,
-		"unitValue": 680000,
-		"manualSeas": true
+		"unitValue": 680000
 	}
 }
