@@ -1,7 +1,9 @@
 #include "tile_map.h"
 
+#include <iomanip>
 #include <iterator>
 #include <optional>
+#include <queue>
 #include <stdexcept>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/range/algorithm/copy.hpp>
@@ -110,6 +112,20 @@ HexagonalMap::HexagonalMap(const VisibilityDrawing &initial,
 		}
 	}
 
+	// determine which configurations are at the horizon
+	for (Configuration &config : configurations) {
+		config.atHorizon = false;
+		for (const Coordinate c0 : config.boundary)
+			for (const Coordinate c1 : c0.neighbors())
+				if (!tiles.contains(c1)) {
+					config.atHorizon = true;
+					assert(config.isSea());
+					goto next;
+				}
+	  next:
+		;
+	}
+
 	// precompute all guiding pairs
 	for (const LandRegion &r1 : landRegions) {
 		for (const int i2 : configGraph.getNeighbors(r1.id)) {
@@ -120,32 +136,8 @@ HexagonalMap::HexagonalMap(const VisibilityDrawing &initial,
 		}
 	}
 
-
-
-
-
-	for (int step = 20; step; step--) {
-		const auto ts = computeBestTransferPath();
-		if (ts.empty()) {
-			std::cout << "no more valid transfers!" << std::endl;
-			break;
-		}
-
-		std::cout << "path of length " << ts.size() + 1 << " : ";
-		std::cout << configurations[tiles[ts.front().tile]].label();
-		for (const Transfer &t : ts) {
-			// const Configuration &source = configurations[tiles[t.tile]];
-			const Configuration &target = configurations[t.targetIndex];
-			std::cout << " -> " << target.label();
-			perform(t);
-		}
-		std::cout << '\n';
-	}
-
-	for (const Configuration &config : configurations)
-		if (config.isLand())
-			std::cout << config.label() << " : " << config.desire() << '\n';
-	std::cout << std::endl;
+	grow(10);
+	run(100);
 }
 
 Point<Inexact> HexagonalMap::getCentroid(const Coordinate c) {
@@ -396,6 +388,83 @@ std::vector<HexagonalMap::Transfer> HexagonalMap::computeBestTransferPath() cons
 	return result;
 }
 
+HexagonalMap::Configuration& HexagonalMap::getNearestAdjacent(
+	const Coordinate c0,
+	const std::unordered_map<int, Point<Inexact>> &centroids
+) {
+	int nearest = -1;
+	double nearestDistance = 1e10;
+
+	const auto p = getCentroid(c0);
+	for (const Coordinate c1 : c0.neighbors()) {
+		const auto it = tiles.find(c1);
+		if (it == tiles.end() || it->second == nearest) continue;
+		const auto d = (p - centroids.at(it->second)).squared_length();
+		if (d < nearestDistance) nearest = it->second, nearestDistance = d;
+	}
+
+	return configurations.at(nearest);
+}
+
+void HexagonalMap::resetBoundary(Configuration &config) const {
+	config.boundary.clear();
+	for (const Coordinate c0 : config.tiles) {
+		for (const Coordinate c1 : c0.neighbors()) {
+			const auto it = tiles.find(c1);
+			if (it == tiles.end() || it->second != config.index) {
+				config.boundary.insert(c0);
+				break;
+			}
+		}
+	}
+}
+
+void HexagonalMap::grow(const int layers) {
+	std::unordered_map<int, Point<Inexact>> centroids;
+	CoordinateMap<int> distance;
+	std::queue<Coordinate> queue;
+
+	for (const Configuration &config : configurations) {
+		if (!config.atHorizon) continue;
+		centroids.insert({ config.index, getCentroid(config) });
+		for (const Coordinate c0 : config.boundary) {
+			for (const Coordinate c1 : c0.neighbors()) {
+				if (distance.contains(c1)) continue;
+				const auto p = tiles.find(c1);
+				if (p == tiles.end() || p->second == config.index) continue;
+				distance[c1] = 0;
+				queue.push(c1);
+			}
+		}
+	}
+
+	int added = 0;
+	while (!queue.empty()) {
+		const Coordinate c0 = queue.front(); queue.pop();
+		const int d = distance[c0];
+		for (const Coordinate c1 : c0.neighbors()) {
+			if (distance.contains(c1)) continue;  // already visited
+			const auto p = tiles.find(c1);
+			if (p == tiles.end()) {
+				Configuration &config = getNearestAdjacent(c1, centroids);
+				config.tiles.insert(c1);
+				tiles[c1] = config.index;
+				added++;
+			}
+			if (p == tiles.end() || configurations[p->second].atHorizon) {
+				distance[c1] = d+1;
+				if (d+1 < layers) queue.push(c1);
+			}
+		}
+	}
+
+	for (Configuration &config : configurations)
+		if (config.atHorizon)
+			resetBoundary(config);
+
+	std::cerr << "[info] grew by " << added << " tiles" << std::endl;
+}
+
 void HexagonalMap::perform(const Transfer &transfer) {
 	Configuration &source = configurations[tiles[transfer.tile]];
 	Configuration &target = configurations[transfer.targetIndex];
@@ -418,8 +487,41 @@ void HexagonalMap::perform(const Transfer &transfer) {
 			target.boundary.erase(c);
 		}
 	}
+}
 
-	// TODO: if source is sea, insert new tile
+void HexagonalMap::perform(const std::vector<Transfer> &path) {
+	std::cout << "path of length " << path.size() + 1 << " : "
+	          << configurations[tiles[path[0].tile]].label();
+	for (const Transfer &transfer : path) {
+		perform(transfer);
+		std::cout << " -> " << configurations[transfer.targetIndex].label();
+	}
+	std::cout << '\n';
+}
+
+void HexagonalMap::run(int iterations) {
+	// find and perform transfers
+	for (int i = 0; i < iterations; i++) {
+		const auto path = computeBestTransferPath();
+		if (path.empty()) {
+			std::cout << "no more valid transfers!\n";
+			break;
+		}
+		perform(path);
+	}
+
+	// print list of regions with wrong size
+	std::vector<std::pair<int, std::string>> desires;
+	for (const Configuration &config : configurations)
+		if (config.isLand() && config.desire())
+			desires.push_back({ config.desire(), config.label() });
+	std::sort(desires.begin(), desires.end());
+	std::cout << '\n';
+	for (const auto &[desire, label] : desires) {
+		std::cout << std::setfill(' ') << std::setw(5) << std::left << label << " : "
+		          << std::setw(4) << std::right << desire << '\n';
+	}
+	std::cout << std::flush;
 }
 
 } // namespace cartocrow::mosaic_cartogram

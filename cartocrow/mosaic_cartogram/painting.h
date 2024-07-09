@@ -29,8 +29,8 @@ class Painting : public renderer::GeometryPainting {
 		Color colorLand   = {  34, 139,  34 };  // forest green
 		Color colorSea    = { 175, 238, 238 };  // pale turquoise
 
-		/// Whether to draw borders between regions with thicker lines. This option is optional and
-		/// \c false by default.
+		/// Whether to draw borders between regions with thicker lines. This parameter is optional
+		/// and \c false by default.
 		bool drawBorders;
 
 		/// The area of one tile. This essentially controls the scale of the painting (compared to

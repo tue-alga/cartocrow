@@ -75,11 +75,11 @@ void Painting::paintMark(Renderer &renderer, Coordinate c) const {
 }
 
 void Painting::paintBorders(Renderer &renderer, const Configuration &config) const {
-	for (const Coordinate c1 : config) {
-		const auto tile = getTile(c1);
+	for (const Coordinate c0 : config) {
+		const auto tile = getTile(c0);
 		auto edge = tile.edges_begin();
-		for (const Coordinate c2 : c1.neighbors()) {  // edges are in same order as neighbors!
-			if (!config.contains(c2)) renderer.draw(*edge);
+		for (const Coordinate c1 : c0.neighbors()) {  // edges are in same order as neighbors!
+			if (!config.contains(c1)) renderer.draw(*edge);
 			++edge;
 		}
 	}
@@ -98,14 +98,14 @@ void Painting::paintMap(Renderer &renderer, ColorFunction tileColor) const {
 
 	// optionally, draw borders between regions
 	if (m_options.drawBorders) {
-		renderer.setStroke(m_options.colorBorder, tileScale / 5);
+		renderer.setStroke(m_options.colorBorder, tileScale / 4);
 		for (const auto &config : map().configurations) paintBorders(renderer, config);
 	}
 }
 
 void Painting::paintGuidingPair(Renderer &renderer, const std::string &sourceName, const std::string &targetName) const {
-	const auto &source = map().configurations[m_mosaicCartogram->m_regionIndices[sourceName]];
-	const auto &target = map().configurations[m_mosaicCartogram->m_regionIndices[targetName]];
+	const auto &source = map().configurations[m_mosaicCartogram->m_regionIndices.at(sourceName)];
+	const auto &target = map().configurations[m_mosaicCartogram->m_regionIndices.at(targetName)];
 
 	auto [guideSource, guideTarget] = map().getGuidingShapes(source, target);
 	guideSource = guideSource.stretch(1 / tileScale);
@@ -153,7 +153,6 @@ void Painting::paintTransfers(Renderer &renderer) const {
 	for (const auto [i, j] : map().configGraph.getEdges()) {
 		const auto &source = map().configurations[i];
 		const auto &target = map().configurations[j];
-		if (source.isSea() || target.isSea()) continue;
 
 		const auto t = map().computeBestTransfer(source, target);
 		if (t) {

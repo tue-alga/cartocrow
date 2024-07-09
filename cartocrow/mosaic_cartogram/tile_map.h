@@ -26,7 +26,6 @@ namespace cartocrow::mosaic_cartogram {
 
 class HexagonalMap {
   public:
-
 	struct CoordinateHash;  // forward declaration
 
 	/// Sea regions, like land regions, also have guiding shapes, to prevent snaking. However, the
@@ -100,6 +99,8 @@ class HexagonalMap {
 		int index;
 		const MosaicRegion *region;
 		CoordinateSet tiles, boundary;
+		/// Whether this configuration is adjacent to the edge of the map.
+		bool atHorizon;
 
 		// implement iterators so we can use foreach loops
 		CoordinateSet::const_iterator begin() const noexcept { return tiles.begin(); }
@@ -127,6 +128,8 @@ class HexagonalMap {
 		int size() const {
 			return tiles.size();
 		}
+
+		bool operator==(const Configuration &config) const { return index == config.index; }
 
 		/// Checks whether \c c and all its neighbors are contained in this configuration. This
 		/// function only queries \c tiles, not \c boundary.
@@ -189,7 +192,16 @@ class HexagonalMap {
 	std::optional<Transfer> computeBestTransfer(const Configuration &source, const Configuration &target) const;
 	std::vector<HexagonalMap::Transfer> computeBestTransferPath() const;
 
+	Configuration& getNearestAdjacent(Coordinate c, const std::unordered_map<int, Point<Inexact>> &centroids);
+	void resetBoundary(Configuration &config) const;
+	/// Add new tiles to configurations at the horizon until the inner configurations are enclosed
+	/// by \c layers of tiles.
+	void grow(int layers = 5);
+
 	void perform(const Transfer &transfer);
+	void perform(const std::vector<Transfer> &path);
+
+	void run(int iterations);
 
 };
 
