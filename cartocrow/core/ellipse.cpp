@@ -11,6 +11,8 @@
 #include <CGAL/number_utils.h>
 #include <Eigen/Eigenvalues>
 
+#include "../core/centroid.h"
+
 namespace cartocrow {
 
 Eigen::Matrix3d Ellipse::Parameters::matrix() const {
@@ -129,8 +131,15 @@ std::string Ellipse::toString(int precision) const {
 }
 
 template <class K> Ellipse Ellipse::fit(const Polygon<K> &polygon) {
-	// TODO: linearly space points on boundary instead of taking vertices, which biases the ellipse towards "detailed corners"
 	const auto n = polygon.size();
+
+	// if the polygon is too small, we simply return a circle with the same area and centroid
+	if (n < 6) {
+		const EllipseAtOrigin circle(1, 0, 1, -CGAL::to_double(polygon.area()) / std::numbers::pi);
+		return circle.translate(approximate(centroid(polygon)) - CGAL::ORIGIN);
+	}
+
+	// TODO: linearly space points on boundary instead of taking vertices, which biases the ellipse towards "detailed corners"
 	Eigen::ArrayX2d boundary(n, 2);
 	for (int i = 0; i < n; i++) {
 		const Point<K> &p = polygon.vertex(i);
@@ -146,9 +155,10 @@ template Ellipse Ellipse::fit<Inexact>(const Polygon<Inexact> &polygon);
 
 // based on Fitzgibbon et al. (1999)
 // TODO: implement improvements by Harker et al. (2008)?
-// TODO: do you need n >= 6?
 Ellipse leastSquares(const Eigen::ArrayX2d &boundary) {
 	const int n = boundary.rows();
+	if (n < 6) throw std::invalid_argument("To fit an ellipse you need at least 6 points");
+
 	const Eigen::ArrayXd xs = boundary.col(0);
 	const Eigen::ArrayXd ys = boundary.col(1);
 

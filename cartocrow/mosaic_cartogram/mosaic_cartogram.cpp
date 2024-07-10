@@ -43,13 +43,24 @@ void MosaicCartogram::absorbMoldova() {
 		m_regionIndices[r._name] = r.id;
 	}
 	for (const auto &r : m_seaRegions) m_regionIndices[r.name()]--;
-	m_regionIndices["_outer0"]--;
-	m_regionIndices["_outer1"]--;
-	m_regionIndices["_outer2"]--;
+}
+
+PolygonWithHoles<Exact> getShape(const RegionArrangement::Face_const_handle face) {
+	Polygon<Exact> polygon;
+	const auto circ = face->outer_ccb();
+	auto curr = circ;
+	int n = 0;
+	do {
+		const auto p = curr->source()->point();
+		n++;
+		polygon.push_back(p);
+	} while (++curr != circ);
+	std::cout << n << std::endl;
+	return PolygonWithHoles<Exact>(polygon);
 }
 
 void MosaicCartogram::computeArrangement() {
-	// gather sea regions
+	// if sea regions were manually specified, read them now
 	if (m_parameters.manualSeas) {
 		for (const auto &[name, region] : *m_inputMap) {
 			if (name.starts_with("_sea")) {
@@ -60,17 +71,13 @@ void MosaicCartogram::computeArrangement() {
 				r.id = parseIntAtEnd(name);
 				r.shape = ps[0];
 				r.guidingShape = computeGuidingShape(r.shape);
-				m_seaRegions.push_back(std::move(r));
+				m_seaRegions.push_back(r);
 
 				assert(r.name() == name);
 				m_regionIndices.insert({ name, r.id + m_landRegions.size() });
 			}
 		}
 
-		const int i = m_landRegions.size() + m_seaRegions.size();
-		m_regionIndices.insert({ "_outer0", i   });
-		m_regionIndices.insert({ "_outer1", i+1 });
-		m_regionIndices.insert({ "_outer2", i+2 });
 	}
 
 	// construct arrangement from processed regions
@@ -81,6 +88,7 @@ void MosaicCartogram::computeArrangement() {
 			map.insert(p);
 	m_arrangement = regionMapToArrangement(map);
 
+	// if sea regions were not manually specified, generate them now
 	if (!m_parameters.manualSeas) {
 		// ensure that all salient points exactly equal one vertex point
 		// this is necessary since the input map may contain "rounding errors"
@@ -98,11 +106,30 @@ void MosaicCartogram::computeArrangement() {
 		}
 
 		// add sea regions such that dual is triangular
-		// TODO: update `m_seaRegions` and `m_regionIndices`
 		triangulate(m_arrangement, m_salientPoints);
+
+		// extract sea regions from new faces
+		for (const RegionArrangement::Face_const_handle fit : m_arrangement.face_handles()) {
+			const std::string &name = fit->data();
+			if (name.starts_with("_sea")) {
+				SeaRegion r;
+				r.id = parseIntAtEnd(name);
+				r.shape = getShape(fit);
+				r.guidingShape = computeGuidingShape(r.shape);
+				m_seaRegions.push_back(r);
+				m_regionIndices.insert({ name, r.id + m_landRegions.size() });
+			}
+		}
 	}
 
+	// (temp) solve Europe-specific problem
 	absorbMoldova();
+
+	// add indices for three outer sea regions
+	const int i = m_landRegions.size() + m_seaRegions.size();
+	m_regionIndices.insert({ "_outer0", i   });
+	m_regionIndices.insert({ "_outer1", i+1 });
+	m_regionIndices.insert({ "_outer2", i+2 });
 }
 
 void MosaicCartogram::computeDual() {
