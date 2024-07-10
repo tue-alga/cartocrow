@@ -15,6 +15,10 @@
 
 namespace cartocrow {
 
+bool isZero(double x) {
+	return std::abs(x) < 1e-10;
+}
+
 Eigen::Matrix3d Ellipse::Parameters::matrix() const {
 	// multiply matrices left to right: translation, rotation, scaling
 	const double cos = std::cos(angle);
@@ -48,10 +52,10 @@ Ellipse::Ellipse(double a, double b, double c, double d, double e, double f)
 	}
 }
 
-// TODO: if A = C then atan(±∞) = ±π/2 correctly?
 double Ellipse::angle() const {
 	// substitute  x -> x cos(t) - y sin(t)  and  y -> x sin(t) + y cos(t)
 	// and solve for t such that coefficient of xy is 0
+	if (isZero(A - C)) return std::numbers::pi / 2;
 	return .5 * std::atan(B / (A-C));
 }
 
