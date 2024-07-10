@@ -10,6 +10,9 @@
 
 namespace cartocrow::mosaic_cartogram {
 
+/// Computes a <em>2-visibility drawing</em> using an <em>orderly-spanning tree</em> like the
+/// original paper on mosaic cartograms (Cano et al., 2015) describes.
+/// Also refer to section 4 (page 935) of Chiang et al., 2005.
 class VisibilityDrawing {
   public:
 	// adjacencies of graph must be in clockwise order

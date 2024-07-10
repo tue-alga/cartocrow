@@ -33,6 +33,7 @@ class Ellipse {
 	Ellipse contour(double c) const { return { A, B, C, D, E, F - c }; }
 	double evaluate(double x, double y) const { return (A*x + B*y + D) * x + (C*y + E) * y + F; }
 	double evaluate(const Point<Inexact> &p) const { return evaluate(p.x(), p.y()); }
+	/// Returns a new ellipse where coefficients \c A and \c C are positive.
 	Ellipse normalizeSign() const;
 	virtual Parameters parameters() const;
 	Ellipse stretch(double cx, double cy) const;
@@ -58,8 +59,11 @@ class EllipseAtOrigin : public Ellipse {
 	EllipseAtOrigin(double a, double b, double c, double f) : Ellipse(a, b, c, 0, 0, f) {}
 
 	double area() const;
+	/// Scales the coefficients such that adding 1 to \c F increases the area by \c deltaArea.
 	EllipseAtOrigin normalizeContours(double deltaArea = 1) const;
 	Parameters parameters() const override;
+	/// Let ℓ be the line with slope \c slope through the origin. This function computes the length
+	/// of the part of ℓ that is contained in the ellipse.
 	double radius(double slope) const;
 	EllipseAtOrigin scaleTo(double area) const;
 };

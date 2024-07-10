@@ -296,7 +296,7 @@ std::vector<HexagonalMap::Transfer> HexagonalMap::computeBestTransferPath() cons
 
 	const int n = configGraph.getNumberOfVertices();
 
-	// create (graph with) vertices
+	// create (cost graph with) vertices
 	BoostGraph graph(n);
 	boost::property_map<BoostGraph, boost::vertex_index_t>::type vertexIndices = get(boost::vertex_index, graph);
 	boost::property_map<BoostGraph, boost::edge_weight_t>::type weights = get(boost::edge_weight, graph);

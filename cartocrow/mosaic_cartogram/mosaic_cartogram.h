@@ -18,6 +18,15 @@
 
 namespace cartocrow::mosaic_cartogram {
 
+/// The entrypoint for computing mosaic cartograms.
+/// First, we transform the input map into a set of contiguous land regions, each with a desired
+/// number of tiles (\ref computeLandRegions).
+/// Next, we add sea regions, either manually from the input map, or computed using a straight
+/// skeleton (\ref computeArrangement).
+/// Then, we compute the dual of the processed regions, where nodes corresponds to regions and edges
+/// to adjacencies (\ref computeDual).
+/// Finally, we compute a \ref VisibilityDrawing that will serve as an initial tile map
+/// (\ref computeTileMap). Computation then carries on in \ref HexagonalMap.
 class MosaicCartogram {
 	friend class Painting;
 
@@ -44,10 +53,12 @@ class MosaicCartogram {
 	/// A mapping from region names (in the input map) to the corresponding user-supplied values.
 	/// After \ref computeLandRegions(), these raw values should not be used anymore.
 	const std::unordered_map<std::string, Number<Inexact>> m_dataValues;
+	/// The points (vertices of land regions) that control the creation of sea regions.
 	std::vector<Point<Exact>> m_salientPoints;
 
 	std::vector<LandRegion> m_landRegions;
 	std::vector<SeaRegion> m_seaRegions;  // excluding the three outer regions
+	/// Maps region names to the corresponding indices.
 	std::unordered_map<std::string, int> m_regionIndices;
 
 	RegionArrangement m_arrangement;
@@ -57,6 +68,8 @@ class MosaicCartogram {
 	int getTileCount(double value) const {
 		return std::round(value / m_parameters.unitValue);
 	}
+	/// Fits ellipse to (the boundary of) the given \c polygon, translates it to the origin, scales
+	/// it to size \c tileCount, and normalizes the contours.
 	template<typename K>
 	EllipseAtOrigin computeGuidingShape(const PolygonWithHoles<K> &polygon, int tileCount = 1) const {
 		// internally, we define tiles to have unit area
@@ -82,7 +95,8 @@ class MosaicCartogram {
 	/// Step 3. Create a vertex for each face in the arrangement and connect two vertices if the
 	/// corresponding faces are adjacent.
 	void computeDual();
-	/// Step 4. Compute an initial tile map using a visibility diagram and TODO.
+	/// Step 4. Compute an initial tile map using a visibility diagram and continue computation in
+	/// \ref HexagonalMap using a flow-based algorithm.
 	void computeTileMap();
 
 	/// (temp) Fixes the only internal problem in Europe, i.e., Moldova having degree 2. This is
