@@ -1,6 +1,7 @@
 #include "guiding_shape.h"
 
 #include <numbers>
+#include <CGAL/number_utils.h>
 
 #include "../core/centroid.h"
 
@@ -22,7 +23,7 @@ GuidingPair::GuidingPair(const LandRegion &region1, const LandRegion &region2) {
 
 
 	// slope of line through the centroids  (TODO: what if x1 = x2?)
-	const double m = approximate((centroid1.y() - centroid2.y()) / (centroid1.x() - centroid2.x()));
+	const double m = CGAL::to_double((centroid1.y() - centroid2.y()) / (centroid1.x() - centroid2.x()));
 
 	// Δx per unit of distance between the centroids
 	const double dx = 1 / std::sqrt(1 + m*m);

@@ -189,7 +189,7 @@ void MosaicCartogram::computeLandRegions() {
 		// allocate tiles
 		// TODO: improve, like e.g. seats are assigned in parliament
 		for (auto &p : parts) {
-			p.value = approximate(p.area / totalArea * value);
+			p.value = CGAL::to_double(p.area / totalArea * value);
 			const int n = std::min(getTileCount(p.value), tiles);
 			p.tiles = n;
 			tiles -= n;

@@ -83,9 +83,6 @@ template <class K> using Arrangement = CGAL::Arrangement_2<CGAL::Arr_segment_tra
  */
 constexpr const Number<Inexact> M_EPSILON = 0.0000001;
 
-/// Converts a number from exact representation to an approximation in inexact
-/// representation.
-Number<Inexact> approximate(const Number<Exact>& p);
 /// Converts a point from exact representation to an approximation in inexact
 /// representation.
 template <class K>
