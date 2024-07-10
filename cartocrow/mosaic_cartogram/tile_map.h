@@ -31,7 +31,7 @@ class HexagonalMap {
 	/// Sea regions, like land regions, also have guiding shapes, to prevent snaking. However, the
 	/// shape of land regions is much more important, so costs for sea regions are multiplied by
 	/// this constant.
-	static constexpr double seaCostModifier = .5;
+	static constexpr double seaCostMultiplier = 5;
 
 	/// The radius of the inscribed circle of the unit hexagon (i.e., the largest circle that fits).
 	/// Also known as the apothem.

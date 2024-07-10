@@ -137,7 +137,7 @@ HexagonalMap::HexagonalMap(const VisibilityDrawing &initial,
 	}
 
 	grow(10);
-	run(100);
+	run(1000);
 }
 
 Point<Inexact> HexagonalMap::getCentroid(const Coordinate c) {
@@ -264,8 +264,8 @@ std::vector<HexagonalMap::Transfer> HexagonalMap::computeAllTransfers(const Conf
 	const auto [guideSource, guideTarget] = getGuidingShapes(source, target);
 	for (const Coordinate c : candidates) {
 		const Point<Inexact> p = getCentroid(c);
-		const double cost = guideTarget.evaluate(p) * (target.isSea() ? seaCostModifier : 1)
-		                  - guideSource.evaluate(p) * (source.isSea() ? seaCostModifier : 1);
+		const double cost = guideTarget.evaluate(p) * (target.isSea() ? seaCostMultiplier : 1)
+		                  - guideSource.evaluate(p) / (source.isSea() ? seaCostMultiplier : 1);
 		transfers.emplace_back(c, target.index, cost);
 	}
 
@@ -367,7 +367,7 @@ std::vector<HexagonalMap::Transfer> HexagonalMap::computeBestTransferPath() cons
 
 				const auto &targetConfig = configurations[target];
 				if (targetConfig.isSea() || targetConfig.desire() > 0)
-					if (sourceConfig.isLand() || targetConfig.isLand())  // TODO: remove this check
+					if (sourceConfig.isLand() || targetConfig.isLand())  // TODO: bad band-aid fix
 						if (!best || q < *best)
 							best = q;
 
