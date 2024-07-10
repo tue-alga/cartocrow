@@ -39,6 +39,14 @@ void PaintingRenderer::paint(GeometryRenderer& renderer) const {
 			renderer.draw(std::get<Circle<Inexact>>(object));
 		} else if (std::holds_alternative<Ellipse>(object)) {
 			renderer.draw(std::get<Ellipse>(object));
+		} else if (std::holds_alternative<BezierSpline>(object)) {
+			renderer.draw(std::get<BezierSpline>(object));
+		} else if (std::holds_alternative<Line<Inexact>>(object)) {
+			renderer.draw(std::get<Line<Inexact>>(object));
+		} else if (std::holds_alternative<Ray<Inexact>>(object)) {
+			renderer.draw(std::get<Ray<Inexact>>(object));
+		} else if (std::holds_alternative<Polyline<Inexact>>(object)) {
+			renderer.draw(std::get<Polyline<Inexact>>(object));
 		} else if (std::holds_alternative<Label>(object)) {
 			renderer.drawText(std::get<Label>(object).first, std::get<Label>(object).second);
 		} else if (std::holds_alternative<Style>(object)) {
@@ -75,6 +83,22 @@ void PaintingRenderer::draw(const Ellipse& e) {
 	m_objects.push_back(e);
 }
 
+void PaintingRenderer::draw(const BezierSpline& s) {
+	m_objects.push_back(s);
+}
+
+void PaintingRenderer::draw(const Line<Inexact>& l) {
+	m_objects.push_back(l);
+}
+
+void PaintingRenderer::draw(const Ray<Inexact>& r) {
+	m_objects.push_back(r);
+}
+
+void PaintingRenderer::draw(const Polyline<Inexact>& p) {
+	m_objects.push_back(p);
+}
+
 void PaintingRenderer::drawText(const Point<Inexact>& p, const std::string& text) {
 	m_objects.push_back(Label(p, text));
 }
@@ -96,6 +120,11 @@ void PaintingRenderer::setMode(int mode) {
 void PaintingRenderer::setStroke(Color color, double width) {
 	m_style.m_strokeColor = color;
 	m_style.m_strokeWidth = width;
+	m_objects.push_back(m_style);
+}
+
+void PaintingRenderer::setStrokeOpacity(int alpha) {
+	m_style.m_strokeOpacity = alpha;
 	m_objects.push_back(m_style);
 }
 

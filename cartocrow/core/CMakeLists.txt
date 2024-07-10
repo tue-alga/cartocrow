@@ -5,6 +5,7 @@ set(SOURCES
 	region_arrangement.cpp
 	region_map.cpp
 	timer.cpp
+	bezier.cpp
 )
 set(HEADERS
 	centroid.h
@@ -14,6 +15,7 @@ set(HEADERS
 	region_arrangement.h
 	region_map.h
 	timer.h
+	bezier.h
 )
 
 add_library(core ${SOURCES})

@@ -37,6 +37,9 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-2019
 #include "cartocrow/flow_map/place.h"
 #include "cartocrow/flow_map/spiral_tree.h"
 #include "cartocrow/flow_map/spiral_tree_unobstructed_algorithm.h"
+#include "cartocrow/isoline_simplification/ipe_isolines.h"
+#include "cartocrow/isoline_simplification/isoline_simplifier.h"
+#include "cartocrow/isoline_simplification/simple_isoline_painting.h"
 #include "cartocrow/mosaic_cartogram/mosaic_cartogram.h"
 #include "cartocrow/mosaic_cartogram/painting.h"
 #include "cartocrow/mosaic_cartogram/parameters.h"
@@ -68,14 +71,13 @@ int main(int argc, char* argv[]) {
 	std::ifstream f(projectFilename);
 	json projectData = json::parse(f);
 
-	const std::filesystem::path ipeFilename = projectFilename.parent_path() / projectData["map"];
-	RegionMap map = ipeToRegionMap(ipeFilename);
-	auto map_ptr = std::make_shared<RegionMap>(map);
-
 	std::shared_ptr<renderer::GeometryPainting> painting;
 	std::shared_ptr<renderer::GeometryPainting> debugPainting;
 
 	if (projectData["type"] == "necklace_map") {
+		RegionMap map = ipeToRegionMap(projectFilename.parent_path() / projectData["map"]);
+		auto map_ptr = std::make_shared<RegionMap>(map);
+
 		std::shared_ptr<necklace_map::NecklaceMap> necklaceMap =
 		    std::make_shared<necklace_map::NecklaceMap>(map_ptr);
 		necklace_map::Parameters& parameters = necklaceMap->parameters();
@@ -98,6 +100,9 @@ int main(int argc, char* argv[]) {
 		painting = std::make_shared<necklace_map::Painting>(necklaceMap, options);
 
 	} else if (projectData["type"] == "flow_map") {
+		RegionMap map = ipeToRegionMap(projectFilename.parent_path() / projectData["map"]);
+		auto map_ptr = std::make_shared<RegionMap>(map);
+
 		// TODO [ws] this is temporary: draw the spiral tree until the flow map
 		// is implemented
 		Region& root = (*map_ptr)[projectData["root"]];
@@ -117,6 +122,10 @@ int main(int argc, char* argv[]) {
 		painting = std::make_shared<flow_map::Painting>(map_ptr, tree, options);
 
 	} else if (projectData["type"] == "mosaic_cartogram") {
+		const std::filesystem::path ipeFilename = projectFilename.parent_path() / projectData["map"];
+		RegionMap map = ipeToRegionMap(ipeFilename);
+		auto map_ptr = std::make_shared<RegionMap>(map);
+
 		// read data values
 		std::unordered_map<std::string, Number<Inexact>> dataValues;
 		for (auto &[key, val] : projectData["data"].items()) {
@@ -154,6 +163,12 @@ int main(int argc, char* argv[]) {
 			cartogram,
 			std::move(paramsPainting)
 		);
+	} else if (projectData["type"] == "isoline_simplification") {
+		auto isolines = isoline_simplification::ipeToIsolines(projectFilename.parent_path() / projectData["isolines"]);
+		isoline_simplification::IsolineSimplifier simplifier(isolines);
+		int target = projectData["target"];
+		simplifier.simplify(target);
+		painting = std::make_shared<isoline_simplification::SimpleIsolinePainting>(simplifier.m_simplified_isolines);
 	} else {
 		std::cerr << "Unknown type \"" << projectData["type"] << "\" specified\n";
 	}

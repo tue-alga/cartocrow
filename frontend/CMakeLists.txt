@@ -14,6 +14,7 @@ target_link_libraries(
     flow_map
     mosaic_cartogram
     necklace_map
+    isoline_simplification
     renderer
     CGAL::CGAL
     Qt5::Widgets

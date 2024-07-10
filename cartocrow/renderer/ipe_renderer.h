@@ -45,6 +45,7 @@ struct IpeRendererStyle {
 	ipe::Color m_fillColor = ipe::Color(0, 102, 203);
 	/// The opacity of filled shapes, as a symbolic Ipe attribute.
 	ipe::Attribute m_fillOpacity;
+	ipe::Attribute m_strokeOpacity;
 };
 
 /// Ipe specialization of the GeometryRenderer.
@@ -71,8 +72,11 @@ struct IpeRendererStyle {
 class IpeRenderer : public GeometryRenderer {
 
   public:
+	IpeRenderer() = default;
+
 	/// Constructs a IpeRenderer for the given painting.
-	IpeRenderer(std::shared_ptr<GeometryPainting> painting);
+	IpeRenderer(const std::shared_ptr<GeometryPainting>& painting);
+	IpeRenderer(const std::shared_ptr<GeometryPainting>& painting, const std::string& name);
 
 	/// Saves the painting to an Ipe file with the given name.
 	void save(const std::filesystem::path& file);
@@ -83,30 +87,47 @@ class IpeRenderer : public GeometryRenderer {
 	void draw(const PolygonWithHoles<Inexact>& p) override;
 	void draw(const Circle<Inexact>& c) override;
 	void draw(const Ellipse& e) override;
-	//void draw(const BezierSpline& s) override;
+	void draw(const BezierSpline& s) override;
+	void draw(const Line<Inexact>& l) override;
+	void draw(const Ray<Inexact>& r) override;
+	void draw(const Polyline<Inexact>& p) override;
 	void drawText(const Point<Inexact>& p, const std::string& text) override;
 
 	void pushStyle() override;
 	void popStyle() override;
 	void setMode(int mode) override;
 	void setStroke(Color color, double width) override;
+	void setStrokeOpacity(int alpha) override;
 	void setFill(Color color) override;
 	void setFillOpacity(int alpha) override;
 
-	void addPainting(std::shared_ptr<GeometryPainting> painting);
+	void addPainting(const std::shared_ptr<GeometryPainting>& painting);
+	void addPainting(const std::shared_ptr<GeometryPainting>& painting, const std::string& name);
 
   private:
 	/// Converts a polygon to an Ipe curve.
 	ipe::Curve* convertPolygonToCurve(const Polygon<Inexact>& p) const;
+	/// Converts a polyline to an Ipe curve.
+	ipe::Curve* convertPolylineToCurve(const Polyline<Inexact>& p) const;
 	/// Returns Ipe attributes to style an Ipe path with the current style.
 	ipe::AllAttributes getAttributesForStyle() const;
 	/// Escapes LaTeX's [reserved characters](https://latexref.xyz/Reserved-characters.html)
 	/// `# $ % & { } _ ~ ^ \` so that the resulting string can safely be used in
 	/// an Ipe file.
 	std::string escapeForLaTeX(const std::string& text) const;
+	/// Get the attribute for an opacity value.
+	/// If there is not yet an attribute for this opacity then it is created and added to the alpha sheet.
+	ipe::Attribute opacity_attribute(int alpha);
+
+	struct DrawnPainting {
+		/// The painting itself.
+		std::shared_ptr<GeometryPainting> m_painting;
+		/// The name of the painting displayed as a layer name in ipe.
+		std::optional<std::string> name;
+	};
 
 	/// The paintings we're drawing.
-	std::vector<std::shared_ptr<GeometryPainting>> m_paintings;
+	std::vector<DrawnPainting> m_paintings;
 	/// The current drawing style.
 	IpeRendererStyle m_style;
 	/// A stack of drawing styles, used by \ref pushStyle() and \ref popStyle()
