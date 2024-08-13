@@ -554,7 +554,7 @@ void GeometryWidget::draw(const BezierSpline& s) {
 
 void GeometryWidget::draw(const Ray<Inexact>& r) {
 	Box bounds = inverseConvertBox(rect());
-	auto result = intersection(r, CGAL::Iso_rectangle_2<Inexact>(Point<Inexact>(bounds.xmin(), bounds.ymin()), Point<Inexact>(bounds.xmax(), bounds.ymax())));
+	auto result = intersection(r, Rectangle<Inexact>(Point<Inexact>(bounds.xmin(), bounds.ymin()), Point<Inexact>(bounds.xmax(), bounds.ymax())));
 	if (result) {
 		if (const Segment<Inexact>* s = boost::get<Segment<Inexact>>(&*result)) {
 			int oldMode = m_style.m_mode;

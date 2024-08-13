@@ -28,6 +28,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 07-11-2019
 #include <CGAL/Bbox_2.h>
 #include <CGAL/Circle_2.h>
 #include <CGAL/Exact_predicates_exact_constructions_kernel.h>
+#include <CGAL/Exact_predicates_exact_constructions_kernel_with_sqrt.h>
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 #include <CGAL/Line_2.h>
 #include <CGAL/Point_2.h>
@@ -42,6 +43,8 @@ namespace cartocrow {
 
 /// CGAL kernel for exact constructions (uses an exact number type).
 using Exact = CGAL::Exact_predicates_exact_constructions_kernel;
+/// CGAL kernel for exact constructions (uses an exact number type that supports the square root operation).
+using ExactWithSqrt = CGAL::Exact_predicates_exact_constructions_kernel_with_sqrt;
 /// CGAL kernel for inexact constructions.
 using Inexact = CGAL::Exact_predicates_inexact_constructions_kernel;
 
@@ -60,6 +63,8 @@ template <class K> using Line = CGAL::Line_2<K>;
 template <class K> using Segment = CGAL::Segment_2<K>;
 /// A ray in the plane. See \ref CGAL::Ray_2.
 template <class K> using Ray = CGAL::Ray_2<K>;
+/// An axis-aligned rectangle in the plane. See \ref CGAL::Iso_rectangle_2.
+template <class K> using Rectangle = CGAL::Iso_rectangle_2<K>;
 
 /// A polygon in the plane. See \ref CGAL::Polygon_2.
 template <class K> using Polygon = CGAL::Polygon_2<K>;
