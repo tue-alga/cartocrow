@@ -612,7 +612,9 @@ void GeometryWidget::setupPainter() {
 		m_painter->setBrush(Qt::NoBrush);
 	}
 	if (m_style.m_mode & GeometryRenderer::stroke) {
-		m_painter->setPen(QPen(m_style.m_strokeColor, m_style.m_strokeWidth, Qt::SolidLine, Qt::FlatCap, Qt::RoundJoin));
+		m_painter->setPen(QPen(m_style.m_strokeColor,
+		                       m_style.m_strokeWidth * (m_style.m_absoluteWidth ? zoomFactor() : 1),
+		                       Qt::SolidLine, Qt::FlatCap, Qt::RoundJoin));
 	} else {
 		m_painter->setPen(Qt::NoPen);
 	}
@@ -631,9 +633,10 @@ void GeometryWidget::setMode(int mode) {
 	m_style.m_mode = mode;
 }
 
-void GeometryWidget::setStroke(Color color, double width) {
+void GeometryWidget::setStroke(Color color, double width, bool absoluteWidth) {
 	m_style.m_strokeColor = QColor(color.r, color.g, color.b);
 	m_style.m_strokeWidth = width;
+	m_style.m_absoluteWidth = absoluteWidth;
 }
 
 void GeometryWidget::setStrokeOpacity(int alpha) {
@@ -703,6 +706,25 @@ void GeometryWidget::zoomOut() {
 	if (m_transform.m11() < m_minZoom) {
 		m_transform /= m_minZoom / m_transform.m11();
 	}
+	updateZoomSlider();
+	update();
+}
+
+void GeometryWidget::centerViewOn(Point<Inexact> newCenter) {
+	Point<Inexact> currentCenter = inverseConvertPoint(QPointF(width(), height()) / 2.0);
+	m_transform.translate(currentCenter.x() - newCenter.x(), currentCenter.y() - newCenter.y());
+	update();
+}
+
+void GeometryWidget::fitInView(Box bbox) {
+	centerViewOn(Point<Inexact>((bbox.xmin() + bbox.xmax()) / 2, (bbox.ymin() + bbox.ymax()) / 2));
+	double newZoom = std::min(width() / bbox.x_span(), height() / bbox.y_span());
+	if (newZoom < m_minZoom) {
+		newZoom = m_minZoom;
+	} else if (newZoom > m_maxZoom) {
+		newZoom = m_maxZoom;
+	}
+	m_transform *= newZoom / m_transform.m11();
 	updateZoomSlider();
 	update();
 }

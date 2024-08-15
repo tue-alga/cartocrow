@@ -49,6 +49,9 @@ struct GeometryWidgetStyle {
 	QColor m_strokeColor = QColor(0, 0, 0);
 	/// The width of lines.
 	double m_strokeWidth = 1;
+	/// Whether the width is interpreted as absolute, that is, independent of
+	/// the renderer's zoom factor.
+	bool m_absoluteWidth = false;
 	/// The color of filled shapes.
 	QColor m_fillColor = QColor(0, 102, 203);
 };
@@ -172,7 +175,7 @@ class GeometryWidget : public QWidget, public GeometryRenderer {
 	void pushStyle() override;
 	void popStyle() override;
 	void setMode(int mode) override;
-	void setStroke(Color color, double width) override;
+	void setStroke(Color color, double width, bool absoluteWidth = false) override;
 	void setStrokeOpacity(int alpha) override;
 	void setFill(Color color) override;
 	void setFillOpacity(int alpha) override;
@@ -204,6 +207,11 @@ class GeometryWidget : public QWidget, public GeometryRenderer {
 	void zoomIn();
 	/// Decreases the zoom level, taking the minimum zoom into account.
 	void zoomOut();
+	/// Pans such that the given point is centered in the viewport.
+	void centerViewOn(Point<Inexact> newCenter);
+	/// Zooms and pans such that the given bounding box is centered and fits
+	/// precisely in the viewport. This clamps to the maximum and minimum zoom.
+	void fitInView(Box bbox);
 	/// Sets the type of grid.
 	void setGridMode(GridMode mode);
 
