@@ -82,6 +82,38 @@ const std::vector<std::shared_ptr<Node>>& SmoothTree::nodes() const {
 	return m_nodes;
 }
 
+Number<Inexact> SmoothTree::computeObstacleCost() {
+	Number<Inexact> cost = 0;
+	for (int i = 0; i < m_nodes.size(); i++) {
+		const auto& node = m_nodes[i];
+		if (node->getType() == Node::ConnectionType::kSubdivision ||
+		    node->getType() == Node::ConnectionType::kJoin) {
+			for (int j = 0; j < m_nodes.size(); j++) {
+				const auto& obstacle = m_nodes[j];
+				if (obstacle->getType() == Node::ConnectionType::kLeaf) {
+					cost += computeObstacleCost(i, node->m_flow, obstacle->m_position);
+				}
+			}
+		}
+	}
+	return cost;
+}
+
+Number<Inexact> SmoothTree::computeObstacleCost(int i, Number<Inexact> thickness,
+                                                PolarPoint obstacle) {
+	PolarPoint n = m_nodes[i]->m_position;
+	Number<Inexact> d = std::sqrt((n.toCartesian() - obstacle.toCartesian()).squared_length());
+
+	if (d < thickness) {
+		return thickness * (m_bufferSize / 2 + thickness) / (m_bufferSize * d) +
+		       d * (m_bufferSize / 2 - thickness) / (m_bufferSize * thickness);
+	} else if (d < thickness + m_bufferSize) {
+		return std::pow(1 - (d - thickness) / m_bufferSize, 2);
+	} else {
+		return 0;
+	}
+}
+
 Number<Inexact> SmoothTree::computeSmoothingCost() {
 	Number<Inexact> cost = 0;
 	for (int i = 0; i < m_nodes.size(); i++) {
@@ -300,8 +332,8 @@ void SmoothTree::applyStraighteningGradient(int i, int iParent,
 }
 
 Number<Inexact> SmoothTree::computeCost() {
-	return computeSmoothingCost() + computeAngleRestrictionCost() + computeBalancingCost() +
-	       computeStraighteningCost();
+	return computeObstacleCost() + computeSmoothingCost() + computeAngleRestrictionCost() +
+	       computeBalancingCost() + computeStraighteningCost();
 }
 
 void SmoothTree::optimize() {
@@ -325,7 +357,7 @@ void SmoothTree::optimize() {
 	for (int i = 0; i < m_nodes.size(); i++) {
 		Number<Inexact> epsilon = 0.0001; // TODO
 		if (m_nodes[i]->getType() == Node::ConnectionType::kJoin) {
-			m_nodes[i]->m_position.setR(m_nodes[i]->m_position.r() - epsilon * m_gradient[i].r);
+			//m_nodes[i]->m_position.setR(m_nodes[i]->m_position.r() - epsilon * m_gradient[i].r);
 		}
 		if (m_nodes[i]->getType() == Node::ConnectionType::kJoin ||
 		    m_nodes[i]->getType() == Node::ConnectionType::kSubdivision) {

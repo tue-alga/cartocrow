@@ -111,9 +111,10 @@ void PaintingRenderer::setMode(int mode) {
 	m_objects.push_back(m_style);
 }
 
-void PaintingRenderer::setStroke(Color color, double width) {
+void PaintingRenderer::setStroke(Color color, double width, bool absoluteWidth) {
 	m_style.m_strokeColor = color;
 	m_style.m_strokeWidth = width;
+	m_style.m_absoluteWidth = absoluteWidth;
 	m_objects.push_back(m_style);
 }
 

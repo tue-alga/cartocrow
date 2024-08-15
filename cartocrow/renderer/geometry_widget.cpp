@@ -610,7 +610,9 @@ void GeometryWidget::setupPainter() {
 		m_painter->setBrush(Qt::NoBrush);
 	}
 	if (m_style.m_mode & GeometryRenderer::stroke) {
-		m_painter->setPen(QPen(m_style.m_strokeColor, m_style.m_strokeWidth, Qt::SolidLine, Qt::FlatCap, Qt::RoundJoin));
+		m_painter->setPen(QPen(m_style.m_strokeColor,
+		                       m_style.m_strokeWidth * (m_style.m_absoluteWidth ? zoomFactor() : 1),
+		                       Qt::SolidLine, Qt::FlatCap, Qt::RoundJoin));
 	} else {
 		m_painter->setPen(Qt::NoPen);
 	}
@@ -629,9 +631,10 @@ void GeometryWidget::setMode(int mode) {
 	m_style.m_mode = mode;
 }
 
-void GeometryWidget::setStroke(Color color, double width) {
+void GeometryWidget::setStroke(Color color, double width, bool absoluteWidth) {
 	m_style.m_strokeColor = QColor(color.r, color.g, color.b);
 	m_style.m_strokeWidth = width;
+	m_style.m_absoluteWidth = absoluteWidth;
 }
 
 void GeometryWidget::setStrokeOpacity(int alpha) {

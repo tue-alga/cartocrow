@@ -95,7 +95,7 @@ class IpeRenderer : public GeometryRenderer {
 	void pushStyle() override;
 	void popStyle() override;
 	void setMode(int mode) override;
-	void setStroke(Color color, double width) override;
+	void setStroke(Color color, double width, bool absoluteWidth = false) override;
 	void setStrokeOpacity(int alpha) override;
 	void setFill(Color color) override;
 	void setFillOpacity(int alpha) override;

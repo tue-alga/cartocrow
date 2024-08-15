@@ -50,7 +50,7 @@ class PaintingRenderer : public GeometryPainting, public GeometryRenderer {
 	void pushStyle() override;
 	void popStyle() override;
 	void setMode(int mode) override;
-	void setStroke(Color color, double width) override;
+	void setStroke(Color color, double width, bool absoluteWidth = false) override;
 	void setStrokeOpacity(int alpha) override;
 	void setFill(Color color) override;
 	void setFillOpacity(int alpha) override;
@@ -65,6 +65,9 @@ class PaintingRenderer : public GeometryPainting, public GeometryRenderer {
 		Color m_strokeColor = Color{0, 0, 0};
 		/// The width of lines.
 		double m_strokeWidth = 1;
+		/// Whether the width is interpreted as absolute, that is, independent of
+		/// the renderer's zoom factor.
+		bool m_absoluteWidth = false;
 		/// The opacity of lines.
 		double m_strokeOpacity = 255;
 		/// The color of filled shapes.

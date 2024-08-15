@@ -23,7 +23,7 @@ void SmoothTreePainting::paintFlow(renderer::GeometryRenderer& renderer) const {
 		if (node->m_parent == nullptr) {
 			continue;
 		}
-		renderer.setStroke(Color{0, 0, 0}, node->m_flow + 2.0f);
+		renderer.setStroke(Color{0, 0, 0}, node->m_flow + 0.2f, true);
 		renderer.draw(Segment<Inexact>(node->m_parent->m_position.toCartesian(),
 		                               node->m_position.toCartesian()));
 	}
@@ -33,7 +33,7 @@ void SmoothTreePainting::paintFlow(renderer::GeometryRenderer& renderer) const {
 		if (node->m_parent == nullptr) {
 			continue;
 		}
-		renderer.setStroke(Color{255, 84, 32}, node->m_flow);
+		renderer.setStroke(Color{255, 84, 32}, node->m_flow, true);
 		renderer.draw(Segment<Inexact>(node->m_parent->m_position.toCartesian(),
 		                               node->m_position.toCartesian()));
 	}

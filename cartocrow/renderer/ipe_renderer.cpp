@@ -252,7 +252,7 @@ void IpeRenderer::setMode(int mode) {
 	m_style.m_mode = mode;
 }
 
-void IpeRenderer::setStroke(Color color, double width) {
+void IpeRenderer::setStroke(Color color, double width, [[maybe_unused]] bool absoluteWidth) {
 	const double factor = 1000.0 / 255.0;
 	m_style.m_strokeColor = ipe::Color(color.r * factor, color.g * factor, color.b * factor);
 	m_style.m_strokeWidth = width;
