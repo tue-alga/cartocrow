@@ -1,12 +1,12 @@
 #ifndef CARTOCROW_POINT_VORONOI_HELPERS_H
 #define CARTOCROW_POINT_VORONOI_HELPERS_H
 
-#include "../core/core.h"
-#include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
+#include "cartocrow/core/core.h"
 #include <CGAL/Delaunay_triangulation_2.h>
-#include <CGAL/Voronoi_diagram_2.h>
-#include <CGAL/Delaunay_triangulation_adaptation_traits_2.h>
 #include <CGAL/Delaunay_triangulation_adaptation_policies_2.h>
+#include <CGAL/Delaunay_triangulation_adaptation_traits_2.h>
+#include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
+#include <CGAL/Voronoi_diagram_2.h>
 
 using namespace cartocrow;
 //typedef CGAL::Delaunay_triangulation_2<K>                                    DT;

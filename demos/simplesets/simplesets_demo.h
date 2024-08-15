@@ -25,6 +25,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "cartocrow/renderer/geometry_painting.h"
 #include "cartocrow/renderer/geometry_widget.h"
 #include "cartocrow/simplesets/types.h"
+#include "cartocrow/simplesets/partition.h"
+#include "cartocrow/simplesets/drawing_algorithm.h"
 #include <QMainWindow>
 
 using namespace cartocrow;
@@ -38,7 +40,12 @@ class SimpleSetsDemo : public QMainWindow {
 	SimpleSetsDemo();
 
   private:
-
+	Partition m_partition;
+	DilatedPatternArrangement m_arr;
+	GeneralSettings m_gs;
+	DrawSettings m_ds;
+	PartitionSettings m_ps;
+	ComputeDrawingSettings m_cds;
 };
 
 #endif //CARTOCROW_SIMPLESETS_DEMO_H

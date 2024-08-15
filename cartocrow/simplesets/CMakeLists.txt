@@ -1,17 +1,36 @@
 set(SOURCES
-	pattern.cpp
-	island.cpp
-	bank.cpp
+	types.cpp
+	parse_input.cpp
+    patterns/pattern.cpp
+	patterns/single_point.cpp
+	patterns/matching.cpp
+    patterns/island.cpp
+    patterns/bank.cpp
+	dilated/dilated_poly.cpp
+	helpers/cs_polygon_helpers.cpp
+	partition_algorithm.cpp
+	partition_painting.cpp
+	drawing_algorithm.cpp
 )
 set(HEADERS
-	pattern.h
 	types.h
 	settings.h
 	cat_point.h
-	island.h
-	bank.h
-	point_voronoi_helpers.h
-	cropped_voronoi.h
+	parse_input.h
+	patterns/pattern.h
+	patterns/poly_pattern.h
+	patterns/single_point.h
+	patterns/matching.h
+	patterns/island.h
+	patterns/bank.h
+	dilated/dilated_poly.h
+	helpers/point_voronoi_helpers.h
+	helpers/cropped_voronoi.h
+	helpers/cs_polygon_helpers.h
+	partition_algorithm.h
+	partition_painting.h
+	partition.h
+	drawing_algorithm.h
 )
 
 add_library(simplesets ${SOURCES})

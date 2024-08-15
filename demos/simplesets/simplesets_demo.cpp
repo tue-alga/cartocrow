@@ -17,21 +17,29 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#include "simplesets_demo.h"
 #include "cartocrow/core/ipe_reader.h"
 #include "cartocrow/renderer/ipe_renderer.h"
+#include "cartocrow/simplesets/patterns/bank.h"
+#include "cartocrow/simplesets/patterns/island.h"
+#include "cartocrow/simplesets/patterns/matching.h"
+#include "cartocrow/simplesets/patterns/single_point.h"
+#include "cartocrow/simplesets/parse_input.h"
+#include "cartocrow/simplesets/partition_algorithm.h"
+#include "cartocrow/simplesets/partition_painting.h"
+#include "cartocrow/simplesets/drawing_algorithm.h"
 #include <QApplication>
 #include <QCheckBox>
 #include <QComboBox>
 #include <QDockWidget>
 #include <QFileDialog>
 #include <QLabel>
+#include <QMessageBox>
 #include <QPushButton>
 #include <QSpinBox>
 #include <QVBoxLayout>
-#include <QMessageBox>
-#include "simplesets_demo.h"
-#include "cartocrow/simplesets/island.h"
-#include "cartocrow/simplesets/bank.h"
+#include "cartocrow/simplesets/dilated/dilated_poly.h"
+#include "colors.h"
 
 namespace fs = std::filesystem;
 using namespace cartocrow;
@@ -63,10 +71,39 @@ SimpleSetsDemo::SimpleSetsDemo() {
 	renderer->setMinZoom(0.01);
 	renderer->setMaxZoom(1000.0);
 
-	Island island({{{1, 1}, 0}, {{2, 1}, 0}, {{3, 1.1}, 0}});
-	Bank bank({{{1, 1}, 0}, {{2, 1}, 0}, {{3, 1.1}, 0}});
-	std::cout << island.coverRadius() << std::endl;
-	std::cout << bank.coverRadius() << std::endl;
+	std::filesystem::path filePath("/home/steven/Documents/cartocrow/data/nyc.txt");
+	std::ifstream inputStream(filePath, std::ios_base::in);
+	if (!inputStream.good()) {
+		throw std::runtime_error("Failed to read input");
+	}
+	std::stringstream buffer;
+	buffer << inputStream.rdbuf();
+	auto nycPoints = parseCatPoints(buffer.str());
+
+	m_gs = GeneralSettings{2.1, 2, M_PI, 70.0 / 180 * M_PI};
+//	m_ps = PartitionSettings{true, true, true, true, 0.5}; todo: fix intersection delay crash
+	m_ps = PartitionSettings{true, true, true, false, 0.5};
+	m_ds = DrawSettings{{CB::light_blue, CB::light_red, CB::light_green, CB::light_purple, CB::light_orange}};
+	m_cds = ComputeDrawingSettings{0.675};
+	auto partitionList = partition(nycPoints, m_gs, m_ps, 8 * m_gs.dilationRadius());
+	std::cout << partitionList.size() << std::endl;
+
+	Number<Inexact> cover = 4.7;
+
+	Partition* thePartition;
+	for (auto& [time, partition] : partitionList) {
+		if (time < cover * m_gs.dilationRadius()) {
+			thePartition = &partition;
+		}
+	}
+	m_partition = *thePartition;
+
+	auto pp = std::make_shared<PartitionPainting>(m_partition, m_gs, m_ds);
+	renderer->addPainting(pp, "Partition");
+
+	m_arr = dilateAndArrange(m_partition, m_gs, m_cds);
+	auto ap = std::make_shared<ArrangementPainting>(m_arr, m_ds, m_partition);
+	renderer->addPainting(ap, "Arrangement");
 }
 
 int main(int argc, char* argv[]) {

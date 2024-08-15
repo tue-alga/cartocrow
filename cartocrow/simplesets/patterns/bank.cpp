@@ -7,8 +7,11 @@ Bank::Bank(std::vector<CatPoint> catPoints): m_catPoints(std::move(catPoints)) {
 		return cp.point;
 	});
 
+	// Store polyline
+	m_polyline = Polyline<Inexact>(m_points);
+
 	// Compute the cover radius
-	std::optional<Number<K>> maxSquaredDistance;
+	std::optional<Number<Inexact>> maxSquaredDistance;
 	for (int i = 0; i < m_points.size() - 1; i++) {
 		auto p = m_points[i];
 		auto q = m_points[i+1];
@@ -23,9 +26,7 @@ Bank::Bank(std::vector<CatPoint> catPoints): m_catPoints(std::move(catPoints)) {
 	computeBends();
 }
 
-Number<K> approximateAngleBetween(const Vector<K>& exact_v, const Vector<K>& exact_w) {
-	auto v = approximate(exact_v);
-	auto w = approximate(exact_w);
+Number<Inexact> computeAngleBetween(const Vector<Inexact>& v, const Vector<Inexact>& w) {
 	return acos((v * w) / (sqrt(v.squared_length()) * sqrt(w.squared_length())));
 }
 
@@ -33,14 +34,14 @@ void Bank::computeBends() {
 	m_bends.clear();
 
 	std::optional<CGAL::Orientation> orientation;
-	Number<K> bendTotalAngle = 0;
-	Number<K> bendMaxAngle = 0;
+	Number<Inexact> bendTotalAngle = 0;
+	Number<Inexact> bendMaxAngle = 0;
 	int startIndex = 0;
 
 	for (int i = 0; i < m_points.size(); i++) {
 		if (i + 2 > m_points.size() - 1) break;
 		auto orient = CGAL::orientation(m_points[i], m_points[i+1], m_points[i+2]);
-		auto angle = approximateAngleBetween(m_points[i+1] - m_points[i], m_points[i+2] - m_points[i+1]);
+		auto angle = computeAngleBetween(m_points[i+1] - m_points[i], m_points[i+2] - m_points[i+1]);
 		if (orientation == -orient) {
 			// Switched orientation
 			m_bends.emplace_back(*orientation, bendMaxAngle, bendTotalAngle, startIndex, i+1);
@@ -60,15 +61,15 @@ void Bank::computeBends() {
 	}
 }
 
-std::variant<Polyline<K>, Polygon<K>> Bank::contour() {
+std::variant<Polyline<Inexact>, Polygon<Inexact>> Bank::poly() const {
 	return m_polyline;
 }
 
-std::vector<CatPoint> Bank::catPoints() {
+const std::vector<CatPoint>& Bank::catPoints() const {
 	return m_catPoints;
 }
 
-bool Bank::isValid(GeneralSettings gs) {
+bool Bank::isValid(const GeneralSettings& gs) const {
 	bool inflectionIsFine = m_bends.size() <= gs.inflectionLimit;
 	bool anglesAreFine = true;
 	for (const auto& bend : m_bends) {
@@ -83,7 +84,7 @@ bool Bank::isValid(GeneralSettings gs) {
 	return inflectionIsFine && anglesAreFine && totalAngleIsFine;
 }
 
-Number<K> Bank::coverRadius() {
+Number<Inexact> Bank::coverRadius() const {
 	return m_coverRadius;
 }
 }

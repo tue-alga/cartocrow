@@ -6,8 +6,9 @@
 namespace cartocrow::simplesets {
 /// Categorical point
 struct CatPoint {
-	Point<K> point;
-	int category;
+	unsigned int category;
+	Point<Inexact> point;
+	auto operator<=>(const CatPoint&) const = default;
 };
 }
 

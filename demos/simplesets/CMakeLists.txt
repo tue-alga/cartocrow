@@ -1,5 +1,6 @@
 set(SOURCES
     simplesets_demo.cpp
+    colors.cpp
 )
 
 add_executable(simplesets_demo ${SOURCES})

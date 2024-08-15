@@ -1,19 +1,19 @@
 #include "island.h"
-#include "point_voronoi_helpers.h"
+#include "cartocrow/simplesets/helpers/cropped_voronoi.h"
+#include "cartocrow/simplesets/helpers/point_voronoi_helpers.h"
 #include <CGAL/Boolean_set_operations_2.h>
-#include <CGAL/convex_hull_2.h>
 #include <CGAL/bounding_box.h>
-#include "cropped_voronoi.h"
+#include <CGAL/convex_hull_2.h>
 
 namespace cartocrow::simplesets {
-Polygon<K> convexHull(const std::vector<Point<K>>& points) {
-    std::vector<Point<K>> chPoints;
+Polygon<Inexact> convexHull(const std::vector<Point<Inexact>>& points) {
+    std::vector<Point<Inexact>> chPoints;
 	CGAL::convex_hull_2(points.begin(), points.end(), std::back_inserter(chPoints));
 	return {chPoints.begin(), chPoints.end()};
 }
 
-std::optional<Polygon<K>> convexIntersection(const Polygon<K> p, const Polygon<K> q) {
-	std::vector<PolygonWithHoles<K>> intersection_result;
+std::optional<Polygon<Inexact>> convexIntersection(const Polygon<Inexact>& p, const Polygon<Inexact>& q) {
+	std::vector<PolygonWithHoles<Inexact>> intersection_result;
 	CGAL::intersection(p, q, std::back_inserter(intersection_result));
 	if (intersection_result.empty()) {
 		return std::nullopt;
@@ -22,21 +22,22 @@ std::optional<Polygon<K>> convexIntersection(const Polygon<K> p, const Polygon<K
 	}
 }
 
-Number<K> coverRadiusOfPoints(const std::vector<Point<K>>& points) {
+Number<Inexact> coverRadiusOfPoints(const std::vector<Point<Inexact>>& points) {
 	DT dt;
-	dt.insert(points.begin(), points.end());
+	auto exact_points = makeExact(points);
+	dt.insert(exact_points.begin(), exact_points.end());
 
-	Rectangle<K> bbox = CGAL::bounding_box(points.begin(), points.end());
-	std::optional<Number<K>> squaredCoverRadius;
+	Rectangle<Inexact> bbox = CGAL::bounding_box(points.begin(), points.end());
+	std::optional<Number<Inexact>> squaredCoverRadius;
 
-	auto hull = convexHull(points);
+	auto hull = makeExact(convexHull(points));
 	Cropped_voronoi_from_delaunay cropped_voronoi(hull);
 
 	for (auto eit = dt.finite_edges_begin(); eit != dt.finite_edges_end(); ++eit) {
 		CGAL::Object o = dt.dual(eit);
-		Line<K> l;
-		Ray<K> r;
-		Segment<K> s;
+		Line<Exact> l;
+		Ray<Exact> r;
+		Segment<Exact> s;
 		auto site = eit->first->vertex(dt.cw(eit->second))->point();
 		if(CGAL::assign(s,o)) cropped_voronoi << std::pair(site, s);
 		if(CGAL::assign(r,o)) cropped_voronoi << std::pair(site, r);
@@ -45,7 +46,7 @@ Number<K> coverRadiusOfPoints(const std::vector<Point<K>>& points) {
 
 	for (const auto& [site, seg] : cropped_voronoi.m_cropped_vd) {
 		for (const auto& v : {seg.source(), seg.target()}) {
-			auto d = squared_distance(v, site);
+			auto d = squared_distance(approximate(v), approximate(site));
 			if (!squaredCoverRadius.has_value() || d > *squaredCoverRadius) {
 				squaredCoverRadius = d;
 			}
@@ -65,19 +66,16 @@ Island::Island(std::vector<CatPoint> catPoints): m_catPoints(std::move(catPoints
 	m_polygon = convexHull(m_points);
 }
 
-std::variant<Polyline<K>, Polygon<K>> Island::contour() {
+std::variant<Polyline<Inexact>, Polygon<Inexact>> Island::poly() const {
+	// todo? return (and store) polyline when m_points are collinear?
 	return m_polygon;
 }
 
-std::vector<CatPoint> Island::catPoints() {
+const std::vector<CatPoint>& Island::catPoints() const {
 	return m_catPoints;
 }
 
-bool Island::isValid(cartocrow::simplesets::GeneralSettings gs) {
-	return true;
-}
-
-Number<K> Island::coverRadius() {
+Number<Inexact> Island::coverRadius() const {
 	return m_coverRadius;
 }
 }

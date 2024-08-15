@@ -6,13 +6,18 @@
 namespace cartocrow::simplesets {
 struct GeneralSettings {
 	/// Radius of circle that represents a point.
-	Number<K> pointSize;
+	Number<Inexact> pointSize;
 	/// Maximum number of inflections a bank is allowed to have.
 	int inflectionLimit;
 	/// Maximum total angle of a bend (maximum monotone subsequence of a bank).
-	Number<K> maxBendAngle;
+	Number<Inexact> maxBendAngle;
 	/// Maximum turning angle in a bank.
-	Number<K> maxTurnAngle;
+	Number<Inexact> maxTurnAngle;
+
+	/// The distance each pattern is dilated.
+	Number<Inexact> dilationRadius() const {
+		return pointSize * 3;
+	}
 };
 
 struct PartitionSettings {
@@ -26,20 +31,20 @@ struct PartitionSettings {
 	/// Delay merges that create patterns that intersect points.
 	bool intersectionDelay;
 	/// Disallow merges that have a point within distance admissableFactor * dilationRadius.
-	Number<K> admissableRadiusFactor;
+	Number<Inexact> admissableRadiusFactor;
 };
 
 struct ComputeDrawingSettings {
 	/// Aim to keep a disk around each point visible of radius cutoutRadiusFactor * dilationRadius.
-	Number<K> cutoutRadiusFactor;
+	Number<Inexact> cutoutRadiusFactor;
 };
 
 struct DrawSettings {
 	std::vector<Color> colors;
-	Number<K> pointStrokeWeight(GeneralSettings gs) {
+	Number<Inexact> pointStrokeWeight(GeneralSettings gs) const {
 		return gs.pointSize / 2.5;
 	}
-	Number<K> contourStrokeWeight(GeneralSettings gs) {
+	Number<Inexact> contourStrokeWeight(GeneralSettings gs) const {
 		return gs.pointSize / 3.5;
 	}
 };

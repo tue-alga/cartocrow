@@ -20,6 +20,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "ipe_renderer.h"
 
 #include "cartocrow/renderer/geometry_renderer.h"
+#include "cartocrow/renderer/function_painting.h"
 #include <ipeattributes.h>
 #include <ipebase.h>
 #include <ipedoc.h>
@@ -76,7 +77,15 @@ void IpeRenderer::save(const std::filesystem::path& file) {
 	setFillOpacity(255); // add default alpha to style sheet
 
 	m_page = new ipe::Page();
-	for (auto painting : m_paintings) {
+	document.push_back(m_page);
+
+	int current_page = 0;
+
+	for (auto painting : m_paintings) { // Assumes m_paintings are ordered in increasing page_index
+		while (painting.page_index > current_page) {
+			m_page = new ipe::Page();
+			document.push_back(m_page);
+		}
 		pushStyle();
 		if (auto name = painting.name) {
 			m_page->addLayer(name->c_str());
@@ -88,7 +97,6 @@ void IpeRenderer::save(const std::filesystem::path& file) {
 		popStyle();
 	}
 
-	document.push_back(m_page);
 	document.save(file.string().c_str(), ipe::FileFormat::Xml, 0);
 }
 
@@ -116,7 +124,7 @@ void IpeRenderer::draw(const Segment<Inexact>& s) {
 
 void IpeRenderer::draw(const Line<Inexact>& l) {
 	// Crop to document size
-	auto bounds = Rectangle<Inexact>(CGAL::ORIGIN, Point<Inexact>(1000.0, 1000.0));
+	auto bounds = CGAL::Iso_rectangle_2<Inexact>(CGAL::ORIGIN, Point<Inexact>(1000.0, 1000.0));
 	auto result = intersection(l, bounds);
 	if (result) {
 		if (const Segment<Inexact>* s = boost::get<Segment<Inexact>>(&*result)) {
@@ -130,7 +138,7 @@ void IpeRenderer::draw(const Line<Inexact>& l) {
 
 void IpeRenderer::draw(const Ray<Inexact>& r) {
 	// Crop to document size
-	auto bounds = Rectangle<Inexact>(CGAL::ORIGIN, Point<Inexact>(1000.0, 1000.0));
+	auto bounds = CGAL::Iso_rectangle_2<Inexact>(CGAL::ORIGIN, Point<Inexact>(1000.0, 1000.0));
 	auto result = intersection(r, bounds);
 	if (result) {
 		if (const Segment<Inexact>* s = boost::get<Segment<Inexact>>(&*result)) {
@@ -318,17 +326,37 @@ ipe::AllAttributes IpeRenderer::getAttributesForStyle() const {
 	attributes.iStroke = ipe::Attribute(ipe::Color(m_style.m_strokeColor));
 	attributes.iFill = ipe::Attribute(ipe::Color(m_style.m_fillColor));
 	attributes.iOpacity = m_style.m_fillOpacity;
+	attributes.iStrokeOpacity = m_style.m_strokeOpacity;
 	return attributes;
 }
 
+
+void IpeRenderer::addPainting(const std::function<void(renderer::GeometryRenderer&)>& draw_function) {
+	auto painting = std::make_shared<FunctionPainting>(draw_function);
+	addPainting(painting);
+}
+
+void IpeRenderer::addPainting(const std::function<void(renderer::GeometryRenderer&)>& draw_function, const std::string& name) {
+	auto painting = std::make_shared<FunctionPainting>(draw_function);
+	addPainting(painting, name);
+}
+
 void IpeRenderer::addPainting(const std::shared_ptr<GeometryPainting>& painting) {
-	m_paintings.push_back(DrawnPainting{painting});
+	m_paintings.push_back(DrawnPainting{painting, std::nullopt, m_page_index});
 }
 
 void IpeRenderer::addPainting(const std::shared_ptr<GeometryPainting>& painting, const std::string& name) {
 	std::string spaceless;
 	std::replace_copy(name.begin(), name.end(), std::back_inserter(spaceless), ' ', '_');
-	m_paintings.push_back(DrawnPainting{painting, spaceless});
+	m_paintings.push_back(DrawnPainting{painting, spaceless, m_page_index});
+}
+
+void IpeRenderer::nextPage() {
+	++m_page_index;
+}
+
+int IpeRenderer::currentPage() {
+	return m_page_index;
 }
 
 std::string IpeRenderer::escapeForLaTeX(const std::string& text) const {

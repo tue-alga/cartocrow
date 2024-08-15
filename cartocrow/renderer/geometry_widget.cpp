@@ -21,6 +21,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "geometry_renderer.h"
 
+#include "function_painting.h"
+
 #include <QGuiApplication>
 #include <QPainterPath>
 #include <QPen>
@@ -650,6 +652,11 @@ void GeometryWidget::addPainting(std::shared_ptr<GeometryPainting> painting, con
 	bool visible = !m_invisibleLayerNames.contains(name);
 	m_paintings.push_back(DrawnPainting{painting, name, visible});
 	updateLayerList();
+}
+
+void GeometryWidget::addPainting(const std::function<void(renderer::GeometryRenderer&)>& draw_function, const std::string& name) {
+	auto painting = std::make_shared<FunctionPainting>(draw_function);
+	addPainting(painting, name);
 }
 
 void GeometryWidget::clear() {
