@@ -69,7 +69,7 @@ template <class K> using PolygonWithHoles = CGAL::Polygon_with_holes_2<K>;
 template <class K> using PolygonSet = CGAL::Polygon_set_2<K>;
 
 /// Axis-aligned bounding box with inexact coordinates. See \ref
-/// CGAL::Polygon_2.
+/// CGAL::Bbox_2.
 using Box = CGAL::Bbox_2;
 
 /// An arrangement of objects in the plane.
