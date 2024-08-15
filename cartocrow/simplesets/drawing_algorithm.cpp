@@ -181,9 +181,9 @@ dilateAndArrange(const Partition& partition, const GeneralSettings& gs, const Co
 	return arr;
 }
 
-ArrangementPainting::ArrangementPainting(const DilatedPatternArrangement& arr, const DrawSettings& ds,
-                                         const Partition& partition)
-    : m_arr(arr), m_ds(ds), m_partition(partition) {};
+ArrangementPainting::ArrangementPainting(const DilatedPatternArrangement& arr, const GeneralSettings& gs,
+                                         const DrawSettings& ds, const Partition& partition)
+    : m_arr(arr), m_ds(ds), m_gs(gs), m_partition(partition) {};
 
 void ArrangementPainting::paint(renderer::GeometryRenderer& renderer) const {
 	renderer.setMode(renderer::GeometryRenderer::fill);
@@ -212,7 +212,7 @@ void ArrangementPainting::paint(renderer::GeometryRenderer& renderer) const {
 	}
 
 	renderer.setMode(renderer::GeometryRenderer::stroke);
-	renderer.setStroke(Color{0, 0, 0}, 3.0);
+	renderer.setStroke(Color{0, 0, 0}, m_ds.contourStrokeWeight(m_gs), true);
 	for (auto eit = m_arr.edges_begin(); eit != m_arr.edges_end(); ++eit) {
 		auto curve = eit->curve();
 		if (curve.is_linear()) {

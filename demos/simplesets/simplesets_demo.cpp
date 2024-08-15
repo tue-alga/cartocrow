@@ -102,7 +102,7 @@ SimpleSetsDemo::SimpleSetsDemo() {
 	renderer->addPainting(pp, "Partition");
 
 	m_arr = dilateAndArrange(m_partition, m_gs, m_cds);
-	auto ap = std::make_shared<ArrangementPainting>(m_arr, m_ds, m_partition);
+	auto ap = std::make_shared<ArrangementPainting>(m_arr, m_gs, m_ds, m_partition);
 	renderer->addPainting(ap, "Arrangement");
 }
 

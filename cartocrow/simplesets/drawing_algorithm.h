@@ -18,12 +18,14 @@ dilateAndArrange(const Partition& partition, const GeneralSettings& gs, const Co
 
 class ArrangementPainting : public renderer::GeometryPainting {
   public:
-	ArrangementPainting(const DilatedPatternArrangement& arr, const DrawSettings& ds, const Partition& partition);
+	ArrangementPainting(const DilatedPatternArrangement& arr, const GeneralSettings& gs,
+	                    const DrawSettings& ds, const Partition& partition);
 	void paint(renderer::GeometryRenderer& renderer) const override;
 
   private:
 	const DilatedPatternArrangement& m_arr;
 	const DrawSettings& m_ds;
+	const GeneralSettings& m_gs;
 	const Partition& m_partition;
 };
 }

@@ -10,14 +10,10 @@ void draw_poly_pattern(const PolyPattern& pattern, renderer::GeometryRenderer& r
 	}
 	renderer.setFill(ds.colors.at(pattern.category()));
 	renderer.setFillOpacity(100);
-	// todo: set absolute stroke width here.
-//	renderer.setStroke(Color{0, 0, 0}, ds.contourStrokeWeight(gs));
-	renderer.setStroke(Color{0, 0, 0}, 1.0);
+	renderer.setStroke(Color{0, 0, 0}, ds.contourStrokeWeight(gs), true);
 	std::visit([&renderer](auto shape){ renderer.draw(shape); }, pattern.poly());
 	for (const auto& pt : pattern.catPoints()) {
-		// todo: set absolute stroke width here.
-//		renderer.setStroke(Color{0, 0, 0}, ds.pointStrokeWeight(gs));
-		renderer.setStroke(Color{0, 0, 0}, 1.0);
+		renderer.setStroke(Color{0, 0, 0}, ds.pointStrokeWeight(gs), true);
 		renderer.setFillOpacity(255);
 		renderer.setFill(ds.colors.at(pt.category));
 		renderer.setMode(renderer::GeometryRenderer::fill | renderer::GeometryRenderer::stroke);
