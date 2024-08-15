@@ -134,7 +134,7 @@ On Ubuntu, most dependencies can be obtained from the repository:
 
 ```sh
 sudo apt install build-essential cmake
-sudo apt install libcgal-dev nlohmann-json3-dev
+sudo apt install libcgal-dev nlohmann-json3-dev qtbase5-dev
 ```
 
 The remaining dependencies need to be built manually.
@@ -200,5 +200,5 @@ build/frontend/cartocrow data/europe-population-necklace.json
 
 ## License
 
-Copyright (c) 2019-2022 Netherlands eScience Center and TU Eindhoven
+Copyright (c) 2019-2023 Netherlands eScience Center and TU Eindhoven
 Licensed under the GPLv3.0 license. See LICENSE for details.

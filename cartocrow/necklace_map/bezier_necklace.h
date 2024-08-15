@@ -24,7 +24,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 25-02-2020
 #define CARTOCROW_NECKLACE_MAP_BEZIER_NECKLACE_H
 
 #include "../core/core.h"
-#include "bezier.h"
+#include "../core/bezier.h"
 #include "necklace_shape.h"
 
 namespace cartocrow::necklace_map {

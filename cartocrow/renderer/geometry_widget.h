@@ -87,7 +87,7 @@ struct GeometryWidgetStyle {
 /// geometry objects are called *editables*. You can register an editable using
 /// \ref registerEditable(). Connect to the \ref edited() signal to be notified
 /// when the user edits something, so that you can rerun the algorithm.
-class GeometryWidget : public QWidget, GeometryRenderer {
+class GeometryWidget : public QWidget, public GeometryRenderer {
 	Q_OBJECT;
 
   public:
@@ -166,13 +166,17 @@ class GeometryWidget : public QWidget, GeometryRenderer {
 	void draw(const Polygon<Inexact>& p) override;
 	void draw(const PolygonWithHoles<Inexact>& p) override;
 	void draw(const Circle<Inexact>& c) override;
-	//void draw(const BezierSpline& s) override;
+	void draw(const BezierSpline& s) override;
+	void draw(const Line<Inexact>& l) override;
+	void draw(const Ray<Inexact>& r) override;
+	void draw(const Polyline<Inexact>& p) override;
 	void drawText(const Point<Inexact>& p, const std::string& text) override;
 
 	void pushStyle() override;
 	void popStyle() override;
 	void setMode(int mode) override;
 	void setStroke(Color color, double width, bool absoluteWidth = false) override;
+	void setStrokeOpacity(int alpha) override;
 	void setFill(Color color) override;
 	void setFillOpacity(int alpha) override;
 
