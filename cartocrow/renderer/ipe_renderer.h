@@ -86,6 +86,7 @@ class IpeRenderer : public GeometryRenderer {
 	void draw(const Polygon<Inexact>& p) override;
 	void draw(const PolygonWithHoles<Inexact>& p) override;
 	void draw(const Circle<Inexact>& c) override;
+	void draw(const Ellipse& e) override;
 	void draw(const BezierSpline& s) override;
 	void draw(const Line<Inexact>& l) override;
 	void draw(const Ray<Inexact>& r) override;

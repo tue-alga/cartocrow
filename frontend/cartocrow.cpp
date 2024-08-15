@@ -40,6 +40,9 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-2019
 #include "cartocrow/isoline_simplification/ipe_isolines.h"
 #include "cartocrow/isoline_simplification/isoline_simplifier.h"
 #include "cartocrow/isoline_simplification/simple_isoline_painting.h"
+#include "cartocrow/mosaic_cartogram/mosaic_cartogram.h"
+#include "cartocrow/mosaic_cartogram/painting.h"
+#include "cartocrow/mosaic_cartogram/parameters.h"
 #include "cartocrow/necklace_map/circle_necklace.h"
 #include "cartocrow/necklace_map/necklace_map.h"
 #include "cartocrow/necklace_map/painting.h"
@@ -118,6 +121,48 @@ int main(int argc, char* argv[]) {
 		flow_map::Painting::Options options;
 		painting = std::make_shared<flow_map::Painting>(map_ptr, tree, options);
 
+	} else if (projectData["type"] == "mosaic_cartogram") {
+		const std::filesystem::path ipeFilename = projectFilename.parent_path() / projectData["map"];
+		RegionMap map = ipeToRegionMap(ipeFilename);
+		auto map_ptr = std::make_shared<RegionMap>(map);
+
+		// read data values
+		std::unordered_map<std::string, Number<Inexact>> dataValues;
+		for (auto &[key, val] : projectData["data"].items()) {
+			if (dataValues.contains(key)) {
+				throw std::logic_error("More than one data value is specified for region \"" + key + '"');
+			}
+			dataValues[key] = val;
+		}
+
+		// initialize cartogram
+		auto cartogram = std::make_shared<mosaic_cartogram::MosaicCartogram>(
+			map_ptr,
+			std::move(dataValues),
+			ipeToSalientPoints(ipeFilename)
+		);
+
+		// read parameters
+		const auto &p = projectData["parameters"];
+		auto &paramsComputation = cartogram->parameters();
+		mosaic_cartogram::Painting::Options paramsPainting;
+
+		paramsComputation.manualSeas = p.value("manualSeas",  false);  // optional
+		paramsComputation.unitValue  = p.value("unitValue",      -1);  // required
+		paramsPainting.drawBorders   = p.value("drawBorders", false);  // optional
+		paramsPainting.tileArea      = p.value("tileArea",        1);  // optional
+
+		paramsComputation.validate();
+		paramsPainting.validate();
+
+		// compute cartogram
+		cartogram->compute();
+
+		// initialize painting
+		painting = std::make_shared<mosaic_cartogram::Painting>(
+			cartogram,
+			std::move(paramsPainting)
+		);
 	} else if (projectData["type"] == "isoline_simplification") {
 		auto isolines = isoline_simplification::ipeToIsolines(projectFilename.parent_path() / projectData["isolines"]);
 		isoline_simplification::IsolineSimplifier simplifier(isolines);

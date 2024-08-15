@@ -37,6 +37,8 @@ void PaintingRenderer::paint(GeometryRenderer& renderer) const {
 			renderer.draw(std::get<PolygonWithHoles<Inexact>>(object));
 		} else if (std::holds_alternative<Circle<Inexact>>(object)) {
 			renderer.draw(std::get<Circle<Inexact>>(object));
+		} else if (std::holds_alternative<Ellipse>(object)) {
+			renderer.draw(std::get<Ellipse>(object));
 		} else if (std::holds_alternative<BezierSpline>(object)) {
 			renderer.draw(std::get<BezierSpline>(object));
 		} else if (std::holds_alternative<Line<Inexact>>(object)) {
@@ -75,6 +77,10 @@ void PaintingRenderer::draw(const PolygonWithHoles<Inexact>& p) {
 
 void PaintingRenderer::draw(const Circle<Inexact>& c) {
 	m_objects.push_back(c);
+}
+
+void PaintingRenderer::draw(const Ellipse& e) {
+	m_objects.push_back(e);
 }
 
 void PaintingRenderer::draw(const BezierSpline& s) {

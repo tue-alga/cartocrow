@@ -1,5 +1,6 @@
 set(SOURCES
 	core.cpp
+	ellipse.cpp
 	ipe_reader.cpp
 	region_arrangement.cpp
 	region_map.cpp
@@ -9,6 +10,7 @@ set(SOURCES
 set(HEADERS
 	centroid.h
 	core.h
+	ellipse.h
 	ipe_reader.h
 	region_arrangement.h
 	region_map.h
@@ -18,7 +20,7 @@ set(HEADERS
 
 add_library(core ${SOURCES})
 target_link_libraries(core
-	PUBLIC Ipe::ipelib
+	PUBLIC Eigen3::Eigen Ipe::ipelib
 	PRIVATE glog::glog
 )
 

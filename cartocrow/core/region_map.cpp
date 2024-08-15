@@ -21,6 +21,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include <ipedoc.h>
 #include <ipepath.h>
+#include <ipereference.h>
 
 #include <CGAL/enum.h>
 #include <stdexcept>
@@ -90,6 +91,25 @@ RegionMap ipeToRegionMap(const std::filesystem::path& file) {
 	}
 
 	return regions;
+}
+
+std::vector<Point<Exact>> ipeToSalientPoints(const std::filesystem::path& file) {
+	std::shared_ptr<ipe::Document> document = IpeReader::loadIpeFile(file);
+	ipe::Page* page = document->page(0);
+
+	std::vector<Point<Exact>> points;
+	for (int i = 0; i < page->count(); ++i) {
+		ipe::Object* object = page->object(i);
+		ipe::Object::Type type = object->type();
+		if (type != ipe::Object::Type::EReference) {
+			continue;
+		}
+		ipe::Reference* symbol = object->asReference();
+		ipe::Vector position = symbol->position();
+		points.push_back(Point<Exact>(position.x, position.y));
+	}
+
+	return points;
 }
 
 std::optional<size_t> detail::findLabelInside(const PolygonSet<Exact>& shape,

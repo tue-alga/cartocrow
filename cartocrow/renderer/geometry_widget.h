@@ -166,6 +166,7 @@ class GeometryWidget : public QWidget, public GeometryRenderer {
 	void draw(const Polygon<Inexact>& p) override;
 	void draw(const PolygonWithHoles<Inexact>& p) override;
 	void draw(const Circle<Inexact>& c) override;
+	void draw(const Ellipse& e) override;
 	void draw(const BezierSpline& s) override;
 	void draw(const Line<Inexact>& l) override;
 	void draw(const Ray<Inexact>& r) override;
@@ -305,7 +306,7 @@ class GeometryWidget : public QWidget, public GeometryRenderer {
 	/// The editable in \ref m_editables that the user is currently interacting
 	/// with, or `nullptr` if no such interaction is going on.
 	Editable* m_activeEditable = nullptr;
-	
+
 	/// The current drawing style.
 	GeometryWidgetStyle m_style;
 	/// A stack of drawing styles, used by \link pushStyle() and \link

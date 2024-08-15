@@ -7,7 +7,7 @@
 
 CartoCrow is a framework that simplifies the implementation of algorithms in cartographic visualization. It allows researchers to experiment with these algorithms and use them to generate maps. The framework behind CartoCrow can be used to run other cartography algorithms online. CartoCrow consists of a C++ library (this repository) which provides a set of command-line applications, and a web interface (see [cartocrow-web](https://github.com/tue-alga/cartocrow-web)) which allows end users to generate maps in a user-friendly way.
 
-> [!WARNING]  
+> [!WARNING]
 > CartoCrow is still a **work in progress**  and should not be considered stable yet.
 
 This repository consists of the following subdirectories:
@@ -115,7 +115,7 @@ The remaining dependencies need to be built manually.
     * in `src/ipelib/ipeplatform.cpp` and `src/ipelib/ipebitmap_win.cpp`, add an `#include <string>`;
     * in `src/ipelib/ipeplatform.cpp`, in `Platform::runLatex()`, replace `wcmd.data()` by `&wcmd[0]`;
     * in `src/ipelib/ipeplatform.cpp`, in `String::w()`, replace `result.data()` by `&result[0]`.
-  
+
   Then, to compile:
   ```sh
   cd src
@@ -135,6 +135,15 @@ On Ubuntu, most dependencies can be obtained from the repository:
 ```sh
 sudo apt install build-essential cmake
 sudo apt install libcgal-dev nlohmann-json3-dev qtbase5-dev
+sudo apt install libeigen3-dev
+```
+
+If Eigen [cannot be found](https://stackoverflow.com/q/23284473) during compilation, you might need to run:
+
+```sh
+cd /usr/include
+sudo ln -s eigen3/Eigen Eigen
+
 ```
 
 The remaining dependencies need to be built manually.

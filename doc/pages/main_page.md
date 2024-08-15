@@ -42,7 +42,7 @@ CartoCrow consists of the following modules.
 
 ### Utilities
 
-* The **core** module contains the basic primitives and utilities that are in use throughout the library. This includes a list of type aliases for basic [CGAL](https://cgal.org) types (\ref cartocrow::Point<K> "Point", \ref cartocrow::Circle<K> "Circle", \ref cartocrow::Polygon<K> "Polygon", etc.) and tools to read maps from Ipe files (\ref cartocrow::RegionList "RegionList").  
+* The **core** module contains the basic primitives and utilities that are in use throughout the library. This includes a list of type aliases for basic [CGAL](https://cgal.org) types (\ref cartocrow::Point<K> "Point", \ref cartocrow::Circle<K> "Circle", \ref cartocrow::Polygon<K> "Polygon", etc.) and tools to read maps from Ipe files (\ref cartocrow::RegionMap "RegionMap").
   _Author: Willem Sonke_
 
 * The **renderer** module implements an interface that can be used to render maps. Each map type provides a \ref cartocrow::renderer:GeometryPainting "GeometryPainting", which can be handed to a \ref cartocrow::renderer::GeometryRenderer "GeometryRenderer" to draw it. In particular, the \ref cartocrow::renderer::IpeRenderer "IpeRenderer" renders the painting to an [Ipe](https://ipe.otfried.org) drawing, while the \ref cartocrow::renderer::GeometryWidget "GeometryWidget" renders the painting to a \ref QWidget for inclusion in a Qt application.  

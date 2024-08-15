@@ -162,6 +162,14 @@ Polyline<Inexact> approximate(const Polyline<K>& p) {
 	return result;
 }
 
+/// Returns the area of a polygon with holes.
+/// TODO: move to more logical place
+template <class K> Number<K> area(PolygonWithHoles<K> polygon) {
+	Number<K> a = polygon.outer_boundary().area();
+	for (const auto &h : polygon.holes()) a -= h.area();
+	return a;  // = outer area minus area of each hole
+}
+
 /// An RGB color. Used for storing the color of elements to be drawn.
 struct Color {
 	/// Red component (integer 0-255).
@@ -170,6 +178,10 @@ struct Color {
 	int g;
 	/// Blue component (integer 0-255).
 	int b;
+
+	/// Returns a new color that is darker (\f$0 \le f < 1\f$) or lighter
+	/// (\f$1 < f \le 2\f$).
+	Color shaded(double f) const;
 };
 
 /// Wraps the given number \f$n\f$ to the interval \f$[a, b)\f$.

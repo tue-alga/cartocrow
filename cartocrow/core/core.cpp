@@ -20,9 +20,31 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 05-12-2019
 */
 
 #include "core.h"
+#include <algorithm>
+#include <cmath>
 #include <CGAL/number_utils_classes.h>
 
 namespace cartocrow {
+
+Color Color::shaded(double f) const {
+	f = std::clamp(f, 0.0, 2.0);
+	if (f < 1) {
+		// darken (shade)
+		return {
+			(int) std::round(r * f),
+			(int) std::round(g * f),
+			(int) std::round(b * f)
+		};
+	} else {
+		// lighten (tint)
+		f -= 1;
+		return {
+			(int) std::round(r + (255 - r) * f),
+			(int) std::round(g + (255 - g) * f),
+			(int) std::round(b + (255 - b) * f),
+		};
+	}
+}
 
 Number<Inexact> wrapAngle(Number<Inexact> alpha, Number<Inexact> beta) {
 	return wrap<Inexact>(alpha, beta, beta + M_2xPI);
