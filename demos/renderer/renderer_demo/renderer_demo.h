@@ -13,7 +13,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include <QCheckBox>
 #include <QMainWindow>
 
 #include <cartocrow/core/core.h>
@@ -38,6 +37,4 @@ class RendererDemo : public QMainWindow {
 
   private:
 	GeometryWidget* m_renderer;
-	QCheckBox* m_axesBox;
-	QCheckBox* m_polarBox;
 };

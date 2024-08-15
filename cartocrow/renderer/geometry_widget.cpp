@@ -703,6 +703,25 @@ void GeometryWidget::zoomOut() {
 	update();
 }
 
+void GeometryWidget::centerViewOn(Point<Inexact> newCenter) {
+	Point<Inexact> currentCenter = inverseConvertPoint(QPointF(width(), height()) / 2.0);
+	m_transform.translate(currentCenter.x() - newCenter.x(), currentCenter.y() - newCenter.y());
+	update();
+}
+
+void GeometryWidget::fitInView(Box bbox) {
+	centerViewOn(Point<Inexact>((bbox.xmin() + bbox.xmax()) / 2, (bbox.ymin() + bbox.ymax()) / 2));
+	double newZoom = std::min(width() / bbox.x_span(), height() / bbox.y_span());
+	if (newZoom < m_minZoom) {
+		newZoom = m_minZoom;
+	} else if (newZoom > m_maxZoom) {
+		newZoom = m_maxZoom;
+	}
+	m_transform *= newZoom / m_transform.m11();
+	updateZoomSlider();
+	update();
+}
+
 void GeometryWidget::setGridMode(GridMode mode) {
 	m_gridMode = mode;
 	update();

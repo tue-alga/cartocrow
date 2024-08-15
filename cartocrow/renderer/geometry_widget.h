@@ -206,6 +206,11 @@ class GeometryWidget : public QWidget, public GeometryRenderer {
 	void zoomIn();
 	/// Decreases the zoom level, taking the minimum zoom into account.
 	void zoomOut();
+	/// Pans such that the given point is centered in the viewport.
+	void centerViewOn(Point<Inexact> newCenter);
+	/// Zooms and pans such that the given bounding box is centered and fits
+	/// precisely in the viewport. This clamps to the maximum and minimum zoom.
+	void fitInView(Box bbox);
 	/// Sets the type of grid.
 	void setGridMode(GridMode mode);
 

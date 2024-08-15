@@ -16,9 +16,11 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "renderer_demo.h"
 
 #include <QApplication>
+#include <QCheckBox>
 #include <QDockWidget>
 #include <QGridLayout>
 #include <QMainWindow>
+#include <QPushButton>
 #include <QWidget>
 
 using namespace cartocrow;
@@ -66,24 +68,30 @@ RendererDemo::RendererDemo() {
 	dockWidget->setWidget(settingsWidget);
 	addDockWidget(Qt::RightDockWidgetArea, dockWidget);
 
-	m_axesBox = new QCheckBox("Draw axes");
-	connect(m_axesBox, &QCheckBox::stateChanged, [&]() {
-		m_renderer->setDrawAxes(m_axesBox->isChecked());
+	QCheckBox* axesBox = new QCheckBox("Draw axes");
+	connect(axesBox, &QCheckBox::stateChanged, [&](int state) {
+		m_renderer->setDrawAxes(state == Qt::CheckState::Checked);
 	});
-	settingsLayout->addWidget(m_axesBox, 0, 0);
+	settingsLayout->addWidget(axesBox, 0, 0);
 
-	m_polarBox = new QCheckBox("Polar coordinates");
-	connect(m_polarBox, &QCheckBox::stateChanged, [&]() {
-		if (m_polarBox->isChecked()) {
+	QCheckBox* polarBox = new QCheckBox("Polar coordinates");
+	connect(polarBox, &QCheckBox::stateChanged, [&](int state) {
+		if (state == Qt::CheckState::Checked) {
 			m_renderer->setGridMode(GeometryWidget::GridMode::POLAR);
 		} else {
 			m_renderer->setGridMode(GeometryWidget::GridMode::CARTESIAN);
 		}
 	});
-	settingsLayout->addWidget(m_polarBox, 1, 0);
+	settingsLayout->addWidget(polarBox, 1, 0);
 
 	std::shared_ptr<DemoPainting> painting = std::make_shared<DemoPainting>();
 	m_renderer->addPainting(painting, "Demo painting");
+
+	QPushButton* zoomButton = new QPushButton("Zoom to shapes");
+	connect(zoomButton, &QPushButton::clicked, [&]() {
+		m_renderer->fitInView(Box(-250, -50, 250, 50));
+	});
+	settingsLayout->addWidget(zoomButton, 2, 0);
 }
 
 int main(int argc, char* argv[]) {
