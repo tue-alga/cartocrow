@@ -202,15 +202,26 @@ void IpeRenderer::draw(const BezierSpline& s) {
 }
 
 void IpeRenderer::draw(const RenderPath& p) {
-	ipe::Curve* curve = new ipe::Curve();
+	ipe::Shape* shape = new ipe::Shape();
+	ipe::Curve* curve = nullptr;
 	std::vector<Point<Inexact>> verticesToDraw;
 	Point<Inexact> from;
 	for (RenderPath::Command c : p.commands()) {
 		if (std::holds_alternative<RenderPath::MoveTo>(c)) {
+			if (curve) {
+				shape->appendSubPath(curve);
+			}
+			curve = new ipe::Curve();
 			Point<Inexact> to = std::get<RenderPath::MoveTo>(c).m_to;
 			verticesToDraw.push_back(to);
 			from = to;
-		} else if (std::holds_alternative<RenderPath::LineTo>(c)) {
+			continue;
+		}
+		if (!curve) {
+			// didn't start with MoveTo
+			curve = new ipe::Curve();
+		}
+		if (std::holds_alternative<RenderPath::LineTo>(c)) {
 			Point<Inexact> to = std::get<RenderPath::LineTo>(c).m_to;
 			verticesToDraw.push_back(to);
 			curve->appendSegment(ipe::Vector(from.x(), from.y()), ipe::Vector(to.x(), to.y()));
@@ -219,8 +230,9 @@ void IpeRenderer::draw(const RenderPath& p) {
 			curve->setClosed(true);
 		}
 	}
-	ipe::Shape* shape = new ipe::Shape();
-	shape->appendSubPath(curve);
+	if (curve) {
+		shape->appendSubPath(curve);
+	}
 	ipe::Path* path = new ipe::Path(getAttributesForStyle(), *shape);
 	m_page->append(ipe::TSelect::ENotSelected, m_layer, path);
 
