@@ -595,16 +595,19 @@ void GeometryWidget::draw(const RenderPath& p) {
 			double radius = sqrt((center - to).squared_length());
 			Vector<Inexact> diagonal(radius, radius);
 			QRectF bounds(convertPoint(center - diagonal), convertPoint(center + diagonal));
-			double startAngle = atan2((center - from).y(), (from - center).x()) * (180 / M_PI);
-			double endAngle = atan2((center - to).y(), (to - center).x()) * (180 / M_PI);
+
+			double startAngle = atan2((from - center).y(), (from - center).x()) * (180 / M_PI);
+			double endAngle = atan2((to - center).y(), (to - center).x()) * (180 / M_PI);
 			double sweepLength = endAngle - startAngle;
-			if (clockwise && sweepLength < 0) {
-				sweepLength += 360;
+			if (!clockwise && sweepLength < 0) {
+				sweepLength += 360;  // counter-clockwise -> positive sweepLength
 			}
-			if (!clockwise && sweepLength > 0) {
-				sweepLength -= 360;
+			if (clockwise && sweepLength > 0) {
+				sweepLength -= 360;  // clockwise -> negative sweepLength
 			}
-			path.arcTo(bounds, startAngle, sweepLength);
+			// the angles are negative because the y-axis is pointing up here
+			// instead of down
+			path.arcTo(bounds, -startAngle, -sweepLength);
 
 		} else if (std::holds_alternative<RenderPath::Close>(c)) {
 			path.closeSubpath();
