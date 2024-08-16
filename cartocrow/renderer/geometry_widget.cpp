@@ -742,7 +742,7 @@ void GeometryWidget::setGridMode(GridMode mode) {
 }
 
 void GeometryWidget::saveToIpe() {
-	QString fileName = QFileDialog::getSaveFileName(this, "Save drawing", ".", "Ipe XML files (*.xml)");
+	QString fileName = QFileDialog::getSaveFileName(this, "Save drawing", ".", "Ipe XML files (*.ipe)");
 	if (fileName == nullptr) {
 		return;
 	}
