@@ -20,7 +20,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "geometry_widget.h"
 
 #include "geometry_renderer.h"
+#include "ipe_renderer.h"
 
+#include <QFileDialog>
 #include <QGuiApplication>
 #include <QPainterPath>
 #include <QPen>
@@ -144,6 +146,11 @@ GeometryWidget::GeometryWidget() {
 	m_zoomInButton->setText("+");
 	connect(m_zoomInButton, &QToolButton::clicked, this, &GeometryWidget::zoomIn);
 	m_zoomBar->addWidget(m_zoomInButton);
+	m_zoomBar->addSeparator();
+	m_saveToIpeButton = new QToolButton(m_zoomBar);
+	m_saveToIpeButton->setText("Save");
+	connect(m_saveToIpeButton, &QToolButton::clicked, this, &GeometryWidget::saveToIpe);
+	m_zoomBar->addWidget(m_saveToIpeButton);
 }
 
 GeometryWidget::GeometryWidget(std::shared_ptr<GeometryPainting> painting) : GeometryWidget() {
@@ -732,6 +739,19 @@ void GeometryWidget::fitInView(Box bbox) {
 void GeometryWidget::setGridMode(GridMode mode) {
 	m_gridMode = mode;
 	update();
+}
+
+void GeometryWidget::saveToIpe() {
+	QString fileName = QFileDialog::getSaveFileName(this, "Save drawing", ".", "Ipe XML files (.xml)");
+	if (fileName == nullptr) {
+		return;
+	}
+
+	IpeRenderer renderer;
+	for (const DrawnPainting& painting : m_paintings) {
+		renderer.addPainting(painting.m_painting, painting.name);
+	}
+	renderer.save(fileName.toStdString());
 }
 
 } // namespace cartocrow::renderer

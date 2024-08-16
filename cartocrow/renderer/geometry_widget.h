@@ -212,6 +212,9 @@ class GeometryWidget : public QWidget, public GeometryRenderer {
 	void fitInView(Box bbox);
 	/// Sets the type of grid.
 	void setGridMode(GridMode mode);
+	/// Launches a file picker that allows the user to save the drawing to an
+	/// Ipe file.
+	void saveToIpe();
 
   signals:
 	/// Emitted when the user clicks on the widget.
@@ -320,6 +323,8 @@ class GeometryWidget : public QWidget, public GeometryRenderer {
 	QSlider* m_zoomSlider;
 	/// The zoom in button in the toolbar.
 	QToolButton* m_zoomInButton;
+	/// The save to Ipe button in the toolbar.
+	QToolButton* m_saveToIpeButton;
 };
 
 } // namespace cartocrow::renderer
