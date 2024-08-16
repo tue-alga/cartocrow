@@ -33,7 +33,9 @@ void DemoPainting::paint(GeometryRenderer& renderer) const {
 	renderer.setMode(GeometryRenderer::DrawMode::fill | GeometryRenderer::DrawMode::stroke);
 
 	// draw circle through the three points
-	renderer.draw(Circle<Inexact>(*m_p1, *m_p2, *m_p3));
+	if (!CGAL::collinear(*m_p1, *m_p2, *m_p3)) {
+		renderer.draw(Circle<Inexact>(*m_p1, *m_p2, *m_p3));
+	}
 	renderer.draw(*m_p1);
 	renderer.draw(*m_p2);
 	renderer.draw(*m_p3);
