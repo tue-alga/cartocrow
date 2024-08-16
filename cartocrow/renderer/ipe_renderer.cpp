@@ -212,6 +212,18 @@ void IpeRenderer::draw(const RenderPath& p) {
 			verticesToDraw.push_back(to);
 			curve->appendSegment(ipe::Vector(from.x(), from.y()), ipe::Vector(to.x(), to.y()));
 			from = to;
+
+		} else if (std::holds_alternative<RenderPath::ArcTo>(c)) {
+			Point<Inexact> center = std::get<RenderPath::ArcTo>(c).m_center;
+			Point<Inexact> to = std::get<RenderPath::ArcTo>(c).m_to;
+			bool clockwise = std::get<RenderPath::ArcTo>(c).m_clockwise;
+			verticesToDraw.push_back(to);
+
+			double radius = sqrt((center - to).squared_length());
+			ipe::Matrix matrix(radius, 0, 0, clockwise ? -radius : radius, center.x(), center.y());
+			curve->appendArc(matrix, ipe::Vector(from.x(), from.y()), ipe::Vector(to.x(), to.y()));
+			from = to;
+
 		} else if (std::holds_alternative<RenderPath::Close>(c)) {
 			curve->setClosed(true);
 		}
