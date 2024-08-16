@@ -19,7 +19,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "ipe_renderer.h"
 
-#include "cartocrow/renderer/geometry_renderer.h"
+#include "geometry_renderer.h"
+
 #include <ipeattributes.h>
 #include <ipebase.h>
 #include <ipedoc.h>
@@ -29,7 +30,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <ipestyle.h>
 #include <ipetext.h>
 
-#include <fstream>
 #include <string>
 
 namespace cartocrow::renderer {
@@ -100,7 +100,7 @@ void IpeRenderer::draw(const Point<Inexact>& p) {
 }
 
 void IpeRenderer::draw(const Line<Inexact>& l) {
-	// Crop to document size
+	// crop to document size
 	auto bounds = CGAL::Iso_rectangle_2<Inexact>(CGAL::ORIGIN, Point<Inexact>(1000.0, 1000.0));
 	auto result = intersection(l, bounds);
 	if (result) {
@@ -114,7 +114,7 @@ void IpeRenderer::draw(const Line<Inexact>& l) {
 }
 
 void IpeRenderer::draw(const Ray<Inexact>& r) {
-	// Crop to document size
+	// crop to document size
 	auto bounds = CGAL::Iso_rectangle_2<Inexact>(CGAL::ORIGIN, Point<Inexact>(1000.0, 1000.0));
 	auto result = intersection(r, bounds);
 	if (result) {
@@ -202,8 +202,33 @@ void IpeRenderer::draw(const BezierSpline& s) {
 }
 
 void IpeRenderer::draw(const RenderPath& p) {
-	/*ipe::Curve* curve = convertPolylineToCurve(p);*/
-	// TODO
+	ipe::Curve* curve = new ipe::Curve();
+	std::vector<Point<Inexact>> verticesToDraw;
+	Point<Inexact> from;
+	for (RenderPath::Command c : p.commands()) {
+		if (std::holds_alternative<RenderPath::MoveTo>(c)) {
+			Point<Inexact> to = std::get<RenderPath::MoveTo>(c).m_to;
+			verticesToDraw.push_back(to);
+			from = to;
+		} else if (std::holds_alternative<RenderPath::LineTo>(c)) {
+			Point<Inexact> to = std::get<RenderPath::LineTo>(c).m_to;
+			verticesToDraw.push_back(to);
+			curve->appendSegment(ipe::Vector(from.x(), from.y()), ipe::Vector(to.x(), to.y()));
+			from = to;
+		} else if (std::holds_alternative<RenderPath::Close>(c)) {
+			curve->setClosed(true);
+		}
+	}
+	ipe::Shape* shape = new ipe::Shape();
+	shape->appendSubPath(curve);
+	ipe::Path* path = new ipe::Path(getAttributesForStyle(), *shape);
+	m_page->append(ipe::TSelect::ENotSelected, m_layer, path);
+
+	if (m_style.m_mode & vertices) {
+		for (const Point<Inexact>& vertex : verticesToDraw) {
+			draw(vertex);
+		}
+	}
 }
 
 void IpeRenderer::drawText(const Point<Inexact>& p, const std::string& text) {
