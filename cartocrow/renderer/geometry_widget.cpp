@@ -20,7 +20,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "geometry_widget.h"
 
 #include "geometry_renderer.h"
+#include "ipe_renderer.h"
 
+#include <QFileDialog>
 #include <QGuiApplication>
 #include <QPainterPath>
 #include <QPen>
@@ -144,6 +146,11 @@ GeometryWidget::GeometryWidget() {
 	m_zoomInButton->setText("+");
 	connect(m_zoomInButton, &QToolButton::clicked, this, &GeometryWidget::zoomIn);
 	m_zoomBar->addWidget(m_zoomInButton);
+	m_zoomBar->addSeparator();
+	m_saveToIpeButton = new QToolButton(m_zoomBar);
+	m_saveToIpeButton->setText("Save");
+	connect(m_saveToIpeButton, &QToolButton::clicked, this, &GeometryWidget::saveToIpe);
+	m_zoomBar->addWidget(m_saveToIpeButton);
 }
 
 GeometryWidget::GeometryWidget(std::shared_ptr<GeometryPainting> painting) : GeometryWidget() {
@@ -320,26 +327,28 @@ void GeometryWidget::drawAxes() {
 		double minorTint = tickScale - floor(tickScale);
 		int minorColor = 255 - 64 * minorTint;
 		setStroke(Color{minorColor, minorColor, minorColor}, 1);
-		for (int i = floor(bounds.xmin() / (majorScale / 10)); i <= bounds.xmax() / (majorScale / 10);
-			++i) {
-			draw(Segment<Inexact>(Point<Inexact>(i * majorScale / 10, bounds.ymin()),
-								Point<Inexact>(i * majorScale / 10, bounds.ymax())));
+		for (int i = floor(bounds.xmin() / (majorScale / 10));
+		     i <= bounds.xmax() / (majorScale / 10); ++i) {
+			GeometryRenderer::draw(
+			    Segment<Inexact>(Point<Inexact>(i * majorScale / 10, bounds.ymin()),
+			                     Point<Inexact>(i * majorScale / 10, bounds.ymax())));
 		}
-		for (int i = floor(bounds.ymax() / (majorScale / 10)); i <= bounds.ymin() / (majorScale / 10);
-			++i) {
-			draw(Segment<Inexact>(Point<Inexact>(bounds.xmin(), i * majorScale / 10),
-								Point<Inexact>(bounds.xmax(), i * majorScale / 10)));
+		for (int i = floor(bounds.ymax() / (majorScale / 10));
+		     i <= bounds.ymin() / (majorScale / 10); ++i) {
+			GeometryRenderer::draw(
+			    Segment<Inexact>(Point<Inexact>(bounds.xmin(), i * majorScale / 10),
+			                     Point<Inexact>(bounds.xmax(), i * majorScale / 10)));
 		}
 
 		// major grid lines
 		setStroke(Color{192, 192, 192}, 1);
 		for (int i = floor(bounds.xmin() / majorScale); i <= bounds.xmax() / majorScale; ++i) {
-			draw(Segment<Inexact>(Point<Inexact>(i * majorScale, bounds.ymin()),
-								Point<Inexact>(i * majorScale, bounds.ymax())));
+			GeometryRenderer::draw(Segment<Inexact>(Point<Inexact>(i * majorScale, bounds.ymin()),
+			                                        Point<Inexact>(i * majorScale, bounds.ymax())));
 		}
 		for (int i = floor(bounds.ymax() / majorScale); i <= bounds.ymin() / majorScale; ++i) {
-			draw(Segment<Inexact>(Point<Inexact>(bounds.xmin(), i * majorScale),
-								Point<Inexact>(bounds.xmax(), i * majorScale)));
+			GeometryRenderer::draw(Segment<Inexact>(Point<Inexact>(bounds.xmin(), i * majorScale),
+			                                        Point<Inexact>(bounds.xmax(), i * majorScale)));
 		}
 
 	} else if (m_gridMode == GridMode::POLAR) {
@@ -380,8 +389,10 @@ void GeometryWidget::drawAxes() {
 
 	// axes
 	setStroke(Color{150, 150, 150}, 1.8);
-	draw(Segment<Inexact>(Point<Inexact>(bounds.xmin(), 0), Point<Inexact>(bounds.xmax(), 0)));
-	draw(Segment<Inexact>(Point<Inexact>(0, bounds.ymin()), Point<Inexact>(0, bounds.ymax())));
+	GeometryRenderer::draw(
+	    Segment<Inexact>(Point<Inexact>(bounds.xmin(), 0), Point<Inexact>(bounds.xmax(), 0)));
+	GeometryRenderer::draw(
+	    Segment<Inexact>(Point<Inexact>(0, bounds.ymin()), Point<Inexact>(0, bounds.ymax())));
 
 	// labels
 	QPointF origin = convertPoint(Point<Inexact>(0, 0));
@@ -474,30 +485,6 @@ void GeometryWidget::draw(const Point<Inexact>& p) {
 	                              m_style.m_pointSize));
 }
 
-void GeometryWidget::draw(const Segment<Inexact>& s) {
-	setupPainter();
-	QPointF p1 = convertPoint(s.start());
-	QPointF p2 = convertPoint(s.end());
-	m_painter->drawLine(p1, p2);
-
-	if (m_style.m_mode & vertices) {
-		draw(s.start());
-		draw(s.end());
-	}
-}
-
-void GeometryWidget::draw(const Polygon<Inexact>& p) {
-	setupPainter();
-	QPainterPath path;
-	addPolygonToPath(path, p);
-	m_painter->drawPath(path);
-	if (m_style.m_mode & vertices) {
-		for (auto v = p.vertices_begin(); v != p.vertices_end(); v++) {
-			draw(*v);
-		}
-	}
-}
-
 void GeometryWidget::draw(const PolygonWithHoles<Inexact>& p) {
 	setupPainter();
 	QPainterPath path;
@@ -559,7 +546,7 @@ void GeometryWidget::draw(const Ray<Inexact>& r) {
 		if (const Segment<Inexact>* s = boost::get<Segment<Inexact>>(&*result)) {
 			int oldMode = m_style.m_mode;
 			setMode(oldMode & ~vertices);
-			draw(*s);
+			GeometryRenderer::draw(*s);
 			setMode(oldMode);
 		}
 		if (m_style.m_mode & vertices) {
@@ -570,28 +557,40 @@ void GeometryWidget::draw(const Ray<Inexact>& r) {
 
 void GeometryWidget::draw(const Line<Inexact>& l) {
 	Box bounds = inverseConvertBox(rect());
-	auto result = intersection(l, CGAL::Iso_rectangle_2<Inexact>(Point<Inexact>(bounds.xmin(), bounds.ymin()), Point<Inexact>(bounds.xmax(), bounds.ymax())));
+	auto result =
+	    intersection(l, CGAL::Iso_rectangle_2<Inexact>(Point<Inexact>(bounds.xmin(), bounds.ymin()),
+	                                                   Point<Inexact>(bounds.xmax(), bounds.ymax())));
 	if (result) {
 		if (const Segment<Inexact>* s = boost::get<Segment<Inexact>>(&*result)) {
 			int oldMode = m_style.m_mode;
 			setMode(oldMode & ~vertices);
-			draw(*s);
+			GeometryRenderer::draw(*s);
 			setMode(oldMode);
 		}
 	}
 }
 
-void GeometryWidget::draw(const Polyline<Inexact>& p) {
+void GeometryWidget::draw(const RenderPath& p) {
 	setupPainter();
 	QPainterPath path;
-	path.moveTo(convertPoint(*p.vertices_begin()));
-	for (auto v = p.vertices_begin()++; v != p.vertices_end(); v++) {
-		path.lineTo(convertPoint(*v));
+	std::vector<Point<Inexact>> verticesToDraw;
+	for (RenderPath::Command c : p.commands()) {
+		if (std::holds_alternative<RenderPath::MoveTo>(c)) {
+			Point<Inexact> to = std::get<RenderPath::MoveTo>(c).m_to;
+			verticesToDraw.push_back(to);
+			path.moveTo(convertPoint(to));
+		} else if (std::holds_alternative<RenderPath::LineTo>(c)) {
+			Point<Inexact> to = std::get<RenderPath::LineTo>(c).m_to;
+			verticesToDraw.push_back(to);
+			path.lineTo(convertPoint(std::get<RenderPath::LineTo>(c).m_to));
+		} else if (std::holds_alternative<RenderPath::Close>(c)) {
+			path.closeSubpath();
+		}
 	}
 	m_painter->drawPath(path);
 	if (m_style.m_mode & vertices) {
-		for (auto v = p.vertices_begin(); v != p.vertices_end(); v++) {
-			draw(*v);
+		for (const Point<Inexact>& vertex : verticesToDraw) {
+			draw(vertex);
 		}
 	}
 }
@@ -697,7 +696,7 @@ void GeometryWidget::zoomIn() {
 void GeometryWidget::zoomOut() {
 	m_transform /= 1.5;
 	if (m_transform.m11() < m_minZoom) {
-		m_transform /= m_minZoom / m_transform.m11();
+		m_transform *= m_minZoom / m_transform.m11();
 	}
 	updateZoomSlider();
 	update();
@@ -725,6 +724,19 @@ void GeometryWidget::fitInView(Box bbox) {
 void GeometryWidget::setGridMode(GridMode mode) {
 	m_gridMode = mode;
 	update();
+}
+
+void GeometryWidget::saveToIpe() {
+	QString fileName = QFileDialog::getSaveFileName(this, "Save drawing", ".", "Ipe XML files (*.ipe)");
+	if (fileName == nullptr) {
+		return;
+	}
+
+	IpeRenderer renderer;
+	for (const DrawnPainting& painting : m_paintings) {
+		renderer.addPainting(painting.m_painting, painting.name);
+	}
+	renderer.save(fileName.toStdString());
 }
 
 } // namespace cartocrow::renderer

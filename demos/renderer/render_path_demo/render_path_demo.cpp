@@ -13,18 +13,20 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "editables_demo.h"
+#include "render_path_demo.h"
 
 #include <QApplication>
+#include <QCheckBox>
+#include <QDockWidget>
+#include <QGridLayout>
 #include <QMainWindow>
+#include <QPushButton>
 #include <QWidget>
+
+#include <cartocrow/renderer/render_path.h>
 
 using namespace cartocrow;
 using namespace cartocrow::renderer;
-
-DemoPainting::DemoPainting(std::shared_ptr<Point<Inexact>> p1, std::shared_ptr<Point<Inexact>> p2,
-                           std::shared_ptr<Point<Inexact>> p3)
-    : m_p1(p1), m_p2(p2), m_p3(p3) {}
 
 void DemoPainting::paint(GeometryRenderer& renderer) const {
 	// set style
@@ -32,35 +34,33 @@ void DemoPainting::paint(GeometryRenderer& renderer) const {
 	renderer.setFill(Color{120, 170, 240});
 	renderer.setMode(GeometryRenderer::DrawMode::fill | GeometryRenderer::DrawMode::stroke);
 
-	// draw circle through the three points
-	if (!CGAL::collinear(*m_p1, *m_p2, *m_p3)) {
-		renderer.draw(Circle<Inexact>(*m_p1, *m_p2, *m_p3));
-	}
-	renderer.draw(*m_p1);
-	renderer.draw(*m_p2);
-	renderer.draw(*m_p3);
+	// construct a RenderPath
+	RenderPath path;
+	path.moveTo(Point<Inexact>(0, 0));
+	path.lineTo(Point<Inexact>(50, 50));
+	path.lineTo(Point<Inexact>(70, -40));
+	path.close();
+	path.moveTo(Point<Inexact>(100, 0));
+	path.lineTo(Point<Inexact>(120, -50));
+	path.lineTo(Point<Inexact>(150, 30));
+
+	// draw various shapes
+	renderer.draw(path);
 }
 
-EditablesDemo::EditablesDemo() {
-	setWindowTitle("CartoCrow – Editables demo");
+RenderPathDemo::RenderPathDemo() {
+	setWindowTitle("CartoCrow – Render path demo");
 
 	m_renderer = new GeometryWidget();
 	setCentralWidget(m_renderer);
 
-	auto p1 = std::make_shared<Point<Inexact>>(-40, 30);
-	m_renderer->registerEditable(p1);
-	auto p2 = std::make_shared<Point<Inexact>>(30, 40);
-	m_renderer->registerEditable(p2);
-	auto p3 = std::make_shared<Point<Inexact>>(40, -30);
-	m_renderer->registerEditable(p3);
-
-	auto painting = std::make_shared<DemoPainting>(p1, p2, p3);
+	std::shared_ptr<DemoPainting> painting = std::make_shared<DemoPainting>();
 	m_renderer->addPainting(painting, "Demo painting");
 }
 
 int main(int argc, char* argv[]) {
 	QApplication app(argc, argv);
-	EditablesDemo demo;
+	RenderPathDemo demo;
 	demo.show();
 	app.exec();
 }

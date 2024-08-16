@@ -22,8 +22,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "../core/bezier.h"
 #include "../core/core.h"
-#include "../core/region_map.h"
 #include "../core/polyline.h"
+#include "render_path.h"
 
 namespace cartocrow::renderer {
 
@@ -89,14 +89,16 @@ class GeometryRenderer {
 	/// Draws a single point with the currently set style.
 	virtual void draw(const Point<Inexact>& p) = 0;
 	/// Draws a single line segment with the currently set style.
-	virtual void draw(const Segment<Inexact>& s) = 0;
+	void draw(const Segment<Inexact>& s);
 	/// Draws a simple polygon with the currently set style.
-	virtual void draw(const Polygon<Inexact>& p) = 0;
+	void draw(const Polygon<Inexact>& p);
+	/// Draws a polyline with the currently set style.
+	void draw(const Polyline<Inexact>& p);
 	/// Draws a polygon with holes with the currently set style.
 	virtual void draw(const PolygonWithHoles<Inexact>& p) = 0;
 	/// Draws a circle with the currently set style.
 	virtual void draw(const Circle<Inexact>& c) = 0;
-	/// Draws a Bézier spline with the currently set style.
+	/// Draws a Bézier curve with the currently set style.
 	void draw(const BezierCurve& c);
 	/// Draws a Bézier spline with the currently set style.
 	virtual void draw(const BezierSpline& s) = 0;
@@ -106,8 +108,8 @@ class GeometryRenderer {
 	virtual void draw(const Line<Inexact>& l) = 0;
 	/// Draws a ray with the currently set style.
 	virtual void draw(const Ray<Inexact>& r) = 0;
-	/// Draws a polyline with the currently set style.
-	virtual void draw(const Polyline<Inexact>& p) = 0;
+	/// Draws a \ref RenderPath with the currently set style.
+	virtual void draw(const RenderPath& p) = 0;
 
 	/// Draws an exact geometry with the currently set style by approximating it.
 	template<class ExactGeometry>
