@@ -704,7 +704,7 @@ void GeometryWidget::zoomIn() {
 void GeometryWidget::zoomOut() {
 	m_transform /= 1.5;
 	if (m_transform.m11() < m_minZoom) {
-		m_transform /= m_minZoom / m_transform.m11();
+		m_transform *= m_minZoom / m_transform.m11();
 	}
 	updateZoomSlider();
 	update();
