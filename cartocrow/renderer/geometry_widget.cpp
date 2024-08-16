@@ -596,6 +596,21 @@ void GeometryWidget::draw(const Polyline<Inexact>& p) {
 	}
 }
 
+void GeometryWidget::draw(const RenderPath& p) {
+	setupPainter();
+	QPainterPath path;
+	for (RenderPath::Command c : p.commands()) {
+		if (std::holds_alternative<RenderPath::MoveTo>(c)) {
+			path.moveTo(convertPoint(std::get<RenderPath::MoveTo>(c).m_to));
+		} else if (std::holds_alternative<RenderPath::LineTo>(c)) {
+			path.lineTo(convertPoint(std::get<RenderPath::LineTo>(c).m_to));
+		} else if (std::holds_alternative<RenderPath::Close>(c)) {
+			path.closeSubpath();
+		}
+	}
+	m_painter->drawPath(path);
+}
+
 void GeometryWidget::drawText(const Point<Inexact>& p, const std::string& text) {
 	setupPainter();
 	QPointF p2 = convertPoint(p);

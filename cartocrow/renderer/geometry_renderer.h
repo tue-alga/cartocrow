@@ -22,8 +22,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "../core/bezier.h"
 #include "../core/core.h"
-#include "../core/region_map.h"
 #include "../core/polyline.h"
+#include "render_path.h"
 
 namespace cartocrow::renderer {
 
@@ -108,6 +108,8 @@ class GeometryRenderer {
 	virtual void draw(const Ray<Inexact>& r) = 0;
 	/// Draws a polyline with the currently set style.
 	virtual void draw(const Polyline<Inexact>& p) = 0;
+	/// Draws a \ref RenderPath with the currently set style.
+	virtual void draw(const RenderPath& p) = 0;
 
 	/// Draws an exact geometry with the currently set style by approximating it.
 	template<class ExactGeometry>

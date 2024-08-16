@@ -230,6 +230,11 @@ void IpeRenderer::draw(const BezierSpline& s) {
 	}
 }
 
+void IpeRenderer::draw(const RenderPath& p) {
+	/*ipe::Curve* curve = convertPolylineToCurve(p);*/
+	// TODO
+}
+
 void IpeRenderer::drawText(const Point<Inexact>& p, const std::string& text) {
 	ipe::String labelText = escapeForLaTeX(text).data();
 	ipe::Text* label = new ipe::Text(getAttributesForStyle(), labelText,

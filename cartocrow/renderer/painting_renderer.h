@@ -17,8 +17,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef CARTOCROW_RENDERER_STORED_PAINTING_H
-#define CARTOCROW_RENDERER_STORED_PAINTING_H
+#ifndef CARTOCROW_RENDERER_PAINTING_RENDERER_H
+#define CARTOCROW_RENDERER_PAINTING_RENDERER_H
 
 #include "geometry_painting.h"
 #include "geometry_renderer.h"
@@ -45,6 +45,7 @@ class PaintingRenderer : public GeometryPainting, public GeometryRenderer {
 	void draw(const Line<Inexact>& l) override;
 	void draw(const Ray<Inexact>& r) override;
 	void draw(const Polyline<Inexact>& p) override;
+	void draw(const RenderPath& p) override;
 	void drawText(const Point<Inexact>& p, const std::string& text) override;
 
 	void pushStyle() override;
@@ -76,13 +77,14 @@ class PaintingRenderer : public GeometryPainting, public GeometryRenderer {
 		double m_fillOpacity = 255;
 	};
 	using Label = std::pair<Point<Inexact>, std::string>;
-	using DrawableObject = std::variant<Point<Inexact>, Segment<Inexact>, Polygon<Inexact>,
-	                                    PolygonWithHoles<Inexact>, Circle<Inexact>, BezierSpline,
-	                                    Line<Inexact>, Ray<Inexact>, Polyline<Inexact>, Label, Style>;
+	using DrawableObject =
+	    std::variant<Point<Inexact>, Segment<Inexact>, Polygon<Inexact>, PolygonWithHoles<Inexact>,
+	                 Circle<Inexact>, BezierSpline, Line<Inexact>, Ray<Inexact>, Polyline<Inexact>,
+	                 RenderPath, Label, Style>;
 	std::vector<DrawableObject> m_objects;
 	Style m_style;
 };
 
 } // namespace cartocrow::renderer
 
-#endif //CARTOCROW_RENDERER_STORED_PAINTING_H
+#endif //CARTOCROW_RENDERER_PAINTING_RENDERER_H

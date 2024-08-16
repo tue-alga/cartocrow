@@ -45,6 +45,8 @@ void PaintingRenderer::paint(GeometryRenderer& renderer) const {
 			renderer.draw(std::get<Ray<Inexact>>(object));
 		} else if (std::holds_alternative<Polyline<Inexact>>(object)) {
 			renderer.draw(std::get<Polyline<Inexact>>(object));
+		} else if (std::holds_alternative<RenderPath>(object)) {
+			renderer.draw(std::get<RenderPath>(object));
 		} else if (std::holds_alternative<Label>(object)) {
 			renderer.drawText(std::get<Label>(object).first, std::get<Label>(object).second);
 		} else if (std::holds_alternative<Style>(object)) {
@@ -90,6 +92,10 @@ void PaintingRenderer::draw(const Ray<Inexact>& r) {
 }
 
 void PaintingRenderer::draw(const Polyline<Inexact>& p) {
+	m_objects.push_back(p);
+}
+
+void PaintingRenderer::draw(const RenderPath& p) {
 	m_objects.push_back(p);
 }
 
