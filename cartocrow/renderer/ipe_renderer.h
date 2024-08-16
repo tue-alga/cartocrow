@@ -82,7 +82,6 @@ class IpeRenderer : public GeometryRenderer {
 	void save(const std::filesystem::path& file);
 
 	void draw(const Point<Inexact>& p) override;
-	void draw(const Segment<Inexact>& s) override;
 	void draw(const Polygon<Inexact>& p) override;
 	void draw(const PolygonWithHoles<Inexact>& p) override;
 	void draw(const Circle<Inexact>& c) override;

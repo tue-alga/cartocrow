@@ -22,6 +22,13 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 namespace cartocrow::renderer {
 
+void GeometryRenderer::draw(const Segment<Inexact>& s) {
+	RenderPath p;
+	p.moveTo(s.start());
+	p.lineTo(s.end());
+	draw(p);
+}
+
 void GeometryRenderer::draw(const PolygonSet<Inexact>& ps) {
 	std::vector<PolygonWithHoles<Inexact>> polygons;
 	ps.polygons_with_holes(std::back_inserter(polygons));

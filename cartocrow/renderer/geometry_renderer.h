@@ -89,14 +89,14 @@ class GeometryRenderer {
 	/// Draws a single point with the currently set style.
 	virtual void draw(const Point<Inexact>& p) = 0;
 	/// Draws a single line segment with the currently set style.
-	virtual void draw(const Segment<Inexact>& s) = 0;
+	void draw(const Segment<Inexact>& s);
 	/// Draws a simple polygon with the currently set style.
 	virtual void draw(const Polygon<Inexact>& p) = 0;
 	/// Draws a polygon with holes with the currently set style.
 	virtual void draw(const PolygonWithHoles<Inexact>& p) = 0;
 	/// Draws a circle with the currently set style.
 	virtual void draw(const Circle<Inexact>& c) = 0;
-	/// Draws a Bézier spline with the currently set style.
+	/// Draws a Bézier curve with the currently set style.
 	void draw(const BezierCurve& c);
 	/// Draws a Bézier spline with the currently set style.
 	virtual void draw(const BezierSpline& s) = 0;

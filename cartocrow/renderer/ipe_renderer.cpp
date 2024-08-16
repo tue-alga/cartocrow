@@ -99,21 +99,6 @@ void IpeRenderer::draw(const Point<Inexact>& p) {
 	m_page->append(ipe::TSelect::ENotSelected, m_layer, reference);
 }
 
-void IpeRenderer::draw(const Segment<Inexact>& s) {
-	ipe::Curve* curve = new ipe::Curve();
-	curve->appendSegment(ipe::Vector(s.start().x(), s.start().y()),
-	                     ipe::Vector(s.end().x(), s.end().y()));
-	ipe::Shape* shape = new ipe::Shape();
-	shape->appendSubPath(curve);
-	ipe::Path* path = new ipe::Path(getAttributesForStyle(), *shape);
-	m_page->append(ipe::TSelect::ENotSelected, m_layer, path);
-
-	if (m_style.m_mode & vertices) {
-		draw(s.start());
-		draw(s.end());
-	}
-}
-
 void IpeRenderer::draw(const Line<Inexact>& l) {
 	// Crop to document size
 	auto bounds = CGAL::Iso_rectangle_2<Inexact>(CGAL::ORIGIN, Point<Inexact>(1000.0, 1000.0));
@@ -122,7 +107,7 @@ void IpeRenderer::draw(const Line<Inexact>& l) {
 		if (const Segment<Inexact>* s = boost::get<Segment<Inexact>>(&*result)) {
 			int oldMode = m_style.m_mode;
 			setMode(oldMode & ~vertices);
-			draw(*s);
+			GeometryRenderer::draw(*s);
 			setMode(oldMode);
 		}
 	}
@@ -136,7 +121,7 @@ void IpeRenderer::draw(const Ray<Inexact>& r) {
 		if (const Segment<Inexact>* s = boost::get<Segment<Inexact>>(&*result)) {
 			int oldMode = m_style.m_mode;
 			setMode(oldMode & ~vertices);
-			draw(*s);
+			GeometryRenderer::draw(*s);
 			setMode(oldMode);
 		}
 		if (m_style.m_mode & vertices) {
