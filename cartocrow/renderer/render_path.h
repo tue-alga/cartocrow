@@ -35,13 +35,19 @@ class RenderPath {
 	struct LineTo {
 		Point<Inexact> m_to;
 	};
+	struct ArcTo {
+		Point<Inexact> m_center;
+		bool m_clockwise;
+		Point<Inexact> m_to;
+	};
 	struct Close {};
-	using Command = std::variant<MoveTo, LineTo, Close>;
+	using Command = std::variant<MoveTo, LineTo, ArcTo, Close>;
 
 	const std::vector<Command>& commands() const;
 
 	void moveTo(Point<Inexact> to);
 	void lineTo(Point<Inexact> to);
+	void arcTo(Point<Inexact> center, bool clockwise, Point<Inexact> to);
 	void close();
 
   private:
