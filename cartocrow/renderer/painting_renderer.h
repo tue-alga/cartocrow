@@ -37,7 +37,6 @@ class PaintingRenderer : public GeometryPainting, public GeometryRenderer {
 	void paint(GeometryRenderer& renderer) const override;
 
 	void draw(const Point<Inexact>& p) override;
-	void draw(const Polygon<Inexact>& p) override;
 	void draw(const PolygonWithHoles<Inexact>& p) override;
 	void draw(const Circle<Inexact>& c) override;
 	void draw(const BezierSpline& s) override;
@@ -76,9 +75,9 @@ class PaintingRenderer : public GeometryPainting, public GeometryRenderer {
 		double m_fillOpacity = 255;
 	};
 	using Label = std::pair<Point<Inexact>, std::string>;
-	using DrawableObject = std::variant<Point<Inexact>, Polygon<Inexact>, PolygonWithHoles<Inexact>,
-	                                    Circle<Inexact>, BezierSpline, Line<Inexact>, Ray<Inexact>,
-	                                    Polyline<Inexact>, RenderPath, Label, Style>;
+	using DrawableObject =
+	    std::variant<Point<Inexact>, PolygonWithHoles<Inexact>, Circle<Inexact>, BezierSpline,
+	                 Line<Inexact>, Ray<Inexact>, Polyline<Inexact>, RenderPath, Label, Style>;
 	std::vector<DrawableObject> m_objects;
 	Style m_style;
 };

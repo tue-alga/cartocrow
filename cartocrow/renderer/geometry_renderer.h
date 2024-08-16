@@ -91,7 +91,7 @@ class GeometryRenderer {
 	/// Draws a single line segment with the currently set style.
 	void draw(const Segment<Inexact>& s);
 	/// Draws a simple polygon with the currently set style.
-	virtual void draw(const Polygon<Inexact>& p) = 0;
+	void draw(const Polygon<Inexact>& p);
 	/// Draws a polygon with holes with the currently set style.
 	virtual void draw(const PolygonWithHoles<Inexact>& p) = 0;
 	/// Draws a circle with the currently set style.

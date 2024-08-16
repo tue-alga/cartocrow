@@ -144,20 +144,6 @@ void IpeRenderer::draw(const Polyline<Inexact>& p) {
 	}
 }
 
-void IpeRenderer::draw(const Polygon<Inexact>& p) {
-	ipe::Curve* curve = convertPolygonToCurve(p);
-	ipe::Shape* shape = new ipe::Shape();
-	shape->appendSubPath(curve);
-	ipe::Path* path = new ipe::Path(getAttributesForStyle(), *shape);
-	m_page->append(ipe::TSelect::ENotSelected, m_layer, path);
-
-	if (m_style.m_mode & vertices) {
-		for (auto v = p.vertices_begin(); v != p.vertices_end(); v++) {
-			draw(*v);
-		}
-	}
-}
-
 void IpeRenderer::draw(const PolygonWithHoles<Inexact>& p) {
 	ipe::Curve* curve = convertPolygonToCurve(p.outer_boundary());
 	ipe::Shape* shape = new ipe::Shape();

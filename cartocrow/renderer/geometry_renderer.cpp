@@ -23,10 +23,23 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 namespace cartocrow::renderer {
 
 void GeometryRenderer::draw(const Segment<Inexact>& s) {
-	RenderPath p;
-	p.moveTo(s.start());
-	p.lineTo(s.end());
-	draw(p);
+	RenderPath path;
+	path.moveTo(s.start());
+	path.lineTo(s.end());
+	draw(path);
+}
+
+void GeometryRenderer::draw(const Polygon<Inexact>& p) {
+	RenderPath path;
+	for (auto vertex = p.vertices_begin(); vertex != p.vertices_end(); vertex++) {
+		if (vertex == p.vertices_begin()) {
+			path.moveTo(*vertex);
+		} else {
+			path.lineTo(*vertex);
+		}
+	}
+	path.close();
+	draw(path);
 }
 
 void GeometryRenderer::draw(const PolygonSet<Inexact>& ps) {

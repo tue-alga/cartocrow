@@ -478,18 +478,6 @@ void GeometryWidget::draw(const Point<Inexact>& p) {
 	                              m_style.m_pointSize));
 }
 
-void GeometryWidget::draw(const Polygon<Inexact>& p) {
-	setupPainter();
-	QPainterPath path;
-	addPolygonToPath(path, p);
-	m_painter->drawPath(path);
-	if (m_style.m_mode & vertices) {
-		for (auto v = p.vertices_begin(); v != p.vertices_end(); v++) {
-			draw(*v);
-		}
-	}
-}
-
 void GeometryWidget::draw(const PolygonWithHoles<Inexact>& p) {
 	setupPainter();
 	QPainterPath path;
