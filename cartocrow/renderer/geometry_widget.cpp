@@ -570,21 +570,6 @@ void GeometryWidget::draw(const Line<Inexact>& l) {
 	}
 }
 
-void GeometryWidget::draw(const Polyline<Inexact>& p) {
-	setupPainter();
-	QPainterPath path;
-	path.moveTo(convertPoint(*p.vertices_begin()));
-	for (auto v = p.vertices_begin()++; v != p.vertices_end(); v++) {
-		path.lineTo(convertPoint(*v));
-	}
-	m_painter->drawPath(path);
-	if (m_style.m_mode & vertices) {
-		for (auto v = p.vertices_begin(); v != p.vertices_end(); v++) {
-			draw(*v);
-		}
-	}
-}
-
 void GeometryWidget::draw(const RenderPath& p) {
 	setupPainter();
 	QPainterPath path;

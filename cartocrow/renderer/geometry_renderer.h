@@ -92,6 +92,8 @@ class GeometryRenderer {
 	void draw(const Segment<Inexact>& s);
 	/// Draws a simple polygon with the currently set style.
 	void draw(const Polygon<Inexact>& p);
+	/// Draws a polyline with the currently set style.
+	void draw(const Polyline<Inexact>& p);
 	/// Draws a polygon with holes with the currently set style.
 	virtual void draw(const PolygonWithHoles<Inexact>& p) = 0;
 	/// Draws a circle with the currently set style.
@@ -106,8 +108,6 @@ class GeometryRenderer {
 	virtual void draw(const Line<Inexact>& l) = 0;
 	/// Draws a ray with the currently set style.
 	virtual void draw(const Ray<Inexact>& r) = 0;
-	/// Draws a polyline with the currently set style.
-	virtual void draw(const Polyline<Inexact>& p) = 0;
 	/// Draws a \ref RenderPath with the currently set style.
 	virtual void draw(const RenderPath& p) = 0;
 

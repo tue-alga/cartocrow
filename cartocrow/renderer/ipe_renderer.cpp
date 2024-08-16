@@ -130,20 +130,6 @@ void IpeRenderer::draw(const Ray<Inexact>& r) {
 	}
 }
 
-void IpeRenderer::draw(const Polyline<Inexact>& p) {
-	ipe::Curve* curve = convertPolylineToCurve(p);
-	ipe::Shape* shape = new ipe::Shape();
-	shape->appendSubPath(curve);
-	ipe::Path* path = new ipe::Path(getAttributesForStyle(), *shape);
-	m_page->append(ipe::TSelect::ENotSelected, m_layer, path);
-
-	if (m_style.m_mode & vertices) {
-		for (auto v = p.vertices_begin(); v != p.vertices_end(); v++) {
-			draw(*v);
-		}
-	}
-}
-
 void IpeRenderer::draw(const PolygonWithHoles<Inexact>& p) {
 	ipe::Curve* curve = convertPolygonToCurve(p.outer_boundary());
 	ipe::Shape* shape = new ipe::Shape();
@@ -306,15 +292,6 @@ ipe::Curve* IpeRenderer::convertPolygonToCurve(const Polygon<Inexact>& p) const 
 		                     ipe::Vector(edge->end().x(), edge->end().y()));
 	}
 	curve->setClosed(true);
-	return curve;
-}
-
-ipe::Curve* IpeRenderer::convertPolylineToCurve(const Polyline<Inexact>& p) const {
-	ipe::Curve* curve = new ipe::Curve();
-	for (auto edge = p.edges_begin(); edge != p.edges_end(); edge++) {
-		curve->appendSegment(ipe::Vector(edge->start().x(), edge->start().y()),
-		                     ipe::Vector(edge->end().x(), edge->end().y()));
-	}
 	return curve;
 }
 
