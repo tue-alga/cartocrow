@@ -29,10 +29,6 @@ void PaintingRenderer::paint(GeometryRenderer& renderer) const {
 	for (auto& object : m_objects) {
 		if (std::holds_alternative<Point<Inexact>>(object)) {
 			renderer.draw(std::get<Point<Inexact>>(object));
-		} else if (std::holds_alternative<Segment<Inexact>>(object)) {
-			renderer.draw(std::get<Segment<Inexact>>(object));
-		} else if (std::holds_alternative<Polygon<Inexact>>(object)) {
-			renderer.draw(std::get<Polygon<Inexact>>(object));
 		} else if (std::holds_alternative<PolygonWithHoles<Inexact>>(object)) {
 			renderer.draw(std::get<PolygonWithHoles<Inexact>>(object));
 		} else if (std::holds_alternative<Circle<Inexact>>(object)) {
@@ -43,8 +39,8 @@ void PaintingRenderer::paint(GeometryRenderer& renderer) const {
 			renderer.draw(std::get<Line<Inexact>>(object));
 		} else if (std::holds_alternative<Ray<Inexact>>(object)) {
 			renderer.draw(std::get<Ray<Inexact>>(object));
-		} else if (std::holds_alternative<Polyline<Inexact>>(object)) {
-			renderer.draw(std::get<Polyline<Inexact>>(object));
+		} else if (std::holds_alternative<RenderPath>(object)) {
+			renderer.draw(std::get<RenderPath>(object));
 		} else if (std::holds_alternative<Label>(object)) {
 			renderer.drawText(std::get<Label>(object).first, std::get<Label>(object).second);
 		} else if (std::holds_alternative<Style>(object)) {
@@ -58,14 +54,6 @@ void PaintingRenderer::paint(GeometryRenderer& renderer) const {
 }
 
 void PaintingRenderer::draw(const Point<Inexact>& p) {
-	m_objects.push_back(p);
-}
-
-void PaintingRenderer::draw(const Segment<Inexact>& s) {
-	m_objects.push_back(s);
-}
-
-void PaintingRenderer::draw(const Polygon<Inexact>& p) {
 	m_objects.push_back(p);
 }
 
@@ -89,7 +77,7 @@ void PaintingRenderer::draw(const Ray<Inexact>& r) {
 	m_objects.push_back(r);
 }
 
-void PaintingRenderer::draw(const Polyline<Inexact>& p) {
+void PaintingRenderer::draw(const RenderPath& p) {
 	m_objects.push_back(p);
 }
 

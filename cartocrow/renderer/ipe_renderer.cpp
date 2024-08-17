@@ -19,8 +19,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "ipe_renderer.h"
 
-#include "cartocrow/renderer/geometry_renderer.h"
-#include "cartocrow/renderer/function_painting.h"
+#include "function_painting.h"
+#include "geometry_renderer.h"
+
 #include <ipeattributes.h>
 #include <ipebase.h>
 #include <ipedoc.h>
@@ -30,7 +31,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <ipestyle.h>
 #include <ipetext.h>
 
-#include <fstream>
 #include <string>
 
 namespace cartocrow::renderer {
@@ -107,76 +107,33 @@ void IpeRenderer::draw(const Point<Inexact>& p) {
 	m_page->append(ipe::TSelect::ENotSelected, m_layer, reference);
 }
 
-void IpeRenderer::draw(const Segment<Inexact>& s) {
-	ipe::Curve* curve = new ipe::Curve();
-	curve->appendSegment(ipe::Vector(s.start().x(), s.start().y()),
-	                     ipe::Vector(s.end().x(), s.end().y()));
-	ipe::Shape* shape = new ipe::Shape();
-	shape->appendSubPath(curve);
-	ipe::Path* path = new ipe::Path(getAttributesForStyle(), *shape);
-	m_page->append(ipe::TSelect::ENotSelected, m_layer, path);
-
-	if (m_style.m_mode & vertices) {
-		draw(s.start());
-		draw(s.end());
-	}
-}
-
 void IpeRenderer::draw(const Line<Inexact>& l) {
-	// Crop to document size
+	// crop to document size
 	auto bounds = CGAL::Iso_rectangle_2<Inexact>(CGAL::ORIGIN, Point<Inexact>(1000.0, 1000.0));
 	auto result = intersection(l, bounds);
 	if (result) {
 		if (const Segment<Inexact>* s = boost::get<Segment<Inexact>>(&*result)) {
 			int oldMode = m_style.m_mode;
 			setMode(oldMode & ~vertices);
-			draw(*s);
+			GeometryRenderer::draw(*s);
 			setMode(oldMode);
 		}
 	}
 }
 
 void IpeRenderer::draw(const Ray<Inexact>& r) {
-	// Crop to document size
+	// crop to document size
 	auto bounds = CGAL::Iso_rectangle_2<Inexact>(CGAL::ORIGIN, Point<Inexact>(1000.0, 1000.0));
 	auto result = intersection(r, bounds);
 	if (result) {
 		if (const Segment<Inexact>* s = boost::get<Segment<Inexact>>(&*result)) {
 			int oldMode = m_style.m_mode;
 			setMode(oldMode & ~vertices);
-			draw(*s);
+			GeometryRenderer::draw(*s);
 			setMode(oldMode);
 		}
 		if (m_style.m_mode & vertices) {
 			draw(r.source());
-		}
-	}
-}
-
-void IpeRenderer::draw(const Polyline<Inexact>& p) {
-	ipe::Curve* curve = convertPolylineToCurve(p);
-	ipe::Shape* shape = new ipe::Shape();
-	shape->appendSubPath(curve);
-	ipe::Path* path = new ipe::Path(getAttributesForStyle(), *shape);
-	m_page->append(ipe::TSelect::ENotSelected, m_layer, path);
-
-	if (m_style.m_mode & vertices) {
-		for (auto v = p.vertices_begin(); v != p.vertices_end(); v++) {
-			draw(*v);
-		}
-	}
-}
-
-void IpeRenderer::draw(const Polygon<Inexact>& p) {
-	ipe::Curve* curve = convertPolygonToCurve(p);
-	ipe::Shape* shape = new ipe::Shape();
-	shape->appendSubPath(curve);
-	ipe::Path* path = new ipe::Path(getAttributesForStyle(), *shape);
-	m_page->append(ipe::TSelect::ENotSelected, m_layer, path);
-
-	if (m_style.m_mode & vertices) {
-		for (auto v = p.vertices_begin(); v != p.vertices_end(); v++) {
-			draw(*v);
 		}
 	}
 }
@@ -235,6 +192,60 @@ void IpeRenderer::draw(const BezierSpline& s) {
 			draw(c.source());
 		}
 		draw(s.curves().back().target());
+	}
+}
+
+void IpeRenderer::draw(const RenderPath& p) {
+	ipe::Shape* shape = new ipe::Shape();
+	ipe::Curve* curve = nullptr;
+	std::vector<Point<Inexact>> verticesToDraw;
+	Point<Inexact> from;
+	for (RenderPath::Command c : p.commands()) {
+		if (std::holds_alternative<RenderPath::MoveTo>(c)) {
+			if (curve) {
+				shape->appendSubPath(curve);
+			}
+			curve = new ipe::Curve();
+			Point<Inexact> to = std::get<RenderPath::MoveTo>(c).m_to;
+			verticesToDraw.push_back(to);
+			from = to;
+			continue;
+		}
+		if (!curve) {
+			// didn't start with MoveTo
+			curve = new ipe::Curve();
+		}
+		if (std::holds_alternative<RenderPath::LineTo>(c)) {
+			Point<Inexact> to = std::get<RenderPath::LineTo>(c).m_to;
+			verticesToDraw.push_back(to);
+			curve->appendSegment(ipe::Vector(from.x(), from.y()), ipe::Vector(to.x(), to.y()));
+			from = to;
+
+		} else if (std::holds_alternative<RenderPath::ArcTo>(c)) {
+			Point<Inexact> center = std::get<RenderPath::ArcTo>(c).m_center;
+			Point<Inexact> to = std::get<RenderPath::ArcTo>(c).m_to;
+			bool clockwise = std::get<RenderPath::ArcTo>(c).m_clockwise;
+			verticesToDraw.push_back(to);
+
+			double radius = sqrt((center - to).squared_length());
+			ipe::Matrix matrix(radius, 0, 0, clockwise ? -radius : radius, center.x(), center.y());
+			curve->appendArc(matrix, ipe::Vector(from.x(), from.y()), ipe::Vector(to.x(), to.y()));
+			from = to;
+
+		} else if (std::holds_alternative<RenderPath::Close>(c)) {
+			curve->setClosed(true);
+		}
+	}
+	if (curve) {
+		shape->appendSubPath(curve);
+	}
+	ipe::Path* path = new ipe::Path(getAttributesForStyle(), *shape);
+	m_page->append(ipe::TSelect::ENotSelected, m_layer, path);
+
+	if (m_style.m_mode & vertices) {
+		for (const Point<Inexact>& vertex : verticesToDraw) {
+			draw(vertex);
+		}
 	}
 }
 
@@ -301,15 +312,6 @@ ipe::Curve* IpeRenderer::convertPolygonToCurve(const Polygon<Inexact>& p) const 
 		                     ipe::Vector(edge->end().x(), edge->end().y()));
 	}
 	curve->setClosed(true);
-	return curve;
-}
-
-ipe::Curve* IpeRenderer::convertPolylineToCurve(const Polyline<Inexact>& p) const {
-	ipe::Curve* curve = new ipe::Curve();
-	for (auto edge = p.edges_begin(); edge != p.edges_end(); edge++) {
-		curve->appendSegment(ipe::Vector(edge->start().x(), edge->start().y()),
-		                     ipe::Vector(edge->end().x(), edge->end().y()));
-	}
 	return curve;
 }
 

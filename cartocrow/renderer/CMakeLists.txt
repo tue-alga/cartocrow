@@ -4,6 +4,7 @@ set(SOURCES
 	ipe_renderer.cpp
 	painting_renderer.cpp
 	function_painting.cpp
+	render_path.cpp
 )
 set(HEADERS
 	geometry_painting.h
@@ -12,6 +13,7 @@ set(HEADERS
 	ipe_renderer.h
 	painting_renderer.h
 	function_painting.h
+	render_path.h
 )
 
 add_library(renderer ${SOURCES})

@@ -82,14 +82,12 @@ class IpeRenderer : public GeometryRenderer {
 	void save(const std::filesystem::path& file);
 
 	void draw(const Point<Inexact>& p) override;
-	void draw(const Segment<Inexact>& s) override;
-	void draw(const Polygon<Inexact>& p) override;
 	void draw(const PolygonWithHoles<Inexact>& p) override;
 	void draw(const Circle<Inexact>& c) override;
 	void draw(const BezierSpline& s) override;
 	void draw(const Line<Inexact>& l) override;
 	void draw(const Ray<Inexact>& r) override;
-	void draw(const Polyline<Inexact>& p) override;
+	void draw(const RenderPath& p) override;
 	void drawText(const Point<Inexact>& p, const std::string& text) override;
 
 	void pushStyle() override;
@@ -113,8 +111,6 @@ class IpeRenderer : public GeometryRenderer {
   private:
 	/// Converts a polygon to an Ipe curve.
 	ipe::Curve* convertPolygonToCurve(const Polygon<Inexact>& p) const;
-	/// Converts a polyline to an Ipe curve.
-	ipe::Curve* convertPolylineToCurve(const Polyline<Inexact>& p) const;
 	/// Returns Ipe attributes to style an Ipe path with the current style.
 	ipe::AllAttributes getAttributesForStyle() const;
 	/// Escapes LaTeX's [reserved characters](https://latexref.xyz/Reserved-characters.html)
