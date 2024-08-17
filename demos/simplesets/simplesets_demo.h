@@ -41,7 +41,7 @@ class SimpleSetsDemo : public QMainWindow {
 
   private:
 	Partition m_partition;
-	DilatedPatternArrangement m_arr;
+	std::shared_ptr<DilatedPatternDrawing> m_dpd;
 	GeneralSettings m_gs;
 	DrawSettings m_ds;
 	PartitionSettings m_ps;

@@ -19,8 +19,10 @@ CSPolygon ccb_to_polygon(CSArrangement::Ccb_halfedge_const_circulator circ) {
 	return poly;
 }
 
-CSPolygon dilatePattern(const Pattern& pattern, const Number<Inexact>& dilationRadius) {
-	auto cont = pattern.contour();
+Dilated::Dilated(const PolyPattern& polyPattern, const Number<Inexact>& dilationRadius) {
+	m_catPoints = polyPattern.catPoints();
+
+	auto cont = polyPattern.poly();
 
 	if (holds_alternative<Polygon<Inexact>>(cont)) {
 		auto exactPolygon = makeExact(std::get<Polygon<Inexact>>(cont));
@@ -40,14 +42,15 @@ CSPolygon dilatePattern(const Pattern& pattern, const Number<Inexact>& dilationR
 			}
 
 			// todo: is order of curves always correct?
-			return {curves.begin(), curves.end()};
+			m_contour = CSPolygon{curves.begin(), curves.end()};
+			return;
 		}
 
 		auto dilation = CGAL::approximated_offset_2(exactPolygon, dilationRadius, M_EPSILON);
 		if (dilation.has_holes()) {
 			throw std::runtime_error("Did not expect holes after dilating a polygonal pattern.");
 		}
-		return dilation.outer_boundary();
+		m_contour = dilation.outer_boundary();
 	} else if (holds_alternative<Polyline<Inexact>>(cont)) {
 		// 1. Dilate each segment
 		// 2. Make arrangement of dilated segments
@@ -66,7 +69,17 @@ CSPolygon dilatePattern(const Pattern& pattern, const Number<Inexact>& dilationR
 			}
 		}
 
-		return ccb_to_polygon(*arr.unbounded_face()->inner_ccbs_begin());
+		m_contour = ccb_to_polygon(*arr.unbounded_face()->inner_ccbs_begin());
+	} else {
+		throw std::runtime_error("Unknown pattern poly.");
 	}
+}
+
+const std::vector<CatPoint>& Dilated::catPoints() const {
+	return m_catPoints;
+}
+
+std::variant<Polyline<Inexact>, Polygon<Inexact>, CSPolygon> Dilated::contour() const {
+	return m_contour;
 }
 }

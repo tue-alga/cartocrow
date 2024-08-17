@@ -81,8 +81,8 @@ Number<Inexact> intersectionDelay(const std::vector<CatPoint>& points, const std
 		if (std::find(resultPts.begin(), resultPts.end(), pt) == resultPts.end() &&
 		    squared_distance(resultPoly, pt.point) < gs.dilationRadius() * 2) {
 			// note that Circle requires us to pass the squared radius
-			CSPolygon ptShape = dilatePattern(SinglePoint(pt), gs.dilationRadius());
-			CSPolygon rShape = dilatePattern(*result, gs.dilationRadius());
+			CSPolygon ptShape = Dilated(SinglePoint(pt), gs.dilationRadius()).m_contour;
+			CSPolygon rShape = Dilated(*result, gs.dilationRadius()).m_contour;
 			std::vector<CSPolygonWithHoles> inters;
 			CGAL::intersection(rShape, ptShape, std::back_inserter(inters));
 			Number<Inexact> newArea = 0;
@@ -90,8 +90,8 @@ Number<Inexact> intersectionDelay(const std::vector<CatPoint>& points, const std
 				newArea += area(gp);
 			}
 			inters.clear();
-			CSPolygon p1Shape = dilatePattern(*p1, gs.dilationRadius());
-			CSPolygon p2Shape = dilatePattern(*p2, gs.dilationRadius());
+			CSPolygon p1Shape = Dilated(*p1, gs.dilationRadius()).m_contour;
+			CSPolygon p2Shape = Dilated(*p2, gs.dilationRadius()).m_contour;
 			CGAL::intersection(p1Shape, ptShape, std::back_inserter(inters));
 			CGAL::intersection(p2Shape, ptShape, std::back_inserter(inters));
 			Number<Inexact> oldArea = 0;

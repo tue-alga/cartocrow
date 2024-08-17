@@ -71,7 +71,7 @@ SimpleSetsDemo::SimpleSetsDemo() {
 	renderer->setMinZoom(0.01);
 	renderer->setMaxZoom(1000.0);
 
-	std::filesystem::path filePath("/home/steven/Documents/cartocrow/data/nyc.txt");
+	std::filesystem::path filePath("/home/steven/Downloads/test/cartocrow/data/nyc.txt");
 	std::ifstream inputStream(filePath, std::ios_base::in);
 	if (!inputStream.good()) {
 		throw std::runtime_error("Failed to read input");
@@ -101,8 +101,8 @@ SimpleSetsDemo::SimpleSetsDemo() {
 	auto pp = std::make_shared<PartitionPainting>(m_partition, m_gs, m_ds);
 	renderer->addPainting(pp, "Partition");
 
-	m_arr = dilateAndArrange(m_partition, m_gs, m_cds);
-	auto ap = std::make_shared<ArrangementPainting>(m_arr, m_gs, m_ds, m_partition);
+	m_dpd = std::make_shared<DilatedPatternDrawing>(m_partition, m_gs, m_cds);
+	auto ap = std::make_shared<SimpleSetsPainting>(*m_dpd, m_ds);
 	renderer->addPainting(ap, "Arrangement");
 }
 

@@ -42,10 +42,10 @@ struct ComputeDrawingSettings {
 struct DrawSettings {
 	std::vector<Color> colors;
 	Number<Inexact> pointStrokeWeight(GeneralSettings gs) const {
-		return gs.pointSize / 2.5;
+		return gs.pointSize / 3.5;
 	}
 	Number<Inexact> contourStrokeWeight(GeneralSettings gs) const {
-		return gs.pointSize / 3.5;
+		return gs.pointSize / 4;
 	}
 };
 
