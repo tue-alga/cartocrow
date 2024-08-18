@@ -1,7 +1,18 @@
 #include "drawing_algorithm.h"
 #include "dilated/dilated_poly.h"
+#include "../renderer/render_path.h"
+
+using namespace cartocrow::renderer;
 
 namespace cartocrow::simplesets {
+CSTraits::X_monotone_curve_2 reverse(CSTraits::X_monotone_curve_2 curve) {
+	if (curve.is_linear()) {
+		return CSTraits::X_monotone_curve_2(curve.supporting_line(), curve.target(), curve.source());
+	} else {
+		return CSTraits::X_monotone_curve_2(curve.supporting_circle(), curve.target(), curve.source(), -curve.orientation());
+	}
+}
+
 CSPolygon face_to_polygon(const DilatedPatternArrangement::Face& face) {
 	assert(face.number_of_holes() == 0);
 	auto ccb_start = face.outer_ccb();
@@ -10,7 +21,11 @@ CSPolygon face_to_polygon(const DilatedPatternArrangement::Face& face) {
 	std::vector<CSTraits::X_monotone_curve_2> x_monotone_curves;
 	do {
 		auto curve = ccb->curve();
-		x_monotone_curves.push_back(curve);
+		if (ccb->source()->point() == curve.source()) {
+			x_monotone_curves.push_back(curve);
+		} else {
+			x_monotone_curves.push_back(reverse(curve));
+		}
 	} while(++ccb != ccb_start);
 
 	return {x_monotone_curves.begin(), x_monotone_curves.end()};
@@ -85,10 +100,13 @@ Point<Exact> get_approx_point_on_boundary(const DilatedPatternArrangement::Face&
 
 Point<Exact> get_point_in(const DilatedPatternArrangement::Face& face) {
 	auto poly = face_to_polygon(face);
-	auto bbox = poly.bbox();
-	Point<Exact> point_outside(bbox.xmin() - 1, bbox.ymin() - 1);
+	Rectangle<Exact> bbox = poly.bbox();
+	Rectangle<Exact> rect({bbox.xmin() - 1, bbox.ymin() - 1}, {bbox.xmax() + 1, bbox.ymax() + 1});
+	Point<Exact> point_outside(rect.xmin(), rect.ymin());
 	Point<Exact> approx_point_on_boundary = get_approx_point_on_boundary(face);
-	Segment<Exact> seg(point_outside, approx_point_on_boundary);
+	Line<Exact> line(point_outside, approx_point_on_boundary);
+	auto line_inter_box = CGAL::intersection(rect, line);
+	auto seg = boost::get<Segment<Exact>>(*line_inter_box);
 	auto seg_curve = make_x_monotone(seg);
 	std::vector<CSTraits::Point_2> intersection_pts;
 	for (auto cit = poly.curves_begin(); cit != poly.curves_end(); cit++) {
@@ -106,11 +124,7 @@ Point<Exact> get_point_in(const DilatedPatternArrangement::Face& face) {
 
 	std::sort(intersection_pts.begin(), intersection_pts.end(), [&seg](const auto& pt1, const auto& pt2) {
 		Vector<Exact> v = seg.supporting_line().to_vector();
-		Vector<Exact> pt1_ = makeExact(approximateAlgebraic(pt1)) - CGAL::ORIGIN;
-		Number<Exact> a1 = v * pt1_;
-	    Vector<Exact> pt2_ = makeExact(approximateAlgebraic(pt1)) - CGAL::ORIGIN;
-	    Number<Exact> a2 = v * pt2_;
-		return a1 < a2;
+		return v * (makeExact(approximateAlgebraic(pt1)) - makeExact(approximateAlgebraic(pt2))) < 0;
 	});
 
 	Point<Exact> approx_source;
@@ -375,26 +389,36 @@ SimpleSetsPainting::SimpleSetsPainting(const DilatedPatternDrawing& dpd, const D
 void SimpleSetsPainting::paint(renderer::GeometryRenderer& renderer) const {
 	renderer.setMode(renderer::GeometryRenderer::fill);
 	for (auto fit = m_dpd.m_arr.faces_begin(); fit != m_dpd.m_arr.faces_end(); ++fit) {
+		if (fit->is_unbounded()) continue;
 		auto face = *fit;
 		auto origins = face.data().origins;
 		if (origins.size() > 1) {
-			renderer.setFill(Color{0, 0, 0});
+			renderer.setFill(Color{100, 100, 100});
 		} else if (origins.size() == 1) {
-			renderer.setFill(Color{0, 0, 0});
 			renderer.setFill(m_ds.colors[m_dpd.m_dilated[origins[0]].category()]);
 		} else {
 			continue;
 		}
 		auto poly = face_to_polygon(face);
+
+		RenderPath path;
+		bool first = true;
 		for (auto cit = poly.curves_begin(); cit != poly.curves_end(); ++cit) {
+			if (first) {
+				path.moveTo(approximateAlgebraic(cit->source()));
+				first = false;
+			}
 			if (cit->is_linear()) {
-				renderer.draw(Segment<Inexact>(approximateAlgebraic(cit->source()), approximateAlgebraic(cit->target())));
+				path.lineTo(approximateAlgebraic(cit->target()));
 			} else if (cit->is_circular()){
 				auto circle = cit->supporting_circle();
-				renderer.draw(circle);
-				// todo: draw arc
+				path.arcTo(approximate(circle.center()), cit->orientation() == CGAL::CLOCKWISE, approximateAlgebraic(cit->target()));
 			}
 		}
+		path.close();
+		renderer.setFillOpacity(150);
+		renderer.setMode(renderer::GeometryRenderer::fill);
+		renderer.draw(path);
 	}
 
 	renderer.setMode(renderer::GeometryRenderer::stroke);
@@ -404,9 +428,11 @@ void SimpleSetsPainting::paint(renderer::GeometryRenderer& renderer) const {
 		if (curve.is_linear()) {
 			renderer.draw(Segment<Inexact>(approximateAlgebraic(curve.source()), approximateAlgebraic(curve.target())));
 		} else if (curve.is_circular()){
+			RenderPath path;
+			path.moveTo(approximateAlgebraic(curve.source()));
 			auto circle = curve.supporting_circle();
-			renderer.draw(circle);
-			// todo: draw arc
+			path.arcTo(approximate(circle.center()), curve.orientation() == CGAL::CLOCKWISE, approximateAlgebraic(curve.target()));
+			renderer.draw(path);
 		}
 	}
 }

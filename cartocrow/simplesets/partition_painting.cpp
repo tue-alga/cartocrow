@@ -11,7 +11,12 @@ void draw_poly_pattern(const PolyPattern& pattern, renderer::GeometryRenderer& r
 	renderer.setFill(ds.colors.at(pattern.category()));
 	renderer.setFillOpacity(100);
 	renderer.setStroke(Color{0, 0, 0}, ds.contourStrokeWeight(gs), true);
-	std::visit([&renderer](auto shape){ renderer.draw(shape); }, pattern.poly());
+	auto& pts = pattern.catPoints();
+	if (pts.size() == 1) {
+//		renderer.draw(pts[0].point);
+	} else {
+		std::visit([&renderer](auto shape) { renderer.draw(shape); }, pattern.poly());
+	}
 	for (const auto& pt : pattern.catPoints()) {
 		renderer.setStroke(Color{0, 0, 0}, ds.pointStrokeWeight(gs), true);
 		renderer.setFillOpacity(255);

@@ -98,12 +98,12 @@ SimpleSetsDemo::SimpleSetsDemo() {
 	}
 	m_partition = *thePartition;
 
-	auto pp = std::make_shared<PartitionPainting>(m_partition, m_gs, m_ds);
-	renderer->addPainting(pp, "Partition");
-
 	m_dpd = std::make_shared<DilatedPatternDrawing>(m_partition, m_gs, m_cds);
 	auto ap = std::make_shared<SimpleSetsPainting>(*m_dpd, m_ds);
 	renderer->addPainting(ap, "Arrangement");
+
+	auto pp = std::make_shared<PartitionPainting>(m_partition, m_gs, m_ds);
+	renderer->addPainting(pp, "Partition");
 }
 
 int main(int argc, char* argv[]) {
