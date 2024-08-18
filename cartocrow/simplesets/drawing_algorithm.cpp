@@ -211,17 +211,6 @@ connectedComponents(const std::vector<FaceH>& faces) {
 	return components;
 }
 
-Component::Component(std::vector<FaceH> faces): m_faces(std::move(faces)) {}
-
-// Best would be to give Component the same interface as a Face.
-// So have outer_ccb circulator etc.
-// Todo: implement this and put in core?
-HalfEdgeH Component::boundaryEdge() {
-	for (auto fh : m_faces) {
-//		auto startEdge = fh->
-	}
-}
-
 // This observer only works as intended when inserting curves incrementally, not when using the CGAL sweep-line insert.
 class MyObserver : public CGAL::Arr_observer<DilatedPatternArrangement> {
   public:
