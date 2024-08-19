@@ -579,10 +579,36 @@ void GeometryWidget::draw(const RenderPath& p) {
 			Point<Inexact> to = std::get<RenderPath::MoveTo>(c).m_to;
 			verticesToDraw.push_back(to);
 			path.moveTo(convertPoint(to));
+
 		} else if (std::holds_alternative<RenderPath::LineTo>(c)) {
 			Point<Inexact> to = std::get<RenderPath::LineTo>(c).m_to;
 			verticesToDraw.push_back(to);
 			path.lineTo(convertPoint(std::get<RenderPath::LineTo>(c).m_to));
+
+		} else if (std::holds_alternative<RenderPath::ArcTo>(c)) {
+			Point<Inexact> from = inverseConvertPoint(path.currentPosition());
+			Point<Inexact> center = std::get<RenderPath::ArcTo>(c).m_center;
+			Point<Inexact> to = std::get<RenderPath::ArcTo>(c).m_to;
+			bool clockwise = std::get<RenderPath::ArcTo>(c).m_clockwise;
+			verticesToDraw.push_back(to);
+
+			double radius = sqrt((center - to).squared_length());
+			Vector<Inexact> diagonal(radius, radius);
+			QRectF bounds(convertPoint(center - diagonal), convertPoint(center + diagonal));
+
+			double startAngle = atan2((from - center).y(), (from - center).x()) * (180 / M_PI);
+			double endAngle = atan2((to - center).y(), (to - center).x()) * (180 / M_PI);
+			double sweepLength = endAngle - startAngle;
+			if (!clockwise && sweepLength < 0) {
+				sweepLength += 360;  // counter-clockwise -> positive sweepLength
+			}
+			if (clockwise && sweepLength > 0) {
+				sweepLength -= 360;  // clockwise -> negative sweepLength
+			}
+			// the angles are negative because the y-axis is pointing up here
+			// instead of down
+			path.arcTo(bounds, -startAngle, -sweepLength);
+
 		} else if (std::holds_alternative<RenderPath::Close>(c)) {
 			path.closeSubpath();
 		}

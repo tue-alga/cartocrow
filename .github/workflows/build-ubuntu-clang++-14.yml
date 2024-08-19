@@ -14,6 +14,6 @@ jobs:
     - name: CMake 
       run: cmake -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_BUILD_TYPE=Release -S . -B build-clang
     - name: Build
-      run: cmake --build build-clang -j4
+      run: cmake --build build-clang
     - name: Test
       run: build-clang/test/cartocrow_test

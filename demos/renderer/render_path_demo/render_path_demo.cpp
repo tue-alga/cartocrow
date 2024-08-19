@@ -34,15 +34,30 @@ void DemoPainting::paint(GeometryRenderer& renderer) const {
 	renderer.setFill(Color{120, 170, 240});
 	renderer.setMode(GeometryRenderer::DrawMode::fill | GeometryRenderer::DrawMode::stroke);
 
-	// construct a RenderPath
+	// construct a RenderPath with three subpaths
 	RenderPath path;
-	path.moveTo(Point<Inexact>(0, 0));
-	path.lineTo(Point<Inexact>(50, 50));
-	path.lineTo(Point<Inexact>(70, -40));
+
+	path.moveTo(Point<Inexact>(-150, -50));
+	for (int i = 0; i < 4; i++) {
+		double alpha = i * 2 * M_PI / 4;
+		path.arcTo(Point<Inexact>(-200 + 100 * cos(alpha), 100 * sin(alpha)), true,
+		           Point<Inexact>(-200 + 50 * sqrt(2) * cos(alpha + M_PI / 4),
+		                          50 * sqrt(2) * sin(alpha + M_PI / 4)));
+	}
+
+	path.moveTo(Point<Inexact>(-30, 0));
+	path.lineTo(Point<Inexact>(20, 50));
+	path.lineTo(Point<Inexact>(40, -40));
 	path.close();
-	path.moveTo(Point<Inexact>(100, 0));
-	path.lineTo(Point<Inexact>(120, -50));
-	path.lineTo(Point<Inexact>(150, 30));
+	
+	path.moveTo(Point<Inexact>(225, -25));
+	for (int i = 0; i < 4; i++) {
+		double alpha = i * 2 * M_PI / 4;
+		path.arcTo(Point<Inexact>(200 + 25 * cos(alpha), 25 * sin(alpha)), false,
+		           Point<Inexact>(200 + 25 * sqrt(2) * cos(alpha + M_PI / 4),
+		                          25 * sqrt(2) * sin(alpha + M_PI / 4)));
+	}
+	path.close();
 
 	// draw various shapes
 	renderer.draw(path);

@@ -33,6 +33,10 @@ void RenderPath::lineTo(Point<Inexact> to) {
 	m_commands.push_back(LineTo{to});
 }
 
+void RenderPath::arcTo(Point<Inexact> center, bool clockwise, Point<Inexact> to) {
+	m_commands.push_back(ArcTo{center, clockwise, to});
+}
+
 void RenderPath::close() {
 	m_commands.push_back(Close{});
 }
