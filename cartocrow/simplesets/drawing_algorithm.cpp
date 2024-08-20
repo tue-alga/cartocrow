@@ -1,47 +1,33 @@
 #include "drawing_algorithm.h"
+
+#include <utility>
 #include "dilated/dilated_poly.h"
 #include "../renderer/render_path.h"
+#include "grow_circles.h"
+#include "poly_line_gon_intersection.h"
+#include "helpers/arrangement_helpers.h"
+#include <CGAL/Boolean_set_operations_2.h>
 
 using namespace cartocrow::renderer;
 
 namespace cartocrow::simplesets {
-CSTraits::X_monotone_curve_2 reverse(CSTraits::X_monotone_curve_2 curve) {
-	if (curve.is_linear()) {
-		return CSTraits::X_monotone_curve_2(curve.supporting_line(), curve.target(), curve.source());
-	} else {
-		return CSTraits::X_monotone_curve_2(curve.supporting_circle(), curve.target(), curve.source(), -curve.orientation());
-	}
-}
-
+// todo: deal with holes
 CSPolygon face_to_polygon(const DilatedPatternArrangement::Face& face) {
 	assert(face.number_of_holes() == 0);
-	auto ccb_start = face.outer_ccb();
-	auto ccb = ccb_start;
-
-	std::vector<CSTraits::X_monotone_curve_2> x_monotone_curves;
-	do {
-		auto curve = ccb->curve();
-		if (ccb->source()->point() == curve.source()) {
-			x_monotone_curves.push_back(curve);
-		} else {
-			x_monotone_curves.push_back(reverse(curve));
-		}
-	} while(++ccb != ccb_start);
-
-	return {x_monotone_curves.begin(), x_monotone_curves.end()};
+	return ccb_to_polygon<CSTraits>(face.outer_ccb());
 }
 
-CSTraits::X_monotone_curve_2 make_x_monotone(const Segment<Exact>& segment) {
+X_monotone_curve_2 make_x_monotone(const Segment<Exact>& segment) {
 	CSTraits traits;
 	auto make_x_monotone = traits.make_x_monotone_2_object();
-	std::vector<boost::variant<CSTraits::Point_2, CSTraits::X_monotone_curve_2>> curves_and_points;
+	std::vector<boost::variant<CSTraits::Point_2, X_monotone_curve_2>> curves_and_points;
 	make_x_monotone(segment, std::back_inserter(curves_and_points));
-	std::vector<CSTraits::X_monotone_curve_2> curves;
+	std::vector<X_monotone_curve_2> curves;
 
 	// There should not be any isolated points
 	for (auto kinda_curve : curves_and_points) {
 		assert(kinda_curve.which() == 1);
-		auto curve = boost::get<CSTraits::X_monotone_curve_2>(kinda_curve);
+		auto curve = boost::get<X_monotone_curve_2>(kinda_curve);
 		curves.push_back(curve);
 	}
 
@@ -70,19 +56,19 @@ Point<Exact> get_approx_point_on_boundary(const DilatedPatternArrangement::Face&
 //		CGAL::intersection(pl, circle);
 		CSTraits traits;
 		auto make_x_monotone = traits.make_x_monotone_2_object();
-		std::vector<boost::variant<CSTraits::Point_2, CSTraits::X_monotone_curve_2>> curves_and_points;
+		std::vector<boost::variant<CSTraits::Point_2, X_monotone_curve_2>> curves_and_points;
 //		make_x_monotone(circle, std::back_inserter(curves_and_points));
 		make_x_monotone(seg, std::back_inserter(curves_and_points));
-		std::vector<CSTraits::X_monotone_curve_2> curves;
+		std::vector<X_monotone_curve_2> curves;
 
 		// There should not be any isolated points
 		for (auto kinda_curve : curves_and_points) {
-			auto curve = boost::get<CSTraits::X_monotone_curve_2>(kinda_curve);
+			auto curve = boost::get<X_monotone_curve_2>(kinda_curve);
 			curves.push_back(curve);
 		}
 
 		typedef std::pair<CSTraits::Point_2, unsigned int> Intersection_point;
-		typedef boost::variant<Intersection_point, CSTraits::X_monotone_curve_2> Intersection_result;
+		typedef boost::variant<Intersection_point, X_monotone_curve_2> Intersection_result;
 		std::vector<Intersection_result> intersection_results;
 		assert(curves.size() == 1);
 		curve.intersect(curves[0], std::back_inserter(intersection_results));
@@ -112,7 +98,7 @@ Point<Exact> get_point_in(const DilatedPatternArrangement::Face& face) {
 	for (auto cit = poly.curves_begin(); cit != poly.curves_end(); cit++) {
 		auto curve = *cit;
 		typedef std::pair<CSTraits::Point_2, unsigned int> Intersection_point;
-		typedef boost::variant<Intersection_point, CSTraits::X_monotone_curve_2> Intersection_result;
+		typedef boost::variant<Intersection_point, X_monotone_curve_2> Intersection_result;
 		std::vector<Intersection_result> intersection_results;
 		curve.intersect(seg_curve, std::back_inserter(intersection_results));
 
@@ -152,7 +138,7 @@ bool on_or_inside(const CSPolygon& polygon, const Point<Exact>& point) {
 	auto seg_curve = make_x_monotone(seg);
 
 	typedef std::pair<CSTraits::Point_2, unsigned int> Intersection_point;
-	typedef boost::variant<Intersection_point, CSTraits::X_monotone_curve_2> Intersection_result;
+	typedef boost::variant<Intersection_point, X_monotone_curve_2> Intersection_result;
 	std::vector<Intersection_result> intersection_results;
 
 	for (auto cit = polygon.curves_begin(); cit != polygon.curves_end(); ++cit) {
@@ -164,13 +150,21 @@ bool on_or_inside(const CSPolygon& polygon, const Point<Exact>& point) {
 }
 
 std::vector<Component>
-connectedComponents(const std::vector<FaceH>& faces) {
-	std::vector<FaceH> remaining = faces;
+connectedComponents(const DilatedPatternArrangement& arr, std::function<bool(FaceH)> in_component) {
+	std::vector<FaceH> remaining;
+	for (auto fit = arr.faces_begin(); fit != arr.faces_end(); ++fit) {
+		auto fh = fit.ptr();
+		if (in_component(fh)) {
+			remaining.emplace_back(fh);
+		}
+	}
+
 	std::vector<Component> components;
 
 	while (!remaining.empty()) {
 		// We do a BFS
 		std::vector<FaceH> compFaces;
+		std::vector<HalfEdgeH> compBoundaryEdges;
 		auto first = remaining.front();
 		std::deque<FaceH> q;
 		q.push_back(first);
@@ -190,12 +184,15 @@ connectedComponents(const std::vector<FaceH>& faces) {
 				// Go through each neighbouring face
 				do {
 					auto candidate = ccb_it->twin()->face();
-
-					// If this is one of the provided faces, and not yet added to queue or compFaces, add it to queue.
-					if (std::find(remaining.begin(), remaining.end(), candidate) != remaining.end() &&
-					    std::find(compFaces.begin(), compFaces.end(), candidate) == compFaces.end() &&
-					    std::find(q.begin(), q.end(), candidate) == q.end()) {
-						q.push_back(candidate);
+					if (!in_component(candidate)) {
+						compBoundaryEdges.emplace_back(ccb_it.ptr());
+					} else {
+						// If this is one of the provided faces, and not yet added to queue or compFaces, add it to queue.
+						if (std::find(compFaces.begin(), compFaces.end(), candidate) ==
+						        compFaces.end() &&
+						    std::find(q.begin(), q.end(), candidate) == q.end()) {
+							q.push_back(candidate);
+						}
 					}
 				} while (++ccb_it != ccb_start);
 			}
@@ -205,61 +202,13 @@ connectedComponents(const std::vector<FaceH>& faces) {
 		remaining.erase(std::remove_if(remaining.begin(), remaining.end(), [&compFaces](const auto& f) {
 		  return std::find(compFaces.begin(), compFaces.end(), f) != compFaces.end();
 		}), remaining.end());
-		components.emplace_back(std::move(compFaces));
+		components.emplace_back(std::move(compFaces), std::move(compBoundaryEdges), in_component);
 	}
 
 	return components;
 }
 
-// This observer only works as intended when inserting curves incrementally, not when using the CGAL sweep-line insert.
-class MyObserver : public CGAL::Arr_observer<DilatedPatternArrangement> {
-  public:
-	MyObserver(DilatedPatternArrangement& arr,
-	           const std::vector<std::pair<CSTraits::X_monotone_curve_2, int>>& curve_data) :
-	      CGAL::Arr_observer<DilatedPatternArrangement>(arr), m_curve_data(curve_data) {};
-
-	void after_create_edge(HalfEdgeH e) override {
-		const CSTraits::X_monotone_curve_2& curve = e->curve();
-		bool found = false;
-		for (const auto& curve_datum : m_curve_data) {
-			const CSTraits::X_monotone_curve_2& other_curve = curve_datum.first;
-			// Cannot check curve equality for some reason, so do it manually instead.
-			if ((curve.source() == other_curve.source() &&
-			    curve.target() == other_curve.target() ||
-			    curve.source() == other_curve.target() &&
-			     curve.target() == other_curve.source()) &&
-			    (curve.is_linear() && other_curve.is_linear() ||
-			     curve.is_circular() && other_curve.is_circular() &&
-			         curve.supporting_circle() == other_curve.supporting_circle())) {
-				found = true;
-				e->set_data(HalfEdgeData{curve_datum.second});
-			}
-		}
-
-		++m_count;
-	}
-
-	void before_split_edge(HalfEdgeH e, VertexH v, const X_monotone_curve_2& c1, const X_monotone_curve_2& c2) override {
-		m_edge_split_data = e->data();
-	}
-
-	void after_split_edge(HalfEdgeH e1, HalfEdgeH e2) override {
-		if (!m_edge_split_data.has_value()) {
-			throw std::runtime_error("Data before split is not accessible after split");
-		}
-		e1->set_data(*m_edge_split_data);
-		e2->set_data(*m_edge_split_data);
-
-		m_edge_split_data = std::nullopt;
-	}
-
-	int m_count = 0;
-  private:
-	const std::vector<std::pair<CSTraits::X_monotone_curve_2, int>>& m_curve_data;
-	std::optional<HalfEdgeData> m_edge_split_data;
-};
-
-CSTraits::Curve_2 to_curve(CSTraits::X_monotone_curve_2 xmc) {
+CSTraits::Curve_2 to_curve(const X_monotone_curve_2& xmc) {
 	if (xmc.is_linear()) {
 		return {xmc.supporting_line(), xmc.source(), xmc.target()};
 	} else if (xmc.is_circular()) {
@@ -269,8 +218,43 @@ CSTraits::Curve_2 to_curve(CSTraits::X_monotone_curve_2 xmc) {
 	}
 }
 
-//DilatedPatternArrangement
-//dilateAndArrange(const Partition& partition, const GeneralSettings& gs, const ComputeDrawingSettings& cds) {
+Component::Component(std::vector<FaceH> faces, std::vector<HalfEdgeH> boundary_edges, std::function<bool(FaceH)> in_component) :
+      m_faces(std::move(faces)), m_in_component(std::move(in_component)) {
+	while (!boundary_edges.empty()) {
+		auto he = boundary_edges.front();
+		auto circ_start = ComponentCcbCirculator(he, m_in_component);
+		auto circ = circ_start;
+
+		std::vector<X_monotone_curve_2> xm_curves;
+		auto last_it = boundary_edges.end();
+		do {
+			last_it = std::remove(boundary_edges.begin(), last_it, circ.handle());
+			xm_curves.push_back(circ->curve());
+		} while (++circ != circ_start);
+		boundary_edges.erase(last_it, boundary_edges.end());
+
+		CSPolygon polygon(xm_curves.begin(), xm_curves.end());
+		auto orientation = polygon.orientation();
+		if (orientation == CGAL::COUNTERCLOCKWISE) {
+			m_outer_ccbs.push_back(circ_start);
+		} else if (orientation == CGAL::CLOCKWISE) {
+			m_inner_ccbs.push_back(circ_start);
+		} else {
+			throw std::runtime_error("Face orientation is not clockwise nor counterclockwise.");
+		}
+	}
+}
+
+std::ostream& operator<<(std::ostream& out, const Order& o) {
+	return out << to_string(o);
+}
+
+std::ostream& operator<<(std::ostream& out, const Relation& r) {
+	return out << r.left << " " << r.ordering
+	           << (r.preference != r.ordering ? "(" + to_string(r.preference) + ")" : "")
+	           << " " << r.right;
+}
+
 DilatedPatternDrawing::DilatedPatternDrawing(const Partition& partition, const GeneralSettings& gs, const ComputeDrawingSettings& cds)
 	: m_gs(gs), m_cds(cds) {
 	for (const auto& p : partition) {
@@ -287,11 +271,6 @@ DilatedPatternDrawing::DilatedPatternDrawing(const Partition& partition, const G
 			curves_data.emplace_back(curve, i);
 		}
 	}
-
-//	MyObserver obs(m_arr, curves_data);
-//	for (auto& curve : x_monotone_curves) {
-//		CGAL::insert(m_arr, curve);
-//	}
 
 	CGAL::insert(m_arr, curves.begin(), curves.end());
 	// Set for each face which pattern it is a subset of.
@@ -336,40 +315,206 @@ DilatedPatternDrawing::DilatedPatternDrawing(const Partition& partition, const G
 			auto cs = intersectionComponents(i, j);
 			for (auto& c : cs) {
 				auto rel = computePreference(i, j, c);
-				for (auto f : c.m_faces) {
-					f->data().relations.push_back(rel);
+				for (auto fit = c.faces_begin(); fit != c.faces_end(); ++fit) {
+					fit->data().relations.push_back(rel);
 				}
 			}
 		}
 	}
 }
 
+/// Returns parts of the boundary of c that originate from i.
+/// This function assumes that some part of the boundary, but not all of the boundary, originates from i.
+std::vector<CSPolyline> boundaryParts(const Component& c, int i) {
+	std::vector<Component::ComponentCcbCirculator> ccbs;
+	std::copy(c.outer_ccbs_begin(), c.outer_ccbs_end(), std::back_inserter(ccbs));
+	std::copy(c.inner_ccbs_begin(), c.inner_ccbs_end(), std::back_inserter(ccbs));
+
+	std::vector<CSPolyline> polylines;
+
+	for (const auto& ccb : ccbs) {
+		// First find a half-edge at the start of a 'part' of this CCB (connected component of the boundary).
+		auto circ = ccb;
+
+		bool found = true;
+		while (circ->data().origin != i) {
+			++circ;
+			if (circ == ccb) {
+				found = false;
+				break;
+			}
+		}
+
+		if (!found) {
+			continue;
+		}
+
+		while (true) {
+			auto prev = circ;
+			--prev;
+			if (prev->data().origin == i) {
+				circ = prev;
+			} else {
+				break;
+			}
+		}
+		assert(circ->data().origin == i);
+
+		// Next, make a polyline for every connected part of the boundary that originates from i.
+		std::vector<X_monotone_curve_2> xm_curves;
+		auto curr = circ;
+		do {
+			if (curr->data().origin == i) {
+				xm_curves.push_back(curr->curve());
+			} else {
+				if (!xm_curves.empty()) {
+					polylines.emplace_back(xm_curves.begin(), xm_curves.end());
+					xm_curves.clear();
+				}
+			}
+		} while (++curr != circ);
+		if (!xm_curves.empty()) {
+			polylines.emplace_back(xm_curves.begin(), xm_curves.end());
+			xm_curves.clear();
+		}
+	}
+
+	return polylines;
+}
+
+// todo: check if small circular arcs should be allowed
+bool isStraight(const CSPolyline& polyline) {
+	for (auto cit = polyline.curves_begin(); cit != polyline.curves_end(); ++cit) {
+		if (cit->is_circular()) return false;
+	}
+	return true;
+}
+
+/// The inclusion and exclusion disks for component \ref c when \ref i is stacked on top of \ref j.
+IncludeExcludeDisks
+DilatedPatternDrawing::includeExcludeDisks(int i, int j, const Component& c) {
+	std::vector<Point<Exact>> ptsI;
+	const auto& catPointsI = m_dilated[i].catPoints();
+	std::transform(catPointsI.begin(), catPointsI.end(), std::back_inserter(ptsI), [](const CatPoint& catPoint) {
+		return Point<Exact>(catPoint.point.x(), catPoint.point.y());
+	});
+	std::vector<Point<Exact>> ptsJ;
+	const auto& catPointsJ = m_dilated[j].catPoints();
+	std::transform(catPointsJ.begin(), catPointsJ.end(), std::back_inserter(ptsJ), [](const CatPoint& catPoint) {
+	  return Point<Exact>(catPoint.point.x(), catPoint.point.y());
+	});
+
+	auto rSqrd = m_gs.dilationRadius() * m_gs.dilationRadius();
+    auto result = growCircles(ptsI, ptsJ, rSqrd, rSqrd * m_cds.cutoutRadiusFactor);
+
+	std::vector<Circle<Exact>> relevantExclusionDisks;
+	for (const auto& d : result.second) {
+		if (CGAL::do_intersect(circleToCSPolygon(d), ccb_to_polygon<CSTraits>(c.outer_ccb()))) {
+			relevantExclusionDisks.push_back(d);
+		}
+	}
+	return {result.first, relevantExclusionDisks};
+}
+
 Relation DilatedPatternDrawing::computePreference(int i, int j, const Component& c) {
-	auto pref = CGAL::ZERO;
+	// The preference indicates the relation R in iRj.
+	// If R is Order::GREATER then i > j and i is preferred to be on top of j.
+	auto pref = Order::EQUAL;
 
 	// 3. Prefer to cover a line segment over covering a circular arc.
+	auto circArcIsCovered = [](const std::vector<CSPolyline>& bps) {
+		for (auto& polyline : bps) {
+			if (!isStraight(polyline)) {
+				return true;
+			}
+		}
+		return false;
+	};
+
+	// If j is stacked over i then it covers all edges of i.
+	// Check if any of them is a circular arc.
+	auto bpi = boundaryParts(c, i);
+	assert(!bpi.empty());
+	bool iCircArcIsCovered = circArcIsCovered(bpi);
+	// Vice versa.
+	auto bpj = boundaryParts(c, j);
+	assert(!bpj.empty());
+	bool jCircArcIsCovered = circArcIsCovered(bpj);
+
+	if (iCircArcIsCovered && !jCircArcIsCovered) {
+		pref = Order::GREATER;
+	}
+	if (!iCircArcIsCovered && jCircArcIsCovered){
+		pref = Order::SMALLER;
+	}
+
 	// 2. Prefer to indent a line segment over indenting a circular arc.
+	// Disks that would be cut out of i to expose points in j.
+	auto jExclusion = includeExcludeDisks(i, j, c).exclude;
+	// Disks that would be cut out of j to expose points in i.
+	auto iExclusion = includeExcludeDisks(j, i, c).exclude;
+
+	auto circularIndented = [](const std::vector<Circle<Exact>>& exclusionDisks, const std::vector<CSPolyline>& bps) {
+		for (const auto& d : exclusionDisks) {
+			if (d.squared_radius() <= 0) continue;
+			for (auto& polyline : bps) {
+				auto inters = poly_line_gon_intersection(circleToCSPolygon(d), polyline);
+				for (auto& inter : inters) {
+					if (!isStraight(inter)) {
+						return true;
+					}
+				}
+			}
+		}
+		return false;
+	};
+	bool iCircularIndented = circularIndented(jExclusion, bpi);
+	bool jCircularIndented = circularIndented(iExclusion, bpj);
+
+	if (iCircularIndented && !jCircularIndented) {
+		pref = Order::GREATER;
+	}
+	if (!iCircularIndented && jCircularIndented){
+		pref = Order::SMALLER;
+	}
+
 	// 1. Prefer to avoid few points over many points.
-	// todo: implement
+	// Fewer disks would be cut out of i than out of j, so prefer to stack i on top of j
+	if (jExclusion.size() < iExclusion.size()) {
+		pref = Order::GREATER;
+	}
+	if (iExclusion.size() < jExclusion.size()) {
+		pref = Order::SMALLER;
+	}
 
 	return {i, j, pref, pref};
 }
 
 std::vector<Component>
-DilatedPatternDrawing::intersectionComponents(int i, int j) {
-	std::vector<FaceH> faces;
-	const std::vector<FaceH>& facesI = m_iToFaces[i];
-	const std::vector<FaceH>& facesJ = m_iToFaces[j];
-	std::set_intersection(facesI.begin(), facesI.end(), facesJ.begin(), facesJ.end(), std::back_inserter(faces));
-	return connectedComponents(faces);
+DilatedPatternDrawing::intersectionComponents(int i, int j) const {
+	return connectedComponents(m_arr, [i, j](FaceH fh) {
+		const auto& origins = fh->data().origins;
+		return std::find(origins.begin(), origins.end(), i) != origins.end() &&
+		       std::find(origins.begin(), origins.end(), j) != origins.end();
+	});
 }
 
 std::vector<Component>
-DilatedPatternDrawing::intersectionComponents(int i) {
-	std::vector<FaceH> faces;
-	std::copy_if(m_iToFaces[i].begin(), m_iToFaces[i].end(), std::back_inserter(faces),
-	             [](const FaceH& fh) { return fh->data().origins.size() > 1; });
-	return connectedComponents(faces);
+DilatedPatternDrawing::intersectionComponents(int i) const {
+	return connectedComponents(m_arr, [i](FaceH fh) {
+		const auto& origins = fh->data().origins;
+		return std::find(origins.begin(), origins.end(), i) != origins.end();
+	});
+}
+
+std::string to_string(Order ord) {
+	if (ord == Order::SMALLER) {
+		return "<";
+	} else if (ord == Order::EQUAL) {
+		return "=";
+	} else {
+		return ">";
+	}
 }
 
 SimpleSetsPainting::SimpleSetsPainting(const DilatedPatternDrawing& dpd, const DrawSettings& ds)
@@ -408,6 +553,22 @@ void SimpleSetsPainting::paint(renderer::GeometryRenderer& renderer) const {
 		renderer.setFillOpacity(150);
 		renderer.setMode(renderer::GeometryRenderer::fill);
 		renderer.draw(path);
+
+		renderer.setMode(renderer::GeometryRenderer::fill | renderer::GeometryRenderer::stroke);
+		renderer.setFill(Color{0, 0, 0});
+		renderer.setStroke(Color{0, 0, 0}, 1);
+
+		auto& rs = face.data().relations;
+		if (!rs.empty()) {
+			auto r = rs[0];
+			std::stringstream ss;
+			ss << r.left << " " << to_string(r.preference) << " " << r.right;
+			renderer.drawText(get_point_in(face), ss.str());
+		}
+
+		if (origins.size() == 1) {
+			renderer.drawText(get_point_in(face), std::to_string(origins[0]));
+		}
 	}
 
 	renderer.setMode(renderer::GeometryRenderer::stroke);

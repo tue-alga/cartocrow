@@ -17,7 +17,7 @@ Number<Inexact> area(const CSTraits::Point_2& P1, const CSTraits::Point_2& P2);
 Number<Inexact> area(const CSTraits::Point_2& P1, const CSTraits::Point_2& P2, const CSTraits::Rational_circle_2& C);
 
 // ------ return signed area under the X-monotone curve
-Number<Inexact> area(const CSTraits::X_monotone_curve_2& XCV);
+Number<Inexact> area(const X_monotone_curve_2& XCV);
 
 // ------ return area of the simple polygon
 Number<Inexact> area(const CSPolygon P);

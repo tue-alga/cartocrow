@@ -11,6 +11,8 @@ set(SOURCES
 	partition_algorithm.cpp
 	partition_painting.cpp
 	drawing_algorithm.cpp
+	grow_circles.cpp
+	poly_line_gon_intersection.cpp
 )
 set(HEADERS
 	types.h
@@ -31,6 +33,10 @@ set(HEADERS
 	partition_painting.h
 	partition.h
 	drawing_algorithm.h
+	general_polyline.h
+	grow_circles.h
+	poly_line_gon_intersection.h
+	helpers/arrangement_helpers.h
 )
 
 add_library(simplesets ${SOURCES})

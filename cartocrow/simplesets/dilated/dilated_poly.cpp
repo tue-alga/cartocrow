@@ -29,20 +29,7 @@ Dilated::Dilated(const PolyPattern& polyPattern, const Number<Inexact>& dilation
 
 		if (exactPolygon.size() == 1) {
 			CSTraits::Rational_circle_2 circle(exactPolygon.vertex(0), dilationRadius * dilationRadius);
-			CSTraits traits;
-			auto make_x_monotone = traits.make_x_monotone_2_object();
-			std::vector<boost::variant<CSTraits::Point_2, CSTraits::X_monotone_curve_2>> curves_and_points;
-			make_x_monotone(circle, std::back_inserter(curves_and_points));
-			std::vector<CSTraits::X_monotone_curve_2> curves;
-
-			// There should not be any isolated points
-			for (auto kinda_curve : curves_and_points) {
-				auto curve = boost::get<CSTraits::X_monotone_curve_2>(kinda_curve);
-				curves.push_back(curve);
-			}
-
-			// todo: is order of curves always correct?
-			m_contour = CSPolygon{curves.begin(), curves.end()};
+			m_contour = circleToCSPolygon(circle);
 			return;
 		}
 

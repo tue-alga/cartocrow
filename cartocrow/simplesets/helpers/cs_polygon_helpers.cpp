@@ -37,7 +37,7 @@ Number<Inexact> area(const CSTraits::Point_2& P1, const CSTraits::Point_2& P2, c
 }
 
 // ------ return signed area under the X-monotone curve
-Number<Inexact> area(const CSTraits::X_monotone_curve_2& XCV) {
+Number<Inexact> area(const X_monotone_curve_2& XCV) {
 	if (XCV.is_linear()) {
 		return area(XCV.source(), XCV.target());
 	} else if (XCV.is_circular()) {

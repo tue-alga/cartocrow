@@ -40,6 +40,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <QVBoxLayout>
 #include "cartocrow/simplesets/dilated/dilated_poly.h"
 #include "colors.h"
+#include <CGAL/Bbox_2.h>
 
 namespace fs = std::filesystem;
 using namespace cartocrow;
@@ -64,6 +65,9 @@ SimpleSetsDemo::SimpleSetsDemo() {
 	vLayout->addWidget(fileSelectorLabel);
 	vLayout->addWidget(fileSelector);
 
+	auto* fitToScreenButton = new QPushButton("Fit to screen");
+	vLayout->addWidget(fitToScreenButton);
+
 	auto renderer = new GeometryWidget();
 	renderer->setDrawAxes(false);
 	setCentralWidget(renderer);
@@ -86,7 +90,6 @@ SimpleSetsDemo::SimpleSetsDemo() {
 	m_ds = DrawSettings{{CB::light_blue, CB::light_red, CB::light_green, CB::light_purple, CB::light_orange}};
 	m_cds = ComputeDrawingSettings{0.675};
 	auto partitionList = partition(nycPoints, m_gs, m_ps, 8 * m_gs.dilationRadius());
-	std::cout << partitionList.size() << std::endl;
 
 	Number<Inexact> cover = 4.7;
 
@@ -104,6 +107,16 @@ SimpleSetsDemo::SimpleSetsDemo() {
 
 	auto pp = std::make_shared<PartitionPainting>(m_partition, m_gs, m_ds);
 	renderer->addPainting(pp, "Partition");
+
+	connect(fitToScreenButton, &QPushButton::clicked, [nycPoints, renderer, this]() {
+		std::vector<Point<Inexact>> pts;
+		std::transform(nycPoints.begin(), nycPoints.end(), std::back_inserter(pts),
+		               [](const CatPoint& pt) { return pt.point; });
+		Box box = CGAL::bbox_2(pts.begin(), pts.end());
+		auto delta = 2 * m_gs.dilationRadius();
+		Box expanded(box.xmin() - delta, box.ymin() - delta, box.xmax() + delta, box.ymax() + delta);
+		renderer->fitInView(expanded);
+	});
 }
 
 int main(int argc, char* argv[]) {

@@ -9,13 +9,17 @@
 #include <CGAL/Gps_traits_2.h>
 #include <CGAL/Gps_circle_segment_traits_2.h>
 
+#include "general_polyline.h"
+
 namespace cartocrow::simplesets {
 //typedef Exact K;
 typedef CGAL::Arr_circle_segment_traits_2<Exact> CSTraits;
 typedef CGAL::Gps_circle_segment_traits_2<Exact> CSTraitsBoolean;
 typedef CSTraitsBoolean::Polygon_2 CSPolygon;
 typedef CSTraitsBoolean::Polygon_with_holes_2 CSPolygonWithHoles;
+typedef General_polyline_2<CSTraits> CSPolyline;
 typedef CGAL::Arrangement_2<CSTraits> CSArrangement;
+typedef CSTraits::X_monotone_curve_2 X_monotone_curve_2;
 //typedef CGAL::CORE_algebraic_number_traits Nt_traits;
 //typedef CGAL::Cartesian<Nt_traits::Rational> Rat_kernel;
 //typedef Nt_traits::Algebraic Algebraic;
@@ -28,6 +32,8 @@ Point<Exact> makeExact(const Point<Inexact>& point);
 std::vector<Point<Exact>> makeExact(const std::vector<Point<Inexact>>& points);
 Polygon<Exact> makeExact(const Polygon<Inexact>& polygon);
 Point<Inexact> approximateAlgebraic(const CSTraits::Point_2& algebraic_point);
+
+CSPolygon circleToCSPolygon(const Circle<Exact>& circle);
 }
 
 #endif //CARTOCROW_TYPES_H

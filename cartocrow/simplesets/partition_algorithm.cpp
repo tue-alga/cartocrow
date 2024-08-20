@@ -150,7 +150,6 @@ partition(const std::vector<CatPoint>& points, const GeneralSettings& gs, const 
 	while (!events.empty()) {
 		auto ev = events.top();
 		events.pop();
-		std::cout << ev.time << std::endl;
 
 		if (ev.time > maxTime) break;
 
@@ -208,7 +207,6 @@ partition(const std::vector<CatPoint>& points, const GeneralSettings& gs, const 
 		partition.push_back(ev.result);
 		// Save this partition
 		history.emplace_back(ev.time, partition);
-		std::cout << ev.result->poly().index() << std::endl;
 
 		// Create new merge events
 		for (const auto& pattern : partition) {
