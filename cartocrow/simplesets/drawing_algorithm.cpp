@@ -1,8 +1,6 @@
 #include "drawing_algorithm.h"
 
 #include <utility>
-#include "dilated/dilated_poly.h"
-#include "../renderer/render_path.h"
 #include "grow_circles.h"
 #include "poly_line_gon_intersection.h"
 #include "helpers/arrangement_helpers.h"
@@ -255,6 +253,14 @@ std::ostream& operator<<(std::ostream& out, const Relation& r) {
 	           << " " << r.right;
 }
 
+bool operator==(const Relation& lhs, const Relation& rhs) {
+	return lhs.left == rhs.left && lhs.right == rhs.right && lhs.preference == rhs.preference && lhs.ordering == rhs.ordering;
+}
+
+bool operator==(const Hyperedge& lhs, const Hyperedge& rhs) {
+	return lhs.relations == rhs.relations && lhs.origins == rhs.origins;
+}
+
 DilatedPatternDrawing::DilatedPatternDrawing(const Partition& partition, const GeneralSettings& gs, const ComputeDrawingSettings& cds)
 	: m_gs(gs), m_cds(cds) {
 	for (const auto& p : partition) {
@@ -321,6 +327,69 @@ DilatedPatternDrawing::DilatedPatternDrawing(const Partition& partition, const G
 			}
 		}
 	}
+
+	auto hEdges = hyperedges();
+	for (auto edge : hEdges) {
+		auto order = getRelationOrder(edge);
+		if (!order.has_value()) {
+			throw std::runtime_error("Hyperedge has cycle.");
+		} else {
+			setRelationOrder(edge, *order);
+		}
+	}
+
+	for (auto fit = m_arr.faces_begin(); fit != m_arr.faces_end(); ++fit) {
+		auto& data = fit->data();
+		auto ordering = computeTotalOrder(data.origins, data.relations);
+		if (!ordering.has_value()) {
+			throw std::runtime_error("Impossible: no total order in a face");
+		}
+		data.ordering = *ordering;
+	}
+
+	for (int i = 0; i < m_dilated.size(); ++i) {
+		auto cs = intersectionComponents(i);
+		for (auto& c : cs) {
+			std::vector<int> avoidees;
+			for (auto fit = c.faces_begin(); fit != c.faces_end(); ++fit) {
+				for (int j : fit->data().ordering) {
+					if (j == i) break;
+					avoidees.push_back(j);
+				}
+			}
+			if (avoidees.empty()) continue;
+
+			std::vector<CSPolyline> morphedEdges;
+			auto bpis = boundaryParts(c, i);
+			for (const auto& bpi : bpis) {
+				auto disks = includeExcludeDisks(i, avoidees, c);
+				auto inclDisks = disks.include;
+				auto exclDisks = disks.exclude;
+
+				if (exclDisks.empty()) continue;
+				auto poly = ccb_to_polygon<CSTraits>(c.outer_ccb());
+				auto morphed = morph(bpi, poly, inclDisks, exclDisks, m_gs, m_cds);
+
+				for (auto fit = c.faces_begin(); fit != c.faces_end(); ++fit) {
+					fit->data().morphedEdges[i].push_back(morphed);
+				}
+				morphedEdges.push_back(morphed);
+			}
+
+			if (morphedEdges.empty()) continue;
+
+			// Compute the morphed version of the CSPolygon for this component.
+			// Set, for each face in component c, the morphed face to the intersection of this CSPolygon with the face.
+			// todo
+		}
+	}
+}
+
+CSPolyline morph(const CSPolyline& boundaryPart, const CSPolygon& componentShape, const std::vector<Circle<Exact>>& inclDisks,
+				 const std::vector<Circle<Exact>>& exclDisks, const GeneralSettings& gs, const ComputeDrawingSettings& cds) {
+	// todo
+	std::vector<X_monotone_curve_2> curves;
+	return { curves.begin(), curves.end() };
 }
 
 /// Returns parts of the boundary of c that originate from i.
@@ -390,22 +459,25 @@ bool isStraight(const CSPolyline& polyline) {
 	return true;
 }
 
-/// The inclusion and exclusion disks for component \ref c when \ref i is stacked on top of \ref j.
+/// The inclusion and exclusion disks for component \ref c when \ref i is stacked on top of \ref js.
 IncludeExcludeDisks
-DilatedPatternDrawing::includeExcludeDisks(int i, int j, const Component& c) {
+DilatedPatternDrawing::includeExcludeDisks(int i, std::vector<int> js, const Component& c) {
 	std::vector<Point<Exact>> ptsI;
 	const auto& catPointsI = m_dilated[i].catPoints();
 	std::transform(catPointsI.begin(), catPointsI.end(), std::back_inserter(ptsI), [](const CatPoint& catPoint) {
 		return Point<Exact>(catPoint.point.x(), catPoint.point.y());
 	});
-	std::vector<Point<Exact>> ptsJ;
-	const auto& catPointsJ = m_dilated[j].catPoints();
-	std::transform(catPointsJ.begin(), catPointsJ.end(), std::back_inserter(ptsJ), [](const CatPoint& catPoint) {
-	  return Point<Exact>(catPoint.point.x(), catPoint.point.y());
-	});
+	std::vector<Point<Exact>> ptsJs;
+	for (int j : js) {
+		const auto& catPointsJ = m_dilated[j].catPoints();
+		std::transform(catPointsJ.begin(), catPointsJ.end(), std::back_inserter(ptsJs),
+		               [](const CatPoint& catPoint) {
+			               return Point<Exact>(catPoint.point.x(), catPoint.point.y());
+		               });
+	}
 
 	auto rSqrd = m_gs.dilationRadius() * m_gs.dilationRadius();
-    auto result = growCircles(ptsI, ptsJ, rSqrd, rSqrd * m_cds.cutoutRadiusFactor);
+    auto result = growCircles(ptsI, ptsJs, rSqrd, rSqrd * m_cds.cutoutRadiusFactor);
 
 	std::vector<Circle<Exact>> relevantExclusionDisks;
 	for (const auto& d : result.second) {
@@ -414,6 +486,13 @@ DilatedPatternDrawing::includeExcludeDisks(int i, int j, const Component& c) {
 		}
 	}
 	return {result.first, relevantExclusionDisks};
+}
+
+/// The inclusion and exclusion disks for component \ref c when \ref i is stacked on top of \ref j.
+IncludeExcludeDisks
+DilatedPatternDrawing::includeExcludeDisks(int i, int j, const Component& c) {
+	std::vector<int> js({j});
+	return includeExcludeDisks(i, js, c);
 }
 
 Relation DilatedPatternDrawing::computePreference(int i, int j, const Component& c) {
@@ -503,8 +582,142 @@ std::vector<Component>
 DilatedPatternDrawing::intersectionComponents(int i) const {
 	return connectedComponents(m_arr, [i](FaceH fh) {
 		const auto& origins = fh->data().origins;
-		return std::find(origins.begin(), origins.end(), i) != origins.end();
+		return origins.size() > 1 && std::find(origins.begin(), origins.end(), i) != origins.end();
 	});
+}
+
+std::vector<Hyperedge> DilatedPatternDrawing::hyperedges() {
+	std::vector<FaceH> interesting;
+
+	for (auto fit = m_arr.faces_begin(); fit != m_arr.faces_end(); ++fit) {
+		if (fit->data().origins.size() >= 3) {
+			interesting.push_back(fit);
+		}
+	}
+
+	std::sort(interesting.begin(), interesting.end(), [](const auto& fh1, const auto& fh2) {
+		return fh1->data().origins.size() < fh2->data().origins.size();
+	});
+
+	std::vector<std::vector<Hyperedge>> hyperedgesGrouped;
+
+	std::vector<Hyperedge> group;
+	std::optional<int> lastSize;
+	for (const auto& fh : interesting) {
+		if (!lastSize.has_value() || fh->data().origins.size() == *lastSize) {
+			group.emplace_back(fh->data().origins, fh->data().relations);
+		} else {
+			if (!group.empty()) {
+				hyperedgesGrouped.push_back(group);
+				group.clear();
+			}
+		}
+	}
+	if (!group.empty()) {
+		hyperedgesGrouped.push_back(group);
+	}
+
+	std::vector<std::pair<int, Hyperedge>> trashCan;
+	for (int i = 0; i < hyperedgesGrouped.size(); i++) {
+		if (i + 1 >= hyperedgesGrouped.size()) break;
+		const auto& group = hyperedgesGrouped[i];
+		for (const auto& hyperedge : group) {
+			for (const auto& larger : hyperedgesGrouped[i+1]) {
+				bool fullyContained = true;
+				for (const auto& r : hyperedge.relations) {
+					if (std::find(larger.relations.begin(), larger.relations.end(), r) == larger.relations.end()) {
+						fullyContained = false;
+					}
+				}
+				if (fullyContained) {
+					// store hyperedge for removal
+					trashCan.emplace_back(i, hyperedge);
+					break;
+				}
+			}
+		}
+	}
+
+	for (const auto& [i, r] : trashCan) {
+		auto& group = hyperedgesGrouped[i];
+		group.erase(std::remove(group.begin(), group.end(), r), group.end());
+	}
+
+	std::vector<Hyperedge> hyperedges;
+	for (const auto& group : hyperedgesGrouped) {
+		std::copy(group.begin(), group.end(), std::back_inserter(hyperedges));
+	}
+
+	return hyperedges;
+}
+
+std::optional<std::vector<int>> computeTotalOrder(const std::vector<int>& origins, const std::vector<Relation>& relations) {
+	struct Vertex {
+		int i;
+		std::vector<Vertex> neighbors;
+		int mark = 0;
+	};
+
+	std::unordered_map<int, Vertex> vertices;
+
+	for (int i : origins) {
+		vertices[i] = Vertex{i};
+	}
+
+	for (const auto& r : relations) {
+		if (r.preference == Order::EQUAL) continue;
+		auto u = vertices.at(r.left);
+		auto v = vertices.at(r.right);
+
+		if (r.ordering == Order::SMALLER) {
+			v.neighbors.push_back(u);
+		} else {
+			u.neighbors.push_back(v);
+		}
+	}
+
+	std::vector<int> ordering;
+
+	std::function<bool(Vertex&)> visit;
+
+	visit = [&ordering, &visit](Vertex& u) {
+		if (u.mark == 2) return true;
+		if (u.mark == 1) return false;
+
+		u.mark = 1;
+
+		for (auto& v : u.neighbors) {
+			bool success = visit(v);
+			if (!success) return false;
+		}
+
+		u.mark = 2;
+		ordering.push_back(u.i);
+		return true;
+	};
+
+	for (auto& [_, v] : vertices) {
+		bool success = visit(v);
+		if (!success) return std::nullopt;
+	}
+
+	return ordering;
+}
+
+std::optional<std::vector<int>> getRelationOrder(const Hyperedge& e) {
+	return computeTotalOrder(e.origins, e.relations);
+}
+
+void setRelationOrder(Hyperedge& e, const std::vector<int>& ordering) {
+	for (auto& r : e.relations) {
+		int i = std::find(ordering.begin(), ordering.end(), r.left) - ordering.begin();
+		int j = std::find(ordering.begin(), ordering.end(), r.right) - ordering.begin();
+		if (i < j) {
+			r.ordering = Order::SMALLER;
+		} else {
+			r.ordering = Order::GREATER;
+		}
+	}
 }
 
 std::string to_string(Order ord) {

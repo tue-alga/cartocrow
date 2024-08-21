@@ -26,11 +26,27 @@ struct Relation {
 	Order ordering;
 };
 
+bool operator==(const Relation& lhs, const Relation& rhs);
+
 std::ostream& operator<<(std::ostream& out, const Relation& r);
+
+class Hyperedge {
+  public:
+	std::vector<int> origins;
+	std::vector<Relation> relations;
+};
+
+std::optional<std::vector<int>> getRelationOrder(const Hyperedge& e);
+void setRelationOrder(Hyperedge& e, const std::vector<int>& ordering);
+std::optional<std::vector<int>> computeTotalOrder(const std::vector<int>& origins, const std::vector<Relation>& relations);
+
+bool operator==(const Hyperedge& lhs, const Hyperedge& rhs);
 
 struct FaceData {
 	std::vector<int> origins;
 	std::vector<Relation> relations;
+	std::vector<int> ordering;
+	std::unordered_map<int, std::vector<CSPolyline>> morphedEdges;
 };
 
 // todo: edge case where edges of dilated patterns overlap, so a half-edge may have multiple origins.
@@ -224,6 +240,11 @@ class Component {
 	std::vector<ComponentCcbCirculator> m_inner_ccbs;
 };
 
+std::vector<CSPolyline> boundaryParts(const Component& c, int i);
+
+CSPolyline morph(const CSPolyline& boundaryPart, const CSPolygon& componentShape, const std::vector<Circle<Exact>>& inclDisks,
+                 const std::vector<Circle<Exact>>& exclDisks, const GeneralSettings& gs, const ComputeDrawingSettings& cds);
+
 struct IncludeExcludeDisks {
 	std::vector<Circle<Exact>> include;
 	std::vector<Circle<Exact>> exclude;
@@ -238,7 +259,10 @@ class DilatedPatternDrawing {
 	Relation computePreference(int i, int j, const Component& c);
 
 	IncludeExcludeDisks includeExcludeDisks(int i, int j, const Component& c);
+	IncludeExcludeDisks includeExcludeDisks(int i, std::vector<int> js, const Component& c);
 
+	std::vector<Hyperedge> hyperedges();
+	
 	DilatedPatternArrangement m_arr;
 	std::unordered_map<int, std::vector<FaceH>> m_iToFaces;
 	std::map<X_monotone_curve_2, int> m_curve_to_origin;
