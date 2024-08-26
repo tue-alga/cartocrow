@@ -64,11 +64,10 @@ Collapse KSBBTraits::ecComputeCollapse(Map::Halfedge_handle e) {
 
 	if (ad.has_on_boundary(arealine.point())) {
 
-		if (ad.has_on_boundary(b)) {
-			// This should not occur:
-			// implies that c is also on ad (caught already by collinearity earlier)
-			col.erase_both = true;
-		} else {
+		// these should be caught already by the collinearity checks earlier
+		assert(!ad.has_on_boundary(b));
+		assert(!ad.has_on_boundary(c));
+		
 			col.erase_both = true;
 
 			// implies that neither b nor c is on ad
@@ -92,7 +91,6 @@ Collapse KSBBTraits::ecComputeCollapse(Map::Halfedge_handle e) {
 				col.this_face_polygons.push_back(second_triangle);
 				col.twin_face_polygons.push_back(first_triangle);
 			}
-		}
 	} else {
 		col.erase_both = false;
 
@@ -138,14 +136,9 @@ Collapse KSBBTraits::ecComputeCollapse(Map::Halfedge_handle e) {
 		} else {
 			auto intersection = CGAL::intersection(arealine, cd);
 			col.point = boost::get<Point<Exact>>(intersection.get());
+
 			Segment<Exact> ns = Segment<Exact>(col.point, a);
 			auto intersection2 = CGAL::intersection(bc, ns);
-
-			// TODO: something may go wrong here still?
-			if (!intersection2) {
-				std::cout << a << "m\n" << b << "l\n" << c << "l\n" << d << "l\n" << col.point;
-			}
-
 			Point<Exact> is = boost::get<Point<Exact>>(intersection2.get());
 
 			Polygon<Exact> first_triangle;
@@ -187,10 +180,7 @@ void KSBBTraits::ecSetCost(Map::Halfedge_handle e) {
 		cost += CGAL::abs(p.area());
 	}
 	// since it is an area preserving method, the other face adds up to the same area...
-	//for (Polygon<Exact> p : col.twin_face_polygons) {
-	//	cost += CGAL::abs(p.area());
-	//}
-	e->data().cost = cost;
+	e->data().cost = 2*cost;
 }
 Number<Exact> KSBBTraits::ecGetCost(Map::Halfedge_handle e) {
 	return e->data().cost;

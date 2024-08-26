@@ -21,6 +21,10 @@ template <MapType MT> class ObliviousArrangement {
 		return util::mergeWithNext(map, e);
 	}
 
+	Map::Halfedge_handle split(Map::Halfedge_handle e, Point<Exact> p) {
+		return util::split(map, e, p);
+	}
+
 	void shift(Map::Vertex_handle v, Point<Exact> p) {
 		util::shift(map, v, p);
 	}

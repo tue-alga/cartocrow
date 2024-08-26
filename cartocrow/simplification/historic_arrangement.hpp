@@ -20,6 +20,28 @@ template <MapType MT> void HalfedgeMerge<MT>::redo(Map& map) {
 	this->halfedge = util::mergeWithNext(map, this->halfedge);
 }
 
+
+template <MapType MT> void HalfedgeSplit<MT>::undo(Map& map) {
+
+	// TODO: need to finalize pointer juggling
+	future_self = this->getAndClear(this->halfedge);
+	future_twin = this->getAndClear(this->halfedge->twin());
+	future_next = this->getAndClear(this->halfedge->next());
+	future_next_twin = this->getAndClear(this->halfedge->next()->twin());
+
+	typename MT::Map::Halfedge_handle inc = util::mergeWithNext(map, this->halfedge);
+
+	if (self != nullptr)
+		self->halfedge = inc;
+	this->halfedge = inc;
+}
+
+template <MapType MT> void HalfedgeSplit<MT>::redo(Map& map) {
+
+	// TODO: need to finalize pointer juggling
+	this->halfedge = util::split(map, this->halfedge, this->post_loc);
+}
+
 template <MapType MT> void HalfedgeTargetShift<MT>::undo(Map& map) {
 
 	util::shift(map, this->halfedge->target(), pre_loc);
@@ -77,7 +99,7 @@ template <MapType MT>
 requires(EdgeStoredHistory<MT, HalfedgeOperation<MT>>) HistoricArrangement<MT>::Map::Halfedge_handle
     HistoricArrangement<MT>::mergeWithNext(Map::Halfedge_handle e) {
 
-	// TODO: assert that there is a batch to build
+	assert(building_batch != null_ptr);
 
 	HalfedgeOperation<MT>* op = new HalfedgeMerge<MT>(e);
 	op->redo(map);
@@ -90,7 +112,7 @@ template <MapType MT>
 requires(EdgeStoredHistory<MT, HalfedgeOperation<MT>>) void HistoricArrangement<MT>::shift(
     Map::Vertex_handle v, Point<Exact> p) {
 
-	// TODO: assert that there is a batch to build
+	assert(building_batch != null_ptr);
 
 	HalfedgeOperation<MT>* op = new HalfedgeTargetShift<MT>(v->inc(), p);
 	op->redo(map);
@@ -112,7 +134,9 @@ requires(EdgeStoredHistory<MT, HalfedgeOperation<MT>>) bool HistoricArrangement<
 
 template <MapType MT>
 requires(EdgeStoredHistory<MT, HalfedgeOperation<MT>>) void HistoricArrangement<MT>::backInTime() {
-	// TODO: assert building_batch is nullptr
+	
+	
+	assert(building_batch == null_ptr);
 
 	OperationBatch<MT>* batch = history.back();
 	history.pop_back();
@@ -124,7 +148,7 @@ requires(EdgeStoredHistory<MT, HalfedgeOperation<MT>>) void HistoricArrangement<
 template <MapType MT>
 requires(EdgeStoredHistory<MT, HalfedgeOperation<MT>>) void HistoricArrangement<MT>::forwardInTime() {
 
-	// TODO: assert building_batch is nullptr
+	assert(building_batch == null_ptr);
 
 	OperationBatch<MT>* batch = undone.back();
 	undone.pop_back();
@@ -136,7 +160,8 @@ requires(EdgeStoredHistory<MT, HalfedgeOperation<MT>>) void HistoricArrangement<
 template <MapType MT>
 requires(EdgeStoredHistory<MT, HalfedgeOperation<MT>>) void HistoricArrangement<MT>::recallComplexity(
     int c) {
-	// TODO: assert building_batch is nullptr
+
+	assert(building_batch == null_ptr);
 
 	while ( // if history is a single element, check input complexity
 	    (history.size() >= 1 && in_complexity <= c)
@@ -152,7 +177,8 @@ requires(EdgeStoredHistory<MT, HalfedgeOperation<MT>>) void HistoricArrangement<
 template <MapType MT>
 requires(EdgeStoredHistory<MT, HalfedgeOperation<MT>>) void HistoricArrangement<MT>::recallThreshold(
     Number<Exact> t) {
-	// TODO: assert building_batch is nullptr
+		
+	assert(building_batch == null_ptr);
 
 	while ((history.size() >= 1 && history.last()->post_maxcost > t)) {
 		backInTime();
@@ -165,7 +191,10 @@ requires(EdgeStoredHistory<MT, HalfedgeOperation<MT>>) void HistoricArrangement<
 template <MapType MT>
 requires(EdgeStoredHistory<MT, HalfedgeOperation<MT>>) void HistoricArrangement<MT>::startBatch(
     Number<Exact> cost) {
-	// TODO: assert building_batch is nullptr and that the map is in the present
+
+	
+	assert(building_batch == null_ptr);
+	assert(atPresent());
 
 	building_batch = new OperationBatch<MT>();
 	history.push_back(building_batch);
@@ -179,6 +208,9 @@ requires(EdgeStoredHistory<MT, HalfedgeOperation<MT>>) void HistoricArrangement<
 
 template <MapType MT>
 requires(EdgeStoredHistory<MT, HalfedgeOperation<MT>>) void HistoricArrangement<MT>::endBatch() {
+	
+	assert(building_batch != null_ptr);
+
 	building_batch->post_complexity = map.number_of_edges();
 	building_batch = nullptr;
 }

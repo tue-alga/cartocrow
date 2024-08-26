@@ -105,7 +105,7 @@ KSBBDemo::KSBBDemo() {
 	setCentralWidget(m_renderer);
 
 	std::filesystem::path file =
-	    std::filesystem::absolute(std::filesystem::path("data/europe-north.ipe"));
+	    std::filesystem::absolute(std::filesystem::path("data/benelux-fix.ipe"));
 	std::cout << "reading file " << file << "\n";
 
 	// step 1: create a RegionMap
@@ -130,12 +130,11 @@ KSBBDemo::KSBBDemo() {
 	t.stamp("Initialization");
 
 	// step 4: simplify until no more vertices can be removed
-	int to = 57;
+	int to = 120;
 	this->alg->simplify(to);
 	t.stamp("Simplification done");
 	t.output();
 
-	this->alg->debug = false;
 	int outcnt = this->map->number_of_edges();
 
 	// initialize a gui with a slider to retrieve all intermediate solutions

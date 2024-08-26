@@ -27,7 +27,7 @@ concept VertexRemovalTraits = requires(typename T::Map::Vertex_handle v, int b, 
 	{ T::vrGetCost(v) } -> std::same_as<Number<Exact>>;
 
 	/// Stores an integer \f$b\f$ with vertex \f$v\f$, representing the blocking 
-	/// number. This should not be modified in other ways that through calls of 
+	/// number. This should not be modified in other ways than through calls of 
 	/// the \ref VertexRemovalSimplification algorithm.
 	{T::vrSetBlockingNumber(v, b)};
 	/// Retrieves the blocking number stored with vertex \f$v\f$.
@@ -70,13 +70,13 @@ requires(std::same_as<typename MA::Map, typename VRT::Map>) class VertexRemovalS
 	/// Initializes the algorithm, taking \f$O(n^2)\f$ time.
 	void initialize();
 
-	/// Performs as many operations as possible, while operations cost at most 
-	/// threshold \f$t\f$. Each iteration takes linear time. 
+	/// Repeatedly performs the cheapest operation, while operations cost at most
+	/// threshold \f$t\f$. Each iteration takes linear time.
 	/// Notes:
 	/// - Subsequent calls with a lower value for \f$t\f$ have no effect.
 	/// - In case of a historic arrangement, it is always set to present. 
 	void simplify(Number<Exact> t);
-	/// Performs as few operations as possible, to achieve a result of at most 
+	/// Repeatedly performs the cheapest operation, until the result has at most
 	/// \f$c\f$ edges. Each iteration takes linear time.
 	/// Notes:
 	/// - Subsequent calls with a higher value for \f$c\f$ have no effect.

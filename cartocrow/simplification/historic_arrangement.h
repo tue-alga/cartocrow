@@ -42,6 +42,33 @@ template <MapType MT> struct HalfedgeOperation {
 	}
 };
 
+template <MapType MT> struct HalfedgeSplit : public HalfedgeOperation<MT> {
+
+	using Map = MT::Map;
+
+	HalfedgeSplit(Map::Halfedge_handle he, Point<Exact> pt) : HalfedgeOperation<MT>(he) {
+
+		post_loc = pt;
+
+		self = this->getAndClear(he);
+	}
+
+	// edge histories of the old edges
+	HalfedgeOperation<MT>* self = nullptr;
+	// edge histories of the new edges
+	// probably overly many, but allowing more black-box type use of CGAL
+	HalfedgeOperation<MT>* future_self = nullptr;
+	HalfedgeOperation<MT>* future_twin = nullptr;
+	HalfedgeOperation<MT>* future_next = nullptr;
+	HalfedgeOperation<MT>* future_next_twin = nullptr;
+
+	// the location of the to-be-introduced vertex
+	Point<Exact> post_loc;
+
+	virtual void undo(Map& map);
+	virtual void redo(Map& map);
+};
+
 template <MapType MT> struct HalfedgeMerge : public HalfedgeOperation<MT> {
 
 	using Map = MT::Map;
@@ -151,6 +178,7 @@ requires(EdgeStoredHistory<MT, HalfedgeOperation<MT>>) class HistoricArrangement
 
 	// From ModifiableArrangementWithHistory
 	Map::Halfedge_handle mergeWithNext(Map::Halfedge_handle e);
+	Map::Halfedge_handle split(Map::Halfedge_handle e, Point<Exact> p);
 	void shift(Map::Vertex_handle v, Point<Exact> p);
 	void goToPresent();
 	void startBatch(Number<Exact> cost);

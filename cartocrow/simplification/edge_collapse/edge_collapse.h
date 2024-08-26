@@ -89,20 +89,18 @@ requires(std::same_as<typename MA::Map, typename ECT::Map>) class EdgeCollapseSi
 	/// Initializes the algorithm, taking \f$O(n^2)\f$ time.
 	void initialize();
 
-	/// Performs as many operations as possible, while operations cost at most
+	/// Repeatedly performs the cheapest operation, while operations cost at most
 	/// threshold \f$t\f$. Each iteration takes linear time.
 	/// Notes:
 	/// - Subsequent calls with a lower value for \f$t\f$ have no effect.
 	/// - In case of a historic arrangement, it is always set to present.
 	void simplify(Number<Exact> t);
-	/// Performs as few operations as possible, to achieve a result of at most
+	/// Repeatedly performs the cheapest operation, until the result has at most
 	/// \f$c\f$ edges. Each iteration takes linear time.
 	/// Notes:
 	/// - Subsequent calls with a higher value for \f$c\f$ have no effect.
 	/// - In case of a historic arrangement, it is always set to present.
 	void simplify(int c);
-
-	bool debug = false;
 
   private:
 	/// Reinitializes the simplification data for the edge
@@ -121,11 +119,6 @@ requires(std::same_as<typename MA::Map, typename ECT::Map>) class EdgeCollapseSi
 	const short NOOP_TRIANGLE = -2;
 	/// Flags for indicating why an edge cannot be collapsed
 	const short NOOP_DEGREE = -3;
-
-	/// 
-	const short OTHER = -1;
-	const short MAIN = 1;
-	const short UNMARKED = 0;
 
 	/// Stores the actual arrangement
 	Map& map;

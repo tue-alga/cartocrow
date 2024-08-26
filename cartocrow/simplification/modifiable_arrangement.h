@@ -26,6 +26,11 @@ concept ModifiableArrangement = requires(T ma, typename T::Map::Vertex_handle v,
 	/// as the given halfedge.
 	{ ma.mergeWithNext(e) } -> std::same_as<typename T::Map::Halfedge_handle>;
 
+	/// Splits a halfedge \f$e\f$, creating a new degree-2 vertex at the given 
+	/// location. Returns the new edge pointing towards the new vertex, incident 
+	/// to the same face as the given halfedge.
+	{ ma.split(e, p) } -> std::same_as<typename T::Map::Halfedge_handle>;
+
 	/// Moves the vertex \f$v\f$ to the indicated location.
 	{ma.shift(v, p)};
 };

@@ -10,10 +10,11 @@ namespace detail {
 template <EdgeCollapseTraits ECT>
 ECT::Map::Halfedge_handle getMain(typename ECT::Map::Halfedge_handle e) {
 	if (ECT::ecGetEdgeMark(e) == ECEdgeMark::MAIN) {
-		// TODO: assert that e->twin is OTHER
+		assert(ECT::ecGetEdgeMark(e->twin()) == ECEdgeMark::OTHER);
 		return e;
 	} else {
-		// TODO: assert that e is OTHER and e->twin is MAIN
+		assert(ECT::ecGetEdgeMark(e) == ECEdgeMark::OTHER);
+		assert(ECT::ecGetEdgeMark(e->twin()) == ECEdgeMark::MAIN);
 		return e->twin();
 	}
 }
@@ -74,15 +75,59 @@ ECT::Map::Halfedge_handle decideMain(typename ECT::Map::Halfedge_handle e) {
 }
 
 inline bool intersects(Segment<Exact> s, PolygonVector polygons) {
+
+	Point<Exact> ref = s.start();
+
 	for (Polygon<Exact> poly : polygons) {
-		if (!poly.has_on_unbounded_side(s.start())) {
+		if (!poly.has_on_unbounded_side(ref)) {
+			// ref point lies on boundary or inside, so intersection guaranteed
 			return true;
 		}
+
+		// since ref point lies outside, it must intersect an edge,
+		// if it is to intersect at all
 		for (typename Polygon<Exact>::Edge_const_iterator it = poly.edges_begin();
 		     it != poly.edges_end(); it++) {
 			Segment<Exact> e = *it;
-			if (CGAL::intersection(e, s)) {
+			auto intersect = CGAL::intersection(e, s);
+			if (intersect) {
 				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
+inline bool intersects(Segment<Exact> s, PolygonVector polygons, Point<Exact> ignore) {
+
+	Point<Exact> ref = s.start() + (s.end() - s.start()) / 2.0; // midpoint
+
+	for (Polygon<Exact> poly : polygons) {
+		if (!poly.has_on_unbounded_side(ref)) {
+			// mid point lies on boundary or inside, so intersection guaranteed
+			return true;
+		}
+
+		// since mid point lies outside, it must intersect an edge,
+		// if it is to intersect at all
+		for (typename Polygon<Exact>::Edge_const_iterator it = poly.edges_begin();
+		     it != poly.edges_end(); it++) {
+			Segment<Exact> e = *it;
+			auto intersect = CGAL::intersection(e, s);
+			if (!intersect) {
+				// no intersection at all
+				continue;
+			} else if (boost::get<Segment<Exact>>(&*intersect)) {
+				// proper overlap, must include nonendpoint part
+				return true;
+			} else {
+				// only other option: point intersection, make sure it's not the
+				// excluded point
+				Point<Exact> p = boost::get<Point<Exact>>(intersect.get());
+				if (p != ignore) {
+					return true;
+				}
 			}
 		}
 	}
@@ -101,69 +146,91 @@ inline bool intersects(Point<Exact> p, PolygonVector polygons) {
 
 template <EdgeCollapseTraits ECT>
 inline bool blocks(typename ECT::Map::Halfedge_handle blocking,
-                   typename ECT::Map::Halfedge_handle collapsing, bool debug) {
+                   typename ECT::Map::Halfedge_handle collapsing) {
 
-	// TODO: assert that collapsing is a MAIN edge
+	assert(ECT::ecGetEdgeMark(collapsing) == ECEdgeMark::MAIN);
 
-	PolygonVector polygons;
-	typename ECT::Map::Halfedge_handle collapse_test;
-	if (debug) {
-		std::cout << blocking->source()->point() << " > " << blocking->target()->point()
-		          << " blocks? " << collapsing->source()->point() << " > "
-		          << collapsing->target()->point() << " mark=" << (ECT::ecGetEdgeMark(collapsing) == ECEdgeMark::MAIN)
-		          << "\n";
-	}
-	// TODO: this isn't going to work when the same face is on both sides of an edge
-	if (blocking->face() == collapsing->face()) {
-		// same face
-		if (debug)
-			std::cout << "  same\n";
-		polygons = ECT::ecGetCollapse(collapsing).this_face_polygons;
-		collapse_test = collapsing;
-	} else {
-		// other face
-		if (debug)
-			std::cout << "  other\n";
-		polygons = ECT::ecGetCollapse(collapsing).twin_face_polygons;
-		collapse_test = collapsing->twin();
-	}
+	if (collapsing->face() == collapsing->twin()->face()) {
+		// same face on both sides, need to check more extensively
+		assert(blocking->face() == collapsing->face());
 
-	if (blocking == collapse_test || blocking == collapse_test->prev() ||
-	    blocking == collapse_test->next()) {
-		if (debug)
-			std::cout << "  near\n";
-		// one of the collapsing edges
-		return false;
-	} else {
-		bool prev_adj = blocking == collapse_test->prev()->prev();
-		bool next_adj = blocking == collapse_test->next()->next();
-		if (prev_adj) {
-			if (next_adj) {
-				if (debug)
-					std::cout << "  quad\n";
-				// quadrilateral, cannot block
-				return false;
-			} else {
-
-				if (debug)
-					std::cout << "  near prev\n";
-				// TODO: what if the segment cuts through?
-				return detail::intersects(blocking->source()->point(), polygons);
-			}
-		} else if (next_adj) {
-			if (debug)
-				std::cout << "  near next\n";
-			// TODO: what if the segment cuts through?
-			return detail::intersects(blocking->target()->point(), polygons);
+		// this is effectively the same as below, but we need to account for the
+		// blocking edge possibly interacting with the collapse from both sides
+		// NB: we could just always run this bit of code, also for the other cases
+		// but it is rather redundant in its checks
+		if (blocking == collapsing || blocking == collapsing->prev() ||
+		    blocking == collapsing->next() || blocking == collapsing->twin() ||
+		    blocking == collapsing->twin()->prev() || blocking == collapsing->twin()->next()) {
+			// one of the collapsing edges
+			return false;
 		} else {
-			if (debug) {
+			// NB: collapsing's vertices are degree 2
+			// NB: pp == tnn edge, for deg-2 nodes, and different if there's a deg-3 node
+			// so we need to handle only one of the following four nearby-edge cases
+			// a quadrilateral isn't possible, as it would imply different faces
 
-				std::cout << "  independent " << blocking->curve() << "\n";
-				std::cout << "    result = " << detail::intersects(blocking->curve(), polygons) << "\n";
+			if (blocking == collapsing->prev()->prev() ||
+			    blocking == collapsing->twin()->prev()->prev()) {
+				return detail::intersects(blocking->curve(),
+				                          ECT::ecGetCollapse(collapsing).this_face_polygons,
+				                          blocking->target()->point()) ||
+				       detail::intersects(blocking->curve(),
+				                          ECT::ecGetCollapse(collapsing).twin_face_polygons,
+				                          blocking->target()->point());
+			} else if (blocking == collapsing->next()->next()) {
+				return detail::intersects(blocking->curve(),
+				                          ECT::ecGetCollapse(collapsing).this_face_polygons,
+				                          blocking->source()->point()) ||
+				       detail::intersects(blocking->curve(),
+				                          ECT::ecGetCollapse(collapsing).twin_face_polygons,
+				                          blocking->source()->point());
+			} else {
+				// independent edge
+				return detail::intersects(blocking->curve(),
+				                          ECT::ecGetCollapse(collapsing).this_face_polygons) ||
+				       detail::intersects(blocking->curve(),
+				                          ECT::ecGetCollapse(collapsing).twin_face_polygons);
 			}
-			// independent edge
+		}
 
-			return detail::intersects(blocking->curve(), polygons);
+	} else {
+		// different faces on both sides of the collapse
+
+		PolygonVector polygons;
+		typename ECT::Map::Halfedge_handle collapse_test;
+
+		if (blocking->face() == collapsing->face()) {
+			// same face
+			polygons = ECT::ecGetCollapse(collapsing).this_face_polygons;
+			collapse_test = collapsing;
+		} else {
+			// other face
+			assert(blocking->face() == collapsing->twin()->face());
+			polygons = ECT::ecGetCollapse(collapsing).twin_face_polygons;
+			collapse_test = collapsing->twin();
+		}
+
+		if (blocking == collapse_test || blocking == collapse_test->prev() ||
+		    blocking == collapse_test->next()) {
+			// one of the collapsing edges
+			return false;
+		} else {
+			bool prev_adj = blocking == collapse_test->prev()->prev();
+			bool next_adj = blocking == collapse_test->next()->next();
+			if (prev_adj) {
+				if (next_adj) {
+					// quadrilateral, cannot block
+					return false;
+				} else {
+					return detail::intersects(blocking->curve(), polygons,
+					                          blocking->target()->point());
+				}
+			} else if (next_adj) {
+				return detail::intersects(blocking->curve(), polygons, blocking->source()->point());
+			} else {
+				// independent edge
+				return detail::intersects(blocking->curve(), polygons);
+			}
 		}
 	}
 }
@@ -281,7 +348,7 @@ requires(std::same_as<typename MA::Map, typename ECT::Map>) void EdgeCollapseSim
 			typename Map::Ccb_halfedge_circulator circ = face->outer_ccb();
 			typename Map::Ccb_halfedge_circulator curr = circ;
 			do {
-				if (detail::blocks<ECT>(&*curr, e, false)) {
+				if (detail::blocks<ECT>(&*curr, e)) {
 					b++;
 				}
 			} while (++curr != circ);
@@ -292,7 +359,7 @@ requires(std::same_as<typename MA::Map, typename ECT::Map>) void EdgeCollapseSim
 			typename Map::Ccb_halfedge_circulator circ = *h;
 			typename Map::Ccb_halfedge_circulator curr = circ;
 			do {
-				if (detail::blocks<ECT>(&*curr, e, false)) {
+				if (detail::blocks<ECT>(&*curr, e)) {
 					b++;
 				}
 
@@ -306,7 +373,7 @@ requires(std::same_as<typename MA::Map, typename ECT::Map>) void EdgeCollapseSim
 			typename Map::Ccb_halfedge_circulator circ = twin_face->outer_ccb();
 			typename Map::Ccb_halfedge_circulator curr = circ;
 			do {
-				if (detail::blocks<ECT>(&*curr, e, false)) {
+				if (detail::blocks<ECT>(&*curr, e)) {
 					b++;
 				}
 			} while (++curr != circ);
@@ -318,7 +385,7 @@ requires(std::same_as<typename MA::Map, typename ECT::Map>) void EdgeCollapseSim
 			typename Map::Ccb_halfedge_circulator circ = *h;
 			typename Map::Ccb_halfedge_circulator curr = circ;
 			do {
-				if (detail::blocks<ECT>(&*curr, e, false)) {
+				if (detail::blocks<ECT>(&*curr, e)) {
 					b++;
 				}
 
@@ -357,12 +424,6 @@ template <ModifiableArrangement MA, EdgeCollapseTraits ECT>
 requires(std::same_as<typename MA::Map, typename ECT::Map>) void EdgeCollapseSimplification<MA, ECT>::execute(
     Map::Halfedge_handle e, Number<Exact> cost) {
 
-	if (debug) {
-
-		std::cout << "EXEC " << e->source()->point() << "\n";
-		std::cout << "     " << e->target()->point() << "\n";
-	}
-
 	// walk over faces to reduce counts
 	adjustCounts(e, -1);
 	adjustCounts(e->prev(), -1);
@@ -399,12 +460,6 @@ requires(std::same_as<typename MA::Map, typename ECT::Map>) void EdgeCollapseSim
 			modmap.endBatch();
 		}
 
-		if (debug) {
-
-			std::cout << "e " << e->source()->point() << "\n";
-			std::cout << "  " << e->target()->point() << "\n";
-		}
-
 		// walk over faces to increase counts
 		adjustCounts(e, 1);
 		adjustCounts(e->twin(), 1);
@@ -425,14 +480,6 @@ requires(std::same_as<typename MA::Map, typename ECT::Map>) void EdgeCollapseSim
 
 	typename Map::Face_handle face = e->face();
 
-	if (debug && adj > 0) {
-
-		std::cout << "adj " << e->source()->point() << "\n";
-		std::cout << "    " << e->target()->point() << "\n";
-
-		std::cout << "    => " << adj << "\n";
-	}
-
 	if (!face->is_unbounded()) {
 		// the outer rim
 		typename Map::Ccb_halfedge_circulator circ = face->outer_ccb();
@@ -440,7 +487,7 @@ requires(std::same_as<typename MA::Map, typename ECT::Map>) void EdgeCollapseSim
 		do {
 			typename Map::Halfedge_handle collapsing = detail::getMain<ECT>(&*curr);
 			int b = ECT::ecGetBlockingNumber(collapsing);
-			if (b >= 0 && detail::blocks<ECT>(e, collapsing, debug && adj > 0)) {
+			if (b >= 0 && detail::blocks<ECT>(e, collapsing)) {
 				ECT::ecSetBlockingNumber(collapsing, b + adj);
 			}
 		} while (++curr != circ);
@@ -453,7 +500,7 @@ requires(std::same_as<typename MA::Map, typename ECT::Map>) void EdgeCollapseSim
 		do {
 			typename Map::Halfedge_handle collapsing = detail::getMain<ECT>(&*curr);
 			int b = ECT::ecGetBlockingNumber(collapsing);
-			if (b >= 0 && detail::blocks<ECT>(e, collapsing, debug && adj > 0)) {
+			if (b >= 0 && detail::blocks<ECT>(e, collapsing)) {
 				ECT::ecSetBlockingNumber(collapsing, b + adj);
 			}
 
