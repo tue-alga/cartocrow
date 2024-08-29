@@ -4,7 +4,7 @@
 
 #include "cartocrow/simplification/vertex_removal/visvalingam_whyatt.h"
 #include <cartocrow/core/core.h>
-#include <cartocrow/core/region_map.h>
+#include "cartocrow/core/boundary_map.h"
 #include <cartocrow/renderer/geometry_widget.h>
 
 using namespace cartocrow;
@@ -28,7 +28,7 @@ class VWDemo : public QMainWindow {
 	QLabel* m_cLabel;
 
 	int c;
-	std::shared_ptr<RegionMap> regions;
+	std::shared_ptr<BoundaryMap> inputmap;
 	std::shared_ptr<VWTraits::Map> map;
 	HistoricArrangement<VWTraits>* hist;
 };

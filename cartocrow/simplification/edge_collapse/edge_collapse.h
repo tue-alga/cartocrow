@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../../core/core.h"
-#include "../../core/region_arrangement.h"
+#include "../../core/arrangement_map.h"
 #include "../historic_arrangement.h"
 #include "../modifiable_arrangement.h"
 #include "../util.h"

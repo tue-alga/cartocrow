@@ -4,7 +4,7 @@
 
 #include "cartocrow/simplification/edge_collapse/kronenfeld_etal.h"
 #include <cartocrow/core/core.h>
-#include <cartocrow/core/region_map.h>
+#include <cartocrow/core/boundary_map.h>
 #include <cartocrow/renderer/geometry_widget.h>
 
 using namespace cartocrow;
@@ -28,7 +28,7 @@ class KSBBDemo : public QMainWindow {
 	QLabel* m_cLabel;
 
 	int c;
-	std::shared_ptr<RegionMap> regions;
+	std::shared_ptr<BoundaryMap> inputmap;
 	std::shared_ptr<KSBBTraits::Map> map;
 	HistoricArrangement<KSBBTraits>* hist;
 	KSBBSimplificationWithHistory* alg;

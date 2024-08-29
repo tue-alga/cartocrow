@@ -736,7 +736,8 @@ void GeometryWidget::centerViewOn(Point<Inexact> newCenter) {
 
 void GeometryWidget::fitInView(Box bbox) {
 	centerViewOn(Point<Inexact>((bbox.xmin() + bbox.xmax()) / 2, (bbox.ymin() + bbox.ymax()) / 2));
-	double newZoom = std::min(width() / bbox.x_span(), height() / bbox.y_span());
+	double newZoom = 1;
+	//std::min(width() / bbox.x_span(), height() / bbox.y_span());
 	if (newZoom < m_minZoom) {
 		newZoom = m_minZoom;
 	} else if (newZoom > m_maxZoom) {

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../../core/core.h"
-#include "../../core/region_arrangement.h"
+#include "../../core/arrangement_map.h"
 #include "../historic_arrangement.h"
 #include "../oblivious_arrangement.h"
 #include "edge_collapse.h"
@@ -23,7 +23,7 @@ struct KSBBEdge;
 ///
 /// Doi: https://doi.org/10.1080/23729333.2019.1631535
 struct KSBBTraits {
-	using Map = RegionArrangement<KSBBVertex, KSBBEdge>;
+	using Map = ArrangementMap<KSBBVertex, KSBBEdge>;
 
 	static void ecSetEdgeMark(Map::Halfedge_handle e, ECEdgeMark m);
 	static ECEdgeMark ecGetEdgeMark(Map::Halfedge_handle e);

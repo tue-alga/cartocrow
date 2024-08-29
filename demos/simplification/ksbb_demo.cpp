@@ -3,8 +3,7 @@
 #include <QApplication>
 
 #include "cartocrow/core/core.h"
-#include "cartocrow/core/region_arrangement.h"
-#include "cartocrow/core/region_map.h"
+#include "cartocrow/core/arrangement_map.h"
 #include "cartocrow/core/boundary_map.h"
 #include "cartocrow/core/timer.h"
 #include "cartocrow/renderer/geometry_painting.h"
@@ -106,21 +105,18 @@ KSBBDemo::KSBBDemo() {
 	setCentralWidget(m_renderer);
 
 	std::filesystem::path file =
-	    std::filesystem::absolute(std::filesystem::path("data/benelux-fix.ipe"));
+	    std::filesystem::absolute(std::filesystem::path("data/benelux-boundaries.ipe"));
 	std::cout << "reading file " << file << "\n";
 
-	BoundaryMap map = BoundaryMap::readFromIpe(file);
-
 	// step 1: create a RegionMap
-	this->regions = std::make_shared<RegionMap>(ipeToRegionMap(file));
+	this->inputmap = std::make_shared<BoundaryMap>(ipeToBoundaryMap(file));
 
 	std::cout << "creating arrangement\n";
 
 	// step 2: convert this to an arrangement with the KSBBTraits
 	// and wrap it in a historic arrangement to allow for quickly recovering all
 	// solutions
-	this->map =
-	    std::make_shared<KSBBTraits::Map>(regionMapToArrangement<KSBBVertex, KSBBEdge>(*regions));
+	this->map = std::make_shared<KSBBTraits::Map>(boundaryMapToArrangementMap<KSBBVertex, KSBBEdge>(*(this->inputmap)));
 	this->hist = new HistoricArrangement<KSBBTraits>(*(this->map));
 
 	int incnt = this->map->number_of_edges();
@@ -158,10 +154,9 @@ KSBBDemo::KSBBDemo() {
 		recalculate();
 	});
 
-	MapPainting::Options in_options;
+	BoundaryPainting::Options in_options;
 	in_options.line_width = 1;
-	in_options.fill = false;
-	auto in_painting = std::make_shared<MapPainting>(this->regions, in_options);
+	auto in_painting = std::make_shared<BoundaryPainting>(this->inputmap, in_options);
 
 	ArrangementPainting<KSBBTraits::Map>::Options out_options;
 	out_options.color = Color{200, 10, 50};

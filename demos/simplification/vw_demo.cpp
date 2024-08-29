@@ -3,8 +3,8 @@
 #include <QApplication>
 
 #include "cartocrow/core/core.h"
-#include "cartocrow/core/region_arrangement.h"
-#include "cartocrow/core/region_map.h"
+#include "cartocrow/core/boundary_map.h"
+#include "cartocrow/core/arrangement_map.h"
 #include "cartocrow/core/timer.h"
 #include "cartocrow/renderer/geometry_painting.h"
 #include "cartocrow/renderer/geometry_widget.h"
@@ -23,18 +23,19 @@ VWDemo::VWDemo() {
 	setCentralWidget(m_renderer);
 
 	std::filesystem::path file =
-	    std::filesystem::absolute(std::filesystem::path("data/benelux-fix.ipe"));
+	    std::filesystem::absolute(std::filesystem::path("data/benelux-boundaries.ipe"));
 	std::cout << "reading file " << file << "\n";
 
 	// step 1: create a RegionMap
-	this->regions = std::make_shared<RegionMap>(ipeToRegionMap(file));
+	this->inputmap = std::make_shared<BoundaryMap>(ipeToBoundaryMap(file));
 
 	std::cout << "creating arrangement\n";
 
 	// step 2: convert this to an arrangement with the VWTraits
 	// and wrap it in a historic arrangement to allow for quickly recovering all
 	// solution
-	this->map = std::make_shared<VWTraits::Map>(regionMapToArrangement<VWVertex, VWEdge>(*regions));
+	this->map =
+	    std::make_shared<VWTraits::Map>(boundaryMapToArrangementMap<VWVertex, VWEdge>(*(this->inputmap)));
 	this->hist = new HistoricArrangement<VWTraits>(*(this->map));
 
 	int incnt = this->map->number_of_edges();
@@ -89,10 +90,9 @@ VWDemo::VWDemo() {
 		recalculate();
 	});
 
-	MapPainting::Options in_options;
+	BoundaryPainting::Options in_options;
 	in_options.line_width = 1;
-	in_options.fill = false;
-	auto in_painting = std::make_shared<MapPainting>(this->regions, in_options);
+	auto in_painting = std::make_shared<BoundaryPainting>(this->inputmap, in_options);
 
 	ArrangementPainting<VWTraits::Map>::Options out_options;
 	out_options.color = Color{200, 10, 50};

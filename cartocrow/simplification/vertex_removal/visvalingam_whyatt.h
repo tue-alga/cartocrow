@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../../core/core.h"
-#include "../../core/region_arrangement.h"
+#include "../../core/arrangement_map.h"
 #include "../oblivious_arrangement.h"
 #include "../historic_arrangement.h"
 #include "vertex_removal.h"
@@ -22,7 +22,7 @@ struct VWEdge;
 /// 
 /// Doi: https://doi.org/10.1179/000870493786962263
 struct VWTraits {
-	using Map = RegionArrangement<VWVertex, VWEdge>;
+	using Map = ArrangementMap<VWVertex, VWEdge>;
 
 	static void vrSetCost(Map::Vertex_handle v, Triangle<Exact> T);
 	static Number<Exact> vrGetCost(Map::Vertex_handle v);

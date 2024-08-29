@@ -10,20 +10,26 @@
 #include <filesystem>
 
 #include "core.h"
+#include "boundary_map.h"
 
 namespace cartocrow {
 
+namespace detail    {
+struct Void {};
+}
 /// An arrangement consisting of polygonal regions.
 ///
 /// This is an \ref Arrangement, or doubly-connected edge list (DCEL)
-template <typename TVertexData, typename TEdgeData, typename TFaceData>
+template <typename TVertexData = detail::Void, typename TEdgeData = detail::Void,
+          typename TFaceData = detail::Void>
 using ArrangementMap = CGAL::Arrangement_2<
     CGAL::Arr_segment_traits_2<Exact>,
     CGAL::Arr_extended_dcel<CGAL::Arr_segment_traits_2<Exact>, TVertexData, TEdgeData, TFaceData>>;
 
-template <typename TVertexData, typename TEdgeData, typename TFaceData>
-void boundaryMapToArrangementMap(BoundaryMap& map,
-                                 ArrangementMap<TVertexData, TEdgeData, TFaceData>& arr);
+template <typename TVertexData = detail::Void, typename TEdgeData = detail::Void,
+          typename TFaceData = detail::Void>
+ArrangementMap<TVertexData, TEdgeData, TFaceData>
+boundaryMapToArrangementMap(BoundaryMap& map);
 
 } // namespace cartocrow
 

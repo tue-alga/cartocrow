@@ -12,18 +12,18 @@ TEST_CASE("Converting a region map to an arrangement") {
 	CHECK(map.contains("R1"));
 	CHECK(map.contains("R2"));
 
-	RegionArrangement<> arrangement = regionMapToArrangement(map);
+	RegionArrangement arrangement = regionMapToArrangement(map);
 	CHECK(arrangement.number_of_faces() == 4); // R1, R2 (2 pieces), outer face
 	int num_r1 = 0;
 	int num_r2 = 0;
 	int num_no_id = 0;
 	for (auto face_iterator = arrangement.faces_begin(); face_iterator != arrangement.faces_end();
 	     ++face_iterator) {
-		if (face_iterator->data().name == "R1") {
+		if (face_iterator->data() == "R1") {
 			num_r1++;
-		} else if (face_iterator->data().name == "R2") {
+		} else if (face_iterator->data() == "R2") {
 			num_r2++;
-		} else if (face_iterator->data().name == "") {
+		} else if (face_iterator->data() == "") {
 			num_no_id++;
 		} else {
 			FAIL_CHECK();
