@@ -49,6 +49,9 @@ struct GeometryWidgetStyle {
 	QColor m_strokeColor = QColor(0, 0, 0);
 	/// The width of lines.
 	double m_strokeWidth = 1;
+	/// Whether the width is interpreted as absolute, that is, independent of
+	/// the renderer's zoom factor.
+	bool m_absoluteWidth = false;
 	/// The color of filled shapes.
 	QColor m_fillColor = QColor(0, 102, 203);
 };
@@ -77,27 +80,101 @@ struct GeometryWidgetStyle {
 /// widget->show();
 /// app.exec();
 /// ```
-class GeometryWidget : public QWidget, GeometryRenderer {
+///
+/// ## Editables
+///
+/// GeometryWidget allows the user to edit inputs for an algorithm. Editable
+/// geometry objects are called *editables*. You can register an editable using
+/// \ref registerEditable(). Connect to the \ref edited() signal to be notified
+/// when the user edits something, so that you can rerun the algorithm.
+class GeometryWidget : public QWidget, public GeometryRenderer {
 	Q_OBJECT;
 
   public:
+	/// Types of grid.
+	enum class GridMode {
+		/// A cartesian \f$(x, y)\f$ grid.
+		CARTESIAN,
+		/// A polar \f$(r, \theta)\f$ grid.
+		POLAR
+	};
+
+	/// A geometry object that can be edited by the user.
+	class Editable {
+	  public:
+		Editable(GeometryWidget* widget);
+		/// Draws a hint that this editable will be active when the user starts
+		/// dragging from this location. Returns `false` if the editable
+		/// wouldn't become active from this location.
+		virtual bool drawHoverHint(Point<Inexact> location, Number<Inexact> radius) const = 0;
+		/// Starts a drag operation. Returns `false` if the editable doesn't
+		/// want to become active from this location.
+		virtual bool startDrag(Point<Inexact> location, Number<Inexact> radius) = 0;
+		/// Handles a drag operation.
+		virtual void handleDrag(Point<Inexact> to) const = 0;
+		/// Ends a running drag operation.
+		virtual void endDrag() = 0;
+
+	  protected:
+		/// The GeometryWidget we belong to.
+		GeometryWidget* m_widget;
+	};
+
+	/// Editable for \ref Point<Inexact>.
+	class PointEditable : public Editable {
+	  public:
+		/// Constructs a PointEditable for the given point.
+		PointEditable(GeometryWidget* widget, std::shared_ptr<Point<Inexact>> point);
+		bool drawHoverHint(Point<Inexact> location, Number<Inexact> radius) const override;
+		bool startDrag(Point<Inexact> location, Number<Inexact> radius) override;
+		void handleDrag(Point<Inexact> to) const override;
+		void endDrag() override;
+
+	  private:
+		/// Checks if the location is within a circle with the given radius
+		/// around the point.
+		bool isClose(Point<Inexact> location, Number<Inexact> radius) const;
+		/// The point we're editing.
+		std::shared_ptr<Point<Inexact>> m_point;
+	};
+
+	class PolygonEditable : public Editable {
+	  public:
+		/// Constructs a PolygonEditable for the given polygon.
+		PolygonEditable(GeometryWidget* widget, std::shared_ptr<Polygon<Inexact>> polygon);
+		bool drawHoverHint(Point<Inexact> location, Number<Inexact> radius) const override;
+		bool startDrag(Point<Inexact> location, Number<Inexact> radius) override;
+		void handleDrag(Point<Inexact> to) const override;
+		void endDrag() override;
+
+	  private:
+		/// Finds a polygon vertex that is within a circle with the given radius
+		/// around the point. If such a vertex doesn't exist, this returns `-1`.
+		int findVertex(Point<Inexact> location, Number<Inexact> radius) const;
+		/// The polygon we're editing.
+		std::shared_ptr<Polygon<Inexact>> m_polygon;
+		int m_draggedVertex = -1;
+	};
+
 	/// Constructs a GeometryWidget without a painting.
 	GeometryWidget();
 	/// Constructs a GeometryWidget for the given painting.
 	GeometryWidget(std::shared_ptr<GeometryPainting> painting);
 
 	void draw(const Point<Inexact>& p) override;
-	void draw(const Segment<Inexact>& s) override;
-	void draw(const Polygon<Inexact>& p) override;
 	void draw(const PolygonWithHoles<Inexact>& p) override;
 	void draw(const Circle<Inexact>& c) override;
-	//void draw(const BezierSpline& s) override;
+	void draw(const BezierSpline& s) override;
+	void draw(const Line<Inexact>& l) override;
+	void draw(const Ray<Inexact>& r) override;
+	void draw(const RenderPath& p) override;
 	void drawText(const Point<Inexact>& p, const std::string& text) override;
 
 	void pushStyle() override;
 	void popStyle() override;
 	void setMode(int mode) override;
-	void setStroke(Color color, double width) override;
+	void setStroke(Color color, double width, bool absoluteWidth = false) override;
+	void setStrokeOpacity(int alpha) override;
 	void setFill(Color color) override;
 	void setFillOpacity(int alpha) override;
 
@@ -109,8 +186,13 @@ class GeometryWidget : public QWidget, GeometryRenderer {
 	/// Returns the current zoom factor, in pixels per unit.
 	Number<Inexact> zoomFactor() const;
 
+	/// Adds an editable point.
+	void registerEditable(std::shared_ptr<Point<Inexact>> point);
+	/// Adds an editable polygon.
+	void registerEditable(std::shared_ptr<Polygon<Inexact>> polygon);
+
   public slots:
-	/// Determines whether to draw the axes in the background.
+	/// Determines whether to draw the axes and gridlines in the background.
 	void setDrawAxes(bool drawAxes);
 	/// Sets the minimum zoom level, in pixels per unit. If the current zoom
 	/// level violates the minimum, it is not automatically adjusted.
@@ -122,6 +204,16 @@ class GeometryWidget : public QWidget, GeometryRenderer {
 	void zoomIn();
 	/// Decreases the zoom level, taking the minimum zoom into account.
 	void zoomOut();
+	/// Pans such that the given point is centered in the viewport.
+	void centerViewOn(Point<Inexact> newCenter);
+	/// Zooms and pans such that the given bounding box is centered and fits
+	/// precisely in the viewport. This clamps to the maximum and minimum zoom.
+	void fitInView(Box bbox);
+	/// Sets the type of grid.
+	void setGridMode(GridMode mode);
+	/// Launches a file picker that allows the user to save the drawing to an
+	/// Ipe file.
+	void saveToIpe();
 
   signals:
 	/// Emitted when the user clicks on the widget.
@@ -133,6 +225,8 @@ class GeometryWidget : public QWidget, GeometryRenderer {
 	void dragMoved(Point<Inexact> location);
 	/// Emitted when the user stopped dragging with the mouse.
 	void dragEnded(Point<Inexact> location);
+	/// Emitted when the user edited an editable.
+	void edited();
 
   protected:
 	void resizeEvent(QResizeEvent* e) override;
@@ -163,6 +257,8 @@ class GeometryWidget : public QWidget, GeometryRenderer {
 	/// Draws the axes, grid, and axis labels in the background, taking the
 	/// current zoom level into account.
 	void drawAxes();
+	/// Draws the coordinate hovered by the mouse.
+	void drawCoordinates();
 	/// Moves the zoom slider knob to the currently set zoom level.
 	void updateZoomSlider();
 	/// Puts the layers currently in this GeometryWidget into the layer list.
@@ -176,6 +272,10 @@ class GeometryWidget : public QWidget, GeometryRenderer {
 		/// Whether the painting is currently visible.
 		bool visible;
 	};
+	/// The set of layer names that were invisible. This set doesn't get cleared
+	/// when paintings are removed; when a new painting is added its name is
+	/// looked up in the set to find out if it should be made visible initially.
+	std::set<std::string> m_invisibleLayerNames;
 	/// List of the paintings we're drawing.
 	std::vector<DrawnPainting> m_paintings;
 	/// The QPainter we are drawing with. Only valid while painting.
@@ -199,6 +299,14 @@ class GeometryWidget : public QWidget, GeometryRenderer {
 	bool m_mouseButtonDown = false;
 	/// Whether to draw the background axes.
 	bool m_drawAxes = true;
+	/// The grid mode.
+	GridMode m_gridMode = GridMode::CARTESIAN;
+	/// The registered editables.
+	std::vector<std::unique_ptr<Editable>> m_editables;
+	/// The editable in \ref m_editables that the user is currently interacting
+	/// with, or `nullptr` if no such interaction is going on.
+	Editable* m_activeEditable = nullptr;
+	
 	/// The current drawing style.
 	GeometryWidgetStyle m_style;
 	/// A stack of drawing styles, used by \link pushStyle() and \link
@@ -214,6 +322,8 @@ class GeometryWidget : public QWidget, GeometryRenderer {
 	QSlider* m_zoomSlider;
 	/// The zoom in button in the toolbar.
 	QToolButton* m_zoomInButton;
+	/// The save to Ipe button in the toolbar.
+	QToolButton* m_saveToIpeButton;
 };
 
 } // namespace cartocrow::renderer

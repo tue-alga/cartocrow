@@ -7,6 +7,9 @@ set(SOURCES
 	polar_line.cpp
 	polar_point.cpp
 	polar_segment.cpp
+	reachable_region_algorithm.cpp
+	smooth_tree.cpp
+	smooth_tree_painting.cpp
 	spiral.cpp
 	spiral_segment.cpp
 	spiral_tree.cpp
@@ -26,6 +29,9 @@ set(HEADERS
 	polar_line.h
 	polar_point.h
 	polar_segment.h
+	reachable_region_algorithm.h
+	smooth_tree.h
+	smooth_tree_painting.h
 	spiral.h
 	spiral_segment.h
 	spiral_tree.h
@@ -41,8 +47,5 @@ target_link_libraries(flow_map
 	PRIVATE glog::glog
 )
 
-install(TARGETS flow_map
-	EXPORT ${CARTOCROW_EXPORT_TARGETS}
-	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBRARY_DIR}
-	INCLUDES DESTINATION ${CMAKE_INSTALL_SOURCE_DIR}
-)
+cartocrow_install_module(flow_map)
+install(FILES ${HEADERS} DESTINATION ${CARTOCROW_INSTALL_DIR}/flow_map)

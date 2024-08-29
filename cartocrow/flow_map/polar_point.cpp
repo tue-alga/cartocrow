@@ -57,6 +57,14 @@ const Number<Inexact> PolarPoint::phi() const {
 	return m_phi;
 }
 
+void PolarPoint::setR(Number<Inexact> r) {
+	m_r = r;
+}
+
+void PolarPoint::setPhi(Number<Inexact> phi) {
+	m_phi = phi;
+}
+
 Point<Inexact> PolarPoint::toCartesian() const {
 	const Vector<Inexact> d = Vector<Inexact>(std::cos(phi()), std::sin(phi()));
 	return Point<Inexact>(CGAL::ORIGIN) + r() * d;

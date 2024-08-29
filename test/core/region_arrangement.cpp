@@ -2,7 +2,7 @@
 
 #include <filesystem>
 
-#include "../../cartocrow/core/region_arrangement.h"
+#include "cartocrow/core/region_arrangement.h"
 
 using namespace cartocrow;
 

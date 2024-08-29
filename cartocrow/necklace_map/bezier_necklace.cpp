@@ -76,12 +76,12 @@ BezierNecklace::BezierNecklace(const BezierSpline spline, const Point<Inexact>& 
 	// Clockwise curves are reversed.
 	if (CGAL::orientation(spline_.curves().begin()->source(),
 	                      spline_.curves().begin()->sourceControl(), kernel_) == CGAL::CLOCKWISE) {
-		spline_.Reverse();
+		spline_.reverse();
 	}
 
 	// Reorder the curves to start with the curve directly to the right of the kernel.
 	std::sort(spline_.curves().begin(), spline_.curves().end(), CompareBezierCurves(*this));
-	CHECK(spline_.IsClosed());
+	CHECK(spline_.isClosed());
 }
 
 const Point<Inexact>& BezierNecklace::kernel() const {
@@ -101,7 +101,7 @@ bool BezierNecklace::isValid() const {
 	// The curve must also be fully visible from the kernel, i.e. no ray originating from the kernel intersects the curve in more than one point.
 	// Finally, the curve must describe a counterclockwise sweep around the kernel, i.e. the curve must start to the left of the vector from the kernel to the curve source.
 
-	bool valid = spline_.IsValid();
+	bool valid = spline_.isValid();
 	for (const BezierCurve& curve : spline_.curves()) {
 		valid &= curve.source() != curve.sourceControl() && curve.target() != curve.targetControl() &&
 		         !CGAL::right_turn(curve.source(), curve.sourceControl(), kernel()) &&
@@ -124,7 +124,7 @@ bool BezierNecklace::intersectRay(const Number<Inexact>& angle_rad,
 }
 
 Box BezierNecklace::computeBoundingBox() const {
-	return spline_.ComputeBoundingBox();
+	return spline_.computeBoundingBox();
 }
 
 Number<Inexact> BezierNecklace::computeCoveringRadiusRad(const Range& range,

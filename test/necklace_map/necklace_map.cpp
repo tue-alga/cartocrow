@@ -1,11 +1,10 @@
 #include "../catch.hpp"
 
-#include "../../cartocrow/core/core.h"
-#include "../../cartocrow/core/region_map.h"
-#include "../../cartocrow/necklace_map/circle_necklace.h"
-#include "../../cartocrow/necklace_map/necklace_map.h"
-#include "../../cartocrow/necklace_map/painting.h"
-#include "../../cartocrow/renderer/ipe_renderer.h"
+#include "cartocrow/core/core.h"
+#include "cartocrow/core/region_map.h"
+#include "cartocrow/necklace_map/circle_necklace.h"
+#include "cartocrow/necklace_map/necklace_map.h"
+#include "cartocrow/necklace_map/painting.h"
 
 using namespace cartocrow;
 using namespace cartocrow::necklace_map;

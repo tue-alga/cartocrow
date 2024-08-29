@@ -1,6 +1,6 @@
 #include "../catch.hpp"
 
-#include "../../cartocrow/necklace_map/circular_range.h"
+#include "cartocrow/necklace_map/circular_range.h"
 
 using namespace cartocrow::necklace_map;
 

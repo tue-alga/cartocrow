@@ -115,6 +115,6 @@ std::ostream& operator<<(std::ostream& os, const PolarSegment& line);
 
 } // namespace cartocrow::flow_map
 
-#include "polar_segment.inc"
+#include "polar_segment.hpp"
 
 #endif //CARTOCROW_CORE_POLAR_SEGMENT_H

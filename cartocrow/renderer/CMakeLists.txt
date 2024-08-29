@@ -3,6 +3,7 @@ set(SOURCES
 	geometry_widget.cpp
 	ipe_renderer.cpp
 	painting_renderer.cpp
+	render_path.cpp
 )
 set(HEADERS
 	geometry_painting.h
@@ -10,6 +11,7 @@ set(HEADERS
 	geometry_widget.h
 	ipe_renderer.h
 	painting_renderer.h
+	render_path.h
 )
 
 add_library(renderer ${SOURCES})
@@ -25,10 +27,5 @@ if(WIN32)
 	)
 endif()
 
-install(
-	TARGETS renderer
-	EXPORT ${CARTOCROW_EXPORT_TARGETS}
-	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBRARY_DIR}
-	INCLUDES DESTINATION ${CMAKE_INSTALL_SOURCE_DIR}
-)
+cartocrow_install_module(renderer)
 install(FILES ${HEADERS} DESTINATION ${CARTOCROW_INSTALL_DIR}/renderer)

@@ -13,11 +13,11 @@ set(TEST_SOURCES "cartocrow_test.cpp"
 	"flow_map/polar_line.cpp"
 	"flow_map/polar_point.cpp"
 	"flow_map/polar_segment.cpp"
+	"flow_map/reachable_region_algorithm.cpp"
 	"flow_map/spiral_tree.cpp"
 	"flow_map/spiral_tree_obstructed_algorithm.cpp"
 	"flow_map/sweep_circle.cpp"
 	"flow_map/sweep_edge.cpp"
-	"simplification/vw_simplification.cpp"
 )
 
 
@@ -28,5 +28,4 @@ target_link_libraries(cartocrow_test
 	necklace_map
 	flow_map
 	renderer
-	simplification
 )

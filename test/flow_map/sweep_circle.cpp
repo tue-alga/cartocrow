@@ -3,7 +3,7 @@
 #include <cmath>
 #include <ctime>
 
-#include "../../cartocrow/flow_map/sweep_circle.h"
+#include "cartocrow/flow_map/sweep_circle.h"
 
 using namespace cartocrow;
 using namespace cartocrow::flow_map;
@@ -32,7 +32,7 @@ TEST_CASE("Creating and computing phi for a segment sweep edge shape") {
 }*/
 
 TEST_CASE("Creating a sweep circle") {
-	SweepCircle circle;
+	SweepCircle circle(SweepInterval::Type::REACHABLE);
 	CHECK(circle.r() == 0);
 	CHECK(circle.isValid());
 	CHECK(circle.intervalCount() == 1);
@@ -44,7 +44,7 @@ TEST_CASE("Creating a sweep circle") {
 }
 
 TEST_CASE("Splitting, switching and merging in a sweep circle") {
-	SweepCircle circle;
+	SweepCircle circle(SweepInterval::Type::REACHABLE);
 	circle.grow(1);
 
 	auto e1 =
@@ -77,7 +77,7 @@ TEST_CASE("Splitting, switching and merging in a sweep circle") {
 
 	auto e3 = std::make_shared<SweepEdge>(
 	    SweepEdgeShape(PolarPoint(2, M_PI / 4), PolarPoint(3, 3 * M_PI / 4)));
-	SweepCircle::SwitchResult switchResult = circle.switchEdge(*e1, e3);
+	SweepCircle::SwitchResult switchResult = circle.switchEdge(e1, e3);
 	CHECK(circle.isValid());
 	CHECK(circle.intervalCount() == 2);
 
@@ -89,7 +89,7 @@ TEST_CASE("Splitting, switching and merging in a sweep circle") {
 	CHECK(circle.isValid());
 	CHECK(circle.intervalCount() == 2);
 
-	SweepCircle::MergeResult mergeResult = circle.mergeToInterval(*e3, *e2);
+	SweepCircle::MergeResult mergeResult = circle.mergeToInterval(e3, e2);
 	mergeResult.mergedInterval->setType(SweepInterval::Type::REACHABLE);
 	CHECK(circle.isValid());
 	CHECK(circle.intervalCount() == 1);
@@ -100,7 +100,7 @@ TEST_CASE("Splitting, switching and merging in a sweep circle") {
 }
 
 TEST_CASE("Querying a sweep circle for intervals and edges") {
-	SweepCircle circle;
+	SweepCircle circle(SweepInterval::Type::REACHABLE);
 	circle.grow(1);
 
 	SECTION("sweep circle with a single interval") {
@@ -135,7 +135,7 @@ TEST_CASE("Querying a sweep circle for intervals and edges") {
 }
 
 TEST_CASE("Growing a sweep circle") {
-	SweepCircle circle;
+	SweepCircle circle(SweepInterval::Type::REACHABLE);
 	circle.grow(1);
 
 	SECTION("with an edge moving counter-clockwise over φ = π") {

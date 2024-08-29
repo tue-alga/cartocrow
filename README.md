@@ -7,8 +7,8 @@
 
 CartoCrow is a framework that simplifies the implementation of algorithms in cartographic visualization. It allows researchers to experiment with these algorithms and use them to generate maps. The framework behind CartoCrow can be used to run other cartography algorithms online. CartoCrow consists of a C++ library (this repository) which provides a set of command-line applications, and a web interface (see [cartocrow-web](https://github.com/tue-alga/cartocrow-web)) which allows end users to generate maps in a user-friendly way.
 
-> :warning: CartoCrow is still a **work in progress**  and should not be considered stable yet.
-
+> [!WARNING]  
+> CartoCrow is still a **work in progress**  and should not be considered stable yet.
 
 This repository consists of the following subdirectories:
 
@@ -22,18 +22,18 @@ This repository consists of the following subdirectories:
 
 CartoCrow depends on the following build tools:
 
-* g++ (11.2.0) / clang++ (14.0.0) / MSVC (2019)
+* g++ (11.4.0, 12.3.0) / clang++ (14.0.0, 15.0.7) / MSVC (2019)
 * CMake (3.15)
 
 And it depends on the following libraries:
 
-* CGAL (5.0) -- for implementations of computational geometry algorithms we need
-* glog (0.5.0) -- for logging
-* ipelib (7.2.26) -- for [Ipe](https://ipe.otfried.org) input and SVG/Ipe output
-* nlohmann-json (3.10.5) -- for JSON parsing
-* Qt (5.15) -- for the interactive GUI
+* CGAL (5.4, 5.5) – for implementations of computational geometry algorithms we need
+* glog (0.5.0, 0.6.0) – for logging
+* ipelib (7.2.26) – for [Ipe](https://ipe.otfried.org) input and SVG/Ipe output
+* nlohmann-json (3.10.5, 3.11.2) – for JSON parsing
+* Qt (5.15) – for the interactive GUI
 
-The version numbers listed are indicative. Newer (and possibly somewhat older) versions will most likely work as well.
+The version numbers listed are the ones we're testing with. Newer (and possibly somewhat older) versions will most likely work as well.
 
 
 ### Windows (MSVC)
@@ -134,7 +134,7 @@ On Ubuntu, most dependencies can be obtained from the repository:
 
 ```sh
 sudo apt install build-essential cmake
-sudo apt install libcgal-dev nlohmann-json3-dev
+sudo apt install libcgal-dev nlohmann-json3-dev qtbase5-dev
 ```
 
 The remaining dependencies need to be built manually.
@@ -200,5 +200,5 @@ build/frontend/cartocrow data/europe-population-necklace.json
 
 ## License
 
-Copyright (c) 2019-2022 Netherlands eScience Center and TU Eindhoven
+Copyright (c) 2019-2023 Netherlands eScience Center and TU Eindhoven
 Licensed under the GPLv3.0 license. See LICENSE for details.

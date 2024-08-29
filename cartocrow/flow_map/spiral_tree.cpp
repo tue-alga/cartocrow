@@ -58,6 +58,10 @@ std::vector<SpiralTree::Obstacle>& SpiralTree::obstacles() {
 	return m_obstacles;
 }
 
+std::shared_ptr<Node> SpiralTree::root() {
+	return m_root;
+}
+
 void SpiralTree::addPlace(const std::string& name, const Point<Inexact>& position,
                           Number<Inexact> flow) {
 	auto newPlace = std::make_shared<Place>(name, position, flow);
@@ -79,14 +83,14 @@ void SpiralTree::addShields() {
 			continue;
 		}
 		Point<Inexact> p = position.toCartesian() + (rootPosition() - CGAL::ORIGIN);
-		const Number<Inexact> shieldWidth = 2;
+		const Number<Inexact> shieldWidth = 1;
 		Vector<Inexact> v1 =
 		    PolarPoint(shieldWidth, position.phi() + M_PI_2).toCartesian() - CGAL::ORIGIN;
-		const Number<Inexact> shieldThickness = 2;
+		const Number<Inexact> shieldThickness = 1;
 		Vector<Inexact> v2 = PolarPoint(shieldThickness, position.phi()).toCartesian() - CGAL::ORIGIN;
 		Polygon<Inexact> polygon;
-		polygon.push_back(p + 0.5 * v2 + v1);
-		polygon.push_back(p + 0.5 * v2 - v1);
+		polygon.push_back(p + 0.25 * v2 + v1);
+		polygon.push_back(p + 0.25 * v2 - v1);
 		polygon.push_back(p + v2);
 		addObstacle(polygon);
 	}
@@ -139,8 +143,12 @@ bool SpiralTree::isReachable(const PolarPoint& parent_point, const PolarPoint& c
 	return std::abs(spiral.angle()) <= m_restrictingAngle;
 }
 
-SpiralTree::Obstacle SpiralTree::makeObstacle(Polygon<Inexact> shape) {
+void SpiralTree::addEdge(const std::shared_ptr<Node>& parent, const std::shared_ptr<Node>& child) {
+	child->m_parent = parent;
+	parent->m_children.push_back(child);
+}
 
+SpiralTree::Obstacle SpiralTree::makeObstacle(Polygon<Inexact> shape) {
 	Obstacle obstacle;
 
 	// enforce counter-clockwise vertex order

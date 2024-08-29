@@ -22,24 +22,36 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 namespace cartocrow::renderer {
 
-void GeometryRenderer::draw(const Point<Exact>& p) {
-	draw(approximate(p));
+void GeometryRenderer::draw(const Segment<Inexact>& s) {
+	RenderPath path;
+	path.moveTo(s.start());
+	path.lineTo(s.end());
+	draw(path);
 }
 
-void GeometryRenderer::draw(const Segment<Exact>& s) {
-	draw(approximate(s));
+void GeometryRenderer::draw(const Polygon<Inexact>& p) {
+	RenderPath path;
+	for (auto vertex = p.vertices_begin(); vertex != p.vertices_end(); vertex++) {
+		if (vertex == p.vertices_begin()) {
+			path.moveTo(*vertex);
+		} else {
+			path.lineTo(*vertex);
+		}
+	}
+	path.close();
+	draw(path);
 }
 
-void GeometryRenderer::draw(const Polygon<Exact>& p) {
-	draw(approximate(p));
-}
-
-void GeometryRenderer::draw(const PolygonWithHoles<Exact>& p) {
-	draw(approximate(p));
-}
-
-void GeometryRenderer::draw(const Circle<Exact>& c) {
-	draw(approximate(c));
+void GeometryRenderer::draw(const Polyline<Inexact>& p) {
+	RenderPath path;
+	for (auto vertex = p.vertices_begin(); vertex != p.vertices_end(); vertex++) {
+		if (vertex == p.vertices_begin()) {
+			path.moveTo(*vertex);
+		} else {
+			path.lineTo(*vertex);
+		}
+	}
+	draw(path);
 }
 
 void GeometryRenderer::draw(const PolygonSet<Inexact>& ps) {
@@ -50,8 +62,10 @@ void GeometryRenderer::draw(const PolygonSet<Inexact>& ps) {
 	}
 }
 
-void GeometryRenderer::draw(const PolygonSet<Exact>& ps) {
-	draw(approximate(ps));
+void GeometryRenderer::draw(const BezierCurve& c) {
+	BezierSpline spline;
+	spline.appendCurve(c);
+	draw(spline);
 }
 
 } // namespace cartocrow::renderer

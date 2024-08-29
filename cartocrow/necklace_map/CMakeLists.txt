@@ -16,8 +16,7 @@ set(SOURCES
 	scale_factor/compute_scale_factor.cpp
 	valid_placement/compute_valid_placement.cpp
 	bead.cpp
-	bezier.cpp
-	bezier_necklace.cpp
+    bezier_necklace.cpp
 	circle_necklace.cpp
 	circular_range.cpp
 	necklace.cpp
@@ -46,8 +45,7 @@ set(HEADERS
 	scale_factor/compute_scale_factor.h
 	valid_placement/compute_valid_placement.h
 	bead.h
-	bezier.h
-	bezier_necklace.h
+    bezier_necklace.h
 	bit_string.h
 	circle_necklace.h
 	circular_range.h
@@ -65,8 +63,5 @@ target_link_libraries(necklace_map
 	PRIVATE glog::glog
 )
 
-install(TARGETS necklace_map
-	EXPORT ${CARTOCROW_EXPORT_TARGETS}
-	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBRARY_DIR}
-	INCLUDES DESTINATION ${CMAKE_INSTALL_SOURCE_DIR}
-)
+cartocrow_install_module(necklace_map)
+install(FILES ${HEADERS} DESTINATION ${CARTOCROW_INSTALL_DIR}/necklace_map)

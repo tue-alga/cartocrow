@@ -5,7 +5,7 @@ Copyright (C) 2021  Netherlands eScience Center and TU Eindhoven
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3f of the License, or
+the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
@@ -19,6 +19,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "sweep_edge.h"
 
+#include <cmath>
 #include <limits>
 
 #include "polar_segment.h"
@@ -43,6 +44,26 @@ PolarPoint SweepEdgeShape::start() const {
 
 std::optional<PolarPoint> SweepEdgeShape::end() const {
 	return m_end;
+}
+
+void SweepEdgeShape::pruneNearSide(PolarPoint newNear) {
+	if (!m_end) {
+		m_start = newNear;
+	} else if (m_start.r() < m_end->r()) {
+		m_start = newNear;
+	} else {
+		m_end = newNear;
+	}
+}
+
+void SweepEdgeShape::pruneFarSide(PolarPoint newFar) {
+	if (!m_end) {
+		m_end = newFar;
+	} else if (m_start.r() < m_end->r()) {
+		m_end = newFar;
+	} else {
+		m_start = newFar;
+	}
 }
 
 PolarPoint SweepEdgeShape::nearEndpoint() const {
@@ -73,11 +94,19 @@ std::optional<Number<Inexact>> SweepEdgeShape::farR() const {
 	}
 }
 
+std::optional<Number<Inexact>> SweepEdgeShape::averageR() const {
+	if (farR()) {
+		return (nearR() + *farR()) / 2;
+	} else {
+		return std::nullopt;
+	}
+}
+
 Number<Inexact> SweepEdgeShape::phiForR(Number<Inexact> r) const {
-	assert(r >= nearR() && (!farR() || r <= farR())); // trying to compute phi for out-of-bounds r
+	assert(!farR() || (r >= nearR() && r <= farR())); // trying to compute φ for out-of-bounds r
 
 	// for robustness, it is important that if we are exactly at the beginning
-	// or end of the edge, we return the exact phi of its begin or end point
+	// or end of the edge, we return the exact φ of its begin or end point
 	if (r == nearR()) {
 		return nearEndpoint().phi();
 	}
@@ -89,7 +118,7 @@ Number<Inexact> SweepEdgeShape::phiForR(Number<Inexact> r) const {
 		PolarSegment s(m_start, *m_end);
 		std::array<Number<Inexact>, 2> phis;
 		int phiCount = s.collectPhi(r, &phis[0]);
-		assert(phiCount <= 1); // line segment contained two of the given phis
+		assert(phiCount <= 1); // line segment contained two of the given φs
 		if (phiCount == 0) {
 			// for floating-point robustness: if we are just within the near-far
 			// range, then it can happen that PolarSegment claims there is no
@@ -112,17 +141,30 @@ PolarPoint SweepEdgeShape::evalForR(Number<Inexact> r) const {
 	return PolarPoint(r, phiForR(r));
 }
 
-bool SweepEdgeShape::departsToLeftOf(const SweepEdgeShape& shape) const {
-	Number<Inexact> r = this->nearR();
-	assert(shape.nearR() == r);
-
-	// TODO temporary implementation with epsilon, should be replaced by angle
-	// computations
-	return PolarSegment(this->evalForR(r + 0.00001), shape.evalForR(r + 0.00001)).isLeftLine();
+Number<Inexact> SweepEdgeShape::tangentAngleForR(Number<Inexact> r) const {
+	assert(!farR() || (r >= nearR() && r <= farR())); // trying to compute tangent angle for out-of-bounds r
+	if (m_type == Type::SEGMENT) {
+		Point<Inexact> start = m_start.toCartesian();
+		Point<Inexact> end = m_end->toCartesian();
+		if (m_start.r() > m_end->r()) {
+			std::swap(start, end);
+		}
+		return std::atan2(end.y() - start.y(), end.x() - start.x());
+	} else {
+		return wrapAngle(evalForR(r).phi() + (m_type == Type::LEFT_SPIRAL ? m_alpha : -m_alpha), -M_PI);
+	}
 }
 
-std::optional<Number<Inexact>> SweepEdgeShape::intersectWith(const SweepEdgeShape& other,
-                                                             Number<Inexact> rMin) const {
+bool SweepEdgeShape::departsOutwardsToLeftOf(Number<Inexact> r, const SweepEdgeShape& other) const {
+	assert(phiForR(r) == other.phiForR(r));
+
+	Number<Inexact> thisAngle = tangentAngleForR(r);
+	Number<Inexact> otherAngle = other.tangentAngleForR(r);
+	return wrapAngle(thisAngle - otherAngle, -M_PI) > 0;
+}
+
+std::optional<Number<Inexact>> SweepEdgeShape::intersectOutwardsWith(const SweepEdgeShape& other,
+                                                                     Number<Inexact> rMin) const {
 	if (this->type() == Type::SEGMENT && other.type() == Type::SEGMENT) {
 		return std::nullopt;
 	}
@@ -134,7 +176,7 @@ std::optional<Number<Inexact>> SweepEdgeShape::intersectWith(const SweepEdgeShap
 	// at distance rMin + ε, are we to the left of the other shape?
 	bool initiallyLeftOfOther;
 	if (phiForR(rMin) == other.phiForR(rMin)) {
-		initiallyLeftOfOther = departsToLeftOf(other);
+		initiallyLeftOfOther = departsOutwardsToLeftOf(rMin, other);
 	} else {
 		initiallyLeftOfOther = isLeftOf(rMin);
 	}
@@ -148,25 +190,18 @@ std::optional<Number<Inexact>> SweepEdgeShape::intersectWith(const SweepEdgeShap
 	}
 
 	Number<Inexact> rLower = rMin;
-	/*std::cout << "at rLower " << isLeftOf(rLower) << " " << evalForR(rLower) << " "
-	          << other.evalForR(rLower) << std::endl;
-	std::cout << "at rLower + 0.01 " << isLeftOf(rLower + 0.01) << " " << evalForR(rLower + 0.01)
-	          << " " << other.evalForR(rLower + 0.01) << std::endl;*/
 	Number<Inexact> rUpper = rLower;
 	Number<Inexact> rLimit = std::min(rMax, rMin * std::exp(2 * M_PI / std::tan(alpha)));
 	while (rUpper < rLimit) {
 		rUpper = std::min(rMax, rUpper * std::exp(M_PI / (8 * std::tan(alpha))));
-		//std::cout << "interval: (" << rLower << ", " << rUpper << "]" << std::endl;
 
 		if (isLeftOf(rUpper) != initiallyLeftOfOther) {
 			Number<Inexact> angleDifference = std::abs(phiForR(rUpper) - other.phiForR(rUpper));
-			//std::cout << angleDifference << std::endl;
 			if (angleDifference < M_PI / 2 || angleDifference > 3 * M_PI / 2) {
 				// found intersection
 				break;
 			} else {
 				// found wraparound, continue searching
-				//std::cout << "wraparound" << std::endl;
 				rLower = rUpper;
 				initiallyLeftOfOther = !initiallyLeftOfOther;
 			}
@@ -179,12 +214,8 @@ std::optional<Number<Inexact>> SweepEdgeShape::intersectWith(const SweepEdgeShap
 
 	// binary search
 	for (int i = 0; i < 30; i++) {
-		//std::cout << "interval: (" << rLower << ", " << rUpper << "]" << std::endl;
 		Number<Inexact> rMid = (rLower + rUpper) / 2;
-
 		bool leftOfOther = isLeftOf(rMid);
-		//std::cout << "midpoint: " << rMid << " " << leftOfOther << std::endl;
-
 		if (leftOfOther == initiallyLeftOfOther) {
 			rLower = rMid;
 		} else {
@@ -192,6 +223,83 @@ std::optional<Number<Inexact>> SweepEdgeShape::intersectWith(const SweepEdgeShap
 		}
 	}
 
+	return (rLower + rUpper) / 2;
+}
+
+bool SweepEdgeShape::departsInwardsToLeftOf(Number<Inexact> r, const SweepEdgeShape& other) const {
+	assert(phiForR(r) == other.phiForR(r));
+
+	Number<Inexact> thisAngle = tangentAngleForR(r);
+	Number<Inexact> otherAngle = other.tangentAngleForR(r);
+	Number<Inexact> angleDifference = wrapAngle(otherAngle - thisAngle, -M_PI);
+	if (std::abs(angleDifference) > M_EPSILON) {
+		return angleDifference > 0;
+	}
+	// if they have the same angle, then decide based on the curve direction
+	// (that is: a right spiral curves inwards more to the left than a segment,
+	// which in turn curves more to the left than a left spiral)
+	return other.signedAlpha() > this->signedAlpha();
+}
+
+std::optional<Number<Inexact>> SweepEdgeShape::intersectInwardsWith(const SweepEdgeShape& other,
+                                                                    Number<Inexact> rMax) const {
+	if (this->type() == Type::SEGMENT && other.type() == Type::SEGMENT) {
+		return std::nullopt;
+	}
+	Number<Inexact> alpha = this->type() != Type::SEGMENT ? m_alpha : other.m_alpha;
+
+	auto isLeftOf = [&](Number<Inexact> r) {
+		return PolarSegment(evalForR(r), other.evalForR(r)).isLeftLine();
+	};
+	// at distance rMax - ε, are we to the left of the other shape?
+	bool initiallyLeftOfOther;
+	if (phiForR(rMax) == other.phiForR(rMax)) {
+		initiallyLeftOfOther = departsInwardsToLeftOf(rMax, other);
+	} else {
+		initiallyLeftOfOther = isLeftOf(rMax);
+	}
+
+	Number<Inexact> rMin = 0;
+	if (farR()) {
+		rMin = std::max(rMin, nearR());
+	}
+	if (other.farR()) {
+		rMin = std::max(rMin, other.nearR());
+	}
+
+	Number<Inexact> rUpper = rMax;
+	Number<Inexact> rLower = rUpper;
+	Number<Inexact> rLimit = std::max(rMin, rMax / std::exp(2 * M_PI / std::tan(alpha)));
+	while (rLower > rLimit) {
+		rLower = std::max(rMin, rLower / std::exp(M_PI / (8 * std::tan(alpha))));
+
+		if (isLeftOf(rLower) != initiallyLeftOfOther) {
+			Number<Inexact> angleDifference = std::abs(phiForR(rLower) - other.phiForR(rLower));
+			if (angleDifference < M_PI / 2 || angleDifference > 3 * M_PI / 2) {
+				// found intersection
+				break;
+			} else {
+				// found wraparound, continue searching
+				rUpper = rLower;
+				initiallyLeftOfOther = !initiallyLeftOfOther;
+			}
+		}
+	}
+
+	if (isLeftOf(rLower) == initiallyLeftOfOther) {
+		return std::nullopt;
+	}
+
+	// binary search
+	for (int i = 0; i < 30; i++) {
+		Number<Inexact> rMid = (rLower + rUpper) / 2;
+		bool leftOfOther = isLeftOf(rMid);
+		if (leftOfOther == initiallyLeftOfOther) {
+			rUpper = rMid;
+		} else {
+			rLower = rMid;
+		}
+	}
 	return (rLower + rUpper) / 2;
 }
 
@@ -208,11 +316,19 @@ SpiralSegment SweepEdgeShape::toSpiralSegment() const {
 	// pick a value so that the spiral rotates by 2π
 }
 
+Number<Inexact> SweepEdgeShape::signedAlpha() const {
+	if (m_type == SweepEdgeShape::Type::LEFT_SPIRAL) {
+		return -m_alpha;
+	} else {
+		return m_alpha;
+	}
+}
+
 SweepEdge::SweepEdge(SweepEdgeShape shape)
     : m_shape(shape), m_previousInterval(nullptr),
       m_nextInterval(SweepInterval(SweepInterval::Type::REACHABLE)) {}
 
-const SweepEdgeShape& SweepEdge::shape() const {
+SweepEdgeShape& SweepEdge::shape() {
 	return m_shape;
 }
 
@@ -230,6 +346,10 @@ SweepInterval* SweepEdge::nextInterval() {
 
 SweepEdge* SweepEdge::nextEdge() {
 	return m_nextInterval.nextBoundary();
+}
+
+bool SweepEdge::isOnCircle() const {
+	return m_onCircle;
 }
 
 } // namespace cartocrow::flow_map

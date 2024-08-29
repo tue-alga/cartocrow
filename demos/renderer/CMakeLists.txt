@@ -1,0 +1,3 @@
+add_subdirectory(renderer_demo)
+add_subdirectory(render_path_demo)
+add_subdirectory(editables_demo)

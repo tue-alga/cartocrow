@@ -1,6 +1,6 @@
 #include "../catch.hpp"
 
-#include "../../cartocrow/core/centroid.h"
+#include "cartocrow/core/centroid.h"
 
 using namespace cartocrow;
 

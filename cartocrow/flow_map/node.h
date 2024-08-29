@@ -57,6 +57,12 @@ struct Node {
 	/// leaf nodes, a node with the leaf type may have children if it is located
 	/// inside the spiral region of another node.
 	std::vector<std::shared_ptr<Node>> m_children;
+
+	/// The amount of flow through this node.
+	Number<Inexact> m_flow;
+
+	/// The index of this node in its tree.
+	int m_id = -1;
 };
 
 } // namespace cartocrow::flow_map

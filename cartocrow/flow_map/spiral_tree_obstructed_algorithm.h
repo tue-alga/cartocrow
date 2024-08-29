@@ -26,30 +26,60 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "../renderer/geometry_painting.h"
 #include "../renderer/painting_renderer.h"
+#include "reachable_region_algorithm.h"
 #include "spiral_tree.h"
 #include "sweep_circle.h"
 
 namespace cartocrow::flow_map {
 
-/// Implementation of the algorithm to compute a spiral tree with obstacles.
+/// Implementation of the algorithm to compute a spiral tree with obstacles. As
+/// the input this algorithm gets the vertices of the unreachable regions (see
+/// \ref ReachableRegionAlgorithm).
 ///
-/// This is a ‘sweep-circle’ algorithm which works in two phases:
+/// \image html spiral-tree-algorithm-overview.svg
 ///
-/// * In the first phase we construct the region of the plane that is reachable
-/// from the root by spirals not passing through obstacles. This is done by
-/// sweeping a circle outwards from the root and maintaining which part of the
-/// circle is reachable.
+/// The figure above illustrates the execution of this algorithm on some
+/// arbitrary input nodes \f$p_1, \ldots, p_5\f$ and the same obstacles as
+/// illustrated in the documentation for the ReachableRegionAlgorithm. The
+/// result of the complete procedure is this spiral tree:
 ///
-/// * In the second phase we construct the tree itself, by sweeping a circle
-/// inwards towards the root of the tree.
+/// \image html spiral-tree-algorithm-overview-2.svg
+///
+/// Throughout this documentation we'll use the color scheme shown in these
+/// figures: brown for obstacles (including their shadows), green for reachable
+/// regions, and blue edges for the resulting spiral tree.
+///
+/// ## Algorithm description
+///
+/// Just like the \ref ReachableRegionAlgorithm, this is a sweep-circle
+/// algorithm that maintains edges and intervals on the sweep circle. While the
+/// ReachableRegionAlgorithm sweeps outwards from the origin, this algorithm
+/// sweeps inwards from infinity towards the origin.
+///
+/// ## Event types
+///
+/// The algorithm handles three types of events:
+///
+/// * \ref NodeEvent "node events": the sweep circle hits a node;
+///
+/// * \ref VertexEvent "vertex events": the sweep circle hits an obstacle
+/// vertex;
+///
+/// * \ref JoinEvent "join events": a shadow interval vanishes.
+///
+/// See the linked class documentation for detailed descriptions of these event
+/// types.
 class SpiralTreeObstructedAlgorithm {
 
   public:
 	/// Constructs this class to run the algorithm for the given spiral tree.
-	SpiralTreeObstructedAlgorithm(std::shared_ptr<SpiralTree> tree);
+	SpiralTreeObstructedAlgorithm(
+	    std::shared_ptr<SpiralTree> tree,
+	    ReachableRegionAlgorithm::ReachableRegion reachableRegion);
 
 	/// Runs the algorithm.
 	void run();
+
 	/// Returns a \ref GeometryPainting that shows some debug information. This
 	/// painting shows some debug information about the algorithm run. If this
 	/// method is called before \ref run(), this will result in an empty
@@ -59,6 +89,8 @@ class SpiralTreeObstructedAlgorithm {
   private:
 	/// The spiral tree we are computing.
 	std::shared_ptr<SpiralTree> m_tree;
+	/// The reachable region as produced by the \ref ReachableRegionAlgorithm.
+	ReachableRegionAlgorithm::ReachableRegion m_reachableRegion;
 
 	class Event;
 	class CompareEvents;
@@ -66,20 +98,17 @@ class SpiralTreeObstructedAlgorithm {
 	using EventQueue =
 	    std::priority_queue<std::shared_ptr<Event>, std::vector<std::shared_ptr<Event>>, CompareEvents>;
 
-	/// An event in the sweep circle algorithm.
+	/// An event in the \ref SpiralTreeObstructedAlgorithm.
 	class Event {
 	  public:
-		enum class Type {
-			NODE,
-			VERTEX,
-			JOIN,
-			SWITCH,
-		};
+		/// Constructs an event at the given position. Also requires a pointer
+		/// to the SpiralTreeObstructedAlgorithm.
+		Event(PolarPoint position, SpiralTreeObstructedAlgorithm* alg);
 
-		Event(PolarPoint position, Type type, SpiralTreeObstructedAlgorithm* alg);
+		/// Returns the radius at which this event happens.
 		Number<Inexact> r() const;
+		/// Returns the \f$\phi\f$ at which this event happens.
 		Number<Inexact> phi() const;
-		Type type() const;
 		/// Handles this event.
 		virtual void handle() = 0;
 		/// Checks if this event is still valid.
@@ -94,38 +123,48 @@ class SpiralTreeObstructedAlgorithm {
 		void insertJoinEventFor(SweepCircle::EdgeMap::iterator previousEdge);
 
 	  protected:
+		/// The position at which this event happens.
 		PolarPoint m_position;
-		Type m_type;
+		/// Pointer to the SpiralTreeObstructedAlgorithm this event belongs to.
 		SpiralTreeObstructedAlgorithm* m_alg;
 	};
 
+	/// An event that happens when the sweep circle hits a node.
 	class NodeEvent : public Event {
 	  public:
-		NodeEvent(PolarPoint position, SpiralTreeObstructedAlgorithm* alg);
+		/// Creates a new node event for the given node.
+		NodeEvent(std::shared_ptr<Node> node, SpiralTreeObstructedAlgorithm* alg);
+
+		/// Handles this event by starting a reachable region for the node.
+		///
+		/// \image html spiral-tree-algorithm-node-event.svg
 		void handle() override;
+
+	  private:
+		std::shared_ptr<Node> m_node;
 	};
 
 	/// An event that happens when the sweep circle hits an obstacle vertex. A
 	/// vertex event is characterized by the two obstacle edges \f$e_1\f$ and
 	/// \f$e_2\f$ incident to the hit vertex. We assume that the edges around
-	/// the obstacle are ordered counter-clockwise, that is, traversing the
+	/// the obstacle are ordered counter-clockwise. That is, traversing the
 	/// obstacle boundary in counter-clockwise order, we traverse \f$e_2\f$
 	/// right after \f$e_1\f$.
 	///
 	/// Vertex events are classified as one of four types, each of which is
 	/// handled separately:
 	///
-	/// * A _near_ vertex event: both \f$e_1\f$ and \f$e_2\f$ lay outside the
-	/// sweep circle.
+	/// * A \ref handleNear() "near vertex event": both \f$e_1\f$ and \f$e_2\f$
+	/// lay outside the sweep circle.
 	///
-	/// * A _far_ vertex event: both \f$e_1\f$ and \f$e_2\f$ lay inside the sweep
-	/// circle.
+	/// * A \ref handleFar() "far vertex event": both \f$e_1\f$ and \f$e_2\f$
+	/// lay inside the sweep circle.
 	///
-	/// * A _left_ vertex event: \f$e_1\f$ lies outside the sweep circle, while
-	/// \f$e_2\f$ lies inside it.
+	/// * A \ref handleLeft() "left vertex event": \f$e_1\f$ lies outside the
+	/// sweep circle, while \f$e_2\f$ lies inside it.
 	///
-	/// * A _right_ vertex event: \f$e_1\f$ lies inside the sweep circle, while
-	/// \f$e_2\f$ lies outside it.
+	/// * A \ref handleRight() "right vertex event": \f$e_1\f$ lies inside the
+	/// sweep circle, while \f$e_2\f$ lies outside it.
 	class VertexEvent : public Event {
 	  public:
 		/// Creates a new vertex event at the given position, with the given
@@ -148,11 +187,37 @@ class SpiralTreeObstructedAlgorithm {
 		Side determineSide();
 
 		/// Handles a left vertex event.
+		///
+		/// * **Case 1:** The obstacle is neighboring a free interval.
+		///
+		/// \image html spiral-tree-algorithm-left-vertex-event-1.svg
+		///
+		/// * **Case 2:** The obstacle is neighboring a reachable region. In
+		/// this case there are three subcases, depending on the position of the
+		/// obstacle edge relative to the two spirals departing from the vertex
+		/// position. Firstly, if the obstacle edge is to the right of both the
+		/// left and right spiral, then the obstacle leaves a non-reachable
+		/// (free) region (**case 2a**). The reachable region now gets split
+		/// into two: the left part maintains the parent of the old reachable
+		/// region; the right part gets the vertex as its parent. If the
+		/// obstacle edge falls between the spirals, then there are still two
+		/// reachable regions but there is no free region (**case 2b**). If the
+		/// obstacle edge is to the left of both spirals, then the result is
+		/// just one single reachable region (**case 2c**).
+		///
+		/// \image html spiral-tree-algorithm-left-vertex-event-2.svg
 		void handleLeft();
+
 		/// Handles a right vertex event.
+		///
+		/// This exactly mirrors the cases from \ref handleLeft().
 		void handleRight();
+
 		/// Handles a near vertex event.
+		///
+		/// \image html spiral-tree-algorithm-near-vertex-event.svg
 		void handleNear();
+
 		/// Handles a far vertex event.
 		void handleFar();
 
@@ -184,15 +249,26 @@ class SpiralTreeObstructedAlgorithm {
 		std::weak_ptr<SweepEdge> m_leftEdge;
 	};
 
+	/// Comparator for events that sorts them in descending order of distance to
+	/// the origin (compare \ref ReachableRegionAlgorithm::CompareEvents).
 	struct CompareEvents {
 		bool operator()(std::shared_ptr<Event>& a, std::shared_ptr<Event>& b) const {
-			return a->r() > b->r();
+			return a->r() < b->r();
 		}
 	};
 
+	/// The sweep circle used in the algorithm.
 	SweepCircle m_circle;
+	/// The event queue storing the remaining events.
 	EventQueue m_queue;
-
+	/// The number of node and vertex events we still have to process.
+	int remainingNodeVertexEventCount;
+	/// The current number of active nodes. This starts with the number of
+	/// terminals; every join event one gets subtracted; we're done when this
+	/// reaches 1 (and \ref remainingNodeEventsCount is 0).
+	int activeNodeCount;
+	/// A painting that contains sweep shapes for each sweep interval
+	/// encountered during the execution of the algorithm.
 	std::shared_ptr<renderer::PaintingRenderer> m_debugPainting;
 };
 
