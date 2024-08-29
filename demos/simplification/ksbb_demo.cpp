@@ -5,6 +5,7 @@
 #include "cartocrow/core/core.h"
 #include "cartocrow/core/region_arrangement.h"
 #include "cartocrow/core/region_map.h"
+#include "cartocrow/core/boundary_map.h"
 #include "cartocrow/core/timer.h"
 #include "cartocrow/renderer/geometry_painting.h"
 #include "cartocrow/renderer/geometry_widget.h"
@@ -108,6 +109,8 @@ KSBBDemo::KSBBDemo() {
 	    std::filesystem::absolute(std::filesystem::path("data/benelux-fix.ipe"));
 	std::cout << "reading file " << file << "\n";
 
+	BoundaryMap map = BoundaryMap::readFromIpe(file);
+
 	// step 1: create a RegionMap
 	this->regions = std::make_shared<RegionMap>(ipeToRegionMap(file));
 
@@ -173,8 +176,8 @@ KSBBDemo::KSBBDemo() {
 	m_renderer->addPainting(in_painting, "Input map");
 	m_renderer->addPainting(out_painting, "Output map");
 
-	IpeRenderer ipe(debug_paint);
-	ipe.save("./ipe.ipe");
+	//IpeRenderer ipe(debug_paint);
+	//ipe.save("./ipe.ipe");
 
 	recalculate();
 }
