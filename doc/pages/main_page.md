@@ -32,8 +32,17 @@ CartoCrow consists of the following modules.
 
 ### Simplification
 
-* The **simplification** (work in progress!) module implements several algorithms to simplify maps consisting of polygonal regions.  
+The **simplification** module implements several algorithms to simplify maps consisting of polygonal regions. All algorithms are implemented to be topologically safe. Currently, the following algorithms are available:
+
+* A generic \ref cartocrow::simplification::VertexRemovalSimplification "vertex-removal algorithm" that repeatedly removes a single vertex. A concrete implementation of the Visvalingam-Whyatt algorithm is provided via \ref cartocrow::simplification::VWTraits "VWTraits".  
   _Author: Wouter Meulemans_
+
+* A generic \ref cartocrow::simplification::EdgeCollapseSimplification "edge-collapse algorithm" (work in progress) that repeatedly collapses an edge onto a single vertex.  
+  _Author: Wouter Meulemans_
+
+* A generic \ref cartocrow::simplification::EdgeMoveSimplification "edge-move algorithm" (work in progress) that repeatedly moves pairs of edges to reduce the number of edges, while maintaining the area of each region.  
+  _Author: Wouter Meulemans_
+
 \image html simplification-example.png
 
 * The **isoline_simplification** module implements \ref cartocrow::isoline_simplification::IsolineSimplifier "an algorithm" \cite scalable_harmonious_simplification_cosit to simplify isolines simultaneously such that common features are maintained.  
