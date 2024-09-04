@@ -1,16 +1,20 @@
 #include "drawing_algorithm.h"
 
-#include <utility>
+#include "cartocrow/simplesets/helpers/poly_line_gon_intersection.h"
 #include "grow_circles.h"
-#include "poly_line_gon_intersection.h"
+#include "helpers/approximate_convex_hull.h"
 #include "helpers/arrangement_helpers.h"
+#include "helpers/cs_curve_helpers.h"
+#include "helpers/cs_polygon_helpers.h"
+#include "helpers/cs_polyline_helpers.h"
 #include <CGAL/Boolean_set_operations_2.h>
+#include <utility>
 
 using namespace cartocrow::renderer;
 
 namespace cartocrow::simplesets {
 // todo: deal with holes
-CSPolygon face_to_polygon(const DilatedPatternArrangement::Face& face) {
+CSPolygon face_to_polygon(const Face& face) {
 	assert(face.number_of_holes() == 0);
 	return ccb_to_polygon<CSTraits>(face.outer_ccb());
 }
@@ -33,7 +37,7 @@ X_monotone_curve_2 make_x_monotone(const Segment<Exact>& segment) {
 	return curves[0];
 }
 
-Point<Exact> get_approx_point_on_boundary(const DilatedPatternArrangement::Face& face) {
+Point<Exact> get_approx_point_on_boundary(const Face& face) {
 	auto curve = face.outer_ccb()->curve();
 	Rectangle<Exact> bbox = curve.bbox();
 	Rectangle<Exact> rect({bbox.xmin() - 1, bbox.ymin() - 1}, {bbox.xmax() + 1, bbox.ymax() + 1});
@@ -82,7 +86,7 @@ Point<Exact> get_approx_point_on_boundary(const DilatedPatternArrangement::Face&
 	}
 }
 
-Point<Exact> get_point_in(const DilatedPatternArrangement::Face& face) {
+Point<Exact> get_point_in(const Face& face) {
 	auto poly = face_to_polygon(face);
 	Rectangle<Exact> bbox = poly.bbox();
 	Rectangle<Exact> rect({bbox.xmin() - 1, bbox.ymin() - 1}, {bbox.xmax() + 1, bbox.ymax() + 1});
@@ -122,29 +126,6 @@ Point<Exact> get_point_in(const DilatedPatternArrangement::Face& face) {
 	}
 
 	return midpoint(Segment<Exact>(approx_source, approx_target));
-}
-
-bool on_or_inside(const CSPolygon& polygon, const Point<Exact>& point) {
-	Ray<Exact> ray(point, Vector<Exact>(1, 0));
-
-	Rectangle<Exact> bbox = polygon.bbox();
-	Rectangle<Exact> rect({bbox.xmin() - 1, bbox.ymin() - 1}, {bbox.xmax() + 1, bbox.ymax() + 1});
-
-	auto inter = CGAL::intersection(ray, rect);
-	if (!inter.has_value()) return false;
-	auto seg = boost::get<Segment<Exact>>(*inter);
-	auto seg_curve = make_x_monotone(seg);
-
-	typedef std::pair<CSTraits::Point_2, unsigned int> Intersection_point;
-	typedef boost::variant<Intersection_point, X_monotone_curve_2> Intersection_result;
-	std::vector<Intersection_result> intersection_results;
-
-	for (auto cit = polygon.curves_begin(); cit != polygon.curves_end(); ++cit) {
-		const auto& curve = *cit;
-		curve.intersect(seg_curve, std::back_inserter(intersection_results));
-	}
-
-	return intersection_results.size() % 2 == 1;
 }
 
 std::vector<Component>
@@ -357,39 +338,319 @@ DilatedPatternDrawing::DilatedPatternDrawing(const Partition& partition, const G
 					avoidees.push_back(j);
 				}
 			}
-			if (avoidees.empty()) continue;
+			if (avoidees.empty())
+				continue;
 
 			std::vector<CSPolyline> morphedEdges;
-			auto bpis = boundaryParts(c, i);
+			auto bpiss = originCcbs(c);
+			assert(bpiss.size() == 1); // todo
+			auto bpis = bpiss[0];
+
+			std::vector<X_monotone_curve_2> morphedComponentXMCurves;
+	 				auto poly = ccb_to_polygon<CSTraits>(c.outer_ccb());
+
+			bool morphedFace = false;
+
 			for (const auto& bpi : bpis) {
+				auto bp = bpi.first;
+				if (bpi.second != i) {
+					std::copy(bp.curves_begin(), bp.curves_end(), std::back_inserter(morphedComponentXMCurves));
+					continue;
+				}
+
 				auto disks = includeExcludeDisks(i, avoidees, c);
 				auto inclDisks = disks.include;
 				auto exclDisks = disks.exclude;
 
-				if (exclDisks.empty()) continue;
-				auto poly = ccb_to_polygon<CSTraits>(c.outer_ccb());
-				auto morphed = morph(bpi, poly, inclDisks, exclDisks, m_gs, m_cds);
+				if (exclDisks.empty()) {
+					std::copy(bp.curves_begin(), bp.curves_end(), std::back_inserter(morphedComponentXMCurves));
+					continue;
+				}
+
+				auto morphed = morph(bp, poly, inclDisks, exclDisks, m_gs, m_cds);
+				std::copy(morphed.curves_begin(), morphed.curves_end(), std::back_inserter(morphedComponentXMCurves));
 
 				for (auto fit = c.faces_begin(); fit != c.faces_end(); ++fit) {
 					fit->data().morphedEdges[i].push_back(morphed);
 				}
-				morphedEdges.push_back(morphed);
+				morphedFace = true;
 			}
 
-			if (morphedEdges.empty()) continue;
+			if (!morphedFace) continue;
 
 			// Compute the morphed version of the CSPolygon for this component.
 			// Set, for each face in component c, the morphed face to the intersection of this CSPolygon with the face.
-			// todo
+			auto morphedComponentPolygon = CSPolygon(morphedComponentXMCurves.begin(), morphedComponentXMCurves.end());
+			for (auto fit = c.faces_begin(); fit != c.faces_end(); ++fit) {
+				auto facePolygon = face_to_polygon(*fit);
+				std::vector<CSPolygonWithHoles> morphedFacePolygonsWithHoles;
+
+				CGAL::intersection(morphedComponentPolygon, facePolygon, std::back_inserter(morphedFacePolygonsWithHoles));
+				assert(morphedFacePolygonsWithHoles.size() == 1);
+				auto morphedFacePolygonWithHoles = morphedFacePolygonsWithHoles[0];
+				assert(!morphedFacePolygonWithHoles.has_holes()); // todo
+				fit->data().morphedFace[i] = morphedFacePolygonWithHoles.outer_boundary();
+			}
 		}
 	}
 }
 
+bool overlap(const Circle<Inexact>& c1, const Circle<Inexact>& c2) {
+	return CGAL::squared_distance(c1.center(), c2.center()) <= c1.squared_radius() + c2.squared_radius();
+}
+
+std::vector<std::vector<std::pair<int, Circle<Inexact>>>> connectedDisks(const std::vector<Circle<Inexact>>& disks) {
+	typedef std::vector<std::pair<int, Circle<Inexact>>> Component;
+	std::vector<Component> components;
+
+	auto merge = [&components](std::vector<Component*>& comps) {
+		Component newComponent;
+		for (auto& comp : comps) {
+			std::copy(comp->begin(), comp->end(), std::back_inserter(newComponent));
+			comp->clear();
+		}
+		components.erase(std::remove_if(components.begin(), components.end(), [](const Component& cs) {
+			return cs.empty();
+		}), components.end());
+		return newComponent;
+	};
+
+	for (int i = 0; i < disks.size(); ++i) {
+		const auto& d = disks[i];
+		std::vector<Component*> overlaps;
+		for (auto& comp : components) {
+			bool anyOverlap = false;
+			for (const auto& other : comp) {
+				if (overlap(d, other.second)) {
+					anyOverlap = true;
+					break;
+				}
+			}
+			if (anyOverlap) {
+				overlaps.push_back(&comp);
+			}
+		}
+		auto merged = merge(overlaps);
+		merged.emplace_back(i, d);
+		components.push_back(merged);
+	}
+
+	return components;
+}
+
+CSPolygon thinRectangle(const Point<Exact>& p, const OneRootPoint& n, const Number<Exact>& w) {
+	Point<Inexact> nApproxInexact = approximateAlgebraic(n);
+	Point<Exact> nApprox(nApproxInexact.x(), nApproxInexact.y());
+	Vector<Exact> d = nApprox - p;
+	auto dl = sqrt(CGAL::to_double(d.squared_length()));
+	Vector<Exact> normalized = d / dl;
+	auto perp = normalized.perpendicular(CGAL::COUNTERCLOCKWISE) * w / 2;
+
+	Point<Exact> p1 = p - perp;
+	Point<Exact> p2 = nApprox + normalized * w / 10 - perp;
+	Point<Exact> p3 = nApprox + normalized * w / 10 + perp;
+	Point<Exact> p4 = p + perp;
+
+	std::vector<Curve_2> curves({
+	    Curve_2(p1, p2),
+		Curve_2(p2, p3),
+		Curve_2(p3, p4),
+		Curve_2(p4, p1)
+	});
+
+	std::vector<X_monotone_curve_2> xm_curves;
+	curvesToXMonotoneCurves(curves.begin(), curves.end(), std::back_inserter(xm_curves));
+
+	return {xm_curves.begin(), xm_curves.end()};
+}
+
 CSPolyline morph(const CSPolyline& boundaryPart, const CSPolygon& componentShape, const std::vector<Circle<Exact>>& inclDisks,
 				 const std::vector<Circle<Exact>>& exclDisks, const GeneralSettings& gs, const ComputeDrawingSettings& cds) {
-	// todo
-	std::vector<X_monotone_curve_2> curves;
-	return { curves.begin(), curves.end() };
+	if (exclDisks.empty()) return boundaryPart;
+
+	std::vector<Circle<Exact>> lineCovering;
+	std::vector<Circle<Exact>> arcCovering;
+
+	for (const auto& d : exclDisks) {
+		auto inter = poly_line_gon_intersection(circleToCSPolygon(d), boundaryPart);
+		bool coversLine = true;
+		for (const auto& p : inter) {
+			if (!isStraight(p)) {
+				coversLine = false;
+				break;
+			}
+		}
+		if (coversLine) {
+			lineCovering.push_back(d);
+		} else {
+			arcCovering.push_back(d);
+		}
+	}
+
+	auto dr = gs.dilationRadius();
+	// Smoothing radius
+	auto sr = dr / 5;
+
+	std::vector<Circle<Inexact>> expandedLineCoveringDisks;
+	for (const auto& d : lineCovering) {
+		expandedLineCoveringDisks.emplace_back(approximate(d.center()), squared(sqrt(CGAL::to_double(d.squared_radius())) + sr));
+	}
+	auto diskComponents = connectedDisks(expandedLineCoveringDisks);
+
+	std::vector<CSPolygon> cuts;
+	for (const auto& comp : diskComponents) {
+		std::vector<Circle<Exact>> disks;
+		for (const auto& [i, _] : comp) {
+			disks.push_back(lineCovering[i]);
+		}
+		cuts.push_back(approximateConvexHull(disks));
+	}
+	for (const auto& d : arcCovering) {
+		cuts.push_back(circleToCSPolygon(d));
+	}
+
+	CSPolygonSet polygonSet;
+	for (const auto& cut : cuts) {
+		polygonSet.join(cut);
+	}
+	for (const auto& d: exclDisks) {
+		if (on_or_inside(componentShape, d.center())) {
+			auto n = nearest(boundaryPart, d.center());
+			auto rect = thinRectangle(d.center(), n, gs.pointSize / 5);
+			polygonSet.join(rect);
+		}
+	}
+	for (const auto& d: inclDisks) {
+		polygonSet.difference(circleToCSPolygon(d));
+	}
+	std::vector<CSPolygonWithHoles> modifiedCuts;
+	polygonSet.polygons_with_holes(std::back_inserter(modifiedCuts));
+
+	CSPolygonSet polygonSet2(componentShape);
+	for (const auto& modifiedCut : modifiedCuts) {
+		polygonSet2.difference(modifiedCut);
+	}
+
+//	polygonSet.complement();
+//	polygonSet.intersection(componentShape);
+
+	std::vector<CSPolygonWithHoles> polys;
+	polygonSet2.polygons_with_holes(std::back_inserter(polys));
+	assert(polys.size() == 1);
+	auto poly = polys[0];
+	assert(!poly.has_holes());
+
+	auto outer = poly.outer_boundary();
+	std::vector<X_monotone_curve_2> outer_xm_curves;
+	for (auto cit = outer.curves_begin(); cit != outer.curves_end(); ++cit) {
+		outer_xm_curves.push_back(*cit);
+	}
+	auto boundaryPartStart = boundaryPart.curves_begin()->source();
+	auto endIt = boundaryPart.curves_end();
+	--endIt;
+	auto boundaryPartEnd = endIt->target();
+//	int boundaryPartStartIndex = -1;
+//	int boundaryPartEndIndex = -1;
+	int startIndex = -1;
+	int endIndex = -1;
+
+//	std::cout << "Looking for start and end of boundary part" << std::endl;
+	for (int i = 0; i < outer_xm_curves.size(); i++) {
+		auto c = outer_xm_curves[i];
+//		std::cout << "curve " << c.source() << " -> " << c.target() << std::endl;
+		if (outer_xm_curves[i].source() == boundaryPartStart) {
+			startIndex = i;
+		}
+		if (outer_xm_curves[i].target() == boundaryPartEnd) {
+			endIndex = i;
+		}
+	}
+//	assert(boundaryPartStartIndex >= 0);
+//	assert(boundaryPartEndIndex >= 0);
+
+//	std::cout << "Looking for alternative start and end" << std::endl;
+	for (int i = 0; i < outer_xm_curves.size() && (startIndex < 0 || endIndex < 0); i++) {
+		const auto& c = outer_xm_curves[i];
+//		std::cout << "curve " << c.source() << "(" << liesOn(c.source(), componentShape).has_value() << ")" << " -> " <<
+//		    c.target() << "(" << liesOn(c.target(), componentShape).has_value() << ")" << " " << liesOn(c, componentShape) << std::endl;
+		if (startIndex < 0 && liesOn(c.source(), componentShape).has_value() && !liesOn(c, componentShape)) {
+			startIndex = i;
+//			std::cout << "Found start curve " << c.source() << " -> " << c.target() << std::endl;
+		}
+		if (endIndex < 0 && !liesOn(c, componentShape) && liesOn(c.target(), componentShape).has_value()) {
+			endIndex = i;
+//			std::cout << "Found end curve " << c.source() << " -> " << c.target() << std::endl;
+		}
+	}
+
+	assert(startIndex >= 0);
+	assert(endIndex >= 0);
+
+	std::vector<X_monotone_curve_2> xm_curves;
+
+	if (endIndex > startIndex) {
+		for (int i = startIndex; i <= endIndex; ++i) {
+			xm_curves.push_back(outer_xm_curves[i]);
+		}
+	} else {
+		for (int i = startIndex; i < outer_xm_curves.size(); ++i) {
+			xm_curves.push_back(outer_xm_curves[i]);
+		}
+		for (int i = 0; i <= endIndex; ++i) {
+			xm_curves.push_back(outer_xm_curves[i]);
+		}
+	}
+
+	//todo smooth
+	return {xm_curves.begin(), xm_curves.end()};
+}
+
+std::vector<std::vector<std::pair<CSPolyline, int>>> originCcbs(const Component& c) {
+	std::vector<Component::ComponentCcbCirculator> ccbs;
+	std::copy(c.outer_ccbs_begin(), c.outer_ccbs_end(), std::back_inserter(ccbs));
+	std::copy(c.inner_ccbs_begin(), c.inner_ccbs_end(), std::back_inserter(ccbs));
+
+	std::vector<std::vector<std::pair<CSPolyline, int>>> result;
+
+	for (const auto& ccb : ccbs) {
+		std::vector<std::pair<CSPolyline, int>> polylines;
+
+		auto circ = ccb;
+		int i = ccb->data().origin;
+
+		// Go to start of this 'origin CCB'. Connected component of the boundary that all originates from the same shape.
+		while (true) {
+			auto prev = circ;
+			--prev;
+			if (prev->data().origin == i) {
+				circ = prev;
+			} else {
+				break;
+			}
+		}
+
+		// Next, make a polyline for every connected part of the boundary that originates from the same shape.
+		std::vector<X_monotone_curve_2> xm_curves;
+		auto curr = circ;
+		do {
+			if (curr->data().origin == i) {
+				xm_curves.push_back(curr->curve());
+			} else {
+				polylines.emplace_back(CSPolyline(xm_curves.begin(), xm_curves.end()), i);
+				xm_curves.clear();
+				i = curr->data().origin;
+				xm_curves.push_back(curr->curve());
+			}
+		} while (++curr != circ);
+		if (!xm_curves.empty()) {
+			polylines.emplace_back(CSPolyline(xm_curves.begin(), xm_curves.end()), i);
+			xm_curves.clear();
+		}
+
+		result.push_back(polylines);
+	}
+
+	return result;
 }
 
 /// Returns parts of the boundary of c that originate from i.
@@ -402,50 +663,23 @@ std::vector<CSPolyline> boundaryParts(const Component& c, int i) {
 	std::vector<CSPolyline> polylines;
 
 	for (const auto& ccb : ccbs) {
-		// First find a half-edge at the start of a 'part' of this CCB (connected component of the boundary).
-		auto circ = ccb;
+		boundaryParts(ccb, i, std::back_inserter(polylines));
+	}
 
-		bool found = true;
-		while (circ->data().origin != i) {
-			++circ;
-			if (circ == ccb) {
-				found = false;
-				break;
-			}
-		}
+	return polylines;
+}
 
-		if (!found) {
-			continue;
-		}
+/// Returns parts of the boundary of c that originate from i.
+/// This function assumes that some part of the boundary, but not all of the boundary, originates from i.
+std::vector<CSPolyline> boundaryParts(FaceH fh, int i) {
+	std::vector<DilatedPatternArrangement::Ccb_halfedge_circulator> ccbs;
+	std::copy(fh->outer_ccbs_begin(), fh->outer_ccbs_end(), std::back_inserter(ccbs));
+	std::copy(fh->inner_ccbs_begin(), fh->inner_ccbs_end(), std::back_inserter(ccbs));
 
-		while (true) {
-			auto prev = circ;
-			--prev;
-			if (prev->data().origin == i) {
-				circ = prev;
-			} else {
-				break;
-			}
-		}
-		assert(circ->data().origin == i);
+	std::vector<CSPolyline> polylines;
 
-		// Next, make a polyline for every connected part of the boundary that originates from i.
-		std::vector<X_monotone_curve_2> xm_curves;
-		auto curr = circ;
-		do {
-			if (curr->data().origin == i) {
-				xm_curves.push_back(curr->curve());
-			} else {
-				if (!xm_curves.empty()) {
-					polylines.emplace_back(xm_curves.begin(), xm_curves.end());
-					xm_curves.clear();
-				}
-			}
-		} while (++curr != circ);
-		if (!xm_curves.empty()) {
-			polylines.emplace_back(xm_curves.begin(), xm_curves.end());
-			xm_curves.clear();
-		}
+	for (const auto& ccb : ccbs) {
+		boundaryParts(ccb, i, std::back_inserter(polylines));
 	}
 
 	return polylines;
@@ -461,7 +695,7 @@ bool isStraight(const CSPolyline& polyline) {
 
 /// The inclusion and exclusion disks for component \ref c when \ref i is stacked on top of \ref js.
 IncludeExcludeDisks
-DilatedPatternDrawing::includeExcludeDisks(int i, std::vector<int> js, const Component& c) {
+DilatedPatternDrawing::includeExcludeDisks(int i, const std::vector<int>& js, const Component& c) {
 	std::vector<Point<Exact>> ptsI;
 	const auto& catPointsI = m_dilated[i].catPoints();
 	std::transform(catPointsI.begin(), catPointsI.end(), std::back_inserter(ptsI), [](const CatPoint& catPoint) {
@@ -477,7 +711,7 @@ DilatedPatternDrawing::includeExcludeDisks(int i, std::vector<int> js, const Com
 	}
 
 	auto rSqrd = m_gs.dilationRadius() * m_gs.dilationRadius();
-    auto result = growCircles(ptsI, ptsJs, rSqrd, rSqrd * m_cds.cutoutRadiusFactor);
+    auto result = approximateGrowCircles(ptsI, ptsJs, rSqrd, rSqrd * m_cds.cutoutRadiusFactor * m_cds.cutoutRadiusFactor);
 
 	std::vector<Circle<Exact>> relevantExclusionDisks;
 	for (const auto& d : result.second) {
@@ -567,6 +801,49 @@ Relation DilatedPatternDrawing::computePreference(int i, int j, const Component&
 	}
 
 	return {i, j, pref, pref};
+}
+
+void DilatedPatternDrawing::drawFaceFill(FaceH fh, renderer::GeometryRenderer& renderer,
+                                     const GeneralSettings& gs, const DrawSettings& ds) const {
+	auto& d = fh->data();
+	for (int i : d.ordering) {
+		renderer.setMode(GeometryRenderer::fill);
+		renderer.setFill(ds.colors[m_dilated[i].category()]);
+		if (!d.morphedFace.contains(i)) {
+			auto poly = face_to_polygon(*fh);
+			renderer.draw(renderPathFromCSPolygon(poly));
+		} else {
+			renderer.draw(renderPathFromCSPolygon(d.morphedFace[i]));
+		}
+	}
+}
+
+void DilatedPatternDrawing::drawFaceStroke(FaceH fh, renderer::GeometryRenderer& renderer,
+										 const GeneralSettings& gs, const DrawSettings& ds) const {
+	auto& d = fh->data();
+	for (int i : d.ordering) {
+		renderer.setMode(GeometryRenderer::stroke);
+		renderer.setStroke(Color{0, 0, 0}, ds.contourStrokeWeight(gs), true);
+
+		// todo: take difference of polylines with the cs polygons stacked on top
+		std::vector<CSPolyline> polylines;
+		if (d.morphedEdges[i].empty()) {
+			auto bps = boundaryParts(fh, i);
+			std::copy(bps.begin(), bps.end(), std::back_inserter(polylines));
+		}
+		std::copy(d.morphedEdges[i].begin(), d.morphedEdges[i].end(), std::back_inserter(polylines));
+
+//		for (const auto& polyline : polylines) {
+//			poly_line_gon_intersection();
+//		}
+
+//		if (d) {
+//			auto poly = face_to_polygon(face);
+//			renderer.draw(renderPathFromCSPolygon(poly));
+//		} else {
+//			renderer.draw(renderPathFromCSPolygon(*d.morphedFace));
+//		}
+	}
 }
 
 std::vector<Component>
@@ -737,66 +1014,11 @@ void SimpleSetsPainting::paint(renderer::GeometryRenderer& renderer) const {
 	renderer.setMode(renderer::GeometryRenderer::fill);
 	for (auto fit = m_dpd.m_arr.faces_begin(); fit != m_dpd.m_arr.faces_end(); ++fit) {
 		if (fit->is_unbounded()) continue;
-		auto face = *fit;
-		auto origins = face.data().origins;
-		if (origins.size() > 1) {
-			renderer.setFill(Color{100, 100, 100});
-		} else if (origins.size() == 1) {
-			renderer.setFill(m_ds.colors[m_dpd.m_dilated[origins[0]].category()]);
-		} else {
-			continue;
-		}
-		auto poly = face_to_polygon(face);
-
-		RenderPath path;
-		bool first = true;
-		for (auto cit = poly.curves_begin(); cit != poly.curves_end(); ++cit) {
-			if (first) {
-				path.moveTo(approximateAlgebraic(cit->source()));
-				first = false;
-			}
-			if (cit->is_linear()) {
-				path.lineTo(approximateAlgebraic(cit->target()));
-			} else if (cit->is_circular()){
-				auto circle = cit->supporting_circle();
-				path.arcTo(approximate(circle.center()), cit->orientation() == CGAL::CLOCKWISE, approximateAlgebraic(cit->target()));
-			}
-		}
-		path.close();
-		renderer.setFillOpacity(150);
-		renderer.setMode(renderer::GeometryRenderer::fill);
-		renderer.draw(path);
-
-		renderer.setMode(renderer::GeometryRenderer::fill | renderer::GeometryRenderer::stroke);
-		renderer.setFill(Color{0, 0, 0});
-		renderer.setStroke(Color{0, 0, 0}, 1);
-
-		auto& rs = face.data().relations;
-		if (!rs.empty()) {
-			auto r = rs[0];
-			std::stringstream ss;
-			ss << r.left << " " << to_string(r.preference) << " " << r.right;
-			renderer.drawText(get_point_in(face), ss.str());
-		}
-
-		if (origins.size() == 1) {
-			renderer.drawText(get_point_in(face), std::to_string(origins[0]));
-		}
+		m_dpd.drawFaceFill(fit.ptr(), renderer, m_dpd.m_gs, m_ds);
 	}
-
-	renderer.setMode(renderer::GeometryRenderer::stroke);
-	for (auto eit = m_dpd.m_arr.edges_begin(); eit != m_dpd.m_arr.edges_end(); ++eit) {
-		auto curve = eit->curve();
-		renderer.setStroke(m_ds.colors[m_dpd.m_dilated[eit->data().origin].category()], m_ds.contourStrokeWeight(m_dpd.m_gs), true);
-		if (curve.is_linear()) {
-			renderer.draw(Segment<Inexact>(approximateAlgebraic(curve.source()), approximateAlgebraic(curve.target())));
-		} else if (curve.is_circular()){
-			RenderPath path;
-			path.moveTo(approximateAlgebraic(curve.source()));
-			auto circle = curve.supporting_circle();
-			path.arcTo(approximate(circle.center()), curve.orientation() == CGAL::CLOCKWISE, approximateAlgebraic(curve.target()));
-			renderer.draw(path);
-		}
+	for (auto fit = m_dpd.m_arr.faces_begin(); fit != m_dpd.m_arr.faces_end(); ++fit) {
+		if (fit->is_unbounded()) continue;
+		m_dpd.drawFaceStroke(fit.ptr(), renderer, m_dpd.m_gs, m_ds);
 	}
 }
 }

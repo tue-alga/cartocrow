@@ -8,10 +8,6 @@
 
 namespace cartocrow::simplesets {
 
-Number<Inexact> squared(Number<Inexact> x) {
-	return x * x;
-}
-
 std::variant<Bank, Island> to_bank_or_island(PolyPattern* polyPattern) {
 	if (auto bp = dynamic_cast<Bank*>(polyPattern)) {
 		return *bp;

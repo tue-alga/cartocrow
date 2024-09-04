@@ -2,8 +2,7 @@
 #define CARTOCROW_CS_POLYGON_HELPERS_H
 
 #include "../types.h"
-
-// Thanks to: https://stackoverflow.com/questions/69399922/how-does-one-obtain-the-area-of-a-general-polygon-set-in-cgal
+#include "../../renderer/render_path.h"
 
 namespace cartocrow::simplesets {
 //For two circles of radii R and r and centered at (0,0) and (d,0) intersecting
@@ -20,10 +19,18 @@ Number<Inexact> area(const CSTraits::Point_2& P1, const CSTraits::Point_2& P2, c
 Number<Inexact> area(const X_monotone_curve_2& XCV);
 
 // ------ return area of the simple polygon
-Number<Inexact> area(const CSPolygon P);
+Number<Inexact> area(const CSPolygon& P);
 
 // ------ return area of the polygon with (optional) holes
 Number<Inexact> area(const CSPolygonWithHoles& P);
+
+CSPolygon circleToCSPolygon(const Circle<Exact>& circle);
+
+std::optional<CSPolygon::Curve_const_iterator> liesOn(const Point<Exact>& p, const CSPolygon& polygon);
+std::optional<CSPolygon::Curve_const_iterator> liesOn(const OneRootPoint& p, const CSPolygon& polygon);
+bool liesOn(const X_monotone_curve_2& c, const CSPolygon& polygon);
+renderer::RenderPath renderPathFromCSPolygon(const CSPolygon& polygon);
+bool on_or_inside(const CSPolygon& polygon, const Point<Exact>& point);
 }
 
 #endif //CARTOCROW_CS_POLYGON_HELPERS_H

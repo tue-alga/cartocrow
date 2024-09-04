@@ -1,4 +1,5 @@
 #include "dilated_poly.h"
+#include "../helpers/cs_polygon_helpers.h"
 #include <CGAL/approximated_offset_2.h>
 
 namespace cartocrow::simplesets {

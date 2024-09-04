@@ -4,6 +4,7 @@ namespace cartocrow::simplesets {
 std::vector<CSPolyline> poly_line_gon_intersection(CSPolygon gon, CSPolyline line) {
 	assert(!gon.is_empty());
 
+	using Arr = CGAL::Arrangement_2<CSTraits, CGAL::Arr_extended_dcel<CSTraits, std::monostate, HalfEdgePolylineData, std::monostate>>;
 	Arr arr;
 	CGAL::insert_non_intersecting_curves(arr, line.curves_begin(), line.curves_end());
 	for (auto eit = arr.edges_begin(); eit != arr.edges_end(); ++eit) {
@@ -23,6 +24,15 @@ std::vector<CSPolyline> poly_line_gon_intersection(CSPolygon gon, CSPolyline lin
 			}
 		}
 	}
+
+	// todo: fix. Use Arr_polycurve_traits_2 class.
+	// 1. line_edges is incorrect because the insertion of polygon edges changes the edge data.
+	// use arrangement with history and polycurve triats.
+	// 2. below I don't check whether a line_edge actually lies inside an interior face of a polygon -_-.
+	// check whether the outer_ccb of one of the adjacent faces of the edge originates from the outer boundary of the
+	// polygon of from a hole.
+	// 3. make it work for CSPolygonWithHoles
+
 
 	std::vector<CSPolyline> parts;
 	while (!line_edges.empty()) {

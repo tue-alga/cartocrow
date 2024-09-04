@@ -2,17 +2,17 @@
 
 namespace cartocrow::simplesets {
 std::pair<std::vector<Circle<Exact>>, std::vector<Circle<Exact>>>
-growCircles(const std::vector<Point<Exact>>& points1,
-            const std::vector<Point<Exact>>& points2,
-            const Number<Exact>& maxSquaredRadius1,
-            const Number<Exact>& maxSquaredRadius2) {
+approximateGrowCircles(const std::vector<Point<Exact>>& points1,
+                       const std::vector<Point<Exact>>& points2,
+                       const Number<Exact>& maxSquaredRadius1,
+                       const Number<Exact>& maxSquaredRadius2) {
 	std::vector<GrowingCircle> growingCircles1;
 	std::transform(points1.begin(), points1.end(), std::back_inserter(growingCircles1), [](const Point<Exact>& pt) {
-		return GrowingCircle{pt, 0, 0};
+		return GrowingCircle{pt, 0};
 	});
 	std::vector<GrowingCircle> growingCircles2;
 	std::transform(points2.begin(), points2.end(), std::back_inserter(growingCircles2), [](const Point<Exact>& pt) {
-	    return GrowingCircle{pt, 0, 1};
+	    return GrowingCircle{pt, 0};
 	});
 
 	// if statement and while(true) combined.
@@ -42,11 +42,11 @@ growCircles(const std::vector<Point<Exact>>& points1,
 
 				Number<Exact> growDist;
 				if (!c1.frozen && !c2.frozen) {
-					growDist = centerDist / 2;
+					growDist = centerDist / 4;
 				} else if (c1.frozen) {
-					growDist = centerDist - c1.squaredRadius;
+					growDist = centerDist + c1.squaredRadius - 2 * sqrt(CGAL::to_double(centerDist)) * sqrt(CGAL::to_double(c1.squaredRadius));
 				} else {
-					growDist = centerDist - c2.squaredRadius;
+					growDist = centerDist + c2.squaredRadius - 2 * sqrt(CGAL::to_double(centerDist)) * sqrt(CGAL::to_double(c2.squaredRadius));
 				}
 
 				if (!minDist.has_value() || growDist < *minDist) {

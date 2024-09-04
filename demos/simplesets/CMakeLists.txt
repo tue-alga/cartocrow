@@ -1,6 +1,7 @@
 set(SOURCES
     simplesets_demo.cpp
     colors.cpp
+    circle_convex_hull.cpp
 )
 
 add_executable(simplesets_demo ${SOURCES})

@@ -46,6 +46,8 @@ class SimpleSetsDemo : public QMainWindow {
 	DrawSettings m_ds;
 	PartitionSettings m_ps;
 	ComputeDrawingSettings m_cds;
+
+	std::shared_ptr<Point<Inexact>> m_cc;
 };
 
 #endif //CARTOCROW_SIMPLESETS_DEMO_H

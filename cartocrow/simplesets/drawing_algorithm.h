@@ -47,6 +47,7 @@ struct FaceData {
 	std::vector<Relation> relations;
 	std::vector<int> ordering;
 	std::unordered_map<int, std::vector<CSPolyline>> morphedEdges;
+	std::unordered_map<int, CSPolygon> morphedFace;
 };
 
 // todo: edge case where edges of dilated patterns overlap, so a half-edge may have multiple origins.
@@ -65,6 +66,7 @@ using DilatedPatternArrangement =
 //DilatedPatternArrangement
 //dilateAndArrange(const Partition& partition, const GeneralSettings& gs, const ComputeDrawingSettings& cds);
 
+using Face = DilatedPatternArrangement::Face;
 using FaceH = DilatedPatternArrangement::Face_handle;
 using VertexH = DilatedPatternArrangement::Vertex_handle;
 using HalfEdgeH = DilatedPatternArrangement::Halfedge_handle;
@@ -240,7 +242,62 @@ class Component {
 	std::vector<ComponentCcbCirculator> m_inner_ccbs;
 };
 
+template <class OutputIterator, class Ccb>
+void boundaryParts(Ccb ccb, int i, OutputIterator out) {
+	// First find a half-edge at the start of a 'part' of this CCB (connected component of the boundary).
+	auto circ = ccb;
+
+	bool found = true;
+	while (circ->data().origin != i) {
+		++circ;
+		if (circ == ccb) {
+			found = false;
+			break;
+		}
+	}
+
+	if (!found) {
+		return;
+	}
+
+	auto start = circ;
+	do {
+		auto prev = circ;
+		--prev;
+		if (prev->data().origin == i) {
+			circ = prev;
+		} else {
+			break;
+		}
+	} while (circ != start);
+	assert(circ->data().origin == i);
+
+	// Next, make a polyline for every connected part of the boundary that originates from i.
+	std::vector<X_monotone_curve_2> xm_curves;
+	auto curr = circ;
+	do {
+		if (curr->data().origin == i) {
+			xm_curves.push_back(curr->curve());
+		} else {
+			if (!xm_curves.empty()) {
+				++out = CSPolyline(xm_curves.begin(), xm_curves.end());
+				xm_curves.clear();
+			}
+		}
+	} while (++curr != circ);
+	if (!xm_curves.empty()) {
+		++out = CSPolyline(xm_curves.begin(), xm_curves.end());
+		xm_curves.clear();
+	}
+}
+
 std::vector<CSPolyline> boundaryParts(const Component& c, int i);
+std::vector<CSPolyline> boundaryParts(FaceH f, int i);
+std::vector<std::vector<std::pair<CSPolyline, int>>> originCcbs(const Component& c);
+
+// exposed for debugging purposes
+std::vector<std::vector<std::pair<int, Circle<Inexact>>>> connectedDisks(const std::vector<Circle<Inexact>>& disks);
+CSPolygon thinRectangle(const Point<Exact>& p, const OneRootPoint& n, const Number<Exact>& w);
 
 CSPolyline morph(const CSPolyline& boundaryPart, const CSPolygon& componentShape, const std::vector<Circle<Exact>>& inclDisks,
                  const std::vector<Circle<Exact>>& exclDisks, const GeneralSettings& gs, const ComputeDrawingSettings& cds);
@@ -249,6 +306,8 @@ struct IncludeExcludeDisks {
 	std::vector<Circle<Exact>> include;
 	std::vector<Circle<Exact>> exclude;
 };
+
+bool isStraight(const CSPolyline& polyline);
 
 class DilatedPatternDrawing {
   public:
@@ -259,10 +318,15 @@ class DilatedPatternDrawing {
 	Relation computePreference(int i, int j, const Component& c);
 
 	IncludeExcludeDisks includeExcludeDisks(int i, int j, const Component& c);
-	IncludeExcludeDisks includeExcludeDisks(int i, std::vector<int> js, const Component& c);
+	IncludeExcludeDisks includeExcludeDisks(int i, const std::vector<int>& js, const Component& c);
 
 	std::vector<Hyperedge> hyperedges();
-	
+
+	void drawFaceFill(FaceH fh, renderer::GeometryRenderer& renderer,
+				      const GeneralSettings& gs, const DrawSettings& ds) const;
+	void drawFaceStroke(FaceH fh, renderer::GeometryRenderer& renderer,
+				        const GeneralSettings& gs, const DrawSettings& ds) const;
+
 	DilatedPatternArrangement m_arr;
 	std::unordered_map<int, std::vector<FaceH>> m_iToFaces;
 	std::map<X_monotone_curve_2, int> m_curve_to_origin;

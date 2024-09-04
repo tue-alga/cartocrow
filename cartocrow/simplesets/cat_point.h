@@ -10,6 +10,8 @@ struct CatPoint {
 	Point<Inexact> point;
 	auto operator<=>(const CatPoint&) const = default;
 };
+
+std::ostream& operator<<(std::ostream& os, CatPoint const& catPoint);
 }
 
 #endif //CARTOCROW_CAT_POINT_H

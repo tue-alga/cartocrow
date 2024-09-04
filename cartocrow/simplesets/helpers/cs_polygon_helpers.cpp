@@ -1,4 +1,5 @@
 #include "cs_polygon_helpers.h"
+#include "cs_curve_helpers.h"
 
 // Code adapted from a Stack Overflow answer by HEKTO.
 // Link: https://stackoverflow.com/questions/69399922/how-does-one-obtain-the-area-of-a-general-polygon-set-in-cgal
@@ -48,7 +49,7 @@ Number<Inexact> area(const X_monotone_curve_2& XCV) {
 }
 
 // ------ return area of the simple polygon
-Number<Inexact> area(const CSPolygon P) {
+Number<Inexact> area(const CSPolygon& P) {
 	Number<Inexact> res = 0;
 	for (auto it = P.curves_begin(); it != P.curves_end(); ++it) {
 		res += area(*it);
@@ -63,5 +64,115 @@ Number<Inexact> area(const CSPolygonWithHoles& P) {
 		res += area(*it);
 	}
 	return res;
+}
+
+CSPolygon circleToCSPolygon(const Circle<Exact>& circle) {
+	std::vector<X_monotone_curve_2> xm_curves;
+	curveToXMonotoneCurves(circle, std::back_inserter(xm_curves));
+	return {xm_curves.begin(), xm_curves.end()};
+}
+
+std::optional<CSPolygon::Curve_const_iterator> liesOn(const Point<Exact>& p, const CSPolygon& polygon) {
+	for (auto cit = polygon.curves_begin(); cit != polygon.curves_end(); ++cit) {
+		if (liesOn(p, *cit)) {
+			return cit;
+		}
+	}
+	return std::nullopt;
+}
+
+std::optional<CSPolygon::Curve_const_iterator> liesOn(const OneRootPoint& p, const CSPolygon& polygon) {
+	for (auto cit = polygon.curves_begin(); cit != polygon.curves_end(); ++cit) {
+		if (liesOn(p, *cit)) {
+			return cit;
+		}
+	}
+	return std::nullopt;
+}
+
+renderer::RenderPath renderPathFromCSPolygon(const CSPolygon& polygon) {
+	renderer::RenderPath path;
+	bool first = true;
+	for (auto cit = polygon.curves_begin(); cit != polygon.curves_end(); ++cit) {
+		addCurveToRenderPath(*cit, path, first);
+	}
+	path.close();
+	return path;
+}
+
+bool on_or_inside(const CSPolygon& polygon, const Point<Exact>& point) {
+	Ray<Exact> ray(point, Vector<Exact>(1, 0));
+
+	Rectangle<Exact> bbox = polygon.bbox();
+	Rectangle<Exact> rect({bbox.xmin() - 1, bbox.ymin() - 1}, {bbox.xmax() + 1, bbox.ymax() + 1});
+
+	auto inter = CGAL::intersection(ray, rect);
+	if (!inter.has_value()) return false;
+	auto seg = boost::get<Segment<Exact>>(*inter);
+	X_monotone_curve_2 seg_xm_curve(seg.source(), seg.target());
+
+	typedef std::pair<CSTraits::Point_2, unsigned int> Intersection_point;
+	typedef boost::variant<Intersection_point, X_monotone_curve_2> Intersection_result;
+	std::vector<Intersection_result> intersection_results;
+
+	for (auto cit = polygon.curves_begin(); cit != polygon.curves_end(); ++cit) {
+		const auto& curve = *cit;
+		curve.intersect(seg_xm_curve, std::back_inserter(intersection_results));
+	}
+
+	return intersection_results.size() % 2 == 1;
+}
+
+bool liesOn(const X_monotone_curve_2& c, const CSPolygon& polygon) {
+	auto sc = liesOn(c.source(), polygon);
+	auto tc = liesOn(c.target(), polygon);
+	if (!sc.has_value() || !tc.has_value()) {
+		return false;
+	}
+	do {
+		auto next = *sc;
+		++next;
+		if (next == polygon.curves_end()) {
+			next = polygon.curves_begin();
+		}
+		if (liesOn(c.source(), *next)) {
+			sc = next;
+		} else {
+			break;
+		}
+	} while (true);
+	do {
+		auto next = *tc;
+		++next;
+		if (next == polygon.curves_end()) {
+			next = polygon.curves_begin();
+		}
+		if (liesOn(c.source(), *next)) {
+			tc = next;
+		} else {
+			break;
+		}
+	} while (true);
+	auto sit = *sc;
+	auto tit = *sc;
+	auto curr = sit;
+	do {
+//		std::cout << c.is_linear() << "  " << c.is_circular() << "  " << c.is_vertical() << std::endl;
+//
+		std::cout << curr->source() << " -> " << curr->target() << std::endl;
+		if (curr->is_linear()) {
+			if (c.is_circular()) return false;
+			std::cout << "Supporting line" << std::endl;
+			std::cout << curr->supporting_line() << std::endl;
+			std::cout << "c" << std::endl;
+			std::cout << c.supporting_line() << "  " << c.source() << " " << c.target() << std::endl;
+			if (curr->supporting_line() != c.supporting_line()) return false;
+		} else {
+			if (c.is_linear()) return false;
+			if (curr->supporting_circle() != c.supporting_circle()) return false;
+		}
+	} while (curr++ != tit);
+
+	return true;
 }
 }
