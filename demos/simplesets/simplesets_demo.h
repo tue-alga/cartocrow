@@ -28,6 +28,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "cartocrow/simplesets/partition.h"
 #include "cartocrow/simplesets/drawing_algorithm.h"
 #include <QMainWindow>
+#include <filesystem>
 
 using namespace cartocrow;
 using namespace cartocrow::renderer;
@@ -38,16 +39,22 @@ class SimpleSetsDemo : public QMainWindow {
 
   public:
 	SimpleSetsDemo();
+	void resizeEvent(QResizeEvent *event) override;
 
   private:
+	std::vector<CatPoint> m_points;
 	Partition m_partition;
 	std::shared_ptr<DilatedPatternDrawing> m_dpd;
 	GeneralSettings m_gs;
 	DrawSettings m_ds;
 	PartitionSettings m_ps;
 	ComputeDrawingSettings m_cds;
+	GeometryWidget* m_renderer;
 
 	std::shared_ptr<Point<Inexact>> m_cc;
+	void fitToScreen();
+	void loadFile(const std::filesystem::path& filePath);
+	void compute();
 };
 
 #endif //CARTOCROW_SIMPLESETS_DEMO_H

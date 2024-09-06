@@ -64,37 +64,73 @@ SimpleSetsDemo::SimpleSetsDemo() {
 
 	auto* basicOptions = new QLabel("<h3>Input</h3>");
 	vLayout->addWidget(basicOptions);
-	auto* fileSelector = new QComboBox();
-	auto* fileSelectorLabel = new QLabel("Input file");
-	fileSelectorLabel->setBuddy(fileSelector);
-	vLayout->addWidget(fileSelectorLabel);
+	auto* fileSelector = new QPushButton("Select file");
 	vLayout->addWidget(fileSelector);
 
 	auto* fitToScreenButton = new QPushButton("Fit to screen");
 	vLayout->addWidget(fitToScreenButton);
 
-	auto renderer = new GeometryWidget();
-	renderer->setDrawAxes(false);
-	setCentralWidget(renderer);
+	m_renderer = new GeometryWidget();
+	m_renderer->setDrawAxes(false);
+	setCentralWidget(m_renderer);
 
-	renderer->setMinZoom(0.01);
-	renderer->setMaxZoom(1000.0);
+	m_renderer->setMinZoom(0.01);
+	m_renderer->setMaxZoom(1000.0);
 
 	std::filesystem::path filePath("/home/steven/Documents/cartocrow/data/nyc.txt");
+
+	m_gs = GeneralSettings{2.1, 2, M_PI, 70.0 / 180 * M_PI};
+//	m_ps = PartitionSettings{true, true, true, true, 0.5}; todo: fix intersection delay crash
+	m_ps = PartitionSettings{true, true, true, false, 0.5};
+	m_ds = DrawSettings{{CB::light_blue, CB::light_red, CB::light_green, CB::light_purple, CB::light_orange}, 0.7};
+	m_cds = ComputeDrawingSettings{0.675};
+
+	loadFile(filePath);
+
+	compute();
+
+	connect(fitToScreenButton, &QPushButton::clicked, [this]() {
+		fitToScreen();
+	});
+	connect(fileSelector, &QPushButton::clicked, [this, fileSelector]() {
+		QString startDir = "/home/steven/Documents/cartocrow/data/";
+		std::filesystem::path filePath = QFileDialog::getOpenFileName(this, tr("Select SimpleSets input"), startDir).toStdString();
+		if (filePath == "") return;
+		loadFile(filePath);
+		fileSelector->setText(QString::fromStdString(filePath.filename()));
+	});
+
+	fitToScreenButton->click();
+}
+
+void SimpleSetsDemo::loadFile(const std::filesystem::path& filePath) {
 	std::ifstream inputStream(filePath, std::ios_base::in);
 	if (!inputStream.good()) {
 		throw std::runtime_error("Failed to read input");
 	}
 	std::stringstream buffer;
 	buffer << inputStream.rdbuf();
-	auto nycPoints = parseCatPoints(buffer.str());
+	m_points = parseCatPoints(buffer.str());
+	compute();
+	fitToScreen();
+}
 
-	m_gs = GeneralSettings{2.1, 2, M_PI, 70.0 / 180 * M_PI};
-//	m_ps = PartitionSettings{true, true, true, true, 0.5}; todo: fix intersection delay crash
-	m_ps = PartitionSettings{true, true, true, false, 0.5};
-	m_ds = DrawSettings{{CB::light_blue, CB::light_red, CB::light_green, CB::light_purple, CB::light_orange}, 0.5};
-	m_cds = ComputeDrawingSettings{0.675};
-	auto partitionList = partition(nycPoints, m_gs, m_ps, 8 * m_gs.dilationRadius());
+void SimpleSetsDemo::fitToScreen() {
+	std::vector<Point<Inexact>> pts;
+	std::transform(m_points.begin(), m_points.end(), std::back_inserter(pts),
+	               [](const CatPoint& pt) { return pt.point; });
+	Box box = CGAL::bbox_2(pts.begin(), pts.end());
+	auto delta = 2 * m_gs.dilationRadius();
+	Box expanded(box.xmin() - delta, box.ymin() - delta, box.xmax() + delta, box.ymax() + delta);
+	m_renderer->fitInView(expanded);
+}
+
+void SimpleSetsDemo::resizeEvent(QResizeEvent *event) {
+	fitToScreen();
+}
+
+void SimpleSetsDemo::compute() {
+	auto partitionList = partition(m_points, m_gs, m_ps, 8 * m_gs.dilationRadius());
 
 	Number<Inexact> cover = 4.7;
 
@@ -106,22 +142,14 @@ SimpleSetsDemo::SimpleSetsDemo() {
 	}
 	m_partition = *thePartition;
 
-	m_dpd = std::make_shared<DilatedPatternDrawing>(m_partition, m_gs, m_cds);
-	auto ap = std::make_shared<SimpleSetsPainting>(*m_dpd, m_ds);
-	renderer->addPainting(ap, "Arrangement");
+	m_renderer->clear();
 
 	auto pp = std::make_shared<PartitionPainting>(m_partition, m_gs, m_ds);
-	renderer->addPainting(pp, "Partition");
+	m_renderer->addPainting(pp, "Partition");
 
-	connect(fitToScreenButton, &QPushButton::clicked, [nycPoints, renderer, this]() {
-		std::vector<Point<Inexact>> pts;
-		std::transform(nycPoints.begin(), nycPoints.end(), std::back_inserter(pts),
-		               [](const CatPoint& pt) { return pt.point; });
-		Box box = CGAL::bbox_2(pts.begin(), pts.end());
-		auto delta = 2 * m_gs.dilationRadius();
-		Box expanded(box.xmin() - delta, box.ymin() - delta, box.xmax() + delta, box.ymax() + delta);
-		renderer->fitInView(expanded);
-	});
+	m_dpd = std::make_shared<DilatedPatternDrawing>(m_partition, m_gs, m_cds);
+	auto ap = std::make_shared<SimpleSetsPainting>(*m_dpd, m_ds);
+	m_renderer->addPainting(ap, "Arrangement");
 }
 
 int main(int argc, char* argv[]) {

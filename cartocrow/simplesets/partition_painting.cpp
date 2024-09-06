@@ -22,7 +22,7 @@ void draw_poly_pattern(const PolyPattern& pattern, renderer::GeometryRenderer& r
 		renderer.setFillOpacity(255);
 		renderer.setFill(ds.colors.at(pt.category));
 		renderer.setMode(renderer::GeometryRenderer::fill | renderer::GeometryRenderer::stroke);
-		renderer.draw(Circle<Inexact>{pt.point, gs.pointSize});
+		renderer.draw(Circle<Inexact>{pt.point, gs.pointSize * gs.pointSize});
 	}
 }
 

@@ -311,6 +311,7 @@ DilatedPatternDrawing::DilatedPatternDrawing(const Partition& partition, const G
 
 	for (auto fit = m_arr.faces_begin(); fit != m_arr.faces_end(); ++fit) {
 		auto& data = fit->data();
+		if (data.origins.empty()) continue;
 		auto ordering = computeTotalOrder(data.origins, data.relations);
 		if (!ordering.has_value()) {
 			throw std::runtime_error("Impossible: no total order in a face");
@@ -361,7 +362,8 @@ DilatedPatternDrawing::DilatedPatternDrawing(const Partition& partition, const G
 				std::copy(morphed.curves_begin(), morphed.curves_end(), std::back_inserter(morphedComponentXMCurves));
 
 				for (auto fit = c.faces_begin(); fit != c.faces_end(); ++fit) {
-					fit->data().morphedEdges[i].push_back(morphed);
+					CSPolygonWithHoles pgn(face_to_polygon(*fit));
+					poly_line_gon_intersection(pgn, morphed, std::back_inserter(fit->data().morphedEdges[i]), false, true);
 				}
 				morphedFace = true;
 			}
@@ -761,10 +763,10 @@ Relation DilatedPatternDrawing::computePreference(int i, int j, const Component&
 	bool jCircularIndented = circularIndented(iExclusion, bpj);
 
 	if (iCircularIndented && !jCircularIndented) {
-		pref = Order::GREATER;
+		pref = Order::SMALLER;
 	}
 	if (!iCircularIndented && jCircularIndented){
-		pref = Order::SMALLER;
+		pref = Order::GREATER;
 	}
 
 	// 1. Prefer to avoid few points over many points.
@@ -941,9 +943,15 @@ std::vector<Hyperedge> DilatedPatternDrawing::hyperedges() {
 }
 
 std::optional<std::vector<int>> computeTotalOrder(const std::vector<int>& origins, const std::vector<Relation>& relations) {
+	if (relations.empty()) {
+		assert(origins.size() <= 1);
+		return origins;
+	}
+
 	struct Vertex {
 		int i;
 		std::vector<Vertex> neighbors;
+		bool hasIncoming = false;
 		int mark = 0;
 	};
 
@@ -955,13 +963,15 @@ std::optional<std::vector<int>> computeTotalOrder(const std::vector<int>& origin
 
 	for (const auto& r : relations) {
 		if (r.preference == Order::EQUAL) continue;
-		auto u = vertices.at(r.left);
-		auto v = vertices.at(r.right);
+		auto& u = vertices.at(r.left);
+		auto& v = vertices.at(r.right);
 
 		if (r.ordering == Order::SMALLER) {
 			v.neighbors.push_back(u);
+			u.hasIncoming = true;
 		} else {
 			u.neighbors.push_back(v);
+			v.hasIncoming = true;
 		}
 	}
 
@@ -986,8 +996,15 @@ std::optional<std::vector<int>> computeTotalOrder(const std::vector<int>& origin
 	};
 
 	for (auto& [_, v] : vertices) {
-		bool success = visit(v);
-		if (!success) return std::nullopt;
+		if (!v.hasIncoming) {
+			bool success = visit(v);
+			if (!success)
+				return std::nullopt;
+		}
+	}
+
+	if (ordering.size() != origins.size()) {
+		return std::nullopt;
 	}
 
 	return ordering;
@@ -1040,7 +1057,7 @@ void SimpleSetsPainting::paint(renderer::GeometryRenderer& renderer) const {
 	for (const auto& dp : m_dpd.m_dilated) {
 		for (const auto& cp : dp.catPoints()) {
 			renderer.setFill(m_ds.colors.at(cp.category));
-			renderer.draw(Circle<Inexact>{cp.point, gs.pointSize});
+			renderer.draw(Circle<Inexact>{cp.point, gs.pointSize * gs.pointSize});
 		}
 	}
 }
