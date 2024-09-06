@@ -1,43 +1,60 @@
 #include "poly_line_gon_intersection.h"
+#include "cs_polyline_helpers.h"
+#include "cs_polygon_helpers.h"
+#include <CGAL/Arrangement_with_history_2.h>
 
 namespace cartocrow::simplesets {
-std::vector<CSPolyline> poly_line_gon_intersection(CSPolygon gon, CSPolyline line) {
-	assert(!gon.is_empty());
+std::vector<CSPolyline> poly_line_gon_intersection(const CSPolygon& gon, const CSPolyline& line) {
+	CSPolygonWithHoles withHoles(gon);
+	return poly_line_gon_intersection(withHoles, line);
+}
 
-	using Arr = CGAL::Arrangement_2<CSTraits, CGAL::Arr_extended_dcel<CSTraits, std::monostate, HalfEdgePolylineData, std::monostate>>;
+std::vector<CSPolyline> poly_line_gon_intersection(const CSPolygonWithHoles& gon, const CSPolyline& line) {
+	using Arr = CGAL::Arrangement_with_history_2<PolyCSTraits, CGAL::Arr_extended_dcel<CSTraits, std::monostate, HalfEdgePolylineData, std::monostate>>;
 	Arr arr;
-	CGAL::insert_non_intersecting_curves(arr, line.curves_begin(), line.curves_end());
-	for (auto eit = arr.edges_begin(); eit != arr.edges_end(); ++eit) {
-		eit->set_data({true});
-		eit->twin()->set_data({true});
-	}
-	CGAL::insert(arr, gon.curves_begin(), gon.curves_end());
+	auto linePolycurve = arrPolycurveFromCSPolyline(line);
+	auto outerGonPolycurve = arrPolycurveFromCSPolygon(gon.outer_boundary());
 
-	std::vector<Arr::Halfedge_handle> line_edges;
-	for (auto eit = arr.edges_begin(); eit != arr.edges_end(); ++eit) {
-		if (eit->data().of_polyline) {
-			if (eit->source()->point() == eit->curve().source()) {
-				line_edges.push_back(eit.ptr());
-			} else {
-				assert(eit->twin()->source()->point() == eit->twin()->curve().source());
-				line_edges.push_back(eit->twin().ptr());
+	auto lch = CGAL::insert(arr, linePolycurve);
+	auto ogch = CGAL::insert(arr, outerGonPolycurve);
+	std::vector<Arr::Curve_handle> hgch;
+
+	std::vector<CSPolycurve> holesGonPolycurves;
+	for (auto hit = gon.holes_begin(); hit != gon.holes_end(); ++hit) {
+		CGAL::insert(arr, arrPolycurveFromCSPolygon(*hit));
+	}
+
+	std::vector<Arr::Halfedge_handle> line_edges_in_gon;
+	for (auto eit = arr.induced_edges_begin(lch); eit != arr.induced_edges_end(lch); ++eit) {
+		auto edge = *eit;
+		auto fh = edge->face();
+
+		bool liesInGon = false;
+		if (!fh->has_outer_ccb()) {
+			continue;
+		}
+		auto ccb = fh->outer_ccb();
+		auto ccbIt = ccb;
+		do {
+			// if *ccbIt lies on outer face.
+			for (auto curveIt = arr.originating_curves_begin(ccbIt); curveIt != arr.originating_curves_end(ccbIt); ++curveIt) {
+				Arr::Curve_handle ch = curveIt;
+				if (ch == ogch) {
+					liesInGon = true;
+					break;
+				}
 			}
+		} while (++ccbIt != ccb);
+
+		if (liesInGon) {
+			line_edges_in_gon.push_back(eit->ptr());
 		}
 	}
 
-	// todo: fix. Use Arr_polycurve_traits_2 class.
-	// 1. line_edges is incorrect because the insertion of polygon edges changes the edge data.
-	// use arrangement with history and polycurve triats.
-	// 2. below I don't check whether a line_edge actually lies inside an interior face of a polygon -_-.
-	// check whether the outer_ccb of one of the adjacent faces of the edge originates from the outer boundary of the
-	// polygon of from a hole.
-	// 3. make it work for CSPolygonWithHoles
-
-
 	std::vector<CSPolyline> parts;
-	while (!line_edges.empty()) {
+	while (!line_edges_in_gon.empty()) {
 		// Find first edge on connected component of polyline (in the intersection with polygon)
-		auto start = line_edges.front();
+		auto start = line_edges_in_gon.front();
 		auto curr = start;
 		while (curr->prev()->data().of_polyline) {
 			curr = curr->prev();
@@ -48,13 +65,13 @@ std::vector<CSPolyline> poly_line_gon_intersection(CSPolygon gon, CSPolyline lin
 			}
 		}
 		std::vector<X_monotone_curve_2> xmcs;
-		auto last_it = line_edges.end();
+		auto last_it = line_edges_in_gon.end();
 		do {
-			last_it = std::remove(line_edges.begin(), last_it, curr);
-			xmcs.push_back(curr->curve());
+			last_it = std::remove(line_edges_in_gon.begin(), last_it, curr);
+			std::copy(curr->curve().subcurves_begin(), curr->curve().subcurves_end(), std::back_inserter(xmcs));
 			curr = curr->next();
 		} while (curr->data().of_polyline);
-		line_edges.erase(last_it, line_edges.end());
+		line_edges_in_gon.erase(last_it, line_edges_in_gon.end());
 		parts.emplace_back(xmcs.begin(), xmcs.end());
 	}
 

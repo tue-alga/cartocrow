@@ -36,7 +36,19 @@ OneRootPoint nearest(const X_monotone_curve_2& xm_curve, const Point<Exact>& poi
 bool liesOn(const Point<Exact>& p, const X_monotone_curve_2& xm_curve);
 bool liesOn(const OneRootPoint& p, const X_monotone_curve_2& xm_curve);
 renderer::RenderPath renderPathFromXMCurve(const X_monotone_curve_2& xm_curve);
-void addCurveToRenderPath(const X_monotone_curve_2& xm_curve, renderer::RenderPath& path, bool& first);
+void addToRenderPath(const X_monotone_curve_2& xm_curve, renderer::RenderPath& path, bool& first);
+Curve_2 toCurve(const X_monotone_curve_2& xmc);
+
+template <class InputIterator>
+CSPolycurve arrPolycurveFromXMCurves(InputIterator begin, InputIterator end) {
+	PolyCSTraits traits;
+	auto construct = traits.construct_curve_2_object();
+	std::vector<Curve_2> curves;
+	std::transform(begin, end, std::back_inserter(curves), [](const X_monotone_curve_2& xm_curve) {
+		return toCurve(xm_curve);
+	});
+	return construct(curves.begin(), curves.end());
+}
 }
 
 #endif //CARTOCROW_CS_CURVE_HELPERS_H

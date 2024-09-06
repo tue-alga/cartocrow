@@ -117,7 +117,7 @@ renderer::RenderPath renderPathFromXMCurve(const X_monotone_curve_2& xm_curve) {
 	return path;
 }
 
-void addCurveToRenderPath(const X_monotone_curve_2& xm_curve, renderer::RenderPath& path, bool& first) {
+void addToRenderPath(const X_monotone_curve_2& xm_curve, renderer::RenderPath& path, bool& first) {
 	auto as = approximateAlgebraic(xm_curve.source());
 	auto at = approximateAlgebraic(xm_curve.target());
 	if (first) {
@@ -132,6 +132,17 @@ void addCurveToRenderPath(const X_monotone_curve_2& xm_curve, renderer::RenderPa
 		}
 		auto circle = xm_curve.supporting_circle();
 		path.arcTo(approximate(circle.center()), xm_curve.orientation() == CGAL::CLOCKWISE, approximateAlgebraic(xm_curve.target()));
+	}
+}
+
+
+Curve_2 toCurve(const X_monotone_curve_2& xmc) {
+	if (xmc.is_linear()) {
+		return {xmc.supporting_line(), xmc.source(), xmc.target()};
+	} else if (xmc.is_circular()) {
+		return {xmc.supporting_circle(), xmc.source(), xmc.target()};
+	} else {
+		throw std::runtime_error("Impossible: circle-segment x-monotone curve is neither linear nor circular.");
 	}
 }
 }

@@ -90,13 +90,27 @@ std::optional<CSPolygon::Curve_const_iterator> liesOn(const OneRootPoint& p, con
 	return std::nullopt;
 }
 
-renderer::RenderPath renderPathFromCSPolygon(const CSPolygon& polygon) {
-	renderer::RenderPath path;
+renderer::RenderPath operator<<(renderer::RenderPath& path, const CSPolygon& polygon) {
 	bool first = true;
 	for (auto cit = polygon.curves_begin(); cit != polygon.curves_end(); ++cit) {
-		addCurveToRenderPath(*cit, path, first);
+		addToRenderPath(*cit, path, first);
 	}
 	path.close();
+	return path;
+}
+
+renderer::RenderPath renderPath(const CSPolygon& polygon) {
+	renderer::RenderPath path;
+	path << polygon;
+	return path;
+}
+
+renderer::RenderPath renderPath(const CSPolygonWithHoles& withHoles) {
+	renderer::RenderPath path;
+	path << withHoles.outer_boundary();
+	for (auto hit = withHoles.holes_begin(); hit != withHoles.holes_end(); ++hit) {
+		path << *hit;
+	}
 	return path;
 }
 
@@ -174,5 +188,9 @@ bool liesOn(const X_monotone_curve_2& c, const CSPolygon& polygon) {
 	} while (curr++ != tit);
 
 	return true;
+}
+
+CSPolycurve arrPolycurveFromCSPolygon(const CSPolygon& polygon) {
+	return arrPolycurveFromXMCurves(polygon.curves_begin(), polygon.curves_end());
 }
 }

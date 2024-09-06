@@ -187,16 +187,6 @@ connectedComponents(const DilatedPatternArrangement& arr, std::function<bool(Fac
 	return components;
 }
 
-CSTraits::Curve_2 to_curve(const X_monotone_curve_2& xmc) {
-	if (xmc.is_linear()) {
-		return {xmc.supporting_line(), xmc.source(), xmc.target()};
-	} else if (xmc.is_circular()) {
-		return {xmc.supporting_circle(), xmc.source(), xmc.target()};
-	} else {
-		throw std::runtime_error("Impossible: circle-segment x-monotone curve is neither linear nor circular.");
-	}
-}
-
 Component::Component(std::vector<FaceH> faces, std::vector<HalfEdgeH> boundary_edges, std::function<bool(FaceH)> in_component) :
       m_faces(std::move(faces)), m_in_component(std::move(in_component)) {
 	while (!boundary_edges.empty()) {
@@ -253,7 +243,7 @@ DilatedPatternDrawing::DilatedPatternDrawing(const Partition& partition, const G
 	for (int i = 0; i < m_dilated.size(); i++) {
 		for (auto cit = m_dilated[i].m_contour.curves_begin(); cit != m_dilated[i].m_contour.curves_end(); ++cit) {
 			auto x_monotone = *cit;
-			CSTraits::Curve_2 curve = to_curve(x_monotone);
+			CSTraits::Curve_2 curve = toCurve(x_monotone);
 			curves.emplace_back(curve);
 			curves_data.emplace_back(curve, i);
 		}
@@ -331,11 +321,11 @@ DilatedPatternDrawing::DilatedPatternDrawing(const Partition& partition, const G
 	for (int i = 0; i < m_dilated.size(); ++i) {
 		auto cs = intersectionComponents(i);
 		for (auto& c : cs) {
-			std::vector<int> avoidees;
+			std::unordered_set<int> avoidees;
 			for (auto fit = c.faces_begin(); fit != c.faces_end(); ++fit) {
 				for (int j : fit->data().ordering) {
 					if (j == i) break;
-					avoidees.push_back(j);
+					avoidees.insert(j);
 				}
 			}
 			if (avoidees.empty())
@@ -695,7 +685,7 @@ bool isStraight(const CSPolyline& polyline) {
 
 /// The inclusion and exclusion disks for component \ref c when \ref i is stacked on top of \ref js.
 IncludeExcludeDisks
-DilatedPatternDrawing::includeExcludeDisks(int i, const std::vector<int>& js, const Component& c) {
+DilatedPatternDrawing::includeExcludeDisks(int i, const std::unordered_set<int>& js, const Component& c) {
 	std::vector<Point<Exact>> ptsI;
 	const auto& catPointsI = m_dilated[i].catPoints();
 	std::transform(catPointsI.begin(), catPointsI.end(), std::back_inserter(ptsI), [](const CatPoint& catPoint) {
@@ -725,7 +715,7 @@ DilatedPatternDrawing::includeExcludeDisks(int i, const std::vector<int>& js, co
 /// The inclusion and exclusion disks for component \ref c when \ref i is stacked on top of \ref j.
 IncludeExcludeDisks
 DilatedPatternDrawing::includeExcludeDisks(int i, int j, const Component& c) {
-	std::vector<int> js({j});
+	std::unordered_set<int> js({j});
 	return includeExcludeDisks(i, js, c);
 }
 
@@ -811,9 +801,9 @@ void DilatedPatternDrawing::drawFaceFill(FaceH fh, renderer::GeometryRenderer& r
 		renderer.setFill(ds.colors[m_dilated[i].category()]);
 		if (!d.morphedFace.contains(i)) {
 			auto poly = face_to_polygon(*fh);
-			renderer.draw(renderPathFromCSPolygon(poly));
+			renderer.draw(renderPath(poly));
 		} else {
-			renderer.draw(renderPathFromCSPolygon(d.morphedFace[i]));
+			renderer.draw(renderPath(d.morphedFace[i]));
 		}
 	}
 }
@@ -825,13 +815,17 @@ void DilatedPatternDrawing::drawFaceStroke(FaceH fh, renderer::GeometryRenderer&
 		renderer.setMode(GeometryRenderer::stroke);
 		renderer.setStroke(Color{0, 0, 0}, ds.contourStrokeWeight(gs), true);
 
-		// todo: take difference of polylines with the cs polygons stacked on top
 		std::vector<CSPolyline> polylines;
 		if (d.morphedEdges[i].empty()) {
 			auto bps = boundaryParts(fh, i);
 			std::copy(bps.begin(), bps.end(), std::back_inserter(polylines));
 		}
 		std::copy(d.morphedEdges[i].begin(), d.morphedEdges[i].end(), std::back_inserter(polylines));
+
+		std::vector<CSPolyline> modifiedPolylines;
+		CSPolygonSet polySet;
+
+		// todo: take difference of polylines with the cs polygons stacked on top
 
 //		for (const auto& polyline : polylines) {
 //			poly_line_gon_intersection();

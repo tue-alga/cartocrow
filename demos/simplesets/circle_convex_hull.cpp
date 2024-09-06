@@ -25,7 +25,7 @@ CircleConvexHullDemo::CircleConvexHullDemo() {
 	auto hull = approximateConvexHull(cs);
 
 	std::function<void(GeometryRenderer&)> drawFunc = [cs, hull](GeometryRenderer& renderer) {
-		RenderPath path = renderPathFromCSPolygon(hull);
+		RenderPath path = renderPath(hull);
 	  	renderer.setMode(GeometryRenderer::stroke);
 	  	renderer.setFill(Color{50, 50, 50});
 		renderer.draw(path);

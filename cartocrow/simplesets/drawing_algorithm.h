@@ -318,7 +318,7 @@ class DilatedPatternDrawing {
 	Relation computePreference(int i, int j, const Component& c);
 
 	IncludeExcludeDisks includeExcludeDisks(int i, int j, const Component& c);
-	IncludeExcludeDisks includeExcludeDisks(int i, const std::vector<int>& js, const Component& c);
+	IncludeExcludeDisks includeExcludeDisks(int i, const std::unordered_set<int>& js, const Component& c);
 
 	std::vector<Hyperedge> hyperedges();
 

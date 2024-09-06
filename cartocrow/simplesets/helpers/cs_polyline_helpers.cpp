@@ -40,11 +40,11 @@ std::optional<CSPolyline::Curve_const_iterator> liesOn(const OneRootPoint& p, co
 	return std::nullopt;
 }
 
-renderer::RenderPath renderPathFromCSPolyline(const CSPolyline& polyline) {
+renderer::RenderPath renderPath(const CSPolyline& polyline) {
 	renderer::RenderPath path;
 	bool first = true;
 	for (auto cit = polyline.curves_begin(); cit != polyline.curves_end(); ++cit) {
-		addCurveToRenderPath(*cit, path, first);
+		addToRenderPath(*cit, path, first);
 	}
 	return path;
 }
@@ -69,5 +69,9 @@ bool liesOn(const X_monotone_curve_2& c, const CSPolyline& polyline) {
 	} while (curr++ != tit);
 
 	return true;
+}
+
+CSPolycurve arrPolycurveFromCSPolyline(const CSPolyline& polyline) {
+	return arrPolycurveFromXMCurves(polyline.curves_begin(), polyline.curves_end());
 }
 }

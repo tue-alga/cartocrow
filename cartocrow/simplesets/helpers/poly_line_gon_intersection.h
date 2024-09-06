@@ -9,7 +9,8 @@ struct HalfEdgePolylineData {
 	bool of_polyline = false;
 };
 
-std::vector<CSPolyline> poly_line_gon_intersection(CSPolygon gon, CSPolyline line);
+std::vector<CSPolyline> poly_line_gon_intersection(const CSPolygon& gon, const CSPolyline& line);
+std::vector<CSPolyline> poly_line_gon_intersection(const CSPolygonWithHoles& gon, const CSPolyline& line);
 }
 
 #endif //CARTOCROW_POLY_LINE_GON_INTERSECTION_H

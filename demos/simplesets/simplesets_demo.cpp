@@ -106,29 +106,33 @@ SimpleSetsDemo::SimpleSetsDemo() {
 	}
 	m_partition = *thePartition;
 
-//	m_dpd = std::make_shared<DilatedPatternDrawing>(m_partition, m_gs, m_cds);
-//	auto ap = std::make_shared<SimpleSetsPainting>(*m_dpd, m_ds);
-//	renderer->addPainting(ap, "Arrangement");
-//
-//	auto pp = std::make_shared<PartitionPainting>(m_partition, m_gs, m_ds);
-//	renderer->addPainting(pp, "Partition");
+	m_dpd = std::make_shared<DilatedPatternDrawing>(m_partition, m_gs, m_cds);
+	auto ap = std::make_shared<SimpleSetsPainting>(*m_dpd, m_ds);
+	renderer->addPainting(ap, "Arrangement");
+
+	auto pp = std::make_shared<PartitionPainting>(m_partition, m_gs, m_ds);
+	renderer->addPainting(pp, "Partition");
 
 	renderer->addPainting([this](GeometryRenderer& r) {
 	  CSPolygon disk = circleToCSPolygon({{0, 0}, 1});
+	  std::vector<CSPolygon> diskHoles = {circleToCSPolygon({{0, 0}, 0.4})};
+	  CSPolygonWithHoles withHoles(disk, diskHoles.begin(), diskHoles.end());
 	  std::vector<X_monotone_curve_2> xm_curves_pl({
 		  {{0, -2}, {0, 2}}
 	  });
 	  CSPolyline polyline(xm_curves_pl.begin(), xm_curves_pl.end());
 
-	  r.setMode(GeometryRenderer::stroke);
 	  r.setStroke(Color{0, 0, 0}, 3);
-	  r.draw(renderPathFromCSPolygon(disk));
-//	  r.draw(renderPathFromCSPolyline(polyline));
+	  r.setMode(GeometryRenderer::stroke | GeometryRenderer::fill);
+	  r.setFill(Color{200, 200, 200});
+	  r.draw(renderPath(withHoles));
+	  r.setMode(GeometryRenderer::stroke);
+	  r.draw(renderPath(polyline));
 
-	  auto inters = poly_line_gon_intersection(disk, polyline);
-	  r.setStroke(CB::blue, 3);
+	  auto inters = poly_line_gon_intersection(withHoles, polyline);
+	  r.setStroke(CB::blue, 5);
 	  for (const auto& inter : inters) {
-		  r.draw(renderPathFromCSPolyline(inter));
+		  r.draw(renderPath(inter));
 	  }
 	}, "Poly-gon-line intersection");
 
@@ -168,7 +172,7 @@ SimpleSetsDemo::SimpleSetsDemo() {
 ////		    r.draw(include);
 ////	    }
 ////		auto hull = approximateConvexHull(includeExclude.include);
-////	  	auto path = renderPathFromCSPolygon(hull);
+////	  	auto path = renderPath(hull);
 ////		r.draw(path);
 //
 //

@@ -29,8 +29,10 @@ CSPolygon circleToCSPolygon(const Circle<Exact>& circle);
 std::optional<CSPolygon::Curve_const_iterator> liesOn(const Point<Exact>& p, const CSPolygon& polygon);
 std::optional<CSPolygon::Curve_const_iterator> liesOn(const OneRootPoint& p, const CSPolygon& polygon);
 bool liesOn(const X_monotone_curve_2& c, const CSPolygon& polygon);
-renderer::RenderPath renderPathFromCSPolygon(const CSPolygon& polygon);
+renderer::RenderPath renderPath(const CSPolygon& polygon);
+renderer::RenderPath renderPath(const CSPolygonWithHoles& withHoles);
 bool on_or_inside(const CSPolygon& polygon, const Point<Exact>& point);
+CSPolycurve arrPolycurveFromCSPolygon(const CSPolygon& polygon);
 }
 
 #endif //CARTOCROW_CS_POLYGON_HELPERS_H
