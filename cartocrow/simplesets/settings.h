@@ -16,7 +16,7 @@ struct GeneralSettings {
 
 	/// The distance each pattern is dilated.
 	Number<Inexact> dilationRadius() const {
-		return pointSize * 3;
+		return pointSize * 2.1;
 	}
 };
 
@@ -41,6 +41,7 @@ struct ComputeDrawingSettings {
 
 struct DrawSettings {
 	std::vector<Color> colors;
+	Number<Inexact> whiten;
 	Number<Inexact> pointStrokeWeight(GeneralSettings gs) const {
 		return gs.pointSize / 3.5;
 	}

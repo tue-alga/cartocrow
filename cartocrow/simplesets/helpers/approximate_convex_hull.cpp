@@ -270,10 +270,6 @@ CSPolygon approximateConvexHull(const std::vector<Circle<Exact>>& circles) {
 			segs.push_back(pair.second);
 		}
 		tangents.push_back(segs);
-
-		for (const auto& seg : segs) {
-			std::cout << seg.source() << " -> " << seg.target() << std::endl;
-		}
 	}
 
 	std::vector<X_monotone_curve_2> xm_curves;

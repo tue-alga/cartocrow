@@ -1,5 +1,6 @@
 #include "cs_polygon_helpers.h"
 #include "cs_curve_helpers.h"
+#include <CGAL/approximated_offset_2.h>
 
 // Code adapted from a Stack Overflow answer by HEKTO.
 // Link: https://stackoverflow.com/questions/69399922/how-does-one-obtain-the-area-of-a-general-polygon-set-in-cgal
@@ -171,15 +172,8 @@ bool liesOn(const X_monotone_curve_2& c, const CSPolygon& polygon) {
 	auto tit = *sc;
 	auto curr = sit;
 	do {
-//		std::cout << c.is_linear() << "  " << c.is_circular() << "  " << c.is_vertical() << std::endl;
-//
-		std::cout << curr->source() << " -> " << curr->target() << std::endl;
 		if (curr->is_linear()) {
 			if (c.is_circular()) return false;
-			std::cout << "Supporting line" << std::endl;
-			std::cout << curr->supporting_line() << std::endl;
-			std::cout << "c" << std::endl;
-			std::cout << c.supporting_line() << "  " << c.source() << " " << c.target() << std::endl;
 			if (curr->supporting_line() != c.supporting_line()) return false;
 		} else {
 			if (c.is_linear()) return false;
@@ -192,5 +186,30 @@ bool liesOn(const X_monotone_curve_2& c, const CSPolygon& polygon) {
 
 CSPolycurve arrPolycurveFromCSPolygon(const CSPolygon& polygon) {
 	return arrPolycurveFromXMCurves(polygon.curves_begin(), polygon.curves_end());
+}
+
+Polygon<Exact> linearSample(const CSPolygon& polygon, int n) {
+    std::vector<std::pair<double, double>> coords;
+	polygon.approximate(std::back_inserter(coords), n);
+	std::vector<Point<Exact>> points;
+
+	// polygon.approximate returns duplicate points.
+	for (int i = 0; i < coords.size(); ++i) {
+		auto p = coords[i];
+		if (i > 0) {
+			auto prev = coords[i - 1];
+			if (p == prev) continue;
+		}
+		if (i == coords.size() - 1 && p == coords[0]) {
+			continue;
+		}
+		points.emplace_back(p.first, p.second);
+	}
+	return {points.begin(), points.end()};
+}
+
+CSPolygonWithHoles approximateDilate(const CSPolygon& polygon, double r, double eps, int n) {
+	auto poly = linearSample(polygon, n);
+	return CGAL::approximated_offset_2(poly, r, eps);
 }
 }

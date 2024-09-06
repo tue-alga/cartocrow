@@ -462,7 +462,7 @@ CSPolyline morph(const CSPolyline& boundaryPart, const CSPolygon& componentShape
 	std::vector<Circle<Exact>> arcCovering;
 
 	for (const auto& d : exclDisks) {
-		auto inter = poly_line_gon_intersection(circleToCSPolygon(d), boundaryPart);
+		auto inter = poly_line_gon_intersection(circleToCSPolygon(d), boundaryPart, true);
 		bool coversLine = true;
 		for (const auto& p : inter) {
 			if (!isStraight(p)) {
@@ -521,9 +521,6 @@ CSPolyline morph(const CSPolyline& boundaryPart, const CSPolygon& componentShape
 		polygonSet2.difference(modifiedCut);
 	}
 
-//	polygonSet.complement();
-//	polygonSet.intersection(componentShape);
-
 	std::vector<CSPolygonWithHoles> polys;
 	polygonSet2.polygons_with_holes(std::back_inserter(polys));
 	assert(polys.size() == 1);
@@ -539,15 +536,11 @@ CSPolyline morph(const CSPolyline& boundaryPart, const CSPolygon& componentShape
 	auto endIt = boundaryPart.curves_end();
 	--endIt;
 	auto boundaryPartEnd = endIt->target();
-//	int boundaryPartStartIndex = -1;
-//	int boundaryPartEndIndex = -1;
 	int startIndex = -1;
 	int endIndex = -1;
 
-//	std::cout << "Looking for start and end of boundary part" << std::endl;
 	for (int i = 0; i < outer_xm_curves.size(); i++) {
 		auto c = outer_xm_curves[i];
-//		std::cout << "curve " << c.source() << " -> " << c.target() << std::endl;
 		if (outer_xm_curves[i].source() == boundaryPartStart) {
 			startIndex = i;
 		}
@@ -555,21 +548,14 @@ CSPolyline morph(const CSPolyline& boundaryPart, const CSPolygon& componentShape
 			endIndex = i;
 		}
 	}
-//	assert(boundaryPartStartIndex >= 0);
-//	assert(boundaryPartEndIndex >= 0);
 
-//	std::cout << "Looking for alternative start and end" << std::endl;
 	for (int i = 0; i < outer_xm_curves.size() && (startIndex < 0 || endIndex < 0); i++) {
 		const auto& c = outer_xm_curves[i];
-//		std::cout << "curve " << c.source() << "(" << liesOn(c.source(), componentShape).has_value() << ")" << " -> " <<
-//		    c.target() << "(" << liesOn(c.target(), componentShape).has_value() << ")" << " " << liesOn(c, componentShape) << std::endl;
 		if (startIndex < 0 && liesOn(c.source(), componentShape).has_value() && !liesOn(c, componentShape)) {
 			startIndex = i;
-//			std::cout << "Found start curve " << c.source() << " -> " << c.target() << std::endl;
 		}
 		if (endIndex < 0 && !liesOn(c, componentShape) && liesOn(c.target(), componentShape).has_value()) {
 			endIndex = i;
-//			std::cout << "Found end curve " << c.source() << " -> " << c.target() << std::endl;
 		}
 	}
 
@@ -761,7 +747,7 @@ Relation DilatedPatternDrawing::computePreference(int i, int j, const Component&
 		for (const auto& d : exclusionDisks) {
 			if (d.squared_radius() <= 0) continue;
 			for (auto& polyline : bps) {
-				auto inters = poly_line_gon_intersection(circleToCSPolygon(d), polyline);
+				auto inters = poly_line_gon_intersection(circleToCSPolygon(d), polyline, true);
 				for (auto& inter : inters) {
 					if (!isStraight(inter)) {
 						return true;
@@ -793,12 +779,16 @@ Relation DilatedPatternDrawing::computePreference(int i, int j, const Component&
 	return {i, j, pref, pref};
 }
 
+Color whiten(const Color& color, double a) {
+	return {static_cast<int>(255 * a + color.r * (1-a)), static_cast<int>(255 * a + color.g * (1-a)), static_cast<int>(255 * a + color.b * (1-a))};
+}
+
 void DilatedPatternDrawing::drawFaceFill(FaceH fh, renderer::GeometryRenderer& renderer,
                                      const GeneralSettings& gs, const DrawSettings& ds) const {
 	auto& d = fh->data();
 	for (int i : d.ordering) {
 		renderer.setMode(GeometryRenderer::fill);
-		renderer.setFill(ds.colors[m_dilated[i].category()]);
+		renderer.setFill(whiten(ds.colors[m_dilated[i].category()], ds.whiten));
 		if (!d.morphedFace.contains(i)) {
 			auto poly = face_to_polygon(*fh);
 			renderer.draw(renderPath(poly));
@@ -811,9 +801,8 @@ void DilatedPatternDrawing::drawFaceFill(FaceH fh, renderer::GeometryRenderer& r
 void DilatedPatternDrawing::drawFaceStroke(FaceH fh, renderer::GeometryRenderer& renderer,
 										 const GeneralSettings& gs, const DrawSettings& ds) const {
 	auto& d = fh->data();
-	for (int i : d.ordering) {
-		renderer.setMode(GeometryRenderer::stroke);
-		renderer.setStroke(Color{0, 0, 0}, ds.contourStrokeWeight(gs), true);
+	for (int index = 0; index < d.ordering.size(); ++index) {
+		int i = d.ordering[index];
 
 		std::vector<CSPolyline> polylines;
 		if (d.morphedEdges[i].empty()) {
@@ -822,21 +811,50 @@ void DilatedPatternDrawing::drawFaceStroke(FaceH fh, renderer::GeometryRenderer&
 		}
 		std::copy(d.morphedEdges[i].begin(), d.morphedEdges[i].end(), std::back_inserter(polylines));
 
+
 		std::vector<CSPolyline> modifiedPolylines;
-		CSPolygonSet polySet;
+		if (index == d.ordering.size() - 1) {
+			modifiedPolylines = polylines;
+		} else {
+			bool nothingVisible = false;
+			auto poly = face_to_polygon(*fh);
+			auto bb = poly.bbox();
+			Rectangle<Exact> bbX(bb.xmin() - 1, bb.ymin() - 1, bb.xmax() + 1, bb.ymax() + 1);
+			std::vector<X_monotone_curve_2> xm_cs;
+			for (int k = 0; k < 4; ++k) {
+				xm_cs.emplace_back(bbX.vertex(k), bbX.vertex((k + 1) % 4));
+			}
+			CSPolygon bbXPoly(xm_cs.begin(), xm_cs.end());
 
-		// todo: take difference of polylines with the cs polygons stacked on top
+			CSPolygonSet polySet(bbXPoly);
+			for (int higherIndex = index + 1; higherIndex < d.ordering.size(); ++higherIndex) {
+				int j = d.ordering[higherIndex];
+				// Pattern j is stacked on top of i and will cover the stroke of shape i.
+				if (!d.morphedFace.contains(j)) {
+					nothingVisible = true;
+					break;
+				} else {
+					polySet.difference(d.morphedFace[j]);
+				}
+			}
 
-//		for (const auto& polyline : polylines) {
-//			poly_line_gon_intersection();
-//		}
+			if (nothingVisible) continue;
 
-//		if (d) {
-//			auto poly = face_to_polygon(face);
-//			renderer.draw(renderPathFromCSPolygon(poly));
-//		} else {
-//			renderer.draw(renderPathFromCSPolygon(*d.morphedFace));
-//		}
+			std::vector<CSPolygonWithHoles> polygonsWithHoles;
+			polySet.polygons_with_holes(std::back_inserter(polygonsWithHoles));
+
+			for (const auto& polyline : polylines) {
+				for (const auto& polygon : polygonsWithHoles) {
+					poly_line_gon_intersection(polygon, polyline, std::back_inserter(modifiedPolylines), false, false);
+				}
+			}
+		}
+
+		renderer.setMode(GeometryRenderer::stroke);
+		renderer.setStroke(Color{0, 0, 0}, ds.contourStrokeWeight(gs), true);
+		for (const auto& polyline : modifiedPolylines) {
+			renderer.draw(renderPath(polyline));
+		}
 	}
 }
 
@@ -1013,6 +1031,17 @@ void SimpleSetsPainting::paint(renderer::GeometryRenderer& renderer) const {
 	for (auto fit = m_dpd.m_arr.faces_begin(); fit != m_dpd.m_arr.faces_end(); ++fit) {
 		if (fit->is_unbounded()) continue;
 		m_dpd.drawFaceStroke(fit.ptr(), renderer, m_dpd.m_gs, m_ds);
+	}
+
+	const auto& gs = m_dpd.m_gs;
+	renderer.setStroke(Color{0, 0, 0}, m_ds.pointStrokeWeight(gs), true);
+	renderer.setFillOpacity(255);
+	renderer.setMode(renderer::GeometryRenderer::fill | renderer::GeometryRenderer::stroke);
+	for (const auto& dp : m_dpd.m_dilated) {
+		for (const auto& cp : dp.catPoints()) {
+			renderer.setFill(m_ds.colors.at(cp.category));
+			renderer.draw(Circle<Inexact>{cp.point, gs.pointSize});
+		}
 	}
 }
 }
