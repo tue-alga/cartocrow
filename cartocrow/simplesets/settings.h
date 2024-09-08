@@ -48,6 +48,16 @@ struct DrawSettings {
 	Number<Inexact> contourStrokeWeight(GeneralSettings gs) const {
 		return gs.pointSize / 3.5;
 	}
+	Color getColor(int category) const {
+		Color fillColor;
+		if (category > colors.size() || category < 0) {
+			std::cerr << "Warning! No color specified for category " << category << std::endl;
+			fillColor = Color{240, 240, 240};
+		} else {
+			fillColor = colors[category];
+		}
+		return fillColor;
+	}
 };
 
 struct Settings {

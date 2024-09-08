@@ -915,6 +915,7 @@ std::vector<Hyperedge> DilatedPatternDrawing::hyperedges() const {
 	for (const auto& fh : interesting) {
 		if (!lastSize.has_value() || fh->data().origins.size() == *lastSize) {
 			group.emplace_back(fh->data().origins, fh->data().relations);
+			lastSize = fh->data().origins.size();
 		} else {
 			if (!group.empty()) {
 				hyperedgesGrouped.push_back(group);
@@ -1135,7 +1136,7 @@ void SimpleSetsPainting::paint(renderer::GeometryRenderer& renderer) const {
 	renderer.setMode(renderer::GeometryRenderer::fill | renderer::GeometryRenderer::stroke);
 	for (const auto& dp : m_dpd.m_dilated) {
 		for (const auto& cp : dp.catPoints()) {
-			renderer.setFill(m_ds.colors.at(cp.category));
+			renderer.setFill(m_ds.getColor(cp.category));
 			renderer.draw(Circle<Inexact>{cp.point, gs.pointSize * gs.pointSize});
 		}
 	}

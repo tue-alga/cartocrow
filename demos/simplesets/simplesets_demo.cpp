@@ -77,9 +77,10 @@ SimpleSetsDemo::SimpleSetsDemo() {
 	m_renderer->setMinZoom(0.01);
 	m_renderer->setMaxZoom(1000.0);
 
-	std::filesystem::path filePath("/home/steven/Documents/cartocrow/data/nyc.txt");
+	std::filesystem::path filePath("/home/steven/Documents/cartocrow/data/diseasome.txt");
 
-	m_gs = GeneralSettings{2.1, 2, M_PI, 70.0 / 180 * M_PI};
+//	m_gs = GeneralSettings{2.1, 2, M_PI, 70.0 / 180 * M_PI}; //nyc
+	m_gs = GeneralSettings{5.204, 2, M_PI, 70.0 / 180 * M_PI}; //diseasome
 //	m_ps = PartitionSettings{true, true, true, true, 0.5}; todo: fix intersection delay crash
 	m_ps = PartitionSettings{true, true, true, false, 0.5};
 	m_ds = DrawSettings{{CB::light_blue, CB::light_red, CB::light_green, CB::light_purple, CB::light_orange}, 0.7};
@@ -132,7 +133,8 @@ void SimpleSetsDemo::resizeEvent(QResizeEvent *event) {
 void SimpleSetsDemo::compute() {
 	auto partitionList = partition(m_points, m_gs, m_ps, 8 * m_gs.dilationRadius());
 
-	Number<Inexact> cover = 4.7;
+//	Number<Inexact> cover = 4.7; // nyc
+	auto cover = 5.913; // diseasome
 
 	Partition* thePartition;
 	for (auto& [time, partition] : partitionList) {

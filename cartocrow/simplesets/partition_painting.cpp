@@ -8,7 +8,7 @@ void draw_poly_pattern(const PolyPattern& pattern, renderer::GeometryRenderer& r
 	} else {
 		renderer.setMode(renderer::GeometryRenderer::fill | renderer::GeometryRenderer::stroke);
 	}
-	renderer.setFill(ds.colors.at(pattern.category()));
+	renderer.setFill(ds.getColor(pattern.category()));
 	renderer.setFillOpacity(100);
 	renderer.setStroke(Color{0, 0, 0}, ds.contourStrokeWeight(gs), true);
 	auto& pts = pattern.catPoints();
@@ -20,7 +20,7 @@ void draw_poly_pattern(const PolyPattern& pattern, renderer::GeometryRenderer& r
 	for (const auto& pt : pattern.catPoints()) {
 		renderer.setStroke(Color{0, 0, 0}, ds.pointStrokeWeight(gs), true);
 		renderer.setFillOpacity(255);
-		renderer.setFill(ds.colors.at(pt.category));
+		renderer.setFill(ds.getColor(pt.category));
 		renderer.setMode(renderer::GeometryRenderer::fill | renderer::GeometryRenderer::stroke);
 		renderer.draw(Circle<Inexact>{pt.point, gs.pointSize * gs.pointSize});
 	}

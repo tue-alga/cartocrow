@@ -22,8 +22,28 @@ void intersection(const CSPolyline& line, const CSPolygonWithHoles& gon, OutputI
 	auto linePolycurve = arrPolycurveFromCSPolyline(line);
 	auto outerGonPolycurve = arrPolycurveFromCSPolygon(gon.outer_boundary());
 
-	auto lch = CGAL::insert(arr, linePolycurve);
+//	std::cout << "!" << std::endl;
+//	for (auto cit = outerGonPolycurve.subcurves_begin(); cit != outerGonPolycurve.subcurves_end(); ++cit) {
+//		if (cit->is_circular()) {
+//			std::cout << cit->supporting_circle().center() << " " << cit->supporting_circle().squared_radius() << std::endl;
+//		}
+//		if (cit->is_linear()) {
+//			std::cout << cit->supporting_line() << std::endl;
+//		}
+//		std::cout << cit->source() << " -> " << cit->target() << std::endl;
+//	}
+//	for (auto cit = linePolycurve.subcurves_begin(); cit != linePolycurve.subcurves_end(); ++cit) {
+//		if (cit->is_circular()) {
+//			std::cout << cit->supporting_circle().center() << " " << cit->supporting_circle().squared_radius() << std::endl;
+//		}
+//		if (cit->is_linear()) {
+//			std::cout << cit->supporting_line() << std::endl;
+//		}
+//		std::cout << cit->source() << " -> " << cit->target() << std::endl;
+//	}
+
 	auto ogch = CGAL::insert(arr, outerGonPolycurve);
+	auto lch = CGAL::insert(arr, linePolycurve);
 	std::vector<Arr::Curve_handle> hgchs;
 
 	std::vector<CSPolycurve> holesGonPolycurves;
