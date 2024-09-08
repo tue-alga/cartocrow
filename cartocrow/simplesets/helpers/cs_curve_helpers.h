@@ -37,7 +37,38 @@ bool liesOn(const Point<Exact>& p, const X_monotone_curve_2& xm_curve);
 bool liesOn(const OneRootPoint& p, const X_monotone_curve_2& xm_curve);
 renderer::RenderPath renderPathFromXMCurve(const X_monotone_curve_2& xm_curve);
 void addToRenderPath(const X_monotone_curve_2& xm_curve, renderer::RenderPath& path, bool& first);
+void addToRenderPath(const Curve_2& curve, renderer::RenderPath& path, bool& first);
 Curve_2 toCurve(const X_monotone_curve_2& xmc);
+
+template <class OutputIterator, class InputIterator>
+void toCurves(InputIterator begin, InputIterator end, OutputIterator out) {
+	std::optional<Curve_2> lastCurve;
+	for (auto curr = begin; curr != end; ++curr) {
+		X_monotone_curve_2 xmc = *curr;
+		if (!lastCurve.has_value()) {
+			lastCurve = toCurve(xmc);
+		} else {
+			if (lastCurve->is_linear() && xmc.is_linear() && lastCurve->supporting_line() == xmc.supporting_line()) {
+				Curve_2 newCurve(lastCurve->supporting_line(), lastCurve->source(), xmc.target());
+				lastCurve = newCurve;
+			} else if (lastCurve->is_circular() && xmc.is_circular() && lastCurve->supporting_circle() == xmc.supporting_circle()) {
+				Curve_2 newCurve;
+				if (xmc.target() == lastCurve->source()) {
+					newCurve = Curve_2(lastCurve->supporting_circle());
+				} else {
+					newCurve = Curve_2(lastCurve->supporting_circle(), lastCurve->source(), xmc.target());
+				}
+				lastCurve = newCurve;
+			} else {
+				++out = *lastCurve;
+				lastCurve = toCurve(xmc);
+			}
+		}
+	}
+	if (lastCurve.has_value()) {
+		++out = *lastCurve;
+	}
+}
 
 template <class InputIterator>
 CSPolycurve arrPolycurveFromXMCurves(InputIterator begin, InputIterator end) {

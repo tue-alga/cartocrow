@@ -8,18 +8,16 @@
 
 namespace cartocrow::simplesets {
 // todo: edge case where edges of dilated patterns overlap, so a half-edge may have multiple origins.
-struct HalfEdgePolylineData {
-	bool of_polyline = false;
-};
-
-std::vector<CSPolyline> poly_line_gon_intersection(const CSPolygon& gon, const CSPolyline& line, bool keepOverlap);
-std::vector<CSPolyline> poly_line_gon_difference(const CSPolygon& gon, const CSPolyline& line, bool keepOverlap);
-std::vector<CSPolyline> poly_line_gon_intersection(const CSPolygonWithHoles& gon, const CSPolyline& line, bool keepOverlap);
-std::vector<CSPolyline> poly_line_gon_difference(const CSPolygonWithHoles& gon, const CSPolyline& line, bool keepOverlap);
+std::vector<CSPolyline> intersection(const CSPolyline& line, const CSPolygon& gon, bool keepOverlap);
+std::vector<CSPolyline> difference(const CSPolyline& line, const CSPolygon& gon, bool keepOverlap);
+std::vector<CSPolyline> intersection(const CSPolyline& line, const CSPolygonWithHoles& gon, bool keepOverlap);
+std::vector<CSPolyline> difference(const CSPolyline& line, const CSPolygonWithHoles& gon, bool keepOverlap);
 
 template <class OutputIterator>
-void poly_line_gon_intersection(const CSPolygonWithHoles& gon, const CSPolyline& line, OutputIterator out, bool difference, bool keepOverlap) {
-	using Arr = CGAL::Arrangement_with_history_2<PolyCSTraits, CGAL::Arr_extended_dcel<CSTraits, std::monostate, HalfEdgePolylineData, std::monostate>>;
+void intersection(const CSPolyline& line, const CSPolygonWithHoles& gon, OutputIterator out, bool difference, bool keepOverlap) {
+	PolyCSTraits traits;
+	auto equals = traits.equal_2_object();
+	using Arr = CGAL::Arrangement_with_history_2<PolyCSTraits>;
 	Arr arr;
 	auto linePolycurve = arrPolycurveFromCSPolyline(line);
 	auto outerGonPolycurve = arrPolycurveFromCSPolygon(gon.outer_boundary());
@@ -50,52 +48,71 @@ void poly_line_gon_intersection(const CSPolygonWithHoles& gon, const CSPolyline&
 				}
 			}
 		}
+		bool liesInGon = false;
 		if (onGonEdge) {
 			if (keepOverlap) {
-				line_edges_keep.push_back(eit->ptr());
+				liesInGon = true;
 			}
-			continue;
-		}
-
-		bool liesInGon = false;
-		for (auto fh : {edge->face(), edge->twin()->face()}) {
-			if (!fh->has_outer_ccb()) {
-				continue;
-			}
-			auto ccb = fh->outer_ccb();
-			auto ccbIt = ccb;
-			do {
-				// if *ccbIt lies on outer face.
-				for (auto curveIt = arr.originating_curves_begin(ccbIt);
-				     curveIt != arr.originating_curves_end(ccbIt); ++curveIt) {
-					Arr::Curve_handle ch = curveIt;
-					if (ch == ogch) {
-						liesInGon = true;
-						break;
-					}
+		} else {
+			for (auto fh : {edge->face(), edge->twin()->face()}) {
+				if (!fh->has_outer_ccb()) {
+					continue;
 				}
-			} while (++ccbIt != ccb);
-			if (liesInGon) break;
+				auto ccb = fh->outer_ccb();
+				auto ccbIt = ccb;
+				do {
+					if (!equals(ccb->source()->point(), ccb->curve().subcurves_begin()->source()))
+						continue;
+					// if *ccbIt lies on outer face.
+					for (auto curveIt = arr.originating_curves_begin(ccbIt);
+					     curveIt != arr.originating_curves_end(ccbIt); ++curveIt) {
+						Arr::Curve_handle ch = curveIt;
+						if (ch == ogch) {
+							liesInGon = true;
+							break;
+						}
+					}
+				} while (++ccbIt != ccb);
+				if (liesInGon)
+					break;
+			}
 		}
 
 		if (!difference && liesInGon) {
-			line_edges_keep.push_back(eit->ptr());
+			if (equals(edge->source()->point(), edge->curve().subcurves_begin()->source())) {
+				line_edges_keep.push_back(edge);
+	 		} else {
+				line_edges_keep.push_back(edge->twin());
+			}
 		}
 		if (difference && !liesInGon) {
-			line_edges_keep.push_back(eit->ptr());
+			if (equals(edge->source()->point(), edge->curve().subcurves_begin()->source())) {
+				line_edges_keep.push_back(edge);
+			} else {
+				line_edges_keep.push_back(edge->twin());
+			}
 		}
 	}
+
+	auto originatesFromPolyline = [&arr, &lch, &equals](Arr::Halfedge_handle h) {
+		for (auto cit = arr.originating_curves_begin(h); cit != arr.originating_curves_end(h); ++cit) {
+			Arr::Curve_handle ch = cit;
+			if (ch == lch && equals(h->source()->point(), h->curve().subcurves_begin()->source())) {
+				return true;
+			}
+		}
+		return false;
+	};
 
 	while (!line_edges_keep.empty()) {
 		// Find first edge on connected component of polyline (in the intersection with polygon)
 		auto start = line_edges_keep.front();
 		auto curr = start;
-		while (curr->prev()->data().of_polyline) {
+		while (originatesFromPolyline(curr->prev())) {
 			curr = curr->prev();
 
-			// The polyline and polygon do not intersect.
 			if (curr == start) {
-				return;
+				break;
 			}
 		}
 		std::vector<X_monotone_curve_2> xmcs;
@@ -104,8 +121,9 @@ void poly_line_gon_intersection(const CSPolygonWithHoles& gon, const CSPolyline&
 			last_it = std::remove(line_edges_keep.begin(), last_it, curr);
 			std::copy(curr->curve().subcurves_begin(), curr->curve().subcurves_end(), std::back_inserter(xmcs));
 			curr = curr->next();
-		} while (curr->data().of_polyline);
+		} while (originatesFromPolyline(curr));
 		line_edges_keep.erase(last_it, line_edges_keep.end());
+
 		++out = CSPolyline(xmcs.begin(), xmcs.end());
 	}
 }

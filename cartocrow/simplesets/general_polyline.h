@@ -26,6 +26,10 @@ class General_polyline_2 {
 	Curve_const_iterator curves_end() const {
 		return m_xm_curves.cend();
 	}
+	[[nodiscard]] unsigned int size() const
+	{
+		return static_cast<unsigned int>(m_xm_curves.size());
+	}
   private:
 	std::vector<typename ArrTraits::X_monotone_curve_2> m_xm_curves;
 };

@@ -33,18 +33,18 @@ std::ostream& operator<<(std::ostream& out, const Relation& r);
 class Hyperedge {
   public:
 	std::vector<int> origins;
-	std::vector<Relation> relations;
+	std::vector<std::shared_ptr<Relation>> relations;
 };
 
 std::optional<std::vector<int>> getRelationOrder(const Hyperedge& e);
 void setRelationOrder(Hyperedge& e, const std::vector<int>& ordering);
-std::optional<std::vector<int>> computeTotalOrder(const std::vector<int>& origins, const std::vector<Relation>& relations);
+std::optional<std::vector<int>> computeTotalOrder(const std::vector<int>& origins, const std::vector<std::shared_ptr<Relation>>& relations);
 
 bool operator==(const Hyperedge& lhs, const Hyperedge& rhs);
 
 struct FaceData {
 	std::vector<int> origins;
-	std::vector<Relation> relations;
+	std::vector<std::shared_ptr<Relation>> relations;
 	std::vector<int> ordering;
 	std::unordered_map<int, std::vector<CSPolyline>> morphedEdges;
 	std::unordered_map<int, CSPolygon> morphedFace;
@@ -68,6 +68,7 @@ using DilatedPatternArrangement =
 
 using Face = DilatedPatternArrangement::Face;
 using FaceH = DilatedPatternArrangement::Face_handle;
+using FaceCH = DilatedPatternArrangement::Face_const_handle;
 using VertexH = DilatedPatternArrangement::Vertex_handle;
 using HalfEdgeH = DilatedPatternArrangement::Halfedge_handle;
 
@@ -315,17 +316,18 @@ class DilatedPatternDrawing {
 
 	std::vector<Component> intersectionComponents(int i) const;
 	std::vector<Component> intersectionComponents(int i, int j) const;
-	Relation computePreference(int i, int j, const Component& c);
+	std::shared_ptr<Relation> computePreference(int i, int j, const Component& c);
 
-	IncludeExcludeDisks includeExcludeDisks(int i, int j, const Component& c);
-	IncludeExcludeDisks includeExcludeDisks(int i, const std::unordered_set<int>& js, const Component& c);
+	IncludeExcludeDisks includeExcludeDisks(int i, int j, const Component& c) const;
+	IncludeExcludeDisks includeExcludeDisks(int i, const std::unordered_set<int>& js, const Component& c) const;
 
-	std::vector<Hyperedge> hyperedges();
+	std::vector<Hyperedge> hyperedges() const;
 
 	void drawFaceFill(FaceH fh, renderer::GeometryRenderer& renderer,
 				      const GeneralSettings& gs, const DrawSettings& ds) const;
 	void drawFaceStroke(FaceH fh, renderer::GeometryRenderer& renderer,
 				        const GeneralSettings& gs, const DrawSettings& ds) const;
+	std::optional<std::vector<int>> totalStackingOrder() const;
 
 	DilatedPatternArrangement m_arr;
 	std::unordered_map<int, std::vector<FaceH>> m_iToFaces;

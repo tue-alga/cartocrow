@@ -130,11 +130,40 @@ void addToRenderPath(const X_monotone_curve_2& xm_curve, renderer::RenderPath& p
 		if (CGAL::squared_distance(as, at) < M_EPSILON) {
 			return;
 		}
-		auto circle = xm_curve.supporting_circle();
+		const auto& circle = xm_curve.supporting_circle();
 		path.arcTo(approximate(circle.center()), xm_curve.orientation() == CGAL::CLOCKWISE, approximateAlgebraic(xm_curve.target()));
 	}
 }
 
+void addToRenderPath(const Curve_2& curve, renderer::RenderPath& path, bool& first) {
+	if (curve.is_full()) {
+		const auto& circ = curve.supporting_circle();
+		const auto& cent = approximate(circ.center());
+		auto r = sqrt(CGAL::to_double(circ.squared_radius()));
+		Point<Inexact> s(cent.x() - r, cent.y());
+		auto clockwise = circ.orientation() == CGAL::CLOCKWISE;
+		path.moveTo(s);
+		path.arcTo(cent, clockwise, {cent.x() + r, cent.y()});
+		path.arcTo(cent, clockwise, s);
+		path.close();
+		return;
+	}
+	auto as = approximateAlgebraic(curve.source());
+	auto at = approximateAlgebraic(curve.target());
+	if (first) {
+		path.moveTo(as);
+		first = false;
+	}
+	if (curve.is_linear()) {
+		path.lineTo(at);
+	} else if (curve.is_circular()){
+		if (CGAL::squared_distance(as, at) < M_EPSILON) {
+			return;
+		}
+		const auto& circle = curve.supporting_circle();
+		path.arcTo(approximate(circle.center()), curve.orientation() == CGAL::CLOCKWISE, approximateAlgebraic(curve.target()));
+	}
+}
 
 Curve_2 toCurve(const X_monotone_curve_2& xmc) {
 	if (xmc.is_linear()) {

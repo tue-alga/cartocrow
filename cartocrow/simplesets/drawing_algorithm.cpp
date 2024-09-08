@@ -129,7 +129,7 @@ Point<Exact> get_point_in(const Face& face) {
 }
 
 std::vector<Component>
-connectedComponents(const DilatedPatternArrangement& arr, std::function<bool(FaceH)> in_component) {
+connectedComponents(const DilatedPatternArrangement& arr, const std::function<bool(FaceH)>& in_component) {
 	std::vector<FaceH> remaining;
 	for (auto fit = arr.faces_begin(); fit != arr.faces_end(); ++fit) {
 		auto fh = fit.ptr();
@@ -363,7 +363,7 @@ DilatedPatternDrawing::DilatedPatternDrawing(const Partition& partition, const G
 
 				for (auto fit = c.faces_begin(); fit != c.faces_end(); ++fit) {
 					CSPolygonWithHoles pgn(face_to_polygon(*fit));
-					poly_line_gon_intersection(pgn, morphed, std::back_inserter(fit->data().morphedEdges[i]), false, true);
+					intersection(morphed, pgn, std::back_inserter(fit->data().morphedEdges[i]), false, true);
 				}
 				morphedFace = true;
 			}
@@ -464,7 +464,7 @@ CSPolyline morph(const CSPolyline& boundaryPart, const CSPolygon& componentShape
 	std::vector<Circle<Exact>> arcCovering;
 
 	for (const auto& d : exclDisks) {
-		auto inter = poly_line_gon_intersection(circleToCSPolygon(d), boundaryPart, true);
+		auto inter = intersection(boundaryPart, circleToCSPolygon(d), true);
 		bool coversLine = true;
 		for (const auto& p : inter) {
 			if (!isStraight(p)) {
@@ -673,7 +673,7 @@ bool isStraight(const CSPolyline& polyline) {
 
 /// The inclusion and exclusion disks for component \ref c when \ref i is stacked on top of \ref js.
 IncludeExcludeDisks
-DilatedPatternDrawing::includeExcludeDisks(int i, const std::unordered_set<int>& js, const Component& c) {
+DilatedPatternDrawing::includeExcludeDisks(int i, const std::unordered_set<int>& js, const Component& c) const {
 	std::vector<Point<Exact>> ptsI;
 	const auto& catPointsI = m_dilated[i].catPoints();
 	std::transform(catPointsI.begin(), catPointsI.end(), std::back_inserter(ptsI), [](const CatPoint& catPoint) {
@@ -702,12 +702,12 @@ DilatedPatternDrawing::includeExcludeDisks(int i, const std::unordered_set<int>&
 
 /// The inclusion and exclusion disks for component \ref c when \ref i is stacked on top of \ref j.
 IncludeExcludeDisks
-DilatedPatternDrawing::includeExcludeDisks(int i, int j, const Component& c) {
+DilatedPatternDrawing::includeExcludeDisks(int i, int j, const Component& c) const {
 	std::unordered_set<int> js({j});
 	return includeExcludeDisks(i, js, c);
 }
 
-Relation DilatedPatternDrawing::computePreference(int i, int j, const Component& c) {
+std::shared_ptr<Relation> DilatedPatternDrawing::computePreference(int i, int j, const Component& c) {
 	// The preference indicates the relation R in iRj.
 	// If R is Order::GREATER then i > j and i is preferred to be on top of j.
 	auto pref = Order::EQUAL;
@@ -749,7 +749,7 @@ Relation DilatedPatternDrawing::computePreference(int i, int j, const Component&
 		for (const auto& d : exclusionDisks) {
 			if (d.squared_radius() <= 0) continue;
 			for (auto& polyline : bps) {
-				auto inters = poly_line_gon_intersection(circleToCSPolygon(d), polyline, true);
+				auto inters = intersection(polyline, circleToCSPolygon(d), true);
 				for (auto& inter : inters) {
 					if (!isStraight(inter)) {
 						return true;
@@ -778,7 +778,7 @@ Relation DilatedPatternDrawing::computePreference(int i, int j, const Component&
 		pref = Order::SMALLER;
 	}
 
-	return {i, j, pref, pref};
+	return std::make_shared<Relation>(i, j, pref, pref);
 }
 
 Color whiten(const Color& color, double a) {
@@ -789,8 +789,9 @@ void DilatedPatternDrawing::drawFaceFill(FaceH fh, renderer::GeometryRenderer& r
                                      const GeneralSettings& gs, const DrawSettings& ds) const {
 	auto& d = fh->data();
 	for (int i : d.ordering) {
-		renderer.setMode(GeometryRenderer::fill);
+		renderer.setMode(GeometryRenderer::fill | GeometryRenderer::stroke);
 		renderer.setFill(whiten(ds.colors[m_dilated[i].category()], ds.whiten));
+		renderer.setStroke(whiten(ds.colors[m_dilated[i].category()], ds.whiten), ds.contourStrokeWeight(gs) / 1.5, true);
 		if (!d.morphedFace.contains(i)) {
 			auto poly = face_to_polygon(*fh);
 			renderer.draw(renderPath(poly));
@@ -847,7 +848,7 @@ void DilatedPatternDrawing::drawFaceStroke(FaceH fh, renderer::GeometryRenderer&
 
 			for (const auto& polyline : polylines) {
 				for (const auto& polygon : polygonsWithHoles) {
-					poly_line_gon_intersection(polygon, polyline, std::back_inserter(modifiedPolylines), false, false);
+					intersection(polyline, polygon, std::back_inserter(modifiedPolylines), false, false);
 				}
 			}
 		}
@@ -858,6 +859,23 @@ void DilatedPatternDrawing::drawFaceStroke(FaceH fh, renderer::GeometryRenderer&
 			renderer.draw(renderPath(polyline));
 		}
 	}
+}
+
+std::optional<std::vector<int>> DilatedPatternDrawing::totalStackingOrder() const {
+	std::vector<std::shared_ptr<Relation>> relations;
+	std::vector<int> origins;
+	for (int i = 0; i < m_dilated.size(); ++i) {
+		origins.push_back(i);
+		for (const auto& f : m_iToFaces.at(i)) {
+			for (const auto& r : f->data().relations) {
+				if (std::find_if(relations.begin(), relations.end(), [&r](const auto& it) { return it->left == r->left && it->right == r->right; }) == relations.end()) {
+					relations.push_back(r);
+				}
+				assert(r->ordering != Order::EQUAL);
+			}
+		}
+	}
+	return computeTotalOrder(origins, relations);
 }
 
 std::vector<Component>
@@ -877,11 +895,11 @@ DilatedPatternDrawing::intersectionComponents(int i) const {
 	});
 }
 
-std::vector<Hyperedge> DilatedPatternDrawing::hyperedges() {
-	std::vector<FaceH> interesting;
+std::vector<Hyperedge> DilatedPatternDrawing::hyperedges() const {
+	std::vector<FaceCH> interesting;
 
 	for (auto fit = m_arr.faces_begin(); fit != m_arr.faces_end(); ++fit) {
-		if (fit->data().origins.size() >= 3) {
+		if (fit->data().origins.size() >= 2) {
 			interesting.push_back(fit);
 		}
 	}
@@ -942,7 +960,7 @@ std::vector<Hyperedge> DilatedPatternDrawing::hyperedges() {
 	return hyperedges;
 }
 
-std::optional<std::vector<int>> computeTotalOrder(const std::vector<int>& origins, const std::vector<Relation>& relations) {
+std::optional<std::vector<int>> computeTotalOrder(const std::vector<int>& origins, const std::vector<std::shared_ptr<Relation>>& relations) {
 	if (relations.empty()) {
 		assert(origins.size() <= 1);
 		return origins;
@@ -950,7 +968,7 @@ std::optional<std::vector<int>> computeTotalOrder(const std::vector<int>& origin
 
 	struct Vertex {
 		int i;
-		std::vector<Vertex> neighbors;
+		std::vector<Vertex*> neighbors;
 		bool hasIncoming = false;
 		int mark = 0;
 	};
@@ -962,15 +980,15 @@ std::optional<std::vector<int>> computeTotalOrder(const std::vector<int>& origin
 	}
 
 	for (const auto& r : relations) {
-		if (r.preference == Order::EQUAL) continue;
-		auto& u = vertices.at(r.left);
-		auto& v = vertices.at(r.right);
+		if (r->ordering == Order::EQUAL) continue;
+		auto& u = vertices.at(r->left);
+		auto& v = vertices.at(r->right);
 
-		if (r.ordering == Order::SMALLER) {
-			v.neighbors.push_back(u);
+		if (r->ordering == Order::SMALLER) {
+			v.neighbors.push_back(&u);
 			u.hasIncoming = true;
 		} else {
-			u.neighbors.push_back(v);
+			u.neighbors.push_back(&v);
 			v.hasIncoming = true;
 		}
 	}
@@ -986,7 +1004,7 @@ std::optional<std::vector<int>> computeTotalOrder(const std::vector<int>& origin
 		u.mark = 1;
 
 		for (auto& v : u.neighbors) {
-			bool success = visit(v);
+			bool success = visit(*v);
 			if (!success) return false;
 		}
 
@@ -1016,12 +1034,12 @@ std::optional<std::vector<int>> getRelationOrder(const Hyperedge& e) {
 
 void setRelationOrder(Hyperedge& e, const std::vector<int>& ordering) {
 	for (auto& r : e.relations) {
-		int i = std::find(ordering.begin(), ordering.end(), r.left) - ordering.begin();
-		int j = std::find(ordering.begin(), ordering.end(), r.right) - ordering.begin();
+		int i = std::find(ordering.begin(), ordering.end(), r->left) - ordering.begin();
+		int j = std::find(ordering.begin(), ordering.end(), r->right) - ordering.begin();
 		if (i < j) {
-			r.ordering = Order::SMALLER;
+			r->ordering = Order::SMALLER;
 		} else {
-			r.ordering = Order::GREATER;
+			r->ordering = Order::GREATER;
 		}
 	}
 }
@@ -1040,16 +1058,77 @@ SimpleSetsPainting::SimpleSetsPainting(const DilatedPatternDrawing& dpd, const D
     : m_ds(ds), m_dpd(dpd) {}
 
 void SimpleSetsPainting::paint(renderer::GeometryRenderer& renderer) const {
-	renderer.setMode(renderer::GeometryRenderer::fill);
-	for (auto fit = m_dpd.m_arr.faces_begin(); fit != m_dpd.m_arr.faces_end(); ++fit) {
-		if (fit->is_unbounded()) continue;
-		m_dpd.drawFaceFill(fit.ptr(), renderer, m_dpd.m_gs, m_ds);
-	}
-	for (auto fit = m_dpd.m_arr.faces_begin(); fit != m_dpd.m_arr.faces_end(); ++fit) {
-		if (fit->is_unbounded()) continue;
-		m_dpd.drawFaceStroke(fit.ptr(), renderer, m_dpd.m_gs, m_ds);
+	auto stackingOrder = m_dpd.totalStackingOrder();
+	// If there is a stacking order, draw the complete patterns stacked in that order
+	if (stackingOrder.has_value()) {
+		for (int i : *stackingOrder) {
+			bool debug = m_dpd.m_dilated[i].category() == 1;
+			auto comps = connectedComponents(m_dpd.m_arr, [i](const FaceH& fh) {
+				const auto& ors = fh->data().origins;
+				return std::find(ors.begin(), ors.end(), i) != ors.end();
+			});
+			assert(comps.size() == 1);
+			const auto& comp = comps[0];
+			auto ccb = comp.outer_ccb();
+			auto start = ccb;
+			// start at first edge on CCB of origin
+			do {
+				auto prev = start;
+				--prev;
+				if (prev->data().origin == start->data().origin) {
+					start = prev;
+				} else {
+					break;
+				}
+			} while (start != ccb);
+
+			auto curr = start;
+
+			std::vector<X_monotone_curve_2> xm_curves;
+			bool doneInFace = false;
+			FaceH prevFace;
+			do {
+				if (doneInFace && curr->face() == prevFace) continue;
+				doneInFace = false;
+				const auto& d = curr->face()->data();
+				if (!d.morphedEdges.contains(i)) {
+					xm_curves.push_back(curr->curve());
+				} else {
+					auto mes = d.morphedEdges.at(i);
+					CSTraits traits;
+					auto equal = traits.equal_2_object();
+					auto it = std::find_if(mes.begin(), mes.end(), [&curr, &equal](const CSPolyline& pl) {
+						return equal(pl.curves_begin()->source(), curr->source()->point());
+					});
+					assert(it != mes.end());
+					auto pl = *it;
+					std::copy(pl.curves_begin(), pl.curves_end(), std::back_inserter(xm_curves));
+					doneInFace = true;
+					prevFace = curr->face();
+				}
+			} while (++curr != start);
+			CSPolygon csPolygon(xm_curves.begin(), xm_curves.end());
+
+			renderer.setMode(GeometryRenderer::fill | GeometryRenderer::stroke);
+			renderer.setFill(whiten(m_ds.colors[m_dpd.m_dilated[i].category()], m_ds.whiten));
+			renderer.setStroke(Color{0, 0, 0}, m_ds.contourStrokeWeight(m_dpd.m_gs), true);
+			renderer.draw(renderPath(csPolygon));
+		}
+	} else {
+		// If there is no stacking order, draw each face of the arrangement separately
+		for (auto fit = m_dpd.m_arr.faces_begin(); fit != m_dpd.m_arr.faces_end(); ++fit) {
+			if (fit->is_unbounded())
+				continue;
+			m_dpd.drawFaceFill(fit.ptr(), renderer, m_dpd.m_gs, m_ds);
+		}
+		for (auto fit = m_dpd.m_arr.faces_begin(); fit != m_dpd.m_arr.faces_end(); ++fit) {
+			if (fit->is_unbounded())
+				continue;
+			m_dpd.drawFaceStroke(fit.ptr(), renderer, m_dpd.m_gs, m_ds);
+		}
 	}
 
+	// Draw points
 	const auto& gs = m_dpd.m_gs;
 	renderer.setStroke(Color{0, 0, 0}, m_ds.pointStrokeWeight(gs), true);
 	renderer.setFillOpacity(255);

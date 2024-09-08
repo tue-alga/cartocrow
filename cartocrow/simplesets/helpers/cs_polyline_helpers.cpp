@@ -74,4 +74,12 @@ bool liesOn(const X_monotone_curve_2& c, const CSPolyline& polyline) {
 CSPolycurve arrPolycurveFromCSPolyline(const CSPolyline& polyline) {
 	return arrPolycurveFromXMCurves(polyline.curves_begin(), polyline.curves_end());
 }
+
+CSPolyline polylineToCSPolyline(const Polyline<Exact>& polyline) {
+	std::vector<X_monotone_curve_2> xm_curves;
+	for (auto eit = polyline.edges_begin(); eit != polyline.edges_end(); ++eit) {
+		xm_curves.emplace_back(eit->source(), eit->target());
+	}
+	return {xm_curves.begin(), xm_curves.end()};
+}
 }

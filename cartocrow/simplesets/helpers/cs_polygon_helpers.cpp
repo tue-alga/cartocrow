@@ -35,7 +35,16 @@ Number<Inexact> area(const CSTraits::Point_2& P1, const CSTraits::Point_2& P2, c
 	    squaredRadius * std::asin(std::min(1.0, chord / (std::sqrt(squaredRadius) * 2)));
 	auto const areaTriangle = chord * std::sqrt(std::max(0.0, squaredRadius * 4 - squaredChord)) / 4;
 	auto const areaCircularSegment = areaSector - areaTriangle;
-	return area(P1, P2) + C.orientation() * areaCircularSegment;
+	int sign;
+	if (C.orientation() == CGAL::Sign::NEGATIVE) {
+		sign = -1;
+	} else if (C.orientation() == CGAL::Sign::POSITIVE) {
+		sign = 1;
+	} else {
+		assert(C.orientation() == CGAL::Sign::ZERO);
+		sign = 0;
+	}
+	return area(P1, P2) + sign * areaCircularSegment;
 }
 
 // ------ return signed area under the X-monotone curve
@@ -93,10 +102,14 @@ std::optional<CSPolygon::Curve_const_iterator> liesOn(const OneRootPoint& p, con
 
 renderer::RenderPath operator<<(renderer::RenderPath& path, const CSPolygon& polygon) {
 	bool first = true;
-	for (auto cit = polygon.curves_begin(); cit != polygon.curves_end(); ++cit) {
-		addToRenderPath(*cit, path, first);
+	std::vector<Curve_2> mergedCurves;
+	toCurves(polygon.curves_begin(), polygon.curves_end(), std::back_inserter(mergedCurves));
+	for (const auto& c : mergedCurves) {
+		addToRenderPath(c, path, first);
 	}
-	path.close();
+	if (!holds_alternative<renderer::RenderPath::Close>(path.commands().back())) {
+		path.close();
+	}
 	return path;
 }
 
