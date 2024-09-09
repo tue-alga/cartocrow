@@ -388,7 +388,7 @@ DilatedPatternDrawing::DilatedPatternDrawing(const Partition& partition, const G
 }
 
 bool overlap(const Circle<Inexact>& c1, const Circle<Inexact>& c2) {
-	return CGAL::squared_distance(c1.center(), c2.center()) <= c1.squared_radius() + c2.squared_radius();
+	return sqrt(CGAL::squared_distance(c1.center(), c2.center())) <= sqrt(c1.squared_radius()) + sqrt(c2.squared_radius());
 }
 
 std::vector<std::vector<std::pair<int, Circle<Inexact>>>> connectedDisks(const std::vector<Circle<Inexact>>& disks) {
@@ -963,7 +963,6 @@ std::vector<Hyperedge> DilatedPatternDrawing::hyperedges() const {
 
 std::optional<std::vector<int>> computeTotalOrder(const std::vector<int>& origins, const std::vector<std::shared_ptr<Relation>>& relations) {
 	if (relations.empty()) {
-		assert(origins.size() <= 1);
 		return origins;
 	}
 

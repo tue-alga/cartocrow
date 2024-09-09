@@ -213,8 +213,6 @@ algebraicCircleTangentToRationalSegments(const CSTraits::Point_2& p1, const CSTr
 std::variant<Segment<Exact>, std::pair<Segment<Exact>, Segment<Exact>>>
 approximateTangent(const RationalRadiusCircle& c1, const RationalRadiusCircle& c2) {
     auto [source, target] = tangentPoints(c1, c2);
-	std::cout << "Tangent points" << std::endl;
-	std::cout << "source: " << approximateAlgebraic(source) << " target: " << approximateAlgebraic(target) << std::endl;
 	return algebraicCircleTangentToRationalSegments(source, target, c1, c2);
 }
 
@@ -250,16 +248,12 @@ CSPolygon approximateConvexHull(const std::vector<Circle<Exact>>& circles) {
 		rrCircles.push_back(approximateRadiusCircle(c));
 	}
 	auto hullCircles = circlesOnConvexHull(rrCircles);
-	for (const auto& hc : hullCircles) {
-		std::cout << hc.center << std::endl;
-	}
 
 	std::vector<std::vector<Segment<Exact>>> tangents;
 
 	for (int i = 0; i < hullCircles.size(); ++i) {
 		auto& c1 = hullCircles[i];
 		auto& c2 = hullCircles[(i + 1) % hullCircles.size()];
-		std::cout << c1.center << " tangent to -> " << c2.center << std::endl;
 		auto segOrPair = approximateTangent(c1, c2);
 		std::vector<Segment<Exact>> segs;
 		if (segOrPair.index() == 0) {

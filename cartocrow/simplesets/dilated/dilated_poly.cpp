@@ -1,5 +1,6 @@
 #include "dilated_poly.h"
 #include "../helpers/cs_polygon_helpers.h"
+#include "../helpers/arrangement_helpers.h"
 #include <CGAL/approximated_offset_2.h>
 
 namespace cartocrow::simplesets {
@@ -8,16 +9,6 @@ CSPolygon dilateSegment(const Segment<Inexact>& segment, const Number<Inexact>& 
 	Polygon<Exact> polygon(points.begin(), points.end());
 	auto dilation = CGAL::approximated_offset_2(polygon, dilationRadius, M_EPSILON);
 	return dilation.outer_boundary();
-}
-
-CSPolygon ccb_to_polygon(CSArrangement::Ccb_halfedge_const_circulator circ) {
-	std::vector<CSArrangement::X_monotone_curve_2> curves;
-	auto curr = circ;
-	do {
-		curves.push_back(curr->curve());
-	} while (++curr != circ);
-	CSPolygon poly(curves.begin(), curves.end());
-	return poly;
 }
 
 Dilated::Dilated(const PolyPattern& polyPattern, const Number<Inexact>& dilationRadius) {
@@ -31,6 +22,9 @@ Dilated::Dilated(const PolyPattern& polyPattern, const Number<Inexact>& dilation
 		if (exactPolygon.size() == 1) {
 			CSTraits::Rational_circle_2 circle(exactPolygon.vertex(0), dilationRadius * dilationRadius);
 			m_contour = circleToCSPolygon(circle);
+			if (m_contour.orientation() == CGAL::CLOCKWISE) {
+				m_contour.reverse_orientation();
+			}
 			return;
 		}
 
@@ -39,6 +33,9 @@ Dilated::Dilated(const PolyPattern& polyPattern, const Number<Inexact>& dilation
 			throw std::runtime_error("Did not expect holes after dilating a polygonal pattern.");
 		}
 		m_contour = dilation.outer_boundary();
+		if (m_contour.orientation() == CGAL::CLOCKWISE) {
+			m_contour.reverse_orientation();
+		}
 	} else if (holds_alternative<Polyline<Inexact>>(cont)) {
 		// 1. Dilate each segment
 		// 2. Make arrangement of dilated segments
@@ -57,7 +54,10 @@ Dilated::Dilated(const PolyPattern& polyPattern, const Number<Inexact>& dilation
 			}
 		}
 
-		m_contour = ccb_to_polygon(*arr.unbounded_face()->inner_ccbs_begin());
+		m_contour = ccb_to_polygon<CSTraits>(*(arr.unbounded_face()->inner_ccbs_begin()));
+		if (m_contour.orientation() == CGAL::CLOCKWISE) {
+			m_contour.reverse_orientation();
+		}
 	} else {
 		throw std::runtime_error("Unknown pattern poly.");
 	}
