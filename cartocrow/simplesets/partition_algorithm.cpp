@@ -66,38 +66,40 @@ bool do_intersect(
 	}, cont1);
 }
 
-Number<Inexact> intersectionDelay(const std::vector<CatPoint>& points, const std::shared_ptr<PolyPattern>& p1, const std::shared_ptr<PolyPattern>& p2,
-                                  const std::shared_ptr<PolyPattern>& result, const GeneralSettings& gs, const PartitionSettings ps) {
+Number<Inexact> intersectionDelay(const std::vector<CatPoint>& points, const PolyPattern& p1, const PolyPattern& p2,
+                                  const PolyPattern& result, const GeneralSettings& gs, const PartitionSettings& ps) {
 	// todo: check consistency with paper
 	if (!ps.intersectionDelay) return 0;
 	Number<Inexact> intersectionArea = 0;
-	auto& resultPts = result->catPoints();
-	auto resultPoly = result->poly();
+	auto& resultPts = result.catPoints();
+	auto resultPoly = result.poly();
 	for (const auto& pt : points) {
 		if (std::find(resultPts.begin(), resultPts.end(), pt) == resultPts.end() &&
-		    squared_distance(resultPoly, pt.point) < gs.dilationRadius() * 2) {
-			// note that Circle requires us to pass the squared radius
+		    squared_distance(resultPoly, pt.point) < squared(2 * gs.dilationRadius())) {
 			CSPolygon ptShape = Dilated(SinglePoint(pt), gs.dilationRadius()).m_contour;
-			CSPolygon rShape = Dilated(*result, gs.dilationRadius()).m_contour;
+			CSPolygon rShape = Dilated(result, gs.dilationRadius()).m_contour;
 			std::vector<CSPolygonWithHoles> inters;
 			CGAL::intersection(rShape, ptShape, std::back_inserter(inters));
 			Number<Inexact> newArea = 0;
 			for (const auto& gp : inters) {
-				newArea += area(gp);
+				newArea += abs(area(gp));
 			}
 			inters.clear();
-			CSPolygon p1Shape = Dilated(*p1, gs.dilationRadius()).m_contour;
-			CSPolygon p2Shape = Dilated(*p2, gs.dilationRadius()).m_contour;
+			CSPolygon p1Shape = Dilated(p1, gs.dilationRadius()).m_contour;
+			CSPolygon p2Shape = Dilated(p2, gs.dilationRadius()).m_contour;
 			CGAL::intersection(p1Shape, ptShape, std::back_inserter(inters));
 			CGAL::intersection(p2Shape, ptShape, std::back_inserter(inters));
 			Number<Inexact> oldArea = 0;
 			for (const auto& gp : inters) {
-				oldArea += area(gp);
+				oldArea += abs(area(gp));
 			}
 			intersectionArea += newArea - oldArea;
 		}
 	}
 
+	if (intersectionArea <= 0) {
+		return 0;
+	}
 	return sqrt(intersectionArea / M_PI);
 }
 
@@ -150,8 +152,8 @@ partition(const std::vector<CatPoint>& points, const GeneralSettings& gs, const 
 		if (ev.time > maxTime) break;
 
 		if (!ev.final) {
-			// todo: compute intersection delay
-			ev.time += intersectionDelay(points, ev.p1, ev.p2, ev.result, gs, ps);
+			auto delay = intersectionDelay(points, *ev.p1, *ev.p2, *ev.result, gs, ps);
+			ev.time += delay;
 			ev.final = true;
 			events.push(ev);
 			continue;

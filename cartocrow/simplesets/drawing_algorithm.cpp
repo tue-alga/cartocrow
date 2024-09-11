@@ -913,15 +913,12 @@ std::vector<Hyperedge> DilatedPatternDrawing::hyperedges() const {
 	std::vector<Hyperedge> group;
 	std::optional<int> lastSize;
 	for (const auto& fh : interesting) {
-		if (!lastSize.has_value() || fh->data().origins.size() == *lastSize) {
-			group.emplace_back(fh->data().origins, fh->data().relations);
-			lastSize = fh->data().origins.size();
-		} else {
-			if (!group.empty()) {
-				hyperedgesGrouped.push_back(group);
-				group.clear();
-			}
+		if (lastSize.has_value() && fh->data().origins.size() != *lastSize && !group.empty()) {
+			hyperedgesGrouped.push_back(group);
+			group.clear();
 		}
+		group.emplace_back(fh->data().origins, fh->data().relations);
+		lastSize = fh->data().origins.size();
 	}
 	if (!group.empty()) {
 		hyperedgesGrouped.push_back(group);
@@ -1060,9 +1057,9 @@ SimpleSetsPainting::SimpleSetsPainting(const DilatedPatternDrawing& dpd, const D
 void SimpleSetsPainting::paint(renderer::GeometryRenderer& renderer) const {
 	auto stackingOrder = m_dpd.totalStackingOrder();
 	// If there is a stacking order, draw the complete patterns stacked in that order
-	if (stackingOrder.has_value()) {
+	if (false) {
+//	if (stackingOrder.has_value()) {
 		for (int i : *stackingOrder) {
-			bool debug = m_dpd.m_dilated[i].category() == 1;
 			auto comps = connectedComponents(m_dpd.m_arr, [i](const FaceH& fh) {
 				const auto& ors = fh->data().origins;
 				return std::find(ors.begin(), ors.end(), i) != ors.end();
@@ -1100,7 +1097,7 @@ void SimpleSetsPainting::paint(renderer::GeometryRenderer& renderer) const {
 					auto it = std::find_if(mes.begin(), mes.end(), [&curr, &equal](const CSPolyline& pl) {
 						return equal(pl.curves_begin()->source(), curr->source()->point());
 					});
-					assert(it != mes.end());
+					assert(it != mes.end()); // this assertion fails sometimes
 					auto pl = *it;
 					std::copy(pl.curves_begin(), pl.curves_end(), std::back_inserter(xm_curves));
 					doneInFace = true;

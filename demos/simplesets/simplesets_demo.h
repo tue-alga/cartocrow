@@ -50,11 +50,13 @@ class SimpleSetsDemo : public QMainWindow {
 	PartitionSettings m_ps;
 	ComputeDrawingSettings m_cds;
 	GeometryWidget* m_renderer;
+	std::vector<std::pair<Number<Inexact>, Partition>> m_partitions;
 
 	std::shared_ptr<Point<Inexact>> m_cc;
 	void fitToScreen();
 	void loadFile(const std::filesystem::path& filePath);
-	void compute();
+	void computePartitions();
+	void computeDrawing(double cover);
 };
 
 #endif //CARTOCROW_SIMPLESETS_DEMO_H

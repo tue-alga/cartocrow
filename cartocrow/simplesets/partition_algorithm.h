@@ -20,6 +20,9 @@ struct PossibleMergeEvent {
 	bool final;
 };
 
+Number<Inexact> intersectionDelay(const std::vector<CatPoint>& points, const PolyPattern& p1, const PolyPattern& p2,
+								  const PolyPattern& result, const GeneralSettings& gs, const PartitionSettings& ps);
+
 std::vector<std::pair<Number<Inexact>, Partition>>
 partition(const std::vector<CatPoint>& points, const GeneralSettings& gs, const PartitionSettings& ps, Number<Inexact> maxTime);
 }

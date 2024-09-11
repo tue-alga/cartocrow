@@ -45,6 +45,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <QMessageBox>
 #include <QPushButton>
 #include <QSpinBox>
+#include <QSlider>
 #include <QVBoxLayout>
 
 namespace fs = std::filesystem;
@@ -54,6 +55,13 @@ using namespace cartocrow::simplesets;
 
 SimpleSetsDemo::SimpleSetsDemo() {
 	setWindowTitle("SimpleSets");
+
+	m_gs = GeneralSettings{2.1, 2, M_PI, 70.0 / 180 * M_PI}; //nyc
+	//	m_gs = GeneralSettings{5.204, 2, M_PI, 70.0 / 180 * M_PI}; //diseasome
+	m_ps = PartitionSettings{true, true, true, true, 0.1};
+	//	m_ps = PartitionSettings{true, true, true, false, 0.5};
+	m_ds = DrawSettings{{CB::light_blue, CB::light_red, CB::light_green, CB::light_purple, CB::light_orange}, 0.7};
+	m_cds = ComputeDrawingSettings{0.675};
 
 	auto* dockWidget = new QDockWidget();
 	addDockWidget(Qt::RightDockWidgetArea, dockWidget);
@@ -70,6 +78,14 @@ SimpleSetsDemo::SimpleSetsDemo() {
 	auto* fitToScreenButton = new QPushButton("Fit to screen");
 	vLayout->addWidget(fitToScreenButton);
 
+	auto* settingsLabel = new QLabel("<h3>Settings</h3>");
+	vLayout->addWidget(settingsLabel);
+	auto* coverSlider = new QSlider(Qt::Orientation::Horizontal);
+	vLayout->addWidget(coverSlider);
+	coverSlider->setMinimum(0);
+	coverSlider->setMaximum(80);
+	coverSlider->setValue(47);
+
 	m_renderer = new GeometryWidget();
 	m_renderer->setDrawAxes(false);
 	setCentralWidget(m_renderer);
@@ -77,28 +93,30 @@ SimpleSetsDemo::SimpleSetsDemo() {
 	m_renderer->setMinZoom(0.01);
 	m_renderer->setMaxZoom(1000.0);
 
-	std::filesystem::path filePath("/home/steven/Documents/cartocrow/data/diseasome.txt");
-
-//	m_gs = GeneralSettings{2.1, 2, M_PI, 70.0 / 180 * M_PI}; //nyc
-	m_gs = GeneralSettings{5.204, 2, M_PI, 70.0 / 180 * M_PI}; //diseasome
-//	m_ps = PartitionSettings{true, true, true, true, 0.5}; todo: fix intersection delay crash
-	m_ps = PartitionSettings{true, true, true, false, 0.5};
-	m_ds = DrawSettings{{CB::light_blue, CB::light_red, CB::light_green, CB::light_purple, CB::light_orange}, 0.7};
-	m_cds = ComputeDrawingSettings{0.675};
+	std::filesystem::path filePath("/home/steven/Downloads/test/cartocrow/data/nyc.txt");
+//	std::filesystem::path filePath("/home/steven/Downloads/test/cartocrow/data/diseasome.txt");
 
 	loadFile(filePath);
-
-	compute();
+	computePartitions();
+	computeDrawing(coverSlider->value() / 10.0);
+	fitToScreen();
 
 	connect(fitToScreenButton, &QPushButton::clicked, [this]() {
 		fitToScreen();
 	});
-	connect(fileSelector, &QPushButton::clicked, [this, fileSelector]() {
-		QString startDir = "/home/steven/Documents/cartocrow/data/";
+	connect(fileSelector, &QPushButton::clicked, [this, fileSelector, coverSlider]() {
+		QString startDir = "/home/steven/Downloads/test/cartocrow/data/";
 		std::filesystem::path filePath = QFileDialog::getOpenFileName(this, tr("Select SimpleSets input"), startDir).toStdString();
 		if (filePath == "") return;
 		loadFile(filePath);
+	    computePartitions();
+	    computeDrawing(coverSlider->value() / 10.0);
+	    fitToScreen();
 		fileSelector->setText(QString::fromStdString(filePath.filename()));
+	});
+	connect(coverSlider, &QSlider::valueChanged, [this, coverSlider] {
+		double value = coverSlider->value() / 10.0;
+		computeDrawing(value);
 	});
 
 	fitToScreenButton->click();
@@ -112,8 +130,6 @@ void SimpleSetsDemo::loadFile(const std::filesystem::path& filePath) {
 	std::stringstream buffer;
 	buffer << inputStream.rdbuf();
 	m_points = parseCatPoints(buffer.str());
-	compute();
-	fitToScreen();
 }
 
 void SimpleSetsDemo::fitToScreen() {
@@ -130,19 +146,24 @@ void SimpleSetsDemo::resizeEvent(QResizeEvent *event) {
 	fitToScreen();
 }
 
-void SimpleSetsDemo::compute() {
-	auto partitionList = partition(m_points, m_gs, m_ps, 8 * m_gs.dilationRadius());
+void SimpleSetsDemo::computePartitions(){
+	m_partitions = partition(m_points, m_gs, m_ps, 8 * m_gs.dilationRadius());
+}
 
-//	Number<Inexact> cover = 4.7; // nyc
-	auto cover = 5.913; // diseasome
-
+void SimpleSetsDemo::computeDrawing(double cover) {
 	Partition* thePartition;
-	for (auto& [time, partition] : partitionList) {
+	bool found = false;
+	for (auto& [time, partition] : m_partitions) {
 		if (time < cover * m_gs.dilationRadius()) {
 			thePartition = &partition;
+			found = true;
 		}
 	}
-	m_partition = *thePartition;
+	if (found) {
+		m_partition = *thePartition;
+	} else {
+		m_partition = m_partitions.front().second;
+	}
 
 	m_renderer->clear();
 

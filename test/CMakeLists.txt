@@ -20,6 +20,7 @@ set(TEST_SOURCES "cartocrow_test.cpp"
 	"renderer/ipe_renderer.cpp"
 	"simplification/vw_simplification.cpp"
 	"simplesets/poly_line_gon_intersection.cpp"
+	"simplesets/partition_algorithm.cpp"
 )
 
 add_executable(cartocrow_test cartocrow_test.cpp ${TEST_SOURCES})
