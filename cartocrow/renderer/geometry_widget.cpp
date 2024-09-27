@@ -21,6 +21,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "geometry_renderer.h"
 #include "ipe_renderer.h"
+#include "svg_renderer.h"
 
 #include <QFileDialog>
 #include <QGuiApplication>
@@ -148,9 +149,13 @@ GeometryWidget::GeometryWidget() {
 	m_zoomBar->addWidget(m_zoomInButton);
 	m_zoomBar->addSeparator();
 	m_saveToIpeButton = new QToolButton(m_zoomBar);
-	m_saveToIpeButton->setText("Save");
+	m_saveToIpeButton->setText("Save as Ipe");
 	connect(m_saveToIpeButton, &QToolButton::clicked, this, &GeometryWidget::saveToIpe);
 	m_zoomBar->addWidget(m_saveToIpeButton);
+	m_saveToSvgButton = new QToolButton(m_zoomBar);
+	m_saveToSvgButton->setText("Save as SVG");
+	connect(m_saveToSvgButton, &QToolButton::clicked, this, &GeometryWidget::saveToSvg);
+	m_zoomBar->addWidget(m_saveToSvgButton);
 }
 
 GeometryWidget::GeometryWidget(std::shared_ptr<GeometryPainting> painting) : GeometryWidget() {
@@ -759,6 +764,19 @@ void GeometryWidget::saveToIpe() {
 	}
 
 	IpeRenderer renderer;
+	for (const DrawnPainting& painting : m_paintings) {
+		renderer.addPainting(painting.m_painting, painting.name);
+	}
+	renderer.save(fileName.toStdString());
+}
+
+void GeometryWidget::saveToSvg() {
+	QString fileName = QFileDialog::getSaveFileName(this, "Save drawing", ".", "SVG files (*.svg)");
+	if (fileName == nullptr) {
+		return;
+	}
+
+	SvgRenderer renderer;
 	for (const DrawnPainting& painting : m_paintings) {
 		renderer.addPainting(painting.m_painting, painting.name);
 	}
