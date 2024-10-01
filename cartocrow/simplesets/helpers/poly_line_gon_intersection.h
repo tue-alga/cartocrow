@@ -57,7 +57,6 @@ void intersection(const CSPolyline& line, const CSPolygonWithHoles& gon, OutputI
 
 		bool onGonEdge = false;
 		for (auto curveIt = arr.originating_curves_begin(edge); curveIt != arr.originating_curves_end(edge); ++curveIt) {
-			auto curve = *curveIt;
 			Arr::Curve_handle ch = curveIt;
 			if (ch == ogch) {
 				onGonEdge = true;
@@ -81,7 +80,7 @@ void intersection(const CSPolyline& line, const CSPolygonWithHoles& gon, OutputI
 				auto ccb = fh->outer_ccb();
 				auto ccbIt = ccb;
 				do {
-					if (!equals(ccb->source()->point(), ccb->curve().subcurves_begin()->source()))
+					if (!equals(ccbIt->source()->point(), ccbIt->curve().subcurves_begin()->source()))
 						continue;
 					// if *ccbIt lies on outer face.
 					for (auto curveIt = arr.originating_curves_begin(ccbIt);
