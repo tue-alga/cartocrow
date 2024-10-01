@@ -93,8 +93,7 @@ SimpleSetsDemo::SimpleSetsDemo() {
 	m_renderer->setMinZoom(0.01);
 	m_renderer->setMaxZoom(1000.0);
 
-	std::filesystem::path filePath("/home/steven/Downloads/test/cartocrow/data/nyc.txt");
-//	std::filesystem::path filePath("/home/steven/Downloads/test/cartocrow/data/diseasome.txt");
+	std::filesystem::path filePath("data/nyc.txt");
 
 	loadFile(filePath);
 	computePartitions();
@@ -105,7 +104,7 @@ SimpleSetsDemo::SimpleSetsDemo() {
 		fitToScreen();
 	});
 	connect(fileSelector, &QPushButton::clicked, [this, fileSelector, coverSlider]() {
-		QString startDir = "/home/steven/Downloads/test/cartocrow/data/";
+		QString startDir = "data/";
 		std::filesystem::path filePath = QFileDialog::getOpenFileName(this, tr("Select SimpleSets input"), startDir).toStdString();
 		if (filePath == "") return;
 		loadFile(filePath);
