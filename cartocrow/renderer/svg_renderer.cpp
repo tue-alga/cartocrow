@@ -48,6 +48,7 @@ void SvgRenderer::save(const std::filesystem::path& file) {
 	std::locale::global(std::locale("C"));
 	m_out.open(file);
 	m_out << "<svg version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\">\n";
+	m_out << "<defs><circle id=\"vertex\" cx=\"0\" cy=\"0\" r=\"4\"/></defs>\n";
 
 	for (auto painting : m_paintings) {
 		m_out << "<g>\n";
@@ -62,7 +63,8 @@ void SvgRenderer::save(const std::filesystem::path& file) {
 }
 
 void SvgRenderer::draw(const Point<Inexact>& p) {
-	// TODO
+	m_out << "<use xlink:href=\"#vertex\" " << getVertexStyle() << " x=\"" << p.x() << "\" y=\""
+	      << -p.y() << "\"/>\n";
 }
 
 void SvgRenderer::draw(const Line<Inexact>& l) {
@@ -121,14 +123,9 @@ void SvgRenderer::draw(const PolygonWithHoles<Inexact>& p) {
 }
 
 void SvgRenderer::draw(const Circle<Inexact>& c) {
-	/*double r = sqrt(c.squared_radius());
-	ipe::Matrix matrix =
-	    ipe::Matrix(ipe::Vector(c.center().x(), c.center().y())) * ipe::Linear(r, 0, 0, r);
-	ipe::Ellipse* ellipse = new ipe::Ellipse(matrix);
-	ipe::Shape* shape = new ipe::Shape();
-	shape->appendSubPath(ellipse);
-	ipe::Path* path = new ipe::Path(getAttributesForStyle(), *shape);
-	m_page->append(ipe::TSelect::ENotSelected, m_layer, path);*/
+	double r = sqrt(c.squared_radius());
+	m_out << "<circle " << getStyle() << " r=\"" << r << "\" cx=\"" << c.center().x() << "\" cy=\""
+	      << c.center().y() << "\"/>\n";
 }
 
 void SvgRenderer::draw(const BezierSpline& s) {
@@ -266,6 +263,15 @@ std::string SvgRenderer::getStyle() const {
 		return "fill=\"none\" stroke=\"" + m_style.m_strokeColor +
 		       "\" stroke-opacity=\"" + std::to_string(m_style.m_strokeOpacity) +
 		       "\" stroke-width=\"" + std::to_string(m_style.m_strokeWidth) + "\"";
+	}
+}
+
+std::string SvgRenderer::getVertexStyle() const {
+	if ((m_style.m_mode & GeometryRenderer::vertices)) {
+		return "fill=\"" + m_style.m_strokeColor +
+		       "\" fill-opacity=\"" + std::to_string(m_style.m_strokeOpacity) + "\"";
+	} else {
+		return "";
 	}
 }
 

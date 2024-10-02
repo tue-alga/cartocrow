@@ -92,6 +92,8 @@ class SvgRenderer : public GeometryRenderer {
 	std::string convertPolygonToCurve(const Polygon<Inexact>& p) const;
 	/// Returns the style as a string that can be added to an SVG path element.
 	std::string getStyle() const;
+	/// Returns the style as a string that can be added to an SVG use element.
+	std::string getVertexStyle() const;
 	/// Escapes SVG's reserved characters.
 	std::string escapeForSvg(const std::string& text) const;
 
