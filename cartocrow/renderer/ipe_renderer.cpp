@@ -75,6 +75,7 @@ void IpeRenderer::save(const std::filesystem::path& file) {
 	m_alphaSheet->setName("alpha-values");
 	document.cascade()->insert(2, m_alphaSheet);
 	setFillOpacity(255); // add default alpha to style sheet
+	setStrokeOpacity(255); // add default alpha to style sheet
 
 	m_page = new ipe::Page();
 	document.push_back(m_page);
