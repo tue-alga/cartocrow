@@ -20,7 +20,7 @@ class Island : public PolyPattern {
 	std::vector<CatPoint> m_catPoints;
 	std::vector<Point<Inexact>> m_points;
 	Number<Inexact> m_coverRadius;
-	Polygon<Inexact> m_polygon;
+	std::variant<Polyline<Inexact>, Polygon<Inexact>> m_poly;
 };
 }
 

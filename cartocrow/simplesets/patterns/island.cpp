@@ -1,4 +1,5 @@
 #include "island.h"
+#include "bank.h"
 #include "cartocrow/simplesets/helpers/cropped_voronoi.h"
 #include "cartocrow/simplesets/helpers/point_voronoi_helpers.h"
 #include <CGAL/Boolean_set_operations_2.h>
@@ -62,13 +63,27 @@ Island::Island(std::vector<CatPoint> catPoints): m_catPoints(std::move(catPoints
 		return cp.point;
 	});
 
+	if (m_catPoints.size() >= 3) {
+		bool collinear = true;
+		for (int i = 0; i < m_catPoints.size() - 2; ++i) {
+			if (!CGAL::collinear(m_catPoints[i].point, m_catPoints[i+1].point, m_catPoints[i+2].point)) {
+				collinear = false;
+			}
+		}
+		if (collinear) {
+			Bank bank(m_catPoints);
+			m_coverRadius = bank.coverRadius();
+			m_poly = bank.poly();
+			return;
+		}
+	}
+
 	m_coverRadius = coverRadiusOfPoints(m_points);
-	m_polygon = convexHull(m_points);
+	m_poly = convexHull(m_points);
 }
 
 std::variant<Polyline<Inexact>, Polygon<Inexact>> Island::poly() const {
-	// todo? return (and store) polyline when m_points are collinear?
-	return m_polygon;
+	return m_poly;
 }
 
 const std::vector<CatPoint>& Island::catPoints() const {
