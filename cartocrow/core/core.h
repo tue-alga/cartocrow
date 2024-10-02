@@ -170,6 +170,10 @@ struct Color {
 	int g;
 	/// Blue component (integer 0-255).
 	int b;
+	/// Constructs the color black.
+	Color();
+	/// Constructs a color.
+	Color(int r, int g, int b);
 };
 
 /// Wraps the given number \f$n\f$ to the interval \f$[a, b)\f$.
