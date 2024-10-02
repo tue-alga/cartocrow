@@ -125,7 +125,7 @@ void SvgRenderer::draw(const PolygonWithHoles<Inexact>& p) {
 void SvgRenderer::draw(const Circle<Inexact>& c) {
 	double r = sqrt(c.squared_radius());
 	m_out << "<circle " << getStyle() << " r=\"" << r << "\" cx=\"" << c.center().x() << "\" cy=\""
-	      << c.center().y() << "\"/>\n";
+	      << -c.center().y() << "\"/>\n";
 }
 
 void SvgRenderer::draw(const BezierSpline& s) {
