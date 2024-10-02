@@ -6,8 +6,8 @@
 template <class ArrTraits>
 class General_polyline_2 {
   public:
-	typedef std::vector<typename ArrTraits::X_monotone_curve_2>::iterator Curve_iterator;
-	typedef std::vector<typename ArrTraits::X_monotone_curve_2>::const_iterator Curve_const_iterator;
+	typedef typename std::vector<typename ArrTraits::X_monotone_curve_2>::iterator Curve_iterator;
+	typedef typename std::vector<typename ArrTraits::X_monotone_curve_2>::const_iterator Curve_const_iterator;
 
 	template <class InputIterator>
 	General_polyline_2(InputIterator begin, InputIterator end) {
