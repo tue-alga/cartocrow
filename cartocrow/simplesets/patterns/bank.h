@@ -11,6 +11,8 @@ struct Bend {
 	Number<Inexact> totalAngle;
 	int startIndex;
 	int endIndex;
+	Bend(CGAL::Orientation orientation, Number<Inexact> maxAngle, Number<Inexact> totalAngle, int startIndex, int endIndex) :
+	  orientation(orientation), maxAngle(maxAngle), totalAngle(totalAngle), startIndex(startIndex), endIndex(endIndex){}
 };
 
 class Bank : public PolyPattern {

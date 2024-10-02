@@ -140,7 +140,7 @@ partition(const std::vector<CatPoint>& points, const GeneralSettings& gs, const 
 			}
 			if (tooClose) continue;
 
-			PossibleMergeEvent event(newPattern->coverRadius(), partition[i], partition[j], newPattern, false);
+			PossibleMergeEvent event{newPattern->coverRadius(), partition[i], partition[j], newPattern, false};
 			events.push(event);
 		}
 	}
@@ -232,7 +232,7 @@ partition(const std::vector<CatPoint>& points, const GeneralSettings& gs, const 
 
 					Number<Inexact> regDelay = !ps.regularityDelay ? 0 : newIsland->coverRadius() - std::max(pattern->coverRadius(), ev.result->coverRadius());
 					Number<Inexact> eventTime = newIsland->coverRadius() + regDelay;
-					PossibleMergeEvent newEvent(eventTime, ev.result, pattern, newIsland, false);
+					PossibleMergeEvent newEvent{eventTime, ev.result, pattern, newIsland, false};
 					if (eventTime <= maxTime) {
 						events.push(newEvent);
 					}
@@ -273,7 +273,7 @@ partition(const std::vector<CatPoint>& points, const GeneralSettings& gs, const 
 						if (!b->isValid(gs)) continue;
 						Number<Inexact> regDelay = !ps.regularityDelay ? 0 : b->coverRadius() - std::max(ev.result->coverRadius(), pattern->coverRadius());
 						Number<Inexact> eventTime = b->coverRadius() + regDelay;
-						PossibleMergeEvent newEvent(eventTime * 1, ev.result, pattern, b, false);
+						PossibleMergeEvent newEvent{eventTime * 1, ev.result, pattern, b, false};
 						if (eventTime <= maxTime) {
 							events.push(newEvent);
 						}

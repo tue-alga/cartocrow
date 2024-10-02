@@ -275,7 +275,7 @@ DilatedPatternDrawing::DilatedPatternDrawing(const Partition& partition, const G
 		});
 		for (auto eit = m_arr.induced_edges_begin(cit); eit != m_arr.induced_edges_end(cit); ++eit) {
 			DilatedPatternArrangement::Halfedge_handle eh = *eit;
-			HalfEdgeData data(curve_data->second);
+			HalfEdgeData data{curve_data->second};
 			eh->set_data(data);
 			eh->twin()->set_data(data);
 		}

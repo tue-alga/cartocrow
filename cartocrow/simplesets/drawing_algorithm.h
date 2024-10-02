@@ -24,16 +24,19 @@ struct Relation {
 	int right;
 	Order preference;
 	Order ordering;
+	Relation(int left, int right, Order preference, Order ordering) :
+	 left(left), right(right), preference(preference), ordering(ordering) {}
 };
 
 bool operator==(const Relation& lhs, const Relation& rhs);
 
 std::ostream& operator<<(std::ostream& out, const Relation& r);
 
-class Hyperedge {
-  public:
+struct Hyperedge {
 	std::vector<int> origins;
 	std::vector<std::shared_ptr<Relation>> relations;
+	Hyperedge(std::vector<int> origins, std::vector<std::shared_ptr<Relation>> relations) :
+		origins(origins), relations(relations) {};
 };
 
 std::optional<std::vector<int>> getRelationOrder(const Hyperedge& e);

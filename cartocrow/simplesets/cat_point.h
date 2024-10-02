@@ -8,7 +8,8 @@ namespace cartocrow::simplesets {
 struct CatPoint {
 	unsigned int category;
 	Point<Inexact> point;
-	auto operator<=>(const CatPoint&) const = default;
+	CatPoint(unsigned int category, Point<Inexact> point) : category(category), point(point) {};
+	bool operator==(const CatPoint&) const = default;
 };
 
 std::ostream& operator<<(std::ostream& os, CatPoint const& catPoint);
