@@ -103,7 +103,7 @@ class IpeRenderer : public GeometryRenderer {
 	void addPainting(const std::shared_ptr<GeometryPainting>& painting);
 	void addPainting(const std::shared_ptr<GeometryPainting>& painting, const std::string& name);
 
-	/// Paintings will be added a new page.
+	/// Paintings will be added to a new page.
 	void nextPage();
 	/// Returns the current page index.
 	int currentPage();
