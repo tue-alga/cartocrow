@@ -26,21 +26,21 @@ CircleConvexHullDemo::CircleConvexHullDemo() {
 
 	std::function<void(GeometryRenderer&)> drawFunc = [cs, hull](GeometryRenderer& renderer) {
 		RenderPath path = renderPath(hull);
-	  	renderer.setMode(GeometryRenderer::stroke);
-	  	renderer.setFill(Color{50, 50, 50});
-		renderer.draw(path);
 	  	renderer.setMode(GeometryRenderer::fill);
-	  	renderer.setFill(Color{50, 50, 50});
+	  	renderer.setFill(Color{150, 150, 150});
 		for (const auto& c : cs) {
 			renderer.draw(c);
 		}
+	    renderer.setMode(GeometryRenderer::stroke);
+	    renderer.setStroke(Color{0, 0, 0}, 3.0);
+	    renderer.draw(path);
 	};
 	renderer->addPainting(drawFunc, "Disks");
 }
 
-//int main(int argc, char* argv[]) {
-//	QApplication app(argc, argv);
-//	CircleConvexHullDemo demo;
-//	demo.show();
-//	app.exec();
-//}
+int main(int argc, char* argv[]) {
+	QApplication app(argc, argv);
+	CircleConvexHullDemo demo;
+	demo.show();
+	app.exec();
+}

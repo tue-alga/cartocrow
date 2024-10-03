@@ -1,7 +1,6 @@
 set(SOURCES
     simplesets_demo.cpp
     colors.cpp
-    circle_convex_hull.cpp
 )
 
 add_executable(simplesets_demo ${SOURCES})
@@ -17,4 +16,6 @@ target_link_libraries(
     Qt5::Widgets
 )
 
-install(TARGETS simplesets DESTINATION ${INSTALL_BINARY_DIR})
+install(TARGETS simplesets_demo DESTINATION ${INSTALL_BINARY_DIR})
+
+add_subdirectory(helpers)
