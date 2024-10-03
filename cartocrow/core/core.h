@@ -43,8 +43,6 @@ namespace cartocrow {
 
 /// CGAL kernel for exact constructions (uses an exact number type).
 using Exact = CGAL::Exact_predicates_exact_constructions_kernel;
-/// CGAL kernel for exact constructions (uses an exact number type that supports the square root operation).
-using ExactWithSqrt = CGAL::Exact_predicates_exact_constructions_kernel_with_sqrt;
 /// CGAL kernel for inexact constructions.
 using Inexact = CGAL::Exact_predicates_inexact_constructions_kernel;
 
