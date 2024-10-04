@@ -177,6 +177,8 @@ struct Color {
 	Color();
 	/// Constructs a color.
 	Color(int r, int g, int b);
+	/// Constructs a color from a single integer (useful combined with hexadecimal literals, e.g. 0xFFFFFF).
+	Color(int rgb);
 };
 
 /// Wraps the given number \f$n\f$ to the interval \f$[a, b)\f$.
