@@ -56,12 +56,20 @@ using namespace cartocrow::simplesets;
 SimpleSetsDemo::SimpleSetsDemo() {
 	setWindowTitle("SimpleSets");
 
-	m_gs = GeneralSettings{2.1, 2, M_PI, 70.0 / 180 * M_PI}; //nyc
-//	m_gs = GeneralSettings{5.204, 2, M_PI, 70.0 / 180 * M_PI}; //diseasome
-	m_ps = PartitionSettings{true, true, true, true, 0.1};
-	//	m_ps = PartitionSettings{true, true, true, false, 0.5};
-	m_ds = DrawSettings{{CB::light_blue, CB::light_red, CB::light_green, CB::light_purple, CB::light_orange}, 0.7};
 	m_cds = ComputeDrawingSettings{0.675};
+
+	// Initial file
+	std::filesystem::path filePath("data/nyc.txt");
+
+	// nyc
+	m_gs = GeneralSettings{2.1, 2, M_PI, 70.0 / 180 * M_PI};
+	m_ds = DrawSettings{{CB::light_blue, CB::light_red, CB::light_green, CB::light_purple, CB::light_orange}, 0.7};
+	m_ps = PartitionSettings{true, true, true, true, 0.1};
+
+	// diseasome
+//	m_gs = GeneralSettings{5.204, 2, M_PI, 70.0 / 180 * M_PI};
+//	m_ds = DrawSettings{diseasome::colors, 0.7};
+//	m_ps = PartitionSettings{true, true, true, false, 0.5};
 
 	auto* dockWidget = new QDockWidget();
 	addDockWidget(Qt::RightDockWidgetArea, dockWidget);
@@ -102,8 +110,6 @@ SimpleSetsDemo::SimpleSetsDemo() {
 
 	m_renderer->setMinZoom(0.01);
 	m_renderer->setMaxZoom(1000.0);
-
-	std::filesystem::path filePath("data/nyc.txt");
 
 	loadFile(filePath);
 	computePartitions();

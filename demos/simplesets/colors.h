@@ -16,5 +16,9 @@ namespace cartocrow::CB {
     extern Color purple;
 }
 
+namespace cartocrow::diseasome {
+	extern std::vector<Color> colors;
+}
+
 
 #endif //CARTOCROW_COLORS_H
