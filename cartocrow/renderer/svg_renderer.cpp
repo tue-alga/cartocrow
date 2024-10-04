@@ -51,7 +51,11 @@ void SvgRenderer::save(const std::filesystem::path& file) {
 	m_out << "<defs><circle id=\"vertex\" cx=\"0\" cy=\"0\" r=\"4\"/></defs>\n";
 
 	for (auto painting : m_paintings) {
-		m_out << "<g>\n";
+		m_out << "<g inkscape:groupmode=\"layer\"";
+		if (painting.name) {
+			m_out << " inkscape:label=\"" << *painting.name << "\"";
+		}
+		m_out << ">\n";
 		pushStyle();
 		painting.m_painting->paint(*this);
 		popStyle();

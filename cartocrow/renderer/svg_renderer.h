@@ -100,7 +100,11 @@ class SvgRenderer : public GeometryRenderer {
 	struct DrawnPainting {
 		/// The painting itself.
 		std::shared_ptr<GeometryPainting> m_painting;
-		/// The name of the painting displayed as a layer name in ipe.
+		/// The name of the painting displayed as a layer name in Inkscape.
+		///
+		/// The SVG standard does not have a concept of layers, however Inkscape
+		/// does support them by means of groups with the custom inkscape:label
+		/// attribute.
 		std::optional<std::string> name;
 	};
 
