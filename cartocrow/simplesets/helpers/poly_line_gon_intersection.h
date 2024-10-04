@@ -2,6 +2,7 @@
 #define CARTOCROW_POLY_LINE_GON_INTERSECTION_H
 
 #include "cartocrow/simplesets/types.h"
+#include "cs_curve_helpers.h"
 #include "cs_polyline_helpers.h"
 #include "cs_polygon_helpers.h"
 #include <CGAL/Arrangement_with_history_2.h>
@@ -19,6 +20,7 @@ template <class OutputIterator>
 void intersection(const CSPolyline& line, const CSPolygonWithHoles& gon, OutputIterator out, bool difference, bool keepOverlap) {
 	CSTraits traits;
 	auto equals = traits.equal_2_object();
+	auto opposite = traits.construct_opposite_2_object();
 	enum Origin {
 		Polyline,
 		PolygonOuter,
@@ -51,6 +53,16 @@ void intersection(const CSPolyline& line, const CSPolygonWithHoles& gon, OutputI
 			e1->twin()->set_data(beforeSplitData);
 			e2->twin()->set_data(beforeSplitData);
 			e2->set_data(beforeSplitData);
+			CSTraits traits;
+			auto opposite = traits.construct_opposite_2_object();
+			if (liesOn(e1->curve(), xmCurve) || liesOn(opposite(e1->curve()), xmCurve)) {
+				e1->data().origins.push_back(currentOrigin);
+				e1->twin()->data().origins.push_back(currentOrigin);
+			}
+			if (liesOn(e2->curve(), xmCurve) || liesOn(opposite(e2->curve()), xmCurve)) {
+				e2->data().origins.push_back(currentOrigin);
+				e2->twin()->data().origins.push_back(currentOrigin);
+			}
 		}
 
 		virtual void after_modify_edge(HeH e) {
@@ -59,7 +71,7 @@ void intersection(const CSPolyline& line, const CSPolygonWithHoles& gon, OutputI
 		}
 
 		Origin currentOrigin;
-
+		X_monotone_curve_2 xmCurve;
 	  private:
 		HalfEdgeData beforeSplitData;
 	};
@@ -68,15 +80,18 @@ void intersection(const CSPolyline& line, const CSPolygonWithHoles& gon, OutputI
 
 	observer.currentOrigin = Origin::Polyline;
 	for (auto cit = line.curves_begin(); cit != line.curves_end(); ++cit) {
+		observer.xmCurve = *cit;
 		CGAL::insert(arr, *cit);
 	}
 	observer.currentOrigin = Origin::PolygonOuter;
 	for (auto cit = gon.outer_boundary().curves_begin(); cit != gon.outer_boundary().curves_end(); ++cit) {
+		observer.xmCurve = *cit;
 		CGAL::insert(arr, *cit);
 	}
 	observer.currentOrigin = Origin::PolygonHole;
 	for (auto hit = gon.holes_begin(); hit != gon.holes_end(); ++hit) {
 		for (auto cit = hit->curves_begin(); cit != hit->curves_end(); ++cit) {
+			observer.xmCurve = *cit;
 			CGAL::insert(arr, *cit);
 		}
 	}

@@ -101,6 +101,23 @@ bool liesOn(const OneRootPoint& p, const X_monotone_curve_2& xm_curve) {
 	return xm_curve.point_position(p) == CGAL::EQUAL;
 }
 
+bool liesOn(const X_monotone_curve_2& c1, const X_monotone_curve_2& c2) {
+	auto sc = liesOn(c1.source(), c2);
+	auto tc = liesOn(c1.target(), c2);
+	if (!sc || !tc) {
+		return false;
+	}
+	if (c2.is_linear()) {
+		if (c1.is_circular()) return false;
+		if (c1.supporting_line() != c2.supporting_line()) return false;
+	} else {
+		if (c1.is_linear()) return false;
+		if (c1.supporting_circle() != c2.supporting_circle()) return false;
+	}
+
+	return true;
+}
+
 renderer::RenderPath renderPathFromXMCurve(const X_monotone_curve_2& xm_curve) {
 	renderer::RenderPath path;
 	path.moveTo(approximateAlgebraic(xm_curve.source()));

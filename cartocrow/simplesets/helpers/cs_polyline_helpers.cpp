@@ -63,7 +63,7 @@ bool liesOn(const X_monotone_curve_2& c, const CSPolyline& polyline) {
 			if (c.is_circular()) return false;
 			if (curr->supporting_line() != c.supporting_line()) return false;
 		} else {
-			if (c.is_circular()) return false;
+			if (c.is_linear()) return false;
 			if (curr->supporting_circle() != c.supporting_circle()) return false;
 		}
 	} while (curr++ != tit);

@@ -56,9 +56,9 @@ using namespace cartocrow::simplesets;
 SimpleSetsDemo::SimpleSetsDemo() {
 	setWindowTitle("SimpleSets");
 
-//	m_gs = GeneralSettings{2.1, 2, M_PI, 70.0 / 180 * M_PI}; //nyc
-	m_gs = GeneralSettings{5.204, 2, M_PI, 70.0 / 180 * M_PI}; //diseasome
-	m_ps = PartitionSettings{true, true, true, false, 0.1};
+	m_gs = GeneralSettings{2.1, 2, M_PI, 70.0 / 180 * M_PI}; //nyc
+//	m_gs = GeneralSettings{5.204, 2, M_PI, 70.0 / 180 * M_PI}; //diseasome
+	m_ps = PartitionSettings{true, true, true, true, 0.1};
 	//	m_ps = PartitionSettings{true, true, true, false, 0.5};
 	m_ds = DrawSettings{{CB::light_blue, CB::light_red, CB::light_green, CB::light_purple, CB::light_orange}, 0.7};
 	m_cds = ComputeDrawingSettings{0.675};
@@ -86,7 +86,7 @@ SimpleSetsDemo::SimpleSetsDemo() {
 	vLayout->addWidget(coverSlider);
 	coverSlider->setMinimum(0);
 	coverSlider->setMaximum(80);
-	coverSlider->setValue(4);
+	coverSlider->setValue(47);
 
 	auto* ptSizeLabel = new QLabel("Point size");
 	vLayout->addWidget(ptSizeLabel);
@@ -94,7 +94,7 @@ SimpleSetsDemo::SimpleSetsDemo() {
 	vLayout->addWidget(ptSizeSlider);
 	ptSizeSlider->setMinimum(0);
 	ptSizeSlider->setMaximum(80);
-	ptSizeSlider->setValue(21);
+	ptSizeSlider->setValue(static_cast<int>(m_gs.pointSize * 10));
 
 	m_renderer = new GeometryWidget();
 	m_renderer->setDrawAxes(false);
@@ -103,7 +103,7 @@ SimpleSetsDemo::SimpleSetsDemo() {
 	m_renderer->setMinZoom(0.01);
 	m_renderer->setMaxZoom(1000.0);
 
-	std::filesystem::path filePath("data/diseasome.txt");
+	std::filesystem::path filePath("data/nyc.txt");
 
 	loadFile(filePath);
 	computePartitions();
