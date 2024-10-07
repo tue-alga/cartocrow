@@ -50,12 +50,12 @@ struct FaceData {
 	std::vector<std::shared_ptr<Relation>> relations;
 	std::vector<int> ordering;
 	std::unordered_map<int, std::vector<CSPolyline>> morphedEdges;
-	std::unordered_map<int, CSPolygon> morphedFace;
+	std::unordered_map<int, std::vector<CSPolygon>> morphedFace;
 };
 
 // todo: edge case where edges of dilated patterns overlap, so a half-edge may have multiple origins.
 struct HalfEdgeData {
-	int origin;
+	std::vector<int> origins;
 };
 
 struct VertexData {
@@ -246,13 +246,18 @@ class Component {
 	std::vector<ComponentCcbCirculator> m_inner_ccbs;
 };
 
-template <class OutputIterator, class Ccb>
+template <class Traits, class OutputIterator, class Ccb>
 void boundaryParts(Ccb ccb, int i, OutputIterator out) {
 	// First find a half-edge at the start of a 'part' of this CCB (connected component of the boundary).
 	auto circ = ccb;
 
+	auto originates_from = [](Ccb circ, int i) {
+		auto& os = circ->data().origins;
+		return std::find(os.begin(), os.end(), i) != os.end();
+	};
+
 	bool found = true;
-	while (circ->data().origin != i) {
+	while (!originates_from(circ, i)) {
 		++circ;
 		if (circ == ccb) {
 			found = false;
@@ -268,20 +273,28 @@ void boundaryParts(Ccb ccb, int i, OutputIterator out) {
 	do {
 		auto prev = circ;
 		--prev;
-		if (prev->data().origin == i) {
+		if (originates_from(prev, i)) {
 			circ = prev;
 		} else {
 			break;
 		}
 	} while (circ != start);
-	assert(circ->data().origin == i);
+	assert(originates_from(circ, i));
+
+	Traits traits;
+	auto opposite = traits.construct_opposite_2_object();
 
 	// Next, make a polyline for every connected part of the boundary that originates from i.
 	std::vector<X_monotone_curve_2> xm_curves;
 	auto curr = circ;
 	do {
-		if (curr->data().origin == i) {
-			xm_curves.push_back(curr->curve());
+		if (originates_from(curr, i)) {
+			auto& curve = curr->curve();
+			if (curr->source()->point() == curve.source()) {
+				xm_curves.push_back(curve);
+			} else {
+				xm_curves.push_back(opposite(curve));
+			}
 		} else {
 			if (!xm_curves.empty()) {
 				++out = CSPolyline(xm_curves.begin(), xm_curves.end());
@@ -303,8 +316,10 @@ std::vector<std::vector<std::pair<CSPolyline, int>>> originCcbs(const Component&
 std::vector<std::vector<std::pair<int, Circle<Inexact>>>> connectedDisks(const std::vector<Circle<Inexact>>& disks);
 CSPolygon thinRectangle(const Point<Exact>& p, const OneRootPoint& n, const Number<Exact>& w);
 
-CSPolyline morph(const CSPolyline& boundaryPart, const CSPolygon& componentShape, const std::vector<Circle<Exact>>& inclDisks,
-                 const std::vector<Circle<Exact>>& exclDisks, const GeneralSettings& gs, const ComputeDrawingSettings& cds);
+CSPolygon morph(const std::vector<CSPolyline>& boundaryParts, const CSPolygon& componentShape, const std::vector<Circle<Exact>>& inclDisks,
+				const std::vector<Circle<Exact>>& exclDisks, const GeneralSettings& gs, const ComputeDrawingSettings& cds);
+
+CSPolyline associatedBoundary(CSPolygon component, CSPolygon morphedComponent, CSPolyline boundaryPart);
 
 struct IncludeExcludeDisks {
 	std::vector<Circle<Exact>> include;

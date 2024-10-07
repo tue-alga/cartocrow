@@ -6,6 +6,8 @@
 
 template <class Traits, class Ccb>
 CGAL::General_polygon_2<Traits> ccb_to_polygon(Ccb ccb) {
+	Traits traits;
+	auto opposite = traits.construct_opposite_2_object();
 	auto curr = ccb;
 
 	std::vector<typename Traits::X_monotone_curve_2> x_monotone_curves;
@@ -14,8 +16,6 @@ CGAL::General_polygon_2<Traits> ccb_to_polygon(Ccb ccb) {
 		if (curr->source()->point() == curve.source()) {
 			x_monotone_curves.push_back(curve);
 		} else {
-			Traits traits;
-			auto opposite = traits.construct_opposite_2_object();
 			x_monotone_curves.push_back(opposite(curve));
 		}
 	} while(++curr != ccb);

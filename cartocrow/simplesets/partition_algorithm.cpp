@@ -133,7 +133,9 @@ partition(const std::vector<CatPoint>& points, const GeneralSettings& gs, const 
 			for (const CatPoint& pt : points) {
 				// Check if a point is too close to the segment
 				if (pt != p.catPoint() && pt != q.catPoint() &&
-				    CGAL::squared_distance(seg, pt.point) < squared(ps.admissableRadiusFactor * gs.dilationRadius())) {
+				    CGAL::squared_distance(seg, pt.point) < squared(ps.admissableRadiusFactor * gs.dilationRadius()) &&
+				    CGAL::squared_distance(seg, pt.point) < CGAL::min(CGAL::squared_distance(p.catPoint().point, pt.point),
+				                                                CGAL::squared_distance(q.catPoint().point, pt.point)) - M_EPSILON) {
 					tooClose = true;
 					break;
 				}
@@ -188,10 +190,20 @@ partition(const std::vector<CatPoint>& points, const GeneralSettings& gs, const 
 		bool tooClose = false;
 		// Check whether any point is too close to the result pattern
 		for (const auto& pt : points) {
-			if (std::find(newPts.begin(), newPts.end(), pt) == newPts.end() &&
-			    squared_distance(newPoly, pt.point) < squared(ps.admissableRadiusFactor * gs.dilationRadius())) {
-				tooClose = true;
-				break;
+			if (std::find(newPts.begin(), newPts.end(), pt) == newPts.end()) {
+			    auto polyPtDist = squared_distance(newPoly, pt.point);
+				std::optional<Number<Inexact>> pointPtDist;
+				for (auto np : newPts) {
+					auto d = CGAL::squared_distance(np.point, pt.point);
+					if (d < pointPtDist) {
+						pointPtDist = d;
+					}
+				}
+				if (polyPtDist < squared(ps.admissableRadiusFactor * gs.dilationRadius()) &&
+				    polyPtDist < pointPtDist) {
+					tooClose = true;
+					break;
+				}
 			}
 		}
 		if (tooClose) continue;

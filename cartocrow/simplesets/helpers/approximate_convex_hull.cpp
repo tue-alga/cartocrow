@@ -162,6 +162,7 @@ algebraicCircleTangentToRationalSegments(const CSTraits::Point_2& p1, const CSTr
 		}
 
 		// This is hacky
+		lower_tan_half_phi -= M_EPSILON;
 		upper_tan_half_phi += M_EPSILON;
 
 		auto sqr_tan_half_phi = CGAL::square (lower_tan_half_phi);
@@ -227,6 +228,10 @@ std::vector<RationalRadiusCircle> circlesOnConvexHull(const std::vector<Rational
 		auto vh = apo.insert(ASite(c.center, c.radius));
 		vToCircle[vh] = c;
 	}
+	if (apo.number_of_vertices() == 1) {
+		auto site = apo.finite_vertices_begin()->site();
+		return {{site.point(), site.weight()}};
+	}
 	auto circ = apo.incident_vertices(apo.infinite_vertex());
 	auto curr = circ;
 	std::vector<RationalRadiusCircle> hullCircles;
@@ -239,7 +244,10 @@ std::vector<RationalRadiusCircle> circlesOnConvexHull(const std::vector<Rational
 	return hullCircles;
 }
 
+/// Precondition: the circle centers are distinct.
 CSPolygon approximateConvexHull(const std::vector<Circle<Exact>>& circles) {
+	// todo: approximating circle radii may cause problems when two circles overlap in a single point and one is contained in the other.
+	// solution? filter out any circle that is contained in another, before approximating the radii.
 	if (circles.size() == 1) {
 		return circleToCSPolygon(circles.front());
 	}
@@ -248,6 +256,13 @@ CSPolygon approximateConvexHull(const std::vector<Circle<Exact>>& circles) {
 		rrCircles.push_back(approximateRadiusCircle(c));
 	}
 	auto hullCircles = circlesOnConvexHull(rrCircles);
+	if (hullCircles.size() == 1) {
+		for (const auto& c : circles) {
+			if (c.center() == hullCircles[0].center) {
+				return circleToCSPolygon(c);
+			}
+		}
+	}
 
 	std::vector<std::vector<Segment<Exact>>> tangents;
 

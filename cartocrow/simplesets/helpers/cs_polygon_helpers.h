@@ -32,6 +32,7 @@ bool liesOn(const X_monotone_curve_2& c, const CSPolygon& polygon);
 renderer::RenderPath renderPath(const CSPolygon& polygon);
 renderer::RenderPath renderPath(const CSPolygonWithHoles& withHoles);
 bool on_or_inside(const CSPolygon& polygon, const Point<Exact>& point);
+bool inside(const CSPolygon& polygon, const Point<Exact>& point);
 CSPolycurve arrPolycurveFromCSPolygon(const CSPolygon& polygon);
 Polygon<Exact> linearSample(const CSPolygon& polygon, int n);
 CSPolygonWithHoles approximateDilate(const CSPolygon& polygon, double r, double eps, int n);

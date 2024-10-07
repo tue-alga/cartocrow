@@ -100,7 +100,7 @@ SimpleSetsDemo::SimpleSetsDemo() {
 	vLayout->addWidget(ptSizeLabel);
 	auto* ptSizeSlider = new QSlider(Qt::Orientation::Horizontal);
 	vLayout->addWidget(ptSizeSlider);
-	ptSizeSlider->setMinimum(0);
+	ptSizeSlider->setMinimum(1);
 	ptSizeSlider->setMaximum(80);
 	ptSizeSlider->setValue(static_cast<int>(m_gs.pointSize * 10));
 
@@ -192,9 +192,22 @@ void SimpleSetsDemo::computeDrawing(double cover) {
 	auto pp = std::make_shared<PartitionPainting>(m_partition, m_gs, m_ds);
 	m_renderer->addPainting(pp, "Partition");
 
-	m_dpd = std::make_shared<DilatedPatternDrawing>(m_partition, m_gs, m_cds);
-	auto ap = std::make_shared<SimpleSetsPainting>(*m_dpd, m_ds);
-	m_renderer->addPainting(ap, "Arrangement");
+	bool wellSeparated = true;
+	for (const auto& p : m_points) {
+		for (const auto& q : m_points) {
+			if (p.category == q.category) continue;
+			if (CGAL::squared_distance(p.point, q.point) < 4 * m_gs.pointSize * m_gs.pointSize) {
+				wellSeparated = false;
+			}
+		}
+	}
+	if (wellSeparated) {
+		m_dpd = std::make_shared<DilatedPatternDrawing>(m_partition, m_gs, m_cds);
+		auto ap = std::make_shared<SimpleSetsPainting>(*m_dpd, m_ds);
+		m_renderer->addPainting(ap, "Arrangement");
+	} else {
+		std::cerr << "Points of different category are too close together; not computing a drawing." << std::endl;
+	}
 }
 
 int main(int argc, char* argv[]) {

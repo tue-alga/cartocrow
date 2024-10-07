@@ -136,6 +136,7 @@ bool on_or_inside(const CSPolygon& polygon, const Point<Exact>& point) {
 
 	auto inter = CGAL::intersection(ray, rect);
 	if (!inter.has_value()) return false;
+	if (inter->type() == typeid(Point<Exact>)) return true;
 	auto seg = boost::get<Segment<Exact>>(*inter);
 	X_monotone_curve_2 seg_xm_curve(seg.source(), seg.target());
 
@@ -148,7 +149,27 @@ bool on_or_inside(const CSPolygon& polygon, const Point<Exact>& point) {
 		curve.intersect(seg_xm_curve, std::back_inserter(intersection_results));
 	}
 
-	return intersection_results.size() % 2 == 1;
+	int count = 0;
+	for (const auto& ir : intersection_results) {
+		if (ir.which() == 0) {
+			auto ip = get<Intersection_point>(ir);
+			//(ir) Intersection points are double-counted, so increase count by half.
+			bool found = false;
+			for (auto cit = polygon.curves_begin(); cit != polygon.curves_end(); ++cit) {
+				if (cit->source() == ip.first) {
+					found = true;
+					break;
+				}
+			}
+			if (found) {
+				count += 1;
+				continue;
+			}
+		}
+		count += 2;
+	}
+
+	return count % 4 != 0;
 }
 
 bool liesOn(const X_monotone_curve_2& c, const CSPolygon& polygon) {
@@ -195,6 +216,10 @@ bool liesOn(const X_monotone_curve_2& c, const CSPolygon& polygon) {
 	} while (curr++ != tit);
 
 	return true;
+}
+
+bool inside(const CSPolygon& polygon, const Point<Exact>& point) {
+    return on_or_inside(polygon, point) && !liesOn(point, polygon);
 }
 
 CSPolycurve arrPolycurveFromCSPolygon(const CSPolygon& polygon) {

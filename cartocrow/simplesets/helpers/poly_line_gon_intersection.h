@@ -169,28 +169,36 @@ void intersection(const CSPolyline& line, const CSPolygonWithHoles& gon, OutputI
 	while (!line_edges_keep.empty()) {
 		// Find first edge on connected component of polyline (in the intersection with polygon)
 		auto start = line_edges_keep.front();
-		auto curr = start;
-		while (originatesFromPolyline(curr->prev())) {
-			curr = curr->prev();
+		auto startStart = start;
+		while (originatesFromPolyline(startStart->prev())) {
+			startStart = startStart->prev();
 
-			if (curr == start) {
+			if (startStart == start) {
 				break;
 			}
 		}
 		std::vector<X_monotone_curve_2> xmcs;
 		auto last_it = line_edges_keep.end();
+		auto curr = startStart;
 		do {
 			last_it = std::remove(line_edges_keep.begin(), last_it, curr);
 			xmcs.push_back(curr->curve());
 			curr = curr->next();
-		} while (originatesFromPolyline(curr));
+		} while (originatesFromPolyline(curr) && curr != startStart);
 		line_edges_keep.erase(last_it, line_edges_keep.end());
 
 		++out = CSPolyline(xmcs.begin(), xmcs.end());
 	}
 }
 
+template <class OutputIterator>
+void intersection(const CSPolyline& line, const CSPolygon& gon, OutputIterator out, bool difference, bool keepOverlap) {
+	CSPolygonWithHoles withHoles(gon);
+	return intersection(line, withHoles, out, difference, keepOverlap);
+}
+
 // May crash due to CGAL bug: https://github.com/CGAL/cgal/issues/8468
+#if 0
 template <class OutputIterator>
 void intersectionCrashes(const CSPolyline& line, const CSPolygonWithHoles& gon, OutputIterator out, bool difference, bool keepOverlap) {
 	PolyCSTraits traits;
@@ -304,6 +312,7 @@ void intersectionCrashes(const CSPolyline& line, const CSPolygonWithHoles& gon, 
 		++out = CSPolyline(xmcs.begin(), xmcs.end());
 	}
 }
+#endif
 }
 
 #endif //CARTOCROW_POLY_LINE_GON_INTERSECTION_H
