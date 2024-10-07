@@ -118,7 +118,7 @@ bool liesOn(const X_monotone_curve_2& c1, const X_monotone_curve_2& c2) {
 	return true;
 }
 
-renderer::RenderPath renderPathFromXMCurve(const X_monotone_curve_2& xm_curve) {
+renderer::RenderPath renderPath(const X_monotone_curve_2& xm_curve) {
 	renderer::RenderPath path;
 	path.moveTo(approximateAlgebraic(xm_curve.source()));
 

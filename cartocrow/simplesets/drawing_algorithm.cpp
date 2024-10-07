@@ -1076,8 +1076,7 @@ SimpleSetsPainting::SimpleSetsPainting(const DilatedPatternDrawing& dpd, const D
 void SimpleSetsPainting::paint(renderer::GeometryRenderer& renderer) const {
 	auto stackingOrder = m_dpd.totalStackingOrder();
 	// If there is a stacking order, draw the complete patterns stacked in that order
-	if (false) {
-//	if (stackingOrder.has_value()) {
+	if (stackingOrder.has_value()) {
 		for (int i : *stackingOrder) {
 			auto comps = connectedComponents(m_dpd.m_arr, [i](const FaceH& fh) {
 				const auto& ors = fh->data().origins;
@@ -1085,44 +1084,39 @@ void SimpleSetsPainting::paint(renderer::GeometryRenderer& renderer) const {
 			});
 			assert(comps.size() == 1);
 			const auto& comp = comps[0];
-			auto ccb = comp.outer_ccb();
-			auto start = ccb;
-			// start at first edge on CCB of origin
-			do {
-				auto prev = start;
-				--prev;
-				if (prev->data().origins.front() == start->data().origins.front()) { // todo: check for multiple origins
-					start = prev;
+
+			std::vector<CSPolyline> boundaryPieces;
+			for (auto fit = comp.faces_begin(); fit != comp.faces_end(); ++fit) {
+				auto& data = fit->data();
+				if (data.morphedFace.contains(i)) {
+					std::copy(data.morphedEdges[i].begin(), data.morphedEdges[i].end(), std::back_inserter(boundaryPieces));
 				} else {
-					break;
+					FaceH fh = fit.handle();
+					auto bps = boundaryParts(fh, i);
+					std::copy(bps.begin(), bps.end(), std::back_inserter(boundaryPieces));
 				}
-			} while (start != ccb);
+			}
 
-			auto curr = start;
-
+			// no order or hash on OneRootPoint :(
+//			std::map<OneRootPoint, int> sourceToI;
+//			for (int j = 0; j < boundaryPieces.size(); ++j) {
+//				auto& bp = boundaryPieces[j];
+//				sourceToI[bp.curves_begin()->source()] = j;
+//			}
 			std::vector<X_monotone_curve_2> xm_curves;
-			bool doneInFace = false;
-			FaceH prevFace;
-			do {
-				if (doneInFace && curr->face() == prevFace) continue;
-				doneInFace = false;
-				const auto& d = curr->face()->data();
-				if (!d.morphedEdges.contains(i)) {
-					xm_curves.push_back(curr->curve());
-				} else {
-					auto mes = d.morphedEdges.at(i);
-					CSTraits traits;
-					auto equal = traits.equal_2_object();
-					auto it = std::find_if(mes.begin(), mes.end(), [&curr, &equal](const CSPolyline& pl) {
-						return equal(pl.curves_begin()->source(), curr->source()->point());
-					});
-					assert(it != mes.end()); // this assertion fails sometimes
-					auto pl = *it;
-					std::copy(pl.curves_begin(), pl.curves_end(), std::back_inserter(xm_curves));
-					doneInFace = true;
-					prevFace = curr->face();
+
+			std::copy(boundaryPieces[0].curves_begin(), boundaryPieces[0].curves_end(), std::back_inserter(xm_curves));
+			int count = 1;
+			while (count < boundaryPieces.size()) {
+				auto head = xm_curves.back().target();
+				for (const auto& bp : boundaryPieces) {
+					if (bp.curves_begin()->source() == head) {
+						std::copy(bp.curves_begin(), bp.curves_end(), std::back_inserter(xm_curves));
+					}
 				}
-			} while (++curr != start);
+				++count;
+			}
+
 			CSPolygon csPolygon(xm_curves.begin(), xm_curves.end());
 
 			renderer.setMode(GeometryRenderer::fill | GeometryRenderer::stroke);

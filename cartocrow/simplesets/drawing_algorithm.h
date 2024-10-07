@@ -187,6 +187,14 @@ class Component {
 			return tmp;
 		}
 
+		pointer ptr() const {
+			return *m_faceHandleIterator;
+		}
+
+		pointer handle() const {
+			return *m_faceHandleIterator;
+		}
+
 		bool operator==(const Self& other) const {
 			return m_faceHandleIterator == other.m_faceHandleIterator;
 		}
