@@ -23,18 +23,14 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-2019
 
 #include <filesystem>
 #include <fstream>
-#include <sstream>
 
 #include <QApplication>
 
 #include <nlohmann/json.hpp>
 
 #include "cartocrow/core/centroid.h"
-#include "cartocrow/core/region_arrangement.h"
 #include "cartocrow/core/region_map.h"
 #include "cartocrow/flow_map/painting.h"
-#include "cartocrow/flow_map/parameters.h"
-#include "cartocrow/flow_map/place.h"
 #include "cartocrow/flow_map/spiral_tree.h"
 #include "cartocrow/flow_map/spiral_tree_unobstructed_algorithm.h"
 #include "cartocrow/isoline_simplification/ipe_isolines.h"
@@ -46,7 +42,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-2019
 #include "cartocrow/necklace_map/parameters.h"
 #include "cartocrow/renderer/geometry_painting.h"
 #include "cartocrow/renderer/geometry_widget.h"
-#include "cartocrow/renderer/ipe_renderer.h"
+#include "cartocrow/renderer/svg_renderer.h"
 
 using namespace cartocrow;
 using json = nlohmann::json;
@@ -55,7 +51,7 @@ int main(int argc, char* argv[]) {
 	if (argc != 2 && argc != 3) {
 		std::cout << "Usage: cartocrow <project_file> [<output_file>]\n";
 		std::cout << "where <project_file> is a JSON file describing the map to generate,\n";
-		std::cout << "and <output_file> is the file to write the output to. If <output_file>\n";
+		std::cout << "and <output_file> is the SVG file to write the output to. If <output_file>\n";
 		std::cout << "is omitted, an interactive GUI will be opened instead.\n";
 		return 1;
 	}
@@ -140,7 +136,7 @@ int main(int argc, char* argv[]) {
 		return a.exec();
 
 	} else {
-		cartocrow::renderer::IpeRenderer renderer(painting);
+		cartocrow::renderer::SvgRenderer renderer(painting);
 		renderer.save(outputFilename);
 		return 0;
 	}
