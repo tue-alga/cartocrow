@@ -303,12 +303,16 @@ DilatedPatternDrawing::DilatedPatternDrawing(const Partition& partition, const G
 
 	auto hEdges = hyperedges();
 	for (auto edge : hEdges) {
-		auto order = getRelationOrder(edge);
+		auto order = getRelationOrder(*edge);
 		if (!order.has_value()) {
-			throw std::runtime_error("Hyperedge has cycle.");
-		} else {
-			setRelationOrder(edge, *order);
+			std::cerr << "Hyperedge has cycle; ignoring preferences in this hyperedge." << std::endl;
+			for (const auto& r : edge->relations) {
+				r->ordering = Order::EQUAL;
+			}
+			order = getRelationOrder(*edge);
+			assert(order.has_value());
 		}
+		setRelationOrder(*edge, *order);
 	}
 
 	for (auto fit = m_arr.faces_begin(); fit != m_arr.faces_end(); ++fit) {
@@ -552,7 +556,7 @@ CSPolygon morph(const std::vector<CSPolyline>& boundaryParts, const CSPolygon& c
 
 	for (const auto& d : rectangleCutDisks) {
 		auto n = nearestOnBoundary(d.center());
-		auto rect = thinRectangle(d.center(), n, gs.pointSize / 5);
+		auto rect = thinRectangle(d.center(), n, gs.pointSize);
 		polygonSet.join(rect);
 	}
 
@@ -906,7 +910,7 @@ DilatedPatternDrawing::intersectionComponents(int i) const {
 	});
 }
 
-std::vector<Hyperedge> DilatedPatternDrawing::hyperedges() const {
+std::vector<std::shared_ptr<Hyperedge>> DilatedPatternDrawing::hyperedges() const {
 	std::vector<FaceCH> interesting;
 
 	for (auto fit = m_arr.faces_begin(); fit != m_arr.faces_end(); ++fit) {
@@ -919,31 +923,35 @@ std::vector<Hyperedge> DilatedPatternDrawing::hyperedges() const {
 		return fh1->data().origins.size() < fh2->data().origins.size();
 	});
 
-	std::vector<std::vector<Hyperedge>> hyperedgesGrouped;
+	std::vector<std::vector<std::shared_ptr<Hyperedge>>> hyperedgesGrouped;
 
-	std::vector<Hyperedge> group;
+	std::vector<std::shared_ptr<Hyperedge>> group;
 	std::optional<int> lastSize;
 	for (const auto& fh : interesting) {
 		if (lastSize.has_value() && fh->data().origins.size() != *lastSize && !group.empty()) {
 			hyperedgesGrouped.push_back(group);
 			group.clear();
 		}
-		group.emplace_back(fh->data().origins, fh->data().relations);
+		auto he = std::make_shared<Hyperedge>(fh->data().origins, fh->data().relations);
+		for (auto& r : he->relations) {
+			r->hyperedges.push_back(he);
+		}
+		group.push_back(he);
 		lastSize = fh->data().origins.size();
 	}
 	if (!group.empty()) {
 		hyperedgesGrouped.push_back(group);
 	}
 
-	std::vector<std::pair<int, Hyperedge>> trashCan;
+	std::vector<std::pair<int, std::shared_ptr<Hyperedge>>> trashCan;
 	for (int i = 0; i < hyperedgesGrouped.size(); i++) {
 		if (i + 1 >= hyperedgesGrouped.size()) break;
 		const auto& group = hyperedgesGrouped[i];
 		for (const auto& hyperedge : group) {
 			for (const auto& larger : hyperedgesGrouped[i+1]) {
 				bool fullyContained = true;
-				for (const auto& r : hyperedge.relations) {
-					if (std::find(larger.relations.begin(), larger.relations.end(), r) == larger.relations.end()) {
+				for (const auto& r : hyperedge->relations) {
+					if (std::find(larger->relations.begin(), larger->relations.end(), r) == larger->relations.end()) {
 						fullyContained = false;
 					}
 				}
@@ -961,7 +969,7 @@ std::vector<Hyperedge> DilatedPatternDrawing::hyperedges() const {
 		group.erase(std::remove(group.begin(), group.end(), r), group.end());
 	}
 
-	std::vector<Hyperedge> hyperedges;
+	std::vector<std::shared_ptr<Hyperedge>> hyperedges;
 	for (const auto& group : hyperedgesGrouped) {
 		std::copy(group.begin(), group.end(), std::back_inserter(hyperedges));
 	}

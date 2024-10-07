@@ -19,11 +19,14 @@ std::string to_string(Order ord);
 
 std::ostream& operator<<(std::ostream& out, const Order& o);
 
+struct Hyperedge;
+
 struct Relation {
 	int left;
 	int right;
 	Order preference;
 	Order ordering;
+	std::vector<std::shared_ptr<Hyperedge>> hyperedges;
 	Relation(int left, int right, Order preference, Order ordering) :
 	 left(left), right(right), preference(preference), ordering(ordering) {}
 };
@@ -339,7 +342,7 @@ class DilatedPatternDrawing {
 	IncludeExcludeDisks includeExcludeDisks(int i, int j, const Component& c) const;
 	IncludeExcludeDisks includeExcludeDisks(int i, const std::unordered_set<int>& js, const Component& c) const;
 
-	std::vector<Hyperedge> hyperedges() const;
+	std::vector<std::shared_ptr<Hyperedge>> hyperedges() const;
 
 	void drawFaceFill(FaceH fh, renderer::GeometryRenderer& renderer,
 				      const GeneralSettings& gs, const DrawSettings& ds) const;
