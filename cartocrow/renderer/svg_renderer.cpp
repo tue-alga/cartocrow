@@ -103,15 +103,12 @@ void SvgRenderer::draw(const Ray<Inexact>& r) {
 }
 
 void SvgRenderer::draw(const PolygonWithHoles<Inexact>& p) {
-	/*ipe::Curve* curve = convertPolygonToCurve(p.outer_boundary());
-	ipe::Shape* shape = new ipe::Shape();
-	shape->appendSubPath(curve);
+	m_out << "<path " << getStyle() << " d=\"";
+	m_out << convertPolygonToCurve(p.outer_boundary());
 	for (auto hole : p.holes()) {
-		ipe::Curve* holeCurve = convertPolygonToCurve(hole);
-		shape->appendSubPath(holeCurve);
+		m_out << " " << convertPolygonToCurve(hole);
 	}
-	ipe::Path* path = new ipe::Path(getAttributesForStyle(), *shape);
-	m_page->append(ipe::TSelect::ENotSelected, m_layer, path);
+	m_out << "\"/>\n";
 
 	if (m_style.m_mode & vertices) {
 		for (auto v = p.outer_boundary().vertices_begin(); v != p.outer_boundary().vertices_end(); v++) {
@@ -122,8 +119,7 @@ void SvgRenderer::draw(const PolygonWithHoles<Inexact>& p) {
 				draw(*v);
 			}
 		}
-	}*/
-	// TODO
+	}
 }
 
 void SvgRenderer::draw(const Circle<Inexact>& c) {
@@ -203,12 +199,6 @@ void SvgRenderer::draw(const RenderPath& p) {
 void SvgRenderer::drawText(const Point<Inexact>& p, const std::string& text) {
 	m_out << "<text text-anchor=\"middle\" dominant-baseline=\"middle\" x=\"" << p.x() << "\" y=\""
 	      << -p.y() << "\">" << escapeForSvg(text) << "</text>\n";
-	/*ipe::String labelText = escapeForLaTeX(text).data();
-	ipe::Text* label = new ipe::Text(getAttributesForStyle(), labelText,
-	                                 ipe::Vector(p.x(), p.y()), ipe::Text::TextType::ELabel);
-	label->setHorizontalAlignment(ipe::THorizontalAlignment::EAlignHCenter);
-	label->setVerticalAlignment(ipe::TVerticalAlignment::EAlignVCenter);
-	m_page->append(ipe::TSelect::ENotSelected, m_layer, label);*/
 }
 
 void SvgRenderer::pushStyle() {
@@ -244,13 +234,14 @@ void SvgRenderer::setFillOpacity(int alpha) {
 }
 
 std::string SvgRenderer::convertPolygonToCurve(const Polygon<Inexact>& p) const {
-	/*ipe::Curve* curve = new ipe::Curve();
-	for (auto edge = p.edges_begin(); edge != p.edges_end(); edge++) {
-		curve->appendSegment(ipe::Vector(edge->start().x(), edge->start().y()),
-		                     ipe::Vector(edge->end().x(), edge->end().y()));
+	std::stringstream result;
+	bool first = true;
+	for (auto& vertex : p) {
+		result << (first ? "M " : "L ") << vertex.x() << " " << -vertex.y() << " ";
+		first = false;
 	}
-	return curve;*/
-	return "";
+	result << "Z";
+	return result.str();
 }
 
 std::string SvgRenderer::getStyle() const {
@@ -258,6 +249,8 @@ std::string SvgRenderer::getStyle() const {
 		return "fill=\"" + m_style.m_fillColor +
 		       "\" fill-opacity=\"" + std::to_string(m_style.m_fillOpacity) +
 		       "\" stroke=\"" + m_style.m_strokeColor +
+		       "\" stroke-linecap=\"round" +
+		       "\" stroke-linejoin=\"round" +
 		       "\" stroke-opacity=\"" + std::to_string(m_style.m_strokeOpacity) +
 		       "\" stroke-width=\"" + std::to_string(m_style.m_strokeWidth) + "\"";
 	} else if (m_style.m_mode & GeometryRenderer::fill) {
@@ -265,6 +258,8 @@ std::string SvgRenderer::getStyle() const {
 		       "\" fill-opacity=\"" + std::to_string(m_style.m_fillOpacity) + "\"";
 	} else {
 		return "fill=\"none\" stroke=\"" + m_style.m_strokeColor +
+		       "\" stroke-linecap=\"round" +
+		       "\" stroke-linejoin=\"round" +
 		       "\" stroke-opacity=\"" + std::to_string(m_style.m_strokeOpacity) +
 		       "\" stroke-width=\"" + std::to_string(m_style.m_strokeWidth) + "\"";
 	}
