@@ -48,18 +48,20 @@ using namespace cartocrow;
 using json = nlohmann::json;
 
 int main(int argc, char* argv[]) {
-	if (argc != 2 && argc != 3) {
-		std::cout << "Usage: cartocrow <project_file> [<output_file>]\n";
+	if (argc != 3 && argc != 4) {
+		std::cout << "Usage: cartocrow <project_file> <output_file> [<map_file>]\n";
 		std::cout << "where <project_file> is a JSON file describing the map to generate,\n";
-		std::cout << "and <output_file> is the SVG file to write the output to. If <output_file>\n";
-		std::cout << "is omitted, an interactive GUI will be opened instead.\n";
+		std::cout << "<output_file> is the SVG file to write the output to, and <map_file>\n";
+		std::cout << "is an Ipe file containing the underlying map (if necessary for the\n";
+		std::cout << "map type generated.\n";
 		return 1;
 	}
 
 	const std::filesystem::path projectFilename = argv[1];
-	std::string outputFilename = "";
-	if (argc == 3) {
-		outputFilename = argv[2];
+	const std::filesystem::path outputFilename = argv[2];
+	std::string mapFilename = "";
+	if (argc == 4) {
+		mapFilename = argv[3];
 	}
 	std::ifstream f(projectFilename);
 	json projectData = json::parse(f);
@@ -68,7 +70,7 @@ int main(int argc, char* argv[]) {
 	std::shared_ptr<renderer::GeometryPainting> debugPainting;
 
 	if (projectData["type"] == "necklace_map") {
-		RegionMap map = ipeToRegionMap(projectFilename.parent_path() / projectData["map"]);
+		RegionMap map = ipeToRegionMap(mapFilename);
 		auto map_ptr = std::make_shared<RegionMap>(map);
 
 		std::shared_ptr<necklace_map::NecklaceMap> necklaceMap =
@@ -124,20 +126,7 @@ int main(int argc, char* argv[]) {
 		std::cerr << "Unknown type \"" << projectData["type"] << "\" specified\n";
 	}
 
-	if (outputFilename == "") {
-		QApplication a(argc, argv);
-		a.setApplicationName("CartoCrow GUI");
-
-		cartocrow::renderer::GeometryWidget widget(painting);
-		if (debugPainting) {
-			widget.addPainting(debugPainting, "Debug visualization");
-		}
-		widget.show();
-		return a.exec();
-
-	} else {
-		cartocrow::renderer::SvgRenderer renderer(painting);
-		renderer.save(outputFilename);
-		return 0;
-	}
+	cartocrow::renderer::SvgRenderer renderer(painting);
+	renderer.save(outputFilename);
+	return 0;
 }
