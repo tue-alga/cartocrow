@@ -129,27 +129,8 @@ void SvgRenderer::draw(const Circle<Inexact>& c) {
 }
 
 void SvgRenderer::draw(const BezierSpline& s) {
-	/*ipe::Curve* curve = new ipe::Curve();
-	for (BezierCurve c : s.curves()) {
-		std::vector<ipe::Vector> coords;
-		coords.emplace_back(c.source().x(), c.source().y());
-		coords.emplace_back(c.sourceControl().x(), c.sourceControl().y());
-		coords.emplace_back(c.targetControl().x(), c.targetControl().y());
-		coords.emplace_back(c.target().x(), c.target().y());
-		curve->appendSpline(coords);
-	}
-	ipe::Shape* shape = new ipe::Shape();
-	shape->appendSubPath(curve);
-	ipe::Path* path = new ipe::Path(getAttributesForStyle(), *shape);
-	m_page->append(ipe::TSelect::ENotSelected, m_layer, path);
-
-	if (m_style.m_mode & vertices) {
-		for (BezierCurve c : s.curves()) {
-			draw(c.source());
-		}
-		draw(s.curves().back().target());
-	}*/
 	// TODO
+	std::cerr << "The SVG renderer does not support BezierSplines; ignoring\n";
 }
 
 void SvgRenderer::draw(const RenderPath& p) {
