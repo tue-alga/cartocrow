@@ -589,7 +589,7 @@ CSPolygon morph(const std::vector<CSPolyline>& boundaryParts, const CSPolygon& c
 	return outer;
 }
 
-CSPolyline associatedBoundary(CSPolygon component, CSPolygon morphedComponent, CSPolyline boundaryPart) {
+CSPolyline associatedBoundary(const CSPolygon& component, const CSPolygon& morphedComponent, const CSPolyline& boundaryPart) {
 	std::vector<X_monotone_curve_2> morphed_xm_curves;
 	for (auto cit = morphedComponent.curves_begin(); cit != morphedComponent.curves_end(); ++cit) {
 		morphed_xm_curves.push_back(*cit);
@@ -925,22 +925,22 @@ std::vector<std::shared_ptr<Hyperedge>> DilatedPatternDrawing::hyperedges() cons
 
 	std::vector<std::vector<std::shared_ptr<Hyperedge>>> hyperedgesGrouped;
 
-	std::vector<std::shared_ptr<Hyperedge>> group;
+	std::vector<std::shared_ptr<Hyperedge>> currentGroup;
 	std::optional<int> lastSize;
 	for (const auto& fh : interesting) {
-		if (lastSize.has_value() && fh->data().origins.size() != *lastSize && !group.empty()) {
-			hyperedgesGrouped.push_back(group);
-			group.clear();
+		if (lastSize.has_value() && fh->data().origins.size() != *lastSize && !currentGroup.empty()) {
+			hyperedgesGrouped.push_back(currentGroup);
+			currentGroup.clear();
 		}
 		auto he = std::make_shared<Hyperedge>(fh->data().origins, fh->data().relations);
 		for (auto& r : he->relations) {
 			r->hyperedges.push_back(he);
 		}
-		group.push_back(he);
+		currentGroup.push_back(he);
 		lastSize = fh->data().origins.size();
 	}
-	if (!group.empty()) {
-		hyperedgesGrouped.push_back(group);
+	if (!currentGroup.empty()) {
+		hyperedgesGrouped.push_back(currentGroup);
 	}
 
 	std::vector<std::pair<int, std::shared_ptr<Hyperedge>>> trashCan;

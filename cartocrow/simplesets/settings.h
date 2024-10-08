@@ -30,8 +30,8 @@ struct PartitionSettings {
 	bool regularityDelay;
 	/// Delay merges that create patterns that intersect points.
 	bool intersectionDelay;
-	/// Disallow merges that have a point within distance admissableFactor * dilationRadius.
-	Number<Inexact> admissableRadiusFactor;
+	/// Disallow merges that have a point within distance admissibleRadiusFactor * dilationRadius.
+	Number<Inexact> admissibleRadiusFactor;
 };
 
 struct ComputeDrawingSettings {

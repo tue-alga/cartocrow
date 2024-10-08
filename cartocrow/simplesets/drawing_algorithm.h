@@ -330,7 +330,7 @@ CSPolygon thinRectangle(const Point<Exact>& p, const OneRootPoint& n, const Numb
 CSPolygon morph(const std::vector<CSPolyline>& boundaryParts, const CSPolygon& componentShape, const std::vector<Circle<Exact>>& inclDisks,
 				const std::vector<Circle<Exact>>& exclDisks, const GeneralSettings& gs, const ComputeDrawingSettings& cds);
 
-CSPolyline associatedBoundary(CSPolygon component, CSPolygon morphedComponent, CSPolyline boundaryPart);
+CSPolyline associatedBoundary(const CSPolygon& component, const CSPolygon& morphedComponent, const CSPolyline& boundaryPart);
 
 struct IncludeExcludeDisks {
 	std::vector<Circle<Exact>> include;
