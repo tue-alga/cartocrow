@@ -185,16 +185,16 @@ If you want to use [cartocrow-web](https://github.com/tue-alga/cartocrow-web), c
 
 ## Usage
 
-CartoCrow provides a command-line application, simply called `cartocrow`, which can be used to generate maps. To use it, you need a JSON file describing the map to generate, which can then be passed to `cartocrow`:
+CartoCrow provides a command-line application, simply called `cartocrow`, which can be used to generate maps in SVG format. To use it, you need a JSON file describing the map to generate, which can then be passed to `cartocrow`:
 
 ```bash
-build/frontend/cartocrow <json-file>
+build/frontend/cartocrow <input-json> <output-svg> [<map-input>]
 ```
 
 We provide some sample input data to generate a necklace map depicting the population of all countries in Europe:
 
 ```bash
-build/frontend/cartocrow data/europe-population-necklace.json
+build/frontend/cartocrow data/europe-population-necklace.json output.svg data/europe.ipe
 ```
 
 
