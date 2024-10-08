@@ -47,7 +47,7 @@ SvgRenderer::SvgRenderer(const std::shared_ptr<GeometryPainting>& painting, cons
 void SvgRenderer::save(const std::filesystem::path& file) {
 	std::locale::global(std::locale("C"));
 	m_out.open(file);
-	m_out << "<svg version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\">\n";
+	m_out << "<svg version=\"1.1\" xmlns:inkscape=\"http://www.inkscape.org/namespaces/inkscape\" xmlns=\"http://www.w3.org/2000/svg\">\n";
 	m_out << "<defs><circle id=\"vertex\" cx=\"0\" cy=\"0\" r=\"4\"/></defs>\n";
 
 	for (auto painting : m_paintings) {
