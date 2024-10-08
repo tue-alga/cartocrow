@@ -3,6 +3,7 @@ set(SOURCES
 	geometry_widget.cpp
 	ipe_renderer.cpp
 	painting_renderer.cpp
+	function_painting.cpp
 	render_path.cpp
 	svg_renderer.cpp
 )
@@ -12,6 +13,7 @@ set(HEADERS
 	geometry_widget.h
 	ipe_renderer.h
 	painting_renderer.h
+	function_painting.h
 	render_path.h
 	svg_renderer.h
 )

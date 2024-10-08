@@ -15,4 +15,4 @@ target_link_libraries(
     Qt5::Widgets
 )
 
-install(TARGETS isoline_simplification DESTINATION ${INSTALL_BINARY_DIR})
+install(TARGETS isoline_simplification_demo DESTINATION ${INSTALL_BINARY_DIR})

@@ -24,6 +24,10 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 05-12-2019
 
 namespace cartocrow {
 
+Color::Color() : r(0), g(0), b(0) {}
+Color::Color(int r, int g, int b) : r(r), g(g), b(b) {}
+Color::Color(int rgb) : r((rgb & 0xff0000) >> 16), g((rgb & 0x00ff00) >> 8), b(rgb & 0x0000ff) {}
+
 Number<Inexact> wrapAngle(Number<Inexact> alpha, Number<Inexact> beta) {
 	return wrap<Inexact>(alpha, beta, beta + M_2xPI);
 }

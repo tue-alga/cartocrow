@@ -23,6 +23,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "ipe_renderer.h"
 #include "svg_renderer.h"
 
+#include "function_painting.h"
+
 #include <QFileDialog>
 #include <QGuiApplication>
 #include <QPainterPath>
@@ -546,7 +548,7 @@ void GeometryWidget::draw(const BezierSpline& s) {
 
 void GeometryWidget::draw(const Ray<Inexact>& r) {
 	Box bounds = inverseConvertBox(rect());
-	auto result = intersection(r, CGAL::Iso_rectangle_2<Inexact>(Point<Inexact>(bounds.xmin(), bounds.ymin()), Point<Inexact>(bounds.xmax(), bounds.ymax())));
+	auto result = intersection(r, Rectangle<Inexact>(Point<Inexact>(bounds.xmin(), bounds.ymin()), Point<Inexact>(bounds.xmax(), bounds.ymax())));
 	if (result) {
 		if (const Segment<Inexact>* s = boost::get<Segment<Inexact>>(&*result)) {
 			int oldMode = m_style.m_mode;
@@ -683,6 +685,11 @@ void GeometryWidget::addPainting(std::shared_ptr<GeometryPainting> painting, con
 	bool visible = !m_invisibleLayerNames.contains(name);
 	m_paintings.push_back(DrawnPainting{painting, name, visible});
 	updateLayerList();
+}
+
+void GeometryWidget::addPainting(const std::function<void(renderer::GeometryRenderer&)>& draw_function, const std::string& name) {
+	auto painting = std::make_shared<FunctionPainting>(draw_function);
+	addPainting(painting, name);
 }
 
 void GeometryWidget::clear() {

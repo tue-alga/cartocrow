@@ -28,6 +28,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 07-11-2019
 #include <CGAL/Bbox_2.h>
 #include <CGAL/Circle_2.h>
 #include <CGAL/Exact_predicates_exact_constructions_kernel.h>
+#include <CGAL/Exact_predicates_exact_constructions_kernel_with_sqrt.h>
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 #include <CGAL/Line_2.h>
 #include <CGAL/Point_2.h>
@@ -60,6 +61,8 @@ template <class K> using Line = CGAL::Line_2<K>;
 template <class K> using Segment = CGAL::Segment_2<K>;
 /// A ray in the plane. See \ref CGAL::Ray_2.
 template <class K> using Ray = CGAL::Ray_2<K>;
+/// An axis-aligned rectangle in the plane. See \ref CGAL::Iso_rectangle_2.
+template <class K> using Rectangle = CGAL::Iso_rectangle_2<K>;
 
 /// A polygon in the plane. See \ref CGAL::Polygon_2.
 template <class K> using Polygon = CGAL::Polygon_2<K>;
@@ -170,6 +173,12 @@ struct Color {
 	int g;
 	/// Blue component (integer 0-255).
 	int b;
+	/// Constructs the color black.
+	Color();
+	/// Constructs a color.
+	Color(int r, int g, int b);
+	/// Constructs a color from a single integer (useful combined with hexadecimal literals, e.g. 0xFFFFFF).
+	Color(int rgb);
 };
 
 /// Wraps the given number \f$n\f$ to the interval \f$[a, b)\f$.
