@@ -98,8 +98,15 @@ class IpeRenderer : public GeometryRenderer {
 	void setFill(Color color) override;
 	void setFillOpacity(int alpha) override;
 
+	void addPainting(const std::function<void(renderer::GeometryRenderer&)>& draw_function);
+	void addPainting(const std::function<void(renderer::GeometryRenderer&)>& draw_function, const std::string& name);
 	void addPainting(const std::shared_ptr<GeometryPainting>& painting);
 	void addPainting(const std::shared_ptr<GeometryPainting>& painting, const std::string& name);
+
+	/// Paintings will be added to a new page.
+	void nextPage();
+	/// Returns the current page index.
+	int currentPage();
 
   private:
 	/// Converts a polygon to an Ipe curve.
@@ -119,6 +126,8 @@ class IpeRenderer : public GeometryRenderer {
 		std::shared_ptr<GeometryPainting> m_painting;
 		/// The name of the painting displayed as a layer name in ipe.
 		std::optional<std::string> name;
+		/// The Ipe page the painting will be drawn onto.
+		int page_index;
 	};
 
 	/// The paintings we're drawing.
@@ -138,6 +147,8 @@ class IpeRenderer : public GeometryRenderer {
 	ipe::StyleSheet* m_alphaSheet;
 	/// The index of the Ipe layer we are currently drawing to.
 	int m_layer;
+	/// The index of the Ipe page a painting will get drawn to.
+	int m_page_index = 0;
 };
 
 } // namespace cartocrow::renderer

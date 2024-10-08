@@ -19,6 +19,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "ipe_renderer.h"
 
+#include "function_painting.h"
 #include "geometry_renderer.h"
 
 #include <ipeattributes.h>
@@ -74,9 +75,18 @@ void IpeRenderer::save(const std::filesystem::path& file) {
 	m_alphaSheet->setName("alpha-values");
 	document.cascade()->insert(2, m_alphaSheet);
 	setFillOpacity(255); // add default alpha to style sheet
+	setStrokeOpacity(255); // add default alpha to style sheet
 
 	m_page = new ipe::Page();
-	for (auto painting : m_paintings) {
+	document.push_back(m_page);
+
+	int current_page = 0;
+
+	for (auto painting : m_paintings) { // Assumes m_paintings are ordered in increasing page_index
+		while (painting.page_index > current_page) {
+			m_page = new ipe::Page();
+			document.push_back(m_page);
+		}
 		pushStyle();
 		if (auto name = painting.name) {
 			m_page->addLayer(name->c_str());
@@ -88,7 +98,6 @@ void IpeRenderer::save(const std::filesystem::path& file) {
 		popStyle();
 	}
 
-	document.push_back(m_page);
 	document.save(file.string().c_str(), ipe::FileFormat::Xml, 0);
 }
 
@@ -320,17 +329,37 @@ ipe::AllAttributes IpeRenderer::getAttributesForStyle() const {
 	attributes.iStroke = ipe::Attribute(ipe::Color(m_style.m_strokeColor));
 	attributes.iFill = ipe::Attribute(ipe::Color(m_style.m_fillColor));
 	attributes.iOpacity = m_style.m_fillOpacity;
+	attributes.iStrokeOpacity = m_style.m_strokeOpacity;
 	return attributes;
 }
 
+
+void IpeRenderer::addPainting(const std::function<void(renderer::GeometryRenderer&)>& draw_function) {
+	auto painting = std::make_shared<FunctionPainting>(draw_function);
+	addPainting(painting);
+}
+
+void IpeRenderer::addPainting(const std::function<void(renderer::GeometryRenderer&)>& draw_function, const std::string& name) {
+	auto painting = std::make_shared<FunctionPainting>(draw_function);
+	addPainting(painting, name);
+}
+
 void IpeRenderer::addPainting(const std::shared_ptr<GeometryPainting>& painting) {
-	m_paintings.push_back(DrawnPainting{painting});
+	m_paintings.push_back(DrawnPainting{painting, std::nullopt, m_page_index});
 }
 
 void IpeRenderer::addPainting(const std::shared_ptr<GeometryPainting>& painting, const std::string& name) {
 	std::string spaceless;
 	std::replace_copy(name.begin(), name.end(), std::back_inserter(spaceless), ' ', '_');
-	m_paintings.push_back(DrawnPainting{painting, spaceless});
+	m_paintings.push_back(DrawnPainting{painting, spaceless, m_page_index});
+}
+
+void IpeRenderer::nextPage() {
+	++m_page_index;
+}
+
+int IpeRenderer::currentPage() {
+	return m_page_index;
 }
 
 std::string IpeRenderer::escapeForLaTeX(const std::string& text) const {

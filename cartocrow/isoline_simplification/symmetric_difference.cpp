@@ -30,7 +30,7 @@ enum Side {
 	TOP = 3,
 };
 
-Side closest_side(const Point<Exact>& point, const Exact::Iso_rectangle_2& bb) {
+Side closest_side(const Point<Exact>& point, const Rectangle<Exact>& bb) {
 	std::vector<double> dist({ to_double(point.x()) - to_double(bb.xmin()), to_double(point.y()) - to_double(bb.ymin()),
 	                           to_double(bb.xmax()) - to_double(point.x()), to_double(bb.ymax()) - to_double(point.y()) });
 	auto it = std::min_element(dist.begin(), dist.end());
@@ -50,7 +50,7 @@ Vector<Exact> side_direction(const Side& side) {
 	}
 }
 
-Point<Exact> proj_on_side(Point<Exact> p, Side side, const Exact::Iso_rectangle_2& rect) {
+Point<Exact> proj_on_side(Point<Exact> p, Side side, const Rectangle<Exact>& rect) {
 	switch (side) {
 	case LEFT:
 		return { rect.xmin(), p.y() };
@@ -63,7 +63,7 @@ Point<Exact> proj_on_side(Point<Exact> p, Side side, const Exact::Iso_rectangle_
 	}
 }
 
-Point<Exact> corner(const Side& side1, const Side& side2, const Exact::Iso_rectangle_2& rect) {
+Point<Exact> corner(const Side& side1, const Side& side2, const Rectangle<Exact>& rect) {
 	if (side1 > side2) return corner(side2, side1, rect);
 	auto dist = abs(side1 - side2);
 	if (dist == 1) {
@@ -77,7 +77,7 @@ Side next_side(const Side& side) {
 	return static_cast<Side>((side + 1) % 4);
 }
 
-Polygon<Exact> close_isoline(const Isoline<K>& isoline, Exact::Iso_rectangle_2& bb, Side source_side, Side target_side) {
+Polygon<Exact> close_isoline(const Isoline<K>& isoline, Rectangle<Exact>& bb, Side source_side, Side target_side) {
 	std::vector<Point<Exact>> points;
 	std::transform(isoline.m_points.begin(), isoline.m_points.end(), std::back_inserter(points),
 				   [](Point<Inexact> p) { return Point<Exact>(p.x(), p.y()); });
@@ -133,7 +133,7 @@ double symmetric_difference(const Isoline<K>& original, const Isoline<K>& simpli
 	std::transform(simplified.m_points.begin(), simplified.m_points.end(), std::back_inserter(all_points),
 				   [](Point<Inexact> p) { return Point<Exact>(p.x(), p.y()); });
 
-	Exact::Iso_rectangle_2 bb = CGAL::bounding_box(all_points.begin(), all_points.end());
+	Rectangle<Exact> bb = CGAL::bounding_box(all_points.begin(), all_points.end());
 
 	auto source_side = closest_side(
 	    Point<Exact>(original.m_points.front().x(), original.m_points.front().y()), bb);
