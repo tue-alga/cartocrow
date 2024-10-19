@@ -1,6 +1,6 @@
 set(SOURCES
     simplesets_demo.cpp
-    colors.cpp
+    colors/colors.cpp
 )
 
 add_executable(simplesets_demo ${SOURCES})
@@ -19,3 +19,4 @@ target_link_libraries(
 install(TARGETS simplesets_demo DESTINATION ${INSTALL_BINARY_DIR})
 
 add_subdirectory(helpers)
+add_subdirectory(filtration_demo)
