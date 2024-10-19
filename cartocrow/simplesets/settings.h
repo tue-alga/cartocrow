@@ -50,7 +50,7 @@ struct DrawSettings {
 	}
 	Color getColor(int category) const {
 		Color fillColor;
-		if (category > colors.size() || category < 0) {
+		if (category >= colors.size() || category < 0) {
 			std::cerr << "Warning! No color specified for category " << category << std::endl;
 			fillColor = Color{240, 240, 240};
 		} else {
