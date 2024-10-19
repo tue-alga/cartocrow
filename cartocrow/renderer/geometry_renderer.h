@@ -90,6 +90,10 @@ class GeometryRenderer {
 	virtual void draw(const Point<Inexact>& p) = 0;
 	/// Draws a single line segment with the currently set style.
 	void draw(const Segment<Inexact>& s);
+	/// Draws a rectangle
+	void draw(const Rectangle<Inexact>& r);
+	/// Draws a box
+	void draw(const Box& r);
 	/// Draws a simple polygon with the currently set style.
 	void draw(const Polygon<Inexact>& p);
 	/// Draws a polyline with the currently set style.

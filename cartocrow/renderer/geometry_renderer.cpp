@@ -29,6 +29,20 @@ void GeometryRenderer::draw(const Segment<Inexact>& s) {
 	draw(path);
 }
 
+void GeometryRenderer::draw(const Rectangle<Inexact>& r) {
+	RenderPath path;
+	path.moveTo(r.vertex(0));
+	for (int i = 1; i < 4; ++i) {
+		path.lineTo(r.vertex(i));
+	}
+	path.close();
+	draw(path);
+}
+
+void GeometryRenderer::draw(const Box& b) {
+	draw(Rectangle<Inexact>({b.xmin(), b.ymin()}, {b.xmax(), b.ymax()}));
+}
+
 void GeometryRenderer::draw(const Polygon<Inexact>& p) {
 	RenderPath path;
 	for (auto vertex = p.vertices_begin(); vertex != p.vertices_end(); vertex++) {
