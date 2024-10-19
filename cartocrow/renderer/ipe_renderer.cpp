@@ -82,10 +82,11 @@ void IpeRenderer::save(const std::filesystem::path& file) {
 
 	int current_page = 0;
 
-	for (auto painting : m_paintings) { // Assumes m_paintings are ordered in increasing page_index
+	for (const auto& painting : m_paintings) { // Assumes m_paintings are ordered in increasing page_index
 		while (painting.page_index > current_page) {
 			m_page = new ipe::Page();
 			document.push_back(m_page);
+			++current_page;
 		}
 		pushStyle();
 		if (auto name = painting.name) {
