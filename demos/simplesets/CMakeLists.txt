@@ -20,3 +20,4 @@ install(TARGETS simplesets_demo DESTINATION ${INSTALL_BINARY_DIR})
 
 add_subdirectory(helpers)
 add_subdirectory(filtration_demo)
+add_subdirectory(offset_demo)
