@@ -16,7 +16,6 @@ target_link_libraries(
     isoline_simplification
     renderer
     CGAL::CGAL
-    Qt5::Widgets
     glog::glog
     nlohmann_json::nlohmann_json
 )

@@ -215,6 +215,9 @@ class GeometryWidget : public QWidget, public GeometryRenderer {
 	/// Launches a file picker that allows the user to save the drawing to an
 	/// Ipe file.
 	void saveToIpe();
+	/// Launches a file picker that allows the user to save the drawing to an
+	/// SVG file.
+	void saveToSvg();
 
   signals:
 	/// Emitted when the user clicks on the widget.
@@ -325,6 +328,8 @@ class GeometryWidget : public QWidget, public GeometryRenderer {
 	QToolButton* m_zoomInButton;
 	/// The save to Ipe button in the toolbar.
 	QToolButton* m_saveToIpeButton;
+	/// The save to SVG button in the toolbar.
+	QToolButton* m_saveToSvgButton;
 };
 
 } // namespace cartocrow::renderer
