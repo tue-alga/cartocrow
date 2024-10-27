@@ -50,6 +50,9 @@ class RenderPath {
 	void arcTo(Point<Inexact> center, bool clockwise, Point<Inexact> to);
 	void close();
 
+	RenderPath operator+(const RenderPath& other);
+	RenderPath& operator+=(const RenderPath& other);
+
   private:
 	std::vector<Command> m_commands;
 };

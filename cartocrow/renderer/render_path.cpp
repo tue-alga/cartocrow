@@ -41,4 +41,15 @@ void RenderPath::close() {
 	m_commands.push_back(Close{});
 }
 
+RenderPath RenderPath::operator+(const RenderPath& other) {
+	RenderPath path;
+	std::copy(m_commands.begin(), m_commands.end(), std::back_inserter(path.m_commands));
+	std::copy(other.m_commands.begin(), other.m_commands.end(), std::back_inserter(path.m_commands));
+	return path;
+}
+
+RenderPath& RenderPath::operator+=(const RenderPath& other) {
+	std::copy(other.m_commands.begin(), other.m_commands.end(), std::back_inserter(m_commands));
+	return *this;
+}
 } // namespace cartocrow::renderer

@@ -34,7 +34,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "cartocrow/simplesets/patterns/island.h"
 #include "cartocrow/simplesets/patterns/matching.h"
 #include "cartocrow/simplesets/patterns/single_point.h"
-#include "colors.h"
+#include "colors/colors.h"
 #include <CGAL/Bbox_2.h>
 #include <QApplication>
 #include <QCheckBox>

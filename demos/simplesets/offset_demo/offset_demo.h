@@ -5,7 +5,6 @@
 #include "cartocrow/simplesets/partition.h"
 #include "cartocrow/renderer/geometry_widget.h"
 #include <filesystem>
-#include "cavc/include/cavc/polylineoffset.hpp"
 
 using namespace cartocrow::simplesets;
 using namespace cartocrow::renderer;
@@ -18,7 +17,10 @@ class OffsetDemo: public QMainWindow {
 
   private:
 	GeometryWidget* m_renderer;
-	std::vector<cavc::Polyline<double>> m_results;
+	CSPolygonSet m_smoothed;
+	CSPolygonSet m_smoothed_;
+	CSPolygonSet m_dilated;
+	CSPolygonSet m_eroded;
 };
 
 #endif //CARTOCROW_OFFSET_DEMO_H

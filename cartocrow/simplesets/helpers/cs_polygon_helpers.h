@@ -36,6 +36,7 @@ bool inside(const CSPolygon& polygon, const Point<Exact>& point);
 CSPolycurve arrPolycurveFromCSPolygon(const CSPolygon& polygon);
 Polygon<Exact> linearSample(const CSPolygon& polygon, int n);
 CSPolygonWithHoles approximateDilate(const CSPolygon& polygon, double r, double eps, int n);
+bool is_simple(const CSPolygon& pgn);
 }
 
 #endif //CARTOCROW_CS_POLYGON_HELPERS_H

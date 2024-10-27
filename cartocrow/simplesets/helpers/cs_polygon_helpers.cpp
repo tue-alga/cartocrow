@@ -1,6 +1,9 @@
 #include "cs_polygon_helpers.h"
 #include "cs_curve_helpers.h"
 #include <CGAL/approximated_offset_2.h>
+#include <CGAL/Boolean_set_operations_2/Gps_polygon_validation.h>
+#include <CGAL/Surface_sweep_2.h>
+#include <CGAL/Surface_sweep_2/Default_visitor.h>
 
 // Code adapted from a Stack Overflow answer by HEKTO.
 // Link: https://stackoverflow.com/questions/69399922/how-does-one-obtain-the-area-of-a-general-polygon-set-in-cgal
@@ -249,5 +252,24 @@ Polygon<Exact> linearSample(const CSPolygon& polygon, int n) {
 CSPolygonWithHoles approximateDilate(const CSPolygon& polygon, double r, double eps, int n) {
 	auto poly = linearSample(polygon, n);
 	return CGAL::approximated_offset_2(poly, r, eps);
+}
+
+bool is_simple(const CSPolygon& pgn) {
+	typedef typename CSTraitsBoolean::Curve_const_iterator       Curve_const_iterator;
+	typedef std::pair<Curve_const_iterator,Curve_const_iterator>
+	    Cci_pair;
+
+	// Sweep the boundary curves and look for intersections.
+	typedef CGAL::Gps_polygon_validation_visitor<CSTraitsBoolean>      Visitor;
+	typedef CGAL::Ss2::Surface_sweep_2<Visitor>                 Surface_sweep;
+
+	CSTraitsBoolean traits;
+
+	Cci_pair itr_pair = traits.construct_curves_2_object()(pgn);
+	Visitor visitor;
+	Surface_sweep surface_sweep(&traits, &visitor);
+
+	visitor.sweep(itr_pair.first, itr_pair.second);
+	return visitor.is_valid();
 }
 }

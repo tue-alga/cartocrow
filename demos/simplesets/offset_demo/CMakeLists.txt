@@ -5,8 +5,6 @@ set(SOURCES
 
 add_executable(offset_demo ${SOURCES})
 
-add_subdirectory(cavc)
-
 target_link_libraries(
     offset_demo
     PRIVATE

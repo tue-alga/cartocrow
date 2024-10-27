@@ -11,8 +11,10 @@ set(SOURCES
 	helpers/approximate_convex_hull.cpp
 	helpers/cs_curve_helpers.cpp
 	helpers/cs_polygon_helpers.cpp
+	helpers/cs_polygonset_helpers.cpp
 	helpers/cs_polyline_helpers.cpp
 	helpers/poly_line_gon_intersection.cpp
+	helpers/cavc_helpers.cpp
 	partition_algorithm.cpp
 	partition_painting.cpp
 	drawing_algorithm.cpp
@@ -37,7 +39,9 @@ set(HEADERS
 	helpers/cropped_voronoi.h
 	helpers/cs_curve_helpers.h
 	helpers/cs_polygon_helpers.h
+	helpers/cs_polygonset_helpers.h
 	helpers/cs_polyline_helpers.h
+	helpers/cavc_helpers.h
 	partition_algorithm.h
 	partition_painting.h
 	partition.h
@@ -45,6 +49,8 @@ set(HEADERS
 	general_polyline.h
 	grow_circles.h
 )
+
+add_subdirectory(helpers/cavc)
 
 add_library(simplesets ${SOURCES})
 target_link_libraries(simplesets
