@@ -14,6 +14,10 @@ CSPolygonSet approximateDilate(const CSPolygonSet& csPolygonSet, double radius);
 CSPolygonSet approximateErode(const CSPolygonSet& csPolygonSet, double radius);
 CSPolygonSet approximateSmooth(const CSPolygonSet& csPolygonSet, double radius);
 CSPolygonSet approximateSmooth_(const CSPolygonSet& polygonSet, double radius);
+CSPolygonSet approximateDilate(const CSPolygonSet& csPolygonSet, Number<Exact> radius);
+CSPolygonSet approximateErode(const CSPolygonSet& csPolygonSet, Number<Exact> radius);
+CSPolygonSet approximateSmooth(const CSPolygonSet& csPolygonSet, Number<Exact> radius);
+CSPolygonSet approximateSmooth_(const CSPolygonSet& polygonSet, Number<Exact> radius);
 
 cavc::Polyline<double> cavcPolyline(const CSPolygon& polygon);
 cavc::Polyline<double> cavcPolyline(const CSPolyline& polyline);

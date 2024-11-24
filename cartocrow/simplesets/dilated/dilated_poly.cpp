@@ -4,14 +4,14 @@
 #include <CGAL/approximated_offset_2.h>
 
 namespace cartocrow::simplesets {
-CSPolygon dilateSegment(const Segment<Inexact>& segment, const Number<Inexact>& dilationRadius) {
+CSPolygon dilateSegment(const Segment<Inexact>& segment, const Number<Exact>& dilationRadius) {
 	std::vector<Point<Exact>> points({makeExact(segment.source()), makeExact(segment.target())});
 	Polygon<Exact> polygon(points.begin(), points.end());
 	auto dilation = CGAL::approximated_offset_2(polygon, dilationRadius, M_EPSILON);
 	return dilation.outer_boundary();
 }
 
-Dilated::Dilated(const PolyPattern& polyPattern, const Number<Inexact>& dilationRadius) {
+Dilated::Dilated(const PolyPattern& polyPattern, const Number<Exact>& dilationRadius) {
 	m_catPoints = polyPattern.catPoints();
 
 	auto cont = polyPattern.poly();

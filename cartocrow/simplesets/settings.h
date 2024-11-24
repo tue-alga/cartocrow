@@ -15,7 +15,7 @@ struct GeneralSettings {
 	Number<Inexact> maxTurnAngle;
 
 	/// The distance each pattern is dilated.
-	Number<Inexact> dilationRadius() const {
+	[[nodiscard]] Number<Exact> dilationRadius() const {
 		return pointSize * 3;
 	}
 };

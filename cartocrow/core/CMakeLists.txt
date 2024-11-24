@@ -14,6 +14,7 @@ set(HEADERS
 	region_map.h
 	timer.h
 	bezier.h
+	rectangle_helpers.h
 )
 
 add_library(core ${SOURCES})

@@ -59,17 +59,19 @@ SimpleSetsDemo::SimpleSetsDemo() {
 	m_cds = ComputeDrawingSettings{0.675};
 
 	// Initial file
-	std::filesystem::path filePath("data/nyc.txt");
+//	std::filesystem::path filePath("data/overlap-example-1.txt");
+//	std::filesystem::path filePath("data/nyc.txt");
+	std::filesystem::path filePath("data/diseasome.txt");
 
 	// nyc
-	m_gs = GeneralSettings{2.1, 2, M_PI, 70.0 / 180 * M_PI};
-	m_ds = DrawSettings{{CB::light_blue, CB::light_red, CB::light_green, CB::light_purple, CB::light_orange}, 0.7};
-	m_ps = PartitionSettings{true, true, true, true, 0.1};
+//	m_gs = GeneralSettings{2.1, 2, M_PI, 70.0 / 180 * M_PI};
+//	m_ds = DrawSettings{{CB::light_blue, CB::light_red, CB::light_green, CB::light_purple, CB::light_orange}, 0.7};
+//	m_ps = PartitionSettings{true, true, true, true, 0.1};
 
 	// diseasome
-//	m_gs = GeneralSettings{5.204, 2, M_PI, 70.0 / 180 * M_PI};
-//	m_ds = DrawSettings{diseasome::colors, 0.7};
-//	m_ps = PartitionSettings{true, true, true, false, 0.5};
+	m_gs = GeneralSettings{5.204, 2, M_PI, 70.0 / 180 * M_PI};
+	m_ds = DrawSettings{diseasome::colors, 0.7};
+	m_ps = PartitionSettings{true, true, true, false, 0.5};
 
 	auto* dockWidget = new QDockWidget();
 	addDockWidget(Qt::RightDockWidgetArea, dockWidget);
@@ -159,7 +161,7 @@ void SimpleSetsDemo::fitToScreen() {
 	std::transform(m_points.begin(), m_points.end(), std::back_inserter(pts),
 	               [](const CatPoint& pt) { return pt.point; });
 	Box box = CGAL::bbox_2(pts.begin(), pts.end());
-	auto delta = 2 * m_gs.dilationRadius();
+	auto delta = CGAL::to_double(2 * m_gs.dilationRadius());
 	Box expanded(box.xmin() - delta, box.ymin() - delta, box.xmax() + delta, box.ymax() + delta);
 	m_renderer->fitInView(expanded);
 }
@@ -169,7 +171,7 @@ void SimpleSetsDemo::resizeEvent(QResizeEvent *event) {
 }
 
 void SimpleSetsDemo::computePartitions(){
-	m_partitions = partition(m_points, m_gs, m_ps, 8 * m_gs.dilationRadius());
+	m_partitions = partition(m_points, m_gs, m_ps, 8 * CGAL::to_double(m_gs.dilationRadius()));
 }
 
 void SimpleSetsDemo::computeDrawing(double cover) {
@@ -204,7 +206,7 @@ void SimpleSetsDemo::computeDrawing(double cover) {
 	if (wellSeparated) {
 		m_dpd = std::make_shared<DilatedPatternDrawing>(m_partition, m_gs, m_cds);
 		auto ap = std::make_shared<SimpleSetsPainting>(*m_dpd, m_ds);
-		m_renderer->addPainting(ap, "Arrangement");
+		m_renderer->addPainting(ap, "Drawing");
 	} else {
 		std::cerr << "Points of different category are too close together; not computing a drawing." << std::endl;
 	}

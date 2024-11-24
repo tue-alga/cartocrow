@@ -5,6 +5,8 @@
 #define CARTOCROW_CS_CURVE_HELPERS_H
 
 namespace cartocrow::simplesets {
+OneRootPoint closestOnCircle(const Circle<Exact>& circle, const Point<Exact>& point);
+
 template <class OutputIterator>
 void curveToXMonotoneCurves(const Curve_2& curve, OutputIterator out) {
 	CSTraits traits;
@@ -82,6 +84,9 @@ CSPolycurve arrPolycurveFromXMCurves(InputIterator begin, InputIterator end) {
 }
 
 bool liesOn(const X_monotone_curve_2& c1, const X_monotone_curve_2& c2);
+
+Vector<Inexact> startTangent(const X_monotone_curve_2& c);
+Vector<Inexact> endTangent(const X_monotone_curve_2& c);
 }
 
 #endif //CARTOCROW_CS_CURVE_HELPERS_H

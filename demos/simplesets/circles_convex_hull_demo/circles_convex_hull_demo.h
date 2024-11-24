@@ -1,5 +1,5 @@
-#ifndef CARTOCROW_CIRCLE_CONVEX_HULL_H
-#define CARTOCROW_CIRCLE_CONVEX_HULL_H
+#ifndef CARTOCROW_CIRCLES_CONVEX_HULL_DEMO_H
+#define CARTOCROW_CIRCLES_CONVEX_HULL_DEMO_H
 
 #include "cartocrow/core/core.h"
 #include "cartocrow/core/ipe_reader.h"
@@ -22,4 +22,4 @@ class CircleConvexHullDemo: public QMainWindow {
 
 };
 
-#endif //CARTOCROW_CIRCLE_CONVEX_HULL_H
+#endif //CARTOCROW_CIRCLES_CONVEX_HULL_DEMO_H

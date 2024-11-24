@@ -12,6 +12,10 @@ Point<Exact> makeExact(const Point<Inexact>& point) {
 	return {point.x(), point.y()};
 }
 
+Vector<Exact> makeExact(const Vector<Inexact>& vector) {
+	return {vector.x(), vector.y()};
+}
+
 Circle<Exact> makeExact(const Circle<Inexact>& circle) {
 	return {makeExact(circle.center()), circle.squared_radius()};
 }

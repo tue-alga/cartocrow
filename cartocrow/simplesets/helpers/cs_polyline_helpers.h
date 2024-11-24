@@ -13,6 +13,8 @@ bool liesOn(const X_monotone_curve_2& c, const CSPolyline& polyline);
 renderer::RenderPath renderPath(const CSPolyline& polyline);
 CSPolycurve arrPolycurveFromCSPolyline(const CSPolyline& polyline);
 CSPolyline polylineToCSPolyline(const Polyline<Exact>& polyline);
+std::tuple<CSPolyline, Point<Exact>, Point<Exact>> extend(const CSPolyline& polyline, Number<Inexact> amount, Number<Exact> dilationRadius);
+CSPolygon closeAroundBB(CSPolyline polyline, CGAL::Orientation orientation, Number<Inexact> offset, const Point<Exact>& source, const Point<Exact>& target);
 }
 
 #endif //CARTOCROW_CS_POLYLINE_HELPERS_H

@@ -6,7 +6,9 @@
 #include "helpers/arrangement_helpers.h"
 #include "helpers/cs_curve_helpers.h"
 #include "helpers/cs_polygon_helpers.h"
+#include "helpers/cs_polygonset_helpers.h"
 #include "helpers/cs_polyline_helpers.h"
+#include "helpers/cavc_helpers.h"
 #include <CGAL/Boolean_set_operations_2.h>
 #include <CGAL/Boolean_set_operations_2/Gps_polygon_validation.h>
 #include <utility>
@@ -474,51 +476,86 @@ CSPolygon morph(const std::vector<CSPolyline>& boundaryParts, const CSPolygon& c
 
 	std::vector<Circle<Inexact>> expandedLineCoveringDisks;
 	for (const auto& d : lineCovering) {
-		expandedLineCoveringDisks.emplace_back(approximate(d.center()), squared(sqrt(CGAL::to_double(d.squared_radius())) + sr));
+		expandedLineCoveringDisks.emplace_back(approximate(d.center()), squared(sqrt(CGAL::to_double(d.squared_radius())) + CGAL::to_double(sr)));
 	}
 	auto diskComponents = connectedDisks(expandedLineCoveringDisks);
 
-	auto nearestOnBoundary = [&boundaryParts](const Point<Exact>& point) {
+	auto nearestOnBoundary = [&boundaryParts](const Point<Exact>& point) -> std::pair<const CSPolyline*, OneRootPoint> {
 		std::optional<OneRootNumber> minSqrdDist;
-		std::optional<OneRootPoint> closest;
+		std::optional<OneRootPoint> closestPoint;
+	  	const CSPolyline* closestBp;
 		for (const auto& bp : boundaryParts) {
 			auto n = nearest(bp, point);
 			auto sqrdDist = CGAL::square(n.x() - point.x()) + CGAL::square(n.y() - point.y());
 			if (!minSqrdDist.has_value() || sqrdDist < *minSqrdDist) {
 				minSqrdDist = sqrdDist;
-				closest = n;
+				closestPoint = n;
+				closestBp = &bp;
 			}
 		}
-		return *closest;
+		return {closestBp, *closestPoint};
 	};
 
-	std::vector<CSPolygon> cuts;
-	std::vector<Circle<Exact>> rectangleCutDisks;
+	CSPolygonSet dilatedCuts;
+	CSPolygonSet veryDilatedCuts;
 	for (const auto& comp : diskComponents) {
 		std::vector<Circle<Exact>> disks;
 		for (const auto& [i, _] : comp) {
 			disks.push_back(lineCovering[i]);
 		}
 		auto hull = approximateConvexHull(disks);
-		cuts.push_back(hull);
+		CSPolygonSet cutSet(hull);
 
 		// Only cut out a rectangle to the nearest disk of the component
 		std::optional<Number<Exact>> minDist;
 		std::optional<Circle<Exact>> closestDisk;
+		std::optional<OneRootPoint> nearest;
+		const CSPolyline* closestBp;
 
 		for (const auto& d : disks) {
-			if (inside(componentShape, d.center())) {
-				auto n = nearestOnBoundary(d.center());
-				auto dist = CGAL::squared_distance(approximateAlgebraic(n), approximate(d.center()));
-				if (!minDist.has_value() || dist < *minDist) {
+			auto [cbp, n] = nearestOnBoundary(d.center());
+			auto dist = CGAL::squared_distance(approximateAlgebraic(n), approximate(d.center()));
+			if (!minDist.has_value() || dist < *minDist) {
+				closestBp = cbp;
+				if (inside(componentShape, d.center())) {
 					minDist = dist;
+					nearest = n;
 					closestDisk = d;
 				}
 			}
 		}
 
 		if (closestDisk.has_value()) {
-			rectangleCutDisks.push_back(*closestDisk);
+			cutSet.join(thinRectangle(closestDisk->center(), *nearest, gs.pointSize));
+		}
+
+		auto dilatedCutSet = approximateDilate(cutSet, 8 * sr);
+		auto bp = *closestBp;
+		auto [bpE, bpEstart, bpEtarget] = extend(bp, CGAL::to_double(8 * sr), dr);
+		auto pgn = closeAroundBB(bpE, CGAL::COUNTERCLOCKWISE, 4 * CGAL::to_double(dr), bpEstart, bpEtarget);
+		if (pgn.orientation() == CGAL::CLOCKWISE) {
+			pgn.reverse_orientation();
+		}
+		dilatedCutSet.difference(pgn);
+
+		dilatedCutSet.join(hull);
+		if (closestDisk.has_value()) {
+			dilatedCutSet.join(thinRectangle(closestDisk->center(), *nearest, gs.pointSize));
+		}
+
+		// todo: Check if .join works
+		std::vector<CSPolygonWithHoles> withHoles;
+		dilatedCutSet.polygons_with_holes(std::back_inserter(withHoles));
+		for (const auto& wh : withHoles) {
+			veryDilatedCuts.join(wh);
+		}
+
+		// todo: Check if .join works
+		std::vector<CSPolygonWithHoles> withHoles2;
+		auto drDilatedCutSet = approximateDilate(cutSet, 1.49 * sr);
+		drDilatedCutSet.polygons_with_holes(std::back_inserter(withHoles2));
+		for (const auto& wh : withHoles2) {
+			dilatedCuts.join(wh);
 		}
 
 		CSTraitsBoolean traits;
@@ -543,31 +580,56 @@ CSPolygon morph(const std::vector<CSPolyline>& boundaryParts, const CSPolygon& c
 	}
 
 	for (const auto& d : arcCovering) {
-		cuts.push_back(circleToCSPolygon(d));
+		CSPolygonSet cutSet(circleToCSPolygon(d));
+
+		auto [bp, n] = nearestOnBoundary(d.center());
 		if (inside(componentShape, d.center())) {
-			rectangleCutDisks.push_back(d);
+			cutSet.join(thinRectangle(d.center(), n, gs.pointSize));
+		}
+
+		auto dilatedCutSet = approximateDilate(cutSet, 8 * sr);
+		auto [bpE, bpEstart, bpEtarget] = extend(*bp, CGAL::to_double(8 * sr), dr);
+		auto pgn = closeAroundBB(bpE, CGAL::COUNTERCLOCKWISE, 4 * CGAL::to_double(dr), bpEstart, bpEtarget);
+		CSTraitsBoolean traits;
+		if (pgn.orientation() == CGAL::CLOCKWISE) {
+			pgn.reverse_orientation();
+		}
+
+		dilatedCutSet.difference(pgn);
+
+		dilatedCutSet.join(circleToCSPolygon(d));
+		if (inside(componentShape, d.center())) {
+			dilatedCutSet.join(thinRectangle(d.center(), n, gs.pointSize));
+		}
+
+		// todo: Check if .join works
+		std::vector<CSPolygonWithHoles> withHoles;
+		dilatedCutSet.polygons_with_holes(std::back_inserter(withHoles));
+		for (const auto& wh : withHoles) {
+			veryDilatedCuts.join(wh);
+		}
+
+		// todo: Check if .join works
+		std::vector<CSPolygonWithHoles> withHoles2;
+		auto drDilatedCutSet = approximateDilate(cutSet, 1.49 * sr);
+		drDilatedCutSet.polygons_with_holes(std::back_inserter(withHoles2));
+		for (const auto& wh : withHoles2) {
+			dilatedCuts.join(wh);
 		}
 	}
 
-	CSPolygonSet polygonSet;
-	for (const auto& cut : cuts) {
-		polygonSet.join(cut);
-	}
-
-	for (const auto& d : rectangleCutDisks) {
-		auto n = nearestOnBoundary(d.center());
-		auto rect = thinRectangle(d.center(), n, gs.pointSize);
-		polygonSet.join(rect);
-	}
-
 	for (const auto& d: inclDisks) {
-		polygonSet.difference(circleToCSPolygon(d));
+		veryDilatedCuts.difference(circleToCSPolygon(d));
 	}
-	std::vector<CSPolygonWithHoles> modifiedCuts;
-	polygonSet.polygons_with_holes(std::back_inserter(modifiedCuts));
+
+	auto smoothedSet = approximateSmooth(veryDilatedCuts, sr);
+	smoothedSet.intersection(dilatedCuts);
+
+	std::vector<CSPolygonWithHoles> modifiedCuts2;
+	smoothedSet.polygons_with_holes(std::back_inserter(modifiedCuts2));
 
 	CSPolygonSet polygonSet2(componentShape);
-	for (const auto& modifiedCut : modifiedCuts) {
+	for (const auto& modifiedCut : modifiedCuts2) {
 		polygonSet2.difference(modifiedCut);
 	}
 

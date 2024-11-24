@@ -54,8 +54,21 @@ std::variant<CSPolyline, CSPolygon> toCSPoly(const cavc::Polyline<double>& polyl
 	}
 }
 
+CSPolygon remove_degeneracies(const CSPolygon& polygon) {
+	std::vector<X_monotone_curve_2> xmCurves;
+	for (auto cit = polygon.curves_begin(); cit != polygon.curves_end(); ++cit) {
+		auto as = approximateAlgebraic(cit->source());
+		auto at = approximateAlgebraic(cit->target());
+		if (CGAL::squared_distance(as, at) > M_EPSILON) {
+			xmCurves.push_back(*cit);
+		}
+	}
+	return {xmCurves.begin(), xmCurves.end()};
+}
+
 cavc::Polyline<double> cavcPolyline(const CSPolygon& polygon) {
-	return cavcPolyline(polygon.curves_begin(), polygon.curves_end(), true);
+	auto clean = remove_degeneracies(polygon);
+	return cavcPolyline(clean.curves_begin(), clean.curves_end(), true);
 }
 
 cavc::Polyline<double> cavcPolyline(const CSPolyline& polyline) {
@@ -200,5 +213,21 @@ CSPolygonSet approximateSmooth_(const CSPolygonSet& polygonSet, double radius) {
 	auto dilatedReady = reverseLoopSet(dilated);
 	auto final = alg.compute(dilatedReady, radius);
 	return csPolygonSet(final, false);
+}
+
+CSPolygonSet approximateDilate(const CSPolygonSet& csPolygonSet, Number<Exact> radius) {
+	return approximateDilate(csPolygonSet, CGAL::to_double(radius));
+}
+
+CSPolygonSet approximateErode(const CSPolygonSet& csPolygonSet, Number<Exact> radius) {
+	return approximateErode(csPolygonSet, CGAL::to_double(radius));
+}
+
+CSPolygonSet approximateSmooth(const CSPolygonSet& csPolygonSet, Number<Exact> radius) {
+	return approximateSmooth(csPolygonSet, CGAL::to_double(radius));
+}
+
+CSPolygonSet approximateSmooth_(const CSPolygonSet& polygonSet, Number<Exact> radius) {
+	return approximateSmooth_(polygonSet, CGAL::to_double(radius));
 }
 }

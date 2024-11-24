@@ -71,8 +71,10 @@ OneRootPoint nearest(const X_monotone_curve_2& xm_curve, const Point<Exact>& poi
 			if (liesOn(opposite, xm_curve)) {
 				return opposite;
 			}
-			auto sdLeft = CGAL::square(point.x() - xm_curve.left().x()) + CGAL::square(point.y() - xm_curve.left().y());
-			auto sdRight = CGAL::square(point.x() - xm_curve.right().x()) + CGAL::square(point.y() - xm_curve.right().y());
+			auto sdLeft = CGAL::square(point.x() - xm_curve.left().x()) +
+			              CGAL::square(point.y() - xm_curve.left().y());
+			auto sdRight = CGAL::square(point.x() - xm_curve.right().x()) +
+			               CGAL::square(point.y() - xm_curve.right().y());
 			if (sdLeft < sdRight) {
 				return xm_curve.left();
 			} else {
@@ -96,8 +98,8 @@ bool liesOn(const Point<Exact>& p, const X_monotone_curve_2& xm_curve) {
 bool liesOn(const OneRootPoint& p, const X_monotone_curve_2& xm_curve) {
 	if (p.x() < xm_curve.left().x() || p.x() > xm_curve.right().x())
 		return false;
-//	CSTraits traits;
-//	auto lies_on = traits.compare_y_at_x_2_object();
+	//	CSTraits traits;
+	//	auto lies_on = traits.compare_y_at_x_2_object();
 	return xm_curve.point_position(p) == CGAL::EQUAL;
 }
 
@@ -108,11 +110,15 @@ bool liesOn(const X_monotone_curve_2& c1, const X_monotone_curve_2& c2) {
 		return false;
 	}
 	if (c2.is_linear()) {
-		if (c1.is_circular()) return false;
-		if (c1.supporting_line() != c2.supporting_line()) return false;
+		if (c1.is_circular())
+			return false;
+		if (c1.supporting_line() != c2.supporting_line())
+			return false;
 	} else {
-		if (c1.is_linear()) return false;
-		if (c1.supporting_circle() != c2.supporting_circle()) return false;
+		if (c1.is_linear())
+			return false;
+		if (c1.supporting_circle() != c2.supporting_circle())
+			return false;
 	}
 
 	return true;
@@ -143,12 +149,13 @@ void addToRenderPath(const X_monotone_curve_2& xm_curve, renderer::RenderPath& p
 	}
 	if (xm_curve.is_linear()) {
 		path.lineTo(at);
-	} else if (xm_curve.is_circular()){
+	} else if (xm_curve.is_circular()) {
 		if (CGAL::squared_distance(as, at) < M_EPSILON) {
 			return;
 		}
 		const auto& circle = xm_curve.supporting_circle();
-		path.arcTo(approximate(circle.center()), xm_curve.orientation() == CGAL::CLOCKWISE, approximateAlgebraic(xm_curve.target()));
+		path.arcTo(approximate(circle.center()), xm_curve.orientation() == CGAL::CLOCKWISE,
+		           approximateAlgebraic(xm_curve.target()));
 	}
 }
 
@@ -173,12 +180,13 @@ void addToRenderPath(const Curve_2& curve, renderer::RenderPath& path, bool& fir
 	}
 	if (curve.is_linear()) {
 		path.lineTo(at);
-	} else if (curve.is_circular()){
+	} else if (curve.is_circular()) {
 		if (CGAL::squared_distance(as, at) < M_EPSILON) {
 			return;
 		}
 		const auto& circle = curve.supporting_circle();
-		path.arcTo(approximate(circle.center()), curve.orientation() == CGAL::CLOCKWISE, approximateAlgebraic(curve.target()));
+		path.arcTo(approximate(circle.center()), curve.orientation() == CGAL::CLOCKWISE,
+		           approximateAlgebraic(curve.target()));
 	}
 }
 
@@ -188,7 +196,38 @@ Curve_2 toCurve(const X_monotone_curve_2& xmc) {
 	} else if (xmc.is_circular()) {
 		return {xmc.supporting_circle(), xmc.source(), xmc.target()};
 	} else {
-		throw std::runtime_error("Impossible: circle-segment x-monotone curve is neither linear nor circular.");
+		throw std::runtime_error(
+		    "Impossible: circle-segment x-monotone curve is neither linear nor circular.");
+	}
+}
+
+Vector<Inexact> startTangent(const X_monotone_curve_2& c) {
+	if (c.is_linear()) {
+		auto l = c.supporting_line();
+		auto v = approximate(l.to_vector());
+		auto len = sqrt(v.squared_length());
+		return v / len;
+	} else {
+		auto circle = c.supporting_circle();
+		auto v = approximate(approximateAlgebraic(c.source())) - approximate(circle.center());
+		auto p = v.perpendicular(circle.orientation());
+		auto len = sqrt(p.squared_length());
+		return p / len;
+	}
+}
+
+Vector<Inexact> endTangent(const X_monotone_curve_2& c) {
+	if (c.is_linear()) {
+		auto l = c.supporting_line();
+		auto v = approximate(l.to_vector());
+		auto len = sqrt(v.squared_length());
+		return v / len;
+	} else {
+		auto circle = c.supporting_circle();
+		auto v = approximate(approximateAlgebraic(c.target())) - approximate(circle.center());
+		auto p = v.perpendicular(circle.orientation());
+		auto len = sqrt(p.squared_length());
+		return p / len;
 	}
 }
 }

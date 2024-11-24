@@ -21,6 +21,12 @@ cavc::Polyline<double> cavcPolyline(InputIterator start, InputIterator end, bool
 			auto d = sqrt(CGAL::squared_distance(mid, center));
 			Number<Inexact> r = sqrt(circle.squared_radius());
 			auto bulge = (r - d) / sqrt(CGAL::squared_distance(mid, s));
+			if (bulge > 1) {
+				bulge = 1;
+			}
+			if (bulge < -1) {
+				bulge = -1;
+			}
 			auto orientation = xmCurve.orientation();
 			auto sign = orientation == CGAL::COUNTERCLOCKWISE ? 1 : -1;
 			polyline.addVertex(s.x(), s.y(), sign * bulge);
