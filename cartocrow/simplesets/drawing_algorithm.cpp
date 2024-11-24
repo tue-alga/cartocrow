@@ -736,12 +736,8 @@ std::vector<CSPolyline> boundaryParts(FaceH fh, int i) {
 	return polylines;
 }
 
-// todo: check if small circular arcs should be allowed
 bool isStraight(const CSPolyline& polyline) {
-	for (auto cit = polyline.curves_begin(); cit != polyline.curves_end(); ++cit) {
-		if (cit->is_circular()) return false;
-	}
-	return true;
+    return approximateAbsoluteTurningAngle(polyline) < 0.1;
 }
 
 /// The inclusion and exclusion disks for component \ref c when \ref i is stacked on top of \ref js.

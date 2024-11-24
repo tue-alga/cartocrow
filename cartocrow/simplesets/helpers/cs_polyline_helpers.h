@@ -15,6 +15,7 @@ CSPolycurve arrPolycurveFromCSPolyline(const CSPolyline& polyline);
 CSPolyline polylineToCSPolyline(const Polyline<Exact>& polyline);
 std::tuple<CSPolyline, Point<Exact>, Point<Exact>> extend(const CSPolyline& polyline, Number<Inexact> amount, Number<Exact> dilationRadius);
 CSPolygon closeAroundBB(CSPolyline polyline, CGAL::Orientation orientation, Number<Inexact> offset, const Point<Exact>& source, const Point<Exact>& target);
+double approximateAbsoluteTurningAngle(const CSPolyline& polyline);
 }
 
 #endif //CARTOCROW_CS_POLYLINE_HELPERS_H

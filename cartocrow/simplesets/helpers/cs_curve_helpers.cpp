@@ -1,4 +1,5 @@
 #include "cs_curve_helpers.h"
+#include "vector_helpers.h"
 
 namespace cartocrow::simplesets {
 OneRootPoint closestOnCircle(const Circle<Exact>& circle, const Point<Exact>& point) {
@@ -229,5 +230,18 @@ Vector<Inexact> endTangent(const X_monotone_curve_2& c) {
 		auto len = sqrt(p.squared_length());
 		return p / len;
 	}
+}
+
+double approximateTurningAngle(const X_monotone_curve_2& xmc) {
+	if (xmc.is_linear()) {
+		return 0.0;
+	}
+
+	auto c = xmc.supporting_circle();
+	auto acc = approximate(c.center());
+	auto v1 = approximateAlgebraic(xmc.source()) - acc;
+	auto v2 = approximateAlgebraic(xmc.target()) - acc;
+
+	return orientedAngleBetween(v1, v2, xmc.orientation());
 }
 }

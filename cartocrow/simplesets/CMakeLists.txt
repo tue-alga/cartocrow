@@ -15,6 +15,7 @@ set(SOURCES
 	helpers/cs_polyline_helpers.cpp
 	helpers/poly_line_gon_intersection.cpp
 	helpers/cavc_helpers.cpp
+	helpers/vector_helpers.cpp
 	partition_algorithm.cpp
 	partition_painting.cpp
 	drawing_algorithm.cpp
@@ -42,6 +43,7 @@ set(HEADERS
 	helpers/cs_polygonset_helpers.h
 	helpers/cs_polyline_helpers.h
 	helpers/cavc_helpers.h
+	helpers/vector_helpers.h
 	partition_algorithm.h
 	partition_painting.h
 	partition.h

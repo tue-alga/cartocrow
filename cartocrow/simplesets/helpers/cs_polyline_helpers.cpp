@@ -1,6 +1,7 @@
 #include "cs_polyline_helpers.h"
 #include "../../core/rectangle_helpers.h"
 #include "cs_curve_helpers.h"
+#include "vector_helpers.h"
 #include <CGAL/Bbox_2.h>
 
 namespace cartocrow::simplesets {
@@ -364,5 +365,18 @@ CSPolygon closeAroundBB(CSPolyline polyline, CGAL::Orientation orientation, Numb
 	}
 
 	return {xm_curves.begin(), xm_curves.end()};
+}
+
+double approximateAbsoluteTurningAngle(const CSPolyline& polyline) {
+	auto total = abs(approximateTurningAngle(*polyline.curves_begin()));
+	for (auto cit = ++polyline.curves_begin(); cit != polyline.curves_end(); ++cit) {
+		auto prev = cit;
+		--prev;
+		auto t1 = endTangent(*prev);
+		auto t2 = startTangent(*cit);
+		total += smallestAngleBetween(t1, t2);
+		total += abs(approximateTurningAngle(*cit));
+	}
+	return total;
 }
 }

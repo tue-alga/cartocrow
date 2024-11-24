@@ -87,6 +87,8 @@ bool liesOn(const X_monotone_curve_2& c1, const X_monotone_curve_2& c2);
 
 Vector<Inexact> startTangent(const X_monotone_curve_2& c);
 Vector<Inexact> endTangent(const X_monotone_curve_2& c);
+
+double approximateTurningAngle(const X_monotone_curve_2& xmc);
 }
 
 #endif //CARTOCROW_CS_CURVE_HELPERS_H
