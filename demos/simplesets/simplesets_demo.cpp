@@ -56,7 +56,7 @@ using namespace cartocrow::simplesets;
 SimpleSetsDemo::SimpleSetsDemo() {
 	setWindowTitle("SimpleSets");
 
-	m_cds = ComputeDrawingSettings{0.675};
+	m_cds = ComputeDrawingSettings{0.675, true, 0.2};
 
 	// Initial file
 //	std::filesystem::path filePath("data/overlap-example-1.txt");
@@ -106,6 +106,18 @@ SimpleSetsDemo::SimpleSetsDemo() {
 	ptSizeSlider->setMaximum(80);
 	ptSizeSlider->setValue(static_cast<int>(m_gs.pointSize * 10));
 
+	auto* smoothCheckbox = new QCheckBox("Smooth");
+	vLayout->addWidget(smoothCheckbox);
+	smoothCheckbox->setChecked(true);
+
+	auto* smoothingSliderLabel = new QLabel("Smoothing radius factor");
+	vLayout->addWidget(smoothingSliderLabel);
+	auto* smoothingSlider = new QSlider(Qt::Orientation::Horizontal);
+	vLayout->addWidget(smoothingSlider);
+	smoothingSlider->setMinimum(1);
+	smoothingSlider->setMaximum(100);
+	smoothingSlider->setValue(20);
+
 	m_renderer = new GeometryWidget();
 	m_renderer->setDrawAxes(false);
 	setCentralWidget(m_renderer);
@@ -141,6 +153,16 @@ SimpleSetsDemo::SimpleSetsDemo() {
 	  	computePartitions();
 	  	computeDrawing(coverSlider->value() / 10.0);
 	  	fitToScreen();
+	});
+	connect(smoothCheckbox, &QCheckBox::stateChanged, [this, smoothCheckbox, coverSlider] {
+		m_cds.smooth = smoothCheckbox->isChecked();
+		computeDrawing(coverSlider->value() / 10.0);
+	});
+	connect(smoothingSlider, &QSlider::valueChanged, [this, smoothingSlider, coverSlider] {
+		m_cds.smoothingRadiusFactor = smoothingSlider->value() / 100.0;
+		if (m_cds.smooth) {
+			computeDrawing(coverSlider->value() / 10.0);
+		}
 	});
 
 	fitToScreenButton->click();

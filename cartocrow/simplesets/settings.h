@@ -37,6 +37,11 @@ struct PartitionSettings {
 struct ComputeDrawingSettings {
 	/// Aim to keep a disk around each point visible of radius cutoutRadiusFactor * dilationRadius.
 	Number<Inexact> cutoutRadiusFactor;
+	/// Apply smoothing to cutouts
+	bool smooth = true;
+	/// The amount cutouts are smoothed (if applied).
+	/// More precisely, this is the radius of erosion and dilation applied as a factor of the dilation radius.
+	Number<Inexact> smoothingRadiusFactor = 0.2;
 };
 
 struct DrawSettings {
