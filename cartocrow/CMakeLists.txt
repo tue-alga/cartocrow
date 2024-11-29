@@ -17,6 +17,7 @@ add_subdirectory(simplification)
 add_subdirectory(flow_map)
 add_subdirectory(isoline_simplification)
 add_subdirectory(simplesets)
+add_subdirectory(chorematic_map)
 
 add_library(cartocrow_lib INTERFACE)
 target_link_libraries(
@@ -26,6 +27,7 @@ target_link_libraries(
     necklace_map
     flow_map
     simplification
+    chorematic_map
 )
 
 install(
