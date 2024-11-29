@@ -92,6 +92,8 @@ class GeometryRenderer {
 	void draw(const Segment<Inexact>& s);
 	/// Draws a rectangle
 	void draw(const Rectangle<Inexact>& r);
+	/// Draws a triangle
+	void draw(const Triangle<Inexact>& t);
 	/// Draws a box
 	void draw(const Box& r);
 	/// Draws a simple polygon with the currently set style.

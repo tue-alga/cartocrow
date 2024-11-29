@@ -63,6 +63,8 @@ template <class K> using Segment = CGAL::Segment_2<K>;
 template <class K> using Ray = CGAL::Ray_2<K>;
 /// An axis-aligned rectangle in the plane. See \ref CGAL::Iso_rectangle_2.
 template <class K> using Rectangle = CGAL::Iso_rectangle_2<K>;
+/// A triangle in the plane. See \ref CGAL::Triangle_2.
+template <class K> using Triangle = CGAL::Triangle_2<K>;
 
 /// A polygon in the plane. See \ref CGAL::Polygon_2.
 template <class K> using Polygon = CGAL::Polygon_2<K>;
@@ -121,6 +123,18 @@ Ray<Inexact> approximate(const Ray<K>& r) {
 template <class K>
 Segment<Inexact> approximate(const Segment<K>& s) {
 	return Segment<Inexact>(approximate(s.start()), approximate(s.end()));
+}
+/// Converts a rectangle from exact representation to an approximation in
+/// inexact representation.
+template <class K>
+Rectangle<Inexact> approximate(const Rectangle<K>& r) {
+	return Rectangle<Inexact>(approximate(r.vertex(0)), approximate(r.vertex(2)));
+}
+/// Converts a triangle from exact representation to an approximation in
+/// inexact representation.
+template <class K>
+Triangle<Inexact> approximate(const Triangle<K>& t) {
+	return Triangle<Inexact>(approximate(t.vertex(0)), approximate(t.vertex(1)), approximate(t.vertex(2)));
 }
 /// Converts a polygon from exact representation to an approximation in inexact
 /// representation.

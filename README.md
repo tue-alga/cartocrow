@@ -27,7 +27,7 @@ CartoCrow depends on the following build tools:
 
 And it depends on the following libraries:
 
-* CGAL (5.4, 5.5) – for implementations of computational geometry algorithms we need
+* CGAL (5.6) – for implementations of computational geometry algorithms we need
 * glog (0.5.0, 0.6.0) – for logging
 * ipelib (7.2.26) – for [Ipe](https://ipe.otfried.org) input and SVG/Ipe output
 * nlohmann-json (3.10.5, 3.11.2) – for JSON parsing

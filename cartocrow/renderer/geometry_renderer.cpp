@@ -39,6 +39,16 @@ void GeometryRenderer::draw(const Rectangle<Inexact>& r) {
 	draw(path);
 }
 
+void GeometryRenderer::draw(const Triangle<Inexact>& t) {
+	RenderPath path;
+	path.moveTo(t.vertex(0));
+	for (int i = 1; i < 3; ++i) {
+		path.lineTo(t.vertex(i));
+	}
+	path.close();
+	draw(path);
+}
+
 void GeometryRenderer::draw(const Box& b) {
 	draw(Rectangle<Inexact>({b.xmin(), b.ymin()}, {b.xmax(), b.ymax()}));
 }

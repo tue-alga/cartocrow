@@ -3,6 +3,7 @@
 #include <utility>
 
 #include <CGAL/mark_domain_in_triangulation.h>
+#include <CGAL/point_generators_2.h>
 
 std::vector<WeightedPoint> readPointsFromIpePage(ipe::Page* page) {
 	std::vector<WeightedPoint> points;
@@ -56,6 +57,12 @@ class TriangulationPainting : public GeometryPainting {
 	TriangulationPainting(std::shared_ptr<CDT> cdt, std::unordered_map<CDT::Face_handle, bool> in_domain) : m_cdt(std::move(cdt)), m_in_domain(std::move(in_domain)) {};
 
 	void paint(GeometryRenderer &renderer) const override {
+		renderer.setMode(GeometryRenderer::fill);
+		renderer.setFill(Color{200, 200, 200});
+		for (auto fit = m_cdt->finite_faces_begin(); fit != m_cdt->finite_faces_end(); ++fit) {
+			if (!m_in_domain.at(fit)) continue;
+			renderer.draw(m_cdt->triangle(fit));
+		}
 		renderer.setMode(GeometryRenderer::stroke);
 		renderer.setStroke(Color{0, 0, 0}, 1.0);
 		for (auto eit = m_cdt->edges_begin(); eit != m_cdt->edges_end(); ++eit) {
@@ -127,13 +134,29 @@ ChorematicMapDemo::ChorematicMapDemo() {
 		CGAL::mark_domain_in_triangulation(*m_cdt, *in_domain);
 	}
 
+	std::vector<Triangle<Exact>> triangles;
 	for (auto fh : m_cdt->finite_face_handles()) {
-		in_domain_map.contains(fh);
+		if (in_domain_map.at(fh)) {
+			triangles.push_back(m_cdt->triangle(fh));
+		}
 	}
+
+	std::vector<Point<Exact>> samples;
+	auto generator = CGAL::Random_points_in_triangles_2<Point<Exact>>(triangles);
+
+	std::copy_n(generator, 1000, std::back_inserter(samples));
+
 	auto rap = std::make_shared<RegionArrangementPainting>(m_arr);
 	renderer->addPainting(rap, "Region arrangement");
 	auto tp = std::make_shared<TriangulationPainting>(m_cdt, in_domain_map);
 	renderer->addPainting(tp, "Triangulation");
+
+	renderer->addPainting([samples](renderer::GeometryRenderer& renderer) {
+		for (const auto& point : samples) {
+			renderer.setStroke(0x000000, 1.0);
+			renderer.draw(point);
+		}
+	}, "Samples");
 }
 
 int main(int argc, char* argv[]) {
