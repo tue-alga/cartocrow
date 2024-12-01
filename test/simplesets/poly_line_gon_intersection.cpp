@@ -1,8 +1,8 @@
-#include "../catch.hpp"
 #include "cartocrow/simplesets/helpers/poly_line_gon_intersection.h"
-#include "cartocrow/simplesets/helpers/cs_curve_helpers.h"
-#include "cartocrow/simplesets/helpers/arrangement_helpers.h"
+#include "../catch.hpp"
+#include "cartocrow/core/arrangement_helpers.h"
 #include "cartocrow/renderer/ipe_renderer.h"
+#include "cartocrow/simplesets/helpers/cs_curve_helpers.h"
 
 using namespace cartocrow;
 using namespace cartocrow::renderer;
@@ -109,7 +109,7 @@ TEST_CASE("Poly-circular-arcs that partially overlap") {
 	curvesToXMonotoneCurves(pgnArcs.begin(), pgnArcs.end(), std::back_inserter(xm_curves));
 	CSPolygon pgn(xm_curves.begin(), xm_curves.end());
 
-	auto plnPoly = ccb_to_polygon<CSTraits>(fh->outer_ccb());
+	auto plnPoly = ccb_to_general_polygon<CSTraits>(fh->outer_ccb());
 	CSPolyline pln(plnPoly.curves_begin(), plnPoly.curves_end());
 	intersection(pln, pgn, true);
 }

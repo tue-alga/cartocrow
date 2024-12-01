@@ -102,6 +102,11 @@ PolygonSet<Exact> IpeReader::convertShapeToPolygonSet(const ipe::Shape& shape,
 			polygon.container().pop_back();
 		}
 		if (!polygon.is_simple()) {
+//			std::cerr << "Encountered non-simple polygon" << std::endl;
+//			continue;
+			for (const auto v : polygon.vertices()) {
+				std::cout << v << std::endl;
+			}
 			throw std::runtime_error("Encountered non-simple polygon");
 		}
 		if (polygon.is_clockwise_oriented()) {

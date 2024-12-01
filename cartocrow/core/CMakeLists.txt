@@ -15,6 +15,7 @@ set(HEADERS
 	timer.h
 	bezier.h
 	rectangle_helpers.h
+	arrangement_helpers.h
 )
 
 add_library(core ${SOURCES})

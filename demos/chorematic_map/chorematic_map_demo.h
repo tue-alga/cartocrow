@@ -9,27 +9,38 @@
 #include "cartocrow/core/region_map.h"
 #include "cartocrow/core/region_arrangement.h"
 
-#include "cartocrow/chorematic_map/maximum_weight_disk.h"
+#include "cartocrow/chorematic_map/weighted_point.h"
+#include "cartocrow/chorematic_map/sampling.h"
 
-#include <CGAL/Constrained_Delaunay_triangulation_2.h>
+#include <CGAL/Arr_landmarks_point_location.h>
+
+#include <QSpinBox>
+#include <QSlider>
+#include <QCheckBox>
 
 using namespace cartocrow;
 using namespace cartocrow::renderer;
 using namespace cartocrow::chorematic_map;
 
-typedef CGAL::Triangulation_vertex_base_2<Exact>                      Vb;
-typedef CGAL::Constrained_triangulation_face_base_2<Exact>            Fb;
-typedef CGAL::Triangulation_data_structure_2<Vb,Fb>                   TDS;
-typedef CGAL::No_constraint_intersection_requiring_constructions_tag  Itag;
-typedef CGAL::Constrained_Delaunay_triangulation_2<Exact, TDS, Itag>  CDT;
+using Landmarks_pl = CGAL::Arr_landmarks_point_location<RegionArrangement>;
 
 class ChorematicMapDemo : public QMainWindow {
 	Q_OBJECT
 
   private:
-	std::shared_ptr<CDT> m_cdt;
-	std::shared_ptr<RegionArrangement> m_arr;
+	GeometryWidget* m_renderer;
+	std::shared_ptr<RegionArrangement> m_regionArr;
+	std::shared_ptr<Landmarks_pl> m_pl;
+	std::unique_ptr<Sampler<Landmarks_pl>> m_sampler;
+	std::vector<WeightedPoint> m_samples;
+	std::shared_ptr<std::unordered_map<std::string, double>> m_regionData;
+	std::optional<Circle<Inexact>> m_disk;
+	QSlider* m_threshold;
+	QSpinBox* m_seed;
+	QSpinBox* m_nSamples;
+	QCheckBox* m_invert;
 
+	void recompute();
   public:
 	ChorematicMapDemo();
 };

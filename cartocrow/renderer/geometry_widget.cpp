@@ -774,6 +774,10 @@ void GeometryWidget::saveToIpe() {
 	for (const DrawnPainting& painting : m_paintings) {
 		renderer.addPainting(painting.m_painting, painting.name);
 	}
+	std::filesystem::path filePath = fileName.toStdString();
+	if (!filePath.has_extension()) {
+		filePath.replace_extension(".ipe");
+	}
 	renderer.save(fileName.toStdString());
 }
 

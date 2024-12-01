@@ -18,12 +18,12 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include "simplesets_demo.h"
+#include "cartocrow/core/arrangement_helpers.h"
 #include "cartocrow/core/ipe_reader.h"
 #include "cartocrow/renderer/ipe_renderer.h"
 #include "cartocrow/simplesets/dilated/dilated_poly.h"
 #include "cartocrow/simplesets/drawing_algorithm.h"
 #include "cartocrow/simplesets/helpers/approximate_convex_hull.h"
-#include "cartocrow/simplesets/helpers/arrangement_helpers.h"
 #include "cartocrow/simplesets/helpers/cs_polygon_helpers.h"
 #include "cartocrow/simplesets/helpers/cs_polyline_helpers.h"
 #include "cartocrow/simplesets/helpers/poly_line_gon_intersection.h"
@@ -44,8 +44,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <QLabel>
 #include <QMessageBox>
 #include <QPushButton>
-#include <QSpinBox>
 #include <QSlider>
+#include <QSpinBox>
 #include <QVBoxLayout>
 
 namespace fs = std::filesystem;

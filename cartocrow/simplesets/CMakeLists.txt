@@ -34,7 +34,6 @@ set(HEADERS
 	patterns/bank.h
 	dilated/dilated_poly.h
 	helpers/approximate_convex_hull.h
-	helpers/arrangement_helpers.h
 	helpers/point_voronoi_helpers.h
 	helpers/poly_line_gon_intersection.h
 	helpers/cropped_voronoi.h

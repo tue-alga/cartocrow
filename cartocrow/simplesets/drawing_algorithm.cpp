@@ -1,18 +1,18 @@
 #include "drawing_algorithm.h"
 
+#include "cartocrow/core/arrangement_helpers.h"
+#include "cartocrow/renderer/ipe_renderer.h"
 #include "cartocrow/simplesets/helpers/poly_line_gon_intersection.h"
 #include "grow_circles.h"
 #include "helpers/approximate_convex_hull.h"
-#include "helpers/arrangement_helpers.h"
+#include "helpers/cavc_helpers.h"
 #include "helpers/cs_curve_helpers.h"
 #include "helpers/cs_polygon_helpers.h"
 #include "helpers/cs_polygonset_helpers.h"
 #include "helpers/cs_polyline_helpers.h"
-#include "helpers/cavc_helpers.h"
 #include <CGAL/Boolean_set_operations_2.h>
 #include <CGAL/Boolean_set_operations_2/Gps_polygon_validation.h>
 #include <utility>
-#include "cartocrow/renderer/ipe_renderer.h"
 
 using namespace cartocrow::renderer;
 
@@ -20,7 +20,7 @@ namespace cartocrow::simplesets {
 // todo: deal with holes
 CSPolygon face_to_polygon(const Face& face) {
 	assert(face.number_of_holes() == 0);
-	return ccb_to_polygon<CSTraits>(face.outer_ccb());
+	return ccb_to_general_polygon<CSTraits>(face.outer_ccb());
 }
 
 X_monotone_curve_2 make_x_monotone(const Segment<Exact>& segment) {
@@ -348,7 +348,7 @@ DilatedPatternDrawing::DilatedPatternDrawing(const Partition& partition, const G
 			if (exclDisks.empty()) {
 				continue;
 			}
-			auto componentPolygon = ccb_to_polygon<CSTraits>(c.outer_ccb());
+			auto componentPolygon = ccb_to_general_polygon<CSTraits>(c.outer_ccb());
 			auto morphedComponentPolygon = morph(bpis, componentPolygon, inclDisks, exclDisks, m_gs, m_cds);
 
 			// Compute the morphed version of the CSPolygon for this component.
@@ -765,7 +765,7 @@ DilatedPatternDrawing::includeExcludeDisks(int i, const std::unordered_set<int>&
 
 	std::vector<Circle<Exact>> relevantExclusionDisks;
 	for (const auto& d : result.second) {
-		if (CGAL::do_intersect(circleToCSPolygon(d), ccb_to_polygon<CSTraits>(c.outer_ccb()))) {
+		if (CGAL::do_intersect(circleToCSPolygon(d), ccb_to_general_polygon<CSTraits>(c.outer_ccb()))) {
 			relevantExclusionDisks.push_back(d);
 		}
 	}

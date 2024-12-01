@@ -1,45 +1,66 @@
 #include "chorematic_map_demo.h"
+
 #include <QApplication>
+#include <QCheckBox>
+#include <QComboBox>
+#include <QDockWidget>
+#include <QFileDialog>
+#include <QLabel>
+#include <QMessageBox>
+#include <QPushButton>
+#include <QSpinBox>
+#include <QSlider>
+#include <QVBoxLayout>
+
 #include <utility>
 
-#include <CGAL/mark_domain_in_triangulation.h>
-#include <CGAL/point_generators_2.h>
+#include "parse_input.h"
 
-std::vector<WeightedPoint> readPointsFromIpePage(ipe::Page* page) {
-	std::vector<WeightedPoint> points;
-	for (int i = 0; i < page->count(); i++) {
-		auto object = page->object(i);
-		if (object->type() != ipe::Object::Type::EReference) continue;
-		auto reference = object->asReference();
-		auto matrix = object->matrix();
-		std::string colorName = reference->fill().string().z();
-		auto pos = matrix * reference->position();
-		auto weight = colorName == "CB light blue" ? -1.0 : 1.0;
-		points.push_back({{pos.x, pos.y}, weight});
-	}
-	return points;
-}
+#include "cartocrow/core/arrangement_helpers.h"
+#include "cartocrow/chorematic_map/maximum_weight_disk.h"
 
-std::vector<WeightedPoint> readPointsFromIpe(const std::filesystem::path& path) {
-	std::shared_ptr<ipe::Document> document = IpeReader::loadIpeFile(path);
-
-	if (document->countPages() == 0) {
-		throw std::runtime_error("Cannot read points from an Ipe file with no pages");
-	} else if (document->countPages() > 1) {
-		throw std::runtime_error("Cannot read points from an Ipe file with more than one page");
-	}
-
-	ipe::Page* page = document->page(0);
-	return readPointsFromIpePage(page);
-}
+#include <CGAL/centroid.h>
 
 class RegionArrangementPainting : public GeometryPainting {
   private:
 	std::shared_ptr<RegionArrangement> m_arr;
+	std::shared_ptr<std::unordered_map<std::string, double>> m_data;
+	QSlider* m_threshold;
   public:
-	RegionArrangementPainting(std::shared_ptr<RegionArrangement> arr) : m_arr(std::move(arr)) {};
+	RegionArrangementPainting(std::shared_ptr<RegionArrangement> arr,
+	                          std::shared_ptr<std::unordered_map<std::string, double>> data,
+	                          QSlider* threshold) :
+	      m_arr(std::move(arr)), m_data(std::move(data)), m_threshold(threshold) {};
 
 	void paint(GeometryRenderer &renderer) const override {
+		for (auto fit = m_arr->faces_begin(); fit != m_arr->faces_end(); ++fit) {
+			if (!fit->has_outer_ccb()) continue;
+			double w;
+			auto region = fit->data();
+			if (!region.empty()) {
+				renderer.setMode(GeometryRenderer::fill);
+			} else {
+				renderer.setMode(0);
+			}
+			auto t = m_threshold->value();
+			if (m_data->contains(region)) {
+				w = m_data->at(fit->data());
+			} else {
+				w = t;
+			}
+			if (w > t) {
+				renderer.setFill(Color{255, 100, 100});
+			} else if (w < t) {
+				renderer.setFill(Color{100, 100, 255});
+			} else {
+				renderer.setFill(Color{200, 200, 200});
+			}
+			auto poly = face_to_polygon_with_holes<Exact>(fit);
+			renderer.draw(poly);
+			auto c = CGAL::centroid(poly.outer_boundary().vertices_begin(), poly.outer_boundary().vertices_end());
+			renderer.setMode(GeometryRenderer::stroke);
+			renderer.drawText(c, fit->data());
+		}
 		renderer.setMode(GeometryRenderer::stroke);
 		renderer.setStroke(Color{0, 0, 0}, 1.0);
 		for (auto eit = m_arr->edges_begin(); eit != m_arr->edges_end(); ++eit) {
@@ -48,115 +69,192 @@ class RegionArrangementPainting : public GeometryPainting {
 	}
 };
 
-class TriangulationPainting : public GeometryPainting {
-  private:
-	std::shared_ptr<CDT> m_cdt;
-	std::unordered_map<CDT::Face_handle, bool> m_in_domain;
-
-  public:
-	TriangulationPainting(std::shared_ptr<CDT> cdt, std::unordered_map<CDT::Face_handle, bool> in_domain) : m_cdt(std::move(cdt)), m_in_domain(std::move(in_domain)) {};
-
-	void paint(GeometryRenderer &renderer) const override {
-		renderer.setMode(GeometryRenderer::fill);
-		renderer.setFill(Color{200, 200, 200});
-		for (auto fit = m_cdt->finite_faces_begin(); fit != m_cdt->finite_faces_end(); ++fit) {
-			if (!m_in_domain.at(fit)) continue;
-			renderer.draw(m_cdt->triangle(fit));
-		}
-		renderer.setMode(GeometryRenderer::stroke);
-		renderer.setStroke(Color{0, 0, 0}, 1.0);
-		for (auto eit = m_cdt->edges_begin(); eit != m_cdt->edges_end(); ++eit) {
-			if (!m_in_domain.at(eit->first)) continue;
-			auto p1 = eit->first->vertex((eit->second + 1) % 3)->point();
-			auto p2 = eit->first->vertex((eit->second + 2) % 3)->point();
-			renderer.draw(Segment<Exact>(p1, p2));
-		}
+std::unordered_map<std::string, double> parseRegionDataFile(std::filesystem::path& path) {
+	std::ifstream inputStream(path, std::ios_base::in);
+	if (!inputStream.good()) {
+		throw std::runtime_error("Failed to read input");
 	}
-};
+	std::stringstream buffer;
+	buffer << inputStream.rdbuf();
+	return parseRegionData(buffer.str());
+}
+
+std::tuple<double, double, double, int> regionDataData(const std::unordered_map<std::string, double>& regionData) {
+	std::optional<double> minValue;
+	std::optional<double> maxValue;
+	double totalValue = 0;
+	int count = 0;
+	for (auto [_, value] : regionData) {
+		if (!minValue.has_value() || value < minValue) {
+			minValue = value;
+		}
+		if (!maxValue.has_value() || value > maxValue) {
+			maxValue = value;
+		}
+		totalValue += value;
+		++count;
+	}
+	return {*minValue, *maxValue, totalValue, count};
+}
+
+std::string regionDataInfo(const std::unordered_map<std::string, double>& regionData) {
+	auto [minValue, maxValue, totalValue, count] = regionDataData(regionData);
+
+	std::stringstream ss;
+	ss << "Region data info" << std::endl;
+	ss << "Min: " << minValue << std::endl;
+	ss << "Max: " << maxValue << std::endl;
+	ss << "Average: " << totalValue / count << std::endl;
+	return ss.str();
+}
+
+void ChorematicMapDemo::recompute() {
+	m_samples.clear();
+	m_sampler->set_seed(m_seed->value());
+	m_sampler->uniform_random_samples(m_nSamples->value(), std::back_inserter(m_samples));
+	for (auto& pt : m_samples) {
+		pt.weight -= m_threshold->value();
+	}
+	std::optional<WeightedPoint> p1, p2, p3;
+	if (m_invert->isChecked()) {
+		std::tie(p1, p2, p3) = minimum_weight_disk(m_samples.begin(), m_samples.end());
+	} else {
+		std::tie(p1, p2, p3) = maximum_weight_disk(m_samples.begin(), m_samples.end());
+	}
+	if (p1.has_value() && p2.has_value() && p3.has_value()) {
+		m_disk = Circle<Inexact>(p1->point, p2->point, p3->point);
+	} else {
+		m_disk = Circle<Inexact>(p1->point, 3.0);
+	}
+	m_renderer->repaint();
+}
 
 ChorematicMapDemo::ChorematicMapDemo() {
 	setWindowTitle("Chorematic map");
-	auto renderer = new GeometryWidget();
-	renderer->setDrawAxes(false);
-	setCentralWidget(renderer);
+	m_renderer = new GeometryWidget();
+	m_renderer->setDrawAxes(false);
+	setCentralWidget(m_renderer);
 
-	auto points = readPointsFromIpe("points.ipe");
-	auto [p1, p2, p3] = maximum_weight_disk(points.begin(), points.end());
+	auto* dockWidget = new QDockWidget();
+	addDockWidget(Qt::RightDockWidgetArea, dockWidget);
+	auto* vWidget = new QWidget();
+	auto* vLayout = new QVBoxLayout(vWidget);
+	vLayout->setAlignment(Qt::AlignTop);
+	dockWidget->setWidget(vWidget);
 
-	Circle<Inexact> circle(p1.point, p2.point, p3.point);
+	auto* seedLabel = new QLabel("Seed");
+	m_seed = new QSpinBox();
+	m_seed->setValue(0);
+	m_seed->setMaximum(100);
+	vLayout->addWidget(seedLabel);
+	vLayout->addWidget(m_seed);
 
-	renderer->addPainting([points](renderer::GeometryRenderer& renderer) {
-		for (const auto& [point, weight] : points) {
+	auto* nSamplesLabel = new QLabel("#Samples");
+	m_nSamples = new QSpinBox();
+	m_nSamples->setMinimum(1);
+	m_nSamples->setMaximum(10000);
+	m_nSamples->setValue(100);
+	vLayout->addWidget(nSamplesLabel);
+	vLayout->addWidget(m_nSamples);
+
+	m_invert = new QCheckBox();
+	m_invert->setChecked(true);
+	vLayout->addWidget(m_invert);
+
+//	std::ifstream inputStream("data/chorematic_map/test_data.txt", std::ios_base::in);
+
+	std::filesystem::path dataPath = "data/chorematic_map/europe_data.txt";
+	std::filesystem::path mapPath = "data/europe.ipe";
+	m_regionData = std::make_shared<std::unordered_map<std::string, double>>(parseRegionDataFile(dataPath));
+//	auto regionMap = ipeToRegionMap("data/chorematic_map/test_region_arrangement.ipe");
+	auto regionMap = ipeToRegionMap(mapPath);
+//	auto regionMap = ipeToRegionMap("data/chorematic_map/gem_2017_simplified.ipe");
+	m_regionArr = std::make_shared<RegionArrangement>(regionMapToArrangement(regionMap));
+
+
+
+	auto* infoText = new QLabel();
+	infoText->setText(QString::fromStdString(regionDataInfo(*m_regionData)));
+	vLayout->addWidget(infoText);
+
+	auto* thresholdLabel = new QLabel("Threshold");
+	m_threshold = new QSlider();
+	m_threshold->setOrientation(Qt::Horizontal);
+
+	auto [rdMin, rdMax, _, blah] = regionDataData(*m_regionData);
+	m_threshold->setMinimum(rdMin);
+	m_threshold->setMaximum(rdMax);
+	m_threshold->setValue(0);
+
+	vLayout->addWidget(thresholdLabel);
+	vLayout->addWidget(m_threshold);
+
+	m_pl = std::make_shared<Landmarks_pl>(*m_regionArr);
+	m_sampler = std::make_unique<Sampler<Landmarks_pl>>(*m_regionArr, *m_pl, *m_regionData, m_seed->value());
+	m_sampler->uniform_random_samples(m_nSamples->value(), std::back_inserter(m_samples));
+
+	for (auto& pt : m_samples) {
+		pt.weight -= m_threshold->value();
+	}
+
+	auto rap = std::make_shared<RegionArrangementPainting>(m_regionArr, m_regionData, m_threshold);
+	m_renderer->addPainting(rap, "Region arrangement");
+
+	m_renderer->addPainting([this](renderer::GeometryRenderer& renderer) {
+	  	double minWeight = 0;
+		double maxWeight = 0;
+	  	for (const auto& [point, weight] : m_samples) {
+			if (weight > maxWeight) {
+				maxWeight = weight;
+			}
+			if (weight < minWeight) {
+				minWeight = weight;
+			}
+	  	}
+
+	  renderer.setMode(GeometryRenderer::stroke);
+		for (const auto& [point, weight] : m_samples) {
 			if (weight > 0) {
-				renderer.setFill(0xFF0000);
-				renderer.setStroke(0xFF0000, 1.0);
+				Color c(100 + weight * 155 / maxWeight, 0, 0);
+				renderer.setStroke(c, 1.0);
 				renderer.draw(point);
 			}
 			if (weight < 0) {
-				renderer.setFill(0x0000FF);
-				renderer.setStroke(0x0000FF, 1.0);
+				Color c(0, 0, 100 + weight * 155 / minWeight);
+				renderer.setStroke(c, 1.0);
 				renderer.draw(point);
 			}
 		}
-	}, "Points");
+	}, "Samples");
 
-	renderer->addPainting([circle](renderer::GeometryRenderer& renderer) {
+	auto [p1, p2, p3] = minimum_weight_disk(m_samples.begin(), m_samples.end());
+	if (p1.has_value() && p2.has_value() && p3.has_value()) {
+		m_disk = Circle<Inexact>(p1->point, p2->point, p3->point);
+	} else {
+		m_disk = Circle<Inexact>(p1->point, 3.0);
+	}
+
+	m_renderer->addPainting([this](renderer::GeometryRenderer& renderer) {
+		if (!m_disk.has_value()) return;
 		renderer.setMode(GeometryRenderer::fill | GeometryRenderer::stroke);
-	  	renderer.setStroke(Color(0, 0, 0), 2.0);
-	  	renderer.setFill(0x000000);
+		renderer.setStroke(Color(0, 0, 0), 2.0);
+		renderer.setFill(0x000000);
 		renderer.setFillOpacity(50);
-	  	renderer.draw(circle);
+		renderer.draw(*m_disk);
 	}, "Circle");
 
-	auto regionMap = ipeToRegionMap("data/test_region_arrangement.ipe");
-	m_arr = std::make_shared<RegionArrangement>(regionMapToArrangement(regionMap));
-	m_cdt = std::make_shared<CDT>();
-
-	for (auto fit = m_arr->faces_begin(); fit != m_arr->faces_end(); ++fit) {
-		std::vector<RegionArrangement::Ccb_halfedge_circulator> ccbs;
-		std::copy(fit->outer_ccbs_begin(), fit->outer_ccbs_end(), std::back_inserter(ccbs));
-		std::copy(fit->inner_ccbs_begin(), fit->inner_ccbs_end(), std::back_inserter(ccbs));
-		for (auto ccb : ccbs) {
-			std::vector<Point<Exact>> vertices;
-			auto curr = ccb;
-			do {
-				auto point = curr->source()->point();
-				vertices.push_back(point);
-			} while (++curr != ccb);
-			m_cdt->insert_constraint(vertices.begin(), vertices.end(), true);
-		}
-	}
-
-	std::unordered_map<CDT::Face_handle, bool> in_domain_map;
-	auto in_domain = std::make_shared<boost::associative_property_map<std::unordered_map<CDT::Face_handle,bool>>>(in_domain_map);
-
-	if (m_cdt->dimension() == 2) {
-		CGAL::mark_domain_in_triangulation(*m_cdt, *in_domain);
-	}
-
-	std::vector<Triangle<Exact>> triangles;
-	for (auto fh : m_cdt->finite_face_handles()) {
-		if (in_domain_map.at(fh)) {
-			triangles.push_back(m_cdt->triangle(fh));
-		}
-	}
-
-	std::vector<Point<Exact>> samples;
-	auto generator = CGAL::Random_points_in_triangles_2<Point<Exact>>(triangles);
-
-	std::copy_n(generator, 1000, std::back_inserter(samples));
-
-	auto rap = std::make_shared<RegionArrangementPainting>(m_arr);
-	renderer->addPainting(rap, "Region arrangement");
-	auto tp = std::make_shared<TriangulationPainting>(m_cdt, in_domain_map);
-	renderer->addPainting(tp, "Triangulation");
-
-	renderer->addPainting([samples](renderer::GeometryRenderer& renderer) {
-		for (const auto& point : samples) {
-			renderer.setStroke(0x000000, 1.0);
-			renderer.draw(point);
-		}
-	}, "Samples");
+	connect(m_seed, QOverload<int>::of(&QSpinBox::valueChanged), [this](){
+		recompute();
+	});
+	connect(m_nSamples, QOverload<int>::of(&QSpinBox::valueChanged), [this](){
+	  recompute();
+	});
+	connect(m_threshold, &QSlider::valueChanged, [this]() {
+		recompute();
+	});
+	connect(m_invert, &QCheckBox::stateChanged, [this]() {
+		recompute();
+	});
 }
 
 int main(int argc, char* argv[]) {
