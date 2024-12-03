@@ -107,12 +107,9 @@ class Sampler {
 	void uniform_random_samples(int n, OutputIterator out) {
 		CGAL::Random rng(m_seed);
 		CGAL::get_default_random() = CGAL::Random(m_seed);
-		std::cout << rng.get_double() << std::endl;
-		std::cout << rng.get_double() << std::endl;
 		auto generator = CGAL::Random_points_in_triangles_2<Point<Exact>>(m_triangles, rng);
 		std::vector<Point<Exact>> points;
 		std::copy_n(generator, n, std::back_inserter(points));
-		std::cout << approximate(points[0]) << std::endl;
 		for (const auto& pt : points) {
 			auto obj = m_pl.locate(pt);
 			if (auto fhp = boost::get<RegionArrangement::Face_const_handle>(&obj)) {

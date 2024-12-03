@@ -7,6 +7,10 @@ namespace cartocrow::chorematic_map {
 struct WeightedPoint {
 	Point<Inexact> point;
 	Number<Inexact> weight;
+
+	bool operator<(const WeightedPoint& wp2) const {
+		return point < wp2.point;
+	}
 };
 
 using InducedDisk = std::tuple<std::optional<Point<Inexact>>, std::optional<Point<Inexact>>, std::optional<Point<Inexact>>>;

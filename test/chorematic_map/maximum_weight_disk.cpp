@@ -4,7 +4,7 @@
 #include "cartocrow/chorematic_map/parse_points.h"
 
 namespace cartocrow::chorematic_map {
-TEST_CASE("Maximum weight disk") {
+TEST_CASE("Smallest maximum weight disk") {
 	auto pointSets = readPointsFromIpe("data/chorematic_map/maximum_weight_disk_tests.ipe");
 	auto disks = readDisksFromIpe("data/chorematic_map/maximum_weight_disk_tests.ipe");
 	if (pointSets.size() != disks.size()) {
@@ -13,7 +13,8 @@ TEST_CASE("Maximum weight disk") {
 	for (int i = 0; i < pointSets.size(); ++i) {
 		auto& points = pointSets[i];
 		auto [p1, p2, p3] = disks[i];
-		auto [wp1, wp2, wp3] = maximum_weight_disk(points.begin(), points.end());
+		auto [wp1, wp2, wp3] = smallest_maximum_weight_disk(points.begin(), points.end());
+		// Testing page i. (If I make SECTIONs then each run all points are reloaded...)
 		if (!wp1.has_value()) {
 			CHECK(!p1.has_value());
 			continue;

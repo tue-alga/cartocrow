@@ -12,10 +12,16 @@ std::vector<WeightedPoint> readPointsFromIpePage(ipe::Page* page, ipe::Cascade* 
 			continue;
 		auto reference = object->asReference();
 		auto matrix = object->matrix();
-		auto fill = reference->fill();
-		auto realFill = cascade->find(ipe::Kind::EColor, fill).color();
-		double r = realFill.iRed.toDouble();
-		double b = realFill.iBlue.toDouble();
+		ipe::Color color;
+		if (reference->flags() & ipe::Reference::EHasFill) {
+			auto fill = reference->fill();
+			color = cascade->find(ipe::Kind::EColor, fill).color();
+		} else {
+			auto stroke = reference->stroke();
+			color = cascade->find(ipe::Kind::EColor, stroke).color();
+		}
+		double r = color.iRed.toDouble();
+		double b = color.iBlue.toDouble();
 		auto pos = matrix * reference->position();
 		auto weight = r > b ? r : -b;
 		points.push_back({{pos.x, pos.y}, weight});
@@ -79,9 +85,19 @@ InducedDisk readDiskFromIpePage(ipe::Page* page) {
 
 		auto last = matrix * curve->segment(curve->countSegments()-1).last();
 		points.emplace_back(last.x, last.y);
-		p1 = points[0];
-		p2 = points[1];
-		p3 = points[2];
+		int s = points.size();
+		if (s > 1 && points.front() == points.back()) {
+			--s;
+		}
+		if (s > 0) {
+			p1 = points[0];
+		}
+		if (s > 1) {
+			p2 = points[1];
+		}
+		if (s > 2) {
+			p3 = points[2];
+		}
 
 		break;
 	}

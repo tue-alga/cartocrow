@@ -108,6 +108,19 @@ std::string regionDataInfo(const std::unordered_map<std::string, double>& region
 	return ss.str();
 }
 
+std::optional<Circle<Inexact>> circle(InducedDiskW disk) {
+	auto [p1, p2, p3] = disk;
+	if (p1.has_value() && p2.has_value() && p3.has_value()) {
+		return Circle<Inexact>(p1->point, p2->point, p3->point);
+	} else if (p1.has_value() && p2.has_value()) {
+		return Circle<Inexact>(p1->point, p2->point);
+	} else if (p1.has_value()) {
+		return Circle<Inexact>(p1->point, 3.0);
+	} else {
+		return std::nullopt;
+	}
+}
+
 void ChorematicMapDemo::recompute() {
 	m_samples.clear();
 	m_sampler->set_seed(m_seed->value());
@@ -115,17 +128,10 @@ void ChorematicMapDemo::recompute() {
 	for (auto& pt : m_samples) {
 		pt.weight -= m_threshold->value();
 	}
-	std::optional<WeightedPoint> p1, p2, p3;
-	if (m_invert->isChecked()) {
-		std::tie(p1, p2, p3) = minimum_weight_disk(m_samples.begin(), m_samples.end());
-	} else {
-		std::tie(p1, p2, p3) = maximum_weight_disk(m_samples.begin(), m_samples.end());
-	}
-	if (p1.has_value() && p2.has_value() && p3.has_value()) {
-		m_disk = Circle<Inexact>(p1->point, p2->point, p3->point);
-	} else {
-		m_disk = Circle<Inexact>(p1->point, 3.0);
-	}
+	InducedDiskW disk = m_invert->isChecked() ?
+		smallest_minimum_weight_disk(m_samples.begin(), m_samples.end()) :
+		smallest_maximum_weight_disk(m_samples.begin(), m_samples.end());
+	m_disk = circle(disk);
 	m_renderer->repaint();
 }
 
@@ -191,11 +197,6 @@ ChorematicMapDemo::ChorematicMapDemo() {
 
 	m_pl = std::make_shared<Landmarks_pl>(*m_regionArr);
 	m_sampler = std::make_unique<Sampler<Landmarks_pl>>(*m_regionArr, *m_pl, *m_regionData, m_seed->value());
-	m_sampler->uniform_random_samples(m_nSamples->value(), std::back_inserter(m_samples));
-
-	for (auto& pt : m_samples) {
-		pt.weight -= m_threshold->value();
-	}
 
 	auto rap = std::make_shared<RegionArrangementPainting>(m_regionArr, m_regionData, m_threshold);
 	m_renderer->addPainting(rap, "Region arrangement");
@@ -215,24 +216,19 @@ ChorematicMapDemo::ChorematicMapDemo() {
 	  renderer.setMode(GeometryRenderer::stroke);
 		for (const auto& [point, weight] : m_samples) {
 			if (weight > 0) {
-				Color c(100 + weight * 155 / maxWeight, 0, 0);
+				Color c(1 + weight * 155 / maxWeight, 0, 0);
 				renderer.setStroke(c, 1.0);
 				renderer.draw(point);
 			}
 			if (weight < 0) {
-				Color c(0, 0, 100 + weight * 155 / minWeight);
+				Color c(0, 0, 1 + weight * 155 / minWeight);
 				renderer.setStroke(c, 1.0);
 				renderer.draw(point);
 			}
 		}
 	}, "Samples");
 
-	auto [p1, p2, p3] = minimum_weight_disk(m_samples.begin(), m_samples.end());
-	if (p1.has_value() && p2.has_value() && p3.has_value()) {
-		m_disk = Circle<Inexact>(p1->point, p2->point, p3->point);
-	} else {
-		m_disk = Circle<Inexact>(p1->point, 3.0);
-	}
+	recompute();
 
 	m_renderer->addPainting([this](renderer::GeometryRenderer& renderer) {
 		if (!m_disk.has_value()) return;
