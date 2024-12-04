@@ -24,13 +24,11 @@
 class RegionArrangementPainting : public GeometryPainting {
   private:
 	std::shared_ptr<RegionArrangement> m_arr;
-	std::shared_ptr<std::unordered_map<std::string, double>> m_data;
-	QSlider* m_threshold;
+	std::shared_ptr<std::unordered_map<std::string, double>> m_weights;
   public:
 	RegionArrangementPainting(std::shared_ptr<RegionArrangement> arr,
-	                          std::shared_ptr<std::unordered_map<std::string, double>> data,
-	                          QSlider* threshold) :
-	      m_arr(std::move(arr)), m_data(std::move(data)), m_threshold(threshold) {};
+	                          std::shared_ptr<std::unordered_map<std::string, double>> weights) :
+	      m_arr(std::move(arr)), m_weights(std::move(weights)) {};
 
 	void paint(GeometryRenderer &renderer) const override {
 		for (auto fit = m_arr->faces_begin(); fit != m_arr->faces_end(); ++fit) {
@@ -42,15 +40,14 @@ class RegionArrangementPainting : public GeometryPainting {
 			} else {
 				renderer.setMode(0);
 			}
-			auto t = m_threshold->value();
-			if (m_data->contains(region)) {
-				w = m_data->at(fit->data());
+			if (m_weights->contains(region)) {
+				w = m_weights->at(fit->data());
 			} else {
-				w = t;
+				w = 0;
 			}
-			if (w > t) {
+			if (w > 0) {
 				renderer.setFill(Color{255, 100, 100});
-			} else if (w < t) {
+			} else if (w < 0) {
 				renderer.setFill(Color{100, 100, 255});
 			} else {
 				renderer.setFill(Color{200, 200, 200});
@@ -101,9 +98,9 @@ std::string regionDataInfo(const std::unordered_map<std::string, double>& region
 	auto [minValue, maxValue, totalValue, count] = regionDataData(regionData);
 
 	std::stringstream ss;
-	ss << "Region data info" << std::endl;
-	ss << "Min: " << minValue << std::endl;
-	ss << "Max: " << maxValue << std::endl;
+	ss << "<h3>Region data info</h3>" << std::endl;
+	ss << "Min: " << minValue << "<br>" << std::endl;
+	ss << "Max: " << maxValue << "<br>" << std::endl;
 	ss << "Average: " << totalValue / count << std::endl;
 	return ss.str();
 }
@@ -123,16 +120,37 @@ std::optional<Circle<Inexact>> circle(InducedDiskW disk) {
 
 void ChorematicMapDemo::recompute() {
 	m_samples.clear();
+	m_disk = std::nullopt;
+	m_sampler->reweight_triangulation();
 	m_sampler->set_seed(m_seed->value());
-	m_sampler->uniform_random_samples(m_nSamples->value(), std::back_inserter(m_samples));
-	for (auto& pt : m_samples) {
-		pt.weight -= m_threshold->value();
+
+	for (auto& pair : *m_regionWeight) {
+		pair.second = m_regionData->at(pair.first) - m_threshold->value();
+	}
+
+	switch (m_samplingStrategy->currentIndex()) {
+	case 0: {
+		m_sampler->uniform_random_samples(m_nSamples->value(), std::back_inserter(m_samples));
+		break;
+	}
+	case 1: {
+		m_sampler->uniform_random_samples_weighted(m_nSamples->value(), std::back_inserter(m_samples));
+		break;
+	}
+	case 2: {
+		m_sampler->centroids(std::back_inserter(m_samples));
+		break;
+	}
+	default: {
+		std::cerr << "Unimplemented sampling strategy: " << m_samplingStrategy->currentIndex() << " "
+		          << m_samplingStrategy->currentText().toStdString() << std::endl;
+		return;
+	}
 	}
 	InducedDiskW disk = m_invert->isChecked() ?
 		smallest_minimum_weight_disk(m_samples.begin(), m_samples.end()) :
 		smallest_maximum_weight_disk(m_samples.begin(), m_samples.end());
 	m_disk = circle(disk);
-	m_renderer->repaint();
 }
 
 ChorematicMapDemo::ChorematicMapDemo() {
@@ -148,40 +166,24 @@ ChorematicMapDemo::ChorematicMapDemo() {
 	vLayout->setAlignment(Qt::AlignTop);
 	dockWidget->setWidget(vWidget);
 
-	auto* seedLabel = new QLabel("Seed");
-	m_seed = new QSpinBox();
-	m_seed->setValue(0);
-	m_seed->setMaximum(100);
-	vLayout->addWidget(seedLabel);
-	vLayout->addWidget(m_seed);
-
-	auto* nSamplesLabel = new QLabel("#Samples");
-	m_nSamples = new QSpinBox();
-	m_nSamples->setMinimum(1);
-	m_nSamples->setMaximum(10000);
-	m_nSamples->setValue(100);
-	vLayout->addWidget(nSamplesLabel);
-	vLayout->addWidget(m_nSamples);
-
-	m_invert = new QCheckBox();
-	m_invert->setChecked(true);
-	vLayout->addWidget(m_invert);
-
 //	std::ifstream inputStream("data/chorematic_map/test_data.txt", std::ios_base::in);
 
 	std::filesystem::path dataPath = "data/chorematic_map/europe_data.txt";
 	std::filesystem::path mapPath = "data/europe.ipe";
 	m_regionData = std::make_shared<std::unordered_map<std::string, double>>(parseRegionDataFile(dataPath));
+	m_regionWeight = std::make_shared<std::unordered_map<std::string, double>>(*m_regionData);
+
 //	auto regionMap = ipeToRegionMap("data/chorematic_map/test_region_arrangement.ipe");
 	auto regionMap = ipeToRegionMap(mapPath);
 //	auto regionMap = ipeToRegionMap("data/chorematic_map/gem_2017_simplified.ipe");
 	m_regionArr = std::make_shared<RegionArrangement>(regionMapToArrangement(regionMap));
 
-
-
 	auto* infoText = new QLabel();
 	infoText->setText(QString::fromStdString(regionDataInfo(*m_regionData)));
 	vLayout->addWidget(infoText);
+
+	auto* binningSettings = new QLabel("<h3>Binning</h3>");
+	vLayout->addWidget(binningSettings);
 
 	auto* thresholdLabel = new QLabel("Threshold");
 	m_threshold = new QSlider();
@@ -195,10 +197,55 @@ ChorematicMapDemo::ChorematicMapDemo() {
 	vLayout->addWidget(thresholdLabel);
 	vLayout->addWidget(m_threshold);
 
-	m_pl = std::make_shared<Landmarks_pl>(*m_regionArr);
-	m_sampler = std::make_unique<Sampler<Landmarks_pl>>(*m_regionArr, *m_pl, *m_regionData, m_seed->value());
+	auto* samplingSettings = new QLabel("<h3>Sampling</h3>");
+	vLayout->addWidget(samplingSettings);
 
-	auto rap = std::make_shared<RegionArrangementPainting>(m_regionArr, m_regionData, m_threshold);
+	auto* sampleStrategyLabel = new QLabel("Sample strategy");
+	m_samplingStrategy = new QComboBox();
+	sampleStrategyLabel->setBuddy(m_samplingStrategy);
+	vLayout->addWidget(sampleStrategyLabel);
+	m_samplingStrategy->addItem("Uniform random");
+	m_samplingStrategy->addItem("Uniform random weighted");
+	m_samplingStrategy->addItem("Centroids");
+	m_samplingStrategy->setCurrentIndex(0);
+	vLayout->addWidget(m_samplingStrategy);
+
+	auto* nSamplesLabel = new QLabel("#Samples");
+	m_nSamples = new QSpinBox();
+	m_nSamples->setMinimum(1);
+	m_nSamples->setMaximum(10000);
+	m_nSamples->setValue(100);
+	vLayout->addWidget(nSamplesLabel);
+	vLayout->addWidget(m_nSamples);
+
+	auto* seedLabel = new QLabel("Seed");
+	m_seed = new QSpinBox();
+	m_seed->setValue(0);
+	m_seed->setMaximum(100);
+	vLayout->addWidget(seedLabel);
+	vLayout->addWidget(m_seed);
+
+	auto* diskFittingSettings = new QLabel("<h3>Disk fitting</h3>");
+	vLayout->addWidget(diskFittingSettings);
+	auto* invertLabel = new QLabel("Invert weights");
+	vLayout->addWidget(invertLabel);
+	m_invert = new QCheckBox();
+	m_invert->setChecked(true);
+	vLayout->addWidget(m_invert);
+
+	auto* miscellaneous = new QLabel("<h3>Miscellaneous</h3>");
+	vLayout->addWidget(miscellaneous);
+	auto* recomputeAutomaticallyLabel = new QLabel("Recompute automatically");
+	m_recomputeAutomatically = new QCheckBox();
+	m_recomputeAutomatically->setChecked(true);
+	recomputeAutomaticallyLabel->setBuddy(m_recomputeAutomatically);
+	vLayout->addWidget(recomputeAutomaticallyLabel);
+	vLayout->addWidget(m_recomputeAutomatically);
+
+	m_pl = std::make_shared<Landmarks_pl>(*m_regionArr);
+	m_sampler = std::make_unique<Sampler<Landmarks_pl>>(*m_regionArr, *m_pl, *m_regionWeight, m_seed->value());
+
+	auto rap = std::make_shared<RegionArrangementPainting>(m_regionArr, m_regionWeight);
 	m_renderer->addPainting(rap, "Region arrangement");
 
 	m_renderer->addPainting([this](renderer::GeometryRenderer& renderer) {
@@ -213,16 +260,18 @@ ChorematicMapDemo::ChorematicMapDemo() {
 			}
 	  	}
 
-	  renderer.setMode(GeometryRenderer::stroke);
+		renderer.setMode(GeometryRenderer::stroke);
 		for (const auto& [point, weight] : m_samples) {
 			if (weight > 0) {
-				Color c(1 + weight * 155 / maxWeight, 0, 0);
+				Color c(1 + weight * 254 / maxWeight, 0, 0);
 				renderer.setStroke(c, 1.0);
 				renderer.draw(point);
-			}
-			if (weight < 0) {
-				Color c(0, 0, 1 + weight * 155 / minWeight);
+			} else if (weight < 0) {
+				Color c(0, 0, 1 + weight * 254 / minWeight);
 				renderer.setStroke(c, 1.0);
+				renderer.draw(point);
+			} else {
+				renderer.setStroke(Color{100, 100, 100}, 1.0);
 				renderer.draw(point);
 			}
 		}
@@ -240,16 +289,34 @@ ChorematicMapDemo::ChorematicMapDemo() {
 	}, "Circle");
 
 	connect(m_seed, QOverload<int>::of(&QSpinBox::valueChanged), [this](){
-		recompute();
+		if (m_recomputeAutomatically->isChecked()) {
+			recompute();
+		}
+	  	m_renderer->repaint();
 	});
 	connect(m_nSamples, QOverload<int>::of(&QSpinBox::valueChanged), [this](){
-	  recompute();
+	  	if (m_recomputeAutomatically->isChecked()) {
+			recompute();
+	  	}
+	  	m_renderer->repaint();
 	});
 	connect(m_threshold, &QSlider::valueChanged, [this]() {
-		recompute();
+	  	if (m_recomputeAutomatically->isChecked()) {
+			recompute();
+	  	}
+	  	m_renderer->repaint();
 	});
 	connect(m_invert, &QCheckBox::stateChanged, [this]() {
-		recompute();
+	  	if (m_recomputeAutomatically->isChecked()) {
+			recompute();
+	  	}
+	  	m_renderer->repaint();
+	});
+	connect(m_samplingStrategy, &QComboBox::currentTextChanged, [this]() {
+		if (m_recomputeAutomatically->isChecked()) {
+			recompute();
+		}
+		m_renderer->repaint();
 	});
 }
 

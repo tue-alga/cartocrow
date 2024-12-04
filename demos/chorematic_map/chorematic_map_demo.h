@@ -17,6 +17,7 @@
 #include <QSpinBox>
 #include <QSlider>
 #include <QCheckBox>
+#include <QComboBox>
 
 using namespace cartocrow;
 using namespace cartocrow::renderer;
@@ -34,11 +35,14 @@ class ChorematicMapDemo : public QMainWindow {
 	std::unique_ptr<Sampler<Landmarks_pl>> m_sampler;
 	std::vector<WeightedPoint> m_samples;
 	std::shared_ptr<std::unordered_map<std::string, double>> m_regionData;
+	std::shared_ptr<std::unordered_map<std::string, double>> m_regionWeight;
 	std::optional<Circle<Inexact>> m_disk;
 	QSlider* m_threshold;
 	QSpinBox* m_seed;
 	QSpinBox* m_nSamples;
 	QCheckBox* m_invert;
+	QCheckBox* m_recomputeAutomatically;
+	QComboBox* m_samplingStrategy;
 
 	void recompute();
   public:
