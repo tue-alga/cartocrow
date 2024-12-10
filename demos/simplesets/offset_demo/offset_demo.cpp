@@ -1,12 +1,12 @@
 #include "offset_demo.h"
+#include "cartocrow/core/cs_polygonset_helpers.h"
 #include "cartocrow/renderer/geometry_painting.h"
 #include "cartocrow/renderer/geometry_widget.h"
 #include "cartocrow/renderer/render_path.h"
+#include "cartocrow/simplesets/dilated/dilated_poly.h"
 #include "cartocrow/simplesets/helpers/cavc_helpers.h"
-#include "cartocrow/simplesets/helpers/cs_polygonset_helpers.h"
 #include "cartocrow/simplesets/patterns/bank.h"
 #include "cartocrow/simplesets/patterns/single_point.h"
-#include "cartocrow/simplesets/dilated/dilated_poly.h"
 #include "demos/simplesets/colors/colors.h"
 #include <QApplication>
 #include <QDockWidget>

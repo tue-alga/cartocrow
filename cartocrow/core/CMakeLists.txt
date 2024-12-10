@@ -5,6 +5,13 @@ set(SOURCES
 	region_map.cpp
 	timer.cpp
 	bezier.cpp
+	rectangle_helpers.cpp
+	cs_curve_helpers.cpp
+	cs_polygon_helpers.cpp
+	cs_polygonset_helpers.cpp
+	cs_polyline_helpers.cpp
+	cs_types.cpp
+	vector_helpers.cpp
 )
 set(HEADERS
 	centroid.h
@@ -16,6 +23,14 @@ set(HEADERS
 	bezier.h
 	rectangle_helpers.h
 	arrangement_helpers.h
+	polyline.h
+	general_polyline.h
+	cs_curve_helpers.h
+	cs_polygon_helpers.h
+	cs_polygonset_helpers.h
+	cs_polyline_helpers.h
+	cs_types.h
+	vector_helpers.h
 )
 
 add_library(core ${SOURCES})

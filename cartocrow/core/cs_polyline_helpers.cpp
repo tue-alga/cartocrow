@@ -1,10 +1,10 @@
 #include "cs_polyline_helpers.h"
-#include "../../core/rectangle_helpers.h"
 #include "cs_curve_helpers.h"
+#include "rectangle_helpers.h"
 #include "vector_helpers.h"
 #include <CGAL/Bbox_2.h>
 
-namespace cartocrow::simplesets {
+namespace cartocrow {
 OneRootPoint nearest(const CSPolyline& polyline, const Point<Exact>& point) {
 	std::optional<OneRootNumber> minSqrdDist;
 	std::optional<OneRootPoint> closest;

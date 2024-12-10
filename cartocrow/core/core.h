@@ -25,6 +25,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 07-11-2019
 #include "polyline.h"
 #include <CGAL/Arr_segment_traits_2.h>
 #include <CGAL/Arrangement_2.h>
+#include <CGAL/Arrangement_with_history_2.h>
 #include <CGAL/Bbox_2.h>
 #include <CGAL/Circle_2.h>
 #include <CGAL/Exact_predicates_exact_constructions_kernel.h>
@@ -79,6 +80,7 @@ using Box = CGAL::Bbox_2;
 
 /// An arrangement of objects in the plane.
 template <class K> using Arrangement = CGAL::Arrangement_2<CGAL::Arr_segment_traits_2<K>>;
+template <class K> using ArrangementWithHistory = CGAL::Arrangement_with_history_2<CGAL::Arr_segment_traits_2<K>>;
 
 /// An epsilon value.
 /**

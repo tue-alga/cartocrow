@@ -1,6 +1,6 @@
 #include "cs_polyline_helpers_demo.h"
-#include "cartocrow/simplesets/helpers/cs_polyline_helpers.h"
-#include "cartocrow/simplesets/helpers/cs_polygon_helpers.h"
+#include "cartocrow/core/cs_polygon_helpers.h"
+#include "cartocrow/core/cs_polyline_helpers.h"
 #include <QApplication>
 
 CSPolylineHelpersDemo::CSPolylineHelpersDemo() {

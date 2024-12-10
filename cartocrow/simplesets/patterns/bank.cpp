@@ -1,5 +1,5 @@
 #include "bank.h"
-#include "../helpers/vector_helpers.h"
+#include "cartocrow/core/vector_helpers.h"
 
 namespace cartocrow::simplesets {
 Bank::Bank(std::vector<CatPoint> catPoints): m_catPoints(std::move(catPoints)) {

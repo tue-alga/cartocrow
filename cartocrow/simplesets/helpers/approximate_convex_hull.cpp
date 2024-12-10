@@ -1,6 +1,6 @@
 #include "approximate_convex_hull.h"
-#include "cs_curve_helpers.h"
-#include "cs_polygon_helpers.h"
+#include "cartocrow/core/cs_curve_helpers.h"
+#include "cartocrow/core/cs_polygon_helpers.h"
 
 namespace cartocrow::simplesets {
 Segment<Inexact> tangent(const Circle<Inexact>& c1, const Circle<Inexact>& c2) {

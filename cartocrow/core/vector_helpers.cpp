@@ -1,6 +1,6 @@
 #include "vector_helpers.h"
 
-namespace cartocrow::simplesets {
+namespace cartocrow {
 double orientedAngleBetween(Vector<Inexact> v, Vector<Inexact> w, CGAL::Orientation orientation) {
 	if (orientation == CGAL::CLOCKWISE) return orientedAngleBetween(w, v, CGAL::COUNTERCLOCKWISE);
 	return atan2(v.x() * w.y() - v.y() * w.x(), v.x() * w.x() + v.y() * w.y());

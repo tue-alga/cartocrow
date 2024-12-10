@@ -3,8 +3,8 @@
 
 #include <queue>
 
+#include "cartocrow/core/cs_polygon_helpers.h"
 #include <CGAL/Boolean_set_operations_2.h>
-#include "helpers/cs_polygon_helpers.h"
 
 namespace cartocrow::simplesets {
 

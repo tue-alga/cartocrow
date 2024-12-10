@@ -1,10 +1,10 @@
-#include "../types.h"
-#include "cartocrow/renderer/render_path.h"
+#include "../renderer/render_path.h"
+#include "cs_types.h"
 
 #ifndef CARTOCROW_CS_CURVE_HELPERS_H
 #define CARTOCROW_CS_CURVE_HELPERS_H
 
-namespace cartocrow::simplesets {
+namespace cartocrow {
 OneRootPoint closestOnCircle(const Circle<Exact>& circle, const Point<Exact>& point);
 
 template <class OutputIterator>

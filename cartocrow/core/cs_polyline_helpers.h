@@ -1,11 +1,11 @@
 #ifndef CARTOCROW_CS_POLYLINE_HELPERS_H
 #define CARTOCROW_CS_POLYLINE_HELPERS_H
 
-#include "../types.h"
-#include "cartocrow/renderer/render_path.h"
+#include "../renderer/render_path.h"
+#include "cs_types.h"
 #include <CGAL/Arr_polycurve_traits_2.h>
 
-namespace cartocrow::simplesets {
+namespace cartocrow {
 OneRootPoint nearest(const CSPolyline& polyline, const Point<Exact>& point);
 std::optional<CSPolyline::Curve_const_iterator> liesOn(const Point<Exact>& p, const CSPolyline& polyline);
 std::optional<CSPolyline::Curve_const_iterator> liesOn(const OneRootPoint& p, const CSPolyline& polyline);

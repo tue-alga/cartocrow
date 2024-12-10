@@ -1,6 +1,6 @@
 #include "circles_convex_hull_demo.h"
+#include "cartocrow/core/cs_polygon_helpers.h"
 #include "cartocrow/simplesets/helpers/approximate_convex_hull.h"
-#include "cartocrow/simplesets/helpers/cs_polygon_helpers.h"
 #include <QApplication>
 
 CircleConvexHullDemo::CircleConvexHullDemo() {

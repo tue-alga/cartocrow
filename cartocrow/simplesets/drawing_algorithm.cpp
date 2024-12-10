@@ -1,15 +1,15 @@
 #include "drawing_algorithm.h"
 
 #include "cartocrow/core/arrangement_helpers.h"
+#include "cartocrow/core/cs_curve_helpers.h"
+#include "cartocrow/core/cs_polygon_helpers.h"
+#include "cartocrow/core/cs_polygonset_helpers.h"
+#include "cartocrow/core/cs_polyline_helpers.h"
 #include "cartocrow/renderer/ipe_renderer.h"
 #include "cartocrow/simplesets/helpers/poly_line_gon_intersection.h"
 #include "grow_circles.h"
 #include "helpers/approximate_convex_hull.h"
 #include "helpers/cavc_helpers.h"
-#include "helpers/cs_curve_helpers.h"
-#include "helpers/cs_polygon_helpers.h"
-#include "helpers/cs_polygonset_helpers.h"
-#include "helpers/cs_polyline_helpers.h"
 #include <CGAL/Boolean_set_operations_2.h>
 #include <CGAL/Boolean_set_operations_2/Gps_polygon_validation.h>
 #include <utility>
@@ -131,92 +131,6 @@ Point<Exact> get_point_in(const Face& face) {
 	}
 
 	return midpoint(Segment<Exact>(approx_source, approx_target));
-}
-
-std::vector<Component>
-connectedComponents(const DilatedPatternArrangement& arr, const std::function<bool(FaceH)>& in_component) {
-	std::vector<FaceH> remaining;
-	for (auto fit = arr.faces_begin(); fit != arr.faces_end(); ++fit) {
-		auto fh = fit.ptr();
-		if (in_component(fh)) {
-			remaining.emplace_back(fh);
-		}
-	}
-
-	std::vector<Component> components;
-
-	while (!remaining.empty()) {
-		// We do a BFS
-		std::vector<FaceH> compFaces;
-		std::vector<HalfEdgeH> compBoundaryEdges;
-		auto first = remaining.front();
-		std::deque<FaceH> q;
-		q.push_back(first);
-
-		while (!q.empty()) {
-			auto f = q.front();
-			q.pop_front();
-			compFaces.push_back(f);
-
-			// Go through boundaries of this face
-			std::vector<DilatedPatternArrangement::Ccb_halfedge_circulator> ccbs;
-			std::copy(f->outer_ccbs_begin(), f->outer_ccbs_end(), std::back_inserter(ccbs));
-			std::copy(f->inner_ccbs_begin(), f->inner_ccbs_end(), std::back_inserter(ccbs));
-			for (auto ccb_start : ccbs) {
-				auto ccb_it = ccb_start;
-
-				// Go through each neighbouring face
-				do {
-					auto candidate = ccb_it->twin()->face();
-					if (!in_component(candidate)) {
-						compBoundaryEdges.emplace_back(ccb_it.ptr());
-					} else {
-						// If this is one of the provided faces, and not yet added to queue or compFaces, add it to queue.
-						if (std::find(compFaces.begin(), compFaces.end(), candidate) ==
-						        compFaces.end() &&
-						    std::find(q.begin(), q.end(), candidate) == q.end()) {
-							q.push_back(candidate);
-						}
-					}
-				} while (++ccb_it != ccb_start);
-			}
-		}
-
-		// Done with this connected component
-		remaining.erase(std::remove_if(remaining.begin(), remaining.end(), [&compFaces](const auto& f) {
-		  return std::find(compFaces.begin(), compFaces.end(), f) != compFaces.end();
-		}), remaining.end());
-		components.emplace_back(std::move(compFaces), std::move(compBoundaryEdges), in_component);
-	}
-
-	return components;
-}
-
-Component::Component(std::vector<FaceH> faces, std::vector<HalfEdgeH> boundary_edges, std::function<bool(FaceH)> in_component) :
-      m_faces(std::move(faces)), m_in_component(std::move(in_component)) {
-	while (!boundary_edges.empty()) {
-		auto he = boundary_edges.front();
-		auto circ_start = ComponentCcbCirculator(he, m_in_component);
-		auto circ = circ_start;
-
-		std::vector<X_monotone_curve_2> xm_curves;
-		auto last_it = boundary_edges.end();
-		do {
-			last_it = std::remove(boundary_edges.begin(), last_it, circ.handle());
-			xm_curves.push_back(circ->curve());
-		} while (++circ != circ_start);
-		boundary_edges.erase(last_it, boundary_edges.end());
-
-		CSPolygon polygon(xm_curves.begin(), xm_curves.end());
-		auto orientation = polygon.orientation();
-		if (orientation == CGAL::COUNTERCLOCKWISE) {
-			m_outer_ccbs.push_back(circ_start);
-		} else if (orientation == CGAL::CLOCKWISE) {
-			m_inner_ccbs.push_back(circ_start);
-		} else {
-			throw std::runtime_error("Face orientation is not clockwise nor counterclockwise.");
-		}
-	}
 }
 
 std::ostream& operator<<(std::ostream& out, const Order& o) {
@@ -709,8 +623,8 @@ CSPolyline associatedBoundary(const CSPolygon& component, const CSPolygon& morph
 
 /// Returns parts of the boundary of c that originate from i.
 /// This function assumes that some part of the boundary, but not all of the boundary, originates from i.
-std::vector<CSPolyline> boundaryParts(const Component& c, int i) {
-	std::vector<Component::ComponentCcbCirculator> ccbs;
+std::vector<CSPolyline> boundaryParts(const CComponent& c, int i) {
+	std::vector<CComponent::ComponentCcbCirculator> ccbs;
 	std::copy(c.outer_ccbs_begin(), c.outer_ccbs_end(), std::back_inserter(ccbs));
 	std::copy(c.inner_ccbs_begin(), c.inner_ccbs_end(), std::back_inserter(ccbs));
 
@@ -745,7 +659,7 @@ bool isStraight(const CSPolyline& polyline) {
 
 /// The inclusion and exclusion disks for component \ref c when \ref i is stacked on top of \ref js.
 IncludeExcludeDisks
-DilatedPatternDrawing::includeExcludeDisks(int i, const std::unordered_set<int>& js, const Component& c) const {
+DilatedPatternDrawing::includeExcludeDisks(int i, const std::unordered_set<int>& js, const CComponent& c) const {
 	std::vector<Point<Exact>> ptsI;
 	const auto& catPointsI = m_dilated[i].catPoints();
 	std::transform(catPointsI.begin(), catPointsI.end(), std::back_inserter(ptsI), [](const CatPoint& catPoint) {
@@ -774,12 +688,12 @@ DilatedPatternDrawing::includeExcludeDisks(int i, const std::unordered_set<int>&
 
 /// The inclusion and exclusion disks for component \ref c when \ref i is stacked on top of \ref j.
 IncludeExcludeDisks
-DilatedPatternDrawing::includeExcludeDisks(int i, int j, const Component& c) const {
+DilatedPatternDrawing::includeExcludeDisks(int i, int j, const CComponent& c) const {
 	std::unordered_set<int> js({j});
 	return includeExcludeDisks(i, js, c);
 }
 
-std::shared_ptr<Relation> DilatedPatternDrawing::computePreference(int i, int j, const Component& c) {
+std::shared_ptr<Relation> DilatedPatternDrawing::computePreference(int i, int j, const CComponent& c) {
 	// The preference indicates the relation R in iRj.
 	// If R is Order::GREATER then i > j and i is preferred to be on top of j.
 	auto pref = Order::EQUAL;
@@ -954,7 +868,7 @@ std::optional<std::vector<int>> DilatedPatternDrawing::totalStackingOrder() cons
 	return computeTotalOrder(origins, relations);
 }
 
-std::vector<Component>
+std::vector<CComponent>
 DilatedPatternDrawing::intersectionComponents(int i, int j) const {
 	return connectedComponents(m_arr, [i, j](FaceH fh) {
 		const auto& origins = fh->data().origins;
@@ -963,7 +877,7 @@ DilatedPatternDrawing::intersectionComponents(int i, int j) const {
 	});
 }
 
-std::vector<Component>
+std::vector<CComponent>
 DilatedPatternDrawing::intersectionComponents(int i) const {
 	return connectedComponents(m_arr, [i](FaceH fh) {
 		const auto& origins = fh->data().origins;

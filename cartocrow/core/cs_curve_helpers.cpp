@@ -1,7 +1,7 @@
 #include "cs_curve_helpers.h"
 #include "vector_helpers.h"
 
-namespace cartocrow::simplesets {
+namespace cartocrow {
 OneRootPoint closestOnCircle(const Circle<Exact>& circle, const Point<Exact>& point) {
 	auto bb = circle.bbox();
 	Rectangle<Exact> bbX(bb.xmin() - 1, bb.ymin() - 1, bb.xmax() + 1, bb.ymax() + 1);

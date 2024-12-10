@@ -2,10 +2,12 @@ set(SOURCES
 	maximum_weight_disk.cpp
 	sampling.h
 	parse_points.cpp
+	disk_area.cpp
 )
 set(HEADERS
 	maximum_weight_disk.h
 	parse_points.h
+	disk_area.h
 )
 
 add_library(chorematic_map ${SOURCES})

@@ -11,7 +11,7 @@
 // The only changes made were changing the auto return type to Number<Inexact> and using the
 // typedefs for circle, point, polygon etc.
 
-namespace cartocrow::simplesets {
+namespace cartocrow {
 //For two circles of radii R and r and centered at (0,0) and (d,0) intersecting
 //in a region shaped like an asymmetric lens.
 constexpr double lens_area(const double r, const double R, const double d) {
@@ -271,5 +271,22 @@ bool is_simple(const CSPolygon& pgn) {
 
 	visitor.sweep(itr_pair.first, itr_pair.second);
 	return visitor.is_valid();
+}
+
+CSPolygon polygonToCSPolygon(const Polygon<Exact>& polygon) {
+	std::vector<X_monotone_curve_2> xmCurves;
+	for (auto eit = polygon.edges_begin(); eit != polygon.edges_end(); ++eit) {
+		X_monotone_curve_2 xmCurve(eit->source(), eit->target());
+		xmCurves.push_back(xmCurve);
+	}
+	return {xmCurves.begin(), xmCurves.end()};
+}
+
+CSPolygonWithHoles polygonToCSPolygon(const PolygonWithHoles<Exact>& polygon) {
+	std::vector<CSPolygon> holes;
+	for (auto hit = polygon.holes_begin(); hit != polygon.holes_end(); ++hit) {
+		holes.push_back(polygonToCSPolygon(*hit));
+	}
+	return {polygonToCSPolygon(polygon.outer_boundary()), holes.begin(), holes.end()};
 }
 }

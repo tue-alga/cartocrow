@@ -1,8 +1,8 @@
 #include "cartocrow/simplesets/helpers/poly_line_gon_intersection.h"
 #include "../catch.hpp"
 #include "cartocrow/core/arrangement_helpers.h"
+#include "cartocrow/core/cs_curve_helpers.h"
 #include "cartocrow/renderer/ipe_renderer.h"
-#include "cartocrow/simplesets/helpers/cs_curve_helpers.h"
 
 using namespace cartocrow;
 using namespace cartocrow::renderer;

@@ -9,13 +9,8 @@ set(SOURCES
     patterns/bank.cpp
 	dilated/dilated_poly.cpp
 	helpers/approximate_convex_hull.cpp
-	helpers/cs_curve_helpers.cpp
-	helpers/cs_polygon_helpers.cpp
-	helpers/cs_polygonset_helpers.cpp
-	helpers/cs_polyline_helpers.cpp
 	helpers/poly_line_gon_intersection.cpp
 	helpers/cavc_helpers.cpp
-	helpers/vector_helpers.cpp
 	partition_algorithm.cpp
 	partition_painting.cpp
 	drawing_algorithm.cpp
@@ -37,17 +32,11 @@ set(HEADERS
 	helpers/point_voronoi_helpers.h
 	helpers/poly_line_gon_intersection.h
 	helpers/cropped_voronoi.h
-	helpers/cs_curve_helpers.h
-	helpers/cs_polygon_helpers.h
-	helpers/cs_polygonset_helpers.h
-	helpers/cs_polyline_helpers.h
 	helpers/cavc_helpers.h
-	helpers/vector_helpers.h
 	partition_algorithm.h
 	partition_painting.h
 	partition.h
 	drawing_algorithm.h
-	general_polyline.h
 	grow_circles.h
 )
 

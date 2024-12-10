@@ -1,10 +1,10 @@
 #ifndef CARTOCROW_CS_POLYGON_HELPERS_H
 #define CARTOCROW_CS_POLYGON_HELPERS_H
 
-#include "../types.h"
-#include "../../renderer/render_path.h"
+#include "../renderer/render_path.h"
+#include "cs_types.h"
 
-namespace cartocrow::simplesets {
+namespace cartocrow {
 //For two circles of radii R and r and centered at (0,0) and (d,0) intersecting
 //in a region shaped like an asymmetric lens.
 constexpr double lens_area(const double r, const double R, const double d);
@@ -25,7 +25,8 @@ Number<Inexact> area(const CSPolygon& P);
 Number<Inexact> area(const CSPolygonWithHoles& P);
 
 CSPolygon circleToCSPolygon(const Circle<Exact>& circle);
-
+CSPolygon polygonToCSPolygon(const Polygon<Exact>& polygon);
+CSPolygonWithHoles polygonToCSPolygon(const PolygonWithHoles<Exact>& polygon);
 std::optional<CSPolygon::Curve_const_iterator> liesOn(const Point<Exact>& p, const CSPolygon& polygon);
 std::optional<CSPolygon::Curve_const_iterator> liesOn(const OneRootPoint& p, const CSPolygon& polygon);
 bool liesOn(const X_monotone_curve_2& c, const CSPolygon& polygon);
