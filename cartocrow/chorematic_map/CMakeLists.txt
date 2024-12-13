@@ -3,16 +3,19 @@ set(SOURCES
 	sampling.h
 	parse_points.cpp
 	disk_area.cpp
+	choropleth.cpp
 )
 set(HEADERS
 	maximum_weight_disk.h
 	parse_points.h
 	disk_area.h
+	choropleth.h
 )
 
 add_library(chorematic_map ${SOURCES})
 target_link_libraries(chorematic_map
 	PUBLIC core
+	PRIVATE GDAL::GDAL
 )
 
 cartocrow_install_module(chorematic_map)

@@ -43,6 +43,7 @@ include_directories(${CGAL_INCLUDE_DIR})
 link_libraries(${CGAL_LIBRARIES})
 find_package(GMP REQUIRED)
 
+find_package(GDAL CONFIG REQUIRED)
 find_package(Qt5Widgets REQUIRED)
 set(CMAKE_AUTOMOC ON)
 find_package(glog REQUIRED)

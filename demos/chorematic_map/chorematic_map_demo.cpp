@@ -11,6 +11,7 @@
 #include <QSpinBox>
 #include <QSlider>
 #include <QVBoxLayout>
+#include <QProgressDialog>
 
 #include <utility>
 
@@ -25,6 +26,64 @@
 #include <CGAL/Boolean_set_operations_2/oriented_side.h>
 #include <CGAL/General_polygon_set_2.h>
 #include <CGAL/centroid.h>
+
+#include <gdal/ogrsf_frmts.h>
+
+std::shared_ptr<RegionMap> dutchMunicipalities() {
+    GDALAllRegister();
+    GDALDataset       *poDS;
+
+    poDS = (GDALDataset*) GDALOpenEx( "data/chorematic_map/wijkenbuurten_2024_v1.gpkg", GDAL_OF_VECTOR, nullptr, nullptr, nullptr );
+    if( poDS == nullptr )
+    {
+        printf( "Open failed.\n" );
+        exit( 1 );
+    }
+    OGRLayer* poLayer = poDS->GetLayerByName( "gemeenten" );
+
+    auto regionMap = std::make_shared<RegionMap>();
+    RegionMap& regions = *regionMap;
+    poLayer->ResetReading();
+
+    for (auto& poFeature : *poLayer) {
+        std::string water = poFeature->GetFieldAsString(poFeature->GetFieldIndex("water"));
+        if (water != "NEE") continue;
+        std::string regionId = poFeature->GetFieldAsString(0);
+        OGRGeometry *poGeometry;
+
+        poGeometry = poFeature->GetGeometryRef();
+        if( wkbFlatten(poGeometry->getGeometryType()) == wkbMultiPolygon ){
+            OGRMultiPolygon* poMultiPolygon = poGeometry->toMultiPolygon();
+
+            PolygonSet<Exact> polygonSet;
+            for (auto& poly : *poMultiPolygon) {
+                for (auto& linearRing : *poly) {
+                    Polygon<Exact> polygon;
+                    for (auto& pt : *linearRing) {
+                        polygon.push_back({pt.getX(), pt.getY()});
+                    }
+                    // if the begin and end vertices are equal, remove one of them
+                    if (polygon.container().front() == polygon.container().back()) {
+                        polygon.container().pop_back();
+                    }
+                    if (polygon.is_clockwise_oriented()) {
+                        polygon.reverse_orientation();
+                    }
+                    polygonSet.symmetric_difference(polygon);
+                }
+            }
+            Region region;
+            region.shape = polygonSet;
+            region.name = regionId;
+            regions[regionId] = region;
+        } else {
+            printf( "no multipolygon geometry\n" );
+        }
+    }
+
+    std::cout << "Read Dutch municipalities" << std::endl;
+    return regionMap;
+}
 
 class ArrangementPainting : public GeometryPainting {
   private:
@@ -72,41 +131,6 @@ void VoronoiRegionArrangementPainting::paint(GeometryRenderer& renderer) const {
 		if (fit->data().site.has_value()) {
 			renderer.draw(*(fit->data().site));
 		}
-	}
-}
-
-void RegionArrangementPainting::paint(GeometryRenderer& renderer) const {
-	for (auto fit = m_arr->faces_begin(); fit != m_arr->faces_end(); ++fit) {
-		if (!fit->has_outer_ccb()) continue;
-		double w;
-		auto region = fit->data();
-		if (!region.empty()) {
-			renderer.setMode(GeometryRenderer::fill);
-		} else {
-			renderer.setMode(0);
-		}
-		if (m_weights->contains(region)) {
-			w = m_weights->at(fit->data());
-		} else {
-			w = 0;
-		}
-		if (w > 0) {
-			renderer.setFill(Color{255, 100, 100});
-		} else if (w < 0) {
-			renderer.setFill(Color{100, 100, 255});
-		} else {
-			renderer.setFill(Color{200, 200, 200});
-		}
-		auto poly = face_to_polygon_with_holes<Exact>(fit);
-		renderer.draw(poly);
-		auto c = CGAL::centroid(poly.outer_boundary().vertices_begin(), poly.outer_boundary().vertices_end());
-		renderer.setMode(GeometryRenderer::stroke);
-		renderer.drawText(c, fit->data());
-	}
-	renderer.setMode(GeometryRenderer::stroke);
-	renderer.setStroke(Color{0, 0, 0}, 1.0);
-	for (auto eit = m_arr->edges_begin(); eit != m_arr->edges_end(); ++eit) {
-		renderer.draw(Segment<Exact>(eit->source()->point(), eit->target()->point()));
 	}
 }
 
@@ -183,9 +207,21 @@ void ChorematicMapDemo::resample() {
 		break;
 	}
 	case 3: {
+		QProgressDialog progress("Voronoi iterations...", "Abort", 0, m_voronoiIters->value(), this);
+		progress.setWindowModality(Qt::WindowModal);
+		progress.setMinimumDuration(1000);
 		m_sampler->voronoiUniform(m_nSamples->value(), m_voronoiIters->value(),
 		                          std::back_inserter(m_samples), m_compArrs, m_pls, m_bbs,
-		                          m_outerPolys);
+		                          m_outerPolys, [&progress](int i) { progress.setValue(i); },
+		                          [&progress]() { return progress.wasCanceled(); });
+		break;
+	}
+	case 4: {
+		m_sampler->squareGrid(m_gridSize->value() / 10, m_bb, std::back_inserter(m_samples));
+		break;
+	}
+	case 5: {
+		m_sampler->hexGrid(m_gridSize->value() / 10, m_bb, std::back_inserter(m_samples));
 		break;
 	}
 	default: {
@@ -197,17 +233,16 @@ void ChorematicMapDemo::resample() {
 }
 
 void ChorematicMapDemo::rebin() {
-	for (auto& pair : *m_regionWeight) {
-//		pair.second = m_regionData->at(pair.first) - m_threshold->value();
-		double t = m_threshold->value();
-		double v = m_regionData->at(pair.first);
-		if (v > t) {
-			pair.second = 1;
-		} else if (v == t) {
-			pair.second = 0;
-		} else {
-			pair.second = -1;
-		}
+	std::vector<double> thresholds({static_cast<double>(m_threshold->value())});
+	m_choropleth->setThresholds(thresholds.begin(), thresholds.end());
+	m_choropleth->rebin();
+	int binToFit = m_binFit->value();
+	m_regionWeight->clear();
+
+	for (const auto& [region, _] : *(m_choropleth->m_data)) {
+		auto bin = m_choropleth->regionToBin(region);
+		if (!bin.has_value()) continue;
+		m_regionWeight->operator[](region) = *bin == binToFit ? 1 : -1;
 	}
 }
 
@@ -221,9 +256,15 @@ void ChorematicMapDemo::reweight() {
 }
 
 void ChorematicMapDemo::refit() {
-	InducedDiskW iDisk = m_invert->isChecked() ?
-		smallest_minimum_weight_disk(m_samples.begin(), m_samples.end()) :
-		smallest_maximum_weight_disk(m_samples.begin(), m_samples.end());
+	// This progress dialog does not work yet
+	QProgressDialog progress("Fitting disk...", "Abort", 0, m_samples.size(), this);
+	progress.setWindowModality(Qt::WindowModal);
+	progress.setMinimumDuration(1000);
+	InducedDiskW iDisk = smallest_maximum_weight_disk(m_samples.begin(), m_samples.end(),
+	                                                  [&progress, this](int i) {
+		                                                  progress.setValue(i);
+	                                                  },
+	                                                  [&progress]() { return progress.wasCanceled(); });
 	m_disk = circle(iDisk);
 	double score;
 	if (m_disk.has_value()) {
@@ -231,7 +272,7 @@ void ChorematicMapDemo::refit() {
 		auto circleCS = circleToCSPolygon(disk);
 
 		Number<Inexact> total = 0;
-		for (auto fit = m_regionArr->faces_begin(); fit != m_regionArr->faces_end(); ++fit) {
+		for (auto fit = m_choropleth->m_arr->faces_begin(); fit != m_choropleth->m_arr->faces_end(); ++fit) {
 			if (fit->is_unbounded()) continue;
 			auto w = m_regionWeight->contains(fit->data()) ? m_regionWeight->at(fit->data()) : 0;
 			if (w == 0) continue;
@@ -256,17 +297,16 @@ void ChorematicMapDemo::loadMap(const std::filesystem::path& mapPath) {
 	m_disk = std::nullopt;
 	auto regionMap = ipeToRegionMap(mapPath);
 	auto newArr = std::make_shared<RegionArrangement>(regionMapToArrangement(regionMap));
-	m_rap->m_arr = newArr;
 	m_pl = std::make_shared<LandmarksPl>(*newArr);
 	m_sampler->m_regionArr = newArr;
-	m_regionArr = newArr;
+	m_choropleth->m_arr = newArr;
 	m_sampler->m_pl = m_pl;
 	m_sampler->initialize_triangulation();
 	computeComponentInfo();
 }
 
 void ChorematicMapDemo::computeComponentInfo() {
-	m_comps = connectedComponents(*m_regionArr, [](RegionArrangement::Face_handle fh) {
+	m_comps = connectedComponents(*m_choropleth->m_arr, [](RegionArrangement::Face_handle fh) {
 		return !fh->data().empty();
 	});
 	m_compArrs.clear();
@@ -275,7 +315,7 @@ void ChorematicMapDemo::computeComponentInfo() {
 	m_outerPolys.clear();
 	for (const auto& comp : m_comps) {
 		auto compArr = std::make_shared<RegionArrangement>(comp.arrangement());
-		copyBoundedFaceData(*m_regionArr, *compArr);
+		copyBoundedFaceData(*m_choropleth->m_arr, *compArr);
 		m_compArrs.push_back(compArr);
 		m_pls.push_back(std::make_shared<LandmarksPl>(*(m_compArrs.back())));
 		std::vector<Point<Exact>> points;
@@ -286,12 +326,13 @@ void ChorematicMapDemo::computeComponentInfo() {
 		m_bbs.emplace_back(bb);
 		m_outerPolys.push_back(comp.surface_polygon());
 	}
+	m_bb = CGAL::bbox_2(m_bbs.begin(), m_bbs.end());
 }
 
 void ChorematicMapDemo::loadData(const std::filesystem::path& dataPath) {
-	m_regionData = std::make_shared<std::unordered_map<std::string, double>>(parseRegionDataFile(dataPath));
-	m_regionWeight = std::make_shared<std::unordered_map<std::string, double>>(*m_regionData);
-	rebin();
+	m_choropleth->m_data = std::make_shared<std::unordered_map<std::string, double>>(parseRegionDataFile(dataPath));
+	m_regionWeight = std::make_shared<std::unordered_map<std::string, double>>(*m_choropleth->m_data);
+	m_dataInfoLabel->setText(QString::fromStdString(regionDataInfo(*m_choropleth->m_data)));
 }
 
 ChorematicMapDemo::ChorematicMapDemo() {
@@ -314,8 +355,8 @@ ChorematicMapDemo::ChorematicMapDemo() {
 	vLayout->addWidget(loadMapButton);
 	vLayout->addWidget(loadDataButton);
 
-	auto* infoText = new QLabel();
-	vLayout->addWidget(infoText);
+	m_dataInfoLabel = new QLabel();
+	vLayout->addWidget(m_dataInfoLabel);
 
 	auto* binningSettings = new QLabel("<h3>Binning</h3>");
 	vLayout->addWidget(binningSettings);
@@ -338,6 +379,8 @@ ChorematicMapDemo::ChorematicMapDemo() {
 	m_samplingStrategy->addItem("Uniform random weighted");
 	m_samplingStrategy->addItem("Centroids");
 	m_samplingStrategy->addItem("Voronoi");
+	m_samplingStrategy->addItem("Square grid");
+	m_samplingStrategy->addItem("Hexagonal grid");
 	m_samplingStrategy->setCurrentIndex(0);
 	vLayout->addWidget(m_samplingStrategy);
 
@@ -367,14 +410,27 @@ ChorematicMapDemo::ChorematicMapDemo() {
 	auto* moveToCentroids = new QPushButton("Move to centroids");
 	vLayout->addWidget(moveToCentroids);
 
+	auto* gridSizeLabel = new QLabel("Grid size");
+	m_gridSize = new QSlider();
+	m_gridSize->setMinimum(1);
+	m_gridSize->setMaximum(1000);
+	m_gridSize->setValue(100);
+	m_gridSize->setOrientation(Qt::Horizontal);
+	vLayout->addWidget(gridSizeLabel);
+	vLayout->addWidget(m_gridSize);
+
 	auto* diskFittingSettings = new QLabel("<h3>Disk fitting</h3>");
 	vLayout->addWidget(diskFittingSettings);
-	auto* invertLabel = new QLabel("Invert weights");
-	vLayout->addWidget(invertLabel);
-	m_invert = new QCheckBox();
-	m_invert->setChecked(true);
-	vLayout->addWidget(m_invert);
+	auto* binFitLabel = new QLabel("Bin");
+	vLayout->addWidget(binFitLabel);
+	m_binFit = new QSpinBox();
+	m_binFit->setValue(0);
+	m_binFit->setMinimum(0);
+	m_binFit->setMaximum(5);
+	vLayout->addWidget(m_binFit);
 
+	auto* scoreLabel = new QLabel("Score:");
+	vLayout->addWidget(scoreLabel);
 	m_diskCostLabel = new QLabel();
 	vLayout->addWidget(m_diskCostLabel);
 
@@ -389,18 +445,39 @@ ChorematicMapDemo::ChorematicMapDemo() {
 
 	auto* recomputeButton = new QPushButton("Recompute");
 	vLayout->addWidget(recomputeButton);
+	auto* refitButton = new QPushButton("Refit");
+	vLayout->addWidget(refitButton);
 
 	std::filesystem::path dataPath = "data/chorematic_map/test_data.txt";
 	std::filesystem::path mapPath = "data/chorematic_map/test_region_arrangement.ipe";
-	auto regionMap = ipeToRegionMap(mapPath);
-	m_regionArr = std::make_shared<RegionArrangement>(regionMapToArrangement(regionMap));
-	loadData(dataPath);
-	computeComponentInfo();
+	auto regionData =std::make_shared<std::unordered_map<std::string, double>>(parseRegionDataFile(dataPath));
+//	auto regionMap = dutchMunicipalities();
+//	auto regionArr = std::make_shared<RegionArrangement>(regionMapToArrangementParallel(*regionMap));
+    // Write the arrangement to a file.
+//    std::ofstream out_file("regionArr.dat");
+    CGAL::Arr_face_extended_text_formatter<RegionArrangement> formatter;
+//    CGAL::IO::write(*regionArr, out_file, formatter);
+//    out_file.close();
+//
+    RegionArrangement regionArr;
+    std::ifstream in_file("regionArr.dat");
+    CGAL::IO::read(regionArr, in_file, formatter);
+    in_file.close();
+    m_renderer->setMinZoom(0.00000001);
+    m_renderer->setMaxZoom(1000000000);
+    m_renderer->fitInView(Box(9000, 300000, 300000, 615000));
 
-	m_pl = std::make_shared<LandmarksPl>(*m_regionArr);
-	m_sampler = std::make_unique<Sampler<LandmarksPl>>(m_regionArr, m_pl, m_regionWeight, m_seed->value());
-	m_rap = std::make_shared<RegionArrangementPainting>(m_regionArr, m_regionWeight);
-	m_renderer->addPainting(m_rap, "Region arrangement");
+    std::vector<double> thresholds({0});
+	m_choropleth = std::make_unique<Choropleth>(std::make_shared<RegionArrangement>(regionArr), std::move(regionData),
+	                                            thresholds.begin(), thresholds.end());
+	m_regionWeight = std::make_shared<std::unordered_map<std::string, double>>(*m_choropleth->m_data);
+//	computeComponentInfo();
+
+	m_pl = std::make_shared<LandmarksPl>(*m_choropleth->m_arr);
+//	m_sampler = std::make_unique<Sampler<LandmarksPl>>(m_choropleth->m_arr, m_pl, m_regionWeight, m_seed->value());
+	std::vector<Color> colors({Color(150, 150, 150), Color(200, 200, 200)});
+	m_choroplethP = std::make_shared<ChoroplethPainting>(*m_choropleth, colors.begin(), colors.end(), true);
+	m_renderer->addPainting(m_choroplethP, "Choropleth");
 
 	m_renderer->addPainting([this](renderer::GeometryRenderer& renderer) {
 	  	double minWeight = 0;
@@ -431,12 +508,12 @@ ChorematicMapDemo::ChorematicMapDemo() {
 		}
 	}, "Samples");
 
-	rebin();
-	resample();
-	refit();
+//	rebin();
+//	resample();
+//	refit();
 
-	infoText->setText(QString::fromStdString(regionDataInfo(*m_regionData)));
-	auto [rdMin, rdMax, _, blah] = regionDataData(*m_regionData);
+	m_dataInfoLabel->setText(QString::fromStdString(regionDataInfo(*m_choropleth->m_data)));
+	auto [rdMin, rdMax, _, blah] = regionDataData(*m_choropleth->m_data);
 	m_threshold->setMinimum(rdMin);
 	m_threshold->setMaximum(rdMax);
 	m_threshold->setValue(0);
@@ -465,14 +542,23 @@ ChorematicMapDemo::ChorematicMapDemo() {
 	  	m_renderer->repaint();
 	});
 	connect(m_threshold, &QSlider::valueChanged, [this]() {
+	  	rebin();
+	  	reweight();
 	  	if (m_recomputeAutomatically->isChecked()) {
-			rebin();
-			reweight();
 			refit();
 	  	}
 	  	m_renderer->repaint();
 	});
-	connect(m_invert, &QCheckBox::stateChanged, [this]() {
+	connect(m_gridSize, &QSlider::valueChanged, [this]() {
+		resample();
+	  	if ((m_samplingStrategy->currentIndex() == 4 || m_samplingStrategy->currentIndex() == 5) && m_recomputeAutomatically->isChecked()) {
+			  refit();
+	  	}
+	  	m_renderer->repaint();
+	});
+	connect(m_binFit, QOverload<int>::of(&QSpinBox::valueChanged), [this]() {
+	  	rebin();
+	  	reweight();
 	  	if (m_recomputeAutomatically->isChecked()) {
 			refit();
 	  	}
@@ -490,6 +576,12 @@ ChorematicMapDemo::ChorematicMapDemo() {
 	  	resample();
 	  	refit();
 	  	m_renderer->repaint();
+	});
+	connect(refitButton, &QPushButton::clicked, [this]() {
+		rebin();
+		reweight();
+		refit();
+		m_renderer->repaint();
 	});
 	connect(moveToCentroids, &QPushButton::clicked, [this]() {
 		std::vector<Point<Exact>> newSamples;
@@ -530,10 +622,9 @@ ChorematicMapDemo::ChorematicMapDemo() {
 		std::filesystem::path filePath = QFileDialog::getOpenFileName(this, tr("Select region data file"), startDir).toStdString();
 		if (filePath == "") return;
 		loadData(filePath);
-	  	m_rap->m_weights = m_regionWeight;
 	  	m_sampler->m_regionWeight = m_regionWeight;
 		loadDataButton->setText(QString::fromStdString(filePath.filename()));
-		auto [rdMin, rdMax, _, blah] = regionDataData(*m_regionData);
+		auto [rdMin, rdMax, _, blah] = regionDataData(*m_choropleth->m_data);
 		m_threshold->setMinimum(rdMin);
 		m_threshold->setMaximum(rdMax);
 		m_threshold->setValue(0);

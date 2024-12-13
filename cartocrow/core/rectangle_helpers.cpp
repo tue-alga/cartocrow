@@ -21,4 +21,8 @@ Corner mirror_corner(Corner corner, bool vertical) {
 		if (vertical) return BL; else return TR;
 	}
 }
+
+Side next_side(const Side& side) {
+	return static_cast<Side>((side + 1) % 4);
+}
 }

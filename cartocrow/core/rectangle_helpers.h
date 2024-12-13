@@ -127,9 +127,7 @@ Point<K> proj_on_side(Point<K> p, Side side, const Rectangle<K>& rect) {
 	}
 }
 
-Side next_side(const Side& side) {
-	return static_cast<Side>((side + 1) % 4);
-}
+Side next_side(const Side& side);
 }
 
 #endif //CARTOCROW_RECTANGLE_HELPERS_H

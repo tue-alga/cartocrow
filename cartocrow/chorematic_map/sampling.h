@@ -3,6 +3,8 @@
 
 #include "../core/arrangement_helpers.h"
 #include "../core/region_arrangement.h"
+#include "../core/centroid.h"
+#include "../core/rectangle_helpers.h"
 
 #include "weighted_point.h"
 
@@ -121,38 +123,6 @@ voronoiRegionArrangement(const RegionArrangement& domain, InputIterator begin, I
 	return arr;
 }
 
-template <class K>
-std::pair<Point<K>, Number<K>> centroidPWH(const PolygonWithHoles<K>& pgn) {
-	const Polygon<K>& outer = pgn.outer_boundary();
-
-	CDT<K> cdt;
-	cdt.insert_constraint(outer.vertices_begin(), outer.vertices_end(), true);
-	for (auto hit = pgn.holes_begin(); hit != pgn.holes_end(); ++hit) {
-		cdt.insert_constraint(hit->vertices_begin(), hit->vertices_end(), true);
-	}
-	std::unordered_map<typename CDT<K>::Face_handle, bool> in_domain_map;
-	boost::associative_property_map< std::unordered_map<typename CDT<K>::Face_handle,bool>>
-	    in_domain(in_domain_map);
-
-	//Mark facets that are inside the domain bounded by the polygon
-	CGAL::mark_domain_in_triangulation(cdt, in_domain);
-
-	Vector<K> totalCentroid;
-	Number<K> totalArea;
-	for (auto fh = cdt.finite_faces_begin(); fh != cdt.finite_faces_end(); ++fh) {
-		if (get(in_domain, fh)) {
-			auto t = cdt.triangle(fh);
-			auto a = t.area();
-			auto c = CGAL::centroid(t);
-			totalArea += a;
-			totalCentroid += a * (c - CGAL::ORIGIN);
-		}
-	}
-
-	// todo: this crashes in Debug mode; fix (that is, file CGAL issue).
-	return {CGAL::ORIGIN + totalCentroid / totalArea, totalArea};
-}
-
 template <class InputIterator, class OutputIterator>
 void
 voronoiMoveToCentroid(const RegionArrangement& domain, const Landmarks_pl<RegionArrangement>& pl, InputIterator begin, InputIterator end, OutputIterator out, const Rectangle<Exact>& bbox) {
@@ -166,10 +136,14 @@ voronoiMoveToCentroid(const RegionArrangement& domain, const Landmarks_pl<Region
 
 	for (auto [site, faces] : siteToFaces) {
 		Vector<Exact> total = Vector<Exact>(0, 0);
-		Number<Exact> totalWeight;
+		Number<Exact> totalWeight = 0;
 		for (auto fh : faces) {
 			auto poly = face_to_polygon_with_holes<Exact>(fh);
-			auto [c, area] = centroidPWH(poly);
+			auto c = centroid(poly);
+			auto area = poly.outer_boundary().area();
+			for (const auto& hole : poly.holes()) {
+				area -= hole.area();
+			}
 			Polygon<Exact> pgn;
 			auto weight = area;
 			total += weight * (c - CGAL::ORIGIN);
@@ -291,7 +265,7 @@ class Sampler {
 		initialize_triangulation();
 	}
 
-	WeightedPoint assignWeightToPoint(const Point<Exact>& pt) const {
+	WeightedPoint assignWeightToPoint(const Point<Exact>& pt, bool unitWeight = false) const {
 		auto obj = m_pl->locate(pt);
 		if (auto fhp = boost::get<RegionArrangement::Face_const_handle>(&obj)) {
 			auto fh = *fhp;
@@ -299,6 +273,13 @@ class Sampler {
 			auto region = fh->data();
 			if (m_regionWeight->contains(region)) {
 				w = m_regionWeight->at(fh->data());
+				if (unitWeight) {
+					if (w > 0) {
+						w = 1;
+					} else {
+						w = -1;
+					}
+				}
 			} else {
 				std::cerr << "Region " << region << " has no weight" << std::endl;
 				w = 0;
@@ -311,10 +292,10 @@ class Sampler {
 	}
 
 	template <class InputIterator, class OutputIterator>
-	void assignWeightsToPoints(InputIterator begin, InputIterator end, OutputIterator out) const {
+	void assignWeightsToPoints(InputIterator begin, InputIterator end, OutputIterator out, bool unitWeight = false) const {
 		for (auto pit = begin; pit != end; ++pit) {
 			auto pt = *pit;
-			*out++ = assignWeightToPoint(pt);
+			*out++ = assignWeightToPoint(pt, unitWeight);
 		}
 	}
 
@@ -354,7 +335,7 @@ class Sampler {
 			auto generator = CGAL::Random_points_in_triangle_2<Point<Exact>>(m_triangles[index], rng);
 			std::copy_n(generator, 1, std::back_inserter(points));
 		}
-		assignWeightsToPoints(points.begin(), points.end(), out);
+		assignWeightsToPoints(points.begin(), points.end(), out, true);
 	}
 
 	/// Create a sample point at the centroid of each region.
@@ -364,7 +345,7 @@ class Sampler {
 		for (auto fit = m_regionArr->faces_begin(); fit != m_regionArr->faces_end(); ++fit) {
 			if (fit->is_unbounded() || fit->data().empty()) continue;
 			auto polygon = face_to_polygon_with_holes<Exact>(fit);
-			auto c = approximate(centroidPWH(polygon).first);
+			auto c = approximate(centroid(polygon));
 			auto obj = m_pl->locate(Point<Exact>(c.x(), c.y()));
 			double area = approximate(polygon.outer_boundary()).area();
 			for (const auto& hole : polygon.holes()) {
@@ -395,7 +376,9 @@ class Sampler {
 	                    const std::vector<std::shared_ptr<RegionArrangement>>& compArrs,
 	                    const std::vector<std::shared_ptr<Landmarks_pl<RegionArrangement>>>& pls,
 	                    const std::vector<Rectangle<Exact>>& bbs,
-	                    const std::vector<PolygonWithHoles<Exact>>& outerPolys) const {
+	                    const std::vector<PolygonWithHoles<Exact>>& outerPolys,
+	                    std::optional<std::function<void(int)>> progress = std::nullopt,
+	                    std::optional<std::function<bool()>> cancelled = std::nullopt) const {
 		CGAL::Random rng(m_seed);
 		CGAL::get_default_random() = CGAL::Random(m_seed);
 		auto generator = CGAL::Random_points_in_triangles_2<Point<Exact>>(m_triangles, rng);
@@ -421,6 +404,14 @@ class Sampler {
 
 			std::vector<Point<Exact>> newPoints;
 			for (int j = 0; j < iters; ++j) {
+				if (progress.has_value()) {
+					auto f = *progress;
+					f(j);
+				}
+				if (cancelled.has_value()) {
+					auto f = *cancelled;
+					if (f()) break;
+				}
 				std::vector<Point<Exact>> approximated;
 				for (const auto& pt : samplesInComponent) {
 					auto apt = approximate(pt);
@@ -438,6 +429,44 @@ class Sampler {
 		}
 
 		assignWeightsToPoints(finalPoints.begin(), finalPoints.end(), out);
+	}
+
+	template <class OutputIterator>
+	void squareGrid(double cellSize, const Rectangle<Exact>& bb, OutputIterator out) {
+		auto bbA = approximate(bb);
+		auto w = width(bbA);
+		auto h = height(bbA);
+		int stepsX = static_cast<int>(w / cellSize) + 1;
+		int stepsY = static_cast<int>(h / cellSize) + 1;
+		auto bl = get_corner(bb, Corner::BL);
+
+		std::vector<Point<Exact>> points;
+		for (int i = 0; i < stepsX; ++i) {
+			for (int j = 0; j < stepsY; ++j) {
+				points.push_back(bl + Vector<Exact>(cellSize / 2 + i * cellSize, cellSize / 2 + j * cellSize));
+			}
+		}
+		assignWeightsToPoints(points.begin(), points.end(), out);
+	}
+
+	template <class OutputIterator>
+	void hexGrid(double cellSize, const Rectangle<Exact>& bb, OutputIterator out) {
+		auto bbA = approximate(bb);
+		auto w = width(bbA);
+		auto h = height(bbA);
+		int stepsX = static_cast<int>(w / cellSize) + 1;
+		double cellSizeY = 0.8660254 * cellSize;
+		int stepsY = static_cast<int>(h / cellSizeY) + 1;
+		auto bl = get_corner(bb, Corner::BL);
+
+		std::vector<Point<Exact>> points;
+		for (int i = 0; i < stepsX; ++i) {
+			for (int j = 0; j < stepsY; ++j) {
+				double shift = (j % 2 == 1) ? 0 : 0.5;
+				points.push_back(bl + Vector<Exact>(cellSize / 2 + (i + shift) * cellSize, cellSizeY / 2 + j * cellSizeY));
+			}
+		}
+		assignWeightsToPoints(points.begin(), points.end(), out);
 	}
 };
 

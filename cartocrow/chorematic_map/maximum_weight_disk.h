@@ -9,7 +9,9 @@ namespace cartocrow::chorematic_map {
 /// Smallest Maximum-Weight Circle for Weighted Points in the Plane
 /// by Sergey Bereg, Ovidiu Daescu, Marko Zivanic, and Timothy Rozario
 template <class InputIterator>
-InducedDiskW smallest_maximum_weight_disk(InputIterator begin, InputIterator end) {
+InducedDiskW smallest_maximum_weight_disk(InputIterator begin, InputIterator end,
+                                          std::optional<std::function<void(int)>> progress = std::nullopt,
+                                          std::optional<std::function<bool()>> cancelled = std::nullopt) {
 	// Positive weight points
 	std::vector<WeightedPoint> pos;
 	// Negative weight points
