@@ -512,6 +512,10 @@ void GeometryWidget::draw(const PolygonWithHoles<Inexact>& p) {
 	}
 }
 
+void GeometryWidget::draw(const PolygonSet<Inexact>& p) {
+
+}
+
 void GeometryWidget::addPolygonToPath(QPainterPath& path, const Polygon<Inexact>& p) {
 	for (auto vertex = p.vertices_begin(); vertex != p.vertices_end(); vertex++) {
 		if (vertex == p.vertices_begin()) {

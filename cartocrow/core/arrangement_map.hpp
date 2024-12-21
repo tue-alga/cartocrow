@@ -14,7 +14,8 @@ boundaryMapToArrangementMap(BoundaryMap& map) {
 
 	Arr arr;
 
-	CGAL::Arr_walk_along_line_point_location<Arr> loc(arr);
+//	CGAL::Arr_walk_along_line_point_location<Arr> loc(arr);
+    CGAL::Arr_landmarks_point_location<Arr> loc(arr);
 	using PLResult = CGAL::Arr_point_location_result<Arr>::Type;
 
 	for (Boundary& b : map.boundaries) {
@@ -23,7 +24,7 @@ boundaryMapToArrangementMap(BoundaryMap& map) {
 
 		if (b.closed) {
 			auto face = loc.locate(b.points[0]);
-			typename Arr::Face_const_handle* f = boost::get<Arr::Face_const_handle>(&face);
+			typename Arr::Face_const_handle* f = boost::get<typename Arr::Face_const_handle>(&face);
 			typename Arr::Halfedge_handle first =
 			    arr.insert_in_face_interior(Segment<Exact>(b.points[0], b.points[1]), f->ptr());
 
@@ -52,12 +53,12 @@ boundaryMapToArrangementMap(BoundaryMap& map) {
 			{
 				PLResult res = loc.locate(b.points[0]);
 
-				typename Arr::Vertex_const_handle* v = boost::get<Arr::Vertex_const_handle>(&res);
+				typename Arr::Vertex_const_handle* v = boost::get<typename Arr::Vertex_const_handle>(&res);
 
 				if (v) {
 					v0 = arr.non_const_handle(*v);
 				} else {
-					typename Arr::Face_const_handle* f = boost::get<Arr::Face_const_handle>(&res);
+					typename Arr::Face_const_handle* f = boost::get<typename Arr::Face_const_handle>(&res);
 					v0 = arr.insert_in_face_interior(b.points[0], f->ptr());
 				}
 			}
@@ -65,11 +66,11 @@ boundaryMapToArrangementMap(BoundaryMap& map) {
 			typename Arr::Vertex_handle vn;
 			{
 				PLResult res = loc.locate(b.points[b.points.size() - 1]);
-				typename Arr::Vertex_const_handle* v = boost::get<Arr::Vertex_const_handle>(&res);
+				typename Arr::Vertex_const_handle* v = boost::get<typename Arr::Vertex_const_handle>(&res);
 				if (v) {
 					vn = arr.non_const_handle(*v);
 				} else {
-					typename Arr::Face_const_handle* f = boost::get<Arr::Face_const_handle>(&res);
+					typename Arr::Face_const_handle* f = boost::get<typename Arr::Face_const_handle>(&res);
 					vn = arr.insert_in_face_interior(b.points[b.points.size() - 1], f->ptr());
 				}
 			}
@@ -97,4 +98,65 @@ boundaryMapToArrangementMap(BoundaryMap& map) {
 	return arr;
 }
 
+template <class TVertexData, class TEdgeData>
+ArrangementMap<TVertexData, TEdgeData, std::string>
+regionArrangementToArrangementMap(const RegionArrangement& arr) {
+    using Map = ArrangementMap<TVertexData, TEdgeData, std::string>;
+
+    struct PickRegion {
+        std::string operator()(const std::string& region1, const std::string& region2) const {
+            if (!region1.empty() && !region2.empty()) {
+                std::cerr << "Overlapping regions! " << region1 << " and " << region2 << std::endl;
+                return region1;
+            }
+            if (region1.empty()) {
+                return region2;
+            } else {
+                return region1;
+            }
+        }
+    };
+
+    using OverlayTraits = CGAL::Arr_face_overlay_traits<RegionArrangement, Map,
+            Map, PickRegion>;
+
+    OverlayTraits overlayTraits;
+
+    Map result;
+    Map map;
+    CGAL::overlay(arr, map, result, overlayTraits);
+
+    return result;
+}
+
+template <class TVertexData, class TEdgeData>
+RegionArrangement
+arrangementMapToRegionArrangement(const ArrangementMap<TVertexData, TEdgeData, std::string>& arr) {
+    using Map = ArrangementMap<TVertexData, TEdgeData, std::string>;
+
+    struct PickRegion {
+        std::string operator()(const std::string& region1, const std::string& region2) const {
+            if (!region1.empty() && !region2.empty()) {
+                std::cerr << "Overlapping regions! " << region1 << " and " << region2 << std::endl;
+                return region1;
+            }
+            if (region1.empty()) {
+                return region2;
+            } else {
+                return region1;
+            }
+        }
+    };
+
+    using OverlayTraits = CGAL::Arr_face_overlay_traits<Map, RegionArrangement,
+            RegionArrangement, PickRegion>;
+
+    OverlayTraits overlayTraits;
+
+    RegionArrangement result;
+    RegionArrangement map;
+    CGAL::overlay(arr, map, result, overlayTraits);
+
+    return result;
+}
 } // namespace cartocrow

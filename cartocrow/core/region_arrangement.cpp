@@ -53,8 +53,6 @@ struct RegionOverlayTraits
 	std::string m_newId;
 };
 
-
-
 struct PickRegion {
     std::string operator()(const std::string& region1, const std::string& region2) const {
         if (!region1.empty() && !region2.empty()) {

@@ -870,19 +870,23 @@ std::optional<std::vector<int>> DilatedPatternDrawing::totalStackingOrder() cons
 
 std::vector<CComponent>
 DilatedPatternDrawing::intersectionComponents(int i, int j) const {
-	return connectedComponents(m_arr, [i, j](FaceH fh) {
+    std::vector<CComponent> comps;
+	connectedComponents(m_arr, std::back_inserter(comps), [i, j](FaceH fh) {
 		const auto& origins = fh->data().origins;
 		return std::find(origins.begin(), origins.end(), i) != origins.end() &&
 		       std::find(origins.begin(), origins.end(), j) != origins.end();
 	});
+    return comps;
 }
 
 std::vector<CComponent>
 DilatedPatternDrawing::intersectionComponents(int i) const {
-	return connectedComponents(m_arr, [i](FaceH fh) {
+    std::vector<CComponent> comps;
+	connectedComponents(m_arr, std::back_inserter(comps), [i](FaceH fh) {
 		const auto& origins = fh->data().origins;
 		return origins.size() > 1 && std::find(origins.begin(), origins.end(), i) != origins.end();
 	});
+    return comps;
 }
 
 std::vector<std::shared_ptr<Hyperedge>> DilatedPatternDrawing::hyperedges() const {
@@ -1053,7 +1057,8 @@ void SimpleSetsPainting::paint(renderer::GeometryRenderer& renderer) const {
 	// If there is a stacking order, draw the complete patterns stacked in that order
 	if (stackingOrder.has_value()) {
 		for (int i : *stackingOrder) {
-			auto comps = connectedComponents(m_dpd.m_arr, [i](const FaceH& fh) {
+            std::vector<CComponent> comps;
+			connectedComponents(m_dpd.m_arr, std::back_inserter(comps), [i](const FaceH& fh) {
 				const auto& ors = fh->data().origins;
 				return std::find(ors.begin(), ors.end(), i) != ors.end();
 			});

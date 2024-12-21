@@ -34,7 +34,7 @@ class KSBBDebugPainter : public renderer::GeometryPainting {
 		int num = 0;
 		for (auto& e : m_demo.map->edge_handles()) {
 
-			KSBBTraits::Map::Halfedge_handle he = &*e;
+			KSBBTraits<std::string>::Map::Halfedge_handle he = &*e;
 
 			if (he->source()->degree() != 2 || he->target()->degree() != 2) {
 				continue;
@@ -47,13 +47,13 @@ class KSBBDebugPainter : public renderer::GeometryPainting {
 			//    e->target()->point() != Point<Exact>(128, 192))
 			//	continue;
 
-			if (m_demo.hist->atPresent() && KSBBTraits::ecGetEdgeMark(he) != ECEdgeMark::MAIN) {
+			if (m_demo.hist->atPresent() && KSBBTraits<std::string>::ecGetEdgeMark(he) != ECEdgeMark::MAIN) {
 				he = he->twin();
 			}
 
 			//std::cout << e->source()->point() << "->" << e->target()->point() << "\n";
-			Collapse col = m_demo.hist->atPresent() ? KSBBTraits::ecGetCollapse(he)
-			                                        : KSBBTraits::ecComputeCollapse(he);
+			Collapse col = m_demo.hist->atPresent() ? KSBBTraits<std::string>::ecGetCollapse(he)
+			                                        : KSBBTraits<std::string>::ecComputeCollapse(he);
 
 			Color color{(num * 27) % 256, (50 + num * 13) % 256, (100 + num * 73) % 256};
 			num++;
@@ -76,7 +76,7 @@ class KSBBDebugPainter : public renderer::GeometryPainting {
 					renderer.setFillOpacity(255);
 					renderer.setStroke(Color(0,0,0), 4);
 					renderer.drawText(CGAL::centroid(ap.vertex(0), ap.vertex(1), ap.vertex(2)),
-					                  std::to_string(KSBBTraits::ecGetBlockingNumber(he)));
+					                  std::to_string(KSBBTraits<std::string>::ecGetBlockingNumber(he)));
 				}
 			}
 
@@ -105,31 +105,32 @@ KSBBDemo::KSBBDemo() {
 	setCentralWidget(m_renderer);
 
 	std::filesystem::path file =
-	    std::filesystem::absolute(std::filesystem::path("data/benelux-boundaries.ipe"));
+	    std::filesystem::absolute(std::filesystem::path("data/europe.ipe"));
 	std::cout << "reading file " << file << "\n";
 
 	// step 1: create a RegionMap
-	this->inputmap = std::make_shared<BoundaryMap>(ipeToBoundaryMap(file));
+//	this->inputmap = std::make_shared<BoundaryMap>(ipeToBoundaryMap(file));
+    this->inputmap = std::make_shared<RegionArrangement>(regionMapToArrangement(ipeToRegionMap(file)));
 
 	std::cout << "creating arrangement\n";
 
 	// step 2: convert this to an arrangement with the KSBBTraits
 	// and wrap it in a historic arrangement to allow for quickly recovering all
 	// solutions
-	this->map = std::make_shared<KSBBTraits::Map>(boundaryMapToArrangementMap<KSBBVertex, KSBBEdge>(*(this->inputmap)));
-	this->hist = new HistoricArrangement<KSBBTraits>(*(this->map));
+	this->map = std::make_shared<KSBBTraits<std::string>::Map>(regionArrangementToArrangementMap<KSBBVertex, KSBBEdge<std::string>>(*(this->inputmap)));
+	this->hist = new HistoricArrangement<KSBBTraits<std::string>>(*(this->map));
 
 	int incnt = this->map->number_of_edges();
 	std::cout << "in count " << incnt << "\n";
 
 	Timer t;
 	// step 3: initialize the algorithm
-	this->alg = new KSBBSimplificationWithHistory(*hist);
+	this->alg = new KSBBSimplificationWithHistory<std::string>(*hist);
 	this->alg->initialize();
 	t.stamp("Initialization");
 
 	// step 4: simplify until no more vertices can be removed
-	int to = 120;
+	int to = 14000;
 	this->alg->simplify(to);
 	t.stamp("Simplification done");
 	t.output();
@@ -156,19 +157,19 @@ KSBBDemo::KSBBDemo() {
 
 	BoundaryPainting::Options in_options;
 	in_options.line_width = 1;
-	auto in_painting = std::make_shared<BoundaryPainting>(this->inputmap, in_options);
+//	auto in_painting = std::make_shared<BoundaryPainting>(this->inputmap, in_options);
 
-	ArrangementPainting<KSBBTraits::Map>::Options out_options;
+	ArrangementPainting<KSBBTraits<std::string>::Map>::Options out_options;
 	out_options.color = Color{200, 10, 50};
 	out_options.line_width = 2;
 	auto out_painting =
-	    std::make_shared<ArrangementPainting<KSBBTraits::Map>>(this->map, out_options);
+	    std::make_shared<ArrangementPainting<KSBBTraits<std::string>::Map>>(this->map, out_options);
 
 	auto debug_paint = std::make_shared<KSBBDebugPainter>(*this);
 
 	m_renderer->clear();
 	m_renderer->addPainting(debug_paint, "Debug");
-	m_renderer->addPainting(in_painting, "Input map");
+//	m_renderer->addPainting(in_painting, "Input map");
 	m_renderer->addPainting(out_painting, "Output map");
 
 	//IpeRenderer ipe(debug_paint);
@@ -184,6 +185,11 @@ void KSBBDemo::recalculate() {
 		std::cout << "simplifying to " << this->c << "\n";
 		this->alg->simplify(this->c);
 	}
+    if (map->is_valid()) {
+        std::cout << "Simplification is valid" << std::endl;
+    } else {
+        std::cout << "Simplification is not valid" << std::endl;
+    }
 	m_renderer->update();
 }
 

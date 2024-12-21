@@ -28,7 +28,7 @@ class VWDemo : public QMainWindow {
 	QLabel* m_cLabel;
 
 	int c;
-	std::shared_ptr<BoundaryMap> inputmap;
-	std::shared_ptr<VWTraits::Map> map;
-	HistoricArrangement<VWTraits>* hist;
+	std::shared_ptr<RegionArrangement> inputmap;
+	std::shared_ptr<VWTraits<std::string>::Map> map;
+	HistoricArrangement<VWTraits<std::string>>* hist;
 };

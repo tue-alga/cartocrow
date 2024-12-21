@@ -26,9 +26,12 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <stdexcept>
 
 #include "ipe_reader.h"
+
+#include "centroid.h"
+
 namespace cartocrow {
 
-RegionMap ipeToRegionMap(const std::filesystem::path& file) {
+RegionMap ipeToRegionMap(const std::filesystem::path& file, bool labelAtCentroid) {
 	RegionMap regions;
 
 	std::shared_ptr<ipe::Document> document = IpeReader::loadIpeFile(file);
@@ -71,12 +74,22 @@ RegionMap ipeToRegionMap(const std::filesystem::path& file) {
 		ipe::Shape ipeShape = path->shape();
 		// interpret filled paths as regions
 		PolygonSet<Exact> shape = cartocrow::IpeReader::convertShapeToPolygonSet(ipeShape, matrix);
-		std::optional<size_t> labelId = findLabelInside(shape, labels);
-		if (!labelId.has_value()) {
-			throw std::runtime_error("Encountered region without a label");
-		}
-		labels[labelId.value()].matched = true;
-		std::string name = labels[labelId.value()].text;
+        std::string name;
+        if (labelAtCentroid) {
+            auto& label = findLabelAtCentroid(shape, labels);
+            name = label.text;
+            if (label.matched) {
+                std::cerr << "Label matched to multiple regions" << std::endl;
+            }
+            label.matched = true;
+        } else {
+            std::optional<size_t> labelId = findLabelInside(shape, labels);
+            if (!labelId.has_value()) {
+                throw std::runtime_error("Encountered region without a label");
+            }
+            labels[labelId.value()].matched = true;
+            name = labels[labelId.value()].text;
+        }
 		Region region;
 		region.name = name;
 		if (path->fill().isSymbolic()) {
@@ -107,4 +120,18 @@ std::optional<size_t> detail::findLabelInside(const PolygonSet<Exact>& shape,
 	return labelId;
 }
 
+detail::RegionLabel& detail::findLabelAtCentroid(const PolygonSet<Exact>& shape,
+                                                 std::vector<RegionLabel>& labels) {
+    auto c = centroid(shape);
+    RegionLabel& closest = labels.front();
+    Number<Exact> minDist = CGAL::squared_distance(c, labels.front().position);
+    for (auto lit = (++labels.begin()); lit != labels.end(); ++lit) {
+        auto dist = CGAL::squared_distance(c, lit->position);
+        if (dist < minDist) {
+            closest = *lit;
+            minDist = dist;
+        }
+    }
+    return closest;
+}
 } // namespace cartocrow

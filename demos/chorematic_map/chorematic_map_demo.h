@@ -37,24 +37,20 @@ class VoronoiRegionArrangementPainting : public GeometryPainting {
 	void paint(GeometryRenderer& renderer) const override;
 };
 
+using RegionWeights = std::unordered_map<std::string, double>;
+
 class ChorematicMapDemo : public QMainWindow {
 	Q_OBJECT
 
   private:
 	GeometryWidget* m_renderer;
 	std::unique_ptr<Choropleth> m_choropleth;
-	std::shared_ptr<LandmarksPl> m_pl;
 	std::unique_ptr<Sampler<LandmarksPl>> m_sampler;
 	std::vector<WeightedPoint> m_samples;
-	std::shared_ptr<std::unordered_map<std::string, double>> m_regionWeight;
+	std::shared_ptr<RegionWeights> m_regionWeight;
+    std::shared_ptr<std::unordered_map<std::string, RegionWeights>> m_regionWeightMap;
 	std::optional<Circle<Inexact>> m_disk;
-	std::vector<Component<RegionArrangement>> m_comps;
-	std::vector<std::shared_ptr<RegionArrangement>> m_compArrs;
-	std::vector<std::shared_ptr<LandmarksPl>> m_pls;
 	std::vector<std::shared_ptr<VoronoiRegionArrangementPainting>> m_voronois;
-	std::vector<Rectangle<Exact>> m_bbs;
-	Rectangle<Exact> m_bb;
-	std::vector<PolygonWithHoles<Exact>> m_outerPolys;
 	std::shared_ptr<ChoroplethPainting> m_choroplethP;
 	QSlider* m_threshold;
 	QSlider* m_gridSize;
@@ -62,8 +58,11 @@ class ChorematicMapDemo : public QMainWindow {
 	QSpinBox* m_nSamples;
 	QSpinBox* m_voronoiIters;
 	QSpinBox* m_binFit;
+    QSpinBox* m_colorBinSelector;
+    QSpinBox* m_numberOfBins;
 	QCheckBox* m_recomputeAutomatically;
 	QComboBox* m_samplingStrategy;
+    QComboBox* m_dataAttribute;
 	QLabel* m_diskCostLabel;
 	QLabel* m_dataInfoLabel;
 
@@ -73,7 +72,6 @@ class ChorematicMapDemo : public QMainWindow {
 	void rebin();
 	void loadMap(const std::filesystem::path& mapPath);
 	void loadData(const std::filesystem::path& dataPath);
-	void computeComponentInfo();
   public:
 	ChorematicMapDemo();
 };

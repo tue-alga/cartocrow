@@ -559,9 +559,8 @@ class Component {
 	int m_nr_isolated_vertices;
 };
 
-template <class Arr>
-std::vector<Component<Arr>>
-connectedComponents(const Arr& arr, const std::function<bool(typename Arr::Face_handle)>& in_component) {
+template <class Arr, class OutputIterator>
+void connectedComponents(const Arr& arr, OutputIterator out, const std::function<bool(typename Arr::Face_handle)>& in_component) {
 	typedef typename Arr::Face_handle FaceH;
 	typedef typename Arr::Halfedge_handle HalfEdgeH;
 	std::vector<FaceH> remaining;
@@ -571,8 +570,6 @@ connectedComponents(const Arr& arr, const std::function<bool(typename Arr::Face_
 			remaining.emplace_back(fh);
 		}
 	}
-
-	std::vector<Component<Arr>> components;
 
 	while (!remaining.empty()) {
 		// We do a BFS
@@ -615,10 +612,8 @@ connectedComponents(const Arr& arr, const std::function<bool(typename Arr::Face_
 		remaining.erase(std::remove_if(remaining.begin(), remaining.end(), [&compFaces](const auto& f) {
 			                return std::find(compFaces.begin(), compFaces.end(), f) != compFaces.end();
 		                }), remaining.end());
-		components.emplace_back(std::move(compFaces), std::move(compBoundaryEdges), in_component);
+		*out++ = Component<Arr>(std::move(compFaces), std::move(compBoundaryEdges), in_component);
 	}
-
-	return components;
 }
 
 /// Copy face data of bounded faces from arr1 to arr2.

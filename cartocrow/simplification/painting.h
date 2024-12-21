@@ -120,7 +120,7 @@ template <class TArr> class ArrangementPainting : public renderer::GeometryPaint
 		renderer.setMode(renderer::GeometryRenderer::stroke);
 		renderer.setStroke(m_options.color, m_options.line_width);
 
-		for (auto& e : m_arr->halfedge_handles()) {
+		for (auto& e : m_arr->edge_handles()) {
 			Segment<Exact> ls = Segment<Exact>(e->source()->point(), e->target()->point());
 			Segment<Inexact> als = approximate(ls);
 			renderer.draw(als);

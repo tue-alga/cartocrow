@@ -28,8 +28,8 @@ class KSBBDemo : public QMainWindow {
 	QLabel* m_cLabel;
 
 	int c;
-	std::shared_ptr<BoundaryMap> inputmap;
-	std::shared_ptr<KSBBTraits::Map> map;
-	HistoricArrangement<KSBBTraits>* hist;
-	KSBBSimplificationWithHistory* alg;
+	std::shared_ptr<RegionArrangement> inputmap;
+	std::shared_ptr<KSBBTraits<std::string>::Map> map;
+	HistoricArrangement<KSBBTraits<std::string>>* hist;
+	KSBBSimplificationWithHistory<std::string>* alg;
 };

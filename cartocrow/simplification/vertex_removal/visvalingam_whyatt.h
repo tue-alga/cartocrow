@@ -8,7 +8,9 @@
 
 namespace cartocrow::simplification {
 
+template <class FaceData = std::monostate>
 struct VWVertex;
+template <class FaceData = std::monostate>
 struct VWEdge;
 
 /// These traits implements the \ref cartocrow::simplification::VertexRemovalTraits 
@@ -21,8 +23,9 @@ struct VWEdge;
 /// Authors: M. Visvalingam and J. D. Whyatt
 /// 
 /// Doi: https://doi.org/10.1179/000870493786962263
+template <class FaceData = std::monostate>
 struct VWTraits {
-	using Map = ArrangementMap<VWVertex, VWEdge>;
+	using Map = ArrangementMap<VWVertex<FaceData>, VWEdge<FaceData>, FaceData>;
 
 	static void vrSetCost(Map::Vertex_handle v, Triangle<Exact> T);
 	static Number<Exact> vrGetCost(Map::Vertex_handle v);
@@ -37,19 +40,25 @@ struct VWTraits {
 	static HalfedgeOperation<VWTraits>* histGetData(Map::Halfedge_handle e);
 };
 
-using VWSimplification = VertexRemovalSimplification<ObliviousArrangement<VWTraits>,VWTraits>;
-using VWSimplificationWithHistory = VertexRemovalSimplification<HistoricArrangement<VWTraits>,VWTraits>;
+template <class FaceData = std::monostate>
+using VWSimplification = VertexRemovalSimplification<ObliviousArrangement<VWTraits<FaceData>>,VWTraits<FaceData>>;
+template <class FaceData = std::monostate>
+using VWSimplificationWithHistory = VertexRemovalSimplification<HistoricArrangement<VWTraits<FaceData>>,VWTraits<FaceData>>;
 
 /// The data associated with a vertex in the arrangement used in \ref VWTraits.
+template <class FaceData>
 struct VWVertex {
 	int block;
 	Number<Exact> cost;
-	VWTraits::Map::Halfedge_handle inc;
+	VWTraits<FaceData>::Map::Halfedge_handle inc;
 };
 
 /// The data associated with a halfedge in the arrangement used in \ref VWTraits.
+template <class FaceData>
 struct VWEdge {
-	HalfedgeOperation<VWTraits>* hist = nullptr;
+	HalfedgeOperation<VWTraits<FaceData>>* hist = nullptr;
 };
 
 } // namespace cartocrow::simplification
+
+#include "visvalingam_whyatt.hpp"

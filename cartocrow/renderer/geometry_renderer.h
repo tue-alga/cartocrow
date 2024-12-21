@@ -109,7 +109,7 @@ class GeometryRenderer {
 	/// Draws a Bézier spline with the currently set style.
 	virtual void draw(const BezierSpline& s) = 0;
 	/// Draws a polygon set with the currently set style.
-	virtual void draw(const PolygonSet<Inexact>& p);
+	virtual void draw(const PolygonSet<Inexact>& p) = 0;
 	/// Draws a line with the currently set style.
 	virtual void draw(const Line<Inexact>& l) = 0;
 	/// Draws a ray with the currently set style.

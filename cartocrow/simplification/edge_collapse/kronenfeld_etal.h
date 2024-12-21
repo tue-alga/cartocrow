@@ -9,6 +9,7 @@
 namespace cartocrow::simplification {
 
 struct KSBBVertex;
+template <class FaceData>
 struct KSBBEdge;
 
 /// These traits implements the \ref cartocrow::simplification::EdgeCollapseTraits
@@ -22,8 +23,9 @@ struct KSBBEdge;
 /// Authors: Barry J. Kronenfeld, Lawrence V.Stanislawski, Barbara P.Buttenfieldx, Tyler Brockmeyer
 ///
 /// Doi: https://doi.org/10.1080/23729333.2019.1631535
+template <class FaceData = std::monostate>
 struct KSBBTraits {
-	using Map = ArrangementMap<KSBBVertex, KSBBEdge>;
+	using Map = ArrangementMap<KSBBVertex, KSBBEdge<FaceData>, FaceData>;
 
 	static void ecSetEdgeMark(Map::Halfedge_handle e, ECEdgeMark m);
 	static ECEdgeMark ecGetEdgeMark(Map::Halfedge_handle e);
@@ -42,22 +44,27 @@ struct KSBBTraits {
 	static HalfedgeOperation<KSBBTraits>* histGetData(Map::Halfedge_handle e);
 };
 
-using KSBBSimplification = EdgeCollapseSimplification<ObliviousArrangement<KSBBTraits>, KSBBTraits>;
+template <class FaceData>
+using KSBBSimplification = EdgeCollapseSimplification<ObliviousArrangement<KSBBTraits<FaceData>>, KSBBTraits<FaceData>>;
+template <class FaceData>
 using KSBBSimplificationWithHistory =
-    EdgeCollapseSimplification<HistoricArrangement<KSBBTraits>, KSBBTraits>;
+    EdgeCollapseSimplification<HistoricArrangement<KSBBTraits<FaceData>>, KSBBTraits<FaceData>>;
 
 /// The data associated with a vertex in the arrangement used in \ref KSBBTraits.
 struct KSBBVertex {
 };
 
 /// The data associated with a halfedge in the arrangement used in \ref KSBBTraits.
+template <class FaceData>
 struct KSBBEdge {
 	int block = 0;
 	Number<Exact> cost = 0;
 	ECEdgeMark mark = ECEdgeMark::NONE; 
 	Collapse collapse;
 
-	HalfedgeOperation<KSBBTraits>* hist = nullptr;
+	HalfedgeOperation<KSBBTraits<FaceData>>* hist = nullptr;
 };
 
 } // namespace cartocrow::simplification
+
+#include "kronenfeld_etal.hpp"

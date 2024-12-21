@@ -4,12 +4,14 @@ set(SOURCES
 	parse_points.cpp
 	disk_area.cpp
 	choropleth.cpp
+	natural_breaks_external.cpp
 )
 set(HEADERS
 	maximum_weight_disk.h
 	parse_points.h
 	disk_area.h
 	choropleth.h
+	natural_breaks.h
 )
 
 add_library(chorematic_map ${SOURCES})

@@ -1,6 +1,5 @@
-set(SOURCES	
-	vertex_removal/visvalingam_whyatt.cpp
-	edge_collapse/kronenfeld_etal.cpp
+set(SOURCES
+    edge_collapse/kronenfeld_etal.hpp
 )
 set(HEADERS
 	vertex_removal/vertex_removal.h

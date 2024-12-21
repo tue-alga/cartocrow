@@ -1,6 +1,7 @@
 #pragma once
 
 #include <CGAL/Arr_extended_dcel.h>
+#include <CGAL/Arr_landmarks_point_location.h>
 #include <CGAL/Arr_segment_traits_2.h>
 #include <CGAL/Arrangement_2.h>
 #include <CGAL/Polygon_set_2.h>
@@ -11,6 +12,7 @@
 
 #include "core.h"
 #include "boundary_map.h"
+#include "region_arrangement.h"
 
 namespace cartocrow {
 
@@ -31,6 +33,15 @@ template <typename TVertexData = detail::Void, typename TEdgeData = detail::Void
 ArrangementMap<TVertexData, TEdgeData, TFaceData>
 boundaryMapToArrangementMap(BoundaryMap& map);
 
+/// Change DCEL to have appropriate additional vertex and edge data.
+template <class TVertexData = detail::Void, class TEdgeData = detail::Void>
+ArrangementMap<TVertexData, TEdgeData, std::string>
+regionArrangementToArrangementMap(const RegionArrangement& arr);
+
+/// Change DCEL to forget auxiliary vertex and edge data.
+template <class TVertexData, class TEdgeData>
+RegionArrangement
+arrangementMapToRegionArrangement(const ArrangementMap<TVertexData, TEdgeData, std::string>& arr);
 } // namespace cartocrow
 
 #include "arrangement_map.hpp"

@@ -99,7 +99,7 @@ template <MapType MT>
 requires(EdgeStoredHistory<MT, HalfedgeOperation<MT>>) HistoricArrangement<MT>::Map::Halfedge_handle
     HistoricArrangement<MT>::mergeWithNext(Map::Halfedge_handle e) {
 
-	assert(building_batch != null_ptr);
+	assert(building_batch != nullptr);
 
 	HalfedgeOperation<MT>* op = new HalfedgeMerge<MT>(e);
 	op->redo(map);
@@ -112,7 +112,7 @@ template <MapType MT>
 requires(EdgeStoredHistory<MT, HalfedgeOperation<MT>>) void HistoricArrangement<MT>::shift(
     Map::Vertex_handle v, Point<Exact> p) {
 
-	assert(building_batch != null_ptr);
+	assert(building_batch != nullptr);
 
 	HalfedgeOperation<MT>* op = new HalfedgeTargetShift<MT>(v->inc(), p);
 	op->redo(map);
@@ -136,7 +136,7 @@ template <MapType MT>
 requires(EdgeStoredHistory<MT, HalfedgeOperation<MT>>) void HistoricArrangement<MT>::backInTime() {
 	
 	
-	assert(building_batch == null_ptr);
+	assert(building_batch == nullptr);
 
 	OperationBatch<MT>* batch = history.back();
 	history.pop_back();
@@ -148,7 +148,7 @@ requires(EdgeStoredHistory<MT, HalfedgeOperation<MT>>) void HistoricArrangement<
 template <MapType MT>
 requires(EdgeStoredHistory<MT, HalfedgeOperation<MT>>) void HistoricArrangement<MT>::forwardInTime() {
 
-	assert(building_batch == null_ptr);
+	assert(building_batch == nullptr);
 
 	OperationBatch<MT>* batch = undone.back();
 	undone.pop_back();
@@ -161,7 +161,7 @@ template <MapType MT>
 requires(EdgeStoredHistory<MT, HalfedgeOperation<MT>>) void HistoricArrangement<MT>::recallComplexity(
     int c) {
 
-	assert(building_batch == null_ptr);
+	assert(building_batch == nullptr);
 
 	while ( // if history is a single element, check input complexity
 	    (history.size() >= 1 && in_complexity <= c)
@@ -178,7 +178,7 @@ template <MapType MT>
 requires(EdgeStoredHistory<MT, HalfedgeOperation<MT>>) void HistoricArrangement<MT>::recallThreshold(
     Number<Exact> t) {
 		
-	assert(building_batch == null_ptr);
+	assert(building_batch == nullptr);
 
 	while ((history.size() >= 1 && history.last()->post_maxcost > t)) {
 		backInTime();
@@ -193,7 +193,7 @@ requires(EdgeStoredHistory<MT, HalfedgeOperation<MT>>) void HistoricArrangement<
     Number<Exact> cost) {
 
 	
-	assert(building_batch == null_ptr);
+	assert(building_batch == nullptr);
 	assert(atPresent());
 
 	building_batch = new OperationBatch<MT>();
@@ -209,7 +209,7 @@ requires(EdgeStoredHistory<MT, HalfedgeOperation<MT>>) void HistoricArrangement<
 template <MapType MT>
 requires(EdgeStoredHistory<MT, HalfedgeOperation<MT>>) void HistoricArrangement<MT>::endBatch() {
 	
-	assert(building_batch != null_ptr);
+	assert(building_batch != nullptr);
 
 	building_batch->post_complexity = map.number_of_edges();
 	building_batch = nullptr;

@@ -163,6 +163,7 @@ class GeometryWidget : public QWidget, public GeometryRenderer {
 
 	void draw(const Point<Inexact>& p) override;
 	void draw(const PolygonWithHoles<Inexact>& p) override;
+    void draw(const PolygonSet<Inexact>& p) override;
 	void draw(const Circle<Inexact>& c) override;
 	void draw(const BezierSpline& s) override;
 	void draw(const Line<Inexact>& l) override;

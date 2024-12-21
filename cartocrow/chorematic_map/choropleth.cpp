@@ -19,7 +19,7 @@ void ChoroplethPainting::paint(GeometryRenderer& renderer) const {
 		Color color = m_noDataColor;
 		if (bin.has_value()) {
 			if (m_colors.size() <= *bin) {
-				std::cerr << "No color specified for bin " << *bin;
+				std::cerr << "No color specified for bin " << *bin << std::endl;
 			} else {
 				color = m_colors.at(*bin);
 			}

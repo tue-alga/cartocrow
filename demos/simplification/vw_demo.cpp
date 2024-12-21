@@ -23,27 +23,29 @@ VWDemo::VWDemo() {
 	setCentralWidget(m_renderer);
 
 	std::filesystem::path file =
-	    std::filesystem::absolute(std::filesystem::path("data/benelux-boundaries.ipe"));
+	    std::filesystem::absolute(std::filesystem::path("data/europe.ipe"));
 	std::cout << "reading file " << file << "\n";
 
 	// step 1: create a RegionMap
-	this->inputmap = std::make_shared<BoundaryMap>(ipeToBoundaryMap(file));
+//	this->inputmap = std::make_shared<BoundaryMap>(ipeToBoundaryMap(file));
+    this->inputmap = std::make_shared<RegionArrangement>(regionMapToArrangement(ipeToRegionMap(file)));
 
 	std::cout << "creating arrangement\n";
 
 	// step 2: convert this to an arrangement with the VWTraits
 	// and wrap it in a historic arrangement to allow for quickly recovering all
 	// solution
-	this->map =
-	    std::make_shared<VWTraits::Map>(boundaryMapToArrangementMap<VWVertex, VWEdge>(*(this->inputmap)));
-	this->hist = new HistoricArrangement<VWTraits>(*(this->map));
+//	this->map =
+//	    std::make_shared<VWTraits<>::Map>(boundaryMapToArrangementMap<VWVertex<>, VWEdge<>, std::monostate>(*(this->inputmap)));
+    this->map = std::make_shared<VWTraits<std::string>::Map>(regionArrangementToArrangementMap<VWVertex<std::string>, VWEdge<std::string>>(*(this->inputmap)));
+	this->hist = new HistoricArrangement<VWTraits<std::string>>(*(this->map));
 
 	int incnt = this->map->number_of_edges();
 	std::cout << "in count " << incnt << "\n";
 
 	Timer t;
 	// step 3: initialize the algorithm
-	VWSimplificationWithHistory simplification(*hist);
+	VWSimplificationWithHistory<std::string> simplification(*hist);
 	simplification.initialize();
 	t.stamp("Initialization");
 
@@ -92,15 +94,16 @@ VWDemo::VWDemo() {
 
 	BoundaryPainting::Options in_options;
 	in_options.line_width = 1;
-	auto in_painting = std::make_shared<BoundaryPainting>(this->inputmap, in_options);
+//	auto in_painting = std::make_shared<ArrangementPainting>(this->inputmap, in_options);
+//    auto out_painting = std::make_shared<ArrangementPainting<VWTraits<std::string>::Map>>(this->map, out_options);
 
-	ArrangementPainting<VWTraits::Map>::Options out_options;
+	ArrangementPainting<VWTraits<std::string>::Map>::Options out_options;
 	out_options.color = Color{200, 10, 50};
 	out_options.line_width = 2;
-	auto out_painting = std::make_shared<ArrangementPainting<VWTraits::Map>>(this->map, out_options);
+	auto out_painting = std::make_shared<ArrangementPainting<VWTraits<std::string>::Map>>(this->map, out_options);
 
 	m_renderer->clear();
-	m_renderer->addPainting(in_painting, "Input map");
+//	m_renderer->addPainting(in_painting, "Input map");
 	m_renderer->addPainting(out_painting, "Output map");
 
 	recalculate();
@@ -108,6 +111,11 @@ VWDemo::VWDemo() {
 
 void VWDemo::recalculate() {
 	hist->recallComplexity(c);
+    if (map->is_valid()) {
+        std::cout << "Simplification is valid" << std::endl;
+    } else {
+        std::cout << "Simplification is not valid" << std::endl;
+    }
 	m_renderer->update();
 }
 

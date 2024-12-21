@@ -1,15 +1,16 @@
-#include "kronenfeld_etal.h"
-
 namespace cartocrow::simplification {
 
-void KSBBTraits::ecSetEdgeMark(Map::Halfedge_handle e, ECEdgeMark m) {
+template <class FaceData>
+void KSBBTraits<FaceData>::ecSetEdgeMark(Map::Halfedge_handle e, ECEdgeMark m) {
 	e->data().mark = m;
 }
-ECEdgeMark KSBBTraits::ecGetEdgeMark(Map::Halfedge_handle e) {
+template <class FaceData>
+ECEdgeMark KSBBTraits<FaceData>::ecGetEdgeMark(Map::Halfedge_handle e) {
 	return e->data().mark;
 }
 
-Collapse KSBBTraits::ecComputeCollapse(Map::Halfedge_handle e) {
+template <class FaceData>
+Collapse KSBBTraits<FaceData>::ecComputeCollapse(Map::Halfedge_handle e) {
 	Collapse col;
 
 	Point<Exact> a = e->prev()->source()->point();
@@ -164,15 +165,18 @@ Collapse KSBBTraits::ecComputeCollapse(Map::Halfedge_handle e) {
 	return col;
 }
 
-void KSBBTraits::ecSetCollapse(Map::Halfedge_handle e, Collapse collapse) {
+template <class FaceData>
+void KSBBTraits<FaceData>::ecSetCollapse(Map::Halfedge_handle e, Collapse collapse) {
 	e->data().collapse = collapse;
 }
 
-Collapse KSBBTraits::ecGetCollapse(Map::Halfedge_handle e) {
+template <class FaceData>
+Collapse KSBBTraits<FaceData>::ecGetCollapse(Map::Halfedge_handle e) {
 	return e->data().collapse;
 }
 
-void KSBBTraits::ecSetCost(Map::Halfedge_handle e) {
+template <class FaceData>
+void KSBBTraits<FaceData>::ecSetCost(Map::Halfedge_handle e) {
 
 	const Collapse col = e->data().collapse;
 	Number<Exact> cost = 0;
@@ -182,21 +186,26 @@ void KSBBTraits::ecSetCost(Map::Halfedge_handle e) {
 	// since it is an area preserving method, the other face adds up to the same area...
 	e->data().cost = 2*cost;
 }
-Number<Exact> KSBBTraits::ecGetCost(Map::Halfedge_handle e) {
+template <class FaceData>
+Number<Exact> KSBBTraits<FaceData>::ecGetCost(Map::Halfedge_handle e) {
 	return e->data().cost;
 }
 
-void KSBBTraits::ecSetBlockingNumber(Map::Halfedge_handle e, int b) {
+template <class FaceData>
+void KSBBTraits<FaceData>::ecSetBlockingNumber(Map::Halfedge_handle e, int b) {
 	e->data().block = b;
 }
-int KSBBTraits::ecGetBlockingNumber(Map::Halfedge_handle e) {
+template <class FaceData>
+int KSBBTraits<FaceData>::ecGetBlockingNumber(Map::Halfedge_handle e) {
 	return e->data().block;
 }
 
-void KSBBTraits::histSetData(Map::Halfedge_handle e, HalfedgeOperation<KSBBTraits>* data) {
+template <class FaceData>
+void KSBBTraits<FaceData>::histSetData(Map::Halfedge_handle e, HalfedgeOperation<KSBBTraits<FaceData>>* data) {
 	e->data().hist = data;
 }
-HalfedgeOperation<KSBBTraits>* KSBBTraits::histGetData(Map::Halfedge_handle e) {
+template <class FaceData>
+HalfedgeOperation<KSBBTraits<FaceData>>* KSBBTraits<FaceData>::histGetData(Map::Halfedge_handle e) {
 	return e->data().hist;
 }
 

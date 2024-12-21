@@ -163,6 +163,23 @@ void IpeRenderer::draw(const PolygonWithHoles<Inexact>& p) {
 	}
 }
 
+void IpeRenderer::draw(const PolygonSet<Inexact>& ps) {
+    ipe::Shape* shape = new ipe::Shape();
+
+    std::vector<PolygonWithHoles<Inexact>> pwhs;
+    ps.polygons_with_holes(std::back_inserter(pwhs));
+    for (const auto& p : pwhs) {
+        ipe::Curve *curve = convertPolygonToCurve(p.outer_boundary());
+        shape->appendSubPath(curve);
+        for (auto hole: p.holes()) {
+            ipe::Curve *holeCurve = convertPolygonToCurve(hole);
+            shape->appendSubPath(holeCurve);
+        }
+    }
+    ipe::Path *path = new ipe::Path(getAttributesForStyle(), *shape);
+    m_page->append(ipe::TSelect::ENotSelected, m_layer, path);
+}
+
 void IpeRenderer::draw(const Circle<Inexact>& c) {
 	double r = sqrt(c.squared_radius());
 	ipe::Matrix matrix =

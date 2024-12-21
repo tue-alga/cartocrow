@@ -3,14 +3,24 @@
 
 #include <utility>
 #include "../renderer/geometry_painting.h"
-
 #include "../core/region_arrangement.h"
+#include "../core/arrangement_helpers.h"
+#include "natural_breaks.h"
 
 namespace cartocrow::chorematic_map {
 class Choropleth {
   public:
 	std::shared_ptr<RegionArrangement> m_arr;
 	std::shared_ptr<std::unordered_map<std::string, double>> m_data;
+
+    void naturalBreaks(int nBins) {
+        m_thresholds.clear();
+        std::vector<double> values;
+        for (auto& [_, value] : *m_data) {
+            values.push_back(value);
+        }
+        natural_breaks(values.begin(), values.end(), std::back_inserter(m_thresholds), nBins);
+    }
 
 	void rebin() {
 		// Clear
@@ -33,6 +43,14 @@ class Choropleth {
 		}
 	}
 
+    Choropleth(std::shared_ptr<RegionArrangement> arr,
+               std::shared_ptr<std::unordered_map<std::string, double>> data,
+               int nBins) :
+            m_arr(std::move(arr)), m_data(std::move(data)) {
+        naturalBreaks(nBins);
+        rebin();
+    }
+
 	template <class InputIterator>
 	Choropleth(std::shared_ptr<RegionArrangement> arr,
 	           std::shared_ptr<std::unordered_map<std::string, double>> data,
@@ -52,6 +70,28 @@ class Choropleth {
 		m_thresholds.resize(0);
 		std::copy(begin, end, std::back_inserter(m_thresholds));
 	}
+
+    int numberOfBins() const {
+        return m_bins.size();
+    }
+
+    std::vector<Number<Exact>> binAreas() const {
+        std::vector<Number<Exact>> areas;
+        for (int i = 0; i < m_bins.size(); ++i) {
+            areas.emplace_back(0);
+        }
+        for (auto fit = m_arr->faces_begin(); fit != m_arr->faces_end(); ++fit) {
+            auto pwh = face_to_polygon_with_holes<Exact>(fit);
+            auto& region = fit->data();
+            if (!m_regionToBin.contains(region)) continue;
+            auto& bin = m_regionToBin.at(region);
+            areas[bin] += abs(pwh.outer_boundary().area());
+            for (auto& hole : pwh.holes()) {
+                areas[bin] -= abs(hole.area());
+            }
+        }
+        return areas;
+    }
 
   private:
 	std::vector<double> m_thresholds;
