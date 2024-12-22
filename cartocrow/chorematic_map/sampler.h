@@ -1,5 +1,5 @@
-#ifndef CARTOCROW_SAMPLING_H
-#define CARTOCROW_SAMPLING_H
+#ifndef CARTOCROW_SAMPLER_H
+#define CARTOCROW_SAMPLER_H
 
 #include "../core/arrangement_helpers.h"
 #include "../core/region_arrangement.h"
@@ -7,6 +7,7 @@
 #include "../core/rectangle_helpers.h"
 
 #include "weighted_point.h"
+#include "weighted_region_sample.h"
 
 #include <CGAL/Arr_landmarks_point_location.h>
 #include <CGAL/Boolean_set_operations_2/oriented_side.h>
@@ -164,18 +165,18 @@ voronoiMoveToCentroid(const RegionArrangement& domain, const Landmarks_pl<Region
 	}
 }
 
-template <typename T> int sgn(T val) {
-	return (T(0) < val) - (val < T(0));
-}
-
 template <class PL>
 class Sampler {
   private:
+	using RegionWeight = std::unordered_map<std::string, double>;
+
 	std::shared_ptr<RegionArrangement> m_regionArr;
-	std::shared_ptr<PL> m_pl;
-	std::shared_ptr<std::unordered_map<std::string, double>> m_regionWeight;
     bool m_samplePerRegion;
 	int m_seed;
+
+	// General ancillary data
+	std::vector<std::string> m_regions;
+	std::shared_ptr<PL> m_pl;
 
     // Ancillary data for uniform random sampling
 	std::unique_ptr<CDT<Exact>> m_cdt;
@@ -183,7 +184,6 @@ class Sampler {
 	std::vector<std::string> m_triangleToRegion;
     std::unordered_map<std::string, std::vector<Triangle<Exact>>> m_regionToTriangles;
     std::unordered_map<std::string, double> m_regionArea;
-	std::vector<double> m_triangleWeights;
 
     // Ancillary data for centroidal Voronoi diagram sampling
     std::vector<std::shared_ptr<RegionArrangement>> m_landmassArrs;
@@ -199,20 +199,9 @@ class Sampler {
     // Ancillary data for grid sampling
     std::optional<Rectangle<Exact>> m_bb;
 
-  public:
-    void reweightTriangulation() {
-        m_triangleWeights.clear();
-        for (int i = 0; i < m_triangles.size(); ++i) {
-            std::string region = m_triangleToRegion[i];
-            double weight = m_regionWeight->contains(region) ? m_regionWeight->at(region) : 0;
-            m_triangleWeights.push_back(weight);
-        }
-    }
-
   private:
     void initializeTriangulation() {
         m_triangles.clear();
-        m_triangleWeights.clear();
 
         // Initialize triangulation
         m_cdt = std::make_unique<CDT<Exact>>();
@@ -244,8 +233,8 @@ class Sampler {
                     m_triangles.push_back(t);
                     m_triangleToRegion.push_back(fh->data());
                     m_regionToTriangles[fh->data()].push_back(t);
-                    double weight = m_regionWeight->contains(fh->data()) ? m_regionWeight->at(fh->data()) : 0;
-                    m_triangleWeights.push_back(weight);
+//                    double weight = m_regionWeight->contains(fh->data()) ? m_regionWeight->at(fh->data()) : 0;
+//                    m_triangleWeights.push_back(weight);
                     if (!m_regionArea.contains(fh->data())) {
                         m_regionArea[fh->data()] = 0;
                     }
@@ -282,7 +271,8 @@ class Sampler {
   public:
     void computeRegionCCs() {
         std::vector<Component<RegionArrangement>> comps;
-        for (auto& [region, _] : *m_regionWeight) {
+		std::vector<std::string>& regions = getRegions();
+        for (auto& region : regions) {
             connectedComponents(*m_regionArr, std::back_inserter(comps), [region](RegionArrangement::Face_handle fh) {
                 return fh->data() == region;
             });
@@ -320,14 +310,16 @@ class Sampler {
     void setRegionArr(std::shared_ptr<RegionArrangement> regionArr) {
         m_regionArr = std::move(regionArr);
         m_cdt = nullptr;
-        m_pl = nullptr;
+
+		// General ancillary data
+		m_pl = nullptr;
+		m_regions.clear();
 
         // Ancillary data for uniform random sampling
         m_triangles.clear();
         m_triangleToRegion.clear();
         m_regionToTriangles.clear();
         m_regionArea.clear();
-        m_triangleWeights.clear();
 
         // Ancillary data for centroidal Voronoi diagram sampling
         m_landmassArrs.clear();
@@ -346,15 +338,6 @@ class Sampler {
 
     std::shared_ptr<RegionArrangement> getRegionArr() const {
         return m_regionArr;
-    }
-
-    void setRegionWeight(std::shared_ptr<std::unordered_map<std::string, double>> regionWeight) {
-        m_regionWeight = std::move(regionWeight);
-        m_triangleWeights.clear();
-    }
-
-    std::shared_ptr<std::unordered_map<std::string, double>> getRegionWeight() const {
-        return m_regionWeight;
     }
 
     void setSamplePerRegion(bool samplePerRegion) {
@@ -382,6 +365,22 @@ class Sampler {
         }
         return m_pl;
     }
+
+	void setRegions(const std::vector<std::string>& regions) {
+		m_regions = regions;
+	}
+
+	std::vector<std::string>& getRegions() {
+		if (m_regions.empty()) {
+			for (auto fit = m_regionArr->faces_begin(); fit != m_regionArr->faces_end(); ++fit) {
+				if (!fit->data().empty())
+					m_regions.push_back(fit->data());
+			}
+			std::sort(m_regions.begin(), m_regions.end());
+			m_regions.erase(std::unique(m_regions.begin(), m_regions.end()), m_regions.end());
+		}
+		return m_regions;
+	}
 
     // Triangulation for uniform random sampling
 
@@ -426,10 +425,6 @@ class Sampler {
         m_regionArea = std::move(regionArea);
     }
 
-    void setTriangleWeights(std::vector<double> triangleWeights) {
-        m_triangleWeights = std::move(triangleWeights);
-    }
-
     std::unordered_map<std::string, std::vector<Triangle<Exact>>>& getRegionToTriangles() {
         if (m_regionToTriangles.empty()) {
             initializeTriangulation();
@@ -454,14 +449,6 @@ class Sampler {
         }
         return m_regionArea;
     }
-
-    std::vector<double>& getTriangleWeights() {
-        if (m_triangleWeights.empty()) {
-            initializeTriangulation();
-        }
-        return m_triangleWeights;
-    }
-
 
     // Ancillary data for centroidal Voronoi diagram sampling
     std::vector<std::shared_ptr<RegionArrangement>>& getLandmassArrs() {
@@ -537,21 +524,19 @@ class Sampler {
     }
 
 	Sampler(std::shared_ptr<RegionArrangement> regionArr,
-	        std::shared_ptr<std::unordered_map<std::string, double>> regionData,
             int seed,
             bool samplePerRegion = false)
-	  : m_regionArr(std::move(regionArr)), m_regionWeight(std::move(regionData)), m_seed(seed), m_samplePerRegion(samplePerRegion) {}
+	  : m_regionArr(std::move(regionArr)), m_seed(seed), m_samplePerRegion(samplePerRegion) {}
 
-	WeightedPoint assignWeightToPoint(const Point<Exact>& pt, bool unitWeight = false) {
+	WeightedPoint assignWeightToPoint(const Point<Exact>& pt, const RegionWeight& regionWeight, bool unitWeight = false) {
         auto pl = getPL();
-        auto regionWeight = getRegionWeight();
 		auto obj = pl->locate(pt);
 		if (auto fhp = boost::get<RegionArrangement::Face_const_handle>(&obj)) {
 			auto fh = *fhp;
 			double w;
 			auto region = fh->data();
-			if (regionWeight->contains(region)) {
-				w = regionWeight->at(fh->data());
+			if (regionWeight.contains(region)) {
+				w = regionWeight.at(fh->data());
 				if (unitWeight) {
 					if (w > 0) {
 						w = 1;
@@ -567,14 +552,6 @@ class Sampler {
 		} else {
 			std::cerr << "Point does not lie in face but on edge or vertex!" << std::endl;
 			throw std::runtime_error("Unhandled degenerate case");
-		}
-	}
-
-	template <class InputIterator, class OutputIterator>
-	void assignWeightsToPoints(InputIterator begin, InputIterator end, OutputIterator out, bool unitWeight = false) {
-		for (auto pit = begin; pit != end; ++pit) {
-			auto pt = *pit;
-			*out++ = assignWeightToPoint(pt, unitWeight);
 		}
 	}
 
@@ -615,91 +592,27 @@ class Sampler {
     }
 
   public:
+	std::function<WeightedPoint(const Point<Exact>&, const RegionWeight&)> m_assignWeight = [this](const Point<Exact>& point, const RegionWeight& regionWeights) {
+		return assignWeightToPoint(point, regionWeights);
+	};
 
 	/// Generate samples uniformly at random over the arrangement.
 	/// The weight of a sample point is equal to the weight of the region it lies in.
-	template <class OutputIterator>
-	void uniformRandomSamples(int n, OutputIterator out) {
-        std::vector<Point<Exact>> points;
-        uniformRandomPoints(n, std::back_inserter(points));
-        assignWeightsToPoints(points.begin(), points.end(), out);
-	}
-
-	/// Generate samples on the arrangement. The weight of a region determines the probability that a point is sampled there.
-	/// Sample points have unit weight.
-	template <class OutputIterator>
-	void uniformRandomSamplesWeighted(int n, OutputIterator out) {
-        // todo: sample per region
-		CGAL::Random rng(m_seed);
-		CGAL::get_default_random() = CGAL::Random(m_seed);
-
-        auto& triangles = getTriangles();
-        auto& triangleWeights = getTriangleWeights();
-
-		std::vector<double> weightedAreas;
-		double totalWeightedArea = 0.0;
-		for (int i = 0; i < triangles.size(); ++i) {
-			auto& t = triangles[i];
-			auto w = triangleWeights[i];
-			totalWeightedArea += abs(approximate(t).area() * w);
-			weightedAreas.push_back(totalWeightedArea);
-		}
-
-		std::vector<Point<Exact>> points;
-
-        if (totalWeightedArea == 0) {
-            std::cerr << "Total weight is zero, so cannot sample." << std::endl;
-            return;
-        }
-
-		for (int i = 0; i < n; ++i) {
-			auto x = rng.get_double(0.0, totalWeightedArea);
-			int index = std::distance(weightedAreas.begin(), std::upper_bound(weightedAreas.begin(), weightedAreas.end(), x));
-			auto generator = CGAL::Random_points_in_triangle_2<Point<Exact>>(triangles[index], rng);
-			std::copy_n(generator, 1, std::back_inserter(points));
-		}
-		assignWeightsToPoints(points.begin(), points.end(), out, true);
-	}
-
-	/// Create a sample point at the centroid of each region.
-	/// The weight of a sample point is the area of the region times the weight of the region.
-	template <class OutputIterator>
-	void centroids(OutputIterator out) {
-        auto pl = getPL();
-        auto regionWeight = getRegionWeight();
-		for (auto fit = m_regionArr->faces_begin(); fit != m_regionArr->faces_end(); ++fit) {
-			if (fit->is_unbounded() || fit->data().empty()) continue;
-			auto polygon = face_to_polygon_with_holes<Exact>(fit);
-			auto c = approximate(centroid(polygon));
-			auto obj = pl->locate(Point<Exact>(c.x(), c.y()));
-			double area = approximate(polygon.outer_boundary()).area();
-			for (const auto& hole : polygon.holes()) {
-				area -= approximate(hole).area();
-			}
-			if (auto fhp = boost::get<RegionArrangement::Face_const_handle>(&obj)) {
-				auto fh = *fhp;
-				double w;
-				auto region = fh->data();
-				if (regionWeight->contains(region)) {
-					w = regionWeight->at(fh->data()) * area;
-				} else {
-					std::cerr << "Region " << region << " has no weight" << std::endl;
-					w = 0;
-				}
-				*out++ = WeightedPoint(approximate(c), w);
-			}
-		}
+	WeightedRegionSample<Exact> uniformRandomSamples(int n) {
+		WeightedRegionSample<Exact> sample;
+        uniformRandomPoints(n, std::back_inserter(sample.m_points));
+		sample.setAssignWeightFunction(m_assignWeight);
+		return sample;
 	}
 
 	/// Generate samples uniformly at random over the arrangement.
 	/// The weight of a sample point is equal to the weight of the region it lies in.
 	/// Perturb via Voronoi.
-	template <class OutputIterator>
-	void voronoiUniform(int n,
-	                    int iters,
-	                    OutputIterator out,
-	                    std::optional<std::function<void(int)>> progress = std::nullopt,
-	                    std::optional<std::function<bool()>> cancelled = std::nullopt) {
+	WeightedRegionSample<Exact>
+	voronoiUniform(int n,
+	               int iters,
+	               std::optional<std::function<void(int)>> progress = std::nullopt,
+	               std::optional<std::function<bool()>> cancelled = std::nullopt) {
 		std::vector<Point<Exact>> points;
         uniformRandomPoints(n, std::back_inserter(points));
 
@@ -750,12 +663,10 @@ class Sampler {
             }
             std::copy(samplesInComponent.begin(), samplesInComponent.end(), std::back_inserter(finalPoints));
         }
-
-		assignWeightsToPoints(finalPoints.begin(), finalPoints.end(), out);
+		return {finalPoints.begin(), finalPoints.end(), m_assignWeight};
 	}
 
-	template <class OutputIterator>
-	void squareGrid(double cellSize, OutputIterator out) {
+	WeightedRegionSample<Exact> squareGrid(double cellSize) {
         std::vector<Rectangle<Exact>>&& bbs = m_samplePerRegion ? getRegionCCBbs() : std::vector({getArrBoundingBox()});
         std::vector<std::shared_ptr<PL>>&& pls = m_samplePerRegion ? getRegionCCPls() : std::vector({getPL()});
 
@@ -784,11 +695,10 @@ class Sampler {
                 }
             }
         }
-        assignWeightsToPoints(points.begin(), points.end(), out);
+		return {points.begin(), points.end(), m_assignWeight};
 	}
 
-	template <class OutputIterator>
-	void hexGrid(double cellSize, OutputIterator out) {
+	WeightedRegionSample<Exact> hexGrid(double cellSize) {
         std::vector<Rectangle<Exact>>&& bbs = m_samplePerRegion ? getRegionCCBbs() : std::vector({getArrBoundingBox()});
         std::vector<std::shared_ptr<PL>>&& pls = m_samplePerRegion ? getRegionCCPls() : std::vector({getPL()});
 
@@ -819,9 +729,9 @@ class Sampler {
                 }
             }
         }
-		assignWeightsToPoints(points.begin(), points.end(), out);
+		return {points.begin(), points.end(), m_assignWeight};
 	}
 };
 }
 
-#endif //CARTOCROW_SAMPLING_H
+#endif //CARTOCROW_SAMPLER_H

@@ -112,6 +112,13 @@ class ChoroplethPainting : public renderer::GeometryPainting {
 	    : m_choropleth(choropleth), m_colors(beginColors, endColors),
 	      m_noDataColor(noDataColor), m_drawLabels(drawLabels) {}
 
+	template <class InputIterator>
+	void setColors(InputIterator begin, InputIterator end) {
+		m_colors.clear();
+		m_colors.resize(0);
+		std::copy(begin, end, std::back_inserter(m_colors));
+	}
+
 	void paint(renderer::GeometryRenderer& renderer) const override;
 };
 }

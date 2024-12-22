@@ -10,8 +10,9 @@
 #include "cartocrow/core/region_arrangement.h"
 
 #include "cartocrow/chorematic_map/choropleth.h"
+#include "cartocrow/chorematic_map/choropleth_disks.h"
+#include "cartocrow/chorematic_map/sampler.h"
 #include "cartocrow/chorematic_map/weighted_point.h"
-#include "cartocrow/chorematic_map/sampling.h"
 
 #include <CGAL/Arr_landmarks_point_location.h>
 
@@ -37,7 +38,7 @@ class VoronoiRegionArrangementPainting : public GeometryPainting {
 	void paint(GeometryRenderer& renderer) const override;
 };
 
-using RegionWeights = std::unordered_map<std::string, double>;
+using RegionWeight = std::unordered_map<std::string, double>;
 
 class ChorematicMapDemo : public QMainWindow {
 	Q_OBJECT
@@ -46,10 +47,9 @@ class ChorematicMapDemo : public QMainWindow {
 	GeometryWidget* m_renderer;
 	std::unique_ptr<Choropleth> m_choropleth;
 	std::unique_ptr<Sampler<LandmarksPl>> m_sampler;
-	std::vector<WeightedPoint> m_samples;
-	std::shared_ptr<RegionWeights> m_regionWeight;
-    std::shared_ptr<std::unordered_map<std::string, RegionWeights>> m_regionWeightMap;
-	std::optional<Circle<Inexact>> m_disk;
+	WeightedRegionSample<Exact> m_sample;
+    std::shared_ptr<std::unordered_map<std::string, RegionWeight>> m_regionWeightMap;
+	std::vector<BinDisk> m_disks;
 	std::vector<std::shared_ptr<VoronoiRegionArrangementPainting>> m_voronois;
 	std::shared_ptr<ChoroplethPainting> m_choroplethP;
 	QSlider* m_threshold;
@@ -57,19 +57,19 @@ class ChorematicMapDemo : public QMainWindow {
 	QSpinBox* m_seed;
 	QSpinBox* m_nSamples;
 	QSpinBox* m_voronoiIters;
-	QSpinBox* m_binFit;
     QSpinBox* m_colorBinSelector;
     QSpinBox* m_numberOfBins;
 	QCheckBox* m_recomputeAutomatically;
+	QCheckBox* m_invertFittingOrder;
 	QComboBox* m_samplingStrategy;
     QComboBox* m_dataAttribute;
 	QLabel* m_diskCostLabel;
 	QLabel* m_dataInfoLabel;
 
 	void resample();
-	void reweight();
 	void refit();
 	void rebin();
+	void recolor();
 	void loadMap(const std::filesystem::path& mapPath);
 	void loadData(const std::filesystem::path& dataPath);
   public:

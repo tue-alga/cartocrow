@@ -1,10 +1,11 @@
 set(SOURCES
 	maximum_weight_disk.cpp
-	sampling.h
+    sampler.h
 	parse_points.cpp
 	disk_area.cpp
 	choropleth.cpp
 	natural_breaks_external.cpp
+	choropleth_disks.cpp
 )
 set(HEADERS
 	maximum_weight_disk.h
@@ -12,6 +13,8 @@ set(HEADERS
 	disk_area.h
 	choropleth.h
 	natural_breaks.h
+	weighted_region_sample.h
+	choropleth_disks.h
 )
 
 add_library(chorematic_map ${SOURCES})
