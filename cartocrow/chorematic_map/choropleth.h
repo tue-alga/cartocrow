@@ -71,6 +71,29 @@ class Choropleth {
 		std::copy(begin, end, std::back_inserter(m_thresholds));
 	}
 
+	std::vector<double>& getThresholds() {
+		return m_thresholds;
+	}
+
+	std::vector<double> getIntervals() {
+		std::optional<double> min;
+		std::optional<double> max;
+		for (auto& [region, value] : *m_data) {
+			if (!min.has_value() || value < *min) {
+				min = value;
+			}
+			if (!max.has_value() || value > *max) {
+				max = value;
+			}
+		}
+		std::vector<double> intervals({*min});
+		for (const auto& t : getThresholds()) {
+			intervals.push_back(t);
+		}
+		intervals.push_back(*max);
+		return intervals;
+	}
+
     int numberOfBins() const {
         return m_bins.size();
     }

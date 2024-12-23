@@ -1,4 +1,4 @@
-#include "../renderer/render_path.h"
+//#include "../renderer/render_path.h"
 #include "cs_types.h"
 
 #ifndef CARTOCROW_CS_CURVE_HELPERS_H
@@ -37,9 +37,10 @@ OneRootPoint nearest(const X_monotone_curve_2& xm_curve, const Point<Exact>& poi
 
 bool liesOn(const Point<Exact>& p, const X_monotone_curve_2& xm_curve);
 bool liesOn(const OneRootPoint& p, const X_monotone_curve_2& xm_curve);
-renderer::RenderPath renderPath(const X_monotone_curve_2& xm_curve);
-void addToRenderPath(const X_monotone_curve_2& xm_curve, renderer::RenderPath& path, bool& first);
-void addToRenderPath(const Curve_2& curve, renderer::RenderPath& path, bool& first);
+// todo fix by moving to renderer or simplesets
+//renderer::RenderPath renderPath(const X_monotone_curve_2& xm_curve);
+//void addToRenderPath(const X_monotone_curve_2& xm_curve, renderer::RenderPath& path, bool& first);
+//void addToRenderPath(const Curve_2& curve, renderer::RenderPath& path, bool& first);
 Curve_2 toCurve(const X_monotone_curve_2& xmc);
 
 template <class OutputIterator, class InputIterator>

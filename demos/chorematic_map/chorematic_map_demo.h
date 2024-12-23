@@ -63,7 +63,7 @@ class ChorematicMapDemo : public QMainWindow {
 	QCheckBox* m_invertFittingOrder;
 	QComboBox* m_samplingStrategy;
     QComboBox* m_dataAttribute;
-	QLabel* m_diskCostLabel;
+	QLabel* m_diskScoreLabel;
 	QLabel* m_dataInfoLabel;
 
 	void resample();

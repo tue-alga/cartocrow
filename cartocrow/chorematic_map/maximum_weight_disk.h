@@ -152,7 +152,7 @@ InducedDiskW smallest_maximum_weight_disk(InputIterator begin, InputIterator end
 		for (int i = 0; i < n / step; ++i) {
 			int iStart = std::ceil(i * step);
 			int iEnd = std::ceil((i + 1) * step);
-			results.push_back(std::async(task, iStart, iEnd));
+			results.push_back(std::async(std::launch::async, task, iStart, iEnd));
 		}
 
 		for (auto& futureResult : results) {

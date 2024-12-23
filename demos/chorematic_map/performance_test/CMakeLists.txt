@@ -12,6 +12,7 @@ target_link_libraries(
     chorematic_map
     renderer
     CGAL::CGAL
+    GDAL::GDAL
     Qt5::Widgets
 )
 

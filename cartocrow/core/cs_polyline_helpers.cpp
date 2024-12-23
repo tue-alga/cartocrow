@@ -43,14 +43,14 @@ std::optional<CSPolyline::Curve_const_iterator> liesOn(const OneRootPoint& p, co
 	return std::nullopt;
 }
 
-renderer::RenderPath renderPath(const CSPolyline& polyline) {
-	renderer::RenderPath path;
-	bool first = true;
-	for (auto cit = polyline.curves_begin(); cit != polyline.curves_end(); ++cit) {
-		addToRenderPath(*cit, path, first);
-	}
-	return path;
-}
+//renderer::RenderPath renderPath(const CSPolyline& polyline) {
+//	renderer::RenderPath path;
+//	bool first = true;
+//	for (auto cit = polyline.curves_begin(); cit != polyline.curves_end(); ++cit) {
+//		addToRenderPath(*cit, path, first);
+//	}
+//	return path;
+//}
 
 bool liesOn(const X_monotone_curve_2& c, const CSPolyline& polyline) {
 	auto sc = liesOn(c.source(), polyline);

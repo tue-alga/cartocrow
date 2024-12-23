@@ -1,6 +1,7 @@
 #include "choropleth.h"
 #include "../core/arrangement_helpers.h"
 #include "../core/centroid.h"
+#include "../core/rectangle_helpers.h"
 
 namespace cartocrow::chorematic_map {
 using namespace renderer;
@@ -39,6 +40,23 @@ void ChoroplethPainting::paint(GeometryRenderer& renderer) const {
 	renderer.setStroke(Color{0, 0, 0}, 1.0);
 	for (auto eit = arr.edges_begin(); eit != arr.edges_end(); ++eit) {
 		renderer.draw(Segment<Exact>(eit->source()->point(), eit->target()->point()));
+	}
+	std::vector<Point<Inexact>> points;
+	for (auto vit = arr.vertices_begin(); vit != arr.vertices_end(); ++vit) {
+		points.push_back(approximate(vit->point()));
+	}
+	Rectangle<Inexact> bb = CGAL::bbox_2(points.begin(), points.end());
+	auto bl = get_corner(bb, Corner::BL);
+	auto intervals = m_choropleth.getIntervals();
+	for (int bin = 0; bin < m_choropleth.numberOfBins(); ++bin) {
+		auto& low = intervals[bin];
+		auto& high = intervals[bin + 1];
+		std::stringstream ss;
+		ss << "[" << low << ", " << high << ")" << std::endl;
+		Point<Inexact> pos = bl - Vector<Inexact>(0, 100) * (bin + 1);
+		renderer.setMode(GeometryRenderer::stroke);
+		renderer.setStroke(Color{0, 0, 0}, 1.0);
+		renderer.drawText(pos, ss.str());
 	}
 }
 }

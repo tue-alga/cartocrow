@@ -330,11 +330,11 @@ void ChorematicMapDemo::resample() {
 		break;
 	}
 	case 2: {
-		m_sample = m_sampler->squareGrid(m_gridSize->value() / 10);
+		m_sample = m_sampler->squareGrid(m_gridSize->value() / 10.0);
 		break;
 	}
 	case 3: {
-		m_sample = m_sampler->hexGrid(m_gridSize->value() / 10);
+		m_sample = m_sampler->hexGrid(m_gridSize->value() / 10.0);
 		break;
 	}
 	default: {
@@ -375,12 +375,15 @@ void ChorematicMapDemo::recolor() {
 }
 
 void ChorematicMapDemo::refit() {
-	m_disks = fitDisks(*m_choropleth, m_sample, m_invertFittingOrder->isChecked());
+	m_disks = fitDisks(*m_choropleth, m_sample, m_invertFittingOrder->isChecked(), m_numberOfBins->value() == 2);
+	if (m_disks[0].score.has_value()) {
+		m_diskScoreLabel->setText(QString::fromStdString(std::to_string(m_disks[0].score.value())));
+	}
 }
 
 void ChorematicMapDemo::loadMap(const std::filesystem::path& mapPath) {
 	m_sample.m_points.clear();
-	m_diskCostLabel->setText("");
+	m_diskScoreLabel->setText("");
 	m_disks.clear();
 	auto regionMap = ipeToRegionMap(mapPath);
 	auto newArr = std::make_shared<RegionArrangement>(regionMapToArrangement(regionMap));
@@ -507,8 +510,8 @@ ChorematicMapDemo::ChorematicMapDemo() {
 
 	auto* scoreLabel = new QLabel("Score:");
 	vLayout->addWidget(scoreLabel);
-	m_diskCostLabel = new QLabel();
-	vLayout->addWidget(m_diskCostLabel);
+	m_diskScoreLabel = new QLabel();
+	vLayout->addWidget(m_diskScoreLabel);
 
 	auto* miscellaneous = new QLabel("<h3>Miscellaneous</h3>");
 	vLayout->addWidget(miscellaneous);
@@ -530,10 +533,10 @@ ChorematicMapDemo::ChorematicMapDemo() {
 //    std::filesystem::path dutch = "data/chorematic_map/gemeenten-2022_92959vtcs.ipe";
     std::filesystem::path dutch = "data/chorematic_map/gemeenten-2022_19282vtcs.ipe";
 
-    auto regionMap = std::make_shared<RegionMap>(ipeToRegionMap(dutch, true));
-    m_regionWeightMap = regionDataMapFromGPKG(gpkg3, "gemeenten", "gemeentecode", [](const std::string& s) {
-        return s;
-    });
+//    auto regionMap = std::make_shared<RegionMap>(ipeToRegionMap(dutch, true));
+//    m_regionWeightMap = regionDataMapFromGPKG(gpkg3, "gemeenten", "gemeentecode", [](const std::string& s) {
+//        return s;
+//    });
 
     // Non-generalized Dutch municipalities
 //	auto regionMapDM = regionMapFromGPKG(gpkg3, "gemeenten", "gemeentecode");
@@ -553,13 +556,13 @@ ChorematicMapDemo::ChorematicMapDemo() {
 //    m_regionWeightMap = regionDataMapFromGPKG(gpkg2, "gemeenten", "jrstatcode", [](const std::string& s) {
 //        return s.substr(4);
 //    });
-    auto regionData = std::make_shared<std::unordered_map<std::string, double>>(m_regionWeightMap->begin()->second);
-    // Hessen
-//    auto regionMap = regionMapFromGPKG(gpkg1, "HE_1000k_stats", "GEN");
-//    m_regionWeightMap = regionDataMapFromGPKG(gpkg1, "HE_1000k_stats", "GEN", [](const std::string& s) {
-//        return s;
-//    });
 //    auto regionData = std::make_shared<std::unordered_map<std::string, double>>(m_regionWeightMap->begin()->second);
+    // Hessen
+    auto regionMap = regionMapFromGPKG(gpkg1, "HE_1000k_stats", "GEN");
+    m_regionWeightMap = regionDataMapFromGPKG(gpkg1, "HE_1000k_stats", "GEN", [](const std::string& s) {
+        return s;
+    });
+    auto regionData = std::make_shared<std::unordered_map<std::string, double>>(m_regionWeightMap->begin()->second);
     for (auto& kv : *m_regionWeightMap) {
         m_dataAttribute->addItem(QString::fromStdString(kv.first));
     }
@@ -638,10 +641,10 @@ ChorematicMapDemo::ChorematicMapDemo() {
 	m_renderer->addPainting([this](renderer::GeometryRenderer& renderer) {
 		renderer.setMode(GeometryRenderer::fill | GeometryRenderer::stroke);
 		renderer.setStroke(Color(0, 0, 0), 2.0);
-		for (const auto& [bin, disk] : m_disks) {
-			renderer.setFill(m_choroplethP->m_colors[bin]);
+		for (const auto& binDisk : m_disks) {
+			renderer.setFill(m_choroplethP->m_colors[binDisk.bin]);
 			renderer.setFillOpacity(200);
-			auto c = circle(disk);
+			auto c = circle(binDisk.disk);
 			if (c.has_value()) {
 				renderer.draw(*c);
 			}
@@ -762,6 +765,9 @@ ChorematicMapDemo::ChorematicMapDemo() {
     connect(m_numberOfBins, QOverload<int>::of(&QSpinBox::valueChanged), [this]() {
         rebin();
 		recolor();
+		if (m_recomputeAutomatically->isChecked()) {
+			refit();
+		}
         m_renderer->repaint();
     });
     connect(samplePerRegion, &QCheckBox::stateChanged, [this, samplePerRegion]() {

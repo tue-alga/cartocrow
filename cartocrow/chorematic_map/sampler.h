@@ -19,6 +19,7 @@
 #include <CGAL/point_generators_2.h>
 
 #include <utility>
+#include <future>
 
 namespace cartocrow::chorematic_map {
 
@@ -199,7 +200,7 @@ class Sampler {
     // Ancillary data for grid sampling
     std::optional<Rectangle<Exact>> m_bb;
 
-  private:
+  public:
     void initializeTriangulation() {
         m_triangles.clear();
 
@@ -268,7 +269,6 @@ class Sampler {
 	    }
     }
 
-  public:
     void computeRegionCCs() {
         std::vector<Component<RegionArrangement>> comps;
 		std::vector<std::string>& regions = getRegions();
@@ -623,46 +623,73 @@ class Sampler {
         auto& bbs = m_samplePerRegion ? getRegionCCBbs() : getLandmassBbs();
         auto& polys = m_samplePerRegion ? getRegionCCPolys() : getLandmassPolys();
 
-        for (int i = 0; i < arrs.size(); ++i) {
-            const auto& arr = *arrs[i];
-            const auto& pl = *pls[i];
-            const auto& bb = bbs[i];
-            const auto& outerPoly = polys[i];
+		auto task = [&points, &iters, &arrs, &pls, &bbs, &polys](int iStart, int iEnd) {
+			std::vector<Point<Exact>> outputPoints;
+			for (int i = iStart; i < iEnd; ++i) {
+				const RegionArrangement& arr = *arrs[i];
+				const auto& pl = *pls[i];
+				const auto& bb = bbs[i];
+				const auto& outerPoly = polys[i];
+				std::vector<Point<Exact>> samplesInComponent;
+				for (const auto& pt : points) {
+					auto obj = pl.locate(pt);
+					if (auto fhp = boost::get<RegionArrangement::Face_const_handle>(&obj)) {
+						auto fh = *fhp;
+						if (!fh->data().empty()) {
+							samplesInComponent.push_back(pt);
+						}
+					}
+				}
+				if (samplesInComponent.empty())
+					continue;
+				if (samplesInComponent.size() == 1 &&
+					arr.number_of_faces() - arr.number_of_unbounded_faces() == 1) {
+					outputPoints.push_back(centroid(outerPoly));
+					continue;
+				}
 
-            std::vector<Point<Exact>> samplesInComponent;
-            for (const auto &pt: points) {
-                Point<Exact> exactPoint(pt.x(), pt.y());
-                if (CGAL::oriented_side(exactPoint, outerPoly) != CGAL::NEGATIVE) {
-                    samplesInComponent.push_back(exactPoint);
-                }
-            }
-            if (samplesInComponent.empty()) continue;
+				std::vector<Point<Exact>> newPoints;
+				for (int j = 0; j < iters; ++j) {
+					//				if (progress.has_value()) {
+					//					auto f = *progress;
+					//					f(j);
+					//				}
+					//				if (cancelled.has_value()) {
+					//					auto f = *cancelled;
+					//					if (f()) break;
+					//				}
+					std::vector<Point<Exact>> approximated;
+					for (const auto& pt : samplesInComponent) {
+						auto apt = approximate(pt);
+						approximated.emplace_back(apt.x(), apt.y());
+					}
+					voronoiMoveToCentroid(arr, pl, approximated.begin(), approximated.end(),
+										  std::back_inserter(newPoints), bb);
+					samplesInComponent.clear();
+					samplesInComponent.resize(0);
+					std::copy(newPoints.begin(), newPoints.end(),
+							  std::back_inserter(samplesInComponent));
+					newPoints.clear();
+					newPoints.resize(0);
+				}
+				std::copy(samplesInComponent.begin(), samplesInComponent.end(), std::back_inserter(outputPoints));
+			}
+			return outputPoints;
+		};
 
-            std::vector<Point<Exact>> newPoints;
-            for (int j = 0; j < iters; ++j) {
-                if (progress.has_value()) {
-                    auto f = *progress;
-                    f(j);
-                }
-                if (cancelled.has_value()) {
-                    auto f = *cancelled;
-                    if (f()) break;
-                }
-                std::vector<Point<Exact>> approximated;
-                for (const auto &pt: samplesInComponent) {
-                    auto apt = approximate(pt);
-                    approximated.emplace_back(apt.x(), apt.y());
-                }
-                voronoiMoveToCentroid(arr, pl, approximated.begin(), approximated.end(),
-                                      std::back_inserter(newPoints), bb);
-                samplesInComponent.clear();
-                samplesInComponent.resize(0);
-                std::copy(newPoints.begin(), newPoints.end(), std::back_inserter(samplesInComponent));
-                newPoints.clear();
-                newPoints.resize(0);
-            }
-            std::copy(samplesInComponent.begin(), samplesInComponent.end(), std::back_inserter(finalPoints));
-        }
+		int nThreads = 32;
+		int nArrs = arrs.size();
+		std::vector<std::future<std::vector<Point<Exact>>>> results;
+		double step = nArrs / static_cast<double>(nThreads);
+		for (int i = 0; i < nArrs / step; ++i) {
+			int iStart = std::ceil(i * step);
+			int iEnd = std::ceil((i + 1) * step);
+			results.push_back(std::async(std::launch::async, task, iStart, iEnd));
+		}
+		for (auto& futureResult : results) {
+			auto pts = futureResult.get();
+			std::copy(pts.begin(), pts.end(), std::back_inserter(finalPoints));
+		}
 		return {finalPoints.begin(), finalPoints.end(), m_assignWeight};
 	}
 
@@ -698,6 +725,38 @@ class Sampler {
 		return {points.begin(), points.end(), m_assignWeight};
 	}
 
+	std::pair<double, WeightedRegionSample<Exact>> squareGrid(int n, int maxIters = 50) {
+		auto bb = getArrBoundingBox();
+		auto bbA = approximate(bb);
+		auto w = width(bbA);
+		auto h = height(bbA);
+		// n <= stepsX * stepsY <= (w / cellSize + 1) * (h / cellSize + 1) =~ wh / cellSize²
+		// cellSize <= ~= sqrt(wh / n)
+		double lower = sqrt(w*h / n) / 2;
+		double upper = sqrt(w*h / n) * 2;
+
+		int iters = 0;
+		while (iters < maxIters && lower < upper) {
+			double mid = (lower + upper) / 2;
+			WeightedRegionSample<Exact> sample = squareGrid(mid);
+			auto size = sample.m_points.size();
+			if (size < n) {
+				upper = mid;
+			} else if (size > n) {
+				lower = mid;
+			} else {
+				return {mid, sample};
+			}
+		}
+		auto one = squareGrid(lower);
+		auto other = squareGrid(upper);
+		if (abs(n - static_cast<int>(one.m_points.size())) < abs(n - static_cast<int>(other.m_points.size()))) {
+			return {lower, one};
+		} else {
+			return {upper, other};
+		}
+	}
+
 	WeightedRegionSample<Exact> hexGrid(double cellSize) {
         std::vector<Rectangle<Exact>>&& bbs = m_samplePerRegion ? getRegionCCBbs() : std::vector({getArrBoundingBox()});
         std::vector<std::shared_ptr<PL>>&& pls = m_samplePerRegion ? getRegionCCPls() : std::vector({getPL()});
@@ -730,6 +789,38 @@ class Sampler {
             }
         }
 		return {points.begin(), points.end(), m_assignWeight};
+	}
+
+	std::pair<double, WeightedRegionSample<Exact>> hexGrid(int n, int maxIters = 50) {
+		auto bb = getArrBoundingBox();
+		auto bbA = approximate(bb);
+		auto w = width(bbA);
+		auto h = height(bbA);
+		// n <= stepsX * stepsY <= (w / cellSize + 1) * (h / (cellSize * 0.8660254 + 1) =~ wh / (0.866 * cellSize²)
+		// cellSize <= ~= sqrt(wh / (0.866n))
+		double lower = sqrt(w*h / (0.866 * n)) / 2;
+		double upper = sqrt(w*h / (0.866 * n)) * 2;
+
+		int iters = 0;
+		while (iters < maxIters && lower < upper) {
+			double mid = (lower + upper) / 2;
+			WeightedRegionSample<Exact> sample = hexGrid(mid);
+			auto size = sample.m_points.size();
+			if (size < n) {
+				upper = mid;
+			} else if (size > n) {
+				lower = mid;
+			} else {
+				return {mid, sample};
+			}
+		}
+		auto one = hexGrid(lower);
+		auto other = hexGrid(upper);
+		if (abs(n - static_cast<int>(one.m_points.size())) < abs(n - static_cast<int>(other.m_points.size()))) {
+			return {lower, one};
+		} else {
+			return {upper, other};
+		}
 	}
 };
 }

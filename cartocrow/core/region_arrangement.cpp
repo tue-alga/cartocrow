@@ -101,7 +101,6 @@ RegionArrangement regionMapToArrangementParallel(const RegionMap& map) {
         for (int i = iStart; i != iEnd; ++i) {
             auto& id = keys[i];
             auto& region = map.at(id);
-            std::cout << "Overlaying" << id << std::endl;
             RegionArrangement result;
             detail::RegionOverlayTraits overlayTraits(id);
             CGAL::overlay(arrangement, region.shape.arrangement(), result, overlayTraits);
@@ -120,7 +119,6 @@ RegionArrangement regionMapToArrangementParallel(const RegionMap& map) {
     RegionArrangement arrangement;
     for (auto& futureResult : results) {
         RegionArrangement partialResult = futureResult.get();
-        std::cout << "Overlaying partial result" << std::endl;
         RegionArrangement result;
         detail::RegionPickTraits overlayTraits;
         CGAL::overlay(arrangement, partialResult, result, overlayTraits);
