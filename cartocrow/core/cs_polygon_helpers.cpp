@@ -79,6 +79,8 @@ Number<Inexact> area(const CSPolygonWithHoles& P) {
 	return res;
 }
 
+/// Be careful: circles seem to be clockwise by default, so if you are going to compute
+/// intersections you probably want to reverse its orientation!
 CSPolygon circleToCSPolygon(const Circle<Exact>& circle) {
 	std::vector<X_monotone_curve_2> xm_curves;
 	curveToXMonotoneCurves(circle, std::back_inserter(xm_curves));

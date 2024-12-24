@@ -355,18 +355,22 @@ void ChorematicMapDemo::recolor() {
 	std::vector<Color> colors;
 	switch(m_numberOfBins->value()) {
 	case 2: {
-		colors = std::vector({Color(0xe5f5e0), Color(0xa1d99b)});
+		// There are no colorbrewer 2 class colors. I have picked a light one of 3-class and a dark one from 4-class.
+		colors = std::vector({Color(0xe5f5e0), Color(0x74c476)});
 		break;
 	}
 	case 3: {
+		// https://colorbrewer2.org/#type=sequential&scheme=Greens&n=3
 		colors = std::vector({Color(0xe5f5e0), Color(0xa1d99b), Color(0x31a354)});
 		break;
 	}
 	case 4: {
+		// https://colorbrewer2.org/#type=sequential&scheme=Greens&n=4
 		colors = std::vector({Color(0xedf8e9), Color(0xbae4b3), Color(0x74c476), Color(0x238b45)});
 		break;
 	}
 	case 5: {
+		// https://colorbrewer2.org/#type=sequential&scheme=Greens&n=5
 		colors = std::vector({Color(0xedf8e9), Color(0xbae4b3), Color(0x74c476), Color(0x31a354), Color(0x006d2c)});
 		break;
 	}
@@ -440,7 +444,7 @@ ChorematicMapDemo::ChorematicMapDemo() {
 
     auto* numberOfBinsLabel = new QLabel("Number of bins");
     m_numberOfBins = new QSpinBox();
-    m_numberOfBins->setMinimum(0);
+    m_numberOfBins->setMinimum(2);
     m_numberOfBins->setValue(2);
     m_numberOfBins->setMaximum(7);
     vLayout->addWidget(numberOfBinsLabel);
@@ -629,6 +633,7 @@ ChorematicMapDemo::ChorematicMapDemo() {
 	}, "Samples");
 
 	rebin();
+	recolor();
 	resample();
 	refit();
 
@@ -644,7 +649,7 @@ ChorematicMapDemo::ChorematicMapDemo() {
 		for (const auto& binDisk : m_disks) {
 			renderer.setFill(m_choroplethP->m_colors[binDisk.bin]);
 			renderer.setFillOpacity(200);
-			auto c = circle(binDisk.disk);
+			auto c = binDisk.disk;
 			if (c.has_value()) {
 				renderer.draw(*c);
 			}

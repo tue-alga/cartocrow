@@ -7,11 +7,19 @@
 namespace cartocrow::chorematic_map {
 struct BinDisk {
 	int bin;
-	InducedDiskW disk;
+	std::optional<Circle<Exact>> disk;
 	std::optional<double> score;
 };
 std::vector<BinDisk> fitDisks(const Choropleth& choropleth, const WeightedRegionSample<Exact>& sample,
                               bool invert = false, bool computeScores = false);
+
+std::pair<Circle<Inexact>, double>
+perturbDiskRadius(const Circle<Inexact>& disk,
+				  double score,
+				  const RegionArrangement& arr,
+				  const std::unordered_map<std::string, double>& regionWeight,
+				  double maxDeltaRadius,
+				  int iterations);
 }
 
 #endif //CARTOCROW_CHOROPLETH_DISKS_H

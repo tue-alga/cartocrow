@@ -5,7 +5,7 @@
 #include "../core/region_arrangement.h"
 
 namespace cartocrow::chorematic_map {
-Number<Inexact> totalWeight(const Circle<Inexact>& disk, std::shared_ptr<RegionArrangement> arr,
+Number<Inexact> totalWeight(const Circle<Exact>& disk, const RegionArrangement& arr,
                           const std::unordered_map<std::string, double>& regionWeights);
 }
 

@@ -545,8 +545,10 @@ class Sampler {
 					}
 				}
 			} else {
-				std::cerr << "Region " << region << " has no weight" << std::endl;
-				w = 0;
+				if (!region.empty()) {
+					std::cerr << "Region " << region << " has no weight" << std::endl;
+					w = 0;
+				}
 			}
 			return WeightedPoint(approximate(pt), w);
 		} else {
@@ -747,6 +749,7 @@ class Sampler {
 			} else {
 				return {mid, sample};
 			}
+			++iters;
 		}
 		auto one = squareGrid(lower);
 		auto other = squareGrid(upper);
@@ -813,6 +816,7 @@ class Sampler {
 			} else {
 				return {mid, sample};
 			}
+			++iters;
 		}
 		auto one = hexGrid(lower);
 		auto other = hexGrid(upper);
