@@ -42,8 +42,27 @@ inline TArr::Halfedge_handle mergeWithPrev(TArr& dcel, typename TArr::Halfedge_h
 
 template <class TArr>
 inline TArr::Halfedge_handle mergeWithNext(TArr& dcel, typename TArr::Halfedge_handle edge) {
-	return dcel.merge_edge(edge, edge->next(),
-	                       Segment<Exact>(edge->source()->point(), edge->next()->target()->point()));
+    Segment<Exact> curve(edge->source()->point(), edge->next()->target()->point());
+    if (edge->direction() == edge->next()->direction()) {
+        return dcel.merge_edge(edge, edge->next(), curve);
+    } else {
+        auto fd1 = edge->face()->data();
+        auto fd2 = edge->twin()->face()->data();
+        dcel.remove_edge(edge->next());
+        dcel.remove_edge(edge);
+        auto he = CGAL::insert_non_intersecting_curve(dcel, curve);
+
+        typename TArr::Traits_2 traits;
+        auto equal = traits.equal_2_object();
+        if (equal(curve.source(), he->source()->point())) {
+            he->face()->data() = fd1;
+            he->twin()->face()->data() = fd2;
+        } else {
+            he->face()->data() = fd2;
+            he->twin()->face()->data() = fd1;
+        }
+        return he;
+    }
 }
 
 template <class TArr>
