@@ -179,11 +179,13 @@ void ChorematicMapDemo::resample() {
 		break;
 	}
 	case 2: {
-		m_sample = m_sampler->squareGrid(m_gridSize->value() / 10.0);
+//		m_sample = m_sampler->squareGrid(m_gridSize->value() / 10.0);
+		m_sample = m_sampler->squareGrid(m_nSamples->value()).second;
 		break;
 	}
 	case 3: {
-		m_sample = m_sampler->hexGrid(m_gridSize->value() / 10.0);
+//		m_sample = m_sampler->hexGrid(m_gridSize->value() / 10.0);
+		m_sample = m_sampler->hexGrid(m_nSamples->value()).second;
 		break;
 	}
 	default: {

@@ -19,7 +19,6 @@ PolygonWithHoles<Inexact> transform(const CGAL::Aff_transformation_2<Inexact>& t
 }
 
 void ChoroplethPainting::paint(GeometryRenderer& renderer) const {
-    std::cout << m_transformation.is_scaling() << " " << m_transformation.hm(0, 0) << std::endl;
 	const auto& arr = *m_choropleth.m_arr;
 	for (auto fit = arr.faces_begin(); fit != arr.faces_end(); ++fit) {
 		if (!fit->has_outer_ccb()) continue;
@@ -50,6 +49,7 @@ void ChoroplethPainting::paint(GeometryRenderer& renderer) const {
 			renderer.drawText(c.transform(m_transformation), label);
 		}
 	}
+	renderer.setLineCap(GeometryRenderer::RoundCap);
 	renderer.setMode(GeometryRenderer::stroke);
 	renderer.setStroke(Color{0, 0, 0}, m_strokeWidth);
 	for (auto eit = arr.edges_begin(); eit != arr.edges_end(); ++eit) {

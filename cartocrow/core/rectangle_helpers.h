@@ -88,6 +88,17 @@ Side side(const Rectangle<K>& rect, Corner corner1, Corner corner2) {
 }
 
 template <class K>
+Segment<K> get_side(const Rectangle<K>& rect, Side side) {
+	int i = static_cast<int>(side);
+	return {rect.vertex((i+3)%4), rect.vertex(i)};
+}
+
+template <class K>
+Segment<K> get_side(const Rectangle<K>& rect, Corner corner1, Corner corner2) {
+	return get_side(side(rect, corner1, corner2));
+}
+
+template <class K>
 Side closest_side(const Point<K>& point, const Rectangle<K>& bb) {
 	std::vector<double> dist({ CGAL::to_double(point.x()) - CGAL::to_double(bb.xmin()), CGAL::to_double(point.y()) - CGAL::to_double(bb.ymin()),
 	                           CGAL::to_double(bb.xmax()) - CGAL::to_double(point.x()), CGAL::to_double(bb.ymax()) - CGAL::to_double(point.y()) });

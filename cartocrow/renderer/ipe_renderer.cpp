@@ -99,7 +99,18 @@ void IpeRenderer::save(const std::filesystem::path& file) {
 		popStyle();
 	}
 
-	document.save(file.string().c_str(), ipe::FileFormat::Xml, 0);
+	auto pdf = file.extension() == ".pdf";
+	if (pdf) {
+		bool success = document.runLatex(file.c_str());
+		if (!success) {
+			std::cerr << "LaTeX compilation failed." << std::endl;
+		}
+	}
+	// todo: fix saving to pdf. Currently on opening it says the pdf has no pages; but opening via ipe works.
+	auto success = document.save(file.string().c_str(), pdf ? ipe::FileFormat::Pdf : ipe::FileFormat::Xml, 0);
+	if (!success) {
+		std::cerr << "Saving failed." << std::endl;
+	}
 }
 
 void IpeRenderer::draw(const Point<Inexact>& p) {

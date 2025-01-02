@@ -34,11 +34,12 @@ std::vector<BinDisk> fitDisks(const Choropleth& choropleth, const WeightedRegion
 			negativeArea += binArea;
 		}
 		auto& positiveArea = binAreas[binToFit];
+		auto totalArea = negativeArea + positiveArea;
 		for (const auto& [region, _] : *(choropleth.m_data)) {
 			auto bin = choropleth.regionToBin(region);
 			if (!bin.has_value()) continue;
 
-			regionWeight[region] = CGAL::to_double(*bin == binToFit ? 1 : -positiveArea/negativeArea);
+			regionWeight[region] = CGAL::to_double(*bin == binToFit ? negativeArea / totalArea : -positiveArea / totalArea);
 		}
 
 		std::vector<WeightedPoint> weightedPoints;
