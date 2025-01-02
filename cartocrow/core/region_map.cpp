@@ -90,16 +90,21 @@ RegionMap ipeToRegionMap(const std::filesystem::path& file, bool labelAtCentroid
             labels[labelId.value()].matched = true;
             name = labels[labelId.value()].text;
         }
-		Region region;
-		region.name = name;
-		if (path->fill().isSymbolic()) {
-			region.color = IpeReader::convertIpeColor(
-			    document->cascade()->find(ipe::Kind::EColor, path->fill()).color());
-		} else {
-			region.color = IpeReader::convertIpeColor(path->fill().color());
-		}
-		region.shape = shape;
-		regions[name] = region;
+        if (regions.contains(name)) {
+            Region& region = regions[name];
+            region.shape.join(shape);
+        } else {
+            Region region;
+            region.name = name;
+            if (path->fill().isSymbolic()) {
+                region.color = IpeReader::convertIpeColor(
+                        document->cascade()->find(ipe::Kind::EColor, path->fill()).color());
+            } else {
+                region.color = IpeReader::convertIpeColor(path->fill().color());
+            }
+            region.shape = shape;
+            regions[name] = region;
+        }
 	}
 
 	return regions;
