@@ -276,10 +276,8 @@ void IpeRenderer::drawText(const Point<Inexact>& p, const std::string& text) {
     ipe::String labelText = text.data();
 	ipe::Text* label = new ipe::Text(getAttributesForStyle(), labelText,
 	                                 ipe::Vector(p.x(), p.y()), ipe::Text::TextType::ELabel);
-//	label->setHorizontalAlignment(ipe::THorizontalAlignment::EAlignHCenter);
-//	label->setVerticalAlignment(ipe::TVerticalAlignment::EAlignVCenter);
-    label->setHorizontalAlignment(ipe::THorizontalAlignment::EAlignLeft);
-    label->setVerticalAlignment(ipe::TVerticalAlignment::EAlignTop);
+    label->setHorizontalAlignment(m_style.m_horizontalTextAlignment);
+    label->setVerticalAlignment(m_style.m_verticalTextAlignment);
 	m_page->append(ipe::TSelect::ENotSelected, m_layer, label);
 }
 
@@ -339,42 +337,78 @@ void IpeRenderer::setClipping(bool enable) {
 }
 
 void IpeRenderer::setLineCap(LineCap lineCap) {
-	m_style.m_lineCap = lineCap;
-}
-
-void IpeRenderer::setLineJoin(LineJoin lineJoin) {
-	m_style.m_lineJoin = lineJoin;
-}
-
-void IpeRenderer::drawPathOnPage(ipe::Path* path) {
-	switch(m_style.m_lineCap) {
+	switch(lineCap) {
 	case ButtCap: {
-		path->setLineCap(ipe::EButtCap);
+		m_style.m_lineCap = ipe::EButtCap;
 		break;
 	}
 	case RoundCap: {
-		path->setLineCap(ipe::ERoundCap);
+		m_style.m_lineCap = ipe::ERoundCap;
 		break;
 	}
 	case SquareCap: {
-		path->setLineCap(ipe::ESquareCap);
+		m_style.m_lineCap = ipe::ESquareCap;
 		break;
 	}
 	}
-	switch(m_style.m_lineJoin) {
+}
+
+void IpeRenderer::setLineJoin(LineJoin lineJoin) {
+	switch(lineJoin) {
 	case BevelJoin: {
-		path->setLineJoin(ipe::EBevelJoin);
+		m_style.m_lineJoin = ipe::EBevelJoin;
 		break;
 	}
 	case MiterJoin: {
-		path->setLineJoin(ipe::EMiterJoin);
+		m_style.m_lineJoin = ipe::EMiterJoin;
 		break;
 	}
 	case RoundJoin: {
-		path->setLineJoin(ipe::ERoundJoin);
+		m_style.m_lineJoin = ipe::ERoundJoin;
 		break;
 	}
 	}
+}
+
+void IpeRenderer::setHorizontalTextAlignment(HorizontalTextAlignment alignment) {
+	switch(alignment) {
+	case AlignHCenter: {
+		m_style.m_horizontalTextAlignment = ipe::EAlignHCenter;
+		break;
+	}
+	case AlignLeft: {
+		m_style.m_horizontalTextAlignment = ipe::EAlignLeft;
+		break;
+	}
+	case AlignRight: {
+		m_style.m_horizontalTextAlignment = ipe::EAlignRight;
+		break;
+	}
+	}
+}
+
+void IpeRenderer::setVerticalTextAlignment(VerticalTextAlignment alignment) {
+	switch(alignment) {
+	case AlignVCenter: {
+		m_style.m_verticalTextAlignment = ipe::EAlignVCenter;
+		break;
+	}
+	case AlignTop: {
+		m_style.m_verticalTextAlignment = ipe::EAlignTop;
+		break;
+	}
+	case AlignBottom: {
+		m_style.m_verticalTextAlignment = ipe::EAlignBottom;
+		break;
+	}
+	case AlignBaseline: {
+		m_style.m_verticalTextAlignment = ipe::EAlignBaseline;
+		break;
+	}
+	}
+}
+
+void IpeRenderer::drawPathOnPage(ipe::Path* path) {
 	if (m_style.m_clip) {
 		auto* group = new ipe::Group();
 		group->push_back(path);

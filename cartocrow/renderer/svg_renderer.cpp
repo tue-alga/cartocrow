@@ -306,4 +306,14 @@ void SvgRenderer::setLineCap(LineCap lineCap) {
 
 }
 
+// todo
+void SvgRenderer::setHorizontalTextAlignment(HorizontalTextAlignment alignment) {
+
+}
+
+// todo
+void SvgRenderer::setVerticalTextAlignment(VerticalTextAlignment alignment) {
+
+}
+
 } // namespace cartocrow::renderer

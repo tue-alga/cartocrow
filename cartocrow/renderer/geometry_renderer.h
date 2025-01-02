@@ -95,6 +95,19 @@ class GeometryRenderer {
 		MiterJoin,
 	};
 
+	enum HorizontalTextAlignment {
+		AlignLeft,
+		AlignRight,
+		AlignHCenter,
+	};
+
+	enum VerticalTextAlignment {
+		AlignTop,
+		AlignBottom,
+		AlignVCenter,
+		AlignBaseline,
+	};
+
 	/// \name Drawing methods
 	/// @{
 
@@ -179,6 +192,10 @@ class GeometryRenderer {
 	virtual void setLineJoin(LineJoin lineJoin) = 0;
 	/// Set line cap.
 	virtual void setLineCap(LineCap lineCap) = 0;
+	/// Set horizontal text alignment.
+	virtual void setHorizontalTextAlignment(HorizontalTextAlignment alignment) = 0;
+	/// Set vertical text alignment.
+	virtual void setVerticalTextAlignment(VerticalTextAlignment alignment) = 0;
 	/// @}
 };
 

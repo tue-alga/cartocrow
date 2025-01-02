@@ -86,6 +86,8 @@ class SvgRenderer : public GeometryRenderer {
     void setClipping(bool enable) override;
 	void setLineJoin(LineJoin lineJoin) override;
 	void setLineCap(LineCap lineCap) override;
+	void setHorizontalTextAlignment(HorizontalTextAlignment alignment) override;
+	void setVerticalTextAlignment(VerticalTextAlignment alignment) override;
 
 	void addPainting(const std::shared_ptr<GeometryPainting>& painting);
 	void addPainting(const std::shared_ptr<GeometryPainting>& painting, const std::string& name);

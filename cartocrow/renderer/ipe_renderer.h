@@ -52,9 +52,13 @@ struct IpeRendererStyle {
 	/// Clipping enabled?
 	bool m_clip = false;
 	/// Current line join.
-	GeometryRenderer::LineJoin m_lineJoin;
+	ipe::TLineJoin m_lineJoin = ipe::ERoundJoin;
 	/// Current line cap.
-	GeometryRenderer::LineCap m_lineCap;
+	ipe::TLineCap m_lineCap = ipe::ERoundCap;
+	/// Horizontal text alignment
+	ipe::THorizontalAlignment m_horizontalTextAlignment = ipe::EAlignHCenter;
+	/// Vertical text alignment
+	ipe::TVerticalAlignment m_verticalTextAlignment = ipe::EAlignVCenter;
 };
 
 /// Ipe specialization of the GeometryRenderer.
@@ -111,6 +115,8 @@ class IpeRenderer : public GeometryRenderer {
     void setClipping(bool enable) override;
 	void setLineJoin(LineJoin lineJoin) override;
 	void setLineCap(LineCap lineCap) override;
+	void setHorizontalTextAlignment(HorizontalTextAlignment alignment) override;
+	void setVerticalTextAlignment(VerticalTextAlignment alignment) override;
 
 	void addPainting(const std::function<void(renderer::GeometryRenderer&)>& draw_function);
 	void addPainting(const std::function<void(renderer::GeometryRenderer&)>& draw_function, const std::string& name);

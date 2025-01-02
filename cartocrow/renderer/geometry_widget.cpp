@@ -639,7 +639,7 @@ void GeometryWidget::draw(const RenderPath& p) {
 void GeometryWidget::drawText(const Point<Inexact>& p, const std::string& text) {
 	setupPainter();
 	QPointF p2 = convertPoint(p);
-	m_painter->drawText(QRectF(p2 - QPointF{500, 250}, p2 + QPointF{500, 250}), Qt::AlignCenter,
+	m_painter->drawText(QRectF(p2 - QPointF{500, 250}, p2 + QPointF{500, 250}), m_textAlignment,
 	                    QString::fromStdString(text));
 }
 
@@ -734,6 +734,44 @@ void GeometryWidget::setLineJoin(LineJoin lineJoin) {
 	}
 	}
 	m_painter->setPen(pen);
+}
+
+void GeometryWidget::setHorizontalTextAlignment(HorizontalTextAlignment alignment) {
+	switch(alignment) {
+	case AlignHCenter: {
+		m_textAlignment = (m_textAlignment & Qt::AlignVertical_Mask) | Qt::AlignHCenter;
+		break;
+	}
+	case AlignLeft: {
+		m_textAlignment = (m_textAlignment & Qt::AlignVertical_Mask) | Qt::AlignLeft;
+		break;
+	}
+	case AlignRight: {
+		m_textAlignment = (m_textAlignment & Qt::AlignVertical_Mask) | Qt::AlignRight;
+		break;
+	}
+	}
+}
+
+void GeometryWidget::setVerticalTextAlignment(VerticalTextAlignment alignment) {
+	switch(alignment) {
+	case AlignVCenter: {
+		m_textAlignment = (m_textAlignment & Qt::AlignHorizontal_Mask) | Qt::AlignVCenter;
+		break;
+	}
+	case AlignTop: {
+		m_textAlignment = (m_textAlignment & Qt::AlignHorizontal_Mask) | Qt::AlignTop;
+		break;
+	}
+	case AlignBottom: {
+		m_textAlignment = (m_textAlignment & Qt::AlignHorizontal_Mask) | Qt::AlignBottom;
+		break;
+	}
+	case AlignBaseline: {
+		m_textAlignment = (m_textAlignment & Qt::AlignHorizontal_Mask) | Qt::AlignBaseline;
+		break;
+	}
+	}
 }
 
 void GeometryWidget::addPainting(std::shared_ptr<GeometryPainting> painting, const std::string& name) {

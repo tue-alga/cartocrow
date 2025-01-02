@@ -182,6 +182,13 @@ class GeometryWidget : public QWidget, public GeometryRenderer {
     void setClipping(bool enable) override;
 	void setLineJoin(LineJoin lineJoin) override;
 	void setLineCap(LineCap lineCap) override;
+	void setHorizontalTextAlignment(HorizontalTextAlignment alignment) override;
+	void setVerticalTextAlignment(VerticalTextAlignment alignment) override;
+
+  private:
+	QFlags<Qt::AlignmentFlag> m_textAlignment = Qt::AlignCenter;
+
+  public:
 
 	/// Adds a new painting to this widget.
 	void addPainting(std::shared_ptr<GeometryPainting> painting, const std::string& name);
