@@ -409,6 +409,8 @@ void IpeRenderer::setVerticalTextAlignment(VerticalTextAlignment alignment) {
 }
 
 void IpeRenderer::drawPathOnPage(ipe::Path* path) {
+	path->setLineCap(m_style.m_lineCap);
+	path->setLineJoin(m_style.m_lineJoin);
 	if (m_style.m_clip) {
 		auto* group = new ipe::Group();
 		group->push_back(path);
