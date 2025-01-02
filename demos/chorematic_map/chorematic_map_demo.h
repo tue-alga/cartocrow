@@ -13,6 +13,7 @@
 #include "cartocrow/chorematic_map/choropleth_disks.h"
 #include "cartocrow/chorematic_map/sampler.h"
 #include "cartocrow/chorematic_map/weighted_point.h"
+#include "cartocrow/chorematic_map/input_parsing.h"
 
 #include <CGAL/Arr_landmarks_point_location.h>
 
@@ -38,8 +39,6 @@ class VoronoiRegionArrangementPainting : public GeometryPainting {
 	void paint(GeometryRenderer& renderer) const override;
 };
 
-using RegionWeight = std::unordered_map<std::string, double>;
-
 class ChorematicMapDemo : public QMainWindow {
 	Q_OBJECT
 
@@ -61,6 +60,7 @@ class ChorematicMapDemo : public QMainWindow {
     QSpinBox* m_numberOfBins;
 	QCheckBox* m_recomputeAutomatically;
 	QCheckBox* m_invertFittingOrder;
+    QCheckBox* m_applyHeuristic;
 	QComboBox* m_samplingStrategy;
     QComboBox* m_dataAttribute;
 	QLabel* m_diskScoreLabel;

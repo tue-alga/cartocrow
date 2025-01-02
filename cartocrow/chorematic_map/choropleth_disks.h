@@ -10,11 +10,12 @@ struct BinDisk {
 	std::optional<Circle<Exact>> disk;
 	std::optional<double> score;
 };
-std::vector<BinDisk> fitDisks(const Choropleth& choropleth, const WeightedRegionSample<Exact>& sample,
-                              bool invert = false, bool computeScores = false);
 
-std::pair<Circle<Inexact>, double>
-perturbDiskRadius(const Circle<Inexact>& disk,
+std::vector<BinDisk> fitDisks(const Choropleth& choropleth, const WeightedRegionSample<Exact>& sample,
+                              bool invert = false, bool computeScores = false, bool heuristic = false);
+
+std::pair<Circle<Exact>, double>
+perturbDiskRadius(const Circle<Exact>& disk,
 				  double score,
 				  const RegionArrangement& arr,
 				  const std::unordered_map<std::string, double>& regionWeight,

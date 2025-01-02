@@ -24,140 +24,13 @@
 #include "cartocrow/core/cs_polygon_helpers.h"
 #include "cartocrow/core/rectangle_helpers.h"
 #include "cartocrow/chorematic_map/maximum_weight_disk.h"
+#include "cartocrow/chorematic_map/input_parsing.h"
 
 #include "cartocrow/renderer/ipe_renderer.h"
 
 #include <CGAL/Boolean_set_operations_2.h>
 #include <CGAL/Boolean_set_operations_2/oriented_side.h>
 #include <CGAL/General_polygon_set_2.h>
-
-#include <gdal/ogrsf_frmts.h>
-
-std::shared_ptr<std::unordered_map<std::string, RegionWeight>>
-regionDataMapFromGPKG(const std::filesystem::path& path, const std::string& layerName, const std::string& regionNameAttribute,
-                      std::function<std::string(std::string)> regionNameTransform) {
-    GDALAllRegister();
-    GDALDataset *poDS;
-
-    poDS = (GDALDataset*) GDALOpenEx( path.c_str(), GDAL_OF_VECTOR, nullptr, nullptr, nullptr );
-    if( poDS == nullptr )
-    {
-        printf( "Open failed.\n" );
-        exit( 1 );
-    }
-    OGRLayer* poLayer = poDS->GetLayerByName( layerName.c_str() );
-
-    auto regionDataMap = std::make_shared<std::unordered_map<std::string, RegionWeight>>();
-    std::unordered_map<std::string, RegionWeight>& dataMap = *regionDataMap;
-    poLayer->ResetReading();
-
-    for (auto& poFeature : *poLayer) {
-        // todo remove
-//        std::string water = poFeature->GetFieldAsString(poFeature->GetFieldIndex("water"));
-//        if (water != "NEE") continue;
-
-        std::string regionId = regionNameTransform(poFeature->GetFieldAsString(poFeature->GetFieldIndex(regionNameAttribute.c_str())));
-        int i = 0;
-        for( auto&& oField: *poFeature ) {
-            std::string name = poFeature->GetDefnRef()->GetFieldDefn(i)->GetNameRef();
-            double w;
-            switch(oField.GetType()) {
-                case OFTInteger:
-                    w = oField.GetInteger();
-                    break;
-                case OFTReal:
-                    w = oField.GetDouble();
-                    break;
-            }
-            if (w != -99999999) {
-                dataMap[name][regionId] = w;
-            }
-            ++i;
-        }
-    }
-
-    return regionDataMap;
-}
-
-std::shared_ptr<RegionMap> regionMapFromGPKG(const std::filesystem::path& path,
-                                             const std::string& layerName,
-                                             const std::string& regionNameAttribute) {
-    GDALAllRegister();
-    GDALDataset       *poDS;
-
-    poDS = (GDALDataset*) GDALOpenEx( path.c_str(), GDAL_OF_VECTOR, nullptr, nullptr, nullptr );
-    if( poDS == nullptr )
-    {
-        printf( "Open failed.\n" );
-        exit( 1 );
-    }
-    OGRLayer* poLayer = poDS->GetLayerByName( layerName.c_str() );
-
-    auto regionMap = std::make_shared<RegionMap>();
-    RegionMap& regions = *regionMap;
-    poLayer->ResetReading();
-
-    for (auto& poFeature : *poLayer) {
-//        std::string water = poFeature->GetFieldAsString(poFeature->GetFieldIndex("water"));
-//        if (water != "NEE") continue;
-        std::string regionId = poFeature->GetFieldAsString(poFeature->GetFieldIndex(regionNameAttribute.c_str()));
-        OGRGeometry *poGeometry;
-
-        PolygonSet<Exact> polygonSet;
-        poGeometry = poFeature->GetGeometryRef();
-        if( wkbFlatten(poGeometry->getGeometryType()) == wkbMultiPolygon ) {
-            OGRMultiPolygon *poMultiPolygon = poGeometry->toMultiPolygon();
-
-            for (auto &poly: *poMultiPolygon) {
-                for (auto &linearRing: *poly) {
-                    Polygon<Exact> polygon;
-                    for (auto &pt: *linearRing) {
-                        polygon.push_back({pt.getX(), pt.getY()});
-                    }
-                    // if the begin and end vertices are equal, remove one of them
-                    if (polygon.container().front() == polygon.container().back()) {
-                        polygon.container().pop_back();
-                    }
-                    if (polygon.is_clockwise_oriented()) {
-                        polygon.reverse_orientation();
-                    }
-                    polygonSet.symmetric_difference(polygon);
-                }
-            }
-        } else if (wkbFlatten(poGeometry->getGeometryType()) == wkbPolygon) {
-            OGRPolygon* poly = poGeometry->toPolygon();
-
-            for (auto& linearRing : *poly) {
-                Polygon<Exact> polygon;
-                for (auto& pt : *linearRing) {
-                    polygon.push_back({pt.getX(), pt.getY()});
-                }
-                // if the begin and end vertices are equal, remove one of them
-                if (polygon.container().front() == polygon.container().back()) {
-                    polygon.container().pop_back();
-                }
-                if (polygon.is_clockwise_oriented()) {
-                    polygon.reverse_orientation();
-                }
-                polygonSet.symmetric_difference(polygon);
-            }
-        } else {
-            std::cout << "Did not handle this type of geometry: " << poGeometry->getGeometryName() << std::endl;
-        }
-        if (regions.contains(regionId)) {
-            Region& existingRegion = regions.at(regionId);
-            PolygonSet<Exact>& existingPolygonSet = existingRegion.shape;
-            existingPolygonSet.join(polygonSet);
-        } else {
-            Region region;
-            region.shape = polygonSet;
-            region.name = regionId;
-            regions[regionId] = region;
-        }
-    }
-
-    return regionMap;
-}
 
 class RegionArrangementPainting : public GeometryPainting {
   private:
@@ -193,20 +66,9 @@ class RegionArrangementPainting : public GeometryPainting {
 class RegionMapPainting : public GeometryPainting {
 private:
     std::shared_ptr<RegionMap> m_map;
-    Rectangle<Exact> m_bb;
 
 public:
-    RegionMapPainting(std::shared_ptr<RegionMap> map) : m_map(std::move(map)) {
-//        std::vector<Box> bboxes;
-//        for (auto& [name, region] : m_map) {
-//            std::vector<PolygonWithHoles<Exact>> pwhs;
-//            region.shape.polygons_with_holes(std::back_inserter(pwhs));
-//            for (auto& pwh : pwhs) {
-//                bboxes.push_back(pwh.bbox());
-//            }
-//        }
-//        m_bb = CGAL::bbox_2(bboxes.begin(), bboxes.end());
-    };
+    RegionMapPainting(std::shared_ptr<RegionMap> map) : m_map(std::move(map)) {};
 
     void paint(GeometryRenderer &renderer) const override {
         for (auto& [name, region] : *m_map) {
@@ -298,19 +160,6 @@ std::string regionDataInfo(const std::unordered_map<std::string, double>& region
 	return ss.str();
 }
 
-std::optional<Circle<Inexact>> circle(InducedDiskW disk) {
-	auto [p1, p2, p3] = disk;
-	if (p1.has_value() && p2.has_value() && p3.has_value()) {
-		return Circle<Inexact>(p1->point, p2->point, p3->point);
-	} else if (p1.has_value() && p2.has_value()) {
-		return Circle<Inexact>(p1->point, p2->point);
-	} else if (p1.has_value()) {
-		return Circle<Inexact>(p1->point, 3.0);
-	} else {
-		return std::nullopt;
-	}
-}
-
 void ChorematicMapDemo::resample() {
 	m_disks.clear();
     m_sampler->setSeed(m_seed->value());
@@ -379,7 +228,8 @@ void ChorematicMapDemo::recolor() {
 }
 
 void ChorematicMapDemo::refit() {
-	m_disks = fitDisks(*m_choropleth, m_sample, m_invertFittingOrder->isChecked(), m_numberOfBins->value() == 2);
+	m_disks = fitDisks(*m_choropleth, m_sample, m_invertFittingOrder->isChecked(), m_numberOfBins->value() == 2,
+                       m_applyHeuristic->isChecked());
 	if (m_disks[0].score.has_value()) {
 		m_diskScoreLabel->setText(QString::fromStdString(std::to_string(m_disks[0].score.value())));
 	}
@@ -398,6 +248,18 @@ void ChorematicMapDemo::loadMap(const std::filesystem::path& mapPath) {
 void ChorematicMapDemo::loadData(const std::filesystem::path& dataPath) {
 	m_choropleth->m_data = std::make_shared<std::unordered_map<std::string, double>>(parseRegionDataFile(dataPath));
 	m_dataInfoLabel->setText(QString::fromStdString(regionDataInfo(*m_choropleth->m_data)));
+}
+
+RenderPath& operator<<(RenderPath& path, const Polygon<Inexact> p) {
+    for (auto vertex = p.vertices_begin(); vertex != p.vertices_end(); vertex++) {
+        if (vertex == p.vertices_begin()) {
+            path.moveTo(*vertex);
+        } else {
+            path.lineTo(*vertex);
+        }
+    }
+    path.close();
+    return path;
 }
 
 ChorematicMapDemo::ChorematicMapDemo() {
@@ -512,6 +374,9 @@ ChorematicMapDemo::ChorematicMapDemo() {
 	m_invertFittingOrder = new QCheckBox("Invert fitting order");
 	vLayout->addWidget(m_invertFittingOrder);
 
+    m_applyHeuristic = new QCheckBox("Apply heuristic");
+    vLayout->addWidget(m_applyHeuristic);
+
 	auto* scoreLabel = new QLabel("Score:");
 	vLayout->addWidget(scoreLabel);
 	m_diskScoreLabel = new QLabel();
@@ -535,12 +400,15 @@ ChorematicMapDemo::ChorematicMapDemo() {
     std::filesystem::path gpkg2 = "data/chorematic_map/wijkenbuurten_2020_v3.gpkg";
     std::filesystem::path gpkg3 = "data/chorematic_map/wijkenbuurten_2022_v3.gpkg";
 //    std::filesystem::path dutch = "data/chorematic_map/gemeenten-2022_92959vtcs.ipe";
-    std::filesystem::path dutch = "data/chorematic_map/gemeenten-2022_19282vtcs.ipe";
+//    std::filesystem::path dutch = "data/chorematic_map/gemeenten-2022_19282vtcs.ipe";
+    std::filesystem::path dutch = "data/chorematic_map/gemeenten-2022_5000vtcs.ipe";
+//    std::filesystem::path dutch = "data/chorematic_map/gemeenten-2022_4959vtcs.ipe";
+//    std::filesystem::path dutch = "data/chorematic_map/gemeenten-2022_idkvtcs.ipe";
 
-//    auto regionMap = std::make_shared<RegionMap>(ipeToRegionMap(dutch, true));
-//    m_regionWeightMap = regionDataMapFromGPKG(gpkg3, "gemeenten", "gemeentecode", [](const std::string& s) {
-//        return s;
-//    });
+    auto regionMap = std::make_shared<RegionMap>(ipeToRegionMap(dutch, true));
+    m_regionWeightMap = regionDataMapFromGPKG(gpkg3, "gemeenten", "gemeentecode", [](const std::string& s) {
+        return s;
+    });
 
     // Non-generalized Dutch municipalities
 //	auto regionMapDM = regionMapFromGPKG(gpkg3, "gemeenten", "gemeentecode");
@@ -560,13 +428,13 @@ ChorematicMapDemo::ChorematicMapDemo() {
 //    m_regionWeightMap = regionDataMapFromGPKG(gpkg2, "gemeenten", "jrstatcode", [](const std::string& s) {
 //        return s.substr(4);
 //    });
-//    auto regionData = std::make_shared<std::unordered_map<std::string, double>>(m_regionWeightMap->begin()->second);
-    // Hessen
-    auto regionMap = regionMapFromGPKG(gpkg1, "HE_1000k_stats", "GEN");
-    m_regionWeightMap = regionDataMapFromGPKG(gpkg1, "HE_1000k_stats", "GEN", [](const std::string& s) {
-        return s;
-    });
     auto regionData = std::make_shared<std::unordered_map<std::string, double>>(m_regionWeightMap->begin()->second);
+    // Hessen
+//    auto regionMap = regionMapFromGPKG(gpkg1, "HE_1000k_stats", "GEN");
+//    m_regionWeightMap = regionDataMapFromGPKG(gpkg1, "HE_1000k_stats", "GEN", [](const std::string& s) {
+//        return s;
+//    });
+//    auto regionData = std::make_shared<std::unordered_map<std::string, double>>(m_regionWeightMap->begin()->second);
     for (auto& kv : *m_regionWeightMap) {
         m_dataAttribute->addItem(QString::fromStdString(kv.first));
     }
@@ -575,19 +443,19 @@ ChorematicMapDemo::ChorematicMapDemo() {
 //    auto regionArr = regionMapToArrangementParallel(*regionMap);
     auto regionArr = regionMapToArrangementParallel(*regionMap);
 
-    IpeRenderer ipeRenderer;
-    ipeRenderer.addPainting([regionArr](GeometryRenderer& renderer) {
-        auto ubf = regionArr.unbounded_face();
-
-        for (auto ccb = ubf->inner_ccbs_begin(); ccb != ubf->inner_ccbs_end(); ++ccb) {
-            Polygon<Exact> poly = ccb_to_polygon<Exact>(*ccb);
-            poly.reverse_orientation();
-            renderer.setMode(GeometryRenderer::stroke);
-            renderer.setStroke(Color{0, 0, 0}, 1.0);
-            renderer.draw(poly);
-        }
-    }, "Outline");
-    ipeRenderer.save("hessen-outline.ipe");
+//    IpeRenderer ipeRenderer;
+//    ipeRenderer.addPainting([regionArr](GeometryRenderer& renderer) {
+//        auto ubf = regionArr.unbounded_face();
+//
+//        for (auto ccb = ubf->inner_ccbs_begin(); ccb != ubf->inner_ccbs_end(); ++ccb) {
+//            Polygon<Exact> poly = ccb_to_polygon<Exact>(*ccb);
+//            poly.reverse_orientation();
+//            renderer.setMode(GeometryRenderer::stroke);
+//            renderer.setStroke(Color{0, 0, 0}, 1.0);
+//            renderer.draw(poly);
+//        }
+//    }, "Outline");
+//    ipeRenderer.save("hessen-outline.ipe");
 
 
     // Write the arrangement to a file.
@@ -644,6 +512,17 @@ ChorematicMapDemo::ChorematicMapDemo() {
 	m_threshold->setValue(0);
 
 	m_renderer->addPainting([this](renderer::GeometryRenderer& renderer) {
+        RenderPath renderPath;
+        auto&& polys = m_sampler->getLandmassPolys();
+        for (const auto& poly : polys) {
+            renderPath << approximate(poly.outer_boundary());
+            for (const auto& h : poly.holes()) {
+                renderPath << approximate(h);
+            }
+        }
+
+        renderer.setClipping(true);
+        renderer.setClipPath(renderPath);
 		renderer.setMode(GeometryRenderer::fill | GeometryRenderer::stroke);
 		renderer.setStroke(Color(0, 0, 0), 2.0);
 		for (const auto& binDisk : m_disks) {
@@ -654,7 +533,18 @@ ChorematicMapDemo::ChorematicMapDemo() {
 				renderer.draw(*c);
 			}
 		}
+        renderer.setClipping(false);
 	}, "Disks");
+
+    m_renderer->addPainting([this](GeometryRenderer& renderer) {
+        renderer.setMode(GeometryRenderer::stroke);
+        renderer.setStroke(Color{0, 0, 0}, 1.5);
+
+        auto&& polys = m_sampler->getLandmassPolys();
+        for (const auto& poly : polys) {
+            renderer.draw(poly);
+        }
+    }, "Outline");
 
 	connect(m_seed, QOverload<int>::of(&QSpinBox::valueChanged), [this](){
 		if (m_recomputeAutomatically->isChecked()) {
@@ -779,6 +669,12 @@ ChorematicMapDemo::ChorematicMapDemo() {
         m_sampler->setSamplePerRegion(samplePerRegion->isChecked());
         if (m_recomputeAutomatically->isChecked()) {
             resample();
+            refit();
+            m_renderer->repaint();
+        }
+    });
+    connect(m_applyHeuristic, &QCheckBox::stateChanged, [this]() {
+        if (m_recomputeAutomatically->isChecked()) {
             refit();
             m_renderer->repaint();
         }

@@ -5,6 +5,7 @@
 #include "cartocrow/chorematic_map/maximum_weight_disk.h"
 #include "cartocrow/chorematic_map/choropleth_disks.h"
 #include "cartocrow/chorematic_map/sampler.h"
+#include "cartocrow/chorematic_map/input_parsing.h"
 
 #include <chrono>
 
@@ -133,50 +134,6 @@ void measureSamplingRunningTime() {
 	}
 }
 
-using RegionWeight = std::unordered_map<std::string, double>;
-
-std::shared_ptr<std::unordered_map<std::string, RegionWeight>>
-regionDataMapFromGPKG(const std::filesystem::path& path, const std::string& layerName, const std::string& regionNameAttribute,
-                      std::function<std::string(std::string)> regionNameTransform) {
-	GDALAllRegister();
-	GDALDataset *poDS;
-
-	poDS = (GDALDataset*) GDALOpenEx( path.c_str(), GDAL_OF_VECTOR, nullptr, nullptr, nullptr );
-	if( poDS == nullptr )
-	{
-		printf( "Open failed.\n" );
-		exit( 1 );
-	}
-	OGRLayer* poLayer = poDS->GetLayerByName( layerName.c_str() );
-
-	auto regionDataMap = std::make_shared<std::unordered_map<std::string, RegionWeight>>();
-	std::unordered_map<std::string, RegionWeight>& dataMap = *regionDataMap;
-	poLayer->ResetReading();
-
-	for (auto& poFeature : *poLayer) {
-		std::string regionId = regionNameTransform(poFeature->GetFieldAsString(poFeature->GetFieldIndex(regionNameAttribute.c_str())));
-		int i = 0;
-		for( auto&& oField: *poFeature ) {
-			std::string name = poFeature->GetDefnRef()->GetFieldDefn(i)->GetNameRef();
-			double w;
-			switch(oField.GetType()) {
-			case OFTInteger:
-				w = oField.GetInteger();
-				break;
-			case OFTReal:
-				w = oField.GetDouble();
-				break;
-			}
-			if (w != -99999999) {
-				dataMap[name][regionId] = w;
-			}
-			++i;
-		}
-	}
-
-	return regionDataMap;
-}
-
 void measureScores() {
 	std::filesystem::path dutch = "data/chorematic_map/gemeenten-2022_19282vtcs.ipe";
 	auto regionMap = std::make_shared<RegionMap>(ipeToRegionMap(dutch, true));
@@ -244,13 +201,13 @@ void measureScores() {
 
 	int nSeeds = 1;
 
-	std::ofstream fileOut("scores.txt");
+	std::ofstream fileOut("scores-with-heuristic.txt");
 	for (bool samplePerRegion : {true}) {
 		Sampler<Landmarks_pl<RegionArrangement>> sampler(regionArr, 0, samplePerRegion);
 
 		for (const auto& [name, method] : methods) {
 			fileOut << name << (samplePerRegion ? "_perRegion" : "") << std::endl;
-			for (int n = 500; n <= 10000; n += 500) {
+			for (int n = 10; n <= 1000; n += 10) {
 				double totalScore = 0;
 				for (int seed = 0; seed < nSeeds; ++seed) {
 					sampler.setSeed(seed);
@@ -258,7 +215,7 @@ void measureScores() {
 					auto sample = f();
 					std::vector<WeightedPoint> weightedPoints;
 					sample.weightedPoints(std::back_inserter(weightedPoints), *regionWeight);
-					auto disk = fitDisks(choropleth, sample, false, true)[0];
+					auto disk = fitDisks(choropleth, sample, false, true, true)[0];
 					totalScore += disk.score.value();
 				}
 				fileOut << "(" << n << ", " << (totalScore / nSeeds) << ")" << std::endl;

@@ -3,8 +3,10 @@
 #include <QApplication>
 
 #include "cartocrow/core/core.h"
+#include "cartocrow/core/centroid.h"
 #include "cartocrow/core/boundary_map.h"
 #include "cartocrow/core/arrangement_map.h"
+#include "cartocrow/core/arrangement_helpers.h"
 #include "cartocrow/core/timer.h"
 #include "cartocrow/renderer/geometry_painting.h"
 #include "cartocrow/renderer/geometry_widget.h"
@@ -16,6 +18,38 @@ using namespace cartocrow;
 using namespace cartocrow::simplification;
 using namespace cartocrow::renderer;
 
+class RegionArrangementPainting : public GeometryPainting {
+private:
+    std::shared_ptr<RegionArrangement> m_arr;
+
+public:
+    RegionArrangementPainting(std::shared_ptr<RegionArrangement> arr) : m_arr(std::move(arr)) {};
+
+    void paint(GeometryRenderer &renderer) const override {
+        for (auto fit = m_arr->faces_begin(); fit != m_arr->faces_end(); ++fit) {
+            if (!fit->has_outer_ccb()) continue;
+            auto region = fit->data();
+            if (region.empty() || region == "#") {
+                continue;
+            }
+            auto poly = approximate(face_to_polygon_with_holes<Exact>(fit));
+            renderer.setMode(GeometryRenderer::fill | GeometryRenderer::stroke);
+            renderer.setFill(Color{200, 200, 200});
+            renderer.setStroke(Color{0, 0, 0}, 1.0);
+            renderer.draw(poly);
+            auto c = centroid(poly);
+            renderer.setMode(GeometryRenderer::stroke);
+            renderer.drawText(c, region);
+        }
+//        renderer.setMode(GeometryRenderer::stroke);
+//        renderer.setStroke(Color{0, 0, 0}, 1.0);
+//        for (auto eit = m_arr->edges_begin(); eit != m_arr->edges_end(); ++eit) {
+//            Segment<Exact> seg = eit->curve();
+//            renderer.draw(seg);
+//        }
+    }
+};
+
 VWDemo::VWDemo() {
 	setWindowTitle("CartoCrow : Visvalingam-Whyatt demo");
 
@@ -23,12 +57,12 @@ VWDemo::VWDemo() {
 	setCentralWidget(m_renderer);
 
 	std::filesystem::path file =
-	    std::filesystem::absolute(std::filesystem::path("data/europe.ipe"));
+	    std::filesystem::absolute(std::filesystem::path("data/chorematic_map/gemeenten-2022_19282vtcs.ipe"));
 	std::cout << "reading file " << file << "\n";
 
 	// step 1: create a RegionMap
 //	this->inputmap = std::make_shared<BoundaryMap>(ipeToBoundaryMap(file));
-    this->inputmap = std::make_shared<RegionArrangement>(regionMapToArrangement(ipeToRegionMap(file)));
+    this->inputmap = std::make_shared<RegionArrangement>(regionMapToArrangement(ipeToRegionMap(file, true)));
 
 	std::cout << "creating arrangement\n";
 
@@ -50,7 +84,7 @@ VWDemo::VWDemo() {
 	t.stamp("Initialization");
 
 	// step 4: simplify until no more vertices can be removed
-	simplification.simplify(0);
+	simplification.simplify(5000);
 	t.stamp("Simplification done");
 	t.output();
 
@@ -101,10 +135,13 @@ VWDemo::VWDemo() {
 	out_options.color = Color{200, 10, 50};
 	out_options.line_width = 2;
 	auto out_painting = std::make_shared<ArrangementPainting<VWTraits<std::string>::Map>>(this->map, out_options);
+    auto regionArrangement = std::make_shared<RegionArrangement>(arrangementMapToRegionArrangement(*map));
+    auto ra_painting = std::make_shared<RegionArrangementPainting>(regionArrangement);
 
 	m_renderer->clear();
 //	m_renderer->addPainting(in_painting, "Input map");
 	m_renderer->addPainting(out_painting, "Output map");
+    m_renderer->addPainting(ra_painting, "Region arrangement");
 
 	recalculate();
 }

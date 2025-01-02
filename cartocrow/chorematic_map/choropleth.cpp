@@ -5,7 +5,21 @@
 
 namespace cartocrow::chorematic_map {
 using namespace renderer;
+
+PolygonWithHoles<Inexact> transform(const CGAL::Aff_transformation_2<Inexact>& t, const PolygonWithHoles<Inexact>& pwh) {
+    Polygon<Inexact> outerT;
+    if (!pwh.is_unbounded()) {
+        outerT = transform(t, pwh.outer_boundary());
+    }
+    std::vector<Polygon<Inexact>> holesT;
+    for (const auto& h : pwh.holes()) {
+        holesT.push_back(transform(t, h));
+    }
+    return {outerT, holesT.begin(), holesT.end()};
+}
+
 void ChoroplethPainting::paint(GeometryRenderer& renderer) const {
+    std::cout << m_transformation.is_scaling() << " " << m_transformation.hm(0, 0) << std::endl;
 	const auto& arr = *m_choropleth.m_arr;
 	for (auto fit = arr.faces_begin(); fit != arr.faces_end(); ++fit) {
 		if (!fit->has_outer_ccb()) continue;
@@ -27,36 +41,19 @@ void ChoroplethPainting::paint(GeometryRenderer& renderer) const {
 		}
 		renderer.setFill(color);
 		auto poly = approximate(face_to_polygon_with_holes<Exact>(fit));
-		renderer.draw(poly);
+		renderer.draw(transform(m_transformation, poly));
 		if (m_drawLabels) {
 			auto c = centroid(poly);
 			renderer.setMode(GeometryRenderer::stroke);
-			renderer.setStroke(Color{0, 0, 0}, 1.0);
+			renderer.setStroke(Color{0, 0, 0}, m_strokeWidth);
             auto label = fit->data().empty() ? "empty" : fit->data();
-			renderer.drawText(c, label);
+			renderer.drawText(c.transform(m_transformation), label);
 		}
 	}
 	renderer.setMode(GeometryRenderer::stroke);
-	renderer.setStroke(Color{0, 0, 0}, 1.0);
+	renderer.setStroke(Color{0, 0, 0}, m_strokeWidth);
 	for (auto eit = arr.edges_begin(); eit != arr.edges_end(); ++eit) {
-		renderer.draw(Segment<Exact>(eit->source()->point(), eit->target()->point()));
-	}
-	std::vector<Point<Inexact>> points;
-	for (auto vit = arr.vertices_begin(); vit != arr.vertices_end(); ++vit) {
-		points.push_back(approximate(vit->point()));
-	}
-	Rectangle<Inexact> bb = CGAL::bbox_2(points.begin(), points.end());
-	auto bl = get_corner(bb, Corner::BL);
-	auto intervals = m_choropleth.getIntervals();
-	for (int bin = 0; bin < m_choropleth.numberOfBins(); ++bin) {
-		auto& low = intervals[bin];
-		auto& high = intervals[bin + 1];
-		std::stringstream ss;
-		ss << "[" << low << ", " << high << ")" << std::endl;
-		Point<Inexact> pos = bl - Vector<Inexact>(0, 100) * (bin + 1);
-		renderer.setMode(GeometryRenderer::stroke);
-		renderer.setStroke(Color{0, 0, 0}, 1.0);
-		renderer.drawText(pos, ss.str());
+		renderer.draw(Segment<Inexact>(approximate(eit->source()->point()), approximate(eit->target()->point())).transform(m_transformation));
 	}
 }
 }

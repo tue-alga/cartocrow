@@ -7,6 +7,8 @@
 #include "../core/arrangement_helpers.h"
 #include "natural_breaks.h"
 
+#include <CGAL/Aff_transformation_2.h>
+
 namespace cartocrow::chorematic_map {
 class Choropleth {
   public:
@@ -128,12 +130,17 @@ class ChoroplethPainting : public renderer::GeometryPainting {
 	std::vector<Color> m_colors;
 	Color m_noDataColor;
 	bool m_drawLabels;
+    CGAL::Aff_transformation_2<Inexact> m_transformation;
+    double m_strokeWidth = 1.0;
 
 	template <class InputIterator>
 	ChoroplethPainting(Choropleth& choropleth, InputIterator beginColors, InputIterator endColors,
-	                   bool drawLabels = false, Color noDataColor = Color(200, 200, 200))
+	                   bool drawLabels = false, Color noDataColor = Color(200, 200, 200),
+                       const CGAL::Aff_transformation_2<Inexact>& transformation = CGAL::IDENTITY,
+                       double strokeWidth = 1.0)
 	    : m_choropleth(choropleth), m_colors(beginColors, endColors),
-	      m_noDataColor(noDataColor), m_drawLabels(drawLabels) {}
+	      m_noDataColor(noDataColor), m_drawLabels(drawLabels), m_transformation(transformation),
+          m_strokeWidth(strokeWidth) {}
 
 	template <class InputIterator>
 	void setColors(InputIterator begin, InputIterator end) {

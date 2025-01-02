@@ -71,7 +71,7 @@ std::vector<BinDisk> fitDisks(const Choropleth& choropleth, const WeightedRegion
 		}
 		binDisks.emplace_back(binToFit, circle, std::nullopt);
 
-		if (computeScores) {
+		if (computeScores || heuristic) {
 			if (binsToFit.size() > 1) {
 				std::cerr << "Score computation of multiple disks has not been implemented." << std::endl;
 			}
@@ -84,6 +84,15 @@ std::vector<BinDisk> fitDisks(const Choropleth& choropleth, const WeightedRegion
 			auto& arr = choropleth.m_arr;
 
 			binDisks.back().score = totalWeight(*circle, *arr, regionWeight);
+
+            if (heuristic) {
+                double areaPerPoint = (CGAL::to_double(positiveArea) + CGAL::to_double(negativeArea)) / sample.m_points.size();
+                double deltaRadius = sqrt(areaPerPoint) * 2;
+                auto [bDisk, bScore] = perturbDiskRadius(binDisks.back().disk.value(), binDisks.back().score.value(),
+                                                         *arr, regionWeight, deltaRadius, 20);
+                binDisks.back().disk = bDisk;
+                binDisks.back().score = bScore;
+            }
 		}
 	}
 
@@ -91,23 +100,24 @@ std::vector<BinDisk> fitDisks(const Choropleth& choropleth, const WeightedRegion
 	return binDisks;
 }
 
-std::pair<Circle<Inexact>, double>
-perturbDiskRadius(const Circle<Inexact>& disk,
+std::pair<Circle<Exact>, double>
+perturbDiskRadius(const Circle<Exact>& disk,
                   double score,
                   const RegionArrangement& arr,
                   const std::unordered_map<std::string, double>& regionWeight,
                   double maxDeltaRadius,
                   int iterations) {
 	double bestScore = score;
-	Circle<Exact> bestDisk = makeExact(disk);
-	for (int i = 0; i < 10; ++i) {
-		Circle<Exact> diskP(bestDisk.center(), sqrt(CGAL::to_double(disk.squared_radius())) + i * maxDeltaRadius / iterations);
+	Circle<Exact> bestDisk = disk;
+	for (int i = 1; i <= iterations; ++i) {
+        double r = sqrt(CGAL::to_double(disk.squared_radius())) + i * maxDeltaRadius / iterations;
+		Circle<Exact> diskP(bestDisk.center(), r * r);
 		auto scoreP = totalWeight(diskP, arr, regionWeight);
 		if (scoreP > bestScore) {
 			bestDisk = diskP;
 			bestScore = scoreP;
 		}
 	}
-	return {approximate(bestDisk), bestScore};
+	return {bestDisk, bestScore};
 }
 }
