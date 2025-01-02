@@ -188,7 +188,14 @@ void IpeRenderer::draw(const Circle<Inexact>& c) {
 	ipe::Shape* shape = new ipe::Shape();
 	shape->appendSubPath(ellipse);
 	ipe::Path* path = new ipe::Path(getAttributesForStyle(), *shape);
-	m_page->append(ipe::TSelect::ENotSelected, m_layer, path);
+    if (m_clip) {
+        auto* group = new ipe::Group();
+        group->push_back(path);
+        group->setClip(*m_clipPath);
+        m_page->append(ipe::TSelect::ENotSelected, m_layer, group);
+    } else {
+        m_page->append(ipe::TSelect::ENotSelected, m_layer, path);
+    }
 }
 
 void IpeRenderer::draw(const BezierSpline& s) {
@@ -214,52 +221,63 @@ void IpeRenderer::draw(const BezierSpline& s) {
 	}
 }
 
+ipe::Shape* renderPathToIpe(const RenderPath& p) {
+    auto* shape = new ipe::Shape();
+    ipe::Curve* curve = nullptr;
+    Point<Inexact> from;
+    for (RenderPath::Command c : p.commands()) {
+        if (std::holds_alternative<RenderPath::MoveTo>(c)) {
+            if (curve) {
+                shape->appendSubPath(curve);
+            }
+            curve = new ipe::Curve();
+            Point<Inexact> to = std::get<RenderPath::MoveTo>(c).m_to;
+            from = to;
+            continue;
+        }
+        if (!curve) {
+            // didn't start with MoveTo
+            curve = new ipe::Curve();
+        }
+        if (std::holds_alternative<RenderPath::LineTo>(c)) {
+            Point<Inexact> to = std::get<RenderPath::LineTo>(c).m_to;
+            curve->appendSegment(ipe::Vector(from.x(), from.y()), ipe::Vector(to.x(), to.y()));
+            from = to;
+
+        } else if (std::holds_alternative<RenderPath::ArcTo>(c)) {
+            Point<Inexact> center = std::get<RenderPath::ArcTo>(c).m_center;
+            Point<Inexact> to = std::get<RenderPath::ArcTo>(c).m_to;
+            bool clockwise = std::get<RenderPath::ArcTo>(c).m_clockwise;
+
+            double radius = sqrt((center - to).squared_length());
+            ipe::Matrix matrix(radius, 0, 0, clockwise ? -radius : radius, center.x(), center.y());
+            curve->appendArc(matrix, ipe::Vector(from.x(), from.y()), ipe::Vector(to.x(), to.y()));
+            from = to;
+
+        } else if (std::holds_alternative<RenderPath::Close>(c)) {
+            curve->setClosed(true);
+        }
+    }
+    if (curve) {
+        shape->appendSubPath(curve);
+    }
+    return shape;
+}
+
 void IpeRenderer::draw(const RenderPath& p) {
-	ipe::Shape* shape = new ipe::Shape();
-	ipe::Curve* curve = nullptr;
 	std::vector<Point<Inexact>> verticesToDraw;
-	Point<Inexact> from;
-	for (RenderPath::Command c : p.commands()) {
-		if (std::holds_alternative<RenderPath::MoveTo>(c)) {
-			if (curve) {
-				shape->appendSubPath(curve);
-			}
-			curve = new ipe::Curve();
-			Point<Inexact> to = std::get<RenderPath::MoveTo>(c).m_to;
-			verticesToDraw.push_back(to);
-			from = to;
-			continue;
-		}
-		if (!curve) {
-			// didn't start with MoveTo
-			curve = new ipe::Curve();
-		}
-		if (std::holds_alternative<RenderPath::LineTo>(c)) {
-			Point<Inexact> to = std::get<RenderPath::LineTo>(c).m_to;
-			verticesToDraw.push_back(to);
-			curve->appendSegment(ipe::Vector(from.x(), from.y()), ipe::Vector(to.x(), to.y()));
-			from = to;
-
-		} else if (std::holds_alternative<RenderPath::ArcTo>(c)) {
-			Point<Inexact> center = std::get<RenderPath::ArcTo>(c).m_center;
-			Point<Inexact> to = std::get<RenderPath::ArcTo>(c).m_to;
-			bool clockwise = std::get<RenderPath::ArcTo>(c).m_clockwise;
-			verticesToDraw.push_back(to);
-
-			double radius = sqrt((center - to).squared_length());
-			ipe::Matrix matrix(radius, 0, 0, clockwise ? -radius : radius, center.x(), center.y());
-			curve->appendArc(matrix, ipe::Vector(from.x(), from.y()), ipe::Vector(to.x(), to.y()));
-			from = to;
-
-		} else if (std::holds_alternative<RenderPath::Close>(c)) {
-			curve->setClosed(true);
-		}
-	}
-	if (curve) {
-		shape->appendSubPath(curve);
-	}
-	ipe::Path* path = new ipe::Path(getAttributesForStyle(), *shape);
-	m_page->append(ipe::TSelect::ENotSelected, m_layer, path);
+    p.vertices(std::back_inserter(verticesToDraw));
+    ipe::Shape* shape = renderPathToIpe(p);
+	auto* path = new ipe::Path(getAttributesForStyle(), *shape);
+    path->setLineCap(ipe::TLineCap::ERoundCap);
+    if (m_clip) {
+        auto* group = new ipe::Group();
+        group->push_back(path);
+        group->setClip(*m_clipPath);
+        m_page->append(ipe::TSelect::ENotSelected, m_layer, group);
+    } else {
+        m_page->append(ipe::TSelect::ENotSelected, m_layer, path);
+    }
 
 	if (m_style.m_mode & vertices) {
 		for (const Point<Inexact>& vertex : verticesToDraw) {
@@ -269,11 +287,14 @@ void IpeRenderer::draw(const RenderPath& p) {
 }
 
 void IpeRenderer::drawText(const Point<Inexact>& p, const std::string& text) {
-	ipe::String labelText = escapeForLaTeX(text).data();
+//	ipe::String labelText = escapeForLaTeX(text).data();
+    ipe::String labelText = text.data();
 	ipe::Text* label = new ipe::Text(getAttributesForStyle(), labelText,
 	                                 ipe::Vector(p.x(), p.y()), ipe::Text::TextType::ELabel);
-	label->setHorizontalAlignment(ipe::THorizontalAlignment::EAlignHCenter);
-	label->setVerticalAlignment(ipe::TVerticalAlignment::EAlignVCenter);
+//	label->setHorizontalAlignment(ipe::THorizontalAlignment::EAlignHCenter);
+//	label->setVerticalAlignment(ipe::TVerticalAlignment::EAlignVCenter);
+    label->setHorizontalAlignment(ipe::THorizontalAlignment::EAlignLeft);
+    label->setVerticalAlignment(ipe::TVerticalAlignment::EAlignTop);
 	m_page->append(ipe::TSelect::ENotSelected, m_layer, label);
 }
 
@@ -324,6 +345,14 @@ void IpeRenderer::setFillOpacity(int alpha) {
 	m_style.m_fillOpacity = name;
 }
 
+void IpeRenderer::setClipPath(const RenderPath &clipPath) {
+    m_clipPath = renderPathToIpe(clipPath);
+}
+
+void IpeRenderer::setClipping(bool enable) {
+    m_clip = enable;
+}
+
 ipe::Curve* IpeRenderer::convertPolygonToCurve(const Polygon<Inexact>& p) const {
 	ipe::Curve* curve = new ipe::Curve();
 	for (auto edge = p.edges_begin(); edge != p.edges_end(); edge++) {
@@ -363,21 +392,21 @@ void IpeRenderer::addPainting(const std::function<void(renderer::GeometryRendere
 }
 
 void IpeRenderer::addPainting(const std::shared_ptr<GeometryPainting>& painting) {
-	m_paintings.push_back(DrawnPainting{painting, std::nullopt, m_page_index});
+	m_paintings.push_back(DrawnPainting{painting, std::nullopt, m_pageIndex});
 }
 
 void IpeRenderer::addPainting(const std::shared_ptr<GeometryPainting>& painting, const std::string& name) {
 	std::string spaceless;
 	std::replace_copy(name.begin(), name.end(), std::back_inserter(spaceless), ' ', '_');
-	m_paintings.push_back(DrawnPainting{painting, spaceless, m_page_index});
+	m_paintings.push_back(DrawnPainting{painting, spaceless, m_pageIndex});
 }
 
 void IpeRenderer::nextPage() {
-	++m_page_index;
+	++m_pageIndex;
 }
 
 int IpeRenderer::currentPage() {
-	return m_page_index;
+	return m_pageIndex;
 }
 
 std::string IpeRenderer::escapeForLaTeX(const std::string& text) const {

@@ -98,6 +98,8 @@ class IpeRenderer : public GeometryRenderer {
 	void setStrokeOpacity(int alpha) override;
 	void setFill(Color color) override;
 	void setFillOpacity(int alpha) override;
+    void setClipPath(const RenderPath& clipPath) override;
+    void setClipping(bool enable) override;
 
 	void addPainting(const std::function<void(renderer::GeometryRenderer&)>& draw_function);
 	void addPainting(const std::function<void(renderer::GeometryRenderer&)>& draw_function, const std::string& name);
@@ -149,7 +151,11 @@ class IpeRenderer : public GeometryRenderer {
 	/// The index of the Ipe layer we are currently drawing to.
 	int m_layer;
 	/// The index of the Ipe page a painting will get drawn to.
-	int m_page_index = 0;
+	int m_pageIndex = 0;
+    /// The current clip path
+    ipe::Shape* m_clipPath;
+    /// Clipping enabled?
+    bool m_clip = false;
 };
 
 } // namespace cartocrow::renderer

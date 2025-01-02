@@ -581,49 +581,53 @@ void GeometryWidget::draw(const Line<Inexact>& l) {
 	}
 }
 
+QPainterPath GeometryWidget::renderPathToQt(const RenderPath& p) {
+    QPainterPath path;
+    for (RenderPath::Command c : p.commands()) {
+        if (std::holds_alternative<RenderPath::MoveTo>(c)) {
+            Point<Inexact> to = std::get<RenderPath::MoveTo>(c).m_to;
+            path.moveTo(convertPoint(to));
+
+        } else if (std::holds_alternative<RenderPath::LineTo>(c)) {
+            Point<Inexact> to = std::get<RenderPath::LineTo>(c).m_to;
+            path.lineTo(convertPoint(std::get<RenderPath::LineTo>(c).m_to));
+
+        } else if (std::holds_alternative<RenderPath::ArcTo>(c)) {
+            Point<Inexact> from = inverseConvertPoint(path.currentPosition());
+            Point<Inexact> center = std::get<RenderPath::ArcTo>(c).m_center;
+            Point<Inexact> to = std::get<RenderPath::ArcTo>(c).m_to;
+            bool clockwise = std::get<RenderPath::ArcTo>(c).m_clockwise;
+
+            double radius = sqrt((center - to).squared_length());
+            Vector<Inexact> diagonal(radius, radius);
+            QRectF bounds(convertPoint(center - diagonal), convertPoint(center + diagonal));
+
+            double startAngle = atan2((from - center).y(), (from - center).x()) * (180 / M_PI);
+            double endAngle = atan2((to - center).y(), (to - center).x()) * (180 / M_PI);
+            double sweepLength = endAngle - startAngle;
+            if (!clockwise && sweepLength < 0) {
+                sweepLength += 360;  // counter-clockwise -> positive sweepLength
+            }
+            if (clockwise && sweepLength > 0) {
+                sweepLength -= 360;  // clockwise -> negative sweepLength
+            }
+            // the angles are negative because the y-axis is pointing up here
+            // instead of down
+            path.arcTo(bounds, -startAngle, -sweepLength);
+
+        } else if (std::holds_alternative<RenderPath::Close>(c)) {
+            path.closeSubpath();
+        }
+    }
+
+    return path;
+}
+
 void GeometryWidget::draw(const RenderPath& p) {
 	setupPainter();
-	QPainterPath path;
+	QPainterPath path = renderPathToQt(p);
 	std::vector<Point<Inexact>> verticesToDraw;
-	for (RenderPath::Command c : p.commands()) {
-		if (std::holds_alternative<RenderPath::MoveTo>(c)) {
-			Point<Inexact> to = std::get<RenderPath::MoveTo>(c).m_to;
-			verticesToDraw.push_back(to);
-			path.moveTo(convertPoint(to));
-
-		} else if (std::holds_alternative<RenderPath::LineTo>(c)) {
-			Point<Inexact> to = std::get<RenderPath::LineTo>(c).m_to;
-			verticesToDraw.push_back(to);
-			path.lineTo(convertPoint(std::get<RenderPath::LineTo>(c).m_to));
-
-		} else if (std::holds_alternative<RenderPath::ArcTo>(c)) {
-			Point<Inexact> from = inverseConvertPoint(path.currentPosition());
-			Point<Inexact> center = std::get<RenderPath::ArcTo>(c).m_center;
-			Point<Inexact> to = std::get<RenderPath::ArcTo>(c).m_to;
-			bool clockwise = std::get<RenderPath::ArcTo>(c).m_clockwise;
-			verticesToDraw.push_back(to);
-
-			double radius = sqrt((center - to).squared_length());
-			Vector<Inexact> diagonal(radius, radius);
-			QRectF bounds(convertPoint(center - diagonal), convertPoint(center + diagonal));
-
-			double startAngle = atan2((from - center).y(), (from - center).x()) * (180 / M_PI);
-			double endAngle = atan2((to - center).y(), (to - center).x()) * (180 / M_PI);
-			double sweepLength = endAngle - startAngle;
-			if (!clockwise && sweepLength < 0) {
-				sweepLength += 360;  // counter-clockwise -> positive sweepLength
-			}
-			if (clockwise && sweepLength > 0) {
-				sweepLength -= 360;  // clockwise -> negative sweepLength
-			}
-			// the angles are negative because the y-axis is pointing up here
-			// instead of down
-			path.arcTo(bounds, -startAngle, -sweepLength);
-
-		} else if (std::holds_alternative<RenderPath::Close>(c)) {
-			path.closeSubpath();
-		}
-	}
+    p.vertices(std::back_inserter(verticesToDraw));
 	m_painter->drawPath(path);
 	if (m_style.m_mode & vertices) {
 		for (const Point<Inexact>& vertex : verticesToDraw) {
@@ -683,6 +687,15 @@ void GeometryWidget::setFill(Color color) {
 
 void GeometryWidget::setFillOpacity(int alpha) {
 	m_style.m_fillColor.setAlpha(alpha);
+}
+
+void GeometryWidget::setClipPath(const RenderPath& clipPath) {
+    QPainterPath qtClipPath = renderPathToQt(clipPath);
+    m_painter->setClipPath(qtClipPath);
+}
+
+void GeometryWidget::setClipping(bool enable) {
+    m_painter->setClipping(enable);
 }
 
 void GeometryWidget::addPainting(std::shared_ptr<GeometryPainting> painting, const std::string& name) {

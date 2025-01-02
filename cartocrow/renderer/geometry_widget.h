@@ -178,6 +178,8 @@ class GeometryWidget : public QWidget, public GeometryRenderer {
 	void setStrokeOpacity(int alpha) override;
 	void setFill(Color color) override;
 	void setFillOpacity(int alpha) override;
+    void setClipPath(const RenderPath& clipPath) override;
+    void setClipping(bool enable) override;
 
 	/// Adds a new painting to this widget.
 	void addPainting(std::shared_ptr<GeometryPainting> painting, const std::string& name);
@@ -251,6 +253,8 @@ class GeometryWidget : public QWidget, public GeometryRenderer {
 	Point<Inexact> inverseConvertPoint(QPointF p) const;
 	/// Converts a rectangle in Qt coordinates back to drawing coordinates.
 	Box inverseConvertBox(QRectF r) const;
+    /// Convert a render path to a Qt path.
+    QPainterPath renderPathToQt(const RenderPath& p);
 
   private:
 	/// Converts the polygon to Qt coordinates and adds it to the QPainterPath.

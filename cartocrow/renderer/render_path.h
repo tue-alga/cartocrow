@@ -45,6 +45,25 @@ class RenderPath {
 
 	const std::vector<Command>& commands() const;
 
+    template <class OutputIterator>
+    void vertices(OutputIterator out) const {
+        for (RenderPath::Command c : m_commands) {
+            if (std::holds_alternative<RenderPath::MoveTo>(c)) {
+                Point<Inexact> to = std::get<RenderPath::MoveTo>(c).m_to;
+                *out++ = to;
+            } else if (std::holds_alternative<RenderPath::LineTo>(c)) {
+                Point<Inexact> to = std::get<RenderPath::LineTo>(c).m_to;
+                *out++ = to;
+            } else if (std::holds_alternative<RenderPath::ArcTo>(c)) {
+                Point<Inexact> to = std::get<RenderPath::ArcTo>(c).m_to;
+                *out++ = to;
+            } else if (std::holds_alternative<RenderPath::Close>(c)) {
+            } else {
+                throw std::runtime_error("Unknown RenderPath command");
+            }
+        }
+    }
+
 	void moveTo(Point<Inexact> to);
 	void lineTo(Point<Inexact> to);
 	void arcTo(Point<Inexact> center, bool clockwise, Point<Inexact> to);

@@ -286,4 +286,14 @@ std::string SvgRenderer::escapeForSvg(const std::string& text) const {
 	return result.str();
 }
 
+// todo
+void SvgRenderer::setClipPath(const RenderPath& clipPath) {
+
+}
+
+// todo
+void SvgRenderer::setClipping(bool enable) {
+
+}
+
 } // namespace cartocrow::renderer

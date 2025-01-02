@@ -82,6 +82,8 @@ class SvgRenderer : public GeometryRenderer {
 	void setStrokeOpacity(int alpha) override;
 	void setFill(Color color) override;
 	void setFillOpacity(int alpha) override;
+    void setClipPath(const RenderPath& clipPath) override;
+    void setClipping(bool enable) override;
 
 	void addPainting(const std::shared_ptr<GeometryPainting>& painting);
 	void addPainting(const std::shared_ptr<GeometryPainting>& painting, const std::string& name);
