@@ -83,6 +83,18 @@ class GeometryRenderer {
 		vertices = 1 << 2
 	};
 
+	enum LineCap {
+		ButtCap,
+		RoundCap,
+		SquareCap,
+	};
+
+	enum LineJoin {
+		RoundJoin,
+		BevelJoin,
+		MiterJoin,
+	};
+
 	/// \name Drawing methods
 	/// @{
 
@@ -163,6 +175,10 @@ class GeometryRenderer {
     virtual void setClipPath(const RenderPath& clipPath) = 0;
     /// Enable or disable clipping.
     virtual void setClipping(bool enable) = 0;
+	/// Set line join.
+	virtual void setLineJoin(LineJoin lineJoin) = 0;
+	/// Set line cap.
+	virtual void setLineCap(LineCap lineCap) = 0;
 	/// @}
 };
 

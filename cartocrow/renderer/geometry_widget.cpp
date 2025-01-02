@@ -698,6 +698,44 @@ void GeometryWidget::setClipping(bool enable) {
     m_painter->setClipping(enable);
 }
 
+void GeometryWidget::setLineCap(LineCap lineCap) {
+	auto pen = m_painter->pen();
+	switch(lineCap) {
+	case RoundCap: {
+		pen.setCapStyle(Qt::RoundCap);
+		break;
+	}
+	case ButtCap: {
+		pen.setCapStyle(Qt::FlatCap);
+		break;
+	}
+	case SquareCap: {
+		pen.setCapStyle(Qt::SquareCap);
+		break;
+	}
+	}
+	m_painter->setPen(pen);
+}
+
+void GeometryWidget::setLineJoin(LineJoin lineJoin) {
+	auto pen = m_painter->pen();
+	switch(lineJoin) {
+	case RoundJoin: {
+		pen.setJoinStyle(Qt::RoundJoin);
+		break;
+	}
+	case MiterJoin: {
+		pen.setJoinStyle(Qt::MiterJoin);
+		break;
+	}
+	case BevelJoin: {
+		pen.setJoinStyle(Qt::BevelJoin);
+		break;
+	}
+	}
+	m_painter->setPen(pen);
+}
+
 void GeometryWidget::addPainting(std::shared_ptr<GeometryPainting> painting, const std::string& name) {
 	bool visible = !m_invisibleLayerNames.contains(name);
 	m_paintings.push_back(DrawnPainting{painting, name, visible});

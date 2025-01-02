@@ -296,4 +296,14 @@ void SvgRenderer::setClipping(bool enable) {
 
 }
 
+// todo
+void SvgRenderer::setLineJoin(LineJoin lineJoin) {
+
+}
+
+// todo
+void SvgRenderer::setLineCap(LineCap lineCap) {
+
+}
+
 } // namespace cartocrow::renderer

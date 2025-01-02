@@ -149,7 +149,7 @@ void IpeRenderer::draw(const PolygonWithHoles<Inexact>& p) {
 		shape->appendSubPath(holeCurve);
 	}
 	ipe::Path* path = new ipe::Path(getAttributesForStyle(), *shape);
-	m_page->append(ipe::TSelect::ENotSelected, m_layer, path);
+	drawPathOnPage(path);
 
 	if (m_style.m_mode & vertices) {
 		for (auto v = p.outer_boundary().vertices_begin(); v != p.outer_boundary().vertices_end(); v++) {
@@ -177,7 +177,7 @@ void IpeRenderer::draw(const PolygonSet<Inexact>& ps) {
         }
     }
     ipe::Path *path = new ipe::Path(getAttributesForStyle(), *shape);
-    m_page->append(ipe::TSelect::ENotSelected, m_layer, path);
+	drawPathOnPage(path);
 }
 
 void IpeRenderer::draw(const Circle<Inexact>& c) {
@@ -188,14 +188,7 @@ void IpeRenderer::draw(const Circle<Inexact>& c) {
 	ipe::Shape* shape = new ipe::Shape();
 	shape->appendSubPath(ellipse);
 	ipe::Path* path = new ipe::Path(getAttributesForStyle(), *shape);
-    if (m_clip) {
-        auto* group = new ipe::Group();
-        group->push_back(path);
-        group->setClip(*m_clipPath);
-        m_page->append(ipe::TSelect::ENotSelected, m_layer, group);
-    } else {
-        m_page->append(ipe::TSelect::ENotSelected, m_layer, path);
-    }
+	drawPathOnPage(path);
 }
 
 void IpeRenderer::draw(const BezierSpline& s) {
@@ -211,7 +204,7 @@ void IpeRenderer::draw(const BezierSpline& s) {
 	ipe::Shape* shape = new ipe::Shape();
 	shape->appendSubPath(curve);
 	ipe::Path* path = new ipe::Path(getAttributesForStyle(), *shape);
-	m_page->append(ipe::TSelect::ENotSelected, m_layer, path);
+	drawPathOnPage(path);
 
 	if (m_style.m_mode & vertices) {
 		for (BezierCurve c : s.curves()) {
@@ -269,15 +262,7 @@ void IpeRenderer::draw(const RenderPath& p) {
     p.vertices(std::back_inserter(verticesToDraw));
     ipe::Shape* shape = renderPathToIpe(p);
 	auto* path = new ipe::Path(getAttributesForStyle(), *shape);
-    path->setLineCap(ipe::TLineCap::ERoundCap);
-    if (m_clip) {
-        auto* group = new ipe::Group();
-        group->push_back(path);
-        group->setClip(*m_clipPath);
-        m_page->append(ipe::TSelect::ENotSelected, m_layer, group);
-    } else {
-        m_page->append(ipe::TSelect::ENotSelected, m_layer, path);
-    }
+	drawPathOnPage(path);
 
 	if (m_style.m_mode & vertices) {
 		for (const Point<Inexact>& vertex : verticesToDraw) {
@@ -346,11 +331,58 @@ void IpeRenderer::setFillOpacity(int alpha) {
 }
 
 void IpeRenderer::setClipPath(const RenderPath &clipPath) {
-    m_clipPath = renderPathToIpe(clipPath);
+    m_style.m_clipPath = renderPathToIpe(clipPath);
 }
 
 void IpeRenderer::setClipping(bool enable) {
-    m_clip = enable;
+    m_style.m_clip = enable;
+}
+
+void IpeRenderer::setLineCap(LineCap lineCap) {
+	m_style.m_lineCap = lineCap;
+}
+
+void IpeRenderer::setLineJoin(LineJoin lineJoin) {
+	m_style.m_lineJoin = lineJoin;
+}
+
+void IpeRenderer::drawPathOnPage(ipe::Path* path) {
+	switch(m_style.m_lineCap) {
+	case ButtCap: {
+		path->setLineCap(ipe::EButtCap);
+		break;
+	}
+	case RoundCap: {
+		path->setLineCap(ipe::ERoundCap);
+		break;
+	}
+	case SquareCap: {
+		path->setLineCap(ipe::ESquareCap);
+		break;
+	}
+	}
+	switch(m_style.m_lineJoin) {
+	case BevelJoin: {
+		path->setLineJoin(ipe::EBevelJoin);
+		break;
+	}
+	case MiterJoin: {
+		path->setLineJoin(ipe::EMiterJoin);
+		break;
+	}
+	case RoundJoin: {
+		path->setLineJoin(ipe::ERoundJoin);
+		break;
+	}
+	}
+	if (m_style.m_clip) {
+		auto* group = new ipe::Group();
+		group->push_back(path);
+		group->setClip(*m_style.m_clipPath);
+		m_page->append(ipe::TSelect::ENotSelected, m_layer, group);
+	} else {
+		m_page->append(ipe::TSelect::ENotSelected, m_layer, path);
+	}
 }
 
 ipe::Curve* IpeRenderer::convertPolygonToCurve(const Polygon<Inexact>& p) const {

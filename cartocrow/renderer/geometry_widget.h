@@ -180,6 +180,8 @@ class GeometryWidget : public QWidget, public GeometryRenderer {
 	void setFillOpacity(int alpha) override;
     void setClipPath(const RenderPath& clipPath) override;
     void setClipping(bool enable) override;
+	void setLineJoin(LineJoin lineJoin) override;
+	void setLineCap(LineCap lineCap) override;
 
 	/// Adds a new painting to this widget.
 	void addPainting(std::shared_ptr<GeometryPainting> painting, const std::string& name);
