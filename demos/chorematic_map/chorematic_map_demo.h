@@ -61,6 +61,7 @@ class ChorematicMapDemo : public QMainWindow {
 	QCheckBox* m_recomputeAutomatically;
 	QCheckBox* m_invertFittingOrder;
     QCheckBox* m_applyHeuristic;
+    QCheckBox* m_useSymDiff;
 	QComboBox* m_samplingStrategy;
     QComboBox* m_dataAttribute;
 	QLabel* m_diskScoreLabel;

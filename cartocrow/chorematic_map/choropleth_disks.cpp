@@ -8,7 +8,7 @@
 namespace cartocrow::chorematic_map {
 /// The disks are returned in the order that they should be drawn.
 std::vector<BinDisk> fitDisks(const Choropleth& choropleth, const WeightedRegionSample<Exact>& sample,
-                              bool invert, bool computeScores, bool heuristic) {
+                              bool invert, bool computeScores, bool heuristic, bool symmetricDifference) {
 	using RegionWeight = WeightedRegionSample<Exact>::RegionWeight;
 
 	std::vector<int> binsToFit;
@@ -39,7 +39,11 @@ std::vector<BinDisk> fitDisks(const Choropleth& choropleth, const WeightedRegion
 			auto bin = choropleth.regionToBin(region);
 			if (!bin.has_value()) continue;
 
-			regionWeight[region] = CGAL::to_double(*bin == binToFit ? negativeArea / totalArea : -positiveArea / totalArea);
+            if (!symmetricDifference) {
+                regionWeight[region] = CGAL::to_double(*bin == binToFit ? negativeArea / totalArea : -positiveArea / totalArea);
+            } else {
+                regionWeight[region] = CGAL::to_double(*bin == binToFit ? 1 : -1);
+            }
 		}
 
 		std::vector<WeightedPoint> weightedPoints;

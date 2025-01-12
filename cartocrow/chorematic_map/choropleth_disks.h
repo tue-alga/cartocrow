@@ -12,7 +12,8 @@ struct BinDisk {
 };
 
 std::vector<BinDisk> fitDisks(const Choropleth& choropleth, const WeightedRegionSample<Exact>& sample,
-                              bool invert = false, bool computeScores = false, bool heuristic = false);
+                              bool invert = false, bool computeScores = false, bool heuristic = false,
+                              bool symmetricDifference = false);
 
 std::pair<Circle<Exact>, double>
 perturbDiskRadius(const Circle<Exact>& disk,

@@ -231,7 +231,7 @@ void ChorematicMapDemo::recolor() {
 
 void ChorematicMapDemo::refit() {
 	m_disks = fitDisks(*m_choropleth, m_sample, m_invertFittingOrder->isChecked(), m_numberOfBins->value() == 2,
-                       m_applyHeuristic->isChecked());
+                       m_applyHeuristic->isChecked(), m_useSymDiff->isChecked());
 	if (m_disks[0].score.has_value()) {
 		m_diskScoreLabel->setText(QString::fromStdString(std::to_string(m_disks[0].score.value())));
 	}
@@ -379,6 +379,9 @@ ChorematicMapDemo::ChorematicMapDemo() {
     m_applyHeuristic = new QCheckBox("Apply heuristic");
     vLayout->addWidget(m_applyHeuristic);
 
+    m_useSymDiff = new QCheckBox("Symmetric difference cost");
+    vLayout->addWidget(m_useSymDiff);
+
 	auto* scoreLabel = new QLabel("Score:");
 	vLayout->addWidget(scoreLabel);
 	m_diskScoreLabel = new QLabel();
@@ -406,11 +409,17 @@ ChorematicMapDemo::ChorematicMapDemo() {
     std::filesystem::path dutch = "data/chorematic_map/gemeenten-2022_5000vtcs.ipe";
 //    std::filesystem::path dutch = "data/chorematic_map/gemeenten-2022_4959vtcs.ipe";
 //    std::filesystem::path dutch = "data/chorematic_map/gemeenten-2022_idkvtcs.ipe";
+    std::filesystem::path annulus = "data/chorematic_map/annulus.ipe";
+    std::filesystem::path annulus_data = "data/chorematic_map/annulus-data.txt";
 
     auto regionMap = std::make_shared<RegionMap>(ipeToRegionMap(dutch, true));
     m_regionWeightMap = regionDataMapFromGPKG(gpkg3, "gemeenten", "gemeentecode", [](const std::string& s) {
         return s;
     });
+
+
+//    auto regionMap = std::make_shared<RegionMap>(ipeToRegionMap(annulus, false));
+//    auto regionData = std::make_shared<std::unordered_map<std::string, double>>(parseRegionDataFile(annulus_data));
 
     // Non-generalized Dutch municipalities
 //	auto regionMapDM = regionMapFromGPKG(gpkg3, "gemeenten", "gemeentecode");
@@ -437,10 +446,12 @@ ChorematicMapDemo::ChorematicMapDemo() {
 //        return s;
 //    });
 //    auto regionData = std::make_shared<std::unordered_map<std::string, double>>(m_regionWeightMap->begin()->second);
+
     for (auto& kv : *m_regionWeightMap) {
         m_dataAttribute->addItem(QString::fromStdString(kv.first));
     }
     m_dataAttribute->model()->sort(0);
+
 //	auto regionArr = std::make_shared<RegionArrangement>(regionMapToArrangementParallel(*regionMap));
 //    auto regionArr = regionMapToArrangementParallel(*regionMap);
     auto regionArr = regionMapToArrangementParallel(*regionMap);
@@ -676,6 +687,12 @@ ChorematicMapDemo::ChorematicMapDemo() {
         }
     });
     connect(m_applyHeuristic, &QCheckBox::stateChanged, [this]() {
+        if (m_recomputeAutomatically->isChecked()) {
+            refit();
+            m_renderer->repaint();
+        }
+    });
+    connect(m_useSymDiff, &QCheckBox::stateChanged, [this]() {
         if (m_recomputeAutomatically->isChecked()) {
             refit();
             m_renderer->repaint();
