@@ -316,9 +316,9 @@ Point<Inexact> GeometryWidget::inverseConvertPoint(QPointF p) const {
 }
 
 Box GeometryWidget::inverseConvertBox(QRectF r) const {
-	Point<Inexact> topLeft = inverseConvertPoint(r.topLeft());
-	Point<Inexact> bottomRight = inverseConvertPoint(r.bottomRight());
-	return Box(topLeft.x(), topLeft.y(), bottomRight.x(), bottomRight.y());
+	Point<Inexact> bottomLeft = inverseConvertPoint(r.bottomLeft());
+	Point<Inexact> topRight = inverseConvertPoint(r.topRight());
+	return Box(bottomLeft.x(), bottomLeft.y(), topRight.x(), topRight.y());
 }
 
 void GeometryWidget::drawAxes() {
@@ -574,6 +574,29 @@ void GeometryWidget::draw(const Line<Inexact>& l) {
 	if (result) {
 		if (const Segment<Inexact>* s = boost::get<Segment<Inexact>>(&*result)) {
 			int oldMode = m_style.m_mode;
+			setMode(oldMode & ~vertices);
+			GeometryRenderer::draw(*s);
+			setMode(oldMode);
+		}
+	}
+}
+
+void GeometryWidget::draw(const Halfplane<Inexact>& h) {
+	auto l = h.line();
+	Box bounds = inverseConvertBox(rect());
+	auto result =
+		intersection(l, CGAL::Iso_rectangle_2<Inexact>(Point<Inexact>(bounds.xmin(), bounds.ymin()),
+													   Point<Inexact>(bounds.xmax(), bounds.ymax())));
+	if (result) {
+		if (const Segment<Inexact>* s = boost::get<Segment<Inexact>>(&*result)) {
+			int oldMode = m_style.m_mode;
+			if (oldMode & fill) {
+				// Draw filled half-plane
+				setMode(fill);
+				Rectangle<Inexact> rect(bounds.xmin(), bounds.ymin(), bounds.xmax(), bounds.ymax());
+				Polygon<Inexact> poly = h.polygon(rect);
+				GeometryRenderer::draw(poly);
+			}
 			setMode(oldMode & ~vertices);
 			GeometryRenderer::draw(*s);
 			setMode(oldMode);

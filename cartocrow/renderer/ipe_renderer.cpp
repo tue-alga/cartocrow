@@ -151,6 +151,28 @@ void IpeRenderer::draw(const Ray<Inexact>& r) {
 	}
 }
 
+void IpeRenderer::draw(const Halfplane<Inexact>& h) {
+	// crop to document size
+	auto l = h.line();
+	auto bounds = CGAL::Iso_rectangle_2<Inexact>(CGAL::ORIGIN, Point<Inexact>(1000.0, 1000.0));
+	auto result = intersection(l, bounds);
+	if (result) {
+		if (const Segment<Inexact>* s = boost::get<Segment<Inexact>>(&*result)) {
+			int oldMode = m_style.m_mode;
+			if (oldMode & fill) {
+				// Draw filled half-plane
+				setMode(fill);
+				Rectangle<Inexact> rect(bounds.xmin(), bounds.ymin(), bounds.xmax(), bounds.ymax());
+				Polygon<Inexact> poly = h.polygon(rect);
+				GeometryRenderer::draw(poly);
+			}
+			setMode(oldMode & ~vertices);
+			GeometryRenderer::draw(*s);
+			setMode(oldMode);
+		}
+	}
+}
+
 void IpeRenderer::draw(const PolygonWithHoles<Inexact>& p) {
 	ipe::Curve* curve = convertPolygonToCurve(p.outer_boundary());
 	ipe::Shape* shape = new ipe::Shape();

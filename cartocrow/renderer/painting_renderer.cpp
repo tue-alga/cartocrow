@@ -61,6 +61,9 @@ void PaintingRenderer::draw(const PolygonWithHoles<Inexact>& p) {
 	m_objects.push_back(p);
 }
 
+void PaintingRenderer::draw(const PolygonSet<Inexact>& p) {
+}
+
 void PaintingRenderer::draw(const Circle<Inexact>& c) {
 	m_objects.push_back(c);
 }
@@ -75,6 +78,11 @@ void PaintingRenderer::draw(const Line<Inexact>& l) {
 
 void PaintingRenderer::draw(const Ray<Inexact>& r) {
 	m_objects.push_back(r);
+}
+
+// todo
+void PaintingRenderer::draw(const Halfplane<Inexact>& h) {
+	throw std::runtime_error("Not implemented");
 }
 
 void PaintingRenderer::draw(const RenderPath& p) {
@@ -120,5 +128,13 @@ void PaintingRenderer::setFillOpacity(int alpha) {
 	m_style.m_fillOpacity = alpha;
 	m_objects.push_back(m_style);
 }
+
+// todo
+void PaintingRenderer::setClipPath(const RenderPath& clipPath) {}
+void PaintingRenderer::setClipping(bool enable) {}
+void PaintingRenderer::setLineJoin(LineJoin lineJoin) {}
+void PaintingRenderer::setLineCap(LineCap lineCap) {}
+void PaintingRenderer::setHorizontalTextAlignment(HorizontalTextAlignment alignment) {}
+void PaintingRenderer::setVerticalTextAlignment(VerticalTextAlignment alignment) {}
 
 } // namespace cartocrow::renderer

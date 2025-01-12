@@ -9,7 +9,6 @@ set(SOURCES
 	rectangle_helpers.cpp
 	cs_curve_helpers.cpp
 	cs_polygon_helpers.cpp
-	cs_polygonset_helpers.cpp
 	cs_polyline_helpers.cpp
 	cs_types.cpp
 	vector_helpers.cpp
@@ -30,10 +29,10 @@ set(HEADERS
 	general_polyline.h
 	cs_curve_helpers.h
 	cs_polygon_helpers.h
-	cs_polygonset_helpers.h
 	cs_polyline_helpers.h
 	cs_types.h
 	vector_helpers.h
+	halfplane.h
 )
 
 add_library(core ${SOURCES})

@@ -23,6 +23,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "../core/bezier.h"
 #include "../core/core.h"
 #include "../core/polyline.h"
+#include "../core/halfplane.h"
 #include "render_path.h"
 
 namespace cartocrow::renderer {
@@ -139,6 +140,8 @@ class GeometryRenderer {
 	virtual void draw(const Line<Inexact>& l) = 0;
 	/// Draws a ray with the currently set style.
 	virtual void draw(const Ray<Inexact>& r) = 0;
+	/// Draws a halfplane with the currently set style.
+	virtual void draw(const Halfplane<Inexact>& h) = 0;
 	/// Draws a \ref RenderPath with the currently set style.
 	virtual void draw(const RenderPath& p) = 0;
 
