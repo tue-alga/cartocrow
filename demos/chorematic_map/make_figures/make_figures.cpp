@@ -89,12 +89,12 @@ int main() {
 	CGAL::Aff_transformation_2<Inexact> sTrans = sMove * sScale;
 
 	std::vector<std::tuple<std::string, std::string, std::string>> names = {
-//        {"apotheek_gemiddelde_afstand_in_km", "Average distance to pharmacy", " km"},
-//	    {"brandweerkazerne_gemiddelde_afstand_in_km", "Average distance to fire station", " km"},
-//		{"kunstijsbaan_gemiddelde_afstand_in_km", "Average distance to ice-rink", " km"},
-//		{"percentage_huishoudens_met_hoog_inkomen", "Percentage of high-income households", "\\%"},
+        {"apotheek_gemiddelde_afstand_in_km", "Average distance to pharmacy", " km"},
+	    {"brandweerkazerne_gemiddelde_afstand_in_km", "Average distance to fire station", " km"},
+		{"kunstijsbaan_gemiddelde_afstand_in_km", "Average distance to ice-rink", " km"},
+		{"percentage_huishoudens_met_hoog_inkomen", "Percentage of high-income households", "\\%"},
 		{"percentage_werknemers", "Percentage employee", "\\%"},
-//		{"percentage_huurwoningen", "Percentage rental properties", "\\%"},
+		{"percentage_huurwoningen", "Percentage rental properties", "\\%"},
     };
 
 	auto schematization = approximate(loadIpePath(schematizationPath));

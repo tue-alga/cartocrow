@@ -3,8 +3,6 @@
 #include "disk_area.h"
 #include "../core/cs_polygon_helpers.h"
 
-#include <CGAL/Boolean_set_operations_2.h>
-
 namespace cartocrow::chorematic_map {
 /// The disks are returned in the order that they should be drawn.
 std::vector<BinDisk> fitDisks(const Choropleth& choropleth, const WeightedRegionSample<Exact>& sample,
@@ -50,7 +48,7 @@ std::vector<BinDisk> fitDisks(const Choropleth& choropleth, const WeightedRegion
 			    weightedPoints.begin(), weightedPoints.end(), [&binDisks](const WeightedPoint& wp) {
 				    if (wp.weight > 0) return false;
 				    for (const auto& disk : binDisks) {
-					    std::optional<Circle<Exact>> circle = disk.disk;
+					    auto circle = disk.disk;
 					    if (circle.has_value() && !circle->has_on_unbounded_side(makeExact(wp.point))) {
 						    return true;
 					    }
@@ -60,11 +58,16 @@ std::vector<BinDisk> fitDisks(const Choropleth& choropleth, const WeightedRegion
 			weightedPoints.erase(it, weightedPoints.end());
 		}
 
-		std::optional<Circle<Exact>> circle;
+		std::optional<GeneralCircle<Exact>> circle;
 		InducedDiskW iDisk = smallest_maximum_weight_disk(weightedPoints.begin(), weightedPoints.end());
 		auto [p1, p2, p3] = iDisk;
 		if (p1.has_value() && p2.has_value() && p3.has_value()) {
-			circle = Circle<Exact>(makeExact(p1->point), makeExact(p2->point), makeExact(p3->point));
+			if (abs(Triangle<Inexact>(p1->point, p2->point, p3->point).area()) < M_EPSILON) {
+				circle = Halfplane<Exact>(Line<Exact>(makeExact(p1->point), makeExact(p2->point)));
+			} else {
+				circle =
+				    Circle<Exact>(makeExact(p1->point), makeExact(p2->point), makeExact(p3->point));
+			}
 		} else if (p1.has_value() && p2.has_value()) {
 			circle = Circle<Exact>(makeExact(p1->point), makeExact(p2->point));
 		} else {
@@ -101,13 +104,17 @@ std::vector<BinDisk> fitDisks(const Choropleth& choropleth, const WeightedRegion
 	return binDisks;
 }
 
-std::pair<Circle<Exact>, double>
-perturbDiskRadius(const Circle<Exact>& disk,
+std::pair<GeneralCircle<Exact>, double>
+perturbDiskRadius(const GeneralCircle<Exact>& generalDisk,
                   double score,
                   const RegionArrangement& arr,
                   const std::unordered_map<std::string, double>& regionWeight,
                   double maxDeltaRadius,
                   int iterations) {
+	if (generalDisk.is_halfplane()) {
+		return {generalDisk, score};
+	}
+	auto disk = generalDisk.get_circle();
 	double bestScore = score;
 	Circle<Exact> bestDisk = disk;
 	for (int i = 1; i <= iterations; ++i) {

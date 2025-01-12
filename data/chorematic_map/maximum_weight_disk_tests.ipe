@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <!DOCTYPE ipe SYSTEM "ipe.dtd">
-<ipe version="70218" creator="Ipe 7.2.28">
-<info created="D:20241201115027" modified="D:20241205145005"/>
+<ipe version="70218" creator="Ipe 7.2.27">
+<info created="D:20241201115027" modified="D:20250112181757"/>
 <ipestyle name="bettinacolors">
 <color name="Bettina blue" value="0 0.4 0.796"/>
 <color name="Bettina green" value="0.282 0.557 0"/>
@@ -427,7 +427,12 @@ h
 <page>
 <layer name="alpha"/>
 <view layers="alpha" active="alpha"/>
-<use layer="alpha" name="mark/fdisk(sfx)" pos="117.513 435.083" size="normal" stroke="black" fill="CB light red"/>
+<path layer="alpha" stroke="black" cap="1" join="1">
+117.513 435.083 m
+99.7372 396.506 l
+150.038 401.045 l
+</path>
+<use name="mark/fdisk(sfx)" pos="117.513 435.083" size="normal" stroke="black" fill="CB light red"/>
 <use name="mark/fdisk(sfx)" pos="99.7372 396.506" size="normal" stroke="black" fill="CB light red"/>
 <use name="mark/fdisk(sfx)" pos="150.038 401.045" size="normal" stroke="black" fill="CB light red"/>
 <use name="mark/fdisk(sfx)" pos="122.808 417.686" size="normal" stroke="black" fill="CB light red"/>
@@ -438,29 +443,29 @@ h
 <use matrix="1 0 0 1 60.6372 -20.1068" name="mark/fdisk(sfx)" pos="117.513 435.083" size="normal" stroke="black" fill="CB light blue"/>
 <use matrix="1 0 0 1 51.9036 17.1565" name="mark/fdisk(sfx)" pos="117.513 435.083" size="normal" stroke="black" fill="CB light blue"/>
 <use matrix="1 0 0 1 5.90679 25.0167" name="mark/fdisk(sfx)" pos="117.513 435.083" size="normal" stroke="black" fill="CB light blue"/>
-<path stroke="black" cap="1" join="1">
-117.513 435.083 m
-99.7372 396.506 l
-150.038 401.045 l
-</path>
 </page>
 <page>
 <layer name="alpha"/>
 <view layers="alpha" active="alpha"/>
-<use layer="alpha" name="mark/fdisk(sfx)" pos="117.513 435.083" size="normal" stroke="black" fill="CB light red"/>
-<use name="mark/fdisk(sfx)" pos="99.7372 396.506" size="normal" stroke="black" fill="CB light red"/>
-<use name="mark/fdisk(sfx)" pos="150.038 401.045" size="normal" stroke="black" fill="CB light red"/>
-<use name="mark/fdisk(sfx)" pos="122.808 417.686" size="normal" stroke="black" fill="CB light red"/>
-<path stroke="black" cap="1" join="1">
+<path layer="alpha" stroke="black" cap="1" join="1">
 117.513 435.083 m
 99.7372 396.506 l
 150.038 401.045 l
 </path>
+<use name="mark/fdisk(sfx)" pos="117.513 435.083" size="normal" stroke="black" fill="CB light red"/>
+<use name="mark/fdisk(sfx)" pos="99.7372 396.506" size="normal" stroke="black" fill="CB light red"/>
+<use name="mark/fdisk(sfx)" pos="150.038 401.045" size="normal" stroke="black" fill="CB light red"/>
+<use name="mark/fdisk(sfx)" pos="122.808 417.686" size="normal" stroke="black" fill="CB light red"/>
 </page>
 <page>
 <layer name="beta"/>
 <view layers="beta" active="beta"/>
-<use layer="beta" name="mark/fdisk(sfx)" pos="136.201 481.999" size="normal" stroke="black" fill="CB light red"/>
+<path layer="beta" stroke="black" pen="undefined" cap="1" join="1">
+121.25 353.349 m
+139.265 390.232 l
+136.201 481.999 l
+</path>
+<use name="mark/fdisk(sfx)" pos="136.201 481.999" size="normal" stroke="black" fill="CB light red"/>
 <use name="mark/fdisk(sfx)" pos="121.25 353.349" size="normal" stroke="black" fill="CB light red"/>
 <use name="mark/fdisk(sfx)" pos="109.804 363.835" size="normal" stroke="black" fill="CB light red"/>
 <use name="mark/fdisk(sfx)" pos="105.63 381.47" size="normal" stroke="black" fill="CB light red"/>
@@ -490,16 +495,15 @@ h
 <use name="mark/fdisk(sfx)" pos="230.651 398.737" size="normal" stroke="black" fill="CB light blue"/>
 <use name="mark/fdisk(sfx)" pos="234.806 347.286" size="normal" stroke="black" fill="CB light blue"/>
 <use name="mark/fdisk(sfx)" pos="235.492 338.073" size="normal" stroke="black" fill="CB light blue"/>
-<path stroke="black" pen="undefined" cap="1" join="1">
-121.25 353.349 m
-139.265 390.232 l
-136.201 481.999 l
-</path>
 </page>
 <page>
 <layer name="alpha"/>
 <view layers="alpha" active="alpha"/>
-<use layer="alpha" name="mark/fdisk(sfx)" pos="153.812 434.233" size="normal" stroke="black" fill="CB light red"/>
+<path layer="alpha" stroke="black" pen="undefined" cap="1" join="1">
+153.812 434.233 m
+152.082 377.558 l
+</path>
+<use name="mark/fdisk(sfx)" pos="153.812 434.233" size="normal" stroke="black" fill="CB light red"/>
 <use name="mark/fdisk(sfx)" pos="152.082 377.558" size="normal" stroke="black" fill="CB light red"/>
 <use name="mark/fdisk(sfx)" pos="116.037 407.226" size="normal" stroke="black" fill="CB light blue"/>
 <use matrix="1 0 0 1 70.6965 6.31296" name="mark/fdisk(sfx)" pos="116.037 407.226" size="normal" stroke="black" fill="CB light blue"/>
@@ -507,10 +511,6 @@ h
 <use matrix="1 0 0 1 66.0807 -27.5671" name="mark/fdisk(sfx)" pos="153.812 434.233" size="normal" stroke="black" fill="CB light red"/>
 <use matrix="1 0 0 1 -16.7018 21.7356" name="mark/fdisk(sfx)" pos="116.037 407.226" size="normal" stroke="black" fill="CB light blue"/>
 <use matrix="1 0 0 1 96.1605 17.3948" name="mark/fdisk(sfx)" pos="116.037 407.226" size="normal" stroke="black" fill="CB light blue"/>
-<path stroke="black" pen="undefined" cap="1" join="1">
-153.812 434.233 m
-152.082 377.558 l
-</path>
 <use matrix="1 0 0 1 -0.719525 -49.2966" name="mark/fdisk(sfx)" pos="116.037 407.226" size="normal" stroke="black" fill="CB light blue"/>
 <use matrix="1 0 0 1 98.9234 -58.5699" name="mark/fdisk(sfx)" pos="116.037 407.226" size="normal" stroke="black" fill="CB light blue"/>
 <use matrix="1 0 0 1 94.5717 -20.5213" name="mark/fdisk(sfx)" pos="116.037 407.226" size="normal" stroke="black" fill="CB light blue"/>
@@ -558,12 +558,12 @@ h
 <page>
 <layer name="alpha"/>
 <view layers="alpha" active="alpha"/>
-<use layer="alpha" name="mark/fdisk(sfx)" pos="57.3961 460.609" size="normal" stroke="black" fill="CB light red"/>
-<use name="mark/fdisk(sfx)" pos="58.3073 426.285" size="normal" stroke="black" fill="CB light red"/>
-<path stroke="black" pen="undefined" cap="1" join="1">
+<path layer="alpha" stroke="black" pen="undefined" cap="1" join="1">
 57.3961 460.609 m
 58.3073 426.285 l
 </path>
+<use name="mark/fdisk(sfx)" pos="57.3961 460.609" size="normal" stroke="black" fill="CB light red"/>
+<use name="mark/fdisk(sfx)" pos="58.3073 426.285" size="normal" stroke="black" fill="CB light red"/>
 </page>
 <page>
 <layer name="alpha"/>
@@ -590,7 +590,12 @@ h
 <page>
 <layer name="alpha"/>
 <view layers="alpha" active="alpha"/>
-<use layer="alpha" name="mark/fdisk(sfx)" pos="63.0156 470.329" size="normal" stroke="black" fill="CB light red"/>
+<path layer="alpha" stroke="black" pen="undefined" cap="1" join="1">
+144.921 457.024 m
+148.262 462.339 l
+151.755 455.657 l
+</path>
+<use name="mark/fdisk(sfx)" pos="63.0156 470.329" size="normal" stroke="black" fill="CB light red"/>
 <use name="mark/fdisk(sfx)" pos="47.6758 456.66" size="normal" stroke="black" fill="CB light red"/>
 <use matrix="1 0 0 1 2.88569 -2.73381" name="mark/fdisk(sfx)" pos="62.1043 453.471" size="normal" stroke="black" fill="CB light red"/>
 <use name="mark/fdisk(sfx)" pos="138.651 421.273" size="normal" stroke="black" fill="CB light red"/>
@@ -656,16 +661,16 @@ h
 <use name="mark/fdisk(sfx)" pos="144.921 457.024" size="normal" stroke="black" fill="CB light red"/>
 <use name="mark/fdisk(sfx)" pos="148.262 462.339" size="normal" stroke="black" fill="CB light red"/>
 <use name="mark/fdisk(sfx)" pos="151.755 455.657" size="normal" stroke="black" fill="CB light red"/>
-<path stroke="black" pen="undefined" cap="1" join="1">
-144.921 457.024 m
-148.262 462.339 l
-151.755 455.657 l
-</path>
 </page>
 <page>
 <layer name="alpha"/>
 <view layers="alpha" active="alpha"/>
-<use layer="alpha" name="mark/fdisk(sfx)" pos="51.7296 453.379" size="normal" stroke="black" fill="1 0.102 0.102"/>
+<path layer="alpha" stroke="black" pen="undefined" cap="1" join="1">
+51.7296 453.379 m
+66.7189 440.49 l
+74.0259 461.666 l
+</path>
+<use name="mark/fdisk(sfx)" pos="51.7296 453.379" size="normal" stroke="black" fill="1 0.102 0.102"/>
 <use name="mark/fdisk(sfx)" pos="74.0259 461.666" size="normal" stroke="black" fill="1 0.102 0.102"/>
 <use name="mark/fdisk(sfx)" pos="47.1915 426.544" size="normal" stroke="black" fill="CB light blue"/>
 <use name="mark/fdisk(sfx)" pos="55.0839 465.415" size="normal" stroke="black" fill="CB light blue"/>
@@ -690,22 +695,17 @@ h
 <use name="mark/fdisk(sfx)" pos="124.34 429.701" size="normal" stroke="black" fill="0.392 0 0"/>
 <use name="mark/fdisk(sfx)" pos="148.215 432.858" size="normal" stroke="black" fill="0.392 0 0"/>
 <use name="mark/fdisk(sfx)" pos="131.444 440.159" size="normal" stroke="black" fill="0.392 0 0"/>
-<path stroke="black" pen="undefined" cap="1" join="1">
-51.7296 453.379 m
-66.7189 440.49 l
-74.0259 461.666 l
-</path>
 <use name="mark/fdisk(sfx)" pos="66.7189 440.49" size="normal" stroke="black" fill="1 0.102 0.102"/>
 </page>
 <page>
 <layer name="alpha"/>
 <view layers="alpha" active="alpha"/>
-<use layer="alpha" name="mark/fdisk(sfx)" pos="83.4744 447.942" size="normal" stroke="black" fill="CB light red"/>
-<use name="mark/fdisk(sfx)" pos="91.4167 426.385" size="normal" stroke="black" fill="CB light red"/>
-<use name="mark/fdisk(sfx)" pos="73.641 411.635" size="normal" stroke="black" fill="CB light red"/>
-<path stroke="black" cap="1" join="1">
+<path layer="alpha" stroke="black" cap="1" join="1">
 83.4744 447.942 m
 73.641 411.635 l
 </path>
+<use name="mark/fdisk(sfx)" pos="83.4744 447.942" size="normal" stroke="black" fill="CB light red"/>
+<use name="mark/fdisk(sfx)" pos="91.4167 426.385" size="normal" stroke="black" fill="CB light red"/>
+<use name="mark/fdisk(sfx)" pos="73.641 411.635" size="normal" stroke="black" fill="CB light red"/>
 </page>
 </ipe>

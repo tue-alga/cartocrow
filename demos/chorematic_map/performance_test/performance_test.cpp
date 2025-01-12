@@ -7,6 +7,8 @@
 #include "cartocrow/chorematic_map/sampler.h"
 #include "cartocrow/chorematic_map/input_parsing.h"
 
+#include "cartocrow/renderer/ipe_renderer.h"
+
 #include <chrono>
 
 #include <CGAL/point_generators_2.h>
@@ -14,6 +16,7 @@
 #include <gdal/ogrsf_frmts.h>
 
 using namespace cartocrow;
+using namespace cartocrow::renderer;
 using namespace cartocrow::chorematic_map;
 
 void measureDiskRunningTime() {
@@ -21,7 +24,7 @@ void measureDiskRunningTime() {
 
 	std::vector<std::pair<int, double>> times;
 
-	for (int n = 2; n <= 1000; n += 10) {
+	for (int n = 1000; n <= 1000; n += 10) {
 		std::cout << n << std::endl;
 		double totalTime = 0;
 		for (int run = 0; run < nRuns; ++run) {
@@ -55,7 +58,7 @@ void measureDiskRunningTime() {
 void measureSamplingRunningTime() {
 	int seed = 0;
 
-	std::filesystem::path dutch = "data/chorematic_map/gemeenten-2022_19282vtcs.ipe";
+	std::filesystem::path dutch = "data/chorematic_map/gemeenten-2022_5000vtcs.ipe";
 	auto regionMap = std::make_shared<RegionMap>(ipeToRegionMap(dutch, true));
 	auto regionArr = std::make_shared<RegionArrangement>(regionMapToArrangementParallel(*regionMap));
 	std::vector<std::pair<std::string, std::function<
@@ -71,18 +74,18 @@ void measureSamplingRunningTime() {
 	    {
 	        "square_grid",
 	        [&regionArr](Sampler<Landmarks_pl<RegionArrangement>>& sampler, int n) {
-		        auto [cellSize, _] = sampler.squareGrid(n);
-		        return [&sampler, &cellSize]() {
-					return sampler.squareGrid(cellSize);
+//		        auto [cellSize, _] = sampler.squareGrid(n);
+		        return [&sampler, n]() {
+					return sampler.squareGrid(n);
 		        };
 	        }
 	    },
 	    {
 	        "hex_grid",
 	        [&regionArr](Sampler<Landmarks_pl<RegionArrangement>>& sampler, int n) {
-			  auto [cellSize, _] = sampler.hexGrid(n);
-			  return [&sampler, &cellSize]() {
-				return sampler.hexGrid(cellSize);
+//			  auto [cellSize, _] = sampler.hexGrid(n);
+			  return [&sampler, n]() {
+				return sampler.hexGrid(n);
 			  };
 	        }
 	    },
@@ -135,55 +138,55 @@ void measureSamplingRunningTime() {
 }
 
 void measureScores() {
-	std::filesystem::path dutch = "data/chorematic_map/gemeenten-2022_19282vtcs.ipe";
+	std::filesystem::path dutch = "data/chorematic_map/gemeenten-2022_5000vtcs.ipe";
 	auto regionMap = std::make_shared<RegionMap>(ipeToRegionMap(dutch, true));
 	auto regionArr = std::make_shared<RegionArrangement>(regionMapToArrangementParallel(*regionMap));
 	std::vector<std::pair<std::string, std::function<
 	                                       std::function<WeightedRegionSample<Exact>()>
 	                                       (Sampler<Landmarks_pl<RegionArrangement>>&, int n)
 	                                       >>> methods = {
-//	        {
-//	            "uniform",
-//	            [&regionArr](Sampler<Landmarks_pl<RegionArrangement>>& sampler, int n) {
-//		            return [&sampler, n]() { return sampler.uniformRandomSamples(n); };
-//	            }
-//	        },
-//	        {
-//	            "square_grid",
-//	            [&regionArr](Sampler<Landmarks_pl<RegionArrangement>>& sampler, int n) {
+	        {
+	            "Random",
+	            [&regionArr](Sampler<Landmarks_pl<RegionArrangement>>& sampler, int n) {
+		            return [&sampler, n]() { return sampler.uniformRandomSamples(n); };
+	            }
+	        },
+	        {
+	            "Square",
+	            [&regionArr](Sampler<Landmarks_pl<RegionArrangement>>& sampler, int n) {
 //		            auto [cellSize, _] = sampler.squareGrid(n);
-//		            return [&sampler, &cellSize]() {
-//			            return sampler.squareGrid(cellSize);
-//		            };
-//	            }
-//	        },
-//	        {
-//	            "hex_grid",
-//	            [&regionArr](Sampler<Landmarks_pl<RegionArrangement>>& sampler, int n) {
+		            return [&sampler, n]() {
+			            return sampler.squareGrid(n);
+		            };
+	            }
+	        },
+	        {
+	            "Hex",
+	            [&regionArr](Sampler<Landmarks_pl<RegionArrangement>>& sampler, int n) {
 //		            auto [cellSize, _] = sampler.hexGrid(n);
-//		            return [&sampler, &cellSize]() {
-//			            return sampler.hexGrid(cellSize);
-//		            };
-//	            }
-//	        },
+		            return [&sampler, n]() {
+			            return sampler.hexGrid(n);
+		            };
+	            }
+	        },
 	        {
 	            "Voronoi_1",
 	            [&regionArr](Sampler<Landmarks_pl<RegionArrangement>>& sampler, int n) {
 		            return [&sampler, n]() { return sampler.voronoiUniform(n, 1); };
 	            }
 	        },
-//	        {
-//	            "Voronoi_5",
-//	            [&regionArr](Sampler<Landmarks_pl<RegionArrangement>>& sampler, int n) {
-//		            return [&sampler, n]() { return sampler.voronoiUniform(n, 5); };
-//	            }
-//	        },
-//	        {
-//	            "Voronoi_25",
-//	            [&regionArr](Sampler<Landmarks_pl<RegionArrangement>>& sampler, int n) {
-//		            return [&sampler, n]() { return sampler.voronoiUniform(n, 25); };
-//	            }
-//	        },
+	        {
+	            "Voronoi_5",
+	            [&regionArr](Sampler<Landmarks_pl<RegionArrangement>>& sampler, int n) {
+		            return [&sampler, n]() { return sampler.voronoiUniform(n, 5); };
+	            }
+	        },
+	        {
+	            "Voronoi",
+	            [&regionArr](Sampler<Landmarks_pl<RegionArrangement>>& sampler, int n) {
+		            return [&sampler, n]() { return sampler.voronoiUniform(n, 25); };
+	            }
+	        },
 //	        {
 //	            "Voronoi_100",
 //	            [&regionArr](Sampler<Landmarks_pl<RegionArrangement>>& sampler, int n) {
@@ -192,39 +195,60 @@ void measureScores() {
 //	        }
 	    };
 
+	std::vector<std::pair<std::string, bool>> attributes({
+	    {"apotheek_gemiddelde_afstand_in_km", true},
+	    {"brandweerkazerne_gemiddelde_afstand_in_km", false},
+	    {"kunstijsbaan_gemiddelde_afstand_in_km", false},
+	    {"percentage_huishoudens_met_hoog_inkomen", false},
+	    {"percentage_huurwoningen", false},
+	    {"percentage_werknemers", true}
+	});
+
 	std::filesystem::path gpkg3 = "data/chorematic_map/wijkenbuurten_2022_v3.gpkg";
 	auto regionWeightMap = regionDataMapFromGPKG(gpkg3, "gemeenten", "gemeentecode", [](const std::string& s) {
 		return s;
 	});
-	auto regionWeight = std::make_shared<RegionWeight>((*regionWeightMap)["percentage_huishoudens_met_hoog_inkomen"]);
-	Choropleth choropleth(regionArr, regionWeight, 2);
 
-	int nSeeds = 1;
+	std::stringstream outputFileName;
+	outputFileName << "scores-local.txt";
+	std::ofstream fileOut(outputFileName.str());
+	fileOut << std::setprecision(10);
 
-	std::ofstream fileOut("scores-with-heuristic.txt");
-	for (bool samplePerRegion : {true}) {
-		Sampler<Landmarks_pl<RegionArrangement>> sampler(regionArr, 0, samplePerRegion);
+	for (const auto& [attribute, invert] : attributes) {
+		auto regionWeight = std::make_shared<RegionWeight>((*regionWeightMap)[attribute]);
+		Choropleth choropleth(regionArr, regionWeight, 2);
+		bool heuristic = false;
 
-		for (const auto& [name, method] : methods) {
-			fileOut << name << (samplePerRegion ? "_perRegion" : "") << std::endl;
-			for (int n = 10; n <= 1000; n += 10) {
-				double totalScore = 0;
-				for (int seed = 0; seed < nSeeds; ++seed) {
-					sampler.setSeed(seed);
-					auto f = method(sampler, n);
-					auto sample = f();
-					std::vector<WeightedPoint> weightedPoints;
-					sample.weightedPoints(std::back_inserter(weightedPoints), *regionWeight);
-					auto disk = fitDisks(choropleth, sample, false, true, true)[0];
-					totalScore += disk.score.value();
+		int nSeeds = 1;
+
+		auto colors = std::vector({Color(0xe5f5e0), Color(0x74c476)});
+		auto choroplethP =
+		    std::make_shared<ChoroplethPainting>(choropleth, colors.begin(), colors.end());
+
+		for (bool samplePerRegion : {false}) {
+			Sampler<Landmarks_pl<RegionArrangement>> sampler(regionArr, 0, samplePerRegion);
+
+			for (const auto& [name, method] : methods) {
+				for (int n = 1; n <= 1000; n += 1) {
+					double totalScore = 0;
+					int nIters = (name == "uniform") ? nSeeds : 1;
+					for (int seed = 0; seed < nIters; ++seed) {
+						sampler.setSeed(seed);
+						auto f = method(sampler, n);
+						auto sample = f();
+						std::vector<WeightedPoint> weightedPoints;
+						sample.weightedPoints(std::back_inserter(weightedPoints), *regionWeight);
+						auto disk = fitDisks(choropleth, sample, invert, true, heuristic)[0];
+						totalScore += disk.score.value();
+					}
+					fileOut << attribute << "," << name << "," << n << "," << (totalScore/nIters) << std::endl;
 				}
-				fileOut << "(" << n << ", " << (totalScore / nSeeds) << ")" << std::endl;
 			}
 		}
 	}
 }
 
 int main() {
-//	measureSamplingRunningTime();
-	measureScores();
+	measureDiskRunningTime();
+//	measureScores();
 }
