@@ -17,7 +17,10 @@ InducedDiskW smallest_maximum_weight_disk(InputIterator begin, InputIterator end
 	// Negative weight points
 	std::vector<WeightedPoint> neg;
 
+	int nPoints = 0;
+
 	for (auto it = begin; it != end; ++it) {
+		++nPoints;
 		WeightedPoint pt = *it;
 		if (pt.weight < 0) {
 			neg.push_back(pt);
@@ -25,7 +28,6 @@ InducedDiskW smallest_maximum_weight_disk(InputIterator begin, InputIterator end
 		if (pt.weight > 0) {
 			pos.push_back(pt);
 		}
-		// We ignore zero-weight points
 	}
 
 	if (pos.empty()) {
@@ -43,7 +45,7 @@ InducedDiskW smallest_maximum_weight_disk(InputIterator begin, InputIterator end
 		InducedDiskW disk;
 	};
 
-	auto task = [&pos, &begin, &end](int iStart, int iEnd) {
+	auto task = [nPoints, &pos, &begin, &end](int iStart, int iEnd) {
 	  double localBestWeight = 0.0;
 	  double localSquaredRadius = 0.0;
 	  InducedDiskW localBestTriple(std::nullopt, std::nullopt, std::nullopt);
@@ -56,59 +58,68 @@ InducedDiskW smallest_maximum_weight_disk(InputIterator begin, InputIterator end
 				auto vij = lij.to_vector();
 				auto m = CGAL::midpoint(pi.point, pj.point);
 
-				for (CGAL::Sign side : {CGAL::NEGATIVE, CGAL::POSITIVE}) {
-					std::vector<WeightedPoint> candidates;
-					for (auto qit = begin; qit != end; ++qit) {
-						WeightedPoint q = *qit;
-						if (CGAL::collinear(pi.point, pj.point, q.point))
-							continue;
-						// Edge case, for now do not consider degenerate circles that are straight lines.
-						auto cc = CGAL::circumcenter(pi.point, pj.point, q.point);
-						if (CGAL::orientation(pi.point, pj.point, cc) == side)
-							candidates.push_back(q);
-					}
+				std::vector<std::tuple<int, WeightedPoint, Point<Inexact>>> negCandidates;
+				std::vector<std::tuple<int, WeightedPoint, Point<Inexact>>> posCandidates;
 
+				int index = -1;
+				for (auto qit = begin; qit != end; ++qit) {
+					++index;
+					WeightedPoint q = *qit;
+					if (q.point == pi.point || q.point == pj.point) continue;
+					// Edge case: points are (roughly) collinear.
+					// A smallest maximum weight circle cannot be defined by three collinear points.
+					if (abs(CGAL::area(pi.point, pj.point, q.point)) < M_EPSILON) {
+						continue;
+					}
+					auto cc = CGAL::circumcenter(pi.point, pj.point, q.point);
+					auto ori = CGAL::orientation(pi.point, pj.point, cc);
+					if (ori == CGAL::POSITIVE) {
+						posCandidates.emplace_back(index, q, cc);
+					} else if (ori == CGAL::NEGATIVE) {
+						negCandidates.emplace_back(index, q, cc);
+					}
+				}
+
+				for (CGAL::Sign side : {CGAL::NEGATIVE, CGAL::POSITIVE}) {
+					auto& candidates = side == CGAL::NEGATIVE ? negCandidates : posCandidates;
 					std::sort(
 						candidates.begin(), candidates.end(),
-						[pi, pj, vij, m](const WeightedPoint& wp1, const WeightedPoint& wp2) {
-							return abs((CGAL::circumcenter(pi.point, pj.point, wp1.point) - m) *
-									   vij) <
-								   abs((CGAL::circumcenter(pi.point, pj.point, wp2.point) - m) *
-									   vij);
+						[pi, pj, vij, m](const std::tuple<int, WeightedPoint, Point<Inexact>>& wp1, const std::tuple<int, WeightedPoint, Point<Inexact>>& wp2) {
+							return abs((get<2>(wp1) - m) * vij) < abs((get<2>(wp2) - m) * vij);
 						});
 
-					// Todo: use more efficient data structure
-					std::map<WeightedPoint, bool> inDisk;
+					std::vector<bool> inDisk(nPoints);
 					double totalWeight = 0;
+					int index1 = -1;
 					for (auto qit = begin; qit != end; ++qit) {
+						++index1;
 						auto& q = *qit;
 						auto sideOfCircle =
 							CGAL::side_of_bounded_circle(pi.point, pj.point, q.point);
 						if (sideOfCircle != CGAL::ON_UNBOUNDED_SIDE) {
-							inDisk[q] = true;
+							inDisk[index1] = true;
 							totalWeight += q.weight;
 						} else {
-							inDisk[q] = false;
+							inDisk[index1] = false;
 						}
 					}
 
 					double bestTotalWeight = totalWeight;
 					double sqRadiusOfBest = CGAL::squared_distance(pi.point, m);
 					std::optional<WeightedPoint> bestCandidate = std::nullopt;
-					for (auto& cand : candidates) {
-						if (inDisk.at(cand)) {
+					for (auto& [index2, cand, cc] : candidates) {
+						if (inDisk[index2]) {
 							totalWeight -= cand.weight;
 						} else {
 							totalWeight += cand.weight;
 						}
-						inDisk[cand] = !inDisk[cand];
+						inDisk[index2] = !inDisk[index2];
 
 						// Invariant: the smallest disk that contains the points of indices that inDisk sets to true with pi and pj on the boundary
 						// is defined by pi, pj, and cand.
 
 						// Point with negative weight that lies on the boundary can be "chosen" to lie on either side of the disk.
-						double sqRadius = CGAL::squared_distance(
-							pi.point, CGAL::circumcenter(pi.point, pj.point, cand.point));
+						double sqRadius = CGAL::squared_distance(pi.point, cc);
 
 						if (totalWeight > bestTotalWeight ||
 							totalWeight == bestTotalWeight && sqRadius < sqRadiusOfBest) {
@@ -142,12 +153,12 @@ InducedDiskW smallest_maximum_weight_disk(InputIterator begin, InputIterator end
 		}
 	}
 
-	bool useParallel = true;
+	bool useParallel = nPoints > 32;
 
 	std::vector<std::future<Result>> results;
 	if (useParallel) {
-		int nThreads = 32;
 		int n = pos.size();
+		int nThreads = std::min(128, n);
 		double step = n / static_cast<double>(nThreads);
 		for (int i = 0; i < n / step; ++i) {
 			int iStart = std::ceil(i * step);
