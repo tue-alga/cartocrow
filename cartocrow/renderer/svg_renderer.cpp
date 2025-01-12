@@ -22,14 +22,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "geometry_renderer.h"
 
 #include <CGAL/enum.h>
-#include <QFileDialog>
-#include <QGuiApplication>
-#include <QPainterPath>
-#include <QPen>
-#include <QPoint>
-#include <QPolygon>
-#include <QSlider>
-#include <QToolButton>
 
 #include <cmath>
 #include <string>
@@ -98,6 +90,28 @@ void SvgRenderer::draw(const Ray<Inexact>& r) {
 		}
 		if (m_style.m_mode & vertices) {
 			draw(r.source());
+		}
+	}
+}
+
+void SvgRenderer::draw(const Halfplane<Inexact>& h) {
+	// crop to document size
+	auto l = h.line();
+	auto bounds = CGAL::Iso_rectangle_2<Inexact>(CGAL::ORIGIN, Point<Inexact>(1000.0, 1000.0));
+	auto result = intersection(l, bounds);
+	if (result) {
+		if (const Segment<Inexact>* s = boost::get<Segment<Inexact>>(&*result)) {
+			int oldMode = m_style.m_mode;
+			if (oldMode & fill) {
+				// Draw filled half-plane
+				setMode(fill);
+				Rectangle<Inexact> rect(bounds.xmin(), bounds.ymin(), bounds.xmax(), bounds.ymax());
+				Polygon<Inexact> poly = h.polygon(rect);
+				GeometryRenderer::draw(poly);
+			}
+			setMode(oldMode & ~vertices);
+			GeometryRenderer::draw(*s);
+			setMode(oldMode);
 		}
 	}
 }

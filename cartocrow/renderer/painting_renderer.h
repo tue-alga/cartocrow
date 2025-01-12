@@ -43,6 +43,7 @@ class PaintingRenderer : public GeometryPainting, public GeometryRenderer {
 	void draw(const BezierSpline& s) override;
 	void draw(const Line<Inexact>& l) override;
 	void draw(const Ray<Inexact>& r) override;
+	void draw(const Halfplane<Inexact>& h) override;
 	void draw(const RenderPath& p) override;
 	void drawText(const Point<Inexact>& p, const std::string& text) override;
 
@@ -53,6 +54,12 @@ class PaintingRenderer : public GeometryPainting, public GeometryRenderer {
 	void setStrokeOpacity(int alpha) override;
 	void setFill(Color color) override;
 	void setFillOpacity(int alpha) override;
+	void setClipPath(const RenderPath& clipPath) override;
+	void setClipping(bool enable) override;
+	void setLineJoin(LineJoin lineJoin) override;
+	void setLineCap(LineCap lineCap) override;
+	void setHorizontalTextAlignment(HorizontalTextAlignment alignment) override;
+	void setVerticalTextAlignment(VerticalTextAlignment alignment) override;
 
   private:
 	struct Style {

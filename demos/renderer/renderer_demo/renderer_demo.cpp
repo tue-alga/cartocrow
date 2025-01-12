@@ -51,6 +51,10 @@ void DemoPainting::paint(GeometryRenderer& renderer) const {
 	polygon.push_back(Point<Inexact>(195, 20));
 	renderer.draw(polygon);
 	renderer.drawText(Point<Inexact>(200, -30), "Polygon");
+
+	Halfplane<Inexact> halfplane(Line<Inexact>(Point<Inexact>(300, 20), Point<Inexact>(260, -20)));
+	renderer.draw(halfplane);
+	renderer.drawText(Point<Inexact>(280, -30), "Half-plane");
 }
 
 RendererDemo::RendererDemo() {

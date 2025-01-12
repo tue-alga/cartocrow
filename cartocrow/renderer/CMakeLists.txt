@@ -6,6 +6,7 @@ set(SOURCES
 	function_painting.cpp
 	render_path.cpp
 	svg_renderer.cpp
+	cs_render_helpers.cpp
 )
 set(HEADERS
 	geometry_painting.h
@@ -16,6 +17,7 @@ set(HEADERS
 	function_painting.h
 	render_path.h
 	svg_renderer.h
+	cs_render_helpers.h
 )
 
 add_library(renderer ${SOURCES})

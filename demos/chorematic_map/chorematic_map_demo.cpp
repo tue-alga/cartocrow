@@ -180,12 +180,12 @@ void ChorematicMapDemo::resample() {
 	}
 	case 2: {
 //		m_sample = m_sampler->squareGrid(m_gridSize->value() / 10.0);
-		m_sample = m_sampler->squareGrid(m_nSamples->value()).second;
+		m_sample = m_sampler->squareGrid(m_nSamples->value());
 		break;
 	}
 	case 3: {
 //		m_sample = m_sampler->hexGrid(m_gridSize->value() / 10.0);
-		m_sample = m_sampler->hexGrid(m_nSamples->value()).second;
+		m_sample = m_sampler->hexGrid(m_nSamples->value());
 		break;
 	}
 	default: {
@@ -193,6 +193,9 @@ void ChorematicMapDemo::resample() {
 		          << " " << m_samplingStrategy->currentText().toStdString() << std::endl;
 		return;
 	}
+	}
+	if (m_sample.m_points.size() != m_nSamples->value()) {
+		std::cout << m_sample.m_points.size() << " samples instead of the target " << m_nSamples->value() << std::endl;
 	}
 }
 
@@ -543,7 +546,12 @@ ChorematicMapDemo::ChorematicMapDemo() {
 			renderer.setFillOpacity(200);
 			auto c = binDisk.disk;
 			if (c.has_value()) {
-				renderer.draw(*c);
+				auto gc = *c;
+				if (gc.is_circle()) {
+					renderer.draw(gc.get_circle());
+				} else {
+					renderer.draw(gc.get_halfplane());
+				}
 			}
 		}
         renderer.setClipping(false);

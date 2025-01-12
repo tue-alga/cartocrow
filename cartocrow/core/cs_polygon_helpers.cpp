@@ -105,34 +105,6 @@ std::optional<CSPolygon::Curve_const_iterator> liesOn(const OneRootPoint& p, con
 	return std::nullopt;
 }
 
-//renderer::RenderPath operator<<(renderer::RenderPath& path, const CSPolygon& polygon) {
-//	bool first = true;
-//	std::vector<Curve_2> mergedCurves;
-//	toCurves(polygon.curves_begin(), polygon.curves_end(), std::back_inserter(mergedCurves));
-//	for (const auto& c : mergedCurves) {
-//		addToRenderPath(c, path, first);
-//	}
-//	if (!holds_alternative<renderer::RenderPath::Close>(path.commands().back())) {
-//		path.close();
-//	}
-//	return path;
-//}
-//
-//renderer::RenderPath renderPath(const CSPolygon& polygon) {
-//	renderer::RenderPath path;
-//	path << polygon;
-//	return path;
-//}
-//
-//renderer::RenderPath renderPath(const CSPolygonWithHoles& withHoles) {
-//	renderer::RenderPath path;
-//	path << withHoles.outer_boundary();
-//	for (auto hit = withHoles.holes_begin(); hit != withHoles.holes_end(); ++hit) {
-//		path << *hit;
-//	}
-//	return path;
-//}
-
 bool on_or_inside(const CSPolygon& polygon, const Point<Exact>& point) {
 	Ray<Exact> ray(point, Vector<Exact>(1, 0));
 

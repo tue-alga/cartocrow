@@ -22,7 +22,6 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 07-11-2019
 #ifndef CARTOCROW_CORE_CORE_H
 #define CARTOCROW_CORE_CORE_H
 
-#include "polyline.h"
 #include <CGAL/Arr_segment_traits_2.h>
 #include <CGAL/Arrangement_2.h>
 #include <CGAL/Arrangement_with_history_2.h>
@@ -170,17 +169,6 @@ PolygonSet<Inexact> approximate(const PolygonSet<K>& p) {
 	}
 	return result;
 }
-/// Converts a polyline from exact representation to an approximation in
-/// inexact representation.
-template <class K>
-Polyline<Inexact> approximate(const Polyline<K>& p) {
-	Polyline<Inexact> result;
-	for (auto v = p.vertices_begin(); v < p.vertices_end(); ++v) {
-		result.push_back(approximate(*v));
-	}
-	return result;
-}
-
 /// An RGB color. Used for storing the color of elements to be drawn.
 struct Color {
 	/// Red component (integer 0-255).

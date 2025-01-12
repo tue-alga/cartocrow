@@ -128,7 +128,7 @@ voronoiRegionArrangement(const RegionArrangement& domain, InputIterator begin, I
 }
 
 template <class InputIterator, class OutputIterator>
-void
+Number<Inexact>
 voronoiMoveToCentroid(const RegionArrangement& domain, const Landmarks_pl<RegionArrangement>& pl, InputIterator begin, InputIterator end, OutputIterator out, const Rectangle<Exact>& bbox) {
 	auto arr = voronoiRegionArrangement(domain, begin, end, bbox);
 
@@ -138,6 +138,7 @@ voronoiMoveToCentroid(const RegionArrangement& domain, const Landmarks_pl<Region
 		siteToFaces[*(fit->data().site)].push_back(fit);
 	}
 
+	Number<Inexact> totalDistance = 0;
 	for (auto [site, faces] : siteToFaces) {
 		Vector<Exact> total = Vector<Exact>(0, 0);
 		Number<Exact> totalWeight = 0;
@@ -159,11 +160,13 @@ voronoiMoveToCentroid(const RegionArrangement& domain, const Landmarks_pl<Region
 			auto& fh = *fhp;
 			if (!fh->data().empty()) {
 				*out++ = centroid;
+				totalDistance += sqrt(squared_distance(approximate(site), approximate(centroid)));
 			} else {
 				*out++ = site;
 			}
 		}
 	}
+	return totalDistance / siteToFaces.size();
 }
 
 template <class PL>
@@ -180,11 +183,9 @@ class Sampler {
 	std::shared_ptr<PL> m_pl;
 
     // Ancillary data for uniform random sampling
-	std::unique_ptr<CDT<Exact>> m_cdt;
 	std::vector<Triangle<Exact>> m_triangles;
-	std::vector<std::string> m_triangleToRegion;
-    std::unordered_map<std::string, std::vector<Triangle<Exact>>> m_regionToTriangles;
-    std::unordered_map<std::string, double> m_regionArea;
+    std::vector<std::vector<Triangle<Exact>>> m_regionCCToTriangles;
+    std::vector<double> m_regionCCArea;
 
     // Ancillary data for centroidal Voronoi diagram sampling
     std::vector<std::shared_ptr<RegionArrangement>> m_landmassArrs;
@@ -203,46 +204,26 @@ class Sampler {
   public:
     void initializeTriangulation() {
         m_triangles.clear();
+		const std::vector<PolygonWithHoles<Exact>>& polys = getRegionCCPolys();
 
-        // Initialize triangulation
-        m_cdt = std::make_unique<CDT<Exact>>();
-        for (auto fit = m_regionArr->faces_begin(); fit != m_regionArr->faces_end(); ++fit) {
-            std::vector<RegionArrangement::Ccb_halfedge_const_circulator> ccbs;
-            std::copy(fit->outer_ccbs_begin(), fit->outer_ccbs_end(), std::back_inserter(ccbs));
-            std::copy(fit->inner_ccbs_begin(), fit->inner_ccbs_end(), std::back_inserter(ccbs));
-            for (auto& ccb : ccbs) {
-                std::vector<Point<Exact>> vertices;
-                auto curr = ccb;
-                do {
-                    auto point = curr->source()->point();
-                    vertices.push_back(point);
-                } while (++curr != ccb);
-                m_cdt->insert_constraint(vertices.begin(), vertices.end(), true);
-            }
-        }
+		for (const auto& poly : polys) {
+			std::vector<Triangle<Exact>> triangles;
+			CDT<Exact> cdt;
+			cdt.insert_constraint(poly.outer_boundary().vertices_begin(), poly.outer_boundary().vertices_end());
+			for (const auto& hole : poly.holes()) {
+				cdt.insert_constraint(hole.vertices_begin(), hole.vertices_end());
+			}
 
-        auto pl = getPL();
-
-        for (auto t_fit = m_cdt->finite_faces_begin(); t_fit != m_cdt->finite_faces_end(); ++t_fit) {
-            auto t = m_cdt->triangle(t_fit);
-            auto c = centroid(t);
-            auto obj = pl->locate(c);
-            if (auto fhp = boost::get<RegionArrangement::Face_const_handle>(&obj)) {
-                auto fh = *fhp;
-                bool inDomain = !fh->is_unbounded() && !fh->data().empty();
-                if (inDomain) {
-                    m_triangles.push_back(t);
-                    m_triangleToRegion.push_back(fh->data());
-                    m_regionToTriangles[fh->data()].push_back(t);
-//                    double weight = m_regionWeight->contains(fh->data()) ? m_regionWeight->at(fh->data()) : 0;
-//                    m_triangleWeights.push_back(weight);
-                    if (!m_regionArea.contains(fh->data())) {
-                        m_regionArea[fh->data()] = 0;
-                    }
-                    m_regionArea[fh->data()] += abs(approximate(t).area());
-                }
-            }
-        }
+			for (auto t_fit = cdt.finite_faces_begin(); t_fit != cdt.finite_faces_end(); ++t_fit) {
+				auto t = cdt.triangle(t_fit);
+				auto c = centroid(t);
+				if (oriented_side(c, poly) == CGAL::ON_POSITIVE_SIDE) {
+					m_triangles.push_back(t);
+					triangles.push_back(t);
+				}
+			}
+			m_regionCCToTriangles.push_back(std::move(triangles));
+		}
     }
 
     void computeLandmasses() {
@@ -309,7 +290,6 @@ class Sampler {
 
     void setRegionArr(std::shared_ptr<RegionArrangement> regionArr) {
         m_regionArr = std::move(regionArr);
-        m_cdt = nullptr;
 
 		// General ancillary data
 		m_pl = nullptr;
@@ -317,9 +297,8 @@ class Sampler {
 
         // Ancillary data for uniform random sampling
         m_triangles.clear();
-        m_triangleToRegion.clear();
-        m_regionToTriangles.clear();
-        m_regionArea.clear();
+        m_regionCCToTriangles.clear();
+		m_regionCCArea.clear();
 
         // Ancillary data for centroidal Voronoi diagram sampling
         m_landmassArrs.clear();
@@ -384,17 +363,6 @@ class Sampler {
 
     // Triangulation for uniform random sampling
 
-    void setTriangulation(std::unique_ptr<CDT<Exact>> cdt) {
-        m_cdt = std::move(cdt);
-    }
-
-    CDT<Exact>& getTriangulation() {
-        if (!m_cdt) {
-            initializeTriangulation();
-        }
-        return *m_cdt;
-    }
-
     void setTriangles(std::vector<Triangle<Exact>> triangles) {
         m_triangles = std::move(triangles);
     }
@@ -406,48 +374,34 @@ class Sampler {
         return m_triangles;
     }
 
-    void setTriangleToRegion(std::vector<std::string> triangleToRegion) {
-        m_triangleToRegion = std::move(triangleToRegion);
+    void setRegionCCToTriangles(std::vector<std::vector<Triangle<Exact>>> regionCCToTriangles) {
+        m_regionCCToTriangles = std::move(regionCCToTriangles);
     }
 
-    std::vector<std::string>& getTriangleToRegion() {
-        if (m_triangleToRegion.empty()) {
+    void setRegionCCArea(std::vector<double> regionCCArea) {
+		m_regionCCArea = std::move(regionCCArea);
+    }
+
+    std::vector<std::vector<Triangle<Exact>>>& getRegionCCToTriangles() {
+        if (m_regionCCToTriangles.empty()) {
             initializeTriangulation();
         }
-        return m_triangleToRegion;
+        return m_regionCCToTriangles;
     }
 
-    void setRegionToTriangles(std::unordered_map<std::string, std::vector<Triangle<Exact>>> regionToTriangles) {
-        m_regionToTriangles = std::move(regionToTriangles);
-    }
-
-    void setRegionArea(std::unordered_map<std::string, double> regionArea) {
-        m_regionArea = std::move(regionArea);
-    }
-
-    std::unordered_map<std::string, std::vector<Triangle<Exact>>>& getRegionToTriangles() {
-        if (m_regionToTriangles.empty()) {
-            initializeTriangulation();
+    std::vector<double>& getRegionCCArea() {
+        if (m_regionCCArea.empty()) {
+			const std::vector<PolygonWithHoles<Exact>>& polys = getRegionCCPolys();
+			for (const auto& poly : polys) {
+				double area = 0;
+				area += abs(approximate(poly.outer_boundary()).area());
+				for (const auto& h : poly.holes()) {
+					area -= abs(approximate(h).area());
+				}
+				m_regionCCArea.push_back(area);
+			}
         }
-        return m_regionToTriangles;
-    }
-
-    std::unordered_map<std::string, double>& getRegionArea() {
-        if (m_regionArea.empty()) {
-            for (auto fit = m_regionArr->faces_begin(); fit != m_regionArr->faces_end(); ++fit) {
-                auto region = fit->data();
-                if (fit->is_unbounded() || region.empty()) continue;
-                auto pwh = approximate(face_to_polygon_with_holes<Exact>(fit));
-                if (!m_regionArea.contains(region)) {
-                    m_regionArea[region] = 0;
-                }
-                m_regionArea[region] += abs(pwh.outer_boundary().area());
-                for (auto& hole : pwh.holes()) {
-                    m_regionArea[region] -= abs(hole.area());
-                }
-            }
-        }
-        return m_regionArea;
+        return m_regionCCArea;
     }
 
     // Ancillary data for centroidal Voronoi diagram sampling
@@ -558,6 +512,39 @@ class Sampler {
 	}
 
   private:
+	std::vector<int> pointsPerRegion(int n) {
+		auto& regionCCArea = getRegionCCArea();
+		std::vector<int> regionN(regionCCArea.size());
+
+		double totalArea = 0;
+		std::vector<int> regionCCIndices(regionCCArea.size());
+		for (int i = 0; i < regionCCArea.size(); ++i) {
+			totalArea += regionCCArea[i];
+			regionCCIndices[i] = i;
+		}
+		int left = n;
+		for (int i = 0; i < regionCCArea.size(); ++i) {
+			auto& area = regionCCArea[i];
+			auto guaranteed = static_cast<int>(floor(area / totalArea * n));
+			left -= guaranteed;
+			regionN[i] = guaranteed;
+		}
+		if (left > 0) {
+			std::sort(regionCCIndices.begin(), regionCCIndices.end(), [n, &regionCCArea, totalArea](int regionCC1, int regionCC2) {
+				auto prop1 = regionCCArea.at(regionCC1) / totalArea * n;
+				auto prop2 = regionCCArea.at(regionCC2) / totalArea * n;
+				auto frac1 = prop1 - floor(prop1);
+				auto frac2 = prop2 - floor(prop2);
+				return frac1 > frac2;
+			});
+			for (int i = 0; i < left; ++i) {
+				regionN[regionCCIndices[i]] += 1;
+			}
+		}
+
+		return regionN;
+	}
+
     template <class OutputIterator>
     void uniformRandomPoints(int n, OutputIterator out) {
         CGAL::Random rng(m_seed);
@@ -567,31 +554,163 @@ class Sampler {
             auto generator = CGAL::Random_points_in_triangles_2<Point<Exact>>(triangles, rng);
             std::copy_n(generator, n, out);
         } else {
-            auto& regionArea = getRegionArea();
-            auto& regionToTriangles = getRegionToTriangles();
+            auto& regionCCToTriangles = getRegionCCToTriangles();
+			auto regionCCns = pointsPerRegion(n);
 
-            double totalArea = 0;
-            std::vector<std::pair<std::string, double>> cumulativeArea;
-            for (auto& [region, area] : regionArea) {
-                totalArea += area;
-                cumulativeArea.emplace_back(region, totalArea);
-            }
-            double step = totalArea / (n + 1);
-
-            int regionIndex = 0;
-            double currArea = 0.5 * step;
-            for (int i = 0; i < n; ++i) {
-                while (currArea > cumulativeArea[regionIndex].second) {
-                    ++regionIndex;
-                }
-                std::string& region = cumulativeArea[regionIndex].first;
-                const std::vector<Triangle<Exact>>& regionTriangles = regionToTriangles.at(region);
-                auto generator = CGAL::Random_points_in_triangles_2<Point<Exact>>(regionTriangles, rng);
-                std::copy_n(generator, 1, out);
-                currArea += step;
-            }
+			for (int i = 0; i < regionCCns.size(); ++i) {
+				const std::vector<Triangle<Exact>>& regionCCTriangles = regionCCToTriangles.at(i);
+				auto generator = CGAL::Random_points_in_triangles_2<Point<Exact>>(regionCCTriangles, rng);
+				std::copy_n(generator, regionCCns[i], out);
+			}
         }
     }
+
+	template <class OutputIterator>
+	void squareGrid(OutputIterator out, double cellSize, const Rectangle<Exact>& bb, const std::shared_ptr<PL>& pl) {
+		auto bbA = approximate(bb);
+		auto w = width(bbA);
+		auto h = height(bbA);
+		int stepsX = static_cast<int>(std::ceil(w / cellSize));
+		int stepsY = static_cast<int>(std::ceil(h / cellSize));
+		double xRem = cellSize * stepsX - w;
+		double yRem = cellSize * stepsY - h;
+		double xOff = -xRem / 2;
+		double yOff = -yRem / 2;
+		auto bl = get_corner(bb, Corner::BL);
+
+		for (int i = 0; i < stepsX; ++i) {
+			for (int j = 0; j < stepsY; ++j) {
+				Point<Exact> pt = bl + Vector<Exact>(xOff + cellSize / 2 + i * cellSize, yOff + cellSize / 2 + j * cellSize);
+				auto obj = pl->locate(pt);
+				if (auto fhp = boost::get<RegionArrangement::Face_const_handle>(&obj)) {
+					auto fh = *fhp;
+					if (!fh->data().empty()) {
+						*out++ = pt;
+					}
+				}
+			}
+		}
+	}
+
+	template <class OutputIterator>
+	double squareGrid(OutputIterator out, int n, const Rectangle<Exact>& bb, const std::shared_ptr<PL>& pl, int maxIters = 50) {
+		auto bbA = approximate(bb);
+		auto w = width(bbA);
+		auto h = height(bbA);
+		// n <= stepsX * stepsY <= (w / cellSize + 1) * (h / cellSize + 1) =~ wh / cellSize²
+		// cellSize <= ~= sqrt(wh / n)
+		double lower = sqrt(w*h / n) / 2;
+		double upper = sqrt(w*h / n) * 2;
+
+		int iters = 0;
+		std::vector<Point<Exact>> pts;
+		while (iters < maxIters && lower < upper) {
+			double mid = (lower + upper) / 2;
+			pts.clear();
+			pts.resize(0);
+			squareGrid(std::back_inserter(pts), mid, bb, pl);
+			auto size = pts.size();
+			if (size < n) {
+				upper = mid;
+			} else if (size > n) {
+				lower = mid;
+			} else {
+				std::copy(pts.begin(), pts.end(), out);
+				return mid;
+			}
+			++iters;
+		}
+		std::vector<Point<Exact>> one;
+		squareGrid(std::back_inserter(one), lower, bb, pl);
+		std::vector<Point<Exact>> other;
+		squareGrid(std::back_inserter(other), upper, bb, pl);
+		if (one.size() != n && other.size() != n) {
+			std::cerr << "Did not find square grid with " << n << " sample points." << std::endl;
+		}
+		if (abs(n - static_cast<int>(one.size())) < abs(n - static_cast<int>(other.size()))) {
+			std::copy(one.begin(), one.end(), out);
+			return lower;
+		} else {
+			std::copy(other.begin(), other.end(), out);
+			return upper;
+		}
+	}
+
+	template <class OutputIterator>
+	void hexGrid(OutputIterator out, double cellSize, const Rectangle<Exact>& bb, const std::shared_ptr<PL>& pl) {
+		auto bbA = approximate(bb);
+		auto w = width(bbA);
+		auto h = height(bbA);
+		int stepsX = static_cast<int>(std::ceil(w / cellSize));
+		double cellSizeY = 0.8660254 * cellSize;
+		int stepsY = static_cast<int>(std::ceil(h / cellSizeY));
+		auto bl = get_corner(bb, Corner::BL);
+
+		double xRem = cellSize * stepsX - w;
+		double yRem = cellSizeY * stepsY - h;
+		double xOff = -xRem / 2;
+		double yOff = -yRem / 2;
+
+		for (int j = 0; j < stepsY; ++j) {
+			bool odd = j % 2 == 1;
+			for (int i = 0; i < (odd ? stepsX + 1 : stepsX); ++i) {
+				double shift = odd ? 0 : -0.5;
+				Point<Exact> pt = bl + Vector<Exact>(xOff + cellSize / 2 + (i + shift) * cellSize, yOff + cellSizeY / 2 + j * cellSizeY);
+				auto obj = pl->locate(pt);
+				if (auto fhp = boost::get<RegionArrangement::Face_const_handle>(&obj)) {
+					auto fh = *fhp;
+					if (!fh->data().empty()) {
+						*out++ = pt;
+					}
+				}
+			}
+		}
+	}
+
+	template <class OutputIterator>
+	double hexGrid(OutputIterator out, int n, const Rectangle<Exact>& bb, const std::shared_ptr<PL>& pl, int maxIters = 50) {
+		auto bbA = approximate(bb);
+		auto w = width(bbA);
+		auto h = height(bbA);
+		// n <= stepsX * stepsY <= (w / cellSize + 1) * (h / (cellSize * 0.8660254 + 1) =~ wh / (0.866 * cellSize²)
+		// cellSize <= ~= sqrt(wh / (0.866n))
+		double lower = sqrt(w * h / (0.866 * n)) / 2;
+		double upper = sqrt(w * h / (0.866 * n)) * 2;
+
+		int iters = 0;
+		std::vector<Point<Exact>> pts;
+		while (iters < maxIters && lower < upper) {
+			double mid = (lower + upper) / 2;
+			pts.clear();
+			pts.resize(0);
+			hexGrid(std::back_inserter(pts), mid, bb, pl);
+			auto size = pts.size();
+			std::cout << size << std::endl;
+			if (size < n) {
+				upper = mid;
+			} else if (size > n) {
+				lower = mid;
+			} else {
+				std::copy(pts.begin(), pts.end(), out);
+				return mid;
+			}
+			++iters;
+		}
+		std::vector<Point<Exact>> one;
+		hexGrid(std::back_inserter(one), lower, bb, pl);
+		std::vector<Point<Exact>> other;
+		hexGrid(std::back_inserter(other), upper, bb, pl);
+		if (one.size() != n && other.size() != n) {
+			std::cerr << "Did not find hexagonal grid with " << n << " sample points." << std::endl;
+		}
+		if (abs(n - static_cast<int>(one.size())) < abs(n - static_cast<int>(other.size()))) {
+			std::copy(one.begin(), one.end(), out);
+			return lower;
+		} else {
+			std::copy(other.begin(), other.end(), out);
+			return upper;
+		}
+	}
 
   public:
 	std::function<WeightedPoint(const Point<Exact>&, const RegionWeight&)> m_assignWeight = [this](const Point<Exact>& point, const RegionWeight& regionWeights) {
@@ -695,136 +814,47 @@ class Sampler {
 		return {finalPoints.begin(), finalPoints.end(), m_assignWeight};
 	}
 
-	WeightedRegionSample<Exact> squareGrid(double cellSize) {
-        std::vector<Rectangle<Exact>>&& bbs = m_samplePerRegion ? getRegionCCBbs() : std::vector({getArrBoundingBox()});
-        std::vector<std::shared_ptr<PL>>&& pls = m_samplePerRegion ? getRegionCCPls() : std::vector({getPL()});
+	WeightedRegionSample<Exact> squareGrid(int n, int maxIters = 50) {
+		std::vector<Point<Exact>> points;
+		if (m_samplePerRegion) {
+			const std::vector<Rectangle<Exact>>& bbs = getRegionCCBbs();
+			const std::vector<std::shared_ptr<PL>>& pls = getRegionCCPls();
 
-        std::vector<Point<Exact>> points;
-        for (int k = 0; k < bbs.size(); ++k) {
-            auto& bb = bbs[k];
-            auto& pl = pls[k];
-
-            auto bbA = approximate(bb);
-            auto w = width(bbA);
-            auto h = height(bbA);
-            int stepsX = static_cast<int>(w / cellSize) + 1;
-            int stepsY = static_cast<int>(h / cellSize) + 1;
-            auto bl = get_corner(bb, Corner::BL);
-
-            for (int i = 0; i < stepsX; ++i) {
-                for (int j = 0; j < stepsY; ++j) {
-                    Point<Exact> pt = bl + Vector<Exact>(cellSize / 2 + i * cellSize, cellSize / 2 + j * cellSize);
-                    auto obj = pl->locate(pt);
-                    if (auto fhp = boost::get<RegionArrangement::Face_const_handle>(&obj)) {
-                        auto fh = *fhp;
-                        if (!fh->data().empty()) {
-                            points.push_back(pt);
-                        }
-                    }
-                }
-            }
-        }
+			auto regionNMap = pointsPerRegion(n);
+			for (int regionCCIndex = 0; regionCCIndex < bbs.size(); ++regionCCIndex) {
+				const auto& bb = bbs.at(regionCCIndex);
+				const auto& pl = pls.at(regionCCIndex);
+				auto regionN = regionNMap.at(regionCCIndex);
+				if (regionN > 0) {
+					squareGrid(std::back_inserter(points), regionN, bb, pl, maxIters);
+				}
+			}
+		} else {
+			squareGrid(std::back_inserter(points), n, getArrBoundingBox(), getPL(), maxIters);
+		}
 		return {points.begin(), points.end(), m_assignWeight};
 	}
 
-	std::pair<double, WeightedRegionSample<Exact>> squareGrid(int n, int maxIters = 50) {
-		auto bb = getArrBoundingBox();
-		auto bbA = approximate(bb);
-		auto w = width(bbA);
-		auto h = height(bbA);
-		// n <= stepsX * stepsY <= (w / cellSize + 1) * (h / cellSize + 1) =~ wh / cellSize²
-		// cellSize <= ~= sqrt(wh / n)
-		double lower = sqrt(w*h / n) / 2;
-		double upper = sqrt(w*h / n) * 2;
+	WeightedRegionSample<Exact> hexGrid(int n, int maxIters = 50) {
+		std::vector<Point<Exact>> points;
+		if (m_samplePerRegion) {
+			const std::vector<Rectangle<Exact>>& bbs = getRegionCCBbs();
+			const std::vector<std::shared_ptr<PL>>& pls = getRegionCCPls();
 
-		int iters = 0;
-		while (iters < maxIters && lower < upper) {
-			double mid = (lower + upper) / 2;
-			WeightedRegionSample<Exact> sample = squareGrid(mid);
-			auto size = sample.m_points.size();
-			if (size < n) {
-				upper = mid;
-			} else if (size > n) {
-				lower = mid;
-			} else {
-				return {mid, sample};
+			auto regionNMap = pointsPerRegion(n);
+			const auto& regions = getRegions();
+			for (int regionCCIndex = 0; regionCCIndex < bbs.size(); ++regionCCIndex) {
+				const auto& bb = bbs.at(regionCCIndex);
+				const auto& pl = pls.at(regionCCIndex);
+				auto regionN = regionNMap.at(regionCCIndex);
+				if (regionN > 0) {
+					hexGrid(std::back_inserter(points), regionN, bb, pl, maxIters);
+				}
 			}
-			++iters;
-		}
-		auto one = squareGrid(lower);
-		auto other = squareGrid(upper);
-		if (abs(n - static_cast<int>(one.m_points.size())) < abs(n - static_cast<int>(other.m_points.size()))) {
-			return {lower, one};
 		} else {
-			return {upper, other};
+			hexGrid(std::back_inserter(points), n, getArrBoundingBox(), getPL(), maxIters);
 		}
-	}
-
-	WeightedRegionSample<Exact> hexGrid(double cellSize) {
-        std::vector<Rectangle<Exact>>&& bbs = m_samplePerRegion ? getRegionCCBbs() : std::vector({getArrBoundingBox()});
-        std::vector<std::shared_ptr<PL>>&& pls = m_samplePerRegion ? getRegionCCPls() : std::vector({getPL()});
-
-        std::vector<Point<Exact>> points;
-        for (int k = 0; k < bbs.size(); ++k) {
-            auto& bb = bbs[k];
-            auto& pl = pls[k];
-
-            auto bbA = approximate(bb);
-            auto w = width(bbA);
-            auto h = height(bbA);
-            int stepsX = static_cast<int>(w / cellSize) + 1;
-            double cellSizeY = 0.8660254 * cellSize;
-            int stepsY = static_cast<int>(h / cellSizeY) + 1;
-            auto bl = get_corner(bb, Corner::BL);
-
-            for (int i = 0; i < stepsX; ++i) {
-                for (int j = 0; j < stepsY; ++j) {
-                    double shift = (j % 2 == 1) ? 0 : 0.5;
-                    Point<Exact> pt = bl + Vector<Exact>(cellSize / 2 + (i + shift) * cellSize, cellSizeY / 2 + j * cellSizeY);
-                    auto obj = pl->locate(pt);
-                    if (auto fhp = boost::get<RegionArrangement::Face_const_handle>(&obj)) {
-                        auto fh = *fhp;
-                        if (!fh->data().empty()) {
-                            points.push_back(pt);
-                        }
-                    }
-                }
-            }
-        }
 		return {points.begin(), points.end(), m_assignWeight};
-	}
-
-	std::pair<double, WeightedRegionSample<Exact>> hexGrid(int n, int maxIters = 50) {
-		auto bb = getArrBoundingBox();
-		auto bbA = approximate(bb);
-		auto w = width(bbA);
-		auto h = height(bbA);
-		// n <= stepsX * stepsY <= (w / cellSize + 1) * (h / (cellSize * 0.8660254 + 1) =~ wh / (0.866 * cellSize²)
-		// cellSize <= ~= sqrt(wh / (0.866n))
-		double lower = sqrt(w*h / (0.866 * n)) / 2;
-		double upper = sqrt(w*h / (0.866 * n)) * 2;
-
-		int iters = 0;
-		while (iters < maxIters && lower < upper) {
-			double mid = (lower + upper) / 2;
-			WeightedRegionSample<Exact> sample = hexGrid(mid);
-			auto size = sample.m_points.size();
-			if (size < n) {
-				upper = mid;
-			} else if (size > n) {
-				lower = mid;
-			} else {
-				return {mid, sample};
-			}
-			++iters;
-		}
-		auto one = hexGrid(lower);
-		auto other = hexGrid(upper);
-		if (abs(n - static_cast<int>(one.m_points.size())) < abs(n - static_cast<int>(other.m_points.size()))) {
-			return {lower, one};
-		} else {
-			return {upper, other};
-		}
 	}
 };
 }
