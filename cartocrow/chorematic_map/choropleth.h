@@ -128,19 +128,26 @@ class ChoroplethPainting : public renderer::GeometryPainting {
   public:
 	Choropleth& m_choropleth;
 	std::vector<Color> m_colors;
-	Color m_noDataColor;
-	bool m_drawLabels;
-    CGAL::Aff_transformation_2<Inexact> m_transformation;
-    double m_strokeWidth = 1.0;
+
+	struct Options {
+		bool drawLabels = false;
+		Color noDataColor = Color(200, 200, 200);
+		CGAL::Aff_transformation_2<Inexact> transformation = CGAL::IDENTITY;
+		double strokeWidth = 1.0;
+		Color strokeColor = Color(0, 0, 0);
+	};
+
+	Options m_options;
+
+	// Needed because bug in clang gcc:
+	// https://stackoverflow.com/questions/53408962/try-to-understand-compiler-error-message-default-member-initializer-required-be
+	static Options defaultOptions() {
+		return {};
+	}
 
 	template <class InputIterator>
-	ChoroplethPainting(Choropleth& choropleth, InputIterator beginColors, InputIterator endColors,
-	                   bool drawLabels = false, Color noDataColor = Color(200, 200, 200),
-                       const CGAL::Aff_transformation_2<Inexact>& transformation = CGAL::IDENTITY,
-                       double strokeWidth = 1.0)
-	    : m_choropleth(choropleth), m_colors(beginColors, endColors),
-	      m_noDataColor(noDataColor), m_drawLabels(drawLabels), m_transformation(transformation),
-          m_strokeWidth(strokeWidth) {}
+	ChoroplethPainting(Choropleth& choropleth, InputIterator beginColors, InputIterator endColors, Options options = defaultOptions())
+	    : m_choropleth(choropleth), m_colors(beginColors, endColors), m_options(options) {}
 
 	template <class InputIterator>
 	void setColors(InputIterator begin, InputIterator end) {

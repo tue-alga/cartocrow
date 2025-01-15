@@ -207,10 +207,10 @@ void ChorematicMapDemo::rebin() {
 
 void ChorematicMapDemo::recolor() {
 	std::vector<Color> colors;
+	// colors from https://colorbrewer2.org/#type=sequential&scheme=Greens
 	switch(m_numberOfBins->value()) {
 	case 2: {
-		// There are no colorbrewer 2 class colors. I have picked a light one of 3-class and a dark one from 4-class.
-		colors = std::vector({Color(0xe5f5e0), Color(0x74c476)});
+		colors = std::vector({Color(160, 217, 155), Color(48, 162, 83)});
 		break;
 	}
 	case 3: {
@@ -404,6 +404,7 @@ ChorematicMapDemo::ChorematicMapDemo() {
 //	std::filesystem::path dataPath = "data/chorematic_map/test_data.txt";
 //	std::filesystem::path mapPath = "data/chorematic_map/test_region_arrangement.ipe";
 //	auto regionData =std::make_shared<std::unordered_map<std::string, double>>(parseRegionDataFile(dataPath));
+	std::filesystem::path gpkg0 = "data/chorematic_map/hessen.gpkg";
     std::filesystem::path gpkg1 = "data/chorematic_map/HE_NL_NUTS_TUe.gpkg";
     std::filesystem::path gpkg2 = "data/chorematic_map/wijkenbuurten_2020_v3.gpkg";
     std::filesystem::path gpkg3 = "data/chorematic_map/wijkenbuurten_2022_v3.gpkg";
@@ -415,10 +416,11 @@ ChorematicMapDemo::ChorematicMapDemo() {
     std::filesystem::path annulus = "data/chorematic_map/annulus.ipe";
     std::filesystem::path annulus_data = "data/chorematic_map/annulus-data.txt";
 
-    auto regionMap = std::make_shared<RegionMap>(ipeToRegionMap(dutch, true));
-    m_regionWeightMap = regionDataMapFromGPKG(gpkg3, "gemeenten", "gemeentecode", [](const std::string& s) {
-        return s;
-    });
+//    auto regionMap = std::make_shared<RegionMap>(ipeToRegionMap(dutch, true));
+//	std::cout << "#Regions: " << regionMap->size() << std::endl;
+//    m_regionWeightMap = regionDataMapFromGPKG(gpkg3, "gemeenten", "gemeentecode", [](const std::string& s) {
+//        return s;
+//    });
 
 
 //    auto regionMap = std::make_shared<RegionMap>(ipeToRegionMap(annulus, false));
@@ -442,18 +444,20 @@ ChorematicMapDemo::ChorematicMapDemo() {
 //    m_regionWeightMap = regionDataMapFromGPKG(gpkg2, "gemeenten", "jrstatcode", [](const std::string& s) {
 //        return s.substr(4);
 //    });
-    auto regionData = std::make_shared<std::unordered_map<std::string, double>>(m_regionWeightMap->begin()->second);
-    // Hessen
-//    auto regionMap = regionMapFromGPKG(gpkg1, "HE_1000k_stats", "GEN");
-//    m_regionWeightMap = regionDataMapFromGPKG(gpkg1, "HE_1000k_stats", "GEN", [](const std::string& s) {
-//        return s;
-//    });
 //    auto regionData = std::make_shared<std::unordered_map<std::string, double>>(m_regionWeightMap->begin()->second);
+    // Hessen
+    auto regionMap = regionMapFromGPKG(gpkg0, "Hessen", "GEN");
+	std::cout << "#Regions: " << regionMap->size() << std::endl;
+    m_regionWeightMap = regionDataMapFromGPKG(gpkg0, "Hessen", "GEN", [](const std::string& s) {
+        return s;
+    });
 
     for (auto& kv : *m_regionWeightMap) {
         m_dataAttribute->addItem(QString::fromStdString(kv.first));
     }
     m_dataAttribute->model()->sort(0);
+	m_dataAttribute->setCurrentIndex(0);
+	auto regionData = std::make_shared<std::unordered_map<std::string, double>>((*m_regionWeightMap)[m_dataAttribute->currentText().toStdString()]);
 
 //	auto regionArr = std::make_shared<RegionArrangement>(regionMapToArrangementParallel(*regionMap));
 //    auto regionArr = regionMapToArrangementParallel(*regionMap);
@@ -497,7 +501,14 @@ ChorematicMapDemo::ChorematicMapDemo() {
 //	m_pl = std::make_shared<LandmarksPl>(*m_choropleth->m_arr);
 	m_sampler = std::make_unique<Sampler<LandmarksPl>>(m_choropleth->m_arr, m_seed->value());
 	std::vector<Color> colors({Color(0xe5f5e0), Color(0xa1d99b), Color(0x31a354)});
-	m_choroplethP = std::make_shared<ChoroplethPainting>(*m_choropleth, colors.begin(), colors.end(), showLabels->isChecked(), Color(255, 0, 0));
+	ChoroplethPainting::Options choroplethOptions;
+	Color offBlack(68, 68, 68);
+	Color offWhite(230, 230, 230);
+	choroplethOptions.drawLabels = showLabels->isChecked();
+	choroplethOptions.noDataColor = Color(255, 0, 0);
+	choroplethOptions.strokeColor = offWhite;
+	choroplethOptions.strokeWidth = 0.75;
+	m_choroplethP = std::make_shared<ChoroplethPainting>(*m_choropleth, colors.begin(), colors.end(), choroplethOptions);
 	m_renderer->addPainting(m_choroplethP, "Choropleth");
 
     Rectangle<Inexact> abb = approximate(m_sampler->getArrBoundingBox());
@@ -527,7 +538,7 @@ ChorematicMapDemo::ChorematicMapDemo() {
 	m_threshold->setMaximum(rdMax);
 	m_threshold->setValue(0);
 
-	m_renderer->addPainting([this](renderer::GeometryRenderer& renderer) {
+	m_renderer->addPainting([this, offWhite](renderer::GeometryRenderer& renderer) {
         RenderPath renderPath;
         auto&& polys = m_sampler->getLandmassPolys();
         for (const auto& poly : polys) {
@@ -540,7 +551,7 @@ ChorematicMapDemo::ChorematicMapDemo() {
         renderer.setClipping(true);
         renderer.setClipPath(renderPath);
 		renderer.setMode(GeometryRenderer::fill | GeometryRenderer::stroke);
-		renderer.setStroke(Color(0, 0, 0), 2.0);
+		renderer.setStroke(offWhite, 2.0);
 		for (const auto& binDisk : m_disks) {
 			renderer.setFill(m_choroplethP->m_colors[binDisk.bin]);
 			renderer.setFillOpacity(200);
@@ -557,9 +568,9 @@ ChorematicMapDemo::ChorematicMapDemo() {
         renderer.setClipping(false);
 	}, "Disks");
 
-    m_renderer->addPainting([this](GeometryRenderer& renderer) {
+    m_renderer->addPainting([this, offBlack](GeometryRenderer& renderer) {
         renderer.setMode(GeometryRenderer::stroke);
-        renderer.setStroke(Color{0, 0, 0}, 1.5);
+        renderer.setStroke(offBlack, 2);
 
         auto&& polys = m_sampler->getLandmassPolys();
         for (const auto& poly : polys) {
@@ -655,7 +666,7 @@ ChorematicMapDemo::ChorematicMapDemo() {
         m_renderer->repaint();
 	});
     connect(showLabels, &QCheckBox::stateChanged, [this, showLabels]() {
-        m_choroplethP->m_drawLabels = showLabels->isChecked();
+        m_choroplethP->m_options.drawLabels = showLabels->isChecked();
         m_renderer->repaint();
     });
     connect(m_dataAttribute, &QComboBox::currentTextChanged, [this]() {

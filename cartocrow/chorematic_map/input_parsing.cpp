@@ -24,7 +24,7 @@ regionDataMapFromGPKG(const std::filesystem::path& path, const std::string& laye
         int i = 0;
         for( auto&& oField: *poFeature ) {
             std::string name = poFeature->GetDefnRef()->GetFieldDefn(i)->GetNameRef();
-            double w;
+            std::optional<double> w;
             switch(oField.GetType()) {
                 case OFTInteger:
                     w = oField.GetInteger();
@@ -32,9 +32,12 @@ regionDataMapFromGPKG(const std::filesystem::path& path, const std::string& laye
                 case OFTReal:
                     w = oField.GetDouble();
                     break;
+			    default:
+//				    std::cerr << "Field " << name << " for region " << regionId << " neither an integer nor double!" << std::endl;
+				    break;
             }
-            if (w != -99999999) {
-                dataMap[name][regionId] = w;
+            if (w.has_value() && w != -99999999) {
+                dataMap[name][regionId] = *w;
             }
             ++i;
         }

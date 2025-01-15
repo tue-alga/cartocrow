@@ -30,7 +30,7 @@ void ChoroplethPainting::paint(GeometryRenderer& renderer) const {
             renderer.setMode(GeometryRenderer::fill);
 		}
 		std::optional<int> bin = m_choropleth.regionToBin(region);
-		Color color = m_noDataColor;
+		Color color = m_options.noDataColor;
 		if (bin.has_value()) {
 			if (m_colors.size() <= *bin) {
 				std::cerr << "No color specified for bin " << *bin << std::endl;
@@ -40,20 +40,20 @@ void ChoroplethPainting::paint(GeometryRenderer& renderer) const {
 		}
 		renderer.setFill(color);
 		auto poly = approximate(face_to_polygon_with_holes<Exact>(fit));
-		renderer.draw(transform(m_transformation, poly));
-		if (m_drawLabels) {
+		renderer.draw(transform(m_options.transformation, poly));
+		if (m_options.drawLabels) {
 			auto c = centroid(poly);
 			renderer.setMode(GeometryRenderer::stroke);
-			renderer.setStroke(Color{0, 0, 0}, m_strokeWidth);
+			renderer.setStroke(Color{0, 0, 0}, m_options.strokeWidth);
             auto label = fit->data().empty() ? "empty" : fit->data();
-			renderer.drawText(c.transform(m_transformation), label);
+			renderer.drawText(c.transform(m_options.transformation), label);
 		}
 	}
 	renderer.setLineCap(GeometryRenderer::RoundCap);
 	renderer.setMode(GeometryRenderer::stroke);
-	renderer.setStroke(Color{0, 0, 0}, m_strokeWidth);
+	renderer.setStroke(m_options.strokeColor, m_options.strokeWidth);
 	for (auto eit = arr.edges_begin(); eit != arr.edges_end(); ++eit) {
-		renderer.draw(Segment<Inexact>(approximate(eit->source()->point()), approximate(eit->target()->point())).transform(m_transformation));
+		renderer.draw(Segment<Inexact>(approximate(eit->source()->point()), approximate(eit->target()->point())).transform(m_options.transformation));
 	}
 }
 }

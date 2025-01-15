@@ -149,7 +149,6 @@ voronoiMoveToCentroid(const RegionArrangement& domain, const Landmarks_pl<Region
 			for (const auto& hole : poly.holes()) {
 				area -= hole.area();
 			}
-			Polygon<Exact> pgn;
 			auto weight = area;
 			total += weight * (c - CGAL::ORIGIN);
 			totalWeight += weight;
@@ -164,6 +163,8 @@ voronoiMoveToCentroid(const RegionArrangement& domain, const Landmarks_pl<Region
 			} else {
 				*out++ = site;
 			}
+		} else {
+			std::cerr << "Centroid does not lie in a face" << std::endl;
 		}
 	}
 	return totalDistance / siteToFaces.size();
@@ -552,7 +553,42 @@ class Sampler {
         if (!m_samplePerRegion) {
             auto& triangles = getTriangles();
             auto generator = CGAL::Random_points_in_triangles_2<Point<Exact>>(triangles, rng);
-            std::copy_n(generator, n, out);
+			std::vector<Point<Exact>> points;
+            std::copy_n(generator, n, std::back_inserter(points));
+
+			int bad = 0;
+			int i = 1;
+			while (true) {
+				for (auto& pt : points) {
+					bool found = false;
+					for (auto& pl : getLandmassPls()) {
+						auto obj = pl->locate(pt);
+						if (auto fhp = boost::get<RegionArrangement::Face_const_handle>(&obj)) {
+							auto fh = *fhp;
+							if (!fh->data().empty()) {
+								found = true;
+							}
+						} else {
+							std::cout << "Sample point does not lie on face " << pt << std::endl;
+						}
+					}
+					if (!found) {
+						++bad;
+//						std::cerr << "Sample point in empty face " << pt << std::endl;
+					} else {
+						*out++ = pt;
+					}
+				}
+				if (bad == 0) break;
+				points.clear();
+				CGAL::Random rngNew(m_seed + i);
+				CGAL::get_default_random() = CGAL::Random(m_seed + i);
+				auto generatorNew = CGAL::Random_points_in_triangles_2<Point<Exact>>(triangles, rngNew);
+				std::copy_n(generatorNew, bad, std::back_inserter(points));
+				bad = 0;
+				++i;
+			}
+
         } else {
             auto& regionCCToTriangles = getRegionCCToTriangles();
 			auto regionCCns = pointsPerRegion(n);
@@ -560,7 +596,40 @@ class Sampler {
 			for (int i = 0; i < regionCCns.size(); ++i) {
 				const std::vector<Triangle<Exact>>& regionCCTriangles = regionCCToTriangles.at(i);
 				auto generator = CGAL::Random_points_in_triangles_2<Point<Exact>>(regionCCTriangles, rng);
-				std::copy_n(generator, regionCCns[i], out);
+				std::vector<Point<Exact>> points;
+				std::copy_n(generator, regionCCns[i], std::back_inserter(points));
+				auto& pl = getRegionCCPls()[i];
+
+				int bad = 0;
+				int iters = 1;
+				while (true) {
+					for (auto& pt : points) {
+						bool found = false;
+						auto obj = pl->locate(pt);
+						if (auto fhp = boost::get<RegionArrangement::Face_const_handle>(&obj)) {
+							auto fh = *fhp;
+							if (!fh->data().empty()) {
+								found = true;
+							}
+						} else {
+							std::cout << "Sample point does not lie on face " << pt << std::endl;
+						}
+						if (!found) {
+							++bad;
+//							std::cerr << "Sample point in empty face " << pt << std::endl;
+						} else {
+							*out++ = pt;
+						}
+					}
+					if (bad == 0) break;
+					points.clear();
+					CGAL::Random rngNew(m_seed + iters);
+					CGAL::get_default_random() = CGAL::Random(m_seed + iters);
+					auto generatorNew = CGAL::Random_points_in_triangles_2<Point<Exact>>(regionCCTriangles, rngNew);
+					std::copy_n(generatorNew, bad, std::back_inserter(points));
+					bad = 0;
+					++iters;
+				}
 			}
         }
     }
@@ -574,8 +643,10 @@ class Sampler {
 		int stepsY = static_cast<int>(std::ceil(h / cellSize));
 		double xRem = cellSize * stepsX - w;
 		double yRem = cellSize * stepsY - h;
-		double xOff = -xRem / 2;
-		double yOff = -yRem / 2;
+//		double xOff = -xRem / 2;
+//		double yOff = -yRem / 2;
+		double xOff = 0;
+		double yOff = 0;
 		auto bl = get_corner(bb, Corner::BL);
 
 		for (int i = 0; i < stepsX; ++i) {
@@ -587,6 +658,8 @@ class Sampler {
 					if (!fh->data().empty()) {
 						*out++ = pt;
 					}
+				} else {
+					std::cerr << "Square grid sample point does not lie in a face" << std::endl;
 				}
 			}
 		}
@@ -599,8 +672,8 @@ class Sampler {
 		auto h = height(bbA);
 		// n <= stepsX * stepsY <= (w / cellSize + 1) * (h / cellSize + 1) =~ wh / cellSize²
 		// cellSize <= ~= sqrt(wh / n)
-		double lower = sqrt(w*h / n) / 2;
-		double upper = sqrt(w*h / n) * 2;
+		double lower = sqrt(w*h / n) / 4;
+		double upper = sqrt(w*h / n) * 4;
 
 		int iters = 0;
 		std::vector<Point<Exact>> pts;
@@ -648,8 +721,10 @@ class Sampler {
 
 		double xRem = cellSize * stepsX - w;
 		double yRem = cellSizeY * stepsY - h;
-		double xOff = -xRem / 2;
-		double yOff = -yRem / 2;
+//		double xOff = -xRem / 2;
+//		double yOff = -yRem / 2;
+		double xOff = 0;
+		double yOff = 0;
 
 		for (int j = 0; j < stepsY; ++j) {
 			bool odd = j % 2 == 1;
@@ -662,6 +737,8 @@ class Sampler {
 					if (!fh->data().empty()) {
 						*out++ = pt;
 					}
+				} else {
+					std::cerr << "Hex. grid sample point does not lie in a face" << std::endl;
 				}
 			}
 		}
@@ -674,8 +751,8 @@ class Sampler {
 		auto h = height(bbA);
 		// n <= stepsX * stepsY <= (w / cellSize + 1) * (h / (cellSize * 0.8660254 + 1) =~ wh / (0.866 * cellSize²)
 		// cellSize <= ~= sqrt(wh / (0.866n))
-		double lower = sqrt(w * h / (0.866 * n)) / 2;
-		double upper = sqrt(w * h / (0.866 * n)) * 2;
+		double lower = sqrt(w * h / (0.866 * n)) / 4;
+		double upper = sqrt(w * h / (0.866 * n)) * 4;
 
 		int iters = 0;
 		std::vector<Point<Exact>> pts;
@@ -685,7 +762,6 @@ class Sampler {
 			pts.resize(0);
 			hexGrid(std::back_inserter(pts), mid, bb, pl);
 			auto size = pts.size();
-			std::cout << size << std::endl;
 			if (size < n) {
 				upper = mid;
 			} else if (size > n) {
@@ -702,6 +778,7 @@ class Sampler {
 		hexGrid(std::back_inserter(other), upper, bb, pl);
 		if (one.size() != n && other.size() != n) {
 			std::cerr << "Did not find hexagonal grid with " << n << " sample points." << std::endl;
+			std::cerr << "Bounding box: " << bb.xmin() << " " << bb.ymin() << " " << bb.xmax() << " " << bb.ymax() << std::endl;
 		}
 		if (abs(n - static_cast<int>(one.size())) < abs(n - static_cast<int>(other.size()))) {
 			std::copy(one.begin(), one.end(), out);
@@ -750,25 +827,34 @@ class Sampler {
 				const RegionArrangement& arr = *arrs[i];
 				const auto& pl = *pls[i];
 				const auto& bb = bbs[i];
-				const auto& outerPoly = polys[i];
+				const PolygonWithHoles<Exact>& poly = polys[i];
 				std::vector<Point<Exact>> samplesInComponent;
 				for (const auto& pt : points) {
-					auto obj = pl.locate(pt);
-					if (auto fhp = boost::get<RegionArrangement::Face_const_handle>(&obj)) {
-						auto fh = *fhp;
-						if (!fh->data().empty()) {
-							samplesInComponent.push_back(pt);
-						}
+					if (oriented_side(pt, poly) == CGAL::ON_POSITIVE_SIDE) {
+						samplesInComponent.push_back(pt);
 					}
+//					auto obj = pl.locate(pt);
+//					if (auto fhp = boost::get<RegionArrangement::Face_const_handle>(&obj)) {
+//						auto fh = *fhp;
+//						if (!fh->data().empty()) {
+//							samplesInComponent.push_back(pt);
+//						}
+//					} else {
+//						std::cerr << "Voronoi sample point does not lie in a face" << std::endl;
+//					}
 				}
 				if (samplesInComponent.empty())
 					continue;
-				if (samplesInComponent.size() == 1 &&
-					arr.number_of_faces() - arr.number_of_unbounded_faces() == 1) {
-					outputPoints.push_back(centroid(outerPoly));
-					continue;
-				}
+//				if (samplesInComponent.size() == 1 &&
+//					arr.number_of_faces() - arr.number_of_unbounded_faces() == 1) {
+//					auto centr = centroid(outerPoly);
+//					if (oriented_side(centr, outerPoly) == CGAL::ON_POSITIVE_SIDE) {
+//						outputPoints.push_back(centr);
+//						continue;
+//					}
+//				}
 
+				int originalNumber = samplesInComponent.size();
 				std::vector<Point<Exact>> newPoints;
 				for (int j = 0; j < iters; ++j) {
 					//				if (progress.has_value()) {

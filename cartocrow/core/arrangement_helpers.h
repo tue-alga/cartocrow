@@ -7,6 +7,56 @@
 #include <CGAL/Arr_landmarks_point_location.h>
 
 namespace cartocrow {
+/// Compute bounding box of arrangement.
+/// Assumes the arrangement is finite, has at least one vertex, uses line segments as curves, and an exact number type.
+template <class Arr>
+Rectangle<Exact> bboxExact(const Arr& arr) {
+	Number<Exact> xmin = arr.vertices_begin()->point().x();
+	Number<Exact> xmax = arr.vertices_begin()->point().x();
+	Number<Exact> ymin = arr.vertices_begin()->point().y();
+	Number<Exact> ymax = arr.vertices_begin()->point().y();
+	for (auto vit = arr.vertices_begin(); vit != arr.vertices_end(); ++vit) {
+		if (vit->point().x() > xmax) {
+			xmax = vit->point().x();
+		}
+		if (vit->point().x() < xmin) {
+			xmin = vit->point().x();
+		}
+		if (vit->point().y() > ymax) {
+			ymax = vit->point().y();
+		}
+		if (vit->point().y() < ymin) {
+			ymin = vit->point().y();
+		}
+	}
+	return {xmin, ymin, xmax, ymax};
+}
+
+/// Compute bounding box of arrangement.
+/// Assumes the arrangement is finite, has at least one vertex, uses line segments as curves, and an exact number type.
+template <class Arr>
+Rectangle<Inexact> bboxInexact(const Arr& arr) {
+	Number<Inexact> xmin = CGAL::to_double(arr.vertices_begin()->point().x());
+	Number<Inexact> xmax = CGAL::to_double(arr.vertices_begin()->point().x());
+	Number<Inexact> ymin = CGAL::to_double(arr.vertices_begin()->point().y());
+	Number<Inexact> ymax = CGAL::to_double(arr.vertices_begin()->point().y());
+	for (auto vit = arr.vertices_begin(); vit != arr.vertices_end(); ++vit) {
+		if (vit->point().x() > xmax) {
+			xmax = CGAL::to_double(vit->point().x());
+		}
+		if (vit->point().x() < xmin) {
+			xmin = CGAL::to_double(vit->point().x());
+		}
+		if (vit->point().y() > ymax) {
+			ymax = CGAL::to_double(vit->point().y());
+		}
+		if (vit->point().y() < ymin) {
+			ymin = CGAL::to_double(vit->point().y());
+		}
+	}
+	return {xmin, ymin, xmax, ymax};
+}
+
 template <class Traits, class Ccb>
 CGAL::General_polygon_2<Traits> ccb_to_general_polygon(Ccb ccb) {
 	Traits traits;
