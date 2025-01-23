@@ -36,8 +36,7 @@ template <class TArr> Number<Exact> faceArea(typename TArr::Face_handle face) {
 
 template <class TArr>
 inline TArr::Halfedge_handle mergeWithPrev(TArr& dcel, typename TArr::Halfedge_handle edge) {
-	return dcel.merge_edge(edge->prev(), edge,
-	                       Segment<Exact>(edge->prev()->source()->point(), edge->target()->point()));
+	return mergeWithNext(edge->prev());
 }
 
 template <class TArr>
@@ -48,6 +47,8 @@ inline TArr::Halfedge_handle mergeWithNext(TArr& dcel, typename TArr::Halfedge_h
     } else {
         auto fd1 = edge->face()->data();
         auto fd2 = edge->twin()->face()->data();
+
+		// todo: optimize
         dcel.remove_edge(edge->next());
         dcel.remove_edge(edge);
         auto he = CGAL::insert_non_intersecting_curve(dcel, curve);
@@ -106,8 +107,37 @@ inline void shift(TArr& dcel, typename TArr::Halfedge_handle edge, Point<Exact> 
 template <class TArr>
 inline TArr::Halfedge_handle split(TArr& dcel, typename TArr::Halfedge_handle edge, Point<Exact> pt) {
 	CGAL::Arr_accessor<TArr> acc(dcel);
-	return acc.split_edge_ex(edge, pt, Segment<Exact>(edge->source()->point(), pt),
-	                         Segment<Exact>(pt, edge->target()->point()));
+	Segment<Exact> c1(edge->source()->point(), pt);
+	Segment<Exact> c2(pt, edge->target()->point());
+	if (c1.direction() == c2.direction()) {
+		return acc.split_edge_ex(edge, pt, c1, c2);
+	} else {
+		// todo: fix this... this work-around causes seg faults in mergeWithNext
+		// (not using the workaround only invalidates the arrangement)
+		auto d = edge->data();
+		auto fd1 = edge->face()->data();
+		auto fd2 = edge->twin()->face()->data();
+		// todo: optimize
+		dcel.remove_edge(edge);
+		auto he1 = CGAL::insert_non_intersecting_curve(dcel, c1);
+		auto he2 = CGAL::insert_non_intersecting_curve(dcel, c2);
+		typename TArr::Traits_2 traits;
+		auto equal = traits.equal_2_object();
+		if (!equal(c1.source(), he1->source()->point())) {
+			he1 = he1->twin();
+		}
+		he1->face()->data() = fd1;
+		he1->twin()->face()->data() = fd2;
+		if (equal(c2.target(), he2->target()->point())) {
+			he2->face()->data() = fd1;
+			he2->twin()->face()->data() = fd2;
+		} else {
+			he2->face()->data() = fd2;
+			he2->twin()->face()->data() = fd1;
+		}
+		he1->set_data(d);
+		return he1;
+	}
 }
 
 } // namespace cartocrow::simplification::util
