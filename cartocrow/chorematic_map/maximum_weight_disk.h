@@ -68,7 +68,7 @@ InducedDiskW smallest_maximum_weight_disk(InputIterator begin, InputIterator end
 					if (q.point == pi.point || q.point == pj.point) continue;
 					// Edge case: points are (roughly) collinear.
 					// A smallest maximum weight circle cannot be defined by three collinear points.
-					if (abs(CGAL::area(pi.point, pj.point, q.point)) < M_EPSILON) {
+					if (abs(CGAL::area(pi.point, pj.point, q.point)) < 0.001) {
 						continue;
 					}
 					auto cc = CGAL::circumcenter(pi.point, pj.point, q.point);
