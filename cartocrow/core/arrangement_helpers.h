@@ -742,16 +742,26 @@ void copyBoundedFaceData(const ArrWithFaceData& arr1, ArrWithFaceData& arr2) {
 			// Go through boundaries of this face
 			std::vector<std::pair<CCB, CCB>> ccbs;
 			ccbs.push_back({f2->outer_ccb(), f1->outer_ccb()});
-			auto f2iccbIt = f2->inner_ccbs_begin();
-			auto f1iccbIt = f1->inner_ccbs_begin();
-			auto f2iccbItEnd = f2->inner_ccbs_end();
-			auto f1iccbItEnd = f1->inner_ccbs_end();
+			std::vector<CCB> iCcbs1;
+			std::vector<CCB> iCcbs2;
+			std::copy(f2->inner_ccbs_begin(), f2->inner_ccbs_end(), std::back_inserter(iCcbs2));
+			std::copy(f1->inner_ccbs_begin(), f1->inner_ccbs_end(), std::back_inserter(iCcbs1));
+
+			std::sort(iCcbs1.begin(), iCcbs1.end(), [](const CCB& ccb1, const CCB& ccb2) {
+				return ccb1->source()->point() < ccb2->source()->point();
+			});
+			std::sort(iCcbs2.begin(), iCcbs2.end(), [](const CCB& ccb1, const CCB& ccb2) {
+			  return ccb1->source()->point() < ccb2->source()->point();
+			});
+			auto f2iccbIt = iCcbs2.begin();
+			auto f1iccbIt = iCcbs1.begin();
+			auto f2iccbItEnd = iCcbs2.end();
+			auto f1iccbItEnd = iCcbs1.end();
 			while (f2iccbIt != f2iccbItEnd) {
 				ccbs.push_back({*f2iccbIt, *f1iccbIt});
 				++f2iccbIt;
 				++f1iccbIt;
 			}
-			// todo: align inner ccbs if there are multiple.
 
 			for (auto [ccb2_start, ccb1_start] : ccbs) {
 				auto ccb1_it = ccb1_start;
