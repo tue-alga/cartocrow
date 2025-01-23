@@ -714,7 +714,10 @@ void GeometryWidget::setFillOpacity(int alpha) {
 
 void GeometryWidget::setClipPath(const RenderPath& clipPath) {
     QPainterPath qtClipPath = renderPathToQt(clipPath);
+	auto hasClipping = m_painter->hasClipping();
+	// Setting the clip path automatically enables clipping.
     m_painter->setClipPath(qtClipPath);
+	m_painter->setClipping(hasClipping);
 }
 
 void GeometryWidget::setClipping(bool enable) {
