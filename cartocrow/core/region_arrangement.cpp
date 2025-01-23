@@ -38,12 +38,10 @@ struct RegionOverlayTraits
 		if (f2->contained()) {
 			std::string id = f1->data();
 			if (f1->data() != "") {
-				Point<Exact> p = f->outer_ccb()->source()->point();
-				throw std::runtime_error("Found overlapping regions \"" + f1->data() + "\" and \"" +
-				                         m_newId + "\" (at " + std::to_string(CGAL::to_double(p.x())) +
-				                         ", " + std::to_string(CGAL::to_double(p.y())) + ")");
+				f->set_data(f1->data());
+			} else {
+				f->set_data(m_newId);
 			}
-			f->set_data(m_newId);
 		} else {
 			f->set_data(f1->data());
 		}
