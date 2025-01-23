@@ -77,6 +77,11 @@ void IpeRenderer::save(const std::filesystem::path& file) {
 	setFillOpacity(255); // add default alpha to style sheet
 	setStrokeOpacity(255); // add default alpha to style sheet
 
+	auto latexPreambleSheet = new ipe::StyleSheet();
+	latexPreambleSheet->setPreamble(m_preamble.c_str());
+	latexPreambleSheet->setName("latex-preamble");
+	document.cascade()->insert(3, latexPreambleSheet);
+
 	m_page = new ipe::Page();
 	document.push_back(m_page);
 
@@ -481,6 +486,10 @@ ipe::AllAttributes IpeRenderer::getAttributesForStyle() const {
 	return attributes;
 }
 
+
+void IpeRenderer::setPreamble(const std::string& preamble) {
+	m_preamble = preamble;
+}
 
 void IpeRenderer::addPainting(const std::function<void(renderer::GeometryRenderer&)>& draw_function) {
 	auto painting = std::make_shared<FunctionPainting>(draw_function);

@@ -119,6 +119,8 @@ class IpeRenderer : public GeometryRenderer {
 	void setHorizontalTextAlignment(HorizontalTextAlignment alignment) override;
 	void setVerticalTextAlignment(VerticalTextAlignment alignment) override;
 
+	void setPreamble(const std::string& preamble);
+
 	void addPainting(const std::function<void(renderer::GeometryRenderer&)>& draw_function);
 	void addPainting(const std::function<void(renderer::GeometryRenderer&)>& draw_function, const std::string& name);
 	void addPainting(const std::shared_ptr<GeometryPainting>& painting);
@@ -172,6 +174,8 @@ class IpeRenderer : public GeometryRenderer {
 	int m_layer;
 	/// The index of the Ipe page a painting will get drawn to.
 	int m_pageIndex = 0;
+	/// Latex preamble
+	std::string m_preamble;
 };
 
 } // namespace cartocrow::renderer
