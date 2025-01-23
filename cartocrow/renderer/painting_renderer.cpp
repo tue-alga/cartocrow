@@ -31,6 +31,8 @@ void PaintingRenderer::paint(GeometryRenderer& renderer) const {
 			renderer.draw(std::get<Point<Inexact>>(object));
 		} else if (std::holds_alternative<PolygonWithHoles<Inexact>>(object)) {
 			renderer.draw(std::get<PolygonWithHoles<Inexact>>(object));
+		} else if (std::holds_alternative<PolygonSet<Inexact>>(object)) {
+			renderer.draw(std::get<PolygonSet<Inexact>>(object));
 		} else if (std::holds_alternative<Circle<Inexact>>(object)) {
 			renderer.draw(std::get<Circle<Inexact>>(object));
 		} else if (std::holds_alternative<BezierSpline>(object)) {
@@ -39,6 +41,8 @@ void PaintingRenderer::paint(GeometryRenderer& renderer) const {
 			renderer.draw(std::get<Line<Inexact>>(object));
 		} else if (std::holds_alternative<Ray<Inexact>>(object)) {
 			renderer.draw(std::get<Ray<Inexact>>(object));
+		} else if (std::holds_alternative<Halfplane<Inexact>>(object)) {
+			renderer.draw(std::get<Halfplane<Inexact>>(object));
 		} else if (std::holds_alternative<RenderPath>(object)) {
 			renderer.draw(std::get<RenderPath>(object));
 		} else if (std::holds_alternative<Label>(object)) {
@@ -47,7 +51,14 @@ void PaintingRenderer::paint(GeometryRenderer& renderer) const {
 			Style style = std::get<Style>(object);
 			renderer.setFill(style.m_fillColor);
 			renderer.setFillOpacity(style.m_fillOpacity);
-			renderer.setStroke(style.m_strokeColor, style.m_strokeWidth);
+			renderer.setStroke(style.m_strokeColor, style.m_strokeWidth, style.m_absoluteWidth);
+			renderer.setStrokeOpacity(style.m_strokeOpacity);
+			renderer.setClipping(style.m_clip);
+			renderer.setClipPath(style.m_clipPath);
+			renderer.setHorizontalTextAlignment(style.m_horizontalTextAlignment);
+			renderer.setVerticalTextAlignment(style.m_verticalTextAlignment);
+			renderer.setLineCap(style.m_lineCap);
+			renderer.setLineJoin(style.m_lineJoin);
 			renderer.setMode(style.m_mode);
 		}
 	}
@@ -62,6 +73,7 @@ void PaintingRenderer::draw(const PolygonWithHoles<Inexact>& p) {
 }
 
 void PaintingRenderer::draw(const PolygonSet<Inexact>& p) {
+	m_objects.push_back(p);
 }
 
 void PaintingRenderer::draw(const Circle<Inexact>& c) {
@@ -80,9 +92,8 @@ void PaintingRenderer::draw(const Ray<Inexact>& r) {
 	m_objects.push_back(r);
 }
 
-// todo
 void PaintingRenderer::draw(const Halfplane<Inexact>& h) {
-	throw std::runtime_error("Not implemented");
+	m_objects.push_back(h);
 }
 
 void PaintingRenderer::draw(const RenderPath& p) {
@@ -94,12 +105,12 @@ void PaintingRenderer::drawText(const Point<Inexact>& p, const std::string& text
 }
 
 void PaintingRenderer::pushStyle() {
-	//m_styleStack.push(m_style);
+	m_styleStack.push(m_style);
 }
 
 void PaintingRenderer::popStyle() {
-	//m_style = m_styleStack.top();
-	//m_styleStack.pop();
+	m_style = m_styleStack.top();
+	m_styleStack.pop();
 }
 
 void PaintingRenderer::setMode(int mode) {
@@ -129,12 +140,27 @@ void PaintingRenderer::setFillOpacity(int alpha) {
 	m_objects.push_back(m_style);
 }
 
-// todo
-void PaintingRenderer::setClipPath(const RenderPath& clipPath) {}
-void PaintingRenderer::setClipping(bool enable) {}
-void PaintingRenderer::setLineJoin(LineJoin lineJoin) {}
-void PaintingRenderer::setLineCap(LineCap lineCap) {}
-void PaintingRenderer::setHorizontalTextAlignment(HorizontalTextAlignment alignment) {}
-void PaintingRenderer::setVerticalTextAlignment(VerticalTextAlignment alignment) {}
+void PaintingRenderer::setClipPath(const RenderPath& clipPath) {
+	m_style.m_clipPath = clipPath;
+}
 
+void PaintingRenderer::setClipping(bool enable) {
+	m_style.m_clip = enable;
+}
+
+void PaintingRenderer::setLineJoin(LineJoin lineJoin) {
+	m_style.m_lineJoin = lineJoin;
+}
+
+void PaintingRenderer::setLineCap(LineCap lineCap) {
+	m_style.m_lineCap = lineCap;
+}
+
+void PaintingRenderer::setHorizontalTextAlignment(HorizontalTextAlignment alignment) {
+	m_style.m_horizontalTextAlignment = alignment;
+}
+
+void PaintingRenderer::setVerticalTextAlignment(VerticalTextAlignment alignment) {
+	m_style.m_verticalTextAlignment = alignment;
+}
 } // namespace cartocrow::renderer

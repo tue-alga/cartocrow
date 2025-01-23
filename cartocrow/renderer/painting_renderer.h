@@ -80,13 +80,26 @@ class PaintingRenderer : public GeometryPainting, public GeometryRenderer {
 		Color m_fillColor = Color{0, 102, 203};
 		/// The opacity of filled shapes.
 		double m_fillOpacity = 255;
+		/// The current clip path
+		RenderPath m_clipPath;
+		/// Clipping enabled?
+		bool m_clip = false;
+		/// Current line join.
+		LineJoin m_lineJoin = RoundJoin;
+		/// Current line cap.
+		LineCap m_lineCap = RoundCap;
+		/// Horizontal text alignment
+		HorizontalTextAlignment m_horizontalTextAlignment = AlignHCenter;
+		/// Vertical text alignment
+		VerticalTextAlignment m_verticalTextAlignment = AlignVCenter;
 	};
 	using Label = std::pair<Point<Inexact>, std::string>;
 	using DrawableObject =
-	    std::variant<Point<Inexact>, PolygonWithHoles<Inexact>, Circle<Inexact>, BezierSpline,
-	                 Line<Inexact>, Ray<Inexact>, RenderPath, Label, Style>;
+	    std::variant<Point<Inexact>, PolygonWithHoles<Inexact>, PolygonSet<Inexact>, Circle<Inexact>, BezierSpline,
+	                 Line<Inexact>, Ray<Inexact>, Halfplane<Inexact>, RenderPath, Label, Style>;
 	std::vector<DrawableObject> m_objects;
 	Style m_style;
+	std::stack<Style> m_styleStack;
 };
 
 } // namespace cartocrow::renderer
