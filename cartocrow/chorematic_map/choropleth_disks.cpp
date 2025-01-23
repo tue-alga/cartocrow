@@ -91,13 +91,14 @@ std::vector<BinDisk> fitDisks(const Choropleth& choropleth, const WeightedRegion
 
 			auto& arr = choropleth.m_arr;
 
-			binDisks.back().score = totalWeight(*circle, *arr, regionWeight);
+			double normalizer = CGAL::to_double((positiveArea * negativeArea) / totalArea);
+			binDisks.back().score = totalWeight(*circle, *arr, regionWeight) / normalizer;
 
             if (heuristic) {
                 double areaPerPoint = (CGAL::to_double(positiveArea) + CGAL::to_double(negativeArea)) / sample.m_points.size();
                 double deltaRadius = sqrt(areaPerPoint) * 2;
                 auto [bDisk, bScore] = perturbDiskRadius(binDisks.back().disk.value(), binDisks.back().score.value(),
-                                                         *arr, regionWeight, deltaRadius, 20);
+                                                         *arr, regionWeight, deltaRadius, 20, normalizer);
                 binDisks.back().disk = bDisk;
                 binDisks.back().score = bScore;
             }
@@ -114,7 +115,8 @@ perturbDiskRadius(const GeneralCircle<Exact>& generalDisk,
                   const RegionArrangement& arr,
                   const std::unordered_map<std::string, double>& regionWeight,
                   double maxDeltaRadius,
-                  int iterations) {
+                  int iterations,
+                  double normalizer) {
 	if (generalDisk.is_halfplane()) {
 		return {generalDisk, score};
 	}
@@ -124,7 +126,7 @@ perturbDiskRadius(const GeneralCircle<Exact>& generalDisk,
 	for (int i = 1; i <= iterations; ++i) {
         double r = sqrt(CGAL::to_double(disk.squared_radius())) + i * maxDeltaRadius / iterations;
 		Circle<Exact> diskP(bestDisk.center(), r * r);
-		auto scoreP = totalWeight(diskP, arr, regionWeight);
+		auto scoreP = totalWeight(diskP, arr, regionWeight) / normalizer;
 		if (scoreP > bestScore) {
 			bestDisk = diskP;
 			bestScore = scoreP;

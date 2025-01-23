@@ -22,7 +22,8 @@ perturbDiskRadius(const GeneralCircle<Exact>& disk,
 				  const RegionArrangement& arr,
 				  const std::unordered_map<std::string, double>& regionWeight,
 				  double maxDeltaRadius,
-				  int iterations);
+				  int iterations,
+                  double normalizer);
 }
 
 #endif //CARTOCROW_CHOROPLETH_DISKS_H
