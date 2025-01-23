@@ -1,0 +1,50 @@
+{
+  "type": "simplesets",
+  "points": "diseasome.txt",
+  "generalSettings" : {
+    "pointSize": 5.204,
+    "inflectionLimit": 2,
+    "maxBendAngle": 3.1415,
+    "maxTurnAngle": 1.22
+  },
+  "drawSettings" : {
+    "colors": [
+      "0xB9E1EE",
+      "0x9AC019",
+      "0xCD6814",
+      "0xE53389",
+      "0xC1BC56",
+      "0x923B8B",
+      "0xFBD2AA",
+      "0x999999",
+      "0xFECD0F",
+      "0xCB9A03",
+      "0xF3983B",
+      "0x4B8EC7",
+      "0x2E9A67",
+      "0xE95937",
+      "0xF8EE82",
+      "0xE74646",
+      "0xCBBC9D",
+      "0x6699CD",
+      "0x6FC4C6",
+      "0xF1979A",
+      "0x8F5A9C",
+      "0xBB3087"
+    ],
+    "whiten": 0.7
+  },
+  "partitionSettings": {
+    "banks": true,
+    "islands": true,
+    "regularityDelay": true,
+    "intersectionDelay": false,
+    "admissibleRadiusFactor": 0.5
+  },
+  "computeDrawingSettings": {
+    "cutoutRadiusFactor": 0.675,
+    "smooth": true,
+    "smoothingRadiusFactor": 0.2
+  },
+  "cover" : 4.7
+}

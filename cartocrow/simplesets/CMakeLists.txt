@@ -45,6 +45,7 @@ add_subdirectory(helpers/cavc)
 add_library(simplesets ${SOURCES})
 target_link_libraries(simplesets
 	PUBLIC core
+		   renderer
 )
 
 cartocrow_install_module(simplesets)

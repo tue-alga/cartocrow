@@ -27,6 +27,8 @@ target_link_libraries(
     necklace_map
     flow_map
     simplification
+    isoline_simplification
+    simplesets
     chorematic_map
 )
 
