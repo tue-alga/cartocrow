@@ -41,11 +41,17 @@ void ChoroplethPainting::paint(GeometryRenderer& renderer) const {
 		renderer.setFill(color);
 		auto poly = approximate(face_to_polygon_with_holes<Exact>(fit));
 		renderer.draw(transform(m_options.transformation, poly));
-		if (m_options.drawLabels) {
+	}
+	if (m_options.drawLabels) {
+		for (auto fit = arr.faces_begin(); fit != arr.faces_end(); ++fit) {
+			if (!fit->has_outer_ccb())
+				continue;
+			auto region = fit->data();
+			auto poly = approximate(face_to_polygon_with_holes<Exact>(fit));
 			auto c = centroid(poly);
 			renderer.setMode(GeometryRenderer::stroke);
 			renderer.setStroke(Color{0, 0, 0}, m_options.strokeWidth);
-            auto label = fit->data().empty() ? "empty" : fit->data();
+			auto label = fit->data().empty() ? "empty" : fit->data();
 			renderer.drawText(c.transform(m_options.transformation), label);
 		}
 	}
