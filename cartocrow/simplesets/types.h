@@ -1,5 +1,5 @@
-#ifndef CARTOCROW_TYPES_H
-#define CARTOCROW_TYPES_H
+#ifndef CARTOCROW_SIMPLESETS_TYPES_H
+#define CARTOCROW_SIMPLESETS_TYPES_H
 
 #include "../core/core.h"
 #include "../core/cs_types.h"
@@ -20,4 +20,4 @@ T squared(T x) {
 }
 }
 
-#endif //CARTOCROW_TYPES_H
+#endif //CARTOCROW_SIMPLESETS_TYPES_H
