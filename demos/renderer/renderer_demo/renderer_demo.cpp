@@ -93,7 +93,7 @@ RendererDemo::RendererDemo() {
 
 	QPushButton* zoomButton = new QPushButton("Zoom to shapes");
 	connect(zoomButton, &QPushButton::clicked, [&]() {
-		m_renderer->fitInView(Box(-250, -50, 250, 50));
+		m_renderer->fitInView(Box(-250, -50, 350, 50));
 	});
 	settingsLayout->addWidget(zoomButton, 2, 0);
 }
