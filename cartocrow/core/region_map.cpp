@@ -85,6 +85,23 @@ RegionMap ipeToRegionMap(const std::filesystem::path& file, bool labelAtCentroid
         } else {
             std::optional<size_t> labelId = findLabelInside(shape, labels);
             if (!labelId.has_value()) {
+				std::vector<PolygonWithHoles<Exact>> pwhs;
+				shape.polygons_with_holes(std::back_inserter(pwhs));
+				for (const auto& pwh : pwhs) {
+					std::cout << "Polygon: outer" << std::endl;
+					for (const auto& v : pwh.outer_boundary().vertices()) {
+						std::cout << v << " ";
+					}
+					std::cout << std::endl;
+
+					for (const auto& h : pwh.holes()) {
+						std::cout << "Polygon: hole" << std::endl;
+						for (const auto& v : h.vertices()) {
+							std::cout << v << " ";
+						}
+						std::cout << std::endl;
+					}
+				}
                 throw std::runtime_error("Encountered region without a label");
             }
             labels[labelId.value()].matched = true;
