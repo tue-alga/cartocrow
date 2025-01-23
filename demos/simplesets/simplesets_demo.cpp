@@ -23,6 +23,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "cartocrow/core/cs_polyline_helpers.h"
 #include "cartocrow/core/ipe_reader.h"
 #include "cartocrow/renderer/ipe_renderer.h"
+#include "cartocrow/renderer/painting_renderer.h"
 #include "cartocrow/simplesets/dilated/dilated_poly.h"
 #include "cartocrow/simplesets/drawing_algorithm.h"
 #include "cartocrow/simplesets/helpers/approximate_convex_hull.h"
@@ -227,8 +228,10 @@ void SimpleSetsDemo::computeDrawing(double cover) {
 	}
 	if (wellSeparated) {
 		m_dpd = std::make_shared<DilatedPatternDrawing>(m_partition, m_gs, m_cds);
-		auto ap = std::make_shared<SimpleSetsPainting>(*m_dpd, m_ds);
-		m_renderer->addPainting(ap, "Drawing");
+		auto ssp = SimpleSetsPainting(*m_dpd, m_ds);
+		auto paintingRenderer = std::make_shared<PaintingRenderer>();
+		ssp.paint(*paintingRenderer);
+		m_renderer->addPainting(paintingRenderer, "Drawing");
 	} else {
 		std::cerr << "Points of different category are too close together; not computing a drawing." << std::endl;
 	}
