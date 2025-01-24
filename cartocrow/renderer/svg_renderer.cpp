@@ -151,43 +151,49 @@ void SvgRenderer::draw(const BezierSpline& s) {
 	std::cerr << "The SVG renderer does not support BezierSplines; ignoring\n";
 }
 
+std::string renderPathToSVGCommands(const RenderPath& p) {
+    std::stringstream ss;
+
+    Point<Inexact> from;
+    for (RenderPath::Command c : p.commands()) {
+        if (std::holds_alternative<RenderPath::MoveTo>(c)) {
+            Point<Inexact> to = std::get<RenderPath::MoveTo>(c).m_to;
+            ss << "M " << to.x() << " " << -to.y() << " ";
+            from = to;
+
+        } else if (std::holds_alternative<RenderPath::LineTo>(c)) {
+            Point<Inexact> to = std::get<RenderPath::LineTo>(c).m_to;
+            ss << "L " << to.x() << " " << -to.y() << " ";
+            from = to;
+
+        } else if (std::holds_alternative<RenderPath::ArcTo>(c)) {
+            Point<Inexact> center = std::get<RenderPath::ArcTo>(c).m_center;
+            Point<Inexact> to = std::get<RenderPath::ArcTo>(c).m_to;
+            bool clockwise = std::get<RenderPath::ArcTo>(c).m_clockwise;
+            double radius = sqrt((center - to).squared_length());
+            bool centerOnLeft = CGAL::orientation(from, to, center) == CGAL::LEFT_TURN;
+            double rotation = 0;  // ellipse rotation; irrelevant because we draw circles only
+            int largeArc = (centerOnLeft == clockwise) ? 1 : 0;
+            int sweep = clockwise ? 1 : 0;
+            ss << "A " << radius << " " << radius << " " << rotation << " " << largeArc << " "
+                  << sweep << " " << to.x() << " " << -to.y() << " ";
+            from = to;
+
+        } else if (std::holds_alternative<RenderPath::Close>(c)) {
+            ss << "Z ";
+        }
+    }
+
+    return ss.str();
+}
+
 void SvgRenderer::draw(const RenderPath& p) {
-	m_out << "<path " << getStyle() << " d=\"";
-	std::vector<Point<Inexact>> verticesToDraw;
-	Point<Inexact> from;
-	for (RenderPath::Command c : p.commands()) {
-		if (std::holds_alternative<RenderPath::MoveTo>(c)) {
-			Point<Inexact> to = std::get<RenderPath::MoveTo>(c).m_to;
-			m_out << "M " << to.x() << " " << -to.y() << " ";
-			verticesToDraw.push_back(to);
-			from = to;
+    m_out << "<path " << getStyle() << " d=\"";
+    m_out << renderPathToSVGCommands(p);
+    m_out << "\"/>\n";
 
-		} else if (std::holds_alternative<RenderPath::LineTo>(c)) {
-			Point<Inexact> to = std::get<RenderPath::LineTo>(c).m_to;
-			m_out << "L " << to.x() << " " << -to.y() << " ";
-			verticesToDraw.push_back(to);
-			from = to;
-
-		} else if (std::holds_alternative<RenderPath::ArcTo>(c)) {
-			Point<Inexact> center = std::get<RenderPath::ArcTo>(c).m_center;
-			Point<Inexact> to = std::get<RenderPath::ArcTo>(c).m_to;
-			bool clockwise = std::get<RenderPath::ArcTo>(c).m_clockwise;
-			double radius = sqrt((center - to).squared_length());
-			bool centerOnLeft = CGAL::orientation(from, to, center) == CGAL::LEFT_TURN;
-			double rotation = 0;  // ellipse rotation; irrelevant because we draw circles only
-			int largeArc = (centerOnLeft == clockwise) ? 1 : 0;
-			int sweep = clockwise ? 1 : 0;
-			m_out << "A " << radius << " " << radius << " " << rotation << " " << largeArc << " "
-			      << sweep << " " << to.x() << " " << -to.y() << " ";
-			verticesToDraw.push_back(to);
-			from = to;
-
-		} else if (std::holds_alternative<RenderPath::Close>(c)) {
-			m_out << "Z ";
-		}
-	}
-	m_out << "\"/>\n";
-
+    std::vector<Point<Inexact>> verticesToDraw;
+    p.vertices(std::back_inserter(verticesToDraw));
 	if (m_style.m_mode & vertices) {
 		for (const Point<Inexact>& vertex : verticesToDraw) {
 			draw(vertex);
@@ -196,7 +202,9 @@ void SvgRenderer::draw(const RenderPath& p) {
 }
 
 void SvgRenderer::drawText(const Point<Inexact>& p, const std::string& text) {
-	m_out << "<text text-anchor=\"middle\" dominant-baseline=\"middle\" x=\"" << p.x() << "\" y=\""
+	m_out << "<text text-anchor=\"" << m_style.m_horizontalTextAlignment
+          << "\" dominant-baseline=\"" << m_style.m_verticalTextAlignment
+          << "\" x=\"" << p.x() << "\" y=\""
 	      << -p.y() << "\">" << escapeForSvg(text) << "</text>\n";
 }
 
@@ -244,21 +252,25 @@ std::string SvgRenderer::convertPolygonToCurve(const Polygon<Inexact>& p) const 
 }
 
 std::string SvgRenderer::getStyle() const {
+    std::string clip = (!m_style.m_clipping || !m_style.m_clipPath.has_value()) ? "" : ("clip-path=\"url(#clipPath_" + std::to_string(*(m_style.m_clipPath)) + ")\" ");
 	if ((m_style.m_mode & GeometryRenderer::fill) && (m_style.m_mode & GeometryRenderer::stroke)) {
-		return "fill=\"" + m_style.m_fillColor +
+		return clip +
+               "fill=\"" + m_style.m_fillColor +
 		       "\" fill-opacity=\"" + std::to_string(m_style.m_fillOpacity) +
 		       "\" stroke=\"" + m_style.m_strokeColor +
-		       "\" stroke-linecap=\"round" +
-		       "\" stroke-linejoin=\"round" +
+		       "\" stroke-linecap=\"" + m_style.m_lineCap +
+		       "\" stroke-linejoin=\"" + m_style.m_lineJoin +
 		       "\" stroke-opacity=\"" + std::to_string(m_style.m_strokeOpacity) +
 		       "\" stroke-width=\"" + std::to_string(m_style.m_strokeWidth) + "\"";
 	} else if (m_style.m_mode & GeometryRenderer::fill) {
-		return "fill=\"" + m_style.m_fillColor +
+		return clip +
+               "fill=\"" + m_style.m_fillColor +
 		       "\" fill-opacity=\"" + std::to_string(m_style.m_fillOpacity) + "\"";
 	} else {
-		return "fill=\"none\" stroke=\"" + m_style.m_strokeColor +
-		       "\" stroke-linecap=\"round" +
-		       "\" stroke-linejoin=\"round" +
+		return clip +
+               "fill=\"none\" stroke=\"" + m_style.m_strokeColor +
+                "\" stroke-linecap=\"" + m_style.m_lineCap +
+                "\" stroke-linejoin=\"" + m_style.m_lineJoin +
 		       "\" stroke-opacity=\"" + std::to_string(m_style.m_strokeOpacity) +
 		       "\" stroke-width=\"" + std::to_string(m_style.m_strokeWidth) + "\"";
 	}
@@ -300,34 +312,90 @@ std::string SvgRenderer::escapeForSvg(const std::string& text) const {
 	return result.str();
 }
 
-// todo
 void SvgRenderer::setClipPath(const RenderPath& clipPath) {
-
+    m_out << "<clipPath id=\"clipPath_" << m_clipPathId << "\">";
+    m_out << "<path " << " d=\"";
+    m_out << renderPathToSVGCommands(clipPath);
+    m_out << "\"/>\n";
+    m_out << "</clipPath>";
+    m_style.m_clipPath = m_clipPathId;
+    ++m_clipPathId;
 }
 
-// todo
 void SvgRenderer::setClipping(bool enable) {
-
+    m_style.m_clipping = enable;
 }
 
-// todo
 void SvgRenderer::setLineJoin(LineJoin lineJoin) {
-
+    switch (lineJoin) {
+        case RoundJoin: {
+            m_style.m_lineJoin = "round";
+            break;
+        }
+        case BevelJoin: {
+            m_style.m_lineJoin = "bevel";
+            break;
+        }
+        case MiterJoin: {
+            m_style.m_lineJoin = "miter";
+            break;
+        }
+    }
 }
 
-// todo
 void SvgRenderer::setLineCap(LineCap lineCap) {
-
+    switch (lineCap) {
+        case RoundCap: {
+            m_style.m_lineCap = "round";
+            break;
+        }
+        case ButtCap: {
+            m_style.m_lineCap = "butt";
+            break;
+        }
+        case SquareCap: {
+            m_style.m_lineCap = "square";
+            break;
+        }
+    }
 }
 
-// todo
 void SvgRenderer::setHorizontalTextAlignment(HorizontalTextAlignment alignment) {
-
+    switch (alignment) {
+        case AlignHCenter: {
+            m_style.m_horizontalTextAlignment = "middle";
+            break;
+        }
+        case AlignLeft: {
+            m_style.m_horizontalTextAlignment = "start";
+            break;
+        }
+        case AlignRight: {
+            m_style.m_horizontalTextAlignment = "end";
+            break;
+        }
+    }
 }
 
-// todo
 void SvgRenderer::setVerticalTextAlignment(VerticalTextAlignment alignment) {
-
+    switch (alignment) {
+        case AlignVCenter: {
+            m_style.m_verticalTextAlignment = "middle";
+            break;
+        }
+        case AlignTop: {
+            m_style.m_verticalTextAlignment = "hanging";
+            break;
+        }
+        case AlignBottom: {
+            m_style.m_verticalTextAlignment = "ideographic";
+            break;
+        }
+        case AlignBaseline: {
+            m_style.m_verticalTextAlignment = "alphabetic";
+            break;
+        }
+    }
 }
 
 } // namespace cartocrow::renderer

@@ -18,6 +18,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include "render_path.h"
+#include "ipe_reader.h"
 
 namespace cartocrow::renderer {
 
@@ -52,4 +53,24 @@ RenderPath& RenderPath::operator+=(const RenderPath& other) {
 	std::copy(other.m_commands.begin(), other.m_commands.end(), std::back_inserter(m_commands));
 	return *this;
 }
+
+renderer::RenderPath transform(const CGAL::Aff_transformation_2<Inexact>& t, const RenderPath& p) {
+    RenderPath tp;
+    for (auto& cmd : p.commands()) {
+        if (auto* c = std::get_if<RenderPath::MoveTo>(&cmd)) {
+            tp.moveTo(c->m_to.transform(t));
+        } else if (auto* c = std::get_if<RenderPath::LineTo>(&cmd)) {
+            tp.lineTo(c->m_to.transform(t));
+        } else if (auto* c = std::get_if<RenderPath::ArcTo>(&cmd)) {
+            tp.arcTo(c->m_center.transform(t), c->m_clockwise, c->m_to.transform(t)); // todo check clockwise
+        } else if (auto* c = std::get_if<RenderPath::Close>(&cmd)) {
+            tp.close();
+        } else {
+            throw std::runtime_error("Unknown render path command");
+        }
+    }
+    return tp;
+}
+
+
 } // namespace cartocrow::renderer

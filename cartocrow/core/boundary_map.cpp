@@ -6,7 +6,7 @@
 #include <CGAL/enum.h>
 #include <stdexcept>
 
-#include "ipe_reader.h"
+#include "cartocrow/renderer/ipe_reader.h"
 
 namespace cartocrow {
 

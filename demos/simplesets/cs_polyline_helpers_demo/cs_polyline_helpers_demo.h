@@ -2,7 +2,7 @@
 #define CARTOCROW_CS_POLYLINE_HELPERS_DEMO_H
 
 #include "cartocrow/core/core.h"
-#include "cartocrow/core/ipe_reader.h"
+#include "cartocrow/renderer/ipe_reader.h"
 #include "cartocrow/renderer/geometry_painting.h"
 #include "cartocrow/renderer/geometry_widget.h"
 #include "cartocrow/simplesets/types.h"

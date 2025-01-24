@@ -50,6 +50,18 @@ struct SvgRendererStyle {
 	std::string m_fillColor = "#0066cb";
 	/// The opacity of filled shapes.
 	double m_fillOpacity = 1;
+    /// Whether shapes are clipped by the current clip path.
+    bool m_clipping = false;
+    /// The index of the current clip path, if any.
+    std::optional<int> m_clipPath;
+    /// Line cap.
+    std::string m_lineCap = "round";
+    /// Line join.
+    std::string m_lineJoin = "round";
+    /// Horizontal text alignment.
+    std::string m_horizontalTextAlignment = "middle";
+    /// Vertical text alignment.
+    std::string m_verticalTextAlignment = "middle";
 };
 
 /// SVG specialization of the GeometryRenderer.
@@ -123,6 +135,8 @@ class SvgRenderer : public GeometryRenderer {
 	/// A stack of drawing styles, used by \ref pushStyle() and \ref popStyle()
 	/// to store previously pushed styles.
 	std::stack<SvgRendererStyle> m_styleStack;
+    /// Clip path index; the number of clip paths already added to the SVG.
+    int m_clipPathId = 0;
 };
 
 } // namespace cartocrow::renderer

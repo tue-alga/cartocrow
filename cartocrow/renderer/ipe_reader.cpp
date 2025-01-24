@@ -19,19 +19,22 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "ipe_reader.h"
 
-#include "bezier.h"
+#include "cartocrow/core/bezier.h"
 
 #include <CGAL/Boolean_set_operations_2/Gps_polygon_validation.h>
 
 #include <ipebase.h>
 #include <ipegeo.h>
 #include <ipeshape.h>
+#include <ipepath.h>
 
 #include <fstream>
 #include <memory>
 #include <optional>
 #include <stdexcept>
 #include <string>
+
+using namespace cartocrow::renderer;
 
 namespace cartocrow {
 
@@ -133,4 +136,68 @@ BezierSpline IpeReader::convertPathToSpline(const ipe::SubPath& path, const ipe:
 	return spline;
 }
 
+RenderPath IpeReader::convertShapeToRenderPath(const ipe::Shape& shape, const ipe::Matrix& matrix) {
+    RenderPath renderPath;
+    for (int i = 0; i < shape.countSubPaths(); ++i) {
+        if (shape.subPath(i)->type() != ipe::SubPath::ECurve) {
+            throw std::runtime_error("Encountered closed ellipse or B-spline; unimplemented");
+        }
+        const ipe::Curve* curve = shape.subPath(i)->asCurve();
+        for (int j = 0; j < curve->countSegments(); ++j) {
+            ipe::CurveSegment segment = curve->segment(j);
+            Point<Inexact> last;
+            if (segment.type() == ipe::CurveSegment::ESegment || segment.type() == ipe::CurveSegment::EArc) {
+                if (j == 0) {
+                    ipe::Vector v = matrix * segment.cp(0);
+                    Point<Inexact> pt(v.x, v.y);
+                    last = pt;
+                    renderPath.moveTo(pt);
+                }
+                ipe::Vector v = matrix * segment.last();
+                Point<Inexact> pt(v.x, v.y);
+                if (pt != last) {
+                    last = pt;
+                    if (segment.type() == ipe::CurveSegment::ESegment) {
+                        renderPath.lineTo(pt);
+                    } else {
+                        auto m = segment.matrix();
+                        auto clockwise = m.a[3] < 0;
+                        auto center = matrix * ipe::Vector(m.a[4], m.a[5]);
+                        renderPath.arcTo({center.x, center.y}, clockwise, pt);
+                    }
+                }
+            }
+        }
+
+        renderPath.close();
+    }
+    return renderPath;
+}
+
+RenderPath IpeReader::loadIpePath(const std::filesystem::path& ipeFile) {
+    std::shared_ptr<ipe::Document> document = IpeReader::loadIpeFile(ipeFile);
+
+    if (document->countPages() == 0) {
+        throw std::runtime_error("Cannot read map from an Ipe file with no pages");
+    } else if (document->countPages() > 1) {
+        throw std::runtime_error("Cannot read map from an Ipe file with more than one page");
+    }
+
+    ipe::Page* page = document->page(0);
+
+    for (int i = 0; i < page->count(); ++i) {
+        ipe::Object* object = page->object(i);
+        ipe::Object::Type type = object->type();
+        if (type != ipe::Object::Type::EPath) {
+            continue;
+        }
+        ipe::Path* path = object->asPath();
+        ipe::Matrix matrix = path->matrix();
+        ipe::Shape ipeShape = path->shape();
+        auto renderPath = convertShapeToRenderPath(ipeShape, matrix);
+        return renderPath;
+    }
+
+    throw std::runtime_error("Could not find a path in the ipe file");
+}
 } // namespace cartocrow

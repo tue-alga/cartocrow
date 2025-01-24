@@ -20,7 +20,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #ifndef CARTOCROW_IPE_ISOLINES_H
 #define CARTOCROW_IPE_ISOLINES_H
 
-#include "../core/ipe_reader.h"
+#include "cartocrow/renderer/ipe_reader.h"
 #include "types.h"
 
 namespace cartocrow::isoline_simplification {

@@ -6,7 +6,8 @@
 #include "cartocrow/chorematic_map/choropleth_disks.h"
 #include "cartocrow/core/arrangement_helpers.h"
 #include "cartocrow/core/region_arrangement.h"
-#include "cartocrow/core/ipe_reader.h"
+#include "cartocrow/renderer/ipe_reader.h"
+#include "cartocrow/core/transform_helpers.h"
 #include "cartocrow/renderer/ipe_renderer.h"
 
 #include <CGAL/Arr_landmarks_point_location.h>
@@ -16,122 +17,6 @@ using namespace cartocrow::chorematic_map;
 using namespace cartocrow::renderer;
 
 using LandmarksPl = CGAL::Arr_landmarks_point_location<RegionArrangement>;
-
-RenderPath& operator<<(RenderPath& path, const Polygon<Inexact>& p) {
-    for (auto vertex = p.vertices_begin(); vertex != p.vertices_end(); vertex++) {
-        if (vertex == p.vertices_begin()) {
-            path.moveTo(*vertex);
-        } else {
-            path.lineTo(*vertex);
-        }
-    }
-    path.close();
-    return path;
-}
-
-PolygonWithHoles<Inexact> transform(const CGAL::Aff_transformation_2<Inexact>& t, const PolygonWithHoles<Inexact>& pwh) {
-    Polygon<Inexact> outerT;
-    if (!pwh.is_unbounded()) {
-        outerT = transform(t, pwh.outer_boundary());
-    }
-    std::vector<Polygon<Inexact>> holesT;
-    for (const auto& h : pwh.holes()) {
-        holesT.push_back(transform(t, h));
-    }
-    return {outerT, holesT.begin(), holesT.end()};
-}
-
-RenderPath convertShapeToRenderPath(const ipe::Shape& shape, const ipe::Matrix& matrix) {
-	RenderPath renderPath;
-	for (int i = 0; i < shape.countSubPaths(); ++i) {
-		if (shape.subPath(i)->type() != ipe::SubPath::ECurve) {
-			throw std::runtime_error("Encountered closed ellipse or B-spline; unimplemented");
-		}
-		const ipe::Curve* curve = shape.subPath(i)->asCurve();
-		for (int j = 0; j < curve->countSegments(); ++j) {
-			ipe::CurveSegment segment = curve->segment(j);
-			Point<Inexact> last;
-			if (segment.type() == ipe::CurveSegment::ESegment || segment.type() == ipe::CurveSegment::EArc) {
-				if (j == 0) {
-					ipe::Vector v = matrix * segment.cp(0);
-					Point<Inexact> pt(v.x, v.y);
-					last = pt;
-					renderPath.moveTo(pt);
-				}
-				ipe::Vector v = matrix * segment.last();
-				Point<Inexact> pt(v.x, v.y);
-				if (pt != last) {
-					last = pt;
-					if (segment.type() == ipe::CurveSegment::ESegment) {
-						renderPath.lineTo(pt);
-					} else {
-						auto m = segment.matrix();
-						auto clockwise = m.a[3] < 0;
-						auto center = matrix * ipe::Vector(m.a[4], m.a[5]);
-						renderPath.arcTo({center.x, center.y}, clockwise, pt);
-					}
-				}
-			}
-		}
-
-		renderPath.close();
-	}
-	return renderPath;
-}
-
-renderer::RenderPath transform(const CGAL::Aff_transformation_2<Inexact>& t, const RenderPath& p) {
-	RenderPath tp;
-	for (auto& cmd : p.commands()) {
-		if (auto* c = std::get_if<RenderPath::MoveTo>(&cmd)) {
-			tp.moveTo(c->m_to.transform(t));
-		} else if (auto* c = std::get_if<RenderPath::LineTo>(&cmd)) {
-			tp.lineTo(c->m_to.transform(t));
-		} else if (auto* c = std::get_if<RenderPath::ArcTo>(&cmd)) {
-			tp.arcTo(c->m_center.transform(t), c->m_clockwise, c->m_to.transform(t)); // todo check clockwise
-		} else if (auto* c = std::get_if<RenderPath::Close>(&cmd)) {
-			tp.close();
-		} else {
-			throw std::runtime_error("Unknown render path command");
-		}
-	}
-	return tp;
-}
-
-RenderPath loadIpePath(const std::filesystem::path& ipeFile) {
-	std::shared_ptr<ipe::Document> document = IpeReader::loadIpeFile(ipeFile);
-
-	if (document->countPages() == 0) {
-		throw std::runtime_error("Cannot read map from an Ipe file with no pages");
-	} else if (document->countPages() > 1) {
-		throw std::runtime_error("Cannot read map from an Ipe file with more than one page");
-	}
-
-	ipe::Page* page = document->page(0);
-
-	for (int i = 0; i < page->count(); ++i) {
-		ipe::Object* object = page->object(i);
-		ipe::Object::Type type = object->type();
-		if (type != ipe::Object::Type::EPath) {
-			continue;
-		}
-		ipe::Path* path = object->asPath();
-		ipe::Matrix matrix = path->matrix();
-		ipe::Shape ipeShape = path->shape();
-		// interpret filled paths as regions
-		auto renderPath = convertShapeToRenderPath(ipeShape, matrix);
-		return renderPath;
-	}
-
-	throw std::runtime_error("Could not find a path in the ipe file");
-}
-
-CGAL::Aff_transformation_2<Inexact> fitInto(const Rectangle<Inexact>& toFit, const Rectangle<Inexact>& into) {
-	CGAL::Aff_transformation_2<Inexact> move1(CGAL::TRANSLATION, CGAL::ORIGIN - centroid(toFit));
-	CGAL::Aff_transformation_2<Inexact> move2(CGAL::TRANSLATION, centroid(into) - CGAL::ORIGIN);
-	CGAL::Aff_transformation_2<Inexact> scale(CGAL::SCALING, std::min(width(into) / width(toFit), height(into) / height(toFit)));
-	return move2 * scale * move1;
-//	return CGAL::IDENTITY;
-}
 
 int main() {
     std::string name = "dutch";
@@ -205,7 +90,7 @@ int main() {
 	std::optional<Color> bgFill = std::nullopt;
 	Point<Inexact> scorePos(38.69, 247.132);
 
-	RenderPath schematization = transform(sTrans * trans, loadIpePath(schematizationPath));
+	RenderPath schematization = transform(sTrans * trans, IpeReader::loadIpePath(schematizationPath));
 
     auto sampler = std::make_shared<Sampler<LandmarksPl>>(regionArr, seed, perRegion);
 
@@ -297,7 +182,8 @@ int main() {
 						    renderer.draw(
 						        approximate(c->get_circle()).orthogonal_transform(sTrans * trans));
 					    } else {
-						    throw std::runtime_error("Todo: handle halfplane");
+                            auto hp = c->get_halfplane();
+                            renderer.draw(Halfplane<Inexact>(approximate(hp.line()).transform(trans)));
 					    }
 				    }
 				    renderer.setClipping(false);
@@ -370,7 +256,6 @@ int main() {
 				    renderer.setHorizontalTextAlignment(GeometryRenderer::AlignLeft);
 				    renderer.setVerticalTextAlignment(GeometryRenderer::AlignTop);
 				    std::stringstream ss;
-				    //		  std::cout << score << " " << totalArea << " " << (score / totalArea) << std::endl;
 				    ss << std::setprecision(2) << score;
 				    renderer.setStroke(offBlack, 0.8);
 				    renderer.drawText(scorePos, ss.str());

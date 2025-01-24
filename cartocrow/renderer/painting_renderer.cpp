@@ -26,6 +26,8 @@ namespace cartocrow::renderer {
 PaintingRenderer::PaintingRenderer() {}
 
 void PaintingRenderer::paint(GeometryRenderer& renderer) const {
+    Style lastStyle;
+
 	for (auto& object : m_objects) {
 		if (std::holds_alternative<Point<Inexact>>(object)) {
 			renderer.draw(std::get<Point<Inexact>>(object));
@@ -54,12 +56,16 @@ void PaintingRenderer::paint(GeometryRenderer& renderer) const {
 			renderer.setStroke(style.m_strokeColor, style.m_strokeWidth, style.m_absoluteWidth);
 			renderer.setStrokeOpacity(style.m_strokeOpacity);
 			renderer.setClipping(style.m_clip);
-			renderer.setClipPath(style.m_clipPath);
+            if (style.m_clipPath != lastStyle.m_clipPath) {
+			    renderer.setClipPath(style.m_clipPath);
+            }
 			renderer.setHorizontalTextAlignment(style.m_horizontalTextAlignment);
 			renderer.setVerticalTextAlignment(style.m_verticalTextAlignment);
 			renderer.setLineCap(style.m_lineCap);
 			renderer.setLineJoin(style.m_lineJoin);
 			renderer.setMode(style.m_mode);
+
+            lastStyle = style;
 		}
 	}
 }
@@ -142,25 +148,31 @@ void PaintingRenderer::setFillOpacity(int alpha) {
 
 void PaintingRenderer::setClipPath(const RenderPath& clipPath) {
 	m_style.m_clipPath = clipPath;
+    m_objects.push_back(m_style);
 }
 
 void PaintingRenderer::setClipping(bool enable) {
 	m_style.m_clip = enable;
+    m_objects.push_back(m_style);
 }
 
 void PaintingRenderer::setLineJoin(LineJoin lineJoin) {
 	m_style.m_lineJoin = lineJoin;
+    m_objects.push_back(m_style);
 }
 
 void PaintingRenderer::setLineCap(LineCap lineCap) {
 	m_style.m_lineCap = lineCap;
+    m_objects.push_back(m_style);
 }
 
 void PaintingRenderer::setHorizontalTextAlignment(HorizontalTextAlignment alignment) {
 	m_style.m_horizontalTextAlignment = alignment;
+    m_objects.push_back(m_style);
 }
 
 void PaintingRenderer::setVerticalTextAlignment(VerticalTextAlignment alignment) {
 	m_style.m_verticalTextAlignment = alignment;
+    m_objects.push_back(m_style);
 }
 } // namespace cartocrow::renderer

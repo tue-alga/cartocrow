@@ -25,7 +25,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <CGAL/enum.h>
 #include <stdexcept>
 
-#include "ipe_reader.h"
+#include "cartocrow/renderer/ipe_reader.h"
 
 #include "centroid.h"
 

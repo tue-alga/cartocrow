@@ -1,6 +1,5 @@
 set(SOURCES
 	core.cpp
-	ipe_reader.cpp
 	boundary_map.cpp
 	region_arrangement.cpp
 	region_map.cpp
@@ -12,11 +11,11 @@ set(SOURCES
 	cs_polyline_helpers.cpp
 	cs_types.cpp
 	vector_helpers.cpp
+	transform_helpers.cpp
 )
 set(HEADERS
 	centroid.h
 	core.h
-	ipe_reader.h
 	boundary_map.h
 	arrangement_map.h
 	region_arrangement.h
@@ -33,11 +32,11 @@ set(HEADERS
 	cs_types.h
 	vector_helpers.h
 	halfplane.h
+	transform_helpers.h
 )
 
 add_library(core ${SOURCES})
 target_link_libraries(core
-	PUBLIC Ipe::ipelib
 	PRIVATE glog::glog
 )
 

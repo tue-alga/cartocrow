@@ -2,7 +2,7 @@
 #define CARTOCROW_PARSE_POINTS_H
 
 #include "weighted_point.h"
-#include "../core/ipe_reader.h"
+#include "cartocrow/renderer/ipe_reader.h"
 
 namespace cartocrow::chorematic_map {
 std::vector<WeightedPoint> readPointsFromIpePage(ipe::Page* page, ipe::Cascade* cascade);

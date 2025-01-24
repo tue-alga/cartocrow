@@ -170,7 +170,7 @@ voronoiMoveToCentroid(const RegionArrangement& domain, const Landmarks_pl<Region
 	return totalDistance / siteToFaces.size();
 }
 
-template <class PL>
+template <class PL = Landmarks_pl<RegionArrangement>>
 class Sampler {
   private:
 	using RegionWeight = std::unordered_map<std::string, double>;

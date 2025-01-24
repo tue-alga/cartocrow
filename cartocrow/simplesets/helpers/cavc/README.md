@@ -81,13 +81,13 @@ CavalierContours is written in C++ and makes available a C API. Here are some wr
 6. Discard all open polyline slices whose minimum distance to *pline* is less than the offset.
 7. Stitch together the remaining open polyline slices found in step 6, closing the final stitched results if *pline* is closed.
 
-The algorithm is mostly based on Liu et al. [[1]](#references) with some differences since the algorithm they describe for GCPP (general closest point pair) clipping fails for certain inputs with large offsets (or at least I am unable to make their algorithm work).
+The algorithm is mostly based on Liu et al. [[1]](#references) with some differences since the algorithm they describe for GCPP (general closest point pair) m_clipping fails for certain inputs with large offsets (or at least I am unable to make their algorithm work).
 
 The key clarifications/differences are:
 - When raw offset segments are extended to form a raw offset polyline they are always joined by an arc to form a rounded constant distance from the input polyline.
-- Dual offset clipping is only applied if input polyline is open or has self intersects, it is not required for a closed polyline with no self intersects.
+- Dual offset m_clipping is only applied if input polyline is open or has self intersects, it is not required for a closed polyline with no self intersects.
 - If the polyline is open then a circle is formed at each end point with radius equal to the offset, the intersects between those circles and the raw offset polyline are included when forming slices.
-- GCPP (general closest point pair) clipping is never performed and instead slices are formed from intersects, then they are discarded if too close to the original polyline, and finally stitched back together.
+- GCPP (general closest point pair) m_clipping is never performed and instead slices are formed from intersects, then they are discarded if too close to the original polyline, and finally stitched back together.
 - No special handling is done for adjacent segments that overlap (it is not required given the slice and stitch method).
 - Collapsing arc segments (arcs whose radius is less than the offset value) are converted into a line and specially marked for joining purposes.
 
@@ -228,7 +228,7 @@ I set out to generate tool compensated milling tool paths for profile cuts, in t
 
 In addition to papers being difficult to utilize as a pragmatic tool, most papers focus on offsetting straight segment polylines or polygons (sometimes referred to as point sequence curves) [[9][10][16]](#references). And there are a few notable open source libraries that work only on straight segment polylines as well [[11][12][13]](#references). Unfortunately if only straight segments are supported then all curves, even simple constant radius arcs, must be approximated using straight segments. This leads to an inefficient memory footprint, and additional algorithmic steps if arcs must be reconstructed from points after offsetting. Constant radius arcs are very common in CAD/CAM applications (tool compensation, tool offsetting for cleanout, part sizing, etc.), and arcs may be used to approximate other types of curves more memory efficiently than straight line segments, e.g. for Bezier curves [[14]](#references).
 
-There are a few papers on offsetting curves with arc segments [[1][15]](#references), some involve a Voronoi diagram approach [[15]](#references), and others are more similar to the approach this library takes by processing self-intersects and applying a clipping algorithm [[1]](#references). These papers do not provide an opensource reference implementation, and many of them are difficult to understand, and even more difficult to reproduce.
+There are a few papers on offsetting curves with arc segments [[1][15]](#references), some involve a Voronoi diagram approach [[15]](#references), and others are more similar to the approach this library takes by processing self-intersects and applying a m_clipping algorithm [[1]](#references). These papers do not provide an opensource reference implementation, and many of them are difficult to understand, and even more difficult to reproduce.
 
 The goal of this project is to provide a simple, direct, and pragmatic algorithm and reference implementation for polyline offsetting (supporting both lines and arcs, open and closed) for use in CAD/CAM applications. It includes the minimum computational geometry building blocks required (vectors, spatial indexing, etc.) to accomplish this goal. The code is written with the intent that it can be easily read, modified, and transcribed to other programming languages. The [interactive UI app](https://github.com/jbuckmccready/CavalierContoursDev) can be used to help understand the algorithm visually and make parts of the code easier to digest.
 

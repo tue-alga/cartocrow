@@ -16,8 +16,6 @@
 
 #include <utility>
 
-#include "parse_input.h"
-
 #include "cartocrow/core/arrangement_map.h"
 #include "cartocrow/core/arrangement_helpers.h"
 #include "cartocrow/core/centroid.h"
@@ -292,6 +290,9 @@ ChorematicMapDemo::ChorematicMapDemo() {
 
 	m_dataInfoLabel = new QLabel();
 	vLayout->addWidget(m_dataInfoLabel);
+    auto* exportDataButton = new QPushButton();
+    exportDataButton->setText("Export data");
+    vLayout->addWidget(exportDataButton);
 
 	auto* binningSettings = new QLabel("<h3>Binning</h3>");
 	vLayout->addWidget(binningSettings);
@@ -401,56 +402,23 @@ ChorematicMapDemo::ChorematicMapDemo() {
 	auto* refitButton = new QPushButton("Refit");
 	vLayout->addWidget(refitButton);
 
-//	std::filesystem::path dataPath = "data/chorematic_map/test_data.txt";
-//	std::filesystem::path mapPath = "data/chorematic_map/test_region_arrangement.ipe";
-//	auto regionData =std::make_shared<std::unordered_map<std::string, double>>(parseRegionDataFile(dataPath));
 	std::filesystem::path gpkg0 = "data/chorematic_map/hessen.gpkg";
-    std::filesystem::path gpkg1 = "data/chorematic_map/HE_NL_NUTS_TUe.gpkg";
-    std::filesystem::path gpkg2 = "data/chorematic_map/wijkenbuurten_2020_v3.gpkg";
     std::filesystem::path gpkg3 = "data/chorematic_map/wijkenbuurten_2022_v3.gpkg";
-//    std::filesystem::path dutch = "data/chorematic_map/gemeenten-2022_92959vtcs.ipe";
-//    std::filesystem::path dutch = "data/chorematic_map/gemeenten-2022_19282vtcs.ipe";
     std::filesystem::path dutch = "data/chorematic_map/gemeenten-2022_5000vtcs.ipe";
-//    std::filesystem::path dutch = "data/chorematic_map/gemeenten-2022_4959vtcs.ipe";
-//    std::filesystem::path dutch = "data/chorematic_map/gemeenten-2022_idkvtcs.ipe";
-    std::filesystem::path annulus = "data/chorematic_map/annulus.ipe";
-    std::filesystem::path annulus_data = "data/chorematic_map/annulus-data.txt";
 
-//    auto regionMap = std::make_shared<RegionMap>(ipeToRegionMap(dutch, true));
-//	std::cout << "#Regions: " << regionMap->size() << std::endl;
-//    m_regionWeightMap = regionDataMapFromGPKG(gpkg3, "gemeenten", "gemeentecode", [](const std::string& s) {
-//        return s;
-//    });
-
-
-//    auto regionMap = std::make_shared<RegionMap>(ipeToRegionMap(annulus, false));
-//    auto regionData = std::make_shared<std::unordered_map<std::string, double>>(parseRegionDataFile(annulus_data));
-
-    // Non-generalized Dutch municipalities
-//	auto regionMapDM = regionMapFromGPKG(gpkg3, "gemeenten", "gemeentecode");
-//    auto regionArrangementDM = std::make_shared<RegionArrangement>(regionMapToArrangementParallel(*regionMapDM));
-//    auto rp = std::make_shared<RegionMapPainting>(regionMapDM);
-//    IpeRenderer ipeRenderer;
-//    ipeRenderer.addPainting(rp);
-//    ipeRenderer.save("gemeenten-2022.ipe");
-
-//    m_regionWeightMap = regionDataMapFromGPKG(gpkg2, "gemeenten", "jrstatcode", [](const std::string& s) {
-//        return s.substr(4);
-//    });
-
-
-    // Dutch municipalities
-//	auto regionMap = regionMapFromGPKG(gpkg1, "NL_DP1k_LAU_1M", "LAU_ID");
-//    m_regionWeightMap = regionDataMapFromGPKG(gpkg2, "gemeenten", "jrstatcode", [](const std::string& s) {
-//        return s.substr(4);
-//    });
-//    auto regionData = std::make_shared<std::unordered_map<std::string, double>>(m_regionWeightMap->begin()->second);
-    // Hessen
-    auto regionMap = regionMapFromGPKG(gpkg0, "Hessen", "GEN");
+    // Dutch
+    auto regionMap = std::make_shared<RegionMap>(ipeToRegionMap(dutch, true));
 	std::cout << "#Regions: " << regionMap->size() << std::endl;
-    m_regionWeightMap = regionDataMapFromGPKG(gpkg0, "Hessen", "GEN", [](const std::string& s) {
+    m_regionWeightMap = regionDataMapFromGPKG(gpkg3, "gemeenten", "gemeentecode", [](const std::string& s) {
         return s;
     });
+
+    // Hessen
+//    auto regionMap = regionMapFromGPKG(gpkg0, "Hessen", "GEN");
+//	std::cout << "#Regions: " << regionMap->size() << std::endl;
+//    m_regionWeightMap = regionDataMapFromGPKG(gpkg0, "Hessen", "GEN", [](const std::string& s) {
+//        return s;
+//    });
 
     for (auto& kv : *m_regionWeightMap) {
         m_dataAttribute->addItem(QString::fromStdString(kv.first));
@@ -459,46 +427,12 @@ ChorematicMapDemo::ChorematicMapDemo() {
 	m_dataAttribute->setCurrentIndex(0);
 	auto regionData = std::make_shared<std::unordered_map<std::string, double>>((*m_regionWeightMap)[m_dataAttribute->currentText().toStdString()]);
 
-//	auto regionArr = std::make_shared<RegionArrangement>(regionMapToArrangementParallel(*regionMap));
-//    auto regionArr = regionMapToArrangementParallel(*regionMap);
     auto regionArr = regionMapToArrangementParallel(*regionMap);
 
-//    IpeRenderer ipeRenderer;
-//    ipeRenderer.addPainting([regionArr](GeometryRenderer& renderer) {
-//        auto ubf = regionArr.unbounded_face();
-//
-//        for (auto ccb = ubf->inner_ccbs_begin(); ccb != ubf->inner_ccbs_end(); ++ccb) {
-//            Polygon<Exact> poly = ccb_to_polygon<Exact>(*ccb);
-//            poly.reverse_orientation();
-//            renderer.setMode(GeometryRenderer::stroke);
-//            renderer.setStroke(Color{0, 0, 0}, 1.0);
-//            renderer.draw(poly);
-//        }
-//    }, "Outline");
-//    ipeRenderer.save("hessen-outline.ipe");
-
-
-    // Write the arrangement to a file.
-//    std::ofstream out_file("regionArr.dat");
-    CGAL::Arr_face_extended_text_formatter<RegionArrangement> formatter;
-//    CGAL::IO::write(*regionArr, out_file, formatter);
-//    out_file.close();
-//
-//    RegionArrangement regionArr;
-//    std::ifstream in_file("regionArr.dat");
-//    CGAL::IO::read(regionArr, in_file, formatter);
-//    in_file.close();
     m_renderer->setMinZoom(0.00000001);
     m_renderer->setMaxZoom(1000000000);
-//    m_renderer->fitInView(Box(9000, 300000, 300000, 615000));
-//    m_renderer->fitInView(Box(3858769, 3079039,4135284, 3388358));
 
-//    std::vector<double> thresholds({0});
-//	m_choropleth = std::make_unique<Choropleth>(std::make_shared<RegionArrangement>(regionArr), std::move(regionData),
-//	                                            thresholds.begin(), thresholds.end());
     m_choropleth = std::make_unique<Choropleth>(std::make_shared<RegionArrangement>(regionArr), std::move(regionData), 2);
-
-//	m_pl = std::make_shared<LandmarksPl>(*m_choropleth->m_arr);
 	m_sampler = std::make_unique<Sampler<LandmarksPl>>(m_choropleth->m_arr, m_seed->value());
 	std::vector<Color> colors({Color(0xe5f5e0), Color(0xa1d99b), Color(0x31a354)});
 	ChoroplethPainting::Options choroplethOptions;
@@ -716,6 +650,14 @@ ChorematicMapDemo::ChorematicMapDemo() {
             refit();
             m_renderer->repaint();
         }
+    });
+    connect(exportDataButton, &QPushButton::clicked, [this]() {
+        auto csv = regionDataToCSV(*(m_choropleth->m_data));
+        QString startDir = "data/chorematic_map";
+        std::filesystem::path filePath = QFileDialog::getSaveFileName(this, tr("Save region data"), startDir).toStdString();
+        std::ofstream csvFile(filePath);
+        csvFile << csv;
+        csvFile.close();
     });
 }
 

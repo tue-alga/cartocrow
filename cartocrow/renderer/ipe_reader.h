@@ -23,8 +23,10 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <filesystem>
 #include <memory>
 
-#include "core.h"
-#include "bezier.h"
+#include "render_path.h"
+
+#include "cartocrow/core/core.h"
+#include "cartocrow/core/bezier.h"
 
 #include <ipeattributes.h>
 #include <ipedoc.h>
@@ -51,6 +53,9 @@ class IpeReader {
 	                                                  const ipe::Matrix& matrix);
 	/// Converts an Ipe path to a Bézier spline.
 	static BezierSpline convertPathToSpline(const ipe::SubPath& path, const ipe::Matrix& matrix);
+
+    static renderer::RenderPath convertShapeToRenderPath(const ipe::Shape& shape, const ipe::Matrix& matrix);
+    static renderer::RenderPath loadIpePath(const std::filesystem::path& ipeFile);
 };
 
 } // namespace cartocrow

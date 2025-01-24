@@ -21,7 +21,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "cartocrow/core/arrangement_helpers.h"
 #include "cartocrow/core/cs_polygon_helpers.h"
 #include "cartocrow/core/cs_polyline_helpers.h"
-#include "cartocrow/core/ipe_reader.h"
+#include "cartocrow/renderer/ipe_reader.h"
 #include "cartocrow/renderer/ipe_renderer.h"
 #include "cartocrow/renderer/painting_renderer.h"
 #include "cartocrow/simplesets/dilated/dilated_poly.h"

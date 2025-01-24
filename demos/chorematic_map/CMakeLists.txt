@@ -1,6 +1,5 @@
 set(SOURCES
     chorematic_map_demo.cpp
-    parse_input.cpp
 )
 
 add_executable(chorematic_map_demo ${SOURCES})

@@ -31,16 +31,29 @@ class RenderPath {
   public:
 	struct MoveTo {
 		Point<Inexact> m_to;
+        bool operator==(const MoveTo&) const = default;
+        bool operator!=(const MoveTo&) const = default;
 	};
 	struct LineTo {
 		Point<Inexact> m_to;
+        bool operator==(const LineTo&) const = default;
+        bool operator!=(const LineTo&) const = default;
 	};
 	struct ArcTo {
 		Point<Inexact> m_center;
 		bool m_clockwise;
 		Point<Inexact> m_to;
+        bool operator==(const ArcTo&) const = default;
+        bool operator!=(const ArcTo&) const = default;
 	};
-	struct Close {};
+	struct Close {
+        bool operator!=(const Close&) const {
+            return false;
+        }
+        bool operator==(const Close&) const {
+            return true;
+        }
+    };
 	using Command = std::variant<MoveTo, LineTo, ArcTo, Close>;
 
 	const std::vector<Command>& commands() const;
@@ -72,10 +85,13 @@ class RenderPath {
 	RenderPath operator+(const RenderPath& other);
 	RenderPath& operator+=(const RenderPath& other);
 
+    bool operator==(const RenderPath&) const = default;
+    bool operator!=(const RenderPath&) const = default;
   private:
 	std::vector<Command> m_commands;
 };
 
+renderer::RenderPath transform(const CGAL::Aff_transformation_2<Inexact>& t, const RenderPath& p);
 }
 
 #endif //CARTOCROW_RENDERER_RENDER_PATH_H
