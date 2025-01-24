@@ -18,17 +18,16 @@ CartoCrow consists of the following modules.
   _Authors: Willem Sonke, Thijs van Lankveld_
 \image html flow-map-example.png
 
-### Cartograms
+### Spatial set visualization
 
-(A cartogram is a map in which the shapes of regions are distorted such that the size of each region corresponds to some variable, such as population.)
+* The **simplesets** module implements \ref cartocrow::simplesets::SimpleSetsPainting "SimpleSets" \cite simplesets_tvcg, a spatial set visualization technique that uses simple shapes to enclosing categorical point patterns.  
+  _Author: Steven van den Broek_
+\image html SimpleSets-mills.svg
 
-* The **rectangular_cartogram** (future work!) module implements \ref cartocrow::rectangular_cartogram::RectangularCartogram "rectangular cartograms" \cite rectangular_cartograms_cgta, a style of cartogram in which each region is rectangle-shaped and adjacencies between regions are strictly maintained.  
-  _Authors: (to be done)_
-\image html rectangular-cartogram-example.png
-
-* The **mosaic_map** (future work!) module implements \ref cartocrow::mosaic_map::MosaicMap "mosaic maps" \cite mosaic_maps_cgf, a style of cartogram that allows users to count individual tiles in each region to get a more precise reading.  
-  _Authors: (to be done)_
-\image html mosaic-map-example.png
+### Chorematic maps
+* The **chorematic_map** module implements \ref cartocrow::chorematic_map::fitDisks "an algorithm" for summarizing classed region maps with a single disk choreme.  
+  _Author: Steven van den Broek_
+\image html chorematic_map.svg
 
 ### Simplification
 
@@ -48,6 +47,18 @@ The **simplification** module implements several algorithms to simplify maps con
 * The **isoline_simplification** module implements \ref cartocrow::isoline_simplification::IsolineSimplifier "an algorithm" \cite scalable_harmonious_simplification_cosit to simplify isolines simultaneously such that common features are maintained.  
   _Author: Steven van den Broek_
 \image html harmonious-simplification.svg
+
+### Cartograms
+
+(A cartogram is a map in which the shapes of regions are distorted such that the size of each region corresponds to some variable, such as population.)
+
+* The **rectangular_cartogram** (future work!) module implements \ref cartocrow::rectangular_cartogram::RectangularCartogram "rectangular cartograms" \cite rectangular_cartograms_cgta, a style of cartogram in which each region is rectangle-shaped and adjacencies between regions are strictly maintained.  
+  _Authors: (to be done)_
+  \image html rectangular-cartogram-example.png
+
+* The **mosaic_map** (future work!) module implements \ref cartocrow::mosaic_map::MosaicMap "mosaic maps" \cite mosaic_maps_cgf, a style of cartogram that allows users to count individual tiles in each region to get a more precise reading.  
+  _Authors: (to be done)_
+  \image html mosaic-map-example.png
 
 ### Utilities
 

@@ -4,7 +4,6 @@
 #include "../core/cs_polygon_helpers.h"
 
 namespace cartocrow::chorematic_map {
-/// The disks are returned in the order that they should be drawn.
 std::vector<BinDisk> fitDisks(const Choropleth& choropleth, const WeightedRegionSample<Exact>& sample,
                               bool invert, bool computeScores, bool heuristic, bool symmetricDifference) {
 	using RegionWeight = WeightedRegionSample<Exact>::RegionWeight;

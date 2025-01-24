@@ -12,6 +12,13 @@ struct BinDisk {
 	std::optional<double> score;
 };
 
+/// This function takes a \ref Choropleth and a point sample (\ref Sampler implements sampling methods),
+/// and returns disks fit to a class of the choropleth.
+/// The function is setup to be general, but currently only properly supports choropleths of two classes.
+/// By default a disk is fit to the second class of the choropleth (the one with higher values), but the
+/// \p invert parameter can be set to true to fit to the first class instead.
+/// When the \p computeScores parameter is set, then the score field of the \ref BinDisk is set to its normalized score.
+/// When the \p heuristic parameter is set, the radius of the disk is perturbed to locally optimize the score of the disk.
 std::vector<BinDisk> fitDisks(const Choropleth& choropleth, const WeightedRegionSample<Exact>& sample,
                               bool invert = false, bool computeScores = false, bool heuristic = false,
                               bool symmetricDifference = false);

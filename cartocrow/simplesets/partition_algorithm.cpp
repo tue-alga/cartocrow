@@ -1,5 +1,5 @@
 #include "partition_algorithm.h"
-#include "dilated/dilated_poly.h"
+#include "cartocrow/simplesets/dilated/dilated_poly.h"
 
 #include <queue>
 
@@ -76,8 +76,8 @@ Number<Inexact> intersectionDelay(const std::vector<CatPoint>& points, const Pol
 	for (const auto& pt : points) {
 		if (std::find(resultPts.begin(), resultPts.end(), pt) == resultPts.end() &&
 		    squared_distance(resultPoly, pt.point) < squared(2 * gs.dilationRadius())) {
-			CSPolygon ptShape = Dilated(SinglePoint(pt), gs.dilationRadius()).m_contour;
-			CSPolygon rShape = Dilated(result, gs.dilationRadius()).m_contour;
+			CSPolygon ptShape = DilatedPoly(SinglePoint(pt), gs.dilationRadius()).m_contour;
+			CSPolygon rShape = DilatedPoly(result, gs.dilationRadius()).m_contour;
 			std::vector<CSPolygonWithHoles> inters;
 			CGAL::intersection(rShape, ptShape, std::back_inserter(inters));
 			Number<Inexact> newArea = 0;
@@ -85,8 +85,8 @@ Number<Inexact> intersectionDelay(const std::vector<CatPoint>& points, const Pol
 				newArea += abs(area(gp));
 			}
 			inters.clear();
-			CSPolygon p1Shape = Dilated(p1, gs.dilationRadius()).m_contour;
-			CSPolygon p2Shape = Dilated(p2, gs.dilationRadius()).m_contour;
+			CSPolygon p1Shape = DilatedPoly(p1, gs.dilationRadius()).m_contour;
+			CSPolygon p2Shape = DilatedPoly(p2, gs.dilationRadius()).m_contour;
 			CGAL::intersection(p1Shape, ptShape, std::back_inserter(inters));
 			CGAL::intersection(p2Shape, ptShape, std::back_inserter(inters));
 			Number<Inexact> oldArea = 0;

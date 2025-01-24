@@ -11,7 +11,7 @@ CSPolygon dilateSegment(const Segment<Inexact>& segment, const Number<Exact>& di
 	return dilation.outer_boundary();
 }
 
-Dilated::Dilated(const PolyPattern& polyPattern, const Number<Exact>& dilationRadius) {
+DilatedPoly::DilatedPoly(const PolyPattern& polyPattern, const Number<Exact>& dilationRadius) {
 	m_catPoints = polyPattern.catPoints();
 
 	auto cont = polyPattern.poly();
@@ -63,11 +63,11 @@ Dilated::Dilated(const PolyPattern& polyPattern, const Number<Exact>& dilationRa
 	}
 }
 
-const std::vector<CatPoint>& Dilated::catPoints() const {
+const std::vector<CatPoint>& DilatedPoly::catPoints() const {
 	return m_catPoints;
 }
 
-std::variant<Polyline<Inexact>, Polygon<Inexact>, CSPolygon> Dilated::contour() const {
+std::variant<Polyline<Inexact>, Polygon<Inexact>, CSPolygon> DilatedPoly::contour() const {
 	return m_contour;
 }
 }

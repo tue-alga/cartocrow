@@ -10,6 +10,11 @@
 #include <CGAL/Aff_transformation_2.h>
 
 namespace cartocrow::chorematic_map {
+/// A choropleth map. It is a \ref RegionArrangement where double values are associated with each region.
+/// Thresholds that define classes can be passed to the constructor.
+/// If no thresholds are passed, the Fisher-Jenks natural breaks algorithm is used to compute natural thresholds.
+///
+/// This class represents only an abstract choropleth; to draw one, see \ref ChoroplethPainting.
 class Choropleth {
   public:
 	std::shared_ptr<RegionArrangement> m_arr;
@@ -124,6 +129,8 @@ class Choropleth {
 	std::unordered_map<std::string, int> m_regionToBin;
 };
 
+/// Draws a \ref Choropleth. One should pass a color for each bin of the choropleth.
+/// Drawing style can be configured via \ref ChoroplethPainting::Options.
 class ChoroplethPainting : public renderer::GeometryPainting {
   public:
 	Choropleth& m_choropleth;

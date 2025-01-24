@@ -37,8 +37,8 @@ OffsetDemo::OffsetDemo() {
 	CSPolygonSet input;
 	Bank bank({{0, {0, 0}}, {0, {2, 0}}, {0, {1, 2}}});
 	SinglePoint sp({0, {2, 4}});
-	Dilated dilatedB(bank, 0.5);
-	Dilated dilatedSP(sp, 0.5);
+	DilatedPoly dilatedB(bank, 0.5);
+	DilatedPoly dilatedSP(sp, 0.5);
 	input.insert(dilatedB.m_contour);
 	input.insert(dilatedSP.m_contour);
 

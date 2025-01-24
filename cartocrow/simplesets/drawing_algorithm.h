@@ -3,7 +3,7 @@
 
 #include "../renderer/geometry_painting.h"
 #include "cartocrow/core/arrangement_helpers.h"
-#include "dilated/dilated_poly.h"
+#include "cartocrow/simplesets/dilated/dilated_poly.h"
 #include "partition.h"
 #include <CGAL/Arrangement_with_history_2.h>
 
@@ -184,13 +184,33 @@ class DilatedPatternDrawing {
 	DilatedPatternArrangement m_arr;
 	std::unordered_map<int, std::vector<FaceH>> m_iToFaces;
 	std::map<X_monotone_curve_2, int> m_curve_to_origin;
-	std::vector<Dilated> m_dilated;
+	std::vector<DilatedPoly> m_dilated;
 	const GeneralSettings& m_gs;
 	const ComputeDrawingSettings& m_cds;
 
   private:
 };
 
+/// A \ref renderer::GeometryPainting "Painting" of a SimpleSets visualization.
+///
+/// A SimpleSets visualization is created in three steps:
+/// 1. \ref cartocrow::simplesets::partition "Partition" the categorical points (\ref CatPoint) into \ref cartocrow::simplesets::Pattern "patterns".
+/// 2. \ref Dilate the patterns. The patterns from the first step are polygonal (\ref PolyPattern); therefore, the dilated patterns consists of circular arcs and line segments (\ref DilatedPoly).
+/// 3. Render the dilated patterns to a "physically-realizable" \cite proportional_symbol_maps_algorithmica drawing. This involves determining local stacking orders, and cutting shapes such that points beneath it are exposed.
+///
+/// \image html "SimpleSets-pipeline.svg"
+///
+/// The \ref partition function performs step 1. In fact, it creates a sequence of partitions that range from small patterns covering little of the map, to very large patterns.
+/// The \ref DilatedPatternDrawing takes one such \ref Partition of polygonal patterns and performs steps 2 and 3; that is, it dilates the patterns and resolves overlap.
+///
+/// One can draw a \ref Partition using the \ref PartitionPainting.
+/// To draw the final SimpleSets visualization use this \ref SimpleSetsPainting.
+///
+/// Functions of SimpleSets depend on various settings:
+/// - \ref GeneralSettings : parameters such as point size.
+/// - \ref PartitionSettings : parameters for the \ref partition function.
+/// - \ref ComputeDrawingSettings : parameters for the \ref DilatedPatternDrawing class.
+/// - \ref DrawSettings : parameters for drawing functions.
 class SimpleSetsPainting : public renderer::GeometryPainting {
   public:
 	SimpleSetsPainting(const DilatedPatternDrawing& dpd, const DrawSettings& ds);
