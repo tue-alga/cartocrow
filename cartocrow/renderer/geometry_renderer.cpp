@@ -78,13 +78,21 @@ void GeometryRenderer::draw(const Polyline<Inexact>& p) {
 	draw(path);
 }
 
-//void GeometryRenderer::draw(const PolygonSet<Inexact>& ps) {
-//	std::vector<PolygonWithHoles<Inexact>> polygons;
-//	ps.polygons_with_holes(std::back_inserter(polygons));
-//	for (const PolygonWithHoles<Inexact>& p : polygons) {
-//		draw(p);
-//	}
-//}
+void GeometryRenderer::draw(const PolygonWithHoles<Inexact>& p) {
+	RenderPath path;
+	path << p;
+	draw(path);
+}
+
+void GeometryRenderer::draw(const PolygonSet<Inexact>& ps) {
+	std::vector<PolygonWithHoles<Inexact>> polygons;
+	ps.polygons_with_holes(std::back_inserter(polygons));
+	RenderPath path;
+	for (const auto& p : polygons) {
+		path << p;
+	}
+	draw(path);
+}
 
 void GeometryRenderer::draw(const BezierCurve& c) {
 	BezierSpline spline;

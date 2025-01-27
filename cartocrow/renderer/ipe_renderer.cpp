@@ -178,46 +178,6 @@ void IpeRenderer::draw(const Halfplane<Inexact>& h) {
 	}
 }
 
-void IpeRenderer::draw(const PolygonWithHoles<Inexact>& p) {
-	ipe::Curve* curve = convertPolygonToCurve(p.outer_boundary());
-	ipe::Shape* shape = new ipe::Shape();
-	shape->appendSubPath(curve);
-	for (auto hole : p.holes()) {
-		ipe::Curve* holeCurve = convertPolygonToCurve(hole);
-		shape->appendSubPath(holeCurve);
-	}
-	ipe::Path* path = new ipe::Path(getAttributesForStyle(), *shape);
-	drawPathOnPage(path);
-
-	if (m_style.m_mode & vertices) {
-		for (auto v = p.outer_boundary().vertices_begin(); v != p.outer_boundary().vertices_end(); v++) {
-			draw(*v);
-		}
-		for (auto h = p.holes_begin(); h != p.holes_end(); h++) {
-			for (auto v = h->vertices_begin(); v != h->vertices_end(); v++) {
-				draw(*v);
-			}
-		}
-	}
-}
-
-void IpeRenderer::draw(const PolygonSet<Inexact>& ps) {
-    ipe::Shape* shape = new ipe::Shape();
-
-    std::vector<PolygonWithHoles<Inexact>> pwhs;
-    ps.polygons_with_holes(std::back_inserter(pwhs));
-    for (const auto& p : pwhs) {
-        ipe::Curve *curve = convertPolygonToCurve(p.outer_boundary());
-        shape->appendSubPath(curve);
-        for (auto hole: p.holes()) {
-            ipe::Curve *holeCurve = convertPolygonToCurve(hole);
-            shape->appendSubPath(holeCurve);
-        }
-    }
-    ipe::Path *path = new ipe::Path(getAttributesForStyle(), *shape);
-	drawPathOnPage(path);
-}
-
 void IpeRenderer::draw(const Circle<Inexact>& c) {
 	double r = sqrt(c.squared_radius());
 	ipe::Matrix matrix =

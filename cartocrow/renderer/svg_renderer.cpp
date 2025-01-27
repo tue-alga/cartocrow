@@ -116,30 +116,6 @@ void SvgRenderer::draw(const Halfplane<Inexact>& h) {
 	}
 }
 
-void SvgRenderer::draw(const PolygonWithHoles<Inexact>& p) {
-	m_out << "<path " << getStyle() << " d=\"";
-	m_out << convertPolygonToCurve(p.outer_boundary());
-	for (auto hole : p.holes()) {
-		m_out << " " << convertPolygonToCurve(hole);
-	}
-	m_out << "\"/>\n";
-
-	if (m_style.m_mode & vertices) {
-		for (auto v = p.outer_boundary().vertices_begin(); v != p.outer_boundary().vertices_end(); v++) {
-			draw(*v);
-		}
-		for (auto h = p.holes_begin(); h != p.holes_end(); h++) {
-			for (auto v = h->vertices_begin(); v != h->vertices_end(); v++) {
-				draw(*v);
-			}
-		}
-	}
-}
-
-void SvgRenderer::draw(const PolygonSet<Inexact>& p) {
-
-}
-
 void SvgRenderer::draw(const Circle<Inexact>& c) {
 	double r = sqrt(c.squared_radius());
 	m_out << "<circle " << getStyle() << " r=\"" << r << "\" cx=\"" << c.center().x() << "\" cy=\""

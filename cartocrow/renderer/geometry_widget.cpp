@@ -492,30 +492,6 @@ void GeometryWidget::draw(const Point<Inexact>& p) {
 	                              m_style.m_pointSize));
 }
 
-void GeometryWidget::draw(const PolygonWithHoles<Inexact>& p) {
-	setupPainter();
-	QPainterPath path;
-	addPolygonToPath(path, p.outer_boundary());
-	for (auto hole : p.holes()) {
-		addPolygonToPath(path, hole);
-	}
-	m_painter->drawPath(path);
-	if (m_style.m_mode & vertices) {
-		for (auto v = p.outer_boundary().vertices_begin(); v != p.outer_boundary().vertices_end(); v++) {
-			draw(*v);
-		}
-		for (auto h = p.holes_begin(); h != p.holes_end(); h++) {
-			for (auto v = h->vertices_begin(); v != h->vertices_end(); v++) {
-				draw(*v);
-			}
-		}
-	}
-}
-
-void GeometryWidget::draw(const PolygonSet<Inexact>& p) {
-
-}
-
 void GeometryWidget::addPolygonToPath(QPainterPath& path, const Polygon<Inexact>& p) {
 	for (auto vertex = p.vertices_begin(); vertex != p.vertices_end(); vertex++) {
 		if (vertex == p.vertices_begin()) {

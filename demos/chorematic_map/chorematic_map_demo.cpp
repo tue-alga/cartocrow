@@ -253,18 +253,6 @@ void ChorematicMapDemo::loadData(const std::filesystem::path& dataPath) {
 	m_dataInfoLabel->setText(QString::fromStdString(regionDataInfo(*m_choropleth->m_data)));
 }
 
-RenderPath& operator<<(RenderPath& path, const Polygon<Inexact> p) {
-    for (auto vertex = p.vertices_begin(); vertex != p.vertices_end(); vertex++) {
-        if (vertex == p.vertices_begin()) {
-            path.moveTo(*vertex);
-        } else {
-            path.lineTo(*vertex);
-        }
-    }
-    path.close();
-    return path;
-}
-
 ChorematicMapDemo::ChorematicMapDemo() {
 	setWindowTitle("Chorematic choropleth");
 	m_renderer = new GeometryWidget();

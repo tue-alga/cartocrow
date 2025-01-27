@@ -72,5 +72,24 @@ renderer::RenderPath transform(const CGAL::Aff_transformation_2<Inexact>& t, con
     return tp;
 }
 
+RenderPath& operator<<(RenderPath& path, const Polygon<Inexact>& p) {
+	for (auto vertex = p.vertices_begin(); vertex != p.vertices_end(); vertex++) {
+		if (vertex == p.vertices_begin()) {
+			path.moveTo(*vertex);
+		} else {
+			path.lineTo(*vertex);
+		}
+	}
+	path.close();
+	return path;
+}
+
+RenderPath& operator<<(RenderPath& path, const PolygonWithHoles<Inexact>& p) {
+	path << p.outer_boundary();
+	for (const auto& h : p.holes()) {
+		path << h;
+	}
+	return path;
+}
 
 } // namespace cartocrow::renderer

@@ -92,6 +92,8 @@ class RenderPath {
 };
 
 renderer::RenderPath transform(const CGAL::Aff_transformation_2<Inexact>& t, const RenderPath& p);
+RenderPath& operator<<(RenderPath& path, const Polygon<Inexact>& p);
+RenderPath& operator<<(RenderPath& path, const PolygonWithHoles<Inexact>& p);
 }
 
 #endif //CARTOCROW_RENDERER_RENDER_PATH_H
