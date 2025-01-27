@@ -1,5 +1,5 @@
 #include "circles_convex_hull_demo.h"
-#include "cartocrow/core/cs_polygon_helpers.h"
+#include "cartocrow/renderer/cs_render_helpers.h"
 #include "cartocrow/simplesets/helpers/approximate_convex_hull.h"
 #include <QApplication>
 

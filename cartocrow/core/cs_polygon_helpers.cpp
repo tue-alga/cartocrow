@@ -12,14 +12,6 @@
 // typedefs for circle, point, polygon etc.
 
 namespace cartocrow {
-//For two circles of radii R and r and centered at (0,0) and (d,0) intersecting
-//in a region shaped like an asymmetric lens.
-constexpr double lens_area(const double r, const double R, const double d) {
-	return r * r * std::acos((d * d + r * r - R * R) / 2 / d / r) +
-	       R * R * std::acos((d * d + R * R - r * r) / 2 / d / R) -
-	       0.5 * std::sqrt((-d + r + R) * (d + r - R) * (d - r + R) * (d + r + R));
-}
-
 // ------ return signed area under the linear segment (P1, P2)
 Number<Inexact> area(const CSTraits::Point_2& P1, const CSTraits::Point_2& P2) {
 	auto const dx = CGAL::to_double(P1.x()) - CGAL::to_double(P2.x());

@@ -148,7 +148,7 @@ FiltrationDemo::FiltrationDemo() {
 	  	ipeRenderer.save(filePath);
 	});
 	connect(coverSlider, &QSlider::valueChanged, [this, coverSlider, diskPainting] {
-		m_cover = coverSlider->value() / 10.0 * m_gs.dilationRadius();
+		m_cover = coverSlider->value() / 10.0 * CGAL::to_double(m_gs.dilationRadius());
 
 		Partition* thePartition;
 		bool found = false;
@@ -189,7 +189,7 @@ void FiltrationDemo::loadFile(const std::filesystem::path& filePath) {
 		p.point -= {boxX.xmin(), boxX.ymin()};
 	}
 
-	m_partitions = partition(m_points, m_gs, m_ps, 8 * m_gs.dilationRadius());
+	m_partitions = partition(m_points, m_gs, m_ps, 8 * CGAL::to_double(m_gs.dilationRadius()));
 }
 
 int main(int argc, char* argv[]) {

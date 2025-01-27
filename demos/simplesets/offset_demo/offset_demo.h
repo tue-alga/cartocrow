@@ -2,11 +2,12 @@
 #define CARTOCROW_OFFSET_DEMO_H
 
 #include <QMainWindow>
+#include "cartocrow/core/cs_types.h"
 #include "cartocrow/simplesets/partition.h"
 #include "cartocrow/renderer/geometry_widget.h"
 #include <filesystem>
 
-using namespace cartocrow::simplesets;
+using namespace cartocrow;
 using namespace cartocrow::renderer;
 
 class OffsetDemo: public QMainWindow {

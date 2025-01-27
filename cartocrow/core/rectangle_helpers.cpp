@@ -10,16 +10,22 @@ bool is_horizontal(Side side) {
 }
 
 Corner mirror_corner(Corner corner, bool vertical) {
+	Corner mirrored;
 	switch(corner) {
 	case BL:
-		if (vertical) return TL; else return BR;
+		mirrored = vertical ? TL : BR;
+		break;
 	case BR:
-		if (vertical) return TR; else return BL;
+		mirrored = vertical ? TR : BL;
+		break;
 	case TR:
-		if (vertical) return BR; else return TL;
+		mirrored = vertical ? BR : TL;
+		break;
 	case TL:
-		if (vertical) return BL; else return TR;
+		mirrored = vertical ? BL : TR;
+		break;
 	}
+	return mirrored;
 }
 
 Side next_side(const Side& side) {

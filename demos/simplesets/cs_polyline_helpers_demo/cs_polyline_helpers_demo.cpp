@@ -1,7 +1,11 @@
 #include "cs_polyline_helpers_demo.h"
-#include "cartocrow/core/cs_polygon_helpers.h"
 #include "cartocrow/core/cs_polyline_helpers.h"
+#include "cartocrow/renderer/cs_render_helpers.h"
+#include "cartocrow/renderer/geometry_widget.h"
 #include <QApplication>
+
+using namespace cartocrow;
+using namespace cartocrow::renderer;
 
 CSPolylineHelpersDemo::CSPolylineHelpersDemo() {
 	setWindowTitle("Circle-segment polyline helpers demo");
