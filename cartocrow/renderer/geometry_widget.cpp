@@ -340,8 +340,8 @@ void GeometryWidget::drawAxes() {
 			    Segment<Inexact>(Point<Inexact>(i * majorScale / 10, bounds.ymin()),
 			                     Point<Inexact>(i * majorScale / 10, bounds.ymax())));
 		}
-		for (int i = floor(bounds.ymax() / (majorScale / 10));
-		     i <= bounds.ymin() / (majorScale / 10); ++i) {
+		for (int i = floor(bounds.ymin() / (majorScale / 10));
+		     i <= bounds.ymax() / (majorScale / 10); ++i) {
 			GeometryRenderer::draw(
 			    Segment<Inexact>(Point<Inexact>(bounds.xmin(), i * majorScale / 10),
 			                     Point<Inexact>(bounds.xmax(), i * majorScale / 10)));
@@ -353,7 +353,7 @@ void GeometryWidget::drawAxes() {
 			GeometryRenderer::draw(Segment<Inexact>(Point<Inexact>(i * majorScale, bounds.ymin()),
 			                                        Point<Inexact>(i * majorScale, bounds.ymax())));
 		}
-		for (int i = floor(bounds.ymax() / majorScale); i <= bounds.ymin() / majorScale; ++i) {
+		for (int i = floor(bounds.ymin() / majorScale); i <= bounds.ymax() / majorScale; ++i) {
 			GeometryRenderer::draw(Segment<Inexact>(Point<Inexact>(bounds.xmin(), i * majorScale),
 			                                        Point<Inexact>(bounds.xmax(), i * majorScale)));
 		}
@@ -362,19 +362,19 @@ void GeometryWidget::drawAxes() {
 		Number<Inexact> minRadius = std::numeric_limits<Number<Inexact>>::infinity();
 		Number<Inexact> maxRadius = 0;
 		const std::vector<Point<Inexact>> candidates = {
-		    {bounds.xmin(), bounds.ymin()},
-		    {bounds.xmin(), 0},
-		    {0, bounds.ymin()},
 		    {bounds.xmin(), bounds.ymax()},
-		    {bounds.xmax(), bounds.ymin()},
-		    {bounds.xmax(), 0},
+		    {bounds.xmin(), 0},
 		    {0, bounds.ymax()},
+		    {bounds.xmin(), bounds.ymin()},
 		    {bounds.xmax(), bounds.ymax()},
+		    {bounds.xmax(), 0},
+		    {0, bounds.ymin()},
+		    {bounds.xmax(), bounds.ymin()},
 		    {0, 0}
 		};
 		for (const auto& c : candidates) {
-			if (c.x() >= bounds.xmin() && c.x() <= bounds.xmax() && c.y() >= bounds.ymax() &&
-			    c.y() <= bounds.ymin()) {
+			if (c.x() >= bounds.xmin() && c.x() <= bounds.xmax() && c.y() >= bounds.ymin() &&
+			    c.y() <= bounds.ymax()) {
 				Number<Inexact> r = std::hypot(c.x(), c.y());
 				minRadius = std::min(minRadius, r);
 				maxRadius = std::max(maxRadius, r);
@@ -421,7 +421,7 @@ void GeometryWidget::drawAxes() {
 		}
 	}
 	QFontMetricsF metrics(m_painter->font());
-	for (int i = floor(bounds.ymax() / majorScale); i <= bounds.ymin() / majorScale + 1; ++i) {
+	for (int i = floor(bounds.ymin() / majorScale); i <= bounds.ymax() / majorScale + 1; ++i) {
 		if (i != 0) {
 			origin = convertPoint(Point<Inexact>(0, i * majorScale));
 			QString label = QString::number(i * majorScale);
