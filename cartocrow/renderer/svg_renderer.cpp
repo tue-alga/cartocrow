@@ -177,11 +177,11 @@ void SvgRenderer::draw(const RenderPath& p) {
 	}
 }
 
-void SvgRenderer::drawText(const Point<Inexact>& p, const std::string& text) {
+void SvgRenderer::drawText(const Point<Inexact>& p, const std::string& text, bool escape) {
 	m_out << "<text text-anchor=\"" << m_style.m_horizontalTextAlignment
           << "\" dominant-baseline=\"" << m_style.m_verticalTextAlignment
           << "\" x=\"" << p.x() << "\" y=\""
-	      << -p.y() << "\">" << escapeForSvg(text) << "</text>\n";
+	      << -p.y() << "\">" << (escape ? escapeForSvg(text) : text) << "</text>\n";
 }
 
 void SvgRenderer::pushStyle() {

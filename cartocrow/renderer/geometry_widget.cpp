@@ -635,7 +635,7 @@ void GeometryWidget::draw(const RenderPath& p) {
 	}
 }
 
-void GeometryWidget::drawText(const Point<Inexact>& p, const std::string& text) {
+void GeometryWidget::drawText(const Point<Inexact>& p, const std::string& text, bool escape) {
 	setupPainter();
 	QPointF p2 = convertPoint(p);
 	m_painter->drawText(QRectF(p2 - QPointF{500, 250}, p2 + QPointF{500, 250}), m_textAlignment,

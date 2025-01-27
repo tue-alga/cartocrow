@@ -269,9 +269,8 @@ void IpeRenderer::draw(const RenderPath& p) {
 	}
 }
 
-void IpeRenderer::drawText(const Point<Inexact>& p, const std::string& text) {
-//	ipe::String labelText = escapeForLaTeX(text).data();
-    ipe::String labelText = text.data();
+void IpeRenderer::drawText(const Point<Inexact>& p, const std::string& text, bool escape) {
+	ipe::String labelText = escape ? escapeForLaTeX(text).data() : text.data();
 	ipe::Text* label = new ipe::Text(getAttributesForStyle(), labelText,
 	                                 ipe::Vector(p.x(), p.y()), ipe::Text::TextType::ELabel);
     label->setHorizontalAlignment(m_style.m_horizontalTextAlignment);

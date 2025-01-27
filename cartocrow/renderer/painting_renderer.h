@@ -43,7 +43,7 @@ class PaintingRenderer : public GeometryPainting, public GeometryRenderer {
 	void draw(const Ray<Inexact>& r) override;
 	void draw(const Halfplane<Inexact>& h) override;
 	void draw(const RenderPath& p) override;
-	void drawText(const Point<Inexact>& p, const std::string& text) override;
+	void drawText(const Point<Inexact>& p, const std::string& text, bool escape=true) override;
 
 	void pushStyle() override;
 	void popStyle() override;
@@ -91,7 +91,7 @@ class PaintingRenderer : public GeometryPainting, public GeometryRenderer {
 		/// Vertical text alignment
 		VerticalTextAlignment m_verticalTextAlignment = AlignVCenter;
 	};
-	using Label = std::pair<Point<Inexact>, std::string>;
+	using Label = std::tuple<Point<Inexact>, std::string, bool>;
 	using DrawableObject =
 	    std::variant<Point<Inexact>, Circle<Inexact>, BezierSpline,
 	                 Line<Inexact>, Ray<Inexact>, Halfplane<Inexact>, RenderPath, Label, Style>;

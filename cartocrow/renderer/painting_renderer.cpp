@@ -44,7 +44,8 @@ void PaintingRenderer::paint(GeometryRenderer& renderer) const {
 		} else if (std::holds_alternative<RenderPath>(object)) {
 			renderer.draw(std::get<RenderPath>(object));
 		} else if (std::holds_alternative<Label>(object)) {
-			renderer.drawText(std::get<Label>(object).first, std::get<Label>(object).second);
+			auto& [text, position, escape] = std::get<Label>(object);
+			renderer.drawText(text, position, escape);
 		} else if (std::holds_alternative<Style>(object)) {
 			Style style = std::get<Style>(object);
 			renderer.setFill(style.m_fillColor);
@@ -94,8 +95,8 @@ void PaintingRenderer::draw(const RenderPath& p) {
 	m_objects.push_back(p);
 }
 
-void PaintingRenderer::drawText(const Point<Inexact>& p, const std::string& text) {
-	m_objects.push_back(Label(p, text));
+void PaintingRenderer::drawText(const Point<Inexact>& p, const std::string& text, bool escape) {
+	m_objects.push_back(Label(p, text, escape));
 }
 
 void PaintingRenderer::pushStyle() {

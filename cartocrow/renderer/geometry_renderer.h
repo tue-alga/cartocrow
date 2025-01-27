@@ -152,13 +152,21 @@ class GeometryRenderer {
 	};
 
 	/// Draws a string at a given location.
-	/// The string is drawn centered horizontally around the location given.
-	virtual void drawText(const Point<Inexact>& p, const std::string& text) = 0;
+	/// The string is aligned as specified.
+	/// If \p escape is set to true, then the function escapes any characters that
+	/// have special meaning in the renderer (characters like '\<', '\', '%').
+	/// \sa setHorizontalTextAlignment
+	/// \sa setVerticalTextAlignment
+	virtual void drawText(const Point<Inexact>& p, const std::string& text, bool escape=true) = 0;
 	/// Draws a string at a given location.
-	/// The string is drawn centered horizontally around the location given.
+	/// The string is aligned as specified.
+	/// If \p escape is set to true, then the function escapes any characters that
+	/// have special meaning in the renderer (characters like '\<', '\', '%').
+	/// \sa setHorizontalTextAlignment
+	/// \sa setVerticalTextAlignment
 	template <class K>
-	void drawText(const Point<K>& p, const std::string& text) {
-		drawText(approximate(p), text);
+	void drawText(const Point<K>& p, const std::string& text, bool escape=true) {
+		drawText(approximate(p), text, escape);
 	}
 
 	/// @}

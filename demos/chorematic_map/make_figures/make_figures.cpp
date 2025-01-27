@@ -231,7 +231,7 @@ int main() {
 					    renderer.setHorizontalTextAlignment(GeometryRenderer::AlignLeft);
 					    renderer.setVerticalTextAlignment(GeometryRenderer::AlignVCenter);
 					    renderer.draw(r);
-					    renderer.drawText(pos + Vector<Inexact>(12, -3.25), ss.str());
+					    renderer.drawText(pos + Vector<Inexact>(12, -3.25), ss.str(), false);
 				    }
 			    },
 			    "Legend");
@@ -247,7 +247,7 @@ int main() {
 				    ss << (sansSerif ? "\\textsf{" : "") << title << (sansSerif ? "}" : "");
 				    renderer.setStroke(offBlack, 0.8);
 				    renderer.drawText({bottomBG.x(), (bottomBG.y() * 2 + bottomBB.y()) / 3},
-				                      ss.str());
+				                      ss.str(), false);
 			    },
 			    "Title");
 
@@ -256,9 +256,9 @@ int main() {
 				    renderer.setHorizontalTextAlignment(GeometryRenderer::AlignLeft);
 				    renderer.setVerticalTextAlignment(GeometryRenderer::AlignTop);
 				    std::stringstream ss;
-				    ss << std::setprecision(2) << score;
+				    ss << (sansSerif ? "\\textsf{" : "") << std::setprecision(2) << score << (sansSerif ? "}" : "");
 				    renderer.setStroke(offBlack, 0.8);
-				    renderer.drawText(scorePos, ss.str());
+				    renderer.drawText(scorePos, ss.str(), false);
 			    },
 			    "Score");
 
