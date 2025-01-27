@@ -5,7 +5,7 @@
 
 namespace cartocrow::simplesets {
 CSPolygon dilateSegment(const Segment<Inexact>& segment, const Number<Exact>& dilationRadius) {
-	std::vector<Point<Exact>> points({makeExact(segment.source()), makeExact(segment.target())});
+	std::vector<Point<Exact>> points({pretendExact(segment.source()), pretendExact(segment.target())});
 	Polygon<Exact> polygon(points.begin(), points.end());
 	auto dilation = CGAL::approximated_offset_2(polygon, dilationRadius, M_EPSILON);
 	return dilation.outer_boundary();
@@ -17,7 +17,7 @@ DilatedPoly::DilatedPoly(const PolyPattern& polyPattern, const Number<Exact>& di
 	auto cont = polyPattern.poly();
 
 	if (holds_alternative<Polygon<Inexact>>(cont)) {
-		auto exactPolygon = makeExact(std::get<Polygon<Inexact>>(cont));
+		auto exactPolygon = pretendExact(std::get<Polygon<Inexact>>(cont));
 
 		if (exactPolygon.size() == 1) {
 			CSTraits::Rational_circle_2 circle(exactPolygon.vertex(0), dilationRadius * dilationRadius);

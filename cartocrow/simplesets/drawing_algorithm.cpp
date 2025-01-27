@@ -45,8 +45,8 @@ Point<Exact> get_approx_point_on_boundary(const Face& face) {
 	auto curve = face.outer_ccb()->curve();
 	Rectangle<Exact> bbox = curve.bbox();
 	Rectangle<Exact> rect({bbox.xmin() - 1, bbox.ymin() - 1}, {bbox.xmax() + 1, bbox.ymax() + 1});
-	Point<Exact> approx_source = makeExact(approximateAlgebraic(curve.source()));
-	Point<Exact> approx_target = makeExact(approximateAlgebraic(curve.target()));
+	Point<Exact> approx_source = pretendExact(approximateAlgebraic(curve.source()));
+	Point<Exact> approx_target = pretendExact(approximateAlgebraic(curve.target()));
 	Point<Exact> middle = CGAL::midpoint(approx_source, approx_target);
 	if (curve.is_linear()) {
 		return middle;
@@ -86,7 +86,7 @@ Point<Exact> get_approx_point_on_boundary(const Face& face) {
 		}
 
 		assert(intersection_pts.size() == 1);
-		return makeExact(approximateAlgebraic(intersection_pts[0]));
+		return pretendExact(approximateAlgebraic(intersection_pts[0]));
 	}
 }
 
@@ -116,17 +116,17 @@ Point<Exact> get_point_in(const Face& face) {
 
 	std::sort(intersection_pts.begin(), intersection_pts.end(), [&seg](const auto& pt1, const auto& pt2) {
 		Vector<Exact> v = seg.supporting_line().to_vector();
-		return v * (makeExact(approximateAlgebraic(pt1)) - makeExact(approximateAlgebraic(pt2))) < 0;
+		return v * (pretendExact(approximateAlgebraic(pt1)) - pretendExact(approximateAlgebraic(pt2))) < 0;
 	});
 	intersection_pts.erase(std::unique(intersection_pts.begin(), intersection_pts.end()), intersection_pts.end());
 
 	Point<Exact> approx_source;
 	Point<Exact> approx_target;
 	if (intersection_pts.size() >= 2) {
-		approx_source = makeExact(approximateAlgebraic(intersection_pts[0]));
-		approx_target = makeExact(approximateAlgebraic(intersection_pts[1]));
+		approx_source = pretendExact(approximateAlgebraic(intersection_pts[0]));
+		approx_target = pretendExact(approximateAlgebraic(intersection_pts[1]));
 	} else {
-		approx_source = makeExact(approximateAlgebraic(intersection_pts[0]));
+		approx_source = pretendExact(approximateAlgebraic(intersection_pts[0]));
 		approx_target = approx_point_on_boundary;
 	}
 

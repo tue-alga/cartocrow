@@ -171,10 +171,12 @@ std::tuple<CSPolyline, Point<Exact>, Point<Exact>> extend(const CSPolyline& poly
 	auto endCurve = *(--polyline.curves_end());
 
 	auto sTan = startTangent(startCurve);
-	Point<Exact> approxNewSource = makeExact(approximateAlgebraic(startCurve.source())) - makeExact(sTan * amount);
+	Point<Exact> approxNewSource =
+	    pretendExact(approximateAlgebraic(startCurve.source())) - pretendExact(sTan * amount);
 
 	auto tTan = endTangent(*(--polyline.curves_end()));
-	Point<Exact> approxNewTarget = makeExact(approximateAlgebraic(endCurve.target())) + makeExact(tTan * amount);
+	Point<Exact> approxNewTarget =
+	    pretendExact(approximateAlgebraic(endCurve.target())) + pretendExact(tTan * amount);
 
 	std::vector<X_monotone_curve_2> xmCurves;
 

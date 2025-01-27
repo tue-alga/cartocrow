@@ -27,12 +27,6 @@ typedef CSTraits::Curve_2 Curve_2;
 typedef CSTraits::CoordNT OneRootNumber;
 typedef CSTraits::Point_2 OneRootPoint;
 
-// todo: move this elsewhere and clean up
-Point<Exact> makeExact(const Point<Inexact>& point);
-Vector<Exact> makeExact(const Vector<Inexact>& vector);
-Circle<Exact> makeExact(const Circle<Inexact>& circle);
-std::vector<Point<Exact>> makeExact(const std::vector<Point<Inexact>>& points);
-Polygon<Exact> makeExact(const Polygon<Inexact>& polygon);
 Point<Inexact> approximateAlgebraic(const CSTraits::Point_2& algebraic_point);
 }
 

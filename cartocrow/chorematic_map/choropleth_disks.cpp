@@ -52,7 +52,7 @@ std::vector<BinDisk> fitDisks(const Choropleth& choropleth, const WeightedRegion
 				    if (wp.weight > 0) return false;
 				    for (const auto& disk : binDisks) {
 					    auto circle = disk.disk;
-					    if (circle.has_value() && !circle->has_on_unbounded_side(makeExact(wp.point))) {
+					    if (circle.has_value() && !circle->has_on_unbounded_side(pretendExact(wp.point))) {
 						    return true;
 					    }
 				    }
@@ -66,13 +66,14 @@ std::vector<BinDisk> fitDisks(const Choropleth& choropleth, const WeightedRegion
 		auto [p1, p2, p3] = iDisk;
 		if (p1.has_value() && p2.has_value() && p3.has_value()) {
 			if (abs(Triangle<Inexact>(p1->point, p2->point, p3->point).area()) < M_EPSILON) {
-				circle = Halfplane<Exact>(Line<Exact>(makeExact(p1->point), makeExact(p2->point)));
+				circle = Halfplane<Exact>(Line<Exact>(pretendExact(p1->point), pretendExact(p2->point)));
 			} else {
 				circle =
-				    Circle<Exact>(makeExact(p1->point), makeExact(p2->point), makeExact(p3->point));
+				    Circle<Exact>(pretendExact(p1->point), pretendExact(p2->point),
+				                       pretendExact(p3->point));
 			}
 		} else if (p1.has_value() && p2.has_value()) {
-			circle = Circle<Exact>(makeExact(p1->point), makeExact(p2->point));
+			circle = Circle<Exact>(pretendExact(p1->point), pretendExact(p2->point));
 		} else {
 			circle = std::nullopt;
 		}

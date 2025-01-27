@@ -25,13 +25,14 @@ std::optional<Polygon<Inexact>> convexIntersection(const Polygon<Inexact>& p, co
 
 Number<Inexact> coverRadiusOfPoints(const std::vector<Point<Inexact>>& points) {
 	DT dt;
-	auto exact_points = makeExact(points);
+	std::vector<Point<Exact>> exact_points;
+	pretendExact(points.begin(), points.end(), std::back_inserter(exact_points));
 	dt.insert(exact_points.begin(), exact_points.end());
 
 	Rectangle<Inexact> bbox = CGAL::bounding_box(points.begin(), points.end());
 	std::optional<Number<Inexact>> squaredCoverRadius;
 
-	auto hull = makeExact(convexHull(points));
+	auto hull = pretendExact(convexHull(points));
 	Cropped_voronoi_from_delaunay cropped_voronoi(hull);
 
 	for (auto eit = dt.finite_edges_begin(); eit != dt.finite_edges_end(); ++eit) {
