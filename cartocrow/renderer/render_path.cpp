@@ -54,7 +54,7 @@ RenderPath& RenderPath::operator+=(const RenderPath& other) {
 	return *this;
 }
 
-renderer::RenderPath transform(const CGAL::Aff_transformation_2<Inexact>& t, const RenderPath& p) {
+renderer::RenderPath orthogonal_transform(const CGAL::Aff_transformation_2<Inexact>& t, const RenderPath& p) {
     RenderPath tp;
     for (auto& cmd : p.commands()) {
         if (auto* c = std::get_if<RenderPath::MoveTo>(&cmd)) {
@@ -62,7 +62,7 @@ renderer::RenderPath transform(const CGAL::Aff_transformation_2<Inexact>& t, con
         } else if (auto* c = std::get_if<RenderPath::LineTo>(&cmd)) {
             tp.lineTo(c->m_to.transform(t));
         } else if (auto* c = std::get_if<RenderPath::ArcTo>(&cmd)) {
-            tp.arcTo(c->m_center.transform(t), c->m_clockwise, c->m_to.transform(t)); // todo check clockwise
+            tp.arcTo(c->m_center.transform(t), t.is_reflection() ? !c->m_clockwise : c->m_clockwise, c->m_to.transform(t));
         } else if (auto* c = std::get_if<RenderPath::Close>(&cmd)) {
             tp.close();
         } else {

@@ -90,7 +90,7 @@ int main() {
 	std::optional<Color> bgFill = std::nullopt;
 	Point<Inexact> scorePos(38.69, 247.132);
 
-	RenderPath schematization = transform(sTrans * trans, IpeReader::loadIpePath(schematizationPath));
+	RenderPath schematization = orthogonal_transform(sTrans * trans, IpeReader::loadIpePath(schematizationPath));
 
     auto sampler = std::make_shared<Sampler<LandmarksPl>>(regionArr, seed, perRegion);
 

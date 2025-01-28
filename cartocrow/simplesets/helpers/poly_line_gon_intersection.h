@@ -10,7 +10,6 @@
 #include <CGAL/Arrangement_with_history_2.h>
 
 namespace cartocrow::simplesets {
-// todo: edge case where edges of dilated patterns overlap, so a half-edge may have multiple origins.
 std::vector<CSPolyline> intersection(const CSPolyline& line, const CSPolygon& gon, bool keepOverlap);
 std::vector<CSPolyline> difference(const CSPolyline& line, const CSPolygon& gon, bool keepOverlap);
 std::vector<CSPolyline> intersection(const CSPolyline& line, const CSPolygonWithHoles& gon, bool keepOverlap);

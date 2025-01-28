@@ -91,8 +91,12 @@ class RenderPath {
 	std::vector<Command> m_commands;
 };
 
-renderer::RenderPath transform(const CGAL::Aff_transformation_2<Inexact>& t, const RenderPath& p);
+/// Apply transformation \p t on render path \p p.
+/// \pre Affine transformation \p t should be an orthogonal transformation (no stretching).
+renderer::RenderPath orthogonal_transform(const CGAL::Aff_transformation_2<Inexact>& t, const RenderPath& p);
+/// Append polygon to render path.
 RenderPath& operator<<(RenderPath& path, const Polygon<Inexact>& p);
+/// Append polygon with holes to render path.
 RenderPath& operator<<(RenderPath& path, const PolygonWithHoles<Inexact>& p);
 }
 
