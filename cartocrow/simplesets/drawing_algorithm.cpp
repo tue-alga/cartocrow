@@ -459,20 +459,9 @@ CSPolygon morph(const std::vector<CSPolyline>& boundaryParts, const CSPolygon& c
 				dilatedCutSet.join(thinRectangle(closestDisk->center(), *nearest, gs.pointSize));
 			}
 
-			// todo: Check if .join works
-			std::vector<CSPolygonWithHoles> withHoles;
-			dilatedCutSet.polygons_with_holes(std::back_inserter(withHoles));
-			for (const auto& wh : withHoles) {
-				veryDilatedCuts.join(wh);
-			}
-
-			// todo: Check if .join works
-			std::vector<CSPolygonWithHoles> withHoles2;
+			veryDilatedCuts.join(dilatedCutSet);
 			auto drDilatedCutSet = approximateDilate(cutSet, 1.49 * sr);
-			drDilatedCutSet.polygons_with_holes(std::back_inserter(withHoles2));
-			for (const auto& wh : withHoles2) {
-				dilatedCuts.join(wh);
-			}
+			dilatedCuts.join(drDilatedCutSet);
 		} else {
 			std::vector<CSPolygonWithHoles> withHoles;
 			cutSet.polygons_with_holes(std::back_inserter(withHoles));
@@ -507,20 +496,9 @@ CSPolygon morph(const std::vector<CSPolyline>& boundaryParts, const CSPolygon& c
 				dilatedCutSet.join(thinRectangle(d.center(), n, gs.pointSize));
 			}
 
-			// todo: Check if .join works
-			std::vector<CSPolygonWithHoles> withHoles;
-			dilatedCutSet.polygons_with_holes(std::back_inserter(withHoles));
-			for (const auto& wh : withHoles) {
-				veryDilatedCuts.join(wh);
-			}
-
-			// todo: Check if .join works
-			std::vector<CSPolygonWithHoles> withHoles2;
+			veryDilatedCuts.join(dilatedCutSet);
 			auto drDilatedCutSet = approximateDilate(cutSet, 1.49 * sr);
-			drDilatedCutSet.polygons_with_holes(std::back_inserter(withHoles2));
-			for (const auto& wh : withHoles2) {
-				dilatedCuts.join(wh);
-			}
+			dilatedCuts.join(drDilatedCutSet);
 		} else {
 			std::vector<CSPolygonWithHoles> withHoles;
 			cutSet.polygons_with_holes(std::back_inserter(withHoles));
