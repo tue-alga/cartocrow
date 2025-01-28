@@ -68,7 +68,7 @@ bool do_intersect(
 
 Number<Inexact> intersectionDelay(const std::vector<CatPoint>& points, const PolyPattern& p1, const PolyPattern& p2,
                                   const PolyPattern& result, const GeneralSettings& gs, const PartitionSettings& ps) {
-	// todo: check consistency with paper
+	// This differs slightly from the approach described in the paper, for practical efficiency reasons.
 	if (!ps.intersectionDelay) return 0;
 	Number<Inexact> intersectionArea = 0;
 	auto& resultPts = result.catPoints();
@@ -239,8 +239,6 @@ partition(const std::vector<CatPoint>& points, const GeneralSettings& gs, const 
 					std::copy(newPts.begin(), newPts.end(), std::back_inserter(mergedPoints));
 					std::copy(pattern->catPoints().begin(), pattern->catPoints().end(), std::back_inserter(mergedPoints));
 					auto newIsland = std::make_shared<Island>(mergedPoints);
-
-					// todo? do intersection check here already? check how this affects performance
 
 					Number<Inexact> regDelay = !ps.regularityDelay ? 0 : newIsland->coverRadius() - std::max(pattern->coverRadius(), ev.result->coverRadius());
 					Number<Inexact> eventTime = newIsland->coverRadius() + regDelay;

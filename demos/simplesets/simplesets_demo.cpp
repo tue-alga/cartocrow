@@ -18,35 +18,24 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include "simplesets_demo.h"
-#include "cartocrow/core/arrangement_helpers.h"
 #include "cartocrow/core/cs_polygon_helpers.h"
-#include "cartocrow/core/cs_polyline_helpers.h"
-#include "cartocrow/renderer/ipe_reader.h"
 #include "cartocrow/renderer/ipe_renderer.h"
 #include "cartocrow/renderer/painting_renderer.h"
-#include "cartocrow/simplesets/dilated/dilated_poly.h"
 #include "cartocrow/simplesets/drawing_algorithm.h"
 #include "cartocrow/simplesets/helpers/approximate_convex_hull.h"
-#include "cartocrow/simplesets/helpers/poly_line_gon_intersection.h"
 #include "cartocrow/simplesets/parse_input.h"
 #include "cartocrow/simplesets/partition_algorithm.h"
 #include "cartocrow/simplesets/partition_painting.h"
 #include "cartocrow/simplesets/patterns/bank.h"
-#include "cartocrow/simplesets/patterns/island.h"
-#include "cartocrow/simplesets/patterns/matching.h"
-#include "cartocrow/simplesets/patterns/single_point.h"
 #include "colors/colors.h"
 #include <CGAL/Bbox_2.h>
 #include <QApplication>
 #include <QCheckBox>
-#include <QComboBox>
 #include <QDockWidget>
 #include <QFileDialog>
 #include <QLabel>
-#include <QMessageBox>
 #include <QPushButton>
 #include <QSlider>
-#include <QSpinBox>
 #include <QVBoxLayout>
 
 namespace fs = std::filesystem;
@@ -59,20 +48,20 @@ SimpleSetsDemo::SimpleSetsDemo() {
 
 	m_cds = ComputeDrawingSettings{0.675, true, 0.2};
 
-	// Initial file
-//	std::filesystem::path filePath("data/overlap-example-1.txt");
-//	std::filesystem::path filePath("data/nyc.txt");
-	std::filesystem::path filePath("data/diseasome.txt");
+	// Below are two example inputs: nyc and diseasome.
+	// Comment/uncomment the following two sets of four lines to switch.
 
 	// nyc
-//	m_gs = GeneralSettings{2.1, 2, M_PI, 70.0 / 180 * M_PI};
-//	m_ds = DrawSettings{{CB::light_blue, CB::light_red, CB::light_green, CB::light_purple, CB::light_orange}, 0.7};
-//	m_ps = PartitionSettings{true, true, true, true, 0.1};
+//	m_gs.pointSize = 2.1;
+//	m_ds.colors = {CB::light_blue, CB::light_red, CB::light_green, CB::light_purple, CB::light_orange};
+//	m_ps.admissibleRadiusFactor = 0.1;
+//	std::filesystem::path filePath("data/nyc.txt");
 
 	// diseasome
-	m_gs = GeneralSettings{5.204, 2, M_PI, 70.0 / 180 * M_PI};
-	m_ds = DrawSettings{diseasome::colors, 0.7};
-	m_ps = PartitionSettings{true, true, true, false, 0.5};
+	m_gs.pointSize = 5.204;
+	m_ds.colors = diseasome::colors;
+	m_ps.intersectionDelay = false;
+	std::filesystem::path filePath("data/diseasome.txt");
 
 	auto* dockWidget = new QDockWidget();
 	addDockWidget(Qt::RightDockWidgetArea, dockWidget);

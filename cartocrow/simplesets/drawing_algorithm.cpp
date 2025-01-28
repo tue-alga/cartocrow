@@ -754,8 +754,8 @@ void DilatedPatternDrawing::drawFaceFill(FaceH fh, renderer::GeometryRenderer& r
 	auto& d = fh->data();
 	for (int i : d.ordering) {
 		renderer.setMode(GeometryRenderer::fill | GeometryRenderer::stroke);
-		renderer.setFill(whiten(ds.colors[m_dilated[i].category()], ds.whiten));
-		renderer.setStroke(whiten(ds.colors[m_dilated[i].category()], ds.whiten), ds.contourStrokeWeight(gs) / 1.5, true);
+		renderer.setFill(whiten(ds.getColor(m_dilated[i].category()), ds.whiten));
+		renderer.setStroke(whiten(ds.getColor(m_dilated[i].category()), ds.whiten), ds.contourStrokeWeight(gs) / 1.5, true);
 		if (!d.morphedFace.contains(i)) {
 			auto poly = face_to_polygon(*fh);
 			renderer.draw(renderPath(poly));
@@ -1078,7 +1078,7 @@ void SimpleSetsPainting::paint(renderer::GeometryRenderer& renderer) const {
 			CSPolygon csPolygon(xm_curves.begin(), xm_curves.end());
 
 			renderer.setMode(GeometryRenderer::fill | GeometryRenderer::stroke);
-			renderer.setFill(whiten(m_ds.colors[m_dpd.m_dilated[i].category()], m_ds.whiten));
+			renderer.setFill(whiten(m_ds.getColor(m_dpd.m_dilated[i].category()), m_ds.whiten));
 			renderer.setStroke(Color{0, 0, 0}, m_ds.contourStrokeWeight(m_dpd.m_gs), true);
 			renderer.draw(renderPath(csPolygon));
 		}
