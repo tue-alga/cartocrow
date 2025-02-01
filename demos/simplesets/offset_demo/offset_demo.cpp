@@ -4,7 +4,7 @@
 #include "cartocrow/renderer/render_path.h"
 #include "cartocrow/renderer/cs_render_helpers.h"
 #include "cartocrow/simplesets/dilated/dilated_poly.h"
-#include "cartocrow/simplesets/helpers/cavc_helpers.h"
+#include "cartocrow/core/cavc_helpers.h"
 #include "cartocrow/simplesets/patterns/bank.h"
 #include "cartocrow/simplesets/patterns/single_point.h"
 #include "demos/simplesets/colors/colors.h"

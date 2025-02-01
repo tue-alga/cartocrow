@@ -2,7 +2,7 @@
 #include "cartocrow/core/cs_curve_helpers.h"
 #include "cartocrow/core/cs_polygon_helpers.h"
 
-namespace cartocrow::simplesets {
+namespace cartocrow {
 Segment<Inexact> tangent(const Circle<Inexact>& c1, const Circle<Inexact>& c2) {
 	auto distSq = CGAL::squared_distance(c1.center(), c2.center());
 	auto hyp = c2.center() - c1.center();

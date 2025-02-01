@@ -1,10 +1,10 @@
 #ifndef CARTOCROW_CAVC_HELPERS_HPP
 #define CARTOCROW_CAVC_HELPERS_HPP
 
-#include "../types.h"
+#include "cs_types.h"
 #include "cavc/include/cavc/polylineoffset.hpp"
 
-namespace cartocrow::simplesets {
+namespace cartocrow {
 // X monotone curves as input
 template <class InputIterator>
 cavc::Polyline<double> cavcPolyline(InputIterator start, InputIterator end, bool closed) {

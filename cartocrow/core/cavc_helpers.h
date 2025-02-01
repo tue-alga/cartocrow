@@ -1,10 +1,10 @@
 #ifndef CARTOCROW_CAVC_HELPERS_H
 #define CARTOCROW_CAVC_HELPERS_H
 
-#include "../types.h"
+#include "cs_types.h"
 #include "cavc/include/cavc/polylineoffset.hpp"
 
-namespace cartocrow::simplesets {
+namespace cartocrow {
 
 //std::vector<X_monotone_curve_2> xmCurves(const cavc::Polyline<double>& polyline);
 

@@ -1,13 +1,13 @@
 #ifndef CARTOCROW_APPROXIMATE_CONVEX_HULL_H
 #define CARTOCROW_APPROXIMATE_CONVEX_HULL_H
 
-#include "../types.h"
+#include "cs_types.h"
 #include <CGAL/Apollonius_site_2.h>
 #include <CGAL/Apollonius_graph_2.h>
 #include <CGAL/Apollonius_graph_traits_2.h>
 #include <gmpxx.h>
 
-namespace cartocrow::simplesets {
+namespace cartocrow {
 typedef CGAL::Apollonius_graph_traits_2<Exact> AT;
 typedef CGAL::Apollonius_graph_2<AT>           Apollonius;
 typedef Apollonius::Site_2                     ASite;

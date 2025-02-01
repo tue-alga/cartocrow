@@ -34,7 +34,7 @@ endif()
 
 add_library(${CAVC_CPP_HEADER_ONLY_LIB} INTERFACE)
 target_include_directories(${CAVC_CPP_HEADER_ONLY_LIB}
-  INTERFACE include/)
+  INTERFACE include)
 
 if(NOT CAVC_HEADER_ONLY)
   if(CAVC_BUILD_SHARED_LIB)
@@ -62,7 +62,7 @@ if(NOT CAVC_HEADER_ONLY)
   target_compile_definitions(${CAVC_C_API_LIB}
     PRIVATE CAVC_EXPORTS)
   target_include_directories(${CAVC_C_API_LIB}
-    PUBLIC c_api_include/)
+    PUBLIC c_api_include)
   target_link_libraries(${CAVC_C_API_LIB}
     PRIVATE ${CAVC_CPP_HEADER_ONLY_LIB})
 endif()

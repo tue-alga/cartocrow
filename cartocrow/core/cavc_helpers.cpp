@@ -5,7 +5,7 @@
 #include "cavc/include/cavc/polylineoffsetislands.hpp"
 #include "cavc_helpers.hpp"
 
-namespace cartocrow::simplesets {
+namespace cartocrow {
 std::vector<X_monotone_curve_2> xmCurves(const cavc::Polyline<double>& polyline) {
 	std::vector<X_monotone_curve_2> xmCurves;
 

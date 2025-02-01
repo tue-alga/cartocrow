@@ -9,7 +9,7 @@
 #include <CGAL/Arr_observer.h>
 #include <CGAL/Arrangement_with_history_2.h>
 
-namespace cartocrow::simplesets {
+namespace cartocrow {
 std::vector<CSPolyline> intersection(const CSPolyline& line, const CSPolygon& gon, bool keepOverlap);
 std::vector<CSPolyline> difference(const CSPolyline& line, const CSPolygon& gon, bool keepOverlap);
 std::vector<CSPolyline> intersection(const CSPolyline& line, const CSPolygonWithHoles& gon, bool keepOverlap);

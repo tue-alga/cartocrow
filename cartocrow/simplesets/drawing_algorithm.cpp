@@ -6,10 +6,10 @@
 #include "cartocrow/core/cs_polyline_helpers.h"
 #include "cartocrow/renderer/ipe_renderer.h"
 #include "cartocrow/renderer/cs_render_helpers.h"
-#include "cartocrow/simplesets/helpers/poly_line_gon_intersection.h"
+#include "cartocrow/core/poly_line_gon_intersection.h"
 #include "grow_circles.h"
-#include "helpers/approximate_convex_hull.h"
-#include "helpers/cavc_helpers.h"
+#include "cartocrow/core/approximate_convex_hull.h"
+#include "cartocrow/core/cavc_helpers.h"
 #include <CGAL/Boolean_set_operations_2.h>
 #include <CGAL/Boolean_set_operations_2/Gps_polygon_validation.h>
 #include <utility>

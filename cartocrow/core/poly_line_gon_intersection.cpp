@@ -1,6 +1,6 @@
 #include "poly_line_gon_intersection.h"
 
-namespace cartocrow::simplesets {
+namespace cartocrow {
 std::vector<CSPolyline> intersection(const CSPolyline& line, const CSPolygon& gon, bool keepOverlap) {
 	CSPolygonWithHoles withHoles(gon);
 	return intersection(line, withHoles, keepOverlap);

@@ -1,7 +1,6 @@
 #include "island.h"
 #include "bank.h"
-#include "cartocrow/simplesets/helpers/cropped_voronoi.h"
-#include "cartocrow/simplesets/helpers/point_voronoi_helpers.h"
+#include "cartocrow/core/cropped_voronoi.h"
 #include <CGAL/Boolean_set_operations_2.h>
 #include <CGAL/bounding_box.h>
 #include <CGAL/convex_hull_2.h>

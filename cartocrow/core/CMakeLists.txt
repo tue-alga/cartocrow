@@ -12,6 +12,9 @@ set(SOURCES
 	cs_types.cpp
 	vector_helpers.cpp
 	transform_helpers.cpp
+	approximate_convex_hull.cpp
+	cavc_helpers.cpp
+	poly_line_gon_intersection.cpp
 )
 set(HEADERS
 	centroid.h
@@ -33,7 +36,13 @@ set(HEADERS
 	vector_helpers.h
 	halfplane.h
 	transform_helpers.h
+	approximate_convex_hull.h
+	cavc_helpers.h
+	cropped_voronoi.h
+	poly_line_gon_intersection.h
 )
+
+add_subdirectory(cavc)
 
 add_library(core ${SOURCES})
 target_link_libraries(core
