@@ -242,7 +242,7 @@ int main(int argc, char* argv[]) {
         renderer::RenderPath schematization;
         if (schematize) {
             auto schematizationPath = projectFilename.parent_path() / projectData["schematization"];
-            schematization = transform(trans, IpeReader::loadIpePath(schematizationPath));
+            schematization = orthogonal_transform(trans, IpeReader::loadIpePath(schematizationPath));
         }
 
         auto entryToColor = [](const nlohmann::basic_json<>& entry) {
