@@ -15,6 +15,7 @@ set(SOURCES
 	approximate_convex_hull.cpp
 	cavc_helpers.cpp
 	poly_line_gon_intersection.cpp
+	circle_tangents.cpp
 )
 set(HEADERS
 	centroid.h
@@ -40,6 +41,7 @@ set(HEADERS
 	cavc_helpers.h
 	cropped_voronoi.h
 	poly_line_gon_intersection.h
+	circle_tangents.h
 )
 
 add_subdirectory(cavc)
