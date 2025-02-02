@@ -114,6 +114,61 @@ bool GeometryWidget::PointEditable::isClose(Point<Inexact> location, Number<Inex
 	return (*m_point - location).squared_length() < radius * radius;
 }
 
+GeometryWidget::CircleEditable::CircleEditable(GeometryWidget* widget, std::shared_ptr<Circle<Inexact>> circle)
+        : Editable(widget), m_circle(circle) {}
+
+bool GeometryWidget::CircleEditable::drawHoverHint(Point<Inexact> location,
+                                                  Number<Inexact> radius) const {
+    if (isCloseToCenter(location, radius)) {
+        QPointF position = m_widget->convertPoint(m_circle->center());
+        m_widget->m_painter->setPen(QPen(QBrush(QColor{240, 40, 20}), 1.5f));
+        m_widget->m_painter->setBrush(Qt::NoBrush);
+        m_widget->m_painter->drawEllipse(position, 5, 5);
+        return true;
+    } else if (isCloseToBoundary(location, radius)) {
+        m_widget->m_painter->setPen(QPen(QBrush(QColor{240, 40, 20}), 1.5f));
+        m_widget->m_painter->setBrush(Qt::NoBrush);
+        auto r = sqrt(m_circle->squared_radius());
+        auto sx = m_widget->m_transform.m11();
+        m_widget->m_painter->drawEllipse(m_widget->convertPoint(m_circle->center()), sx * r, sx * r);
+        return true;
+    } else {
+        return false;
+    }
+}
+
+bool GeometryWidget::CircleEditable::startDrag(Point<Inexact> location, Number<Inexact> radius) {
+    if (isCloseToCenter(location, radius)) {
+        m_dragging = Dragging::Center;
+        return true;
+    } else if (isCloseToBoundary(location, radius)) {
+        m_dragging = Dragging::Radius;
+        return true;
+    }
+    return false;
+}
+
+void GeometryWidget::CircleEditable::handleDrag(Point<Inexact> to) const {
+    if (m_dragging == Dragging::Center) {
+        *m_circle = Circle<Inexact>(to, m_circle->squared_radius());
+    } else if (m_dragging == Dragging::Radius) {
+        auto c = m_circle->center();
+        *m_circle = Circle<Inexact>(c, CGAL::squared_distance(c, to));
+    }
+}
+
+void GeometryWidget::CircleEditable::endDrag() {}
+
+bool GeometryWidget::CircleEditable::isCloseToCenter(Point<Inexact> location, Number<Inexact> radius) const {
+    return (m_circle->center() - location).squared_length() < radius * radius;
+}
+
+bool GeometryWidget::CircleEditable::isCloseToBoundary(Point<Inexact> location, Number<Inexact> radius) const {
+    auto d = sqrt(CGAL::squared_distance(m_circle->center(), location));
+    auto r = sqrt(m_circle->squared_radius());
+    return abs(d - r) < radius;
+}
+
 GeometryWidget::GeometryWidget() {
 	setMouseTracking(true);
 	m_transform.scale(1, -1);
@@ -798,6 +853,10 @@ Number<Inexact> GeometryWidget::zoomFactor() const {
 
 void GeometryWidget::registerEditable(std::shared_ptr<Point<Inexact>> point) {
 	m_editables.push_back(std::make_unique<PointEditable>(this, point));
+}
+
+void GeometryWidget::registerEditable(std::shared_ptr<Circle<Inexact>> circle) {
+    m_editables.push_back(std::make_unique<CircleEditable>(this, circle));
 }
 
 void GeometryWidget::registerEditable(std::shared_ptr<Polygon<Inexact>> polygon) {

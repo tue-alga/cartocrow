@@ -138,6 +138,37 @@ class GeometryWidget : public QWidget, public GeometryRenderer {
 		std::shared_ptr<Point<Inexact>> m_point;
 	};
 
+    /// Editable for \ref Circle<Inexact>.
+    class CircleEditable : public Editable {
+    public:
+        /// Constructs a CircleEditable for the given circle.
+        CircleEditable(GeometryWidget* widget, std::shared_ptr<Circle<Inexact>> circle);
+        bool drawHoverHint(Point<Inexact> location, Number<Inexact> radius) const override;
+        bool startDrag(Point<Inexact> location, Number<Inexact> radius) override;
+        void handleDrag(Point<Inexact> to) const override;
+        void endDrag() override;
+
+    private:
+        /// The circle we're editing.
+        std::shared_ptr<Circle<Inexact>> m_circle;
+
+        /// Indicates what is being edited.
+        enum Dragging {
+            Center,
+            Radius,
+        };
+        /// Indicates what is being edited.
+        std::optional<Dragging> m_dragging;
+
+        /// Checks if the location is within a circle with the given radius
+        /// around the center.
+        bool isCloseToCenter(Point<Inexact> location, Number<Inexact> radius) const;
+
+        /// Checks if the location is within distance \p radius
+        /// to the boundary of the circle.
+        bool isCloseToBoundary(Point<Inexact> location, Number<Inexact> radius) const;
+    };
+
 	class PolygonEditable : public Editable {
 	  public:
 		/// Constructs a PolygonEditable for the given polygon.
@@ -200,6 +231,8 @@ class GeometryWidget : public QWidget, public GeometryRenderer {
 
 	/// Adds an editable point.
 	void registerEditable(std::shared_ptr<Point<Inexact>> point);
+    /// Adds an editable circle.
+    void registerEditable(std::shared_ptr<Circle<Inexact>> point);
 	/// Adds an editable polygon.
 	void registerEditable(std::shared_ptr<Polygon<Inexact>> polygon);
 
