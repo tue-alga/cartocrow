@@ -514,7 +514,7 @@ CSPolygon morph(const std::vector<CSPolyline>& boundaryParts, const CSPolygon& c
 
 	CSPolygonSet smoothedSet;
 	if (cds.smooth) {
-		smoothedSet = approximateSmooth(veryDilatedCuts, sr);
+		smoothedSet = approximateSmoothCO(veryDilatedCuts, sr);
 		smoothedSet.intersection(dilatedCuts);
 	} else {
 		smoothedSet = veryDilatedCuts;

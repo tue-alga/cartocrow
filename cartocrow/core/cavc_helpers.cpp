@@ -193,7 +193,7 @@ CSPolygonSet approximateErode(const CSPolygonSet& csPolygonSet, double radius) {
 	return approximateDilateOrErode(csPolygonSet, radius, false);
 }
 
-CSPolygonSet approximateSmooth(const CSPolygonSet& polygonSet, double radius) {
+CSPolygonSet approximateSmoothCO(const CSPolygonSet& polygonSet, double radius) {
 	auto loopSet = offsetLoopSet(polygonSet, CGAL::CLOCKWISE);
 	cavc::ParallelOffsetIslands<double> alg;
 	auto dilated = alg.compute(loopSet, radius);
@@ -204,7 +204,7 @@ CSPolygonSet approximateSmooth(const CSPolygonSet& polygonSet, double radius) {
 	return csPolygonSet(final, true);
 }
 
-CSPolygonSet approximateSmooth_(const CSPolygonSet& polygonSet, double radius) {
+CSPolygonSet approximateSmoothOC(const CSPolygonSet& polygonSet, double radius) {
 	auto loopSet = offsetLoopSet(polygonSet, CGAL::COUNTERCLOCKWISE);
 	cavc::ParallelOffsetIslands<double> alg;
 	auto eroded = alg.compute(loopSet, radius);
@@ -215,6 +215,24 @@ CSPolygonSet approximateSmooth_(const CSPolygonSet& polygonSet, double radius) {
 	return csPolygonSet(final, false);
 }
 
+CSPolygonSet approximateClosing(const CSPolygonSet& polygonSet, double radius) {
+    auto loopSet = offsetLoopSet(polygonSet, CGAL::CLOCKWISE);
+    cavc::ParallelOffsetIslands<double> alg;
+    auto dilated = alg.compute(loopSet, radius);
+    auto dilatedReady = reverseLoopSet(dilated);
+    auto eroded = alg.compute(dilatedReady, radius);
+    return csPolygonSet(eroded, false);
+}
+
+CSPolygonSet approximateOpening(const CSPolygonSet& polygonSet, double radius) {
+    auto loopSet = offsetLoopSet(polygonSet, CGAL::COUNTERCLOCKWISE);
+    cavc::ParallelOffsetIslands<double> alg;
+    auto eroded = alg.compute(loopSet, radius);
+    auto erodedReady = reverseLoopSet(eroded);
+    auto dilated = alg.compute(erodedReady, radius);
+    return csPolygonSet(dilated, true);
+}
+
 CSPolygonSet approximateDilate(const CSPolygonSet& csPolygonSet, Number<Exact> radius) {
 	return approximateDilate(csPolygonSet, CGAL::to_double(radius));
 }
@@ -223,11 +241,19 @@ CSPolygonSet approximateErode(const CSPolygonSet& csPolygonSet, Number<Exact> ra
 	return approximateErode(csPolygonSet, CGAL::to_double(radius));
 }
 
-CSPolygonSet approximateSmooth(const CSPolygonSet& csPolygonSet, Number<Exact> radius) {
-	return approximateSmooth(csPolygonSet, CGAL::to_double(radius));
+CSPolygonSet approximateSmoothCO(const CSPolygonSet& csPolygonSet, Number<Exact> radius) {
+	return approximateSmoothCO(csPolygonSet, CGAL::to_double(radius));
 }
 
-CSPolygonSet approximateSmooth_(const CSPolygonSet& polygonSet, Number<Exact> radius) {
-	return approximateSmooth_(polygonSet, CGAL::to_double(radius));
+CSPolygonSet approximateSmoothOC(const CSPolygonSet& csPolygonSet, Number<Exact> radius) {
+	return approximateSmoothOC(csPolygonSet, CGAL::to_double(radius));
+}
+
+CSPolygonSet approximateClosing(const CSPolygonSet& csPolygonSet, Number<Exact> radius) {
+    return approximateClosing(csPolygonSet, CGAL::to_double(radius));
+}
+
+CSPolygonSet approximateOpening(const CSPolygonSet& csPolygonSet, Number<Exact> radius) {
+    return approximateOpening(csPolygonSet, CGAL::to_double(radius));
 }
 }

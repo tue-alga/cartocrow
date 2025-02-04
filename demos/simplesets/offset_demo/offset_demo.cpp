@@ -62,8 +62,8 @@ OffsetDemo::OffsetDemo() {
 
 	connect(offsetSlider, &QSlider::valueChanged, [this, input, offsetSlider] {
 		double r = offsetSlider->value() / 100.0;
-		m_smoothed = approximateSmooth(input, r);
-	  	m_smoothed_ = approximateSmooth_(input, r);
+		m_smoothed = approximateSmoothCO(input, r);
+	  	m_smoothed_ = approximateSmoothOC(input, r);
 	    m_eroded = approximateErode(input, r);
 	    m_dilated = approximateDilate(input, r);
 		m_renderer->repaint();
