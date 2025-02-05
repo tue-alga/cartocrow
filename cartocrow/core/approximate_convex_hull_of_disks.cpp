@@ -40,24 +40,24 @@ std::vector<RationalRadiusCircle> circlesOnConvexHull(const std::vector<Rational
 	return hullCircles;
 }
 
-/// Precondition: the circle centers are distinct.
 CSPolygon approximateConvexHull(const std::vector<Circle<Exact>>& circles) {
+    std::vector<RationalRadiusCircle> rrCircles;
+    for (const auto& c : circles) {
+        rrCircles.push_back(approximateRadiusCircle(c));
+    }
+    return approximateConvexHull(rrCircles);
+}
+
+CSPolygon approximateConvexHull(const std::vector<RationalRadiusCircle>& rrCircles) {
 	// todo: approximating circle radii may cause problems when two circles overlap in a single point and one is contained in the other.
 	// solution? filter out any circle that is contained in another, before approximating the radii.
-	if (circles.size() == 1) {
-		return circleToCSPolygon(circles.front());
-	}
-	std::vector<RationalRadiusCircle> rrCircles;
-	for (const auto& c : circles) {
-		rrCircles.push_back(approximateRadiusCircle(c));
-	}
 	auto hullCircles = circlesOnConvexHull(rrCircles);
 	if (hullCircles.size() == 1) {
-		for (const auto& c : circles) {
-			if (c.center() == hullCircles[0].center) {
-				return circleToCSPolygon(c);
-			}
-		}
+        auto circlePolygon = circleToCSPolygon(Circle<Exact>(hullCircles[0].center, hullCircles[0].radius));
+        if (circlePolygon.orientation() == CGAL::CLOCKWISE) {
+            circlePolygon.reverse_orientation();
+        }
+        return circlePolygon;
 	}
 
 	std::vector<std::vector<Segment<Exact>>> tangents;
