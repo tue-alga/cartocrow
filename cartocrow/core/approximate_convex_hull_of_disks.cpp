@@ -1,4 +1,4 @@
-#include "approximate_convex_hull.h"
+#include "approximate_convex_hull_of_disks.h"
 #include "cartocrow/core/cs_curve_helpers.h"
 #include "cartocrow/core/cs_polygon_helpers.h"
 #include "cartocrow/core/circle_tangents.h"

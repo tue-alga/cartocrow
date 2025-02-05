@@ -8,7 +8,7 @@
 #include "cartocrow/renderer/cs_render_helpers.h"
 #include "cartocrow/core/poly_line_gon_intersection.h"
 #include "grow_circles.h"
-#include "cartocrow/core/approximate_convex_hull.h"
+#include "cartocrow/core/approximate_convex_hull_of_disks.h"
 #include "cartocrow/core/cavc_helpers.h"
 #include <CGAL/Boolean_set_operations_2.h>
 #include <CGAL/Boolean_set_operations_2/Gps_polygon_validation.h>

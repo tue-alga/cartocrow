@@ -12,7 +12,7 @@ set(SOURCES
 	cs_types.cpp
 	vector_helpers.cpp
 	transform_helpers.cpp
-	approximate_convex_hull.cpp
+	approximate_convex_hull_of_disks.cpp
 	cavc_helpers.cpp
 	poly_line_gon_intersection.cpp
 	circle_tangents.cpp
@@ -37,7 +37,7 @@ set(HEADERS
 	vector_helpers.h
 	halfplane.h
 	transform_helpers.h
-	approximate_convex_hull.h
+    approximate_convex_hull_of_disks.h
 	cavc_helpers.h
 	cropped_voronoi.h
 	poly_line_gon_intersection.h

@@ -22,7 +22,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "cartocrow/renderer/ipe_renderer.h"
 #include "cartocrow/renderer/painting_renderer.h"
 #include "cartocrow/simplesets/drawing_algorithm.h"
-#include "cartocrow/core/approximate_convex_hull.h"
 #include "cartocrow/simplesets/parse_input.h"
 #include "cartocrow/simplesets/partition_algorithm.h"
 #include "cartocrow/simplesets/partition_painting.h"
