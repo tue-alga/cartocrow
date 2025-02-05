@@ -446,7 +446,7 @@ CSPolygon morph(const std::vector<CSPolyline>& boundaryParts, const CSPolygon& c
 		if (cds.smooth) {
 			auto dilatedCutSet = approximateDilate(cutSet, 8 * sr);
 			auto bp = *closestBp;
-			auto [bpE, bpEstart, bpEtarget] = extend(bp, CGAL::to_double(8 * sr), dr);
+			auto [bpE, bpEstart, bpEtarget] = approximateExtend(bp, CGAL::to_double(8 * sr), dr);
 			auto pgn = closeAroundBB(bpE, CGAL::COUNTERCLOCKWISE, 4 * CGAL::to_double(dr), bpEstart,
 			                         bpEtarget);
 			if (pgn.orientation() == CGAL::CLOCKWISE) {
@@ -481,7 +481,7 @@ CSPolygon morph(const std::vector<CSPolyline>& boundaryParts, const CSPolygon& c
 
 		if (cds.smooth) {
 			auto dilatedCutSet = approximateDilate(cutSet, 8 * sr);
-			auto [bpE, bpEstart, bpEtarget] = extend(*bp, CGAL::to_double(8 * sr), dr);
+			auto [bpE, bpEstart, bpEtarget] = approximateExtend(*bp, CGAL::to_double(8 * sr), dr);
 			auto pgn = closeAroundBB(bpE, CGAL::COUNTERCLOCKWISE, 4 * CGAL::to_double(dr), bpEstart,
 			                         bpEtarget);
 			GpsCSTraits traits;

@@ -23,7 +23,7 @@ CSPolylineHelpersDemo::CSPolylineHelpersDemo() {
 
 	std::function<void(GeometryRenderer&)> drawFunc = [pl](GeometryRenderer& renderer) {
 		renderer.setMode(GeometryRenderer::stroke);
-		auto [extended, source, target] = extend(pl, 1.0, 1);
+		auto [extended, source, target] = approximateExtend(pl, 1.0, 1);
 	  	auto pgn = closeAroundBB(extended, CGAL::COUNTERCLOCKWISE, 1.0, source, target);
 	  	renderer.setStroke(Color{255, 0, 0}, 3.0);
 		renderer.draw(renderPath(pgn));

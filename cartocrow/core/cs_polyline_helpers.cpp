@@ -165,7 +165,7 @@ Segment<Exact> doStuff(const OneRootPoint& p1, const Point<Exact>& p2, const Rat
 	}
 }
 
-std::tuple<CSPolyline, Point<Exact>, Point<Exact>> extend(const CSPolyline& polyline, Number<Inexact> amount, Number<Exact> dilationRadius) {
+std::tuple<CSPolyline, Point<Exact>, Point<Exact>> approximateExtend(const CSPolyline& polyline, Number<Inexact> amount, Number<Exact> circleRadius) {
 
 	auto startCurve = *polyline.curves_begin();
 	auto endCurve = *(--polyline.curves_end());
@@ -194,7 +194,7 @@ std::tuple<CSPolyline, Point<Exact>, Point<Exact>> extend(const CSPolyline& poly
 			return {{xmCurves.begin(), xmCurves.end()}, newSource, newTarget};
 		} else {
 			auto c = startCurve.supporting_circle();
-			RationalRadiusCircle ratC(c.center(), dilationRadius);
+			RationalRadiusCircle ratC(c.center(), circleRadius);
 			auto seg1 = doStuff(startCurve.source(), approxNewSource, ratC, true).opposite();
 			auto seg2 = doStuff(endCurve.target(), approxNewTarget, ratC, false);
 			auto newSource = seg1.source();
@@ -223,7 +223,7 @@ std::tuple<CSPolyline, Point<Exact>, Point<Exact>> extend(const CSPolyline& poly
 		xmCurves.push_back(extStartCurve);
 	} else {
 		auto c = startCurve.supporting_circle();
-		RationalRadiusCircle ratC(c.center(), dilationRadius);
+		RationalRadiusCircle ratC(c.center(), circleRadius);
 		auto seg = doStuff(startCurve.source(), approxNewSource, ratC, true).opposite();
 		newSource = seg.source();
 		CSXMCurve extStartCurve(seg.source(), seg.target());
@@ -253,7 +253,7 @@ std::tuple<CSPolyline, Point<Exact>, Point<Exact>> extend(const CSPolyline& poly
 		xmCurves.push_back(extEndCurve);
 	} else {
 		auto c = endCurve.supporting_circle();
-		RationalRadiusCircle ratC(c.center(), dilationRadius);
+		RationalRadiusCircle ratC(c.center(), circleRadius);
 		auto seg = doStuff(endCurve.target(), approxNewTarget, ratC, false);
 		newTarget = seg.target();
 		CSXMCurve extEndCurve(seg.source(), seg.target());
@@ -270,10 +270,6 @@ std::tuple<CSPolyline, Point<Exact>, Point<Exact>> extend(const CSPolyline& poly
 
 CSPolygon closeAroundBB(CSPolyline polyline, CGAL::Orientation orientation, Number<Inexact> offset, const Point<Exact>& source, const Point<Exact>& target) {
 	Rectangle<Exact> bb = CGAL::bbox_2(polyline.curves_begin(), polyline.curves_end());
-//	auto source = polyline.source();
-//	auto target = polyline.target();
-//	auto aSource = approximateAlgebraic(polyline.source());
-//	auto aTarget = approximateAlgebraic(polyline.target());
 	auto sSide = closest_side(source, bb);
 	auto tSide = closest_side(target, bb);
 	auto sSideI = static_cast<int>(sSide);
@@ -314,7 +310,6 @@ CSPolygon closeAroundBB(CSPolyline polyline, CGAL::Orientation orientation, Numb
 
 			    auto smaller = static_cast<int>(sSide) < static_cast<int>(tSide) ? sSide : tSide;
 			    auto larger = smaller == sSide ? tSide : sSide;
-//			    auto s1 = next_side(smaller);
 				Side s1;
 			    if (larger == next_side(smaller)) {
 				    s1 = larger;
