@@ -105,7 +105,7 @@ SimpleSetsDemo::SimpleSetsDemo() {
 	auto* smoothingSlider = new QSlider(Qt::Orientation::Horizontal);
 	vLayout->addWidget(smoothingSlider);
 	smoothingSlider->setMinimum(1);
-	smoothingSlider->setMaximum(100);
+	smoothingSlider->setMaximum(20);
 	smoothingSlider->setValue(20);
 
 	m_renderer = new GeometryWidget();
