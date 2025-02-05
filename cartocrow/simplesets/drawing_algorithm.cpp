@@ -175,7 +175,7 @@ DilatedPatternDrawing::DilatedPatternDrawing(const Partition& partition, const G
 		auto pt = get_point_in(*fit);
 		std::vector<int> origins;
 		for (int i = 0; i < m_dilated.size(); i++) {
-			if (on_or_inside(m_dilated[i].m_contour, pt)) {
+			if (onOrInside(m_dilated[i].m_contour, pt)) {
 				origins.push_back(i);
 				m_iToFaces[i].push_back(fit);
 			}
