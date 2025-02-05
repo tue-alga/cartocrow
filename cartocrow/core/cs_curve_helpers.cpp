@@ -99,8 +99,6 @@ bool liesOn(const Point<Exact>& p, const CSXMCurve& xm_curve) {
 bool liesOn(const OneRootPoint& p, const CSXMCurve& xm_curve) {
 	if (p.x() < xm_curve.left().x() || p.x() > xm_curve.right().x())
 		return false;
-	//	CSTraits traits;
-	//	auto lies_on = traits.compare_y_at_x_2_object();
 	return xm_curve.point_position(p) == CGAL::EQUAL;
 }
 

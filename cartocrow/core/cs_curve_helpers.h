@@ -4,8 +4,11 @@
 #define CARTOCROW_CS_CURVE_HELPERS_H
 
 namespace cartocrow {
+/// Return the the point on the circle closest to the provided point.
+/// Note that this point may have irrational coordinates.
 OneRootPoint closestOnCircle(const Circle<Exact>& circle, const Point<Exact>& point);
 
+/// Convert a CSCurve to CSXMCurves.
 template <class OutputIterator>
 void curveToXMonotoneCurves(const CSCurve& curve, OutputIterator out) {
 	ArrCSTraits traits;
@@ -25,6 +28,7 @@ void curveToXMonotoneCurves(const CSCurve& curve, OutputIterator out) {
 	}
 }
 
+/// Convert a range of CSCurves to CSXMCurves.
 template <class InputIterator, class OutputIterator>
 void curvesToXMonotoneCurves(InputIterator begin, InputIterator end, OutputIterator out) {
 	for (auto it = begin; it != end; ++it) {
@@ -32,12 +36,20 @@ void curvesToXMonotoneCurves(InputIterator begin, InputIterator end, OutputItera
 	}
 }
 
+/// Return the point on the CSXMCurve nearest to the provided point.
 OneRootPoint nearest(const CSXMCurve& xm_curve, const Point<Exact>& point);
 
+/// Check whether the point lies on the CSXMCurve.
+/// Note that this is simply a wrapper around the point_position function of CSXMCurve.
 bool liesOn(const Point<Exact>& p, const CSXMCurve& xm_curve);
+/// Check whether the point lies on the CSXMCurve.
+/// Note that this is simply a wrapper around the point_position function of CSXMCurve.
 bool liesOn(const OneRootPoint& p, const CSXMCurve& xm_curve);
+/// Convert a CSXMCurve to a CSCurve.
 CSCurve toCurve(const CSXMCurve& xmc);
 
+/// Convert a range of CSCurves to CSXMCurves.
+/// This function merges consecutive CSXMCurves that lie on the same supporting geometry (line or circle).
 template <class OutputIterator, class InputIterator>
 void toCurves(InputIterator begin, InputIterator end, OutputIterator out) {
 	std::optional<CSCurve> lastCurve;
@@ -68,6 +80,7 @@ void toCurves(InputIterator begin, InputIterator end, OutputIterator out) {
 	}
 }
 
+/// Convert a range of CSXMCurves to a CSPolycurve.
 template <class InputIterator>
 CSPolycurve arrPolycurveFromXMCurves(InputIterator begin, InputIterator end) {
 	PolycurveCSTraits traits;
@@ -79,11 +92,15 @@ CSPolycurve arrPolycurveFromXMCurves(InputIterator begin, InputIterator end) {
 	return construct(curves.begin(), curves.end());
 }
 
+/// Return true iff c1 overlaps c2 and c1 is not a superset of c2.
 bool liesOn(const CSXMCurve& c1, const CSXMCurve& c2);
 
+/// Return an approximate tangent at the start of the curve.
 Vector<Inexact> startTangent(const CSXMCurve& c);
+/// Return an approximate tangent at the end of the curve.
 Vector<Inexact> endTangent(const CSXMCurve& c);
 
+/// Return the approximate turning angle along the curve.
 double approximateTurningAngle(const CSXMCurve& xmc);
 }
 
