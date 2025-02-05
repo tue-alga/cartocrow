@@ -41,6 +41,14 @@ std::vector<RationalRadiusCircle> circlesOnConvexHull(const std::vector<Rational
 }
 
 CSPolygon approximateConvexHull(const std::vector<Circle<Exact>>& circles) {
+    if (circles.size() == 1) {
+        auto circlePolygon = circleToCSPolygon(circles[0]);
+        if (circlePolygon.orientation() == CGAL::CLOCKWISE) {
+            circlePolygon.reverse_orientation();
+        }
+        return circlePolygon;
+    }
+
     std::vector<RationalRadiusCircle> rrCircles;
     for (const auto& c : circles) {
         rrCircles.push_back(approximateRadiusCircle(c));
