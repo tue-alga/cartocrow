@@ -2,7 +2,7 @@
 #include "../core/cs_curve_helpers.h"
 
 namespace cartocrow::renderer {
-renderer::RenderPath renderPath(const X_monotone_curve_2& xm_curve) {
+renderer::RenderPath renderPath(const CSXMCurve& xm_curve) {
 	renderer::RenderPath path;
 	path.moveTo(approximateAlgebraic(xm_curve.source()));
 
@@ -18,7 +18,7 @@ renderer::RenderPath renderPath(const X_monotone_curve_2& xm_curve) {
 	return path;
 }
 
-void addToRenderPath(const X_monotone_curve_2& xm_curve, renderer::RenderPath& path, bool& first) {
+void addToRenderPath(const CSXMCurve& xm_curve, renderer::RenderPath& path, bool& first) {
 	auto as = approximateAlgebraic(xm_curve.source());
 	auto at = approximateAlgebraic(xm_curve.target());
 	if (first) {
@@ -37,7 +37,7 @@ void addToRenderPath(const X_monotone_curve_2& xm_curve, renderer::RenderPath& p
 	}
 }
 
-void addToRenderPath(const Curve_2& curve, renderer::RenderPath& path, bool& first) {
+void addToRenderPath(const CSCurve& curve, renderer::RenderPath& path, bool& first) {
 	if (curve.is_full()) {
 		const auto& circ = curve.supporting_circle();
 		const auto& cent = approximate(circ.center());
@@ -70,7 +70,7 @@ void addToRenderPath(const Curve_2& curve, renderer::RenderPath& path, bool& fir
 
 renderer::RenderPath operator<<(renderer::RenderPath& path, const CSPolygon& polygon) {
 	bool first = true;
-	std::vector<Curve_2> mergedCurves;
+	std::vector<CSCurve> mergedCurves;
 	toCurves(polygon.curves_begin(), polygon.curves_end(), std::back_inserter(mergedCurves));
 	for (const auto& c : mergedCurves) {
 		addToRenderPath(c, path, first);

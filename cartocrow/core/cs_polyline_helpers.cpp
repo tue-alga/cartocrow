@@ -43,7 +43,7 @@ std::optional<CSPolyline::Curve_const_iterator> liesOn(const OneRootPoint& p, co
 	return std::nullopt;
 }
 
-bool liesOn(const X_monotone_curve_2& c, const CSPolyline& polyline) {
+bool liesOn(const CSXMCurve& c, const CSPolyline& polyline) {
 	auto sc = liesOn(c.source(), polyline);
 	auto tc = liesOn(c.target(), polyline);
 	if (!sc.has_value() || !tc.has_value()) {
@@ -70,7 +70,7 @@ CSPolycurve arrPolycurveFromCSPolyline(const CSPolyline& polyline) {
 }
 
 CSPolyline polylineToCSPolyline(const Polyline<Exact>& polyline) {
-	std::vector<X_monotone_curve_2> xm_curves;
+	std::vector<CSXMCurve> xm_curves;
 	for (auto eit = polyline.edges_begin(); eit != polyline.edges_end(); ++eit) {
 		xm_curves.emplace_back(eit->source(), eit->target());
 	}
@@ -178,7 +178,7 @@ std::tuple<CSPolyline, Point<Exact>, Point<Exact>> extend(const CSPolyline& poly
 	Point<Exact> approxNewTarget =
 	    pretendExact(approximateAlgebraic(endCurve.target())) + pretendExact(tTan * amount);
 
-	std::vector<X_monotone_curve_2> xmCurves;
+	std::vector<CSXMCurve> xmCurves;
 
 	// Single curve
 	if (++polyline.curves_begin() == polyline.curves_end()) {
@@ -189,7 +189,7 @@ std::tuple<CSPolyline, Point<Exact>, Point<Exact>> extend(const CSPolyline& poly
 			OneRootPoint newSourceA(newSource.x(), newSource.y());
 			auto newTarget = l.projection(approxNewTarget);
 			OneRootPoint newTargetA(newTarget.x(), newTarget.y());
-			X_monotone_curve_2 extCurve(l, newSourceA, newTargetA);
+			CSXMCurve extCurve(l, newSourceA, newTargetA);
 			xmCurves.push_back(extCurve);
 			return {{xmCurves.begin(), xmCurves.end()}, newSource, newTarget};
 		} else {
@@ -199,13 +199,13 @@ std::tuple<CSPolyline, Point<Exact>, Point<Exact>> extend(const CSPolyline& poly
 			auto seg2 = doStuff(endCurve.target(), approxNewTarget, ratC, false);
 			auto newSource = seg1.source();
 			auto newTarget = seg2.target();
-			X_monotone_curve_2 extStartCurve(seg1.source(), seg1.target());
+			CSXMCurve extStartCurve(seg1.source(), seg1.target());
 			xmCurves.push_back(extStartCurve);
 			OneRootPoint s1tA(seg1.target().x(), seg1.target().y());
 			OneRootPoint s2sA(seg2.source().x(), seg2.source().y());
-			X_monotone_curve_2 newMc(c, s1tA, s2sA, startCurve.orientation());
+			CSXMCurve newMc(c, s1tA, s2sA, startCurve.orientation());
 			xmCurves.push_back(newMc);
-			X_monotone_curve_2 extEndCurve(seg2.source(), seg2.target());
+			CSXMCurve extEndCurve(seg2.source(), seg2.target());
 			xmCurves.push_back(extEndCurve);
 			return {{xmCurves.begin(), xmCurves.end()}, newSource, newTarget};
 		}
@@ -219,17 +219,17 @@ std::tuple<CSPolyline, Point<Exact>, Point<Exact>> extend(const CSPolyline& poly
 		auto l = startCurve.supporting_line();
 		newSource = l.projection(approxNewSource);
 		OneRootPoint newSourceA(newSource.x(), newSource.y());
-		X_monotone_curve_2 extStartCurve(l, newSourceA, startCurve.source());
+		CSXMCurve extStartCurve(l, newSourceA, startCurve.source());
 		xmCurves.push_back(extStartCurve);
 	} else {
 		auto c = startCurve.supporting_circle();
 		RationalRadiusCircle ratC(c.center(), dilationRadius);
 		auto seg = doStuff(startCurve.source(), approxNewSource, ratC, true).opposite();
 		newSource = seg.source();
-		X_monotone_curve_2 extStartCurve(seg.source(), seg.target());
+		CSXMCurve extStartCurve(seg.source(), seg.target());
 		xmCurves.push_back(extStartCurve);
 		OneRootPoint stA(seg.target().x(), seg.target().y());
-		X_monotone_curve_2 newStartCurve(c, stA, startCurve.target(), startCurve.orientation());
+		CSXMCurve newStartCurve(c, stA, startCurve.target(), startCurve.orientation());
 		xmCurves.push_back(newStartCurve);
 		skipFirst = true;
 	}
@@ -249,16 +249,16 @@ std::tuple<CSPolyline, Point<Exact>, Point<Exact>> extend(const CSPolyline& poly
 		auto l = endCurve.supporting_line();
 		newTarget = l.projection(approxNewTarget);
 		OneRootPoint newTargetA(newTarget.x(), newTarget.y());
-		X_monotone_curve_2 extEndCurve(l, endCurve.target(), newTargetA);
+		CSXMCurve extEndCurve(l, endCurve.target(), newTargetA);
 		xmCurves.push_back(extEndCurve);
 	} else {
 		auto c = endCurve.supporting_circle();
 		RationalRadiusCircle ratC(c.center(), dilationRadius);
 		auto seg = doStuff(endCurve.target(), approxNewTarget, ratC, false);
 		newTarget = seg.target();
-		X_monotone_curve_2 extEndCurve(seg.source(), seg.target());
+		CSXMCurve extEndCurve(seg.source(), seg.target());
 		OneRootPoint ssA(seg.source().x(), seg.source().y());
-		X_monotone_curve_2 newEndCurve(c, endCurve.source(), ssA, endCurve.orientation());
+		CSXMCurve newEndCurve(c, endCurve.source(), ssA, endCurve.orientation());
 		xmCurves.push_back(newEndCurve);
 		xmCurves.push_back(extEndCurve);
 	}
@@ -351,7 +351,7 @@ CSPolygon closeAroundBB(CSPolyline polyline, CGAL::Orientation orientation, Numb
 	pts.push_back(sOut);
 	pts.push_back(source);
 
-	std::vector<X_monotone_curve_2> xm_curves;
+	std::vector<CSXMCurve> xm_curves;
 	std::copy(polyline.curves_begin(), polyline.curves_end(), std::back_inserter(xm_curves));
 	for (int i = 1; i < pts.size(); ++i) {
 		xm_curves.emplace_back(pts[i-1], pts[i]);

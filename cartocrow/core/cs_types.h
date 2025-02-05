@@ -11,23 +11,23 @@
 #include <CGAL/Arr_polycurve_traits_2.h>
 
 namespace cartocrow {
-typedef CGAL::Arr_circle_segment_traits_2<Exact> CSTraits;
-typedef CGAL::Gps_circle_segment_traits_2<Exact> CSTraitsBoolean;
-typedef CGAL::Arr_polycurve_traits_2<CSTraits> PolyCSTraits;
-typedef CSTraitsBoolean::Polygon_2 CSPolygon;
-typedef CSTraitsBoolean::Polygon_with_holes_2 CSPolygonWithHoles;
-typedef CGAL::General_polygon_set_2<CSTraitsBoolean> CSPolygonSet;
-typedef General_polyline_2<CSTraits> CSPolyline;
-typedef PolyCSTraits::Curve_2 CSPolycurve;
-typedef PolyCSTraits::X_monotone_curve_2 CSPolycurveXM;
-typedef CGAL::Arrangement_2<CSTraits> CSArrangement;
+typedef CGAL::Arr_circle_segment_traits_2<Exact> ArrCSTraits;
+typedef CGAL::Gps_circle_segment_traits_2<Exact> GpsCSTraits;
+typedef CGAL::Arr_polycurve_traits_2<ArrCSTraits> PolycurveCSTraits;
+typedef GpsCSTraits::Polygon_2 CSPolygon;
+typedef GpsCSTraits::Polygon_with_holes_2 CSPolygonWithHoles;
+typedef CGAL::General_polygon_set_2<GpsCSTraits> CSPolygonSet;
+typedef General_polyline_2<ArrCSTraits> CSPolyline;
+typedef PolycurveCSTraits::Curve_2 CSPolycurve;
+typedef PolycurveCSTraits::X_monotone_curve_2 CSXMPolycurve;
+typedef CGAL::Arrangement_2<ArrCSTraits> CSArrangement;
 
-typedef CSTraits::X_monotone_curve_2 X_monotone_curve_2;
-typedef CSTraits::Curve_2 Curve_2;
-typedef CSTraits::CoordNT OneRootNumber;
-typedef CSTraits::Point_2 OneRootPoint;
+typedef ArrCSTraits::X_monotone_curve_2 CSXMCurve;
+typedef ArrCSTraits::Curve_2 CSCurve;
+typedef ArrCSTraits::CoordNT OneRootNumber;
+typedef ArrCSTraits::Point_2 OneRootPoint;
 
-Point<Inexact> approximateAlgebraic(const CSTraits::Point_2& algebraic_point);
+Point<Inexact> approximateAlgebraic(const OneRootPoint& algebraic_point);
 }
 
 #endif //CARTOCROW_CS_TYPES_H

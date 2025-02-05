@@ -8,7 +8,7 @@ std::vector<Point<Exact>> makeExact(const std::vector<Point<Inexact>>& points) {
 	return exact_points;
 }
 
-Point<Inexact> approximateAlgebraic(const CSTraits::Point_2& algebraic_point) {
+Point<Inexact> approximateAlgebraic(const ArrCSTraits::Point_2& algebraic_point) {
 	return {CGAL::to_double(algebraic_point.x()), CGAL::to_double(algebraic_point.y())};
 }
 }

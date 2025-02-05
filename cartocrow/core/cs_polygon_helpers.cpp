@@ -13,14 +13,14 @@
 
 namespace cartocrow {
 // ------ return signed area under the linear segment (P1, P2)
-Number<Inexact> area(const CSTraits::Point_2& P1, const CSTraits::Point_2& P2) {
+Number<Inexact> area(const ArrCSTraits::Point_2& P1, const ArrCSTraits::Point_2& P2) {
 	auto const dx = CGAL::to_double(P1.x()) - CGAL::to_double(P2.x());
 	auto const sy = CGAL::to_double(P1.y()) + CGAL::to_double(P2.y());
 	return dx * sy / 2;
 }
 
 // ------ return signed area under the circular segment (P1, P2, C)
-Number<Inexact> area(const CSTraits::Point_2& P1, const CSTraits::Point_2& P2, const CSTraits::Rational_circle_2& C) {
+Number<Inexact> area(const ArrCSTraits::Point_2& P1, const ArrCSTraits::Point_2& P2, const ArrCSTraits::Rational_circle_2& C) {
 	auto const dx = CGAL::to_double(P1.x()) - CGAL::to_double(P2.x());
 	auto const dy = CGAL::to_double(P1.y()) - CGAL::to_double(P2.y());
 	auto const squaredChord = dx * dx + dy * dy;
@@ -43,7 +43,7 @@ Number<Inexact> area(const CSTraits::Point_2& P1, const CSTraits::Point_2& P2, c
 }
 
 // ------ return signed area under the X-monotone curve
-Number<Inexact> area(const X_monotone_curve_2& XCV) {
+Number<Inexact> area(const CSXMCurve& XCV) {
 	if (XCV.is_linear()) {
 		return area(XCV.source(), XCV.target());
 	} else if (XCV.is_circular()) {
@@ -74,7 +74,7 @@ Number<Inexact> area(const CSPolygonWithHoles& P) {
 /// Be careful: circles seem to be clockwise by default, so if you are going to compute
 /// intersections you probably want to reverse its orientation!
 CSPolygon circleToCSPolygon(const Circle<Exact>& circle) {
-	std::vector<X_monotone_curve_2> xm_curves;
+	std::vector<CSXMCurve> xm_curves;
 	curveToXMonotoneCurves(circle, std::back_inserter(xm_curves));
 	return {xm_curves.begin(), xm_curves.end()};
 }
@@ -107,10 +107,10 @@ bool on_or_inside(const CSPolygon& polygon, const Point<Exact>& point) {
 	if (!inter.has_value()) return false;
 	if (inter->type() == typeid(Point<Exact>)) return true;
 	auto seg = boost::get<Segment<Exact>>(*inter);
-	X_monotone_curve_2 seg_xm_curve(seg.source(), seg.target());
+	CSXMCurve seg_xm_curve(seg.source(), seg.target());
 
-	typedef std::pair<CSTraits::Point_2, unsigned int> Intersection_point;
-	typedef boost::variant<Intersection_point, X_monotone_curve_2> Intersection_result;
+	typedef std::pair<ArrCSTraits::Point_2, unsigned int> Intersection_point;
+	typedef boost::variant<Intersection_point, CSXMCurve> Intersection_result;
 	std::vector<Intersection_result> intersection_results;
 
 	for (auto cit = polygon.curves_begin(); cit != polygon.curves_end(); ++cit) {
@@ -141,7 +141,7 @@ bool on_or_inside(const CSPolygon& polygon, const Point<Exact>& point) {
 	return count % 4 != 0;
 }
 
-bool liesOn(const X_monotone_curve_2& c, const CSPolygon& polygon) {
+bool liesOn(const CSXMCurve& c, const CSPolygon& polygon) {
 	auto sc = liesOn(c.source(), polygon);
 	auto tc = liesOn(c.target(), polygon);
 	if (!sc.has_value() || !tc.has_value()) {
@@ -221,15 +221,15 @@ CSPolygonWithHoles approximateDilate(const CSPolygon& polygon, double r, double 
 }
 
 bool is_simple(const CSPolygon& pgn) {
-	typedef typename CSTraitsBoolean::Curve_const_iterator       Curve_const_iterator;
+	typedef typename GpsCSTraits::Curve_const_iterator       Curve_const_iterator;
 	typedef std::pair<Curve_const_iterator,Curve_const_iterator>
 	    Cci_pair;
 
 	// Sweep the boundary curves and look for intersections.
-	typedef CGAL::Gps_polygon_validation_visitor<CSTraitsBoolean>      Visitor;
+	typedef CGAL::Gps_polygon_validation_visitor<GpsCSTraits>      Visitor;
 	typedef CGAL::Ss2::Surface_sweep_2<Visitor>                 Surface_sweep;
 
-	CSTraitsBoolean traits;
+	GpsCSTraits traits;
 
 	Cci_pair itr_pair = traits.construct_curves_2_object()(pgn);
 	Visitor visitor;
@@ -240,9 +240,9 @@ bool is_simple(const CSPolygon& pgn) {
 }
 
 CSPolygon polygonToCSPolygon(const Polygon<Exact>& polygon) {
-	std::vector<X_monotone_curve_2> xmCurves;
+	std::vector<CSXMCurve> xmCurves;
 	for (auto eit = polygon.edges_begin(); eit != polygon.edges_end(); ++eit) {
-		X_monotone_curve_2 xmCurve(eit->source(), eit->target());
+		CSXMCurve xmCurve(eit->source(), eit->target());
 		xmCurves.push_back(xmCurve);
 	}
 	return {xmCurves.begin(), xmCurves.end()};

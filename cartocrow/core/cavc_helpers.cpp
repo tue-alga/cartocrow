@@ -6,8 +6,8 @@
 #include "cavc_helpers.hpp"
 
 namespace cartocrow {
-std::vector<X_monotone_curve_2> xmCurves(const cavc::Polyline<double>& polyline) {
-	std::vector<X_monotone_curve_2> xmCurves;
+std::vector<CSXMCurve> xmCurves(const cavc::Polyline<double>& polyline) {
+	std::vector<CSXMCurve> xmCurves;
 
 	auto vs = polyline.vertexes();
 	if (polyline.isClosed()) {
@@ -35,7 +35,7 @@ std::vector<X_monotone_curve_2> xmCurves(const cavc::Polyline<double>& polyline)
 				Circle<Exact> circle(center, r2, orientation);
 				OneRootPoint sourceA(source.x(), source.y());
 				OneRootPoint targetA(target.x(), target.y());
-				Curve_2 curve(circle, sourceA, targetA);
+				CSCurve curve(circle, sourceA, targetA);
 				curveToXMonotoneCurves(curve, std::back_inserter(xmCurves));
 			}
 		}
@@ -55,7 +55,7 @@ std::variant<CSPolyline, CSPolygon> toCSPoly(const cavc::Polyline<double>& polyl
 }
 
 CSPolygon remove_degeneracies(const CSPolygon& polygon) {
-	std::vector<X_monotone_curve_2> xmCurves;
+	std::vector<CSXMCurve> xmCurves;
 	for (auto cit = polygon.curves_begin(); cit != polygon.curves_end(); ++cit) {
 		auto as = approximateAlgebraic(cit->source());
 		auto at = approximateAlgebraic(cit->target());
@@ -137,7 +137,7 @@ cavc::OffsetLoopSet<double> reverseLoopSet(const cavc::OffsetLoopSet<double>& lo
 
 CSPolygonSet csPolygonSet(const cavc::OffsetLoopSet<double>& loopSet, bool reverse) {
 	// todo check
-	CSTraitsBoolean traits;
+	GpsCSTraits traits;
 	CSPolygonSet polygonSet;
 	if (reverse) {
 		for (const auto& loop : loopSet.cwLoops) {

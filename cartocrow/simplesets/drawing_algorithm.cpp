@@ -20,20 +20,20 @@ namespace cartocrow::simplesets {
 // todo: deal with holes
 CSPolygon face_to_polygon(const Face& face) {
 	assert(face.number_of_holes() == 0);
-	return ccb_to_general_polygon<CSTraits>(face.outer_ccb());
+	return ccb_to_general_polygon<ArrCSTraits>(face.outer_ccb());
 }
 
-X_monotone_curve_2 make_x_monotone(const Segment<Exact>& segment) {
-	CSTraits traits;
+CSXMCurve make_x_monotone(const Segment<Exact>& segment) {
+	ArrCSTraits traits;
 	auto make_x_monotone = traits.make_x_monotone_2_object();
-	std::vector<boost::variant<CSTraits::Point_2, X_monotone_curve_2>> curves_and_points;
+	std::vector<boost::variant<ArrCSTraits::Point_2, CSXMCurve>> curves_and_points;
 	make_x_monotone(segment, std::back_inserter(curves_and_points));
-	std::vector<X_monotone_curve_2> curves;
+	std::vector<CSXMCurve> curves;
 
 	// There should not be any isolated points
 	for (auto kinda_curve : curves_and_points) {
 		assert(kinda_curve.which() == 1);
-		auto curve = boost::get<X_monotone_curve_2>(kinda_curve);
+		auto curve = boost::get<CSXMCurve>(kinda_curve);
 		curves.push_back(curve);
 	}
 
@@ -60,26 +60,26 @@ Point<Exact> get_approx_point_on_boundary(const Face& face) {
 		assert(inter->which() == 1);
 		Segment<Exact> seg = boost::get<Segment<Exact>>(*inter);
 //		CGAL::intersection(pl, circle);
-		CSTraits traits;
+		ArrCSTraits traits;
 		auto make_x_monotone = traits.make_x_monotone_2_object();
-		std::vector<boost::variant<CSTraits::Point_2, X_monotone_curve_2>> curves_and_points;
+		std::vector<boost::variant<ArrCSTraits::Point_2, CSXMCurve>> curves_and_points;
 //		make_x_monotone(circle, std::back_inserter(curves_and_points));
 		make_x_monotone(seg, std::back_inserter(curves_and_points));
-		std::vector<X_monotone_curve_2> curves;
+		std::vector<CSXMCurve> curves;
 
 		// There should not be any isolated points
 		for (auto kinda_curve : curves_and_points) {
-			auto curve = boost::get<X_monotone_curve_2>(kinda_curve);
+			auto curve = boost::get<CSXMCurve>(kinda_curve);
 			curves.push_back(curve);
 		}
 
-		typedef std::pair<CSTraits::Point_2, unsigned int> Intersection_point;
-		typedef boost::variant<Intersection_point, X_monotone_curve_2> Intersection_result;
+		typedef std::pair<ArrCSTraits::Point_2, unsigned int> Intersection_point;
+		typedef boost::variant<Intersection_point, CSXMCurve> Intersection_result;
 		std::vector<Intersection_result> intersection_results;
 		assert(curves.size() == 1);
 		curve.intersect(curves[0], std::back_inserter(intersection_results));
 
-		std::vector<CSTraits::Point_2> intersection_pts;
+		std::vector<ArrCSTraits::Point_2> intersection_pts;
 		for (const auto& result : intersection_results) {
 			assert(result.which() == 0);
 			intersection_pts.push_back(boost::get<Intersection_point>(result).first);
@@ -100,11 +100,11 @@ Point<Exact> get_point_in(const Face& face) {
 	auto line_inter_box = CGAL::intersection(rect, line);
 	auto seg = boost::get<Segment<Exact>>(*line_inter_box);
 	auto seg_curve = make_x_monotone(seg);
-	std::vector<CSTraits::Point_2> intersection_pts;
+	std::vector<ArrCSTraits::Point_2> intersection_pts;
 	for (auto cit = poly.curves_begin(); cit != poly.curves_end(); cit++) {
 		auto curve = *cit;
-		typedef std::pair<CSTraits::Point_2, unsigned int> Intersection_point;
-		typedef boost::variant<Intersection_point, X_monotone_curve_2> Intersection_result;
+		typedef std::pair<ArrCSTraits::Point_2, unsigned int> Intersection_point;
+		typedef boost::variant<Intersection_point, CSXMCurve> Intersection_result;
 		std::vector<Intersection_result> intersection_results;
 		curve.intersect(seg_curve, std::back_inserter(intersection_results));
 
@@ -157,12 +157,12 @@ DilatedPatternDrawing::DilatedPatternDrawing(const Partition& partition, const G
 		m_dilated.emplace_back(*p, gs.dilationRadius());
 	}
 
-	std::vector<CSTraits::Curve_2> curves;
-	std::vector<std::pair<CSTraits::Curve_2, int>> curves_data;
+	std::vector<ArrCSTraits::Curve_2> curves;
+	std::vector<std::pair<ArrCSTraits::Curve_2, int>> curves_data;
 	for (int i = 0; i < m_dilated.size(); i++) {
 		for (auto cit = m_dilated[i].m_contour.curves_begin(); cit != m_dilated[i].m_contour.curves_end(); ++cit) {
 			auto x_monotone = *cit;
-			CSTraits::Curve_2 curve = toCurve(x_monotone);
+			ArrCSTraits::Curve_2 curve = toCurve(x_monotone);
 			curves.emplace_back(curve);
 			curves_data.emplace_back(curve, i);
 		}
@@ -185,7 +185,7 @@ DilatedPatternDrawing::DilatedPatternDrawing(const Partition& partition, const G
 
 	// Store in each half-edges form which pattern it originates.
 	for (auto cit = m_arr.curves_begin(); cit != m_arr.curves_end(); ++cit) {
-		CSTraits::Curve_2 curve = *cit;
+		ArrCSTraits::Curve_2 curve = *cit;
 		auto curve_data = std::find_if(curves_data.begin(), curves_data.end(), [&curve](const auto& pair) {
 			auto other = pair.first;
 			return curve.source() == other.source() && curve.target() == other.target() &&
@@ -262,7 +262,7 @@ DilatedPatternDrawing::DilatedPatternDrawing(const Partition& partition, const G
 			if (exclDisks.empty()) {
 				continue;
 			}
-			auto componentPolygon = ccb_to_general_polygon<CSTraits>(c.outer_ccb());
+			auto componentPolygon = ccb_to_general_polygon<ArrCSTraits>(c.outer_ccb());
 			auto morphedComponentPolygon = morph(bpis, componentPolygon, inclDisks, exclDisks, m_gs, m_cds);
 
 			// Compute the morphed version of the CSPolygon for this component.
@@ -345,14 +345,14 @@ CSPolygon thinRectangle(const Point<Exact>& p, const OneRootPoint& n, const Numb
 	Point<Exact> p3 = nApprox + normalized * w / 10 + perp;
 	Point<Exact> p4 = p + perp;
 
-	std::vector<Curve_2> curves({
-	    Curve_2(p1, p2),
-		Curve_2(p2, p3),
-		Curve_2(p3, p4),
-		Curve_2(p4, p1)
+	std::vector<CSCurve> curves({
+                                        CSCurve(p1, p2),
+                                        CSCurve(p2, p3),
+                                        CSCurve(p3, p4),
+                                        CSCurve(p4, p1)
 	});
 
-	std::vector<X_monotone_curve_2> xm_curves;
+	std::vector<CSXMCurve> xm_curves;
 	curvesToXMonotoneCurves(curves.begin(), curves.end(), std::back_inserter(xm_curves));
 
 	return {xm_curves.begin(), xm_curves.end()};
@@ -484,7 +484,7 @@ CSPolygon morph(const std::vector<CSPolyline>& boundaryParts, const CSPolygon& c
 			auto [bpE, bpEstart, bpEtarget] = extend(*bp, CGAL::to_double(8 * sr), dr);
 			auto pgn = closeAroundBB(bpE, CGAL::COUNTERCLOCKWISE, 4 * CGAL::to_double(dr), bpEstart,
 			                         bpEtarget);
-			CSTraitsBoolean traits;
+			GpsCSTraits traits;
 			if (pgn.orientation() == CGAL::CLOCKWISE) {
 				pgn.reverse_orientation();
 			}
@@ -547,7 +547,7 @@ CSPolygon morph(const std::vector<CSPolyline>& boundaryParts, const CSPolygon& c
 }
 
 CSPolyline associatedBoundary(const CSPolygon& component, const CSPolygon& morphedComponent, const CSPolyline& boundaryPart) {
-	std::vector<X_monotone_curve_2> morphed_xm_curves;
+	std::vector<CSXMCurve> morphed_xm_curves;
 	for (auto cit = morphedComponent.curves_begin(); cit != morphedComponent.curves_end(); ++cit) {
 		morphed_xm_curves.push_back(*cit);
 	}
@@ -581,7 +581,7 @@ CSPolyline associatedBoundary(const CSPolygon& component, const CSPolygon& morph
 	assert(startIndex >= 0);
 	assert(endIndex >= 0);
 
-	std::vector<X_monotone_curve_2> xm_curves;
+	std::vector<CSXMCurve> xm_curves;
 
 	if (endIndex >= startIndex) {
 		for (int i = startIndex; i <= endIndex; ++i) {
@@ -609,7 +609,7 @@ std::vector<CSPolyline> boundaryParts(const CComponent& c, int i) {
 	std::vector<CSPolyline> polylines;
 
 	for (const auto& ccb : ccbs) {
-		boundaryParts<CSTraits>(ccb, i, std::back_inserter(polylines));
+		boundaryParts<ArrCSTraits>(ccb, i, std::back_inserter(polylines));
 	}
 
 	return polylines;
@@ -625,7 +625,7 @@ std::vector<CSPolyline> boundaryParts(FaceH fh, int i) {
 	std::vector<CSPolyline> polylines;
 
 	for (const auto& ccb : ccbs) {
-		boundaryParts<CSTraits>(ccb, i, std::back_inserter(polylines));
+		boundaryParts<ArrCSTraits>(ccb, i, std::back_inserter(polylines));
 	}
 
 	return polylines;
@@ -657,7 +657,7 @@ DilatedPatternDrawing::includeExcludeDisks(int i, const std::unordered_set<int>&
 
 	std::vector<Circle<Exact>> relevantExclusionDisks;
 	for (const auto& d : result.second) {
-		if (CGAL::do_intersect(circleToCSPolygon(d), ccb_to_general_polygon<CSTraits>(c.outer_ccb()))) {
+		if (CGAL::do_intersect(circleToCSPolygon(d), ccb_to_general_polygon<ArrCSTraits>(c.outer_ccb()))) {
 			relevantExclusionDisks.push_back(d);
 		}
 	}
@@ -789,7 +789,7 @@ void DilatedPatternDrawing::drawFaceStroke(FaceH fh, renderer::GeometryRenderer&
 			auto poly = face_to_polygon(*fh);
 			auto bb = poly.bbox();
 			Rectangle<Exact> bbX(bb.xmin() - 1, bb.ymin() - 1, bb.xmax() + 1, bb.ymax() + 1);
-			std::vector<X_monotone_curve_2> xm_cs;
+			std::vector<CSXMCurve> xm_cs;
 			for (int k = 0; k < 4; ++k) {
 				xm_cs.emplace_back(bbX.vertex(k), bbX.vertex((k + 1) % 4));
 			}
@@ -1061,7 +1061,7 @@ void SimpleSetsPainting::paint(renderer::GeometryRenderer& renderer) const {
 //				auto& bp = boundaryPieces[j];
 //				sourceToI[bp.curves_begin()->source()] = j;
 //			}
-			std::vector<X_monotone_curve_2> xm_curves;
+			std::vector<CSXMCurve> xm_curves;
 
 			std::copy(boundaryPieces[0].curves_begin(), boundaryPieces[0].curves_end(), std::back_inserter(xm_curves));
 			int count = 1;

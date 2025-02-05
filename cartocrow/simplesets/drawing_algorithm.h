@@ -66,8 +66,8 @@ struct VertexData {
 };
 
 using DilatedPatternArrangement =
-    CGAL::Arrangement_with_history_2<CSTraits,
-                        CGAL::Arr_extended_dcel<CSTraits, VertexData, HalfEdgeData, FaceData>>;
+    CGAL::Arrangement_with_history_2<ArrCSTraits,
+                        CGAL::Arr_extended_dcel<ArrCSTraits, VertexData, HalfEdgeData, FaceData>>;
 
 //DilatedPatternArrangement
 //dilateAndArrange(const Partition& partition, const GeneralSettings& gs, const ComputeDrawingSettings& cds);
@@ -119,7 +119,7 @@ void boundaryParts(Ccb ccb, int i, OutputIterator out) {
 	auto opposite = traits.construct_opposite_2_object();
 
 	// Next, make a polyline for every connected part of the boundary that originates from i.
-	std::vector<X_monotone_curve_2> xm_curves;
+	std::vector<CSXMCurve> xm_curves;
 	auto curr = circ;
 	do {
 		if (originates_from(curr, i)) {
@@ -183,7 +183,7 @@ class DilatedPatternDrawing {
 
 	DilatedPatternArrangement m_arr;
 	std::unordered_map<int, std::vector<FaceH>> m_iToFaces;
-	std::map<X_monotone_curve_2, int> m_curve_to_origin;
+	std::map<CSXMCurve, int> m_curve_to_origin;
 	std::vector<DilatedPoly> m_dilated;
 	const GeneralSettings& m_gs;
 	const ComputeDrawingSettings& m_cds;

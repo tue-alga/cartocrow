@@ -33,7 +33,7 @@ tangents(const Circle<Inexact>& c1, const Circle<Inexact>& c2, bool inner) {
     return std::pair(t1, t2);
 }
 
-std::optional<std::pair<std::pair<CSTraits::Point_2, CSTraits::Point_2>,std::pair<CSTraits::Point_2, CSTraits::Point_2>>>
+std::optional<std::pair<std::pair<ArrCSTraits::Point_2, ArrCSTraits::Point_2>,std::pair<ArrCSTraits::Point_2, ArrCSTraits::Point_2>>>
 tangentPoints(const RationalRadiusCircle& c1, const RationalRadiusCircle& c2, bool inner) {
     Number<Exact> distSq = CGAL::squared_distance(c1.center, c2.center);
     Number<Exact> c1r = c1.radius;
@@ -57,27 +57,27 @@ tangentPoints(const RationalRadiusCircle& c1, const RationalRadiusCircle& c2, bo
     Vector<Exact> a = hyp * adj;
     Vector<Exact> bV = hyp.perpendicular(CGAL::POSITIVE);
     Number<Exact> bSSqr = distSq - adj * adj;
-    CSTraits::CoordNT bx(0, bV.x(), bSSqr);
-    CSTraits::CoordNT by(0, bV.y(), bSSqr);
+    ArrCSTraits::CoordNT bx(0, bV.x(), bSSqr);
+    ArrCSTraits::CoordNT by(0, bV.y(), bSSqr);
 
-    CSTraits::CoordNT v1x = (a.x() - bx) / distSq;
-    CSTraits::CoordNT v1y = (a.y() - by) / distSq;
-    CSTraits::CoordNT v2x = (a.x() + bx) / distSq;
-    CSTraits::CoordNT v2y = (a.y() + by) / distSq;
+    ArrCSTraits::CoordNT v1x = (a.x() - bx) / distSq;
+    ArrCSTraits::CoordNT v1y = (a.y() - by) / distSq;
+    ArrCSTraits::CoordNT v2x = (a.x() + bx) / distSq;
+    ArrCSTraits::CoordNT v2y = (a.y() + by) / distSq;
 
-    CSTraits::CoordNT t1sx = c1.center.x() + v1x * c1r;
-    CSTraits::CoordNT t1sy = c1.center.y() + v1y * c1r;
-    CSTraits::Point_2 t1s(t1sx, t1sy);
-    CSTraits::CoordNT t1tx = c2.center.x() + v1x * c2rSigned;
-    CSTraits::CoordNT t1ty = c2.center.y() + v1y * c2rSigned;
-    CSTraits::Point_2 t1t(t1tx, t1ty);
+    ArrCSTraits::CoordNT t1sx = c1.center.x() + v1x * c1r;
+    ArrCSTraits::CoordNT t1sy = c1.center.y() + v1y * c1r;
+    ArrCSTraits::Point_2 t1s(t1sx, t1sy);
+    ArrCSTraits::CoordNT t1tx = c2.center.x() + v1x * c2rSigned;
+    ArrCSTraits::CoordNT t1ty = c2.center.y() + v1y * c2rSigned;
+    ArrCSTraits::Point_2 t1t(t1tx, t1ty);
 
-    CSTraits::CoordNT t2sx = c1.center.x() + v2x * c1r;
-    CSTraits::CoordNT t2sy = c1.center.y() + v2y * c1r;
-    CSTraits::Point_2 t2s(t2sx, t2sy);
-    CSTraits::CoordNT t2tx = c2.center.x() + v2x * c2rSigned;
-    CSTraits::CoordNT t2ty = c2.center.y() + v2y * c2rSigned;
-    CSTraits::Point_2 t2t(t2tx, t2ty);
+    ArrCSTraits::CoordNT t2sx = c1.center.x() + v2x * c1r;
+    ArrCSTraits::CoordNT t2sy = c1.center.y() + v2y * c1r;
+    ArrCSTraits::Point_2 t2s(t2sx, t2sy);
+    ArrCSTraits::CoordNT t2tx = c2.center.x() + v2x * c2rSigned;
+    ArrCSTraits::CoordNT t2ty = c2.center.y() + v2y * c2rSigned;
+    ArrCSTraits::Point_2 t2t(t2tx, t2ty);
 
     return std::pair(std::pair(t1s, t1t), std::pair(t2s, t2t));
 }
@@ -104,7 +104,7 @@ RationalRadiusCircle approximateRadiusCircle(const Circle<Exact>& circle) {
 ////                 Laurent Rineau <Laurent.Rineau@geometryfactory.com>
 ////                 Efi Fogel      <efif@post.tau.ac.il>
 std::variant<Segment<Exact>, std::pair<Segment<Exact>, Segment<Exact>>>
-algebraicCircleTangentToRationalSegments(const CSTraits::Point_2& p1, const CSTraits::Point_2& p2,
+algebraicCircleTangentToRationalSegments(const ArrCSTraits::Point_2& p1, const ArrCSTraits::Point_2& p2,
                                          const RationalRadiusCircle& c1, const RationalRadiusCircle& c2,
                                          bool flipTp1 = false, bool flipTp2 = false) {
     const auto& x1 = p1.x();

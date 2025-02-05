@@ -17,7 +17,7 @@ std::vector<CSPolyline> difference(const CSPolyline& line, const CSPolygonWithHo
 
 template <class OutputIterator>
 void intersection(const CSPolyline& line, const CSPolygonWithHoles& gon, OutputIterator out, bool difference, bool keepOverlap) {
-	CSTraits traits;
+	ArrCSTraits traits;
 	auto equals = traits.equal_2_object();
 	auto opposite = traits.construct_opposite_2_object();
 	enum Origin {
@@ -28,7 +28,7 @@ void intersection(const CSPolyline& line, const CSPolygonWithHoles& gon, OutputI
 	struct HalfEdgeData {
 		std::vector<Origin> origins;
 	};
-	using Arr = CGAL::Arrangement_2<CSTraits, CGAL::Arr_extended_dcel<CSTraits, std::monostate, HalfEdgeData, std::monostate>>;
+	using Arr = CGAL::Arrangement_2<ArrCSTraits, CGAL::Arr_extended_dcel<ArrCSTraits, std::monostate, HalfEdgeData, std::monostate>>;
 	using FH = typename Arr::Face_handle;
 	using HeH = typename Arr::Halfedge_handle;
 	using VH = typename Arr::Vertex_handle;
@@ -43,7 +43,7 @@ void intersection(const CSPolyline& line, const CSPolygonWithHoles& gon, OutputI
 			e->twin()->data().origins.push_back(currentOrigin);
 		}
 
-		virtual void before_split_edge(HeH e, VH v, const X_monotone_curve_2& c1, const X_monotone_curve_2& c2) {
+		virtual void before_split_edge(HeH e, VH v, const CSXMCurve& c1, const CSXMCurve& c2) {
 			beforeSplitData = e->data();
 		}
 
@@ -52,7 +52,7 @@ void intersection(const CSPolyline& line, const CSPolygonWithHoles& gon, OutputI
 			e1->twin()->set_data(beforeSplitData);
 			e2->twin()->set_data(beforeSplitData);
 			e2->set_data(beforeSplitData);
-			CSTraits traits;
+			ArrCSTraits traits;
 			auto opposite = traits.construct_opposite_2_object();
 			if (liesOn(e1->curve(), xmCurve) || liesOn(opposite(e1->curve()), xmCurve)) {
 				e1->data().origins.push_back(currentOrigin);
@@ -70,7 +70,7 @@ void intersection(const CSPolyline& line, const CSPolygonWithHoles& gon, OutputI
 		}
 
 		Origin currentOrigin;
-		X_monotone_curve_2 xmCurve;
+		CSXMCurve xmCurve;
 	  private:
 		HalfEdgeData beforeSplitData;
 	};
@@ -176,7 +176,7 @@ void intersection(const CSPolyline& line, const CSPolygonWithHoles& gon, OutputI
 				break;
 			}
 		}
-		std::vector<X_monotone_curve_2> xmcs;
+		std::vector<CSXMCurve> xmcs;
 		auto last_it = line_edges_keep.end();
 		auto curr = startStart;
 		do {
@@ -299,7 +299,7 @@ void intersectionCrashes(const CSPolyline& line, const CSPolygonWithHoles& gon, 
 				break;
 			}
 		}
-		std::vector<X_monotone_curve_2> xmcs;
+		std::vector<CSXMCurve> xmcs;
 		auto last_it = line_edges_keep.end();
 		do {
 			last_it = std::remove(line_edges_keep.begin(), last_it, curr);

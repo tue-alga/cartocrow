@@ -9,7 +9,7 @@ OneRootPoint closestOnCircle(const Circle<Exact>& circle, const Point<Exact>& po
 	auto inter = CGAL::intersection(bbX, ray);
 	auto seg = get<Segment<Exact>>(*inter);
 
-	using Arr = CGAL::Arrangement_2<CSTraits>;
+	using Arr = CGAL::Arrangement_2<ArrCSTraits>;
 	Arr arr;
 	CGAL::insert(arr, circle);
 	CGAL::insert(arr, seg);
@@ -30,7 +30,7 @@ OneRootPoint closestOnCircle(const Circle<Exact>& circle, const Point<Exact>& po
 	return *intersectionPoint;
 }
 
-OneRootPoint nearest(const X_monotone_curve_2& xm_curve, const Point<Exact>& point) {
+OneRootPoint nearest(const CSXMCurve& xm_curve, const Point<Exact>& point) {
 	if (xm_curve.is_linear()) {
 		auto l = xm_curve.supporting_line();
 		auto k = l.perpendicular(point);
@@ -85,7 +85,7 @@ OneRootPoint nearest(const X_monotone_curve_2& xm_curve, const Point<Exact>& poi
 	}
 }
 
-bool liesOn(const Point<Exact>& p, const X_monotone_curve_2& xm_curve) {
+bool liesOn(const Point<Exact>& p, const CSXMCurve& xm_curve) {
 	if (p.x() < xm_curve.left().x() || p.x() > xm_curve.right().x())
 		return false;
 
@@ -96,7 +96,7 @@ bool liesOn(const Point<Exact>& p, const X_monotone_curve_2& xm_curve) {
 	}
 }
 
-bool liesOn(const OneRootPoint& p, const X_monotone_curve_2& xm_curve) {
+bool liesOn(const OneRootPoint& p, const CSXMCurve& xm_curve) {
 	if (p.x() < xm_curve.left().x() || p.x() > xm_curve.right().x())
 		return false;
 	//	CSTraits traits;
@@ -104,7 +104,7 @@ bool liesOn(const OneRootPoint& p, const X_monotone_curve_2& xm_curve) {
 	return xm_curve.point_position(p) == CGAL::EQUAL;
 }
 
-bool liesOn(const X_monotone_curve_2& c1, const X_monotone_curve_2& c2) {
+bool liesOn(const CSXMCurve& c1, const CSXMCurve& c2) {
 	auto sc = liesOn(c1.source(), c2);
 	auto tc = liesOn(c1.target(), c2);
 	if (!sc || !tc) {
@@ -125,7 +125,7 @@ bool liesOn(const X_monotone_curve_2& c1, const X_monotone_curve_2& c2) {
 	return true;
 }
 
-Curve_2 toCurve(const X_monotone_curve_2& xmc) {
+CSCurve toCurve(const CSXMCurve& xmc) {
 	if (xmc.is_linear()) {
 		return {xmc.supporting_line(), xmc.source(), xmc.target()};
 	} else if (xmc.is_circular()) {
@@ -136,7 +136,7 @@ Curve_2 toCurve(const X_monotone_curve_2& xmc) {
 	}
 }
 
-Vector<Inexact> startTangent(const X_monotone_curve_2& c) {
+Vector<Inexact> startTangent(const CSXMCurve& c) {
 	if (c.is_linear()) {
 		auto l = c.supporting_line();
 		auto v = approximate(l.to_vector());
@@ -151,7 +151,7 @@ Vector<Inexact> startTangent(const X_monotone_curve_2& c) {
 	}
 }
 
-Vector<Inexact> endTangent(const X_monotone_curve_2& c) {
+Vector<Inexact> endTangent(const CSXMCurve& c) {
 	if (c.is_linear()) {
 		auto l = c.supporting_line();
 		auto v = approximate(l.to_vector());
@@ -166,7 +166,7 @@ Vector<Inexact> endTangent(const X_monotone_curve_2& c) {
 	}
 }
 
-double approximateTurningAngle(const X_monotone_curve_2& xmc) {
+double approximateTurningAngle(const CSXMCurve& xmc) {
 	if (xmc.is_linear()) {
 		return 0.0;
 	}

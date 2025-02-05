@@ -9,13 +9,13 @@ namespace cartocrow {
 constexpr double lens_area(const double r, const double R, const double d);
 
 // ------ return signed area under the linear segment (P1, P2)
-Number<Inexact> area(const CSTraits::Point_2& P1, const CSTraits::Point_2& P2);
+Number<Inexact> area(const ArrCSTraits::Point_2& P1, const ArrCSTraits::Point_2& P2);
 
 // ------ return signed area under the circular segment (P1, P2, C)
-Number<Inexact> area(const CSTraits::Point_2& P1, const CSTraits::Point_2& P2, const CSTraits::Rational_circle_2& C);
+Number<Inexact> area(const ArrCSTraits::Point_2& P1, const ArrCSTraits::Point_2& P2, const ArrCSTraits::Rational_circle_2& C);
 
 // ------ return signed area under the X-monotone curve
-Number<Inexact> area(const X_monotone_curve_2& XCV);
+Number<Inexact> area(const CSXMCurve& XCV);
 
 // ------ return area of the simple polygon
 Number<Inexact> area(const CSPolygon& P);
@@ -28,7 +28,7 @@ CSPolygon polygonToCSPolygon(const Polygon<Exact>& polygon);
 CSPolygonWithHoles polygonToCSPolygon(const PolygonWithHoles<Exact>& polygon);
 std::optional<CSPolygon::Curve_const_iterator> liesOn(const Point<Exact>& p, const CSPolygon& polygon);
 std::optional<CSPolygon::Curve_const_iterator> liesOn(const OneRootPoint& p, const CSPolygon& polygon);
-bool liesOn(const X_monotone_curve_2& c, const CSPolygon& polygon);
+bool liesOn(const CSXMCurve& c, const CSPolygon& polygon);
 bool on_or_inside(const CSPolygon& polygon, const Point<Exact>& point);
 bool inside(const CSPolygon& polygon, const Point<Exact>& point);
 CSPolycurve arrPolycurveFromCSPolygon(const CSPolygon& polygon);

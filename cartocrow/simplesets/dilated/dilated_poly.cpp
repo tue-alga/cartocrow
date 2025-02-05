@@ -20,7 +20,7 @@ DilatedPoly::DilatedPoly(const PolyPattern& polyPattern, const Number<Exact>& di
 		auto exactPolygon = pretendExact(std::get<Polygon<Inexact>>(cont));
 
 		if (exactPolygon.size() == 1) {
-			CSTraits::Rational_circle_2 circle(exactPolygon.vertex(0), dilationRadius * dilationRadius);
+			ArrCSTraits::Rational_circle_2 circle(exactPolygon.vertex(0), dilationRadius * dilationRadius);
 			m_contour = circleToCSPolygon(circle);
 			if (m_contour.orientation() == CGAL::CLOCKWISE) {
 				m_contour.reverse_orientation();
@@ -54,7 +54,7 @@ DilatedPoly::DilatedPoly(const PolyPattern& polyPattern, const Number<Exact>& di
 			}
 		}
 
-		m_contour = ccb_to_general_polygon<CSTraits>(*(arr.unbounded_face()->inner_ccbs_begin()));
+		m_contour = ccb_to_general_polygon<ArrCSTraits>(*(arr.unbounded_face()->inner_ccbs_begin()));
 		if (m_contour.orientation() == CGAL::CLOCKWISE) {
 			m_contour.reverse_orientation();
 		}

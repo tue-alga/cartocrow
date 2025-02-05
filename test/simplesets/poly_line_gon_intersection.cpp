@@ -9,7 +9,7 @@ using namespace cartocrow::renderer;
 using namespace cartocrow::simplesets;
 
 TEST_CASE("Intersection lies in polygon and has correct orientation") {
-	X_monotone_curve_2 xm_curve({-2, 0}, {2, 0});
+	CSXMCurve xm_curve({-2, 0}, {2, 0});
 	std::vector xm_curves{xm_curve};
 	CSPolyline polyline(xm_curves.begin(), xm_curves.end());
 	CSPolygon disk = circleToCSPolygon({{0, 0}, 1});
@@ -21,10 +21,10 @@ TEST_CASE("Intersection lies in polygon and has correct orientation") {
 }
 
 TEST_CASE("Boundary overlap") {
-	X_monotone_curve_2 xm_curve({-2, 0}, {2, 0});
+	CSXMCurve xm_curve({-2, 0}, {2, 0});
 	std::vector xm_curves{xm_curve};
 	CSPolyline polyline(xm_curves.begin(), xm_curves.end());
-	std::vector<X_monotone_curve_2> xm_curves_pgn{{{-4, 0}, {4, 0}}, {{4, 0}, {4, 2}}, {{4, 2}, {-4, 2}}, {{-4, 2}, {-4, 0}}};
+	std::vector<CSXMCurve> xm_curves_pgn{{{-4, 0}, {4, 0}}, {{4, 0}, {4, 2}}, {{4, 2}, {-4, 2}}, {{-4, 2}, {-4, 0}}};
 	CSPolygon polygon(xm_curves_pgn.begin(), xm_curves_pgn.end());
 	auto result1 = intersection(polyline, polygon, false);
 	auto result2 = intersection(polyline, polygon, true);
@@ -85,11 +85,11 @@ TEST_CASE("Poly-circular-arcs that partially overlap") {
 
 	auto isp12 = getIntersections(c1, c2);
 
-	Curve_2 arc1(c1, isp12[0], isp12[1]);
-	Curve_2 arc2(c2, isp12[1], isp12[0]);
-	std::vector<Curve_2> pgnArcs({arc1, arc2});
+	CSCurve arc1(c1, isp12[0], isp12[1]);
+	CSCurve arc2(c2, isp12[1], isp12[0]);
+	std::vector<CSCurve> pgnArcs({arc1, arc2});
 
-	PolyCSTraits traits;
+	PolycurveCSTraits traits;
 	auto construct = traits.construct_curve_2_object();
 	CSPolycurve pgnCurve(pgnArcs.begin(), pgnArcs.end());
 
@@ -105,11 +105,11 @@ TEST_CASE("Poly-circular-arcs that partially overlap") {
 		}
 	}
 
-	std::vector<X_monotone_curve_2> xm_curves;
+	std::vector<CSXMCurve> xm_curves;
 	curvesToXMonotoneCurves(pgnArcs.begin(), pgnArcs.end(), std::back_inserter(xm_curves));
 	CSPolygon pgn(xm_curves.begin(), xm_curves.end());
 
-	auto plnPoly = ccb_to_general_polygon<CSTraits>(fh->outer_ccb());
+	auto plnPoly = ccb_to_general_polygon<ArrCSTraits>(fh->outer_ccb());
 	CSPolyline pln(plnPoly.curves_begin(), plnPoly.curves_end());
 	intersection(pln, pgn, true);
 }

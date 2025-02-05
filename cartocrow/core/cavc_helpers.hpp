@@ -9,7 +9,7 @@ namespace cartocrow {
 template <class InputIterator>
 cavc::Polyline<double> cavcPolyline(InputIterator start, InputIterator end, bool closed) {
 	cavc::Polyline<double> polyline;
-	auto processCurve = [&polyline](const X_monotone_curve_2& xmCurve) {
+	auto processCurve = [&polyline](const CSXMCurve& xmCurve) {
 		Point<Inexact> s = approximateAlgebraic(xmCurve.source());
 		Point<Inexact> t = approximateAlgebraic(xmCurve.target());
 		if (xmCurve.is_linear()) {

@@ -28,7 +28,7 @@ tangents(const Circle<Inexact>& c1, const Circle<Inexact>& c2, bool inner=false)
 /// The first of each point pair representing one tangent lies on c1.
 /// The first tangent of the pair has the property that c1 lies to the left of it.
 /// \sa rationalTangents
-std::optional<std::pair<std::pair<CSTraits::Point_2, CSTraits::Point_2>,std::pair<CSTraits::Point_2, CSTraits::Point_2>>>
+std::optional<std::pair<std::pair<ArrCSTraits::Point_2, ArrCSTraits::Point_2>,std::pair<ArrCSTraits::Point_2, ArrCSTraits::Point_2>>>
 tangentPoints(const RationalRadiusCircle& c1, const RationalRadiusCircle& c2, bool inner=false);
 
 using RationalTangent = std::variant<Segment<Exact>, std::pair<Segment<Exact>, Segment<Exact>>>;
