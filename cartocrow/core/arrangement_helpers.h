@@ -57,6 +57,9 @@ Rectangle<Inexact> bboxInexact(const Arr& arr) {
 	return {xmin, ymin, xmax, ymax};
 }
 
+/// Constructs a general polygon from an arrangement CCB (connected component of the boundary).
+/// The returned general polygon has the same orientation as the CCB.
+/// The Traits class should be a model of ArrangementDirectionalXMonotoneTraits_2.
 template <class Traits, class Ccb>
 CGAL::General_polygon_2<Traits> ccb_to_general_polygon(Ccb ccb) {
 	Traits traits;
@@ -76,6 +79,9 @@ CGAL::General_polygon_2<Traits> ccb_to_general_polygon(Ccb ccb) {
 	return {x_monotone_curves.begin(), x_monotone_curves.end()};
 }
 
+/// Constructs a linear polygon from an arrangement CCB (connected component of the boundary).
+/// The returned polygon has the same orientation as the CCB, and its vertices are the vertices of the CCB.
+/// The kernel should match the one used in the CCB.
 template <class K, class Ccb>
 Polygon<K> ccb_to_polygon(Ccb ccb) {
 	auto curr = ccb;
@@ -88,6 +94,8 @@ Polygon<K> ccb_to_polygon(Ccb ccb) {
 	return {points.begin(), points.end()};
 }
 
+/// Constructs a linear polygon with holes from a face of an arrangement.
+/// The kernel should match the one used in the CCB.
 template <class K, class FaceH>
 PolygonWithHoles<K> face_to_polygon_with_holes(FaceH fh) {
 	Polygon<K> outer;
@@ -99,11 +107,11 @@ PolygonWithHoles<K> face_to_polygon_with_holes(FaceH fh) {
 		holes.push_back(ccb_to_polygon<K>(*ccbIt));
 	}
 
-	PolygonWithHoles<K> pwh(outer, holes.begin(), holes.end());
-//	return {outer, holes.begin(), holes.end()};
-	return pwh;
+	return {outer, holes.begin(), holes.end()};
 }
 
+/// Constructs a general polygon with holes from a face of an arrangement.
+/// The Traits class should be a model of ArrangementDirectionalXMonotoneTraits_2.
 template <class Traits, class FaceH>
 CGAL::General_polygon_with_holes_2<Traits> face_to_general_polygon_with_holes(FaceH fh) {
 	CGAL::General_polygon_2<Traits> outer;
@@ -118,6 +126,11 @@ CGAL::General_polygon_with_holes_2<Traits> face_to_general_polygon_with_holes(Fa
 	return {outer, holes.begin(), holes.end()};
 }
 
+/// A collection of faces in an arrangement.
+/// These faces need not be connected.
+/// The class provides functions for iterating over all vertices, edges, and faces in the component,
+/// and ones for determining the boundaries of the component.
+/// The interface mimics that of a Face in an arrangement.
 template <class Arr>
 class Component {
   public:
@@ -441,6 +454,8 @@ class Component {
 		}
 	};
 
+    /// Construct a component from its constituent faces, its boundary, and a predicate function
+    /// that can (efficiently) determine whether a face is part of the component or not.
 	Component(std::vector<FaceH> faces, std::vector<HalfedgeH> boundary_edges, std::function<bool(FaceH)> in_component) :
 	      m_faces(std::move(faces)), m_in_component(std::move(in_component)) {
 		for (auto fh : m_faces) {
@@ -523,6 +538,8 @@ class Component {
 		return {m_faces.cend()};
 	}
 
+    /// Return the surface of the component as a polygon with holes.
+    /// The vertices of this polygon are the vertices of the component.
 	PolygonWithHoles<Exact> surface_polygon() const {
 		Polygon<Exact> outer;
 		if (has_outer_ccb()) {
@@ -536,6 +553,8 @@ class Component {
 		return {outer, holes.begin(), holes.end()};
 	}
 
+    /// Return the surface of the component as a general polygon with holes.
+    /// The Traits class should be a model of ArrangementDirectionalXMonotoneTraits_2.
 	CGAL::General_polygon_with_holes_2<Traits> surface() const {
 		CGAL::General_polygon_2<Traits> outer;
 		if (has_outer_ccb()) {
@@ -578,10 +597,10 @@ class Component {
 	}
 
   public:
-	// This currently does not work for arrangement with history.
 	/// Return an arrangement that consists only of this component.
-	/// This function creates a new arrangement with all halfedges and isolated vertices of this component.
+	/// This function creates a new arrangement with all halfedges of this component.
 	/// Note that vertex, edge, and face data are not copied.
+	/// Also note that currently the function does not copy over isolated vertices within the component.
 	/// The function copyBoundedFaceData can be used to copy over face data of bounded faces.
 	Arr arrangement() const {
 		Arr arr;
@@ -609,6 +628,9 @@ class Component {
 	int m_nr_isolated_vertices;
 };
 
+/// Compute connected components of faces that satisfy the predicate.
+/// The components are output as Component objects.
+/// \sa Component
 template <class Arr, class OutputIterator>
 void connectedComponents(const Arr& arr, OutputIterator out, const std::function<bool(typename Arr::Face_handle)>& in_component) {
 	typedef typename Arr::Face_handle FaceH;
