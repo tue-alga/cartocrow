@@ -44,8 +44,6 @@ set(HEADERS
 	circle_tangents.h
 )
 
-add_subdirectory(cavc)
-
 add_library(core ${SOURCES})
 target_link_libraries(core
 	PRIVATE glog::glog

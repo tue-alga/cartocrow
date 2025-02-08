@@ -2,7 +2,7 @@
 #define CARTOCROW_CAVC_HELPERS_HPP
 
 #include "cs_types.h"
-#include "cavc/include/cavc/polylineoffset.hpp"
+#include <cavc/polylineoffset.hpp>
 
 namespace cartocrow {
 // X monotone curves as input

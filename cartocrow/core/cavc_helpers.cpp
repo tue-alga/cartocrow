@@ -1,8 +1,8 @@
 #include "cavc_helpers.h"
 #include "cartocrow/core/cs_curve_helpers.h"
 #include "cartocrow/core/cs_polygon_helpers.h"
-#include "cavc/include/cavc/polylineoffset.hpp"
-#include "cavc/include/cavc/polylineoffsetislands.hpp"
+#include <cavc/polylineoffset.hpp>
+#include <cavc/polylineoffsetislands.hpp>
 #include "cavc_helpers.hpp"
 
 namespace cartocrow {

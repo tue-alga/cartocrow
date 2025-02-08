@@ -152,6 +152,12 @@ The remaining dependencies need to be built manually.
 * **Ipelib.** Download the [source archive](https://github.com/otfried/ipe/releases/download/v7.2.24/ipe-7.2.24-src.tar.gz), unpack it, and compile and install it using the instructions given in `install.txt`.
 </details>
 
+* **CavalierContours.** We manually copy the headers to install the header-only library.
+```sh
+git clone https://github.com/jbuckmccready/CavalierContours.git
+cd CavalierContours
+sudo cp -R include/cavc /usr/local/include
+```
 
 ## Compiling
 
