@@ -1,8 +1,8 @@
 #ifndef CARTOCROW_CS_POLYLINE_HELPERS_H
 #define CARTOCROW_CS_POLYLINE_HELPERS_H
 
+#include "cartocrow/core/polyline.h"
 #include "cs_types.h"
-#include "polyline.h"
 #include <CGAL/Arr_polycurve_traits_2.h>
 
 namespace cartocrow {

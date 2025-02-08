@@ -1,7 +1,7 @@
 #include "choropleth_disks.h"
-#include "maximum_weight_disk.h"
+#include "cartocrow/circle_segment_helpers/cs_polygon_helpers.h"
 #include "disk_area.h"
-#include "../core/cs_polygon_helpers.h"
+#include "maximum_weight_disk.h"
 
 namespace cartocrow::chorematic_map {
 std::vector<BinDisk> fitDisks(const Choropleth& choropleth, const WeightedRegionSample<Exact>& sample,

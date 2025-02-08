@@ -6,16 +6,8 @@ set(SOURCES
 	timer.cpp
 	bezier.cpp
 	rectangle_helpers.cpp
-	cs_curve_helpers.cpp
-	cs_polygon_helpers.cpp
-	cs_polyline_helpers.cpp
-	cs_types.cpp
 	vector_helpers.cpp
 	transform_helpers.cpp
-	approximate_convex_hull_of_disks.cpp
-	cavc_helpers.cpp
-	poly_line_gon_intersection.cpp
-	circle_tangents.cpp
 )
 set(HEADERS
 	centroid.h
@@ -30,18 +22,10 @@ set(HEADERS
 	arrangement_helpers.h
 	polyline.h
 	general_polyline.h
-	cs_curve_helpers.h
-	cs_polygon_helpers.h
-	cs_polyline_helpers.h
-	cs_types.h
 	vector_helpers.h
 	halfplane.h
 	transform_helpers.h
-    approximate_convex_hull_of_disks.h
-	cavc_helpers.h
 	cropped_voronoi.h
-	poly_line_gon_intersection.h
-	circle_tangents.h
 )
 
 add_library(core ${SOURCES})

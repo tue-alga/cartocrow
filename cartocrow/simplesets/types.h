@@ -2,14 +2,14 @@
 #define CARTOCROW_SIMPLESETS_TYPES_H
 
 #include "../core/core.h"
-#include "../core/cs_types.h"
-#include <CGAL/Cartesian.h>
+#include "cartocrow/circle_segment_helpers/cs_types.h"
 #include <CGAL/Arr_circle_segment_traits_2.h>
 #include <CGAL/Arr_conic_traits_2.h>
-#include <CGAL/CORE_algebraic_number_traits.h>
-#include <CGAL/Gps_traits_2.h>
-#include <CGAL/Gps_circle_segment_traits_2.h>
 #include <CGAL/Arr_polycurve_traits_2.h>
+#include <CGAL/CORE_algebraic_number_traits.h>
+#include <CGAL/Cartesian.h>
+#include <CGAL/Gps_circle_segment_traits_2.h>
+#include <CGAL/Gps_traits_2.h>
 
 #include "cartocrow/core/general_polyline.h"
 

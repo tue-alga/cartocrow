@@ -1,7 +1,7 @@
 #include "disk_area.h"
 #include "../core/arrangement_helpers.h"
-#include "../core/cs_polygon_helpers.h"
-#include "../core/cs_curve_helpers.h"
+#include "cartocrow/circle_segment_helpers/cs_curve_helpers.h"
+#include "cartocrow/circle_segment_helpers/cs_polygon_helpers.h"
 #include <CGAL/Arr_circle_segment_traits_2.h>
 
 #include <CGAL/Boolean_set_operations_2.h>

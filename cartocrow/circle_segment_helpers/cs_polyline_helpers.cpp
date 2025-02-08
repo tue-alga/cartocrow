@@ -1,7 +1,7 @@
 #include "cs_polyline_helpers.h"
+#include "cartocrow/core/rectangle_helpers.h"
+#include "cartocrow/core/vector_helpers.h"
 #include "cs_curve_helpers.h"
-#include "rectangle_helpers.h"
-#include "vector_helpers.h"
 #include <CGAL/Bbox_2.h>
 
 namespace cartocrow {

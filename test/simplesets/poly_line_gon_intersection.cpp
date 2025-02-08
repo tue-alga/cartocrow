@@ -1,7 +1,7 @@
-#include "cartocrow/core/poly_line_gon_intersection.h"
+#include "cartocrow/circle_segment_helpers/poly_line_gon_intersection.h"
 #include "../catch.hpp"
+#include "cartocrow/circle_segment_helpers/cs_curve_helpers.h"
 #include "cartocrow/core/arrangement_helpers.h"
-#include "cartocrow/core/cs_curve_helpers.h"
 #include "cartocrow/renderer/ipe_renderer.h"
 
 using namespace cartocrow;

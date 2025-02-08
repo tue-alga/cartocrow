@@ -1,15 +1,15 @@
 #include "drawing_algorithm.h"
 
+#include "cartocrow/circle_segment_helpers/approximate_convex_hull_of_disks.h"
+#include "cartocrow/circle_segment_helpers/cavc_helpers.h"
+#include "cartocrow/circle_segment_helpers/cs_curve_helpers.h"
+#include "cartocrow/circle_segment_helpers/cs_polygon_helpers.h"
+#include "cartocrow/circle_segment_helpers/cs_polyline_helpers.h"
+#include "cartocrow/circle_segment_helpers/poly_line_gon_intersection.h"
 #include "cartocrow/core/arrangement_helpers.h"
-#include "cartocrow/core/cs_curve_helpers.h"
-#include "cartocrow/core/cs_polygon_helpers.h"
-#include "cartocrow/core/cs_polyline_helpers.h"
-#include "cartocrow/renderer/ipe_renderer.h"
 #include "cartocrow/renderer/cs_render_helpers.h"
-#include "cartocrow/core/poly_line_gon_intersection.h"
+#include "cartocrow/renderer/ipe_renderer.h"
 #include "grow_circles.h"
-#include "cartocrow/core/approximate_convex_hull_of_disks.h"
-#include "cartocrow/core/cavc_helpers.h"
 #include <CGAL/Boolean_set_operations_2.h>
 #include <CGAL/Boolean_set_operations_2/Gps_polygon_validation.h>
 #include <utility>

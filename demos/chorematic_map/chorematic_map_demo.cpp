@@ -16,13 +16,13 @@
 
 #include <utility>
 
-#include "cartocrow/core/arrangement_map.h"
-#include "cartocrow/core/arrangement_helpers.h"
-#include "cartocrow/core/centroid.h"
-#include "cartocrow/core/cs_polygon_helpers.h"
-#include "cartocrow/core/rectangle_helpers.h"
-#include "cartocrow/chorematic_map/maximum_weight_disk.h"
 #include "cartocrow/chorematic_map/input_parsing.h"
+#include "cartocrow/chorematic_map/maximum_weight_disk.h"
+#include "cartocrow/circle_segment_helpers/cs_polygon_helpers.h"
+#include "cartocrow/core/arrangement_helpers.h"
+#include "cartocrow/core/arrangement_map.h"
+#include "cartocrow/core/centroid.h"
+#include "cartocrow/core/rectangle_helpers.h"
 
 #include "cartocrow/renderer/ipe_renderer.h"
 

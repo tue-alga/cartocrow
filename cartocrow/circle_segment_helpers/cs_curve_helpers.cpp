@@ -1,5 +1,5 @@
 #include "cs_curve_helpers.h"
-#include "vector_helpers.h"
+#include "cartocrow/core/vector_helpers.h"
 
 namespace cartocrow {
 OneRootPoint closestOnCircle(const Circle<Exact>& circle, const Point<Exact>& point) {

@@ -1,6 +1,6 @@
 #include "circles_convex_hull_demo.h"
+#include "cartocrow/circle_segment_helpers/approximate_convex_hull_of_disks.h"
 #include "cartocrow/renderer/cs_render_helpers.h"
-#include "cartocrow/core/approximate_convex_hull_of_disks.h"
 #include <QApplication>
 
 CircleConvexHullDemo::CircleConvexHullDemo() {

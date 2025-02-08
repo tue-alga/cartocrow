@@ -1,6 +1,6 @@
 #include "dilated_poly.h"
+#include "cartocrow/circle_segment_helpers/cs_polygon_helpers.h"
 #include "cartocrow/core/arrangement_helpers.h"
-#include "cartocrow/core/cs_polygon_helpers.h"
 #include <CGAL/approximated_offset_2.h>
 
 namespace cartocrow::simplesets {

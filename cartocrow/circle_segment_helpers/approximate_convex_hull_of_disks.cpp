@@ -1,7 +1,7 @@
 #include "approximate_convex_hull_of_disks.h"
-#include "cartocrow/core/cs_curve_helpers.h"
-#include "cartocrow/core/cs_polygon_helpers.h"
-#include "cartocrow/core/circle_tangents.h"
+#include "circle_tangents.h"
+#include "cs_curve_helpers.h"
+#include "cs_polygon_helpers.h"
 
 #include <CGAL/Apollonius_site_2.h>
 #include <CGAL/Apollonius_graph_2.h>

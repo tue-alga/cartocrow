@@ -36,6 +36,7 @@ add_library(simplesets ${SOURCES})
 target_link_libraries(simplesets
 	PUBLIC core
 		   renderer
+		   circle_segment_helpers
 )
 
 cartocrow_install_module(simplesets)

@@ -1,9 +1,9 @@
 #include "cavc_helpers.h"
-#include "cartocrow/core/cs_curve_helpers.h"
-#include "cartocrow/core/cs_polygon_helpers.h"
+#include "cavc_helpers.hpp"
+#include "cs_curve_helpers.h"
+#include "cs_polygon_helpers.h"
 #include <cavc/polylineoffset.hpp>
 #include <cavc/polylineoffsetislands.hpp>
-#include "cavc_helpers.hpp"
 
 namespace cartocrow {
 std::vector<CSXMCurve> xmCurves(const cavc::Polyline<double>& polyline) {

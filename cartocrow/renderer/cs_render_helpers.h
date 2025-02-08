@@ -1,7 +1,7 @@
 #ifndef CARTOCROW_CS_RENDER_HELPERS_H
 #define CARTOCROW_CS_RENDER_HELPERS_H
 
-#include "../core/cs_types.h"
+#include "cartocrow/circle_segment_helpers/cs_types.h"
 #include "render_path.h"
 
 namespace cartocrow::renderer {

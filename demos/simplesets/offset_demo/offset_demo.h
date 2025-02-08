@@ -1,10 +1,10 @@
 #ifndef CARTOCROW_OFFSET_DEMO_H
 #define CARTOCROW_OFFSET_DEMO_H
 
-#include <QMainWindow>
-#include "cartocrow/core/cs_types.h"
-#include "cartocrow/simplesets/partition.h"
+#include "cartocrow/circle_segment_helpers/cs_types.h"
 #include "cartocrow/renderer/geometry_widget.h"
+#include "cartocrow/simplesets/partition.h"
+#include <QMainWindow>
 #include <filesystem>
 
 using namespace cartocrow;

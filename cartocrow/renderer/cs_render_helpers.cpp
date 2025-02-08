@@ -1,5 +1,5 @@
 #include "cs_render_helpers.h"
-#include "../core/cs_curve_helpers.h"
+#include "cartocrow/circle_segment_helpers/cs_curve_helpers.h"
 
 namespace cartocrow::renderer {
 renderer::RenderPath renderPath(const CSXMCurve& xm_curve) {

@@ -18,7 +18,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include "simplesets_demo.h"
-#include "cartocrow/core/cs_polygon_helpers.h"
+#include "cartocrow/circle_segment_helpers/cs_polygon_helpers.h"
 #include "cartocrow/renderer/ipe_renderer.h"
 #include "cartocrow/renderer/painting_renderer.h"
 #include "cartocrow/simplesets/drawing_algorithm.h"

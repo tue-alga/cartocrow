@@ -1,14 +1,14 @@
 #ifndef CARTOCROW_CS_TYPES_H
 #define CARTOCROW_CS_TYPES_H
 
-#include "core.h"
-#include "general_polyline.h"
-#include <CGAL/Cartesian.h>
+#include "cartocrow/core/core.h"
+#include "cartocrow/core/general_polyline.h"
 #include <CGAL/Arr_circle_segment_traits_2.h>
-#include <CGAL/CORE_algebraic_number_traits.h>
-#include <CGAL/Gps_traits_2.h>
-#include <CGAL/Gps_circle_segment_traits_2.h>
 #include <CGAL/Arr_polycurve_traits_2.h>
+#include <CGAL/CORE_algebraic_number_traits.h>
+#include <CGAL/Cartesian.h>
+#include <CGAL/Gps_circle_segment_traits_2.h>
+#include <CGAL/Gps_traits_2.h>
 
 namespace cartocrow {
 typedef CGAL::Arr_circle_segment_traits_2<Exact> ArrCSTraits;
