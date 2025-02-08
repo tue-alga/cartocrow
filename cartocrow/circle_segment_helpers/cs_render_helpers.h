@@ -2,7 +2,7 @@
 #define CARTOCROW_CS_RENDER_HELPERS_H
 
 #include "cartocrow/circle_segment_helpers/cs_types.h"
-#include "render_path.h"
+#include "cartocrow/renderer/render_path.h"
 
 namespace cartocrow::renderer {
 renderer::RenderPath renderPath(const CSXMCurve& xm_curve);

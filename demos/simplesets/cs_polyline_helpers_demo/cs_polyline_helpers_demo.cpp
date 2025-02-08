@@ -1,6 +1,6 @@
 #include "cs_polyline_helpers_demo.h"
 #include "cartocrow/circle_segment_helpers/cs_polyline_helpers.h"
-#include "cartocrow/renderer/cs_render_helpers.h"
+#include "cartocrow/circle_segment_helpers/cs_render_helpers.h"
 #include "cartocrow/renderer/geometry_widget.h"
 #include <QApplication>
 

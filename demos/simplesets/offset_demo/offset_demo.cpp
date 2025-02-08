@@ -1,6 +1,6 @@
 #include "offset_demo.h"
 #include "cartocrow/circle_segment_helpers/cavc_helpers.h"
-#include "cartocrow/renderer/cs_render_helpers.h"
+#include "cartocrow/circle_segment_helpers/cs_render_helpers.h"
 #include "cartocrow/renderer/geometry_painting.h"
 #include "cartocrow/renderer/geometry_widget.h"
 #include "cartocrow/renderer/render_path.h"
