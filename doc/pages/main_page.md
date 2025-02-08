@@ -67,3 +67,6 @@ The **simplification** module implements several algorithms to simplify maps con
 
 * The **renderer** module implements an interface that can be used to render maps. Each map type provides a \ref cartocrow::renderer:GeometryPainting "GeometryPainting", which can be handed to a \ref cartocrow::renderer::GeometryRenderer "GeometryRenderer" to draw it. In particular, the \ref cartocrow::renderer::IpeRenderer "IpeRenderer" renders the painting to an [Ipe](https://ipe.otfried.org) drawing, while the \ref cartocrow::renderer::GeometryWidget "GeometryWidget" renders the painting to a \ref QWidget for inclusion in a Qt application.  
   _Author: Willem Sonke_
+
+* The **circle_segment_helpers** module provides helper functions for working with geometry that consist of line segments and circular arcs. The geometry classes use CGAL's circle-segment traits. Notable functions in this module compute circle (bi)tangents and a convex hull of circles. Additionally, the module provides a wrapper around the CavalierContours library, which is used to provide offset and smoothing operators on a set of circle-segment polygons.  
+  _Author: Steven van den Broek_
