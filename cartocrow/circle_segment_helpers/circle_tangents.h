@@ -63,6 +63,7 @@ tangentPoints(const RationalRadiusCircle& c, const Point<Exact>& p);
 
 class RationalTangent {
   public:
+	RationalTangent() = default;
 	RationalTangent(Segment<Exact> seg) : variant(seg) {}
 	RationalTangent(Segment<Exact> seg1, Segment<Exact> seg2) : variant(std::pair(seg1, seg2)) {}
 	RationalTangent(std::pair<Segment<Exact>, Segment<Exact>> segs) : variant(segs) {}
