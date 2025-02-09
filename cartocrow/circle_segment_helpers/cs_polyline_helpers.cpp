@@ -82,6 +82,21 @@ struct RationalRadiusCircle {
 	Number<Exact> radius;
 };
 
+// Adapted from https://github.com/CGAL/cgal/blob/38871d9b125c5513ff8d14f9562795aa12681b38/Minkowski_sum_2/include/CGAL/Minkowski_sum_2/Approx_offset_base_2.h
+// This function falls under the following license:
+//// Copyright (c) 2006-2008  Tel-Aviv University (Israel).
+//// All rights reserved.
+////
+//// This function is part of CGAL (www.cgal.org).
+////
+//// $URL$
+//// $Id$
+//// SPDX-License-Identifier: GPL-3.0-or-later OR LicenseRef-Commercial
+////
+//// Author(s)     : Ron Wein       <wein_r@yahoo.com>
+////                 Andreas Fabri  <Andreas.Fabri@geometryfactory.com>
+////                 Laurent Rineau <Laurent.Rineau@geometryfactory.com>
+////                 Efi Fogel      <efif@post.tau.ac.il>
 Segment<Exact> doStuff(const OneRootPoint& p1, const Point<Exact>& p2, const RationalRadiusCircle& c1, bool idk) {
 	const auto& x1 = p1.x();
 	const auto& y1 = p1.y();
@@ -263,8 +278,6 @@ std::tuple<CSPolyline, Point<Exact>, Point<Exact>> approximateExtend(const CSPol
 		xmCurves.push_back(extEndCurve);
 	}
 
-	OneRootPoint nsA(newSource.x(), newSource.y());
-	OneRootPoint ntA(newTarget.x(), newTarget.y());
 	return {{xmCurves.begin(), xmCurves.end()}, newSource, newTarget};
 }
 
