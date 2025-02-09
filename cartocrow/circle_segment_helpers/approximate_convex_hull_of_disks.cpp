@@ -73,12 +73,12 @@ CSPolygon approximateConvexHull(const std::vector<RationalRadiusCircle>& rrCircl
 	for (int i = 0; i < hullCircles.size(); ++i) {
 		auto& c1 = hullCircles[i];
 		auto& c2 = hullCircles[(i + 1) % hullCircles.size()];
-		auto segOrPair = rationalTangents(c1, c2)->first;
+		auto segOrPair = rationalBitangents(c1, c2)->first;
 		std::vector<Segment<Exact>> segs;
-		if (segOrPair.index() == 0) {
-			segs.push_back(std::get<Segment<Exact>>(segOrPair));
+		if (auto segPointer = std::get_if<Segment<Exact>>(&segOrPair.variant)) {
+			segs.push_back(*segPointer);
 		} else {
-			auto pair = std::get<std::pair<Segment<Exact>, Segment<Exact>>>(segOrPair);
+			auto pair = std::get<std::pair<Segment<Exact>, Segment<Exact>>>(segOrPair.variant);
 			segs.push_back(pair.first);
 			segs.push_back(pair.second);
 		}
