@@ -18,7 +18,5 @@ target_link_libraries(
 
 install(TARGETS simplesets_demo DESTINATION ${INSTALL_BINARY_DIR})
 
-add_subdirectory(circles_convex_hull_demo)
 add_subdirectory(filtration_demo)
 add_subdirectory(offset_demo)
-add_subdirectory(cs_polyline_helpers_demo)

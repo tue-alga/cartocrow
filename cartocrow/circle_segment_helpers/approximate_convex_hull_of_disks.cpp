@@ -61,7 +61,7 @@ CSPolygon approximateConvexHull(const std::vector<RationalRadiusCircle>& rrCircl
 	// solution? filter out any circle that is contained in another, before approximating the radii.
 	auto hullCircles = circlesOnConvexHull(rrCircles);
 	if (hullCircles.size() == 1) {
-        auto circlePolygon = circleToCSPolygon(Circle<Exact>(hullCircles[0].center, hullCircles[0].radius));
+        auto circlePolygon = circleToCSPolygon(Circle<Exact>(hullCircles[0].center, CGAL::square(hullCircles[0].radius)));
         if (circlePolygon.orientation() == CGAL::CLOCKWISE) {
             circlePolygon.reverse_orientation();
         }

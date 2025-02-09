@@ -21,6 +21,8 @@ CSPolylineHelpersDemo::CSPolylineHelpersDemo() {
 	std::vector<CSXMCurve> curves({arc, ls1});
 	CSPolyline pl(curves.begin(), curves.end());
 
+	renderer->fitInView(Box(-3, -4, 3, 3));
+
 	std::function<void(GeometryRenderer&)> drawFunc = [pl](GeometryRenderer& renderer) {
 		renderer.setMode(GeometryRenderer::stroke);
 		auto [extended, source, target] = approximateExtend(pl, 1.0, 1);
