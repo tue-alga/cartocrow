@@ -102,6 +102,8 @@ class SvgRenderer : public GeometryRenderer {
 
 	void addPainting(const std::shared_ptr<GeometryPainting>& painting);
 	void addPainting(const std::shared_ptr<GeometryPainting>& painting, const std::string& name);
+	void addPainting(const std::function<void(renderer::GeometryRenderer&)>& draw_function);
+	void addPainting(const std::function<void(renderer::GeometryRenderer&)>& draw_function, const std::string& name);
 
   private:
 	/// The output file we're writing to.

@@ -20,6 +20,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "svg_renderer.h"
 
 #include "geometry_renderer.h"
+#include "function_painting.h"
 
 #include <CGAL/enum.h>
 
@@ -269,6 +270,16 @@ void SvgRenderer::addPainting(const std::shared_ptr<GeometryPainting>& painting,
 	std::string spaceless;
 	std::replace_copy(name.begin(), name.end(), std::back_inserter(spaceless), ' ', '_');
 	m_paintings.push_back(DrawnPainting{painting, spaceless});
+}
+
+void SvgRenderer::addPainting(const std::function<void(renderer::GeometryRenderer&)>& draw_function) {
+	auto painting = std::make_shared<FunctionPainting>(draw_function);
+	addPainting(painting);
+}
+
+void SvgRenderer::addPainting(const std::function<void(renderer::GeometryRenderer&)>& draw_function, const std::string& name) {
+	auto painting = std::make_shared<FunctionPainting>(draw_function);
+	addPainting(painting, name);
 }
 
 std::string SvgRenderer::escapeForSvg(const std::string& text) const {
