@@ -3,8 +3,8 @@
 
 namespace cartocrow::renderer {
 void addToRenderPath(const CSXMCurve& xm_curve, renderer::RenderPath& path, bool first) {
-	auto as = approximateAlgebraic(xm_curve.source());
-	auto at = approximateAlgebraic(xm_curve.target());
+	auto as = approximateOneRootPoint(xm_curve.source());
+	auto at = approximateOneRootPoint(xm_curve.target());
 	if (first) {
 		path.moveTo(as);
 	}
@@ -16,7 +16,7 @@ void addToRenderPath(const CSXMCurve& xm_curve, renderer::RenderPath& path, bool
 		}
 		const auto& circle = xm_curve.supporting_circle();
 		path.arcTo(approximate(circle.center()), xm_curve.orientation() == CGAL::CLOCKWISE,
-		           approximateAlgebraic(xm_curve.target()));
+                   approximateOneRootPoint(xm_curve.target()));
 	}
 }
 
@@ -33,8 +33,8 @@ void addToRenderPath(const CSCurve& curve, renderer::RenderPath& path, bool firs
 		path.close();
 		return;
 	}
-	auto as = approximateAlgebraic(curve.source());
-	auto at = approximateAlgebraic(curve.target());
+	auto as = approximateOneRootPoint(curve.source());
+	auto at = approximateOneRootPoint(curve.target());
 	if (first) {
 		path.moveTo(as);
 	}
@@ -46,7 +46,7 @@ void addToRenderPath(const CSCurve& curve, renderer::RenderPath& path, bool firs
 		}
 		const auto& circle = curve.supporting_circle();
 		path.arcTo(approximate(circle.center()), curve.orientation() == CGAL::CLOCKWISE,
-		           approximateAlgebraic(curve.target()));
+                   approximateOneRootPoint(curve.target()));
 	}
 }
 

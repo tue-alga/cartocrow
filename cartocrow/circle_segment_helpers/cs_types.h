@@ -27,7 +27,9 @@ typedef ArrCSTraits::Curve_2 CSCurve;
 typedef ArrCSTraits::CoordNT OneRootNumber;
 typedef ArrCSTraits::Point_2 OneRootPoint;
 
-Point<Inexact> approximateAlgebraic(const OneRootPoint& algebraic_point);
+Point<Inexact> approximateOneRootPoint(const OneRootPoint &algebraic_point);
+OneRootPoint pretendOneRootPoint(const Point<Inexact>& point);
+OneRootPoint pretendOneRootPoint(const Point<Exact>& point);
 }
 
 #endif //CARTOCROW_CS_TYPES_H

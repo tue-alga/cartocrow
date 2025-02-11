@@ -57,8 +57,8 @@ std::variant<CSPolyline, CSPolygon> toCSPoly(const cavc::Polyline<double>& polyl
 CSPolygon remove_degeneracies(const CSPolygon& polygon) {
 	std::vector<CSXMCurve> xmCurves;
 	for (auto cit = polygon.curves_begin(); cit != polygon.curves_end(); ++cit) {
-		auto as = approximateAlgebraic(cit->source());
-		auto at = approximateAlgebraic(cit->target());
+		auto as = approximateOneRootPoint(cit->source());
+		auto at = approximateOneRootPoint(cit->target());
 		if (CGAL::squared_distance(as, at) > M_EPSILON) {
 			xmCurves.push_back(*cit);
 		}

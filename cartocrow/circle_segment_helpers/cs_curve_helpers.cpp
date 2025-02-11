@@ -142,7 +142,7 @@ Vector<Inexact> startTangent(const CSXMCurve& c) {
 		return v / len;
 	} else {
 		auto circle = c.supporting_circle();
-		auto v = approximate(approximateAlgebraic(c.source())) - approximate(circle.center());
+		auto v = approximate(approximateOneRootPoint(c.source())) - approximate(circle.center());
 		auto p = v.perpendicular(circle.orientation());
 		auto len = sqrt(p.squared_length());
 		return p / len;
@@ -157,7 +157,7 @@ Vector<Inexact> endTangent(const CSXMCurve& c) {
 		return v / len;
 	} else {
 		auto circle = c.supporting_circle();
-		auto v = approximate(approximateAlgebraic(c.target())) - approximate(circle.center());
+		auto v = approximate(approximateOneRootPoint(c.target())) - approximate(circle.center());
 		auto p = v.perpendicular(circle.orientation());
 		auto len = sqrt(p.squared_length());
 		return p / len;
@@ -171,15 +171,15 @@ double approximateTurningAngle(const CSXMCurve& xmc) {
 
 	auto c = xmc.supporting_circle();
 	auto acc = approximate(c.center());
-	auto v1 = approximateAlgebraic(xmc.source()) - acc;
-	auto v2 = approximateAlgebraic(xmc.target()) - acc;
+	auto v1 = approximateOneRootPoint(xmc.source()) - acc;
+	auto v2 = approximateOneRootPoint(xmc.target()) - acc;
 
 	return orientedAngleBetween(v1, v2, xmc.orientation());
 }
 
 double approximateLength(const CSXMCurve& xmc) {
-    auto s = approximateAlgebraic(xmc.source());
-    auto t = approximateAlgebraic(xmc.target());
+    auto s = approximateOneRootPoint(xmc.source());
+    auto t = approximateOneRootPoint(xmc.target());
     if (xmc.is_linear()) {
         return CGAL::sqrt(CGAL::squared_distance(s, t));
     } else {
@@ -191,8 +191,8 @@ double approximateLength(const CSXMCurve& xmc) {
 }
 
 double approximateLength(const CSCurve& c) {
-    auto s = approximateAlgebraic(c.source());
-    auto t = approximateAlgebraic(c.target());
+    auto s = approximateOneRootPoint(c.source());
+    auto t = approximateOneRootPoint(c.target());
     if (c.is_linear()) {
         return CGAL::sqrt(CGAL::squared_distance(s, t));
     } else {

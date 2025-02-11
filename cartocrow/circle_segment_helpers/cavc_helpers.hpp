@@ -10,8 +10,8 @@ template <class InputIterator>
 cavc::Polyline<double> cavcPolyline(InputIterator start, InputIterator end, bool closed) {
 	cavc::Polyline<double> polyline;
 	auto processCurve = [&polyline](const CSXMCurve& xmCurve) {
-		Point<Inexact> s = approximateAlgebraic(xmCurve.source());
-		Point<Inexact> t = approximateAlgebraic(xmCurve.target());
+		Point<Inexact> s = approximateOneRootPoint(xmCurve.source());
+		Point<Inexact> t = approximateOneRootPoint(xmCurve.target());
 		if (xmCurve.is_linear()) {
 			polyline.addVertex(s.x(), s.y(), 0);
 		} else {
@@ -42,7 +42,7 @@ cavc::Polyline<double> cavcPolyline(InputIterator start, InputIterator end, bool
 	} else {
 		auto last = end;
 		--last;
-		Point<Inexact> t = approximateAlgebraic(last->target());
+		Point<Inexact> t = approximateOneRootPoint(last->target());
 		polyline.addVertex(t.x(), t.y(), 0);
 	}
 
