@@ -10,6 +10,7 @@ struct RationalRadiusCircle {
     Point<Exact> center;
     Number<Exact> radius;
 	Circle<Exact> circle() const;
+    bool operator==(const RationalRadiusCircle& other) const = default;
 };
 
 /// Approximate a circle by one with rational radius.
@@ -73,6 +74,7 @@ class RationalTangent {
 	Point<Exact> source() const;
 	Point<Exact> target() const;
 	RationalTangent opposite() const;
+    bool operator==(const RationalTangent& other) const = default;
 };
 
 /// Compute approximate bitangents between circles in Exact representation with rational radius.
