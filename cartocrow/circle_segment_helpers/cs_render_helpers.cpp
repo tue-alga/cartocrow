@@ -2,28 +2,11 @@
 #include "cartocrow/circle_segment_helpers/cs_curve_helpers.h"
 
 namespace cartocrow::renderer {
-renderer::RenderPath renderPath(const CSXMCurve& xm_curve) {
-	renderer::RenderPath path;
-	path.moveTo(approximateAlgebraic(xm_curve.source()));
-
-	if (xm_curve.is_circular()) {
-		auto circle = xm_curve.supporting_circle();
-		path.arcTo(approximate(circle.center()), xm_curve.orientation() == CGAL::CLOCKWISE,
-		           approximateAlgebraic(xm_curve.target()));
-	} else {
-		auto line = xm_curve.supporting_line();
-		path.lineTo(approximateAlgebraic(xm_curve.target()));
-	}
-
-	return path;
-}
-
-void addToRenderPath(const CSXMCurve& xm_curve, renderer::RenderPath& path, bool& first) {
+void addToRenderPath(const CSXMCurve& xm_curve, renderer::RenderPath& path, bool first) {
 	auto as = approximateAlgebraic(xm_curve.source());
 	auto at = approximateAlgebraic(xm_curve.target());
 	if (first) {
 		path.moveTo(as);
-		first = false;
 	}
 	if (xm_curve.is_linear()) {
 		path.lineTo(at);
@@ -37,7 +20,7 @@ void addToRenderPath(const CSXMCurve& xm_curve, renderer::RenderPath& path, bool
 	}
 }
 
-void addToRenderPath(const CSCurve& curve, renderer::RenderPath& path, bool& first) {
+void addToRenderPath(const CSCurve& curve, renderer::RenderPath& path, bool first) {
 	if (curve.is_full()) {
 		const auto& circ = curve.supporting_circle();
 		const auto& cent = approximate(circ.center());
@@ -54,7 +37,6 @@ void addToRenderPath(const CSCurve& curve, renderer::RenderPath& path, bool& fir
 	auto at = approximateAlgebraic(curve.target());
 	if (first) {
 		path.moveTo(as);
-		first = false;
 	}
 	if (curve.is_linear()) {
 		path.lineTo(at);
@@ -74,11 +56,24 @@ renderer::RenderPath operator<<(renderer::RenderPath& path, const CSPolygon& pol
 	toCurves(polygon.curves_begin(), polygon.curves_end(), std::back_inserter(mergedCurves));
 	for (const auto& c : mergedCurves) {
 		addToRenderPath(c, path, first);
+        first = false;
 	}
 	if (!holds_alternative<renderer::RenderPath::Close>(path.commands().back())) {
 		path.close();
 	}
 	return path;
+}
+
+renderer::RenderPath renderPath(const CSXMCurve& xmCurve) {
+    renderer::RenderPath path;
+    addToRenderPath(xmCurve, path, true);
+    return path;
+}
+
+renderer::RenderPath renderPath(const CSCurve& curve) {
+    renderer::RenderPath path;
+    addToRenderPath(curve, path, true);
+    return path;
 }
 
 renderer::RenderPath renderPath(const CSPolygon& polygon) {
@@ -113,6 +108,7 @@ renderer::RenderPath renderPath(const CSPolyline& polyline) {
 	bool first = true;
 	for (auto cit = polyline.curves_begin(); cit != polyline.curves_end(); ++cit) {
 		addToRenderPath(*cit, path, first);
+        first = false;
 	}
 	return path;
 }
