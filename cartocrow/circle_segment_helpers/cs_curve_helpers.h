@@ -102,6 +102,12 @@ Vector<Inexact> endTangent(const CSXMCurve& c);
 
 /// Return the approximate turning angle along the curve.
 double approximateTurningAngle(const CSXMCurve& xmc);
+
+/// Return the approximate length of the curve.
+Number<Inexact> approximateLength(const CSXMCurve& xmc);
+
+/// Return the approximate length of the curve.
+Number<Inexact> approximateLength(const CSCurve& c);
 }
 
 #endif //CARTOCROW_CS_CURVE_HELPERS_H

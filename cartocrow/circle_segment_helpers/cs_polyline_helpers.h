@@ -30,6 +30,8 @@ std::tuple<CSPolyline, Point<Exact>, Point<Exact>> approximateExtend(const CSPol
 CSPolygon closeAroundBB(CSPolyline polyline, CGAL::Orientation orientation, Number<Inexact> offset, const Point<Exact>& source, const Point<Exact>& target);
 /// An approximation of the absolute turning angle of the polyline.
 double approximateAbsoluteTurningAngle(const CSPolyline& polyline);
+/// Return the approximate length of the polyline.
+Number<Inexact> approximateLength(const CSPolyline& polyline);
 }
 
 #endif //CARTOCROW_CS_POLYLINE_HELPERS_H

@@ -380,4 +380,12 @@ double approximateAbsoluteTurningAngle(const CSPolyline& polyline) {
 	}
 	return total;
 }
+
+Number<Inexact> approximateLength(const CSPolyline& polyline) {
+    Number<Inexact> length = 0;
+    for (auto cit = polyline.curves_begin(); cit != polyline.curves_end(); ++cit) {
+        length += approximateLength(*cit);
+    }
+    return length;
+}
 }

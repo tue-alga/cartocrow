@@ -67,6 +67,8 @@ CGAL::Bounded_side bounded_side(const CSPolygon& polygon, const Point<Exact>& po
 CSPolycurve arrPolycurveFromCSPolygon(const CSPolygon& polygon);
 /// Return whether CSPolygon is simple (no self-intersections).
 bool is_simple(const CSPolygon& pgn);
+/// Return the approximate length of the polygon.
+Number<Inexact> approximateLength(const CSPolygon& polygon);
 }
 
 #endif //CARTOCROW_CS_POLYGON_HELPERS_H

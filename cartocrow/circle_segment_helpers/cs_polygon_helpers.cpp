@@ -237,4 +237,12 @@ CSPolygonWithHoles polygonToCSPolygon(const PolygonWithHoles<Exact>& polygon) {
 	}
 	return {polygonToCSPolygon(polygon.outer_boundary()), holes.begin(), holes.end()};
 }
+
+Number<Inexact> approximateLength(const CSPolygon& polygon) {
+    Number<Inexact> length = 0;
+    for (auto cit = polygon.curves_begin(); cit != polygon.curves_end(); ++cit) {
+        length += approximateLength(*cit);
+    }
+    return length;
+}
 }

@@ -176,4 +176,34 @@ double approximateTurningAngle(const CSXMCurve& xmc) {
 
 	return orientedAngleBetween(v1, v2, xmc.orientation());
 }
+
+double approximateLength(const CSXMCurve& xmc) {
+    auto s = approximateAlgebraic(xmc.source());
+    auto t = approximateAlgebraic(xmc.target());
+    if (xmc.is_linear()) {
+        return CGAL::sqrt(CGAL::squared_distance(s, t));
+    } else {
+        auto c = xmc.supporting_circle();
+        auto acc = approximate(c.center());
+        auto angle = orientedAngleBetween(s - acc, t - acc, xmc.orientation());
+        return angle * CGAL::sqrt(CGAL::to_double(c.squared_radius()));
+    }
+}
+
+double approximateLength(const CSCurve& c) {
+    auto s = approximateAlgebraic(c.source());
+    auto t = approximateAlgebraic(c.target());
+    if (c.is_linear()) {
+        return CGAL::sqrt(CGAL::squared_distance(s, t));
+    } else {
+        const auto& circ = c.supporting_circle();
+        auto r = CGAL::sqrt(CGAL::to_double(circ.squared_radius()));
+        if (c.is_full()) {
+            return M_2xPI * r;
+        }
+        auto acc = approximate(circ.center());
+        auto angle = orientedAngleBetween(s - acc, t - acc, c.orientation());
+        return angle * r;
+    }
+}
 }
