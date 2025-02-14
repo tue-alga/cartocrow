@@ -22,6 +22,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include <CGAL/Point_2.h>
 #include <CGAL/Segment_2.h>
+#include "core.h"
 
 namespace cartocrow {
 template <class Segment_>
@@ -35,14 +36,13 @@ class Polyline_Segment_ptr
 	Segment m_seg;
 };
 
-template <class K, class InputIterator> class SegmentIterator:
-    public std::iterator<
-        std::input_iterator_tag, 			     // iterator_category
-        CGAL::Segment_2<K>, 				 	 // value_type
-        typename InputIterator::difference_type, // difference_type
-        CGAL::Segment_2<K>*,				 	 // pointer
-        CGAL::Segment_2<K>& 				 	 // reference
-        > {
+template <class K, class InputIterator> class SegmentIterator {
+  public:
+	using iterator_category = std::input_iterator_tag;
+	using value_type = CGAL::Segment_2<K>;
+	using difference_type = typename InputIterator::difference_type;
+	using pointer = CGAL::Segment_2<K>*;
+	using reference = CGAL::Segment_2<K>&;
   private:
 	InputIterator m_first_vertex;
 
@@ -115,6 +115,17 @@ template <class K> class Polyline {
   private:
 	std::vector<CGAL::Point_2<K>> m_points;
 };
+
+/// Converts a polyline from exact representation to an approximation in
+/// inexact representation.
+template <class K>
+Polyline<Inexact> approximate(const Polyline<K>& p) {
+	Polyline<Inexact> result;
+	for (auto v = p.vertices_begin(); v < p.vertices_end(); ++v) {
+		result.push_back(approximate(*v));
+	}
+	return result;
+}
 }
 
 #endif //CARTOCROW_POLYLINE_H

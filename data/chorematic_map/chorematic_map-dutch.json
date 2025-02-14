@@ -1,0 +1,17 @@
+{
+  "type": "chorematic_map",
+  "regionData": "apotheek_gemiddelde_afstand_in_km.csv",
+  "binColors": [
+    "0xa0d99b",
+    "0x30a253"
+  ],
+  "outlineColor": "0x444444",
+  "boundaryColor": "0xe6e6e6",
+  "outputBounds": [0, 0, 800, 800],
+  "seed": 0,
+  "technique": "Voronoi",
+  "local": true,
+  "nPoints": 1000,
+  "invert": true,
+  "schematization": "netherlands-schematization.ipe"
+}

@@ -1,4 +1,5 @@
 #include "bank.h"
+#include "cartocrow/core/vector_helpers.h"
 
 namespace cartocrow::simplesets {
 Bank::Bank(std::vector<CatPoint> catPoints): m_catPoints(std::move(catPoints)) {
@@ -26,10 +27,6 @@ Bank::Bank(std::vector<CatPoint> catPoints): m_catPoints(std::move(catPoints)) {
 	computeBends();
 }
 
-Number<Inexact> computeAngleBetween(const Vector<Inexact>& v, const Vector<Inexact>& w) {
-	return acos((v * w) / (sqrt(v.squared_length()) * sqrt(w.squared_length())));
-}
-
 void Bank::computeBends() {
 	m_bends.clear();
 
@@ -41,7 +38,7 @@ void Bank::computeBends() {
 	for (int i = 0; i < m_points.size(); i++) {
 		if (i + 2 > m_points.size() - 1) break;
 		auto orient = CGAL::orientation(m_points[i], m_points[i+1], m_points[i+2]);
-		auto angle = computeAngleBetween(m_points[i+1] - m_points[i], m_points[i+2] - m_points[i+1]);
+		auto angle = smallestAngleBetween(m_points[i+1] - m_points[i], m_points[i+2] - m_points[i+1]);
 		if (orientation == -orient) {
 			// Switched orientation
 			m_bends.emplace_back(*orientation, bendMaxAngle, bendTotalAngle, startIndex, i+1);

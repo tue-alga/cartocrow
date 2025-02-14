@@ -16,8 +16,8 @@ EXTRACT_PRIVATE        = YES
 EXTRACT_PACKAGE        = YES
 EXTRACT_STATIC         = YES
 
-INPUT                  = "cartocrow/core" "cartocrow/renderer" "cartocrow/necklace_map" "cartocrow/isoline_simplification" "cartocrow/flow_map" "doc/pages"
-FILE_PATTERNS          = *.cpp *.h *.inc *.md
+INPUT                  = "cartocrow/core" "cartocrow/renderer" "cartocrow/circle_segment_helpers" "cartocrow/necklace_map" "cartocrow/isoline_simplification" "cartocrow/flow_map" "cartocrow/simplification" "cartocrow/simplesets" "cartocrow/chorematic_map" "doc/pages"
+FILE_PATTERNS          = *.cpp *.h *.hpp *.md
 RECURSIVE              = YES
 
 EXCLUDE_PATTERNS       = */detail/*

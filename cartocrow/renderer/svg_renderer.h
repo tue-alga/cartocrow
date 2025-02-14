@@ -50,6 +50,18 @@ struct SvgRendererStyle {
 	std::string m_fillColor = "#0066cb";
 	/// The opacity of filled shapes.
 	double m_fillOpacity = 1;
+    /// Whether shapes are clipped by the current clip path.
+    bool m_clipping = false;
+    /// The index of the current clip path, if any.
+    std::optional<int> m_clipPath;
+    /// Line cap.
+    std::string m_lineCap = "round";
+    /// Line join.
+    std::string m_lineJoin = "round";
+    /// Horizontal text alignment.
+    std::string m_horizontalTextAlignment = "middle";
+    /// Vertical text alignment.
+    std::string m_verticalTextAlignment = "middle";
 };
 
 /// SVG specialization of the GeometryRenderer.
@@ -66,13 +78,13 @@ class SvgRenderer : public GeometryRenderer {
 	void save(const std::filesystem::path& file);
 
 	void draw(const Point<Inexact>& p) override;
-	void draw(const PolygonWithHoles<Inexact>& p) override;
 	void draw(const Circle<Inexact>& c) override;
 	void draw(const BezierSpline& s) override;
 	void draw(const Line<Inexact>& l) override;
 	void draw(const Ray<Inexact>& r) override;
+	void draw(const Halfplane<Inexact>& h) override;
 	void draw(const RenderPath& p) override;
-	void drawText(const Point<Inexact>& p, const std::string& text) override;
+	void drawText(const Point<Inexact>& p, const std::string& text, bool escape=true) override;
 
 	void pushStyle() override;
 	void popStyle() override;
@@ -81,6 +93,12 @@ class SvgRenderer : public GeometryRenderer {
 	void setStrokeOpacity(int alpha) override;
 	void setFill(Color color) override;
 	void setFillOpacity(int alpha) override;
+    void setClipPath(const RenderPath& clipPath) override;
+    void setClipping(bool enable) override;
+	void setLineJoin(LineJoin lineJoin) override;
+	void setLineCap(LineCap lineCap) override;
+	void setHorizontalTextAlignment(HorizontalTextAlignment alignment) override;
+	void setVerticalTextAlignment(VerticalTextAlignment alignment) override;
 
 	void addPainting(const std::shared_ptr<GeometryPainting>& painting);
 	void addPainting(const std::shared_ptr<GeometryPainting>& painting, const std::string& name);
@@ -117,6 +135,8 @@ class SvgRenderer : public GeometryRenderer {
 	/// A stack of drawing styles, used by \ref pushStyle() and \ref popStyle()
 	/// to store previously pushed styles.
 	std::stack<SvgRendererStyle> m_styleStack;
+    /// Clip path index; the number of clip paths already added to the SVG.
+    int m_clipPathId = 0;
 };
 
 } // namespace cartocrow::renderer

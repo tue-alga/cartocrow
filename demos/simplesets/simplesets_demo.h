@@ -21,7 +21,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #define CARTOCROW_SIMPLESETS_DEMO_H
 
 #include "cartocrow/core/core.h"
-#include "cartocrow/core/ipe_reader.h"
+#include "cartocrow/renderer/ipe_reader.h"
 #include "cartocrow/renderer/geometry_painting.h"
 #include "cartocrow/renderer/geometry_widget.h"
 #include "cartocrow/simplesets/types.h"

@@ -6,14 +6,18 @@ The file example_isolines.ipe contains isolines generated from [The Reference El
 These DEMs were provided by the Byrd Polar and Climate Research Center and the Polar Geospatial Center under NSF-OPP awards 1043681, 1542736, 1543501, 1559691, 1810976, and 2129685.
 See the end of the file for the relevant bibliography [3, 4].
 
-The nyc.txt file contains the locations of hotels, subway entrances, and medical clinics (green) in lower Manhattan.
+The file nyc.txt contains the locations of hotels, subway entrances, and medical clinics (green) in lower Manhattan.
 It is a common benchmark dataset that originates from the paper that introduced Bubble Sets [1].
 The point locations were manually traced from the image in the paper.
 
-The diseasome.txt file contains vertices of an embedded graph of disorders, from the human
+The file diseasome.txt contains vertices of an embedded graph of disorders, from the human
 disease network constructed by Goh et al. [2]. The dataset consists of 516 vertices (disorders) of
 twenty-one disorder classes. We use the graph layout of a poster by Bastian and Heymann archived at 
 https://web.archive.org/web/20121116145141/http://diseasome.eu/data/diseasome_poster.pdf.
+
+The file gemeenten-2022_5000vtcs.ipe contains generalized municipalities of The Netherlands,
+generated from the [Wijk- en buurtkaart 2022](https://www.cbs.nl/nl-nl/dossier/nederland-regionaal/geografische-data/wijk-en-buurtkaart-2022); © Kadaster / Centraal Bureau voor de Statistiek, 2024.
+The file apotheek_gemiddelde_afstand_in_km.csv is one statistical data attribute present in the same Wijk- en buurtkaart.
 
 ## References
 [1] C. Collins, G. Penn, and S. Carpendale. Bubble Sets: Revealing set relations with isocontours over existing visualizations.

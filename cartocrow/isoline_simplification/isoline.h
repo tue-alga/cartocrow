@@ -21,6 +21,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #define CARTOCROW_ISOLINE_H
 
 #include "../core/core.h"
+#include "../core/polyline.h"
 
 namespace cartocrow::isoline_simplification {
 /// An object of this class represent an isoline.

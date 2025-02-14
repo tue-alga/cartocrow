@@ -1,0 +1,3 @@
+add_subdirectory(circle_tangents_demo)
+add_subdirectory(circles_convex_hull_demo)
+add_subdirectory(cs_polyline_helpers_demo)

@@ -4,9 +4,9 @@
 #include "../patterns/poly_pattern.h"
 
 namespace cartocrow::simplesets {
-class Dilated : public Pattern {
+class DilatedPoly : public Pattern {
   public:
-	Dilated(const PolyPattern& polyPattern, const Number<Inexact>& dilationRadius);
+	DilatedPoly(const PolyPattern& polyPattern, const Number<Exact>& dilationRadius);
 	std::variant<Polyline<Inexact>, Polygon<Inexact>, CSPolygon> contour() const override;
 	const std::vector<CatPoint>& catPoints() const override;
 	CSPolygon m_contour;

@@ -1,9 +1,10 @@
 #ifndef CARTOCROW_DRAWING_ALGORITHM_H
 #define CARTOCROW_DRAWING_ALGORITHM_H
 
-#include "partition.h"
-#include "dilated/dilated_poly.h"
 #include "../renderer/geometry_painting.h"
+#include "cartocrow/core/arrangement_helpers.h"
+#include "cartocrow/simplesets/dilated/dilated_poly.h"
+#include "partition.h"
 #include <CGAL/Arrangement_with_history_2.h>
 
 #include <utility>
@@ -56,7 +57,6 @@ struct FaceData {
 	std::unordered_map<int, std::vector<CSPolygon>> morphedFace;
 };
 
-// todo: edge case where edges of dilated patterns overlap, so a half-edge may have multiple origins.
 struct HalfEdgeData {
 	std::vector<int> origins;
 };
@@ -66,8 +66,8 @@ struct VertexData {
 };
 
 using DilatedPatternArrangement =
-    CGAL::Arrangement_with_history_2<CSTraits,
-                        CGAL::Arr_extended_dcel<CSTraits, VertexData, HalfEdgeData, FaceData>>;
+    CGAL::Arrangement_with_history_2<ArrCSTraits,
+                        CGAL::Arr_extended_dcel<ArrCSTraits, VertexData, HalfEdgeData, FaceData>>;
 
 //DilatedPatternArrangement
 //dilateAndArrange(const Partition& partition, const GeneralSettings& gs, const ComputeDrawingSettings& cds);
@@ -78,184 +78,7 @@ using FaceCH = DilatedPatternArrangement::Face_const_handle;
 using VertexH = DilatedPatternArrangement::Vertex_handle;
 using HalfEdgeH = DilatedPatternArrangement::Halfedge_handle;
 
-class Component {
-  public:
-	typedef DilatedPatternArrangement Arr;
-//	typedef std::vector<FaceH>::iterator Face_iterator;
-	typedef Arr::Size Size;
-
-	class ComponentCcbCirculator {
-	  private:
-		using Self = ComponentCcbCirculator;
-		Arr::Halfedge_handle m_halfedge;
-		std::function<bool(FaceH)> m_in_component;
-
-	  public:
-		using iterator_category = std::bidirectional_iterator_tag;
-		using value_type = Arr::Halfedge;
-		using difference_type = std::ptrdiff_t;
-		using pointer = Arr::Halfedge_handle;
-		using reference = value_type&;
-
-		ComponentCcbCirculator(Arr::Halfedge_handle halfedge, std::function<bool(FaceH)> in_component)
-		    : m_halfedge(halfedge), m_in_component(std::move(in_component)) {};
-
-		value_type operator*() const {
-			return *m_halfedge;
-		}
-
-		pointer operator->() const {
-			return m_halfedge;
-		}
-
-		pointer ptr() const {
-			return m_halfedge;
-		}
-
-		pointer handle() const {
-			return m_halfedge;
-		}
-
-		Self& operator++() {
-			m_halfedge = m_halfedge->next();
-			while (m_in_component(m_halfedge->twin()->face())) {
-				m_halfedge = m_halfedge->twin()->next();
-			}
-		    return *this;
-		};
-
-		Self operator++(int) {
-			Self tmp = *this;
-			this->operator++();
-			return tmp;
-		}
-
-		Self& operator--() {
-			m_halfedge = m_halfedge->prev();
-			while (m_in_component(m_halfedge->twin()->face())) {
-				m_halfedge = m_halfedge->twin()->prev();
-			}
-			return *this;
-		};
-
-		Self operator--(int) {
-			Self tmp = *this;
-			this->operator--();
-			return tmp;
-		}
-
-		bool operator==(const Self& other) const {
-			return m_halfedge == other.m_halfedge;
-		}
-
-		bool operator!=(const Self& other) const {
-			return m_halfedge != other.m_halfedge;
-		}
-	};
-
-	class Face_const_iterator {
-	  private:
-		using Self = Face_const_iterator;
-		std::vector<FaceH>::const_iterator m_faceHandleIterator;
-
-	  public:
-		using iterator_category = std::input_iterator_tag;
-		using value_type = Arr::Face;
-		using difference_type = std::ptrdiff_t;
-		using pointer = Arr::Face_handle;
-		using reference = value_type&;
-
-		Face_const_iterator(std::vector<FaceH>::const_iterator faceHandleIterator) :
-		      m_faceHandleIterator(faceHandleIterator) {};
-
-		value_type operator*() const {
-			return *(*m_faceHandleIterator);
-		}
-
-		pointer operator->() const {
-			return *m_faceHandleIterator;
-		}
-
-		Self& operator++() {
-			++m_faceHandleIterator;
-			return *this;
-		};
-
-		Self operator++(int) {
-			Self tmp = *this;
-			this->operator++();
-			return tmp;
-		}
-
-		pointer ptr() const {
-			return *m_faceHandleIterator;
-		}
-
-		pointer handle() const {
-			return *m_faceHandleIterator;
-		}
-
-		bool operator==(const Self& other) const {
-			return m_faceHandleIterator == other.m_faceHandleIterator;
-		}
-
-		bool operator!=(const Self& other) const {
-			return m_faceHandleIterator != other.m_faceHandleIterator;
-		}
-	};
-
-	Component(std::vector<FaceH> faces, std::vector<HalfEdgeH> boundaryEdges, std::function<bool(FaceH)> inComponent);
-
-	bool has_outer_ccb() const {
-		return !m_outer_ccbs.empty();
-	}
-	Size number_of_outer_ccbs() const {
-		return m_outer_ccbs.size();
-	}
-	std::vector<ComponentCcbCirculator>::const_iterator outer_ccbs_begin() const {
-		return m_outer_ccbs.cbegin();
-	}
-	std::vector<ComponentCcbCirculator>::const_iterator outer_ccbs_end() const {
-		return m_outer_ccbs.cend();
-	}
-
-	ComponentCcbCirculator outer_ccb() const {
-		return m_outer_ccbs[0];
-	}
-	std::vector<ComponentCcbCirculator>::const_iterator inner_ccbs_begin() const {
-		return m_inner_ccbs.cbegin();
-	}
-	std::vector<ComponentCcbCirculator>::const_iterator inner_ccbs_end() const {
-		return m_inner_ccbs.cend();
-	}
-	Size number_of_inner_ccbs() const {
-		return m_inner_ccbs.size();
-	}
-
-	// Hole is an alias for inner_ccb
-	std::vector<ComponentCcbCirculator>::const_iterator holes_begin() const {
-		return inner_ccbs_begin();
-	}
-	std::vector<ComponentCcbCirculator>::const_iterator holes_end() const {
-		return inner_ccbs_end();
-	}
-	Size number_of_holes() {
-		return number_of_inner_ccbs();
-	}
-
-	Face_const_iterator faces_begin() const {
-		return {m_faces.cbegin()};
-	}
-	Face_const_iterator faces_end() const {
-		return {m_faces.cend()};
-	}
-
-  private:
-	std::vector<FaceH> m_faces;
-	std::function<bool(FaceH)> m_in_component;
-	std::vector<ComponentCcbCirculator> m_outer_ccbs;
-	std::vector<ComponentCcbCirculator> m_inner_ccbs;
-};
+using CComponent = Component<DilatedPatternArrangement>;
 
 template <class Traits, class OutputIterator, class Ccb>
 void boundaryParts(Ccb ccb, int i, OutputIterator out) {
@@ -296,7 +119,7 @@ void boundaryParts(Ccb ccb, int i, OutputIterator out) {
 	auto opposite = traits.construct_opposite_2_object();
 
 	// Next, make a polyline for every connected part of the boundary that originates from i.
-	std::vector<X_monotone_curve_2> xm_curves;
+	std::vector<CSXMCurve> xm_curves;
 	auto curr = circ;
 	do {
 		if (originates_from(curr, i)) {
@@ -319,9 +142,9 @@ void boundaryParts(Ccb ccb, int i, OutputIterator out) {
 	}
 }
 
-std::vector<CSPolyline> boundaryParts(const Component& c, int i);
+std::vector<CSPolyline> boundaryParts(const CComponent& c, int i);
 std::vector<CSPolyline> boundaryParts(FaceH f, int i);
-std::vector<std::vector<std::pair<CSPolyline, int>>> originCcbs(const Component& c);
+std::vector<std::vector<std::pair<CSPolyline, int>>> originCcbs(const CComponent& c);
 
 // exposed for debugging purposes
 std::vector<std::vector<std::pair<int, Circle<Inexact>>>> connectedDisks(const std::vector<Circle<Inexact>>& disks);
@@ -343,12 +166,12 @@ class DilatedPatternDrawing {
   public:
 	DilatedPatternDrawing(const Partition& partition, const GeneralSettings& gs, const ComputeDrawingSettings& cds);
 
-	std::vector<Component> intersectionComponents(int i) const;
-	std::vector<Component> intersectionComponents(int i, int j) const;
-	std::shared_ptr<Relation> computePreference(int i, int j, const Component& c);
+	std::vector<CComponent> intersectionComponents(int i) const;
+	std::vector<CComponent> intersectionComponents(int i, int j) const;
+	std::shared_ptr<Relation> computePreference(int i, int j, const CComponent& c);
 
-	IncludeExcludeDisks includeExcludeDisks(int i, int j, const Component& c) const;
-	IncludeExcludeDisks includeExcludeDisks(int i, const std::unordered_set<int>& js, const Component& c) const;
+	IncludeExcludeDisks includeExcludeDisks(int i, int j, const CComponent& c) const;
+	IncludeExcludeDisks includeExcludeDisks(int i, const std::unordered_set<int>& js, const CComponent& c) const;
 
 	std::vector<std::shared_ptr<Hyperedge>> hyperedges() const;
 
@@ -360,14 +183,34 @@ class DilatedPatternDrawing {
 
 	DilatedPatternArrangement m_arr;
 	std::unordered_map<int, std::vector<FaceH>> m_iToFaces;
-	std::map<X_monotone_curve_2, int> m_curve_to_origin;
-	std::vector<Dilated> m_dilated;
+	std::map<CSXMCurve, int> m_curve_to_origin;
+	std::vector<DilatedPoly> m_dilated;
 	const GeneralSettings& m_gs;
 	const ComputeDrawingSettings& m_cds;
 
   private:
 };
 
+/// A \ref renderer::GeometryPainting "Painting" of a SimpleSets visualization.
+///
+/// A SimpleSets visualization is created in three steps:
+/// 1. \ref cartocrow::simplesets::partition "Partition" the categorical points (\ref CatPoint) into \ref cartocrow::simplesets::Pattern "patterns".
+/// 2. \ref Dilate the patterns. The patterns from the first step are polygonal (\ref PolyPattern); therefore, the dilated patterns consists of circular arcs and line segments (\ref DilatedPoly).
+/// 3. Render the dilated patterns to a "physically-realizable" \cite proportional_symbol_maps_algorithmica drawing. This involves determining local stacking orders, and cutting shapes such that points beneath it are exposed.
+///
+/// \image html "SimpleSets-pipeline.svg"
+///
+/// The \ref partition function performs step 1. In fact, it creates a sequence of partitions that range from small patterns covering little of the map, to very large patterns.
+/// The \ref DilatedPatternDrawing takes one such \ref Partition of polygonal patterns and performs steps 2 and 3; that is, it dilates the patterns and resolves overlap.
+///
+/// One can draw a \ref Partition using the \ref PartitionPainting.
+/// To draw the final SimpleSets visualization use this \ref SimpleSetsPainting.
+///
+/// Functions of SimpleSets depend on various settings:
+/// - \ref GeneralSettings : parameters such as point size.
+/// - \ref PartitionSettings : parameters for the \ref partition function.
+/// - \ref ComputeDrawingSettings : parameters for the \ref DilatedPatternDrawing class.
+/// - \ref DrawSettings : parameters for drawing functions.
 class SimpleSetsPainting : public renderer::GeometryPainting {
   public:
 	SimpleSetsPainting(const DilatedPatternDrawing& dpd, const DrawSettings& ds);

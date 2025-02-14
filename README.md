@@ -27,7 +27,7 @@ CartoCrow depends on the following build tools:
 
 And it depends on the following libraries:
 
-* CGAL (5.4, 5.5) – for implementations of computational geometry algorithms we need
+* CGAL (5.6) – for implementations of computational geometry algorithms we need
 * glog (0.5.0, 0.6.0) – for logging
 * ipelib (7.2.26) – for [Ipe](https://ipe.otfried.org) input and SVG/Ipe output
 * nlohmann-json (3.10.5, 3.11.2) – for JSON parsing
@@ -152,6 +152,12 @@ The remaining dependencies need to be built manually.
 * **Ipelib.** Download the [source archive](https://github.com/otfried/ipe/releases/download/v7.2.24/ipe-7.2.24-src.tar.gz), unpack it, and compile and install it using the instructions given in `install.txt`.
 </details>
 
+* **CavalierContours.** We manually copy the headers to install the header-only library.
+```sh
+git clone https://github.com/jbuckmccready/CavalierContours.git
+cd CavalierContours
+sudo cp -R include/cavc /usr/local/include
+```
 
 ## Compiling
 

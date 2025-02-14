@@ -42,6 +42,9 @@ template <class K> Point<K> centroid(const Polygon<K>& polygon) {
 
 	Number<K> area = polygon.area();
 	if (area == 0) {
+        if (!polygon.is_empty()) {
+            return *polygon.begin();
+        }
 		throw std::runtime_error("Centroid cannot be computed for polygons of area 0");
 	}
 
@@ -65,6 +68,7 @@ template <class K> Point<K> centroid(const PolygonWithHoles<K>& polygon) {
 	for (typename PolygonWithHoles<K>::Hole_const_iterator hole_iter = polygon.holes_begin();
 	     hole_iter != polygon.holes_end(); ++hole_iter) {
 		Number<K> area = CGAL::abs(hole_iter->area());
+        if (area == 0) continue;
 		sum -= area * (centroid(*hole_iter) - CGAL::ORIGIN);
 		areaSum -= area;
 	}

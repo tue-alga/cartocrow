@@ -136,8 +136,8 @@ size_t BezierCurve::intersectRay(const Point<Inexact>& source, const Point<Inexa
 		{
 			const Number<Inexact> sqrt_D = CGAL::sqrt(D);
 			constexpr const Number<Inexact> third = Number<Inexact>(1) / 3;
-			const Number<Inexact> S = CGAL::sign(R + sqrt_D) * std::pow(std::abs(R + sqrt_D), third);
-			const Number<Inexact> T = CGAL::sign(R - sqrt_D) * std::pow(std::abs(R - sqrt_D), third);
+			const Number<Inexact> S = static_cast<int>(CGAL::sign(R + sqrt_D)) * std::pow(std::abs(R + sqrt_D), third);
+			const Number<Inexact> T = static_cast<int>(CGAL::sign(R - sqrt_D)) * std::pow(std::abs(R - sqrt_D), third);
 
 			roots[0] = -A / 3 + (S + T); // Real root.
 			roots[1] = -A / 3 - (S + T) / 2; // Real part of complex root.

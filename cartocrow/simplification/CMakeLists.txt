@@ -1,8 +1,16 @@
 set(SOURCES
-	vw_simplification.cpp
+    edge_collapse/kronenfeld_etal.hpp
 )
 set(HEADERS
-	vw_simplification.h
+	vertex_removal/vertex_removal.h
+	vertex_removal/visvalingam_whyatt.h
+	edge_collapse/edge_collapse.h
+	edge_collapse/kronenfeld_etal.h
+	painting.h
+	util.h
+	modifiable_arrangement.h
+	historic_arrangement.h
+	oblivious_arrangement.h
 )
 
 add_library(simplification ${SOURCES})

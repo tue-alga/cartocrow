@@ -18,65 +18,11 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include "symmetric_difference.h"
+#include "../core/rectangle_helpers.h"
 #include <CGAL/Boolean_set_operations_2.h>
 #include <CGAL/bounding_box.h>
 
 namespace cartocrow::isoline_simplification {
-
-enum Side {
-	LEFT = 0,
-	BOTTOM = 1,
-	RIGHT = 2,
-	TOP = 3,
-};
-
-Side closest_side(const Point<Exact>& point, const Rectangle<Exact>& bb) {
-	std::vector<double> dist({ to_double(point.x()) - to_double(bb.xmin()), to_double(point.y()) - to_double(bb.ymin()),
-	                           to_double(bb.xmax()) - to_double(point.x()), to_double(bb.ymax()) - to_double(point.y()) });
-	auto it = std::min_element(dist.begin(), dist.end());
-	return static_cast<Side>(std::distance(dist.begin(), it));
-}
-
-Vector<Exact> side_direction(const Side& side) {
-	switch (side) {
-	case LEFT:
-		return { -1, 0 };
-	case TOP:
-		return { 0, 1 };
-	case RIGHT:
-		return { 1, 0 };
-	case BOTTOM:
-		return { 0, -1 };
-	}
-}
-
-Point<Exact> proj_on_side(Point<Exact> p, Side side, const Rectangle<Exact>& rect) {
-	switch (side) {
-	case LEFT:
-		return { rect.xmin(), p.y() };
-	case TOP:
-		return { p.x(), rect.ymax() };
-	case RIGHT:
-		return { rect.xmax(), p.y() };
-	case BOTTOM:
-		return { p.x(), rect.ymin() };
-	}
-}
-
-Point<Exact> corner(const Side& side1, const Side& side2, const Rectangle<Exact>& rect) {
-	if (side1 > side2) return corner(side2, side1, rect);
-	auto dist = abs(side1 - side2);
-	if (dist == 1) {
-		return rect.vertex(side1);
-	} else {
-		return rect.vertex(side2);
-	}
-}
-
-Side next_side(const Side& side) {
-	return static_cast<Side>((side + 1) % 4);
-}
-
 Polygon<Exact> close_isoline(const Isoline<K>& isoline, Rectangle<Exact>& bb, Side source_side, Side target_side) {
 	std::vector<Point<Exact>> points;
 	std::transform(isoline.m_points.begin(), isoline.m_points.end(), std::back_inserter(points),
@@ -91,8 +37,8 @@ Polygon<Exact> close_isoline(const Isoline<K>& isoline, Rectangle<Exact>& bb, Si
 			dist -= 2;
 		}
 
-		auto source_dir = side_direction(source_side);
-		auto target_dir = side_direction(target_side);
+		auto source_dir = side_direction<Exact>(source_side);
+		auto target_dir = side_direction<Exact>(target_side);
 
 		auto source_out = proj_on_side(source, source_side, bb) + source_dir;
 		auto target_out = proj_on_side(target, target_side, bb) + target_dir;
@@ -102,14 +48,14 @@ Polygon<Exact> close_isoline(const Isoline<K>& isoline, Rectangle<Exact>& bb, Si
 			// done
 		} else if (dist == 1) {
 			// add corner
-			points.push_back(corner(source_side, target_side, bb) + source_dir + target_dir);
+			points.push_back(get_corner(bb, source_side, target_side) + source_dir + target_dir);
 		} else {
 			assert(dist == 2);
 			// add two corners
 			auto between_side = next_side(source_side);
-			auto between_dir = side_direction(between_side);
-			points.push_back(corner(between_side, target_side, bb) + between_dir + target_dir);
-			points.push_back(corner(source_side, between_side, bb) + source_dir + between_dir);
+			auto between_dir = side_direction<Exact>(between_side);
+			points.push_back(get_corner(bb, between_side, target_side) + between_dir + target_dir);
+			points.push_back(get_corner(bb, source_side, between_side) + source_dir + between_dir);
 		}
 		points.push_back(source_out);
 	}
@@ -159,5 +105,4 @@ double symmetric_difference(const Isoline<K>& original, const Isoline<K>& simpli
 
 	return total_area;
 }
-
 }
