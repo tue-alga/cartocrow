@@ -44,8 +44,10 @@ CSPolygon dilatePolyline(const Polyline<Exact>& polyline, const Number<Exact>& d
 
 OffsetDemo::OffsetDemo() {
 	setWindowTitle("Offset");
+
 	m_renderer = new GeometryWidget();
 	m_renderer->setDrawAxes(false);
+    m_renderer->fitInView(Box(-2, -2, 5, 7));
 	setCentralWidget(m_renderer);
 
 	auto* dockWidget = new QDockWidget();
