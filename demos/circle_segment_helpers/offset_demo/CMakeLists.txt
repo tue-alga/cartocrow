@@ -1,6 +1,5 @@
 set(SOURCES
     offset_demo.cpp
-    ../colors/colors.cpp
 )
 
 add_executable(offset_demo ${SOURCES})
@@ -11,7 +10,7 @@ target_link_libraries(
     ${COMMON_CLA_TARGET}
     core
     renderer
-    simplesets
+    circle_segment_helpers
     CGAL::CGAL
     Qt5::Widgets
 )

@@ -22,6 +22,7 @@ using namespace cartocrow;
 using namespace cartocrow::renderer;
 using namespace cartocrow::simplesets;
 
+// These are parameters for exporting a 'continuous' sequence of frames to ipe.
 double timeStep = 0.1;
 double maxTime = 40.0;
 
@@ -59,7 +60,7 @@ FiltrationDemo::FiltrationDemo() {
 	coverSlider->setMinimum(0);
 	coverSlider->setMaximum(80);
 
-	auto* exportLabel = new QLabel("<h3>Export</h3>");
+	auto* exportLabel = new QLabel("<h3>Export to ipe</h3>");
 	vLayout->addWidget(exportLabel);
 	auto* discreteExport = new QPushButton("Discrete");
 	vLayout->addWidget(discreteExport);
