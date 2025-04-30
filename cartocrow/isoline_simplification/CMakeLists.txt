@@ -27,6 +27,7 @@ add_library(isoline_simplification ${SOURCES})
 target_link_libraries(isoline_simplification
 	PUBLIC core
 		   renderer
+		   reader
 )
 
 cartocrow_install_module(isoline_simplification)

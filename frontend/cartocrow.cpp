@@ -50,7 +50,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 10-09-2019
 #include "cartocrow/necklace_map/necklace_map.h"
 #include "cartocrow/necklace_map/painting.h"
 #include "cartocrow/necklace_map/parameters.h"
-#include "cartocrow/renderer/ipe_reader.h"
+#include "cartocrow/reader/ipe_reader.h"
 #include "cartocrow/renderer/geometry_painting.h"
 #include "cartocrow/renderer/geometry_widget.h"
 #include "cartocrow/renderer/svg_renderer.h"

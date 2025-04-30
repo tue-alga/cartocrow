@@ -6,7 +6,7 @@
 #include "cartocrow/chorematic_map/choropleth_disks.h"
 #include "cartocrow/core/arrangement_helpers.h"
 #include "cartocrow/core/region_arrangement.h"
-#include "cartocrow/renderer/ipe_reader.h"
+#include "cartocrow/reader/ipe_reader.h"
 #include "cartocrow/core/transform_helpers.h"
 #include "cartocrow/renderer/ipe_renderer.h"
 

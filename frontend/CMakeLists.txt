@@ -11,6 +11,7 @@ target_link_libraries(
     PRIVATE
     ${COMMON_CLA_TARGET}
     core
+    reader
     flow_map
     necklace_map
     isoline_simplification

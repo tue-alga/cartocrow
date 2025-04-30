@@ -18,7 +18,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include "render_path.h"
-#include "ipe_reader.h"
 
 namespace cartocrow::renderer {
 

@@ -23,6 +23,7 @@ add_library(chorematic_map ${SOURCES})
 target_link_libraries(chorematic_map
 	PUBLIC core
 		   circle_segment_helpers
+		   reader
 	PRIVATE GDAL::GDAL
 )
 

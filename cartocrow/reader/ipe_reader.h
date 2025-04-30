@@ -23,7 +23,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <filesystem>
 #include <memory>
 
-#include "render_path.h"
+#include "cartocrow/renderer/render_path.h"
 
 #include "cartocrow/core/core.h"
 #include "cartocrow/core/bezier.h"

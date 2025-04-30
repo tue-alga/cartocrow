@@ -1,4 +1,4 @@
-#include "boundary_map.h"
+#include "boundary_map_reader.h"
 
 #include <ipedoc.h>
 #include <ipepath.h>
@@ -33,10 +33,10 @@ BoundaryMap ipeToBoundaryMap(const std::filesystem::path& file) {
 		ipe::Path* path = object->asPath();
 		ipe::Matrix matrix = path->matrix();
 		ipe::Shape shape = path->shape();
-					
+
 		for (int i = 0; i < shape.countSubPaths(); ++i) {
 			map.boundaries.push_back(Boundary());
-			Boundary& b = map.boundaries.back();	
+			Boundary& b = map.boundaries.back();
 			if (shape.subPath(i)->type() != ipe::SubPath::ECurve) {
 				throw std::runtime_error("Encountered shape with a non-polygonal boundary");
 			}
@@ -64,7 +64,7 @@ BoundaryMap ipeToBoundaryMap(const std::filesystem::path& file) {
 				b.points.pop_back();
 			}
 		}
-		
+
 	}
 
 	return map;

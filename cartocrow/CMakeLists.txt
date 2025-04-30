@@ -11,6 +11,7 @@ macro(cartocrow_install_module NAME)
 endmacro(cartocrow_install_module)
 
 add_subdirectory(core)
+add_subdirectory(reader)
 add_subdirectory(renderer)
 add_subdirectory(circle_segment_helpers)
 add_subdirectory(necklace_map)
@@ -24,6 +25,7 @@ add_library(cartocrow_lib INTERFACE)
 target_link_libraries(
     cartocrow_lib INTERFACE
     core
+    reader
     renderer
     circle_segment_helpers
     necklace_map

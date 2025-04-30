@@ -21,7 +21,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #define CARTOCROW_ISOLINE_SIMPLIFICATION_DEMO_H
 
 #include "cartocrow/core/core.h"
-#include "cartocrow/renderer/ipe_reader.h"
+#include "cartocrow/reader/ipe_reader.h"
 #include "cartocrow/isoline_simplification/isoline.h"
 #include "cartocrow/isoline_simplification/isoline_simplifier.h"
 #include "cartocrow/isoline_simplification/types.h"
