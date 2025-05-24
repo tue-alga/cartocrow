@@ -258,9 +258,11 @@ ipe::Shape* renderPathToIpe(const RenderPath& p) {
 void IpeRenderer::draw(const RenderPath& p) {
 	std::vector<Point<Inexact>> verticesToDraw;
     p.vertices(std::back_inserter(verticesToDraw));
-    ipe::Shape* shape = renderPathToIpe(p);
-	auto* path = new ipe::Path(getAttributesForStyle(), *shape);
-	drawPathOnPage(path);
+	if (p.commands().size() > 1) {
+		ipe::Shape* shape = renderPathToIpe(p);
+		auto* path = new ipe::Path(getAttributesForStyle(), *shape);
+		drawPathOnPage(path);
+	}
 
 	if (m_style.m_mode & vertices) {
 		for (const Point<Inexact>& vertex : verticesToDraw) {
