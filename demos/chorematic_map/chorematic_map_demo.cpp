@@ -20,6 +20,7 @@
 #include "cartocrow/circle_segment_helpers/cs_polygon_helpers.h"
 #include "cartocrow/core/arrangement_map.h"
 #include "cartocrow/renderer/ipe_renderer.h"
+#include "cartocrow/reader/gdal_conversion.h"
 
 #include "demos/widgets/double_slider.h"
 
@@ -226,15 +227,22 @@ void ChorematicMapDemo::exportToGpkg(const std::filesystem::path& outputPath) {
 		exit( 1 );
 	}
 
-	OGRFieldDefn oField( "Name", OFTString );
+	OGRFieldDefn oNameField( "name", OFTString );
 
-//	oField.SetWidth(32);
-
-	if( poLayer->CreateField( &oField ) != OGRERR_NONE )
+	if( poLayer->CreateField( &oNameField ) != OGRERR_NONE )
 	{
-		printf( "Creating Name field failed.\n" );
+		printf( "Creating name field failed.\n" );
 		exit( 1 );
 	}
+
+    for (const auto& [attribute, _] : *m_regionWeightMap) {
+        OGRFieldDefn oField(attribute.c_str(), OFTReal);
+
+        if (poLayer->CreateField(&oField) != OGRERR_NONE) {
+            printf("Creating field failed.\n");
+            exit(1);
+        }
+    }
 
 	for (const auto& region : m_sampler->getRegions()) {
 		std::vector<Component<RegionArrangement>> comps;
@@ -244,17 +252,20 @@ void ChorematicMapDemo::exportToGpkg(const std::filesystem::path& outputPath) {
 		OGRMultiPolygon mPgn;
 		for (const auto& comp : comps) {
 			auto cgalPgnWH = comp.surface_polygon();
-
-			// todo: write GDAL helper functions that translate between OGR types and CGAL types.
-//			OGRPolygon pgn;
-//			OGRLinearRing outerRing = cgalPgnWH.outer_boundary();
-//			pgn.addRing()
-//			mPgn.addGeometry();
+            auto ogrPolygon = polygonWithHolesToOGRPolygon(cgalPgnWH);
+            mPgn.addGeometry(&ogrPolygon);
 		}
 		OGRFeature *poFeature;
 
 		poFeature = OGRFeature::CreateFeature( poLayer->GetLayerDefn() );
-		poFeature->SetField( "Name", region.c_str() );
+		poFeature->SetField( "name", region.c_str() );
+        for (const auto& [attribute, dataMap] : *m_regionWeightMap) {
+            if (dataMap.contains(region)) {
+                poFeature->SetField(attribute.c_str(), dataMap.at(region));
+            } else {
+                poFeature->SetField(attribute.c_str(), -1);
+            }
+        }
 
 		poFeature->SetGeometry( &mPgn );
 
@@ -266,6 +277,8 @@ void ChorematicMapDemo::exportToGpkg(const std::filesystem::path& outputPath) {
 
 		OGRFeature::DestroyFeature( poFeature );
 	}
+
+    GDALClose( poDS );
 }
 
 ChorematicMapDemo::ChorematicMapDemo() {
@@ -282,8 +295,8 @@ ChorematicMapDemo::ChorematicMapDemo() {
 	dockWidget->setWidget(vWidget);
 
 	auto* inputSettings = new QLabel("<h3>Input</h3>");
-	auto* loadMapButton = new QPushButton("Load map");
-	auto* loadDataButton = new QPushButton("Load data");
+	auto* loadMapButton = new QPushButton("Load map (ipe or gpkg)");
+	auto* loadDataButton = new QPushButton("Load data (gpkg or single-attribute csv)");
 	vLayout->addWidget(inputSettings);
 	vLayout->addWidget(loadMapButton);
 	vLayout->addWidget(loadDataButton);
@@ -292,7 +305,7 @@ ChorematicMapDemo::ChorematicMapDemo() {
 	m_regionNameAttribute = new QLineEdit();
 	vLayout->addWidget(regionNameAttributeLabel);
 	vLayout->addWidget(m_regionNameAttribute);
-	m_regionNameAttribute->setText("GEN");
+	m_regionNameAttribute->setText("name");
 
 	m_labelAtCentroid = new QCheckBox("Ipe map: label at centroid?");
 	m_labelAtCentroid->setChecked(true);
@@ -429,21 +442,16 @@ ChorematicMapDemo::ChorematicMapDemo() {
 	auto* refitButton = new QPushButton("Refit");
 	vLayout->addWidget(refitButton);
 
-	std::filesystem::path gpkg0 = "data/chorematic_map/hessen.gpkg";
-    std::filesystem::path gpkg3 = "data/chorematic_map/wijkenbuurten_2022_v3.gpkg";
-    std::filesystem::path dutch = "data/chorematic_map/gemeenten-2022_5000vtcs.ipe";
+    std::filesystem::path dutch = "data/chorematic_map/dutch_selected.gpkg";
+    std::filesystem::path hessen = "data/chorematic_map/hessen_selected.gpkg";
 
     // Dutch
-//    auto regionMap = std::make_shared<RegionMap>(ipeToRegionMap(dutch, true));
-//	std::cout << "#Regions: " << regionMap->size() << std::endl;
-//    m_regionWeightMap = regionDataMapFromGPKG(gpkg3, "gemeentecode", "gemeenten", [](const std::string& s) {
-//        return s;
-//    });
+    auto regionMap = regionMapFromGPKG(dutch, "name");
+    m_regionWeightMap = regionDataMapFromGPKG(dutch, "name");
 
     // Hessen
-    auto regionMap = regionMapFromGPKG(gpkg0, "GEN");
-	std::cout << "#Regions: " << regionMap->size() << std::endl;
-    m_regionWeightMap = regionDataMapFromGPKG(gpkg0, "GEN");
+//    auto regionMap = regionMapFromGPKG(hessen, "name");
+//    m_regionWeightMap = regionDataMapFromGPKG(hessen, "name");
 
     for (auto& kv : *m_regionWeightMap) {
         m_dataAttribute->addItem(QString::fromStdString(kv.first));

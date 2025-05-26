@@ -1,4 +1,5 @@
 #include "input_parsing.h"
+#include "cartocrow/reader/gdal_conversion.h"
 
 namespace cartocrow::chorematic_map {
 std::shared_ptr<std::unordered_map<std::string, RegionWeight>>
@@ -19,6 +20,9 @@ regionDataMapFromGPKG(const std::filesystem::path& path, const std::string& regi
     	poLayer = poDS->GetLayerByName( layerName->c_str() );
 	} else {
 		poLayer = poDS->GetLayer(0);
+        if (poDS->GetLayerCount() > 1) {
+            std::cout << "Reading first layer: " << poLayer->GetName() << std::endl;
+        }
 	}
 
     auto regionDataMap = std::make_shared<std::unordered_map<std::string, RegionWeight>>();
@@ -85,40 +89,10 @@ std::shared_ptr<RegionMap> regionMapFromGPKG(const std::filesystem::path& path,
         poGeometry = poFeature->GetGeometryRef();
         if( wkbFlatten(poGeometry->getGeometryType()) == wkbMultiPolygon ) {
             OGRMultiPolygon *poMultiPolygon = poGeometry->toMultiPolygon();
-
-            for (auto &poly: *poMultiPolygon) {
-                for (auto &linearRing: *poly) {
-                    Polygon<Exact> polygon;
-                    for (auto &pt: *linearRing) {
-                        polygon.push_back({pt.getX(), pt.getY()});
-                    }
-                    // if the begin and end vertices are equal, remove one of them
-                    if (polygon.container().front() == polygon.container().back()) {
-                        polygon.container().pop_back();
-                    }
-                    if (polygon.is_clockwise_oriented()) {
-                        polygon.reverse_orientation();
-                    }
-                    polygonSet.symmetric_difference(polygon);
-                }
-            }
+            polygonSet = ogrMultiPolygonToPolygonSet(*poMultiPolygon);
         } else if (wkbFlatten(poGeometry->getGeometryType()) == wkbPolygon) {
             OGRPolygon* poly = poGeometry->toPolygon();
-
-            for (auto& linearRing : *poly) {
-                Polygon<Exact> polygon;
-                for (auto& pt : *linearRing) {
-                    polygon.push_back({pt.getX(), pt.getY()});
-                }
-                // if the begin and end vertices are equal, remove one of them
-                if (polygon.container().front() == polygon.container().back()) {
-                    polygon.container().pop_back();
-                }
-                if (polygon.is_clockwise_oriented()) {
-                    polygon.reverse_orientation();
-                }
-                polygonSet.symmetric_difference(polygon);
-            }
+            polygonSet = ogrPolygonToPolygonSet(*poly);
         } else {
             std::cout << "Did not handle this type of geometry: " << poGeometry->getGeometryName() << std::endl;
         }

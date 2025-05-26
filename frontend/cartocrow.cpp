@@ -276,7 +276,7 @@ int main(int argc, char* argv[]) {
         int seed = projectData["seed"];
         bool local = projectData["local"];
 
-        chorematic_map::Sampler<> sampler(arr, seed, local);
+        chorematic_map::Sampler sampler(arr, seed, local);
 
         chorematic_map::WeightedRegionSample<Exact> sample;
         std::string technique = projectData["technique"];
