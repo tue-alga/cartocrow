@@ -42,9 +42,6 @@ template <class K> Point<K> centroid(const Polygon<K>& polygon) {
 
 	Number<K> area = polygon.area();
 	if (area == 0) {
-        if (!polygon.is_empty()) {
-            return *polygon.begin();
-        }
 		throw std::runtime_error("Centroid cannot be computed for polygons of area 0");
 	}
 
