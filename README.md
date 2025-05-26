@@ -32,6 +32,8 @@ And it depends on the following libraries:
 * ipelib (7.2.26) – for [Ipe](https://ipe.otfried.org) input and SVG/Ipe output
 * nlohmann-json (3.10.5, 3.11.2) – for JSON parsing
 * Qt (5.15) – for the interactive GUI
+* CavalierContours (0.1) – for offsetting polygons and polylines that consist of segments of lines and circles
+* GDAL (3.8.4) – for reading and writing vector geospatial data formats
 
 The version numbers listed are the ones we're testing with. Newer (and possibly somewhat older) versions will most likely work as well.
 
@@ -66,6 +68,7 @@ On Windows systems, we recommend using [vcpkg](https://github.com/microsoft/vcpk
   vcpkg install qt5:x64-windows
   vcpkg install glog:x64-windows
   vcpkg install nlohmann-json:x64-windows
+  vcpkg install gdal
   ```
 
   This step can take a very long time, especially compiling CGAL (around 30 minutes) and Qt (around 2 hours).
@@ -91,7 +94,7 @@ Most dependencies can be obtained from the repository:
 
 ```sh
 pacman -S base-devel mingw-w64-x86_64-toolchain mingw-w64-x86_64-cmake mingw-w64-x86_64-ninja
-pacman -S mingw-w64-x86_64-cgal mingw-w64-x86_64-glog mingw-w64-x86_64-qt5 mingw-w64-x86_64-nlohmann-json
+pacman -S mingw-w64-x86_64-cgal mingw-w64-x86_64-glog mingw-w64-x86_64-qt5 mingw-w64-x86_64-nlohmann-json mingw-w64-x86_64-gdal
 ```
 
 The remaining dependencies need to be built manually.
@@ -135,6 +138,7 @@ On Ubuntu, most dependencies can be obtained from the repository:
 ```sh
 sudo apt install build-essential cmake
 sudo apt install libcgal-dev nlohmann-json3-dev qtbase5-dev
+sudo apt install libpq-dev gdal-bin libgdal-dev
 ```
 
 The remaining dependencies need to be built manually.
