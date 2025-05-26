@@ -16,7 +16,7 @@ boundaryMapToArrangementMap(BoundaryMap& map) {
 
 //	CGAL::Arr_walk_along_line_point_location<Arr> loc(arr);
     CGAL::Arr_landmarks_point_location<Arr> loc(arr);
-	using PLResult = CGAL::Arr_point_location_result<Arr>::Type;
+	using PLResult = typename CGAL::Arr_point_location_result<Arr>::Type;
 
 	for (Boundary& b : map.boundaries) {
 

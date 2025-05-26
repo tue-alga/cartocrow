@@ -2,6 +2,7 @@
 #include "cartocrow/core/rectangle_helpers.h"
 #include "cartocrow/core/vector_helpers.h"
 #include "cs_curve_helpers.h"
+#include "circle_tangents.h"
 #include <CGAL/Bbox_2.h>
 
 namespace cartocrow {
@@ -76,11 +77,6 @@ CSPolyline polylineToCSPolyline(const Polyline<Exact>& polyline) {
 	}
 	return {xm_curves.begin(), xm_curves.end()};
 }
-
-struct RationalRadiusCircle {
-	Point<Exact> center;
-	Number<Exact> radius;
-};
 
 // Adapted from https://github.com/CGAL/cgal/blob/38871d9b125c5513ff8d14f9562795aa12681b38/Minkowski_sum_2/include/CGAL/Minkowski_sum_2/Approx_offset_base_2.h
 // This function falls under the following license:

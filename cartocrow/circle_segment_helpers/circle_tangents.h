@@ -1,6 +1,8 @@
 #ifndef CARTOCROW_CIRCLE_TANGENTS_H
 #define CARTOCROW_CIRCLE_TANGENTS_H
 
+#include <utility>
+
 #include "cs_types.h"
 #include "cartocrow/core/polyline.h"
 
@@ -11,6 +13,8 @@ struct RationalRadiusCircle {
     Number<Exact> radius;
 	Circle<Exact> circle() const;
     bool operator==(const RationalRadiusCircle& other) const = default;
+	RationalRadiusCircle() = default;
+	RationalRadiusCircle(Point<Exact> center, Number<Exact> radius) : center(std::move(center)), radius(std::move(radius)) {};
 };
 
 /// Approximate a circle by one with rational radius.

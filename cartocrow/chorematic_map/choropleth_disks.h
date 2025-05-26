@@ -10,6 +10,9 @@ struct BinDisk {
 	int bin;
 	std::optional<GeneralCircle<Exact>> disk;
 	std::optional<double> score;
+	BinDisk() = default;
+	BinDisk(int bin, std::optional<GeneralCircle<Exact>> disk = std::nullopt, std::optional<double> score = std::nullopt) :
+		bin(bin), disk(disk), score(score) {};
 };
 
 /// This function takes a \ref Choropleth and a point sample (\ref Sampler implements sampling methods),

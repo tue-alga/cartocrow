@@ -135,27 +135,27 @@ template <class Arr>
 class Component {
   public:
 	//	typedef std::vector<FaceH>::iterator Face_iterator;
-	typedef Arr::Face_handle FaceH;
-	typedef Arr::Size Size;
-	typedef Arr::Halfedge_handle HalfedgeH;
-	typedef Arr::Vertex_handle VertexH;
-	typedef Arr::Vertex_const_handle VertexCH;
-	typedef Arr::Traits_2 Traits;
+	typedef typename Arr::Face_handle FaceH;
+	typedef typename Arr::Size Size;
+	typedef typename Arr::Halfedge_handle HalfedgeH;
+	typedef typename Arr::Vertex_handle VertexH;
+	typedef typename Arr::Vertex_const_handle VertexCH;
+	typedef typename Arr::Traits_2 Traits;
 
 	class ComponentCcbCirculator {
 	  private:
 		using Self = ComponentCcbCirculator;
-		Arr::Halfedge_handle m_halfedge;
+		typename Arr::Halfedge_handle m_halfedge;
 		std::function<bool(FaceH)> m_in_component;
 
 	  public:
 		using iterator_category = std::bidirectional_iterator_tag;
-		using value_type = Arr::Halfedge;
+		using value_type = typename Arr::Halfedge;
 		using difference_type = std::ptrdiff_t;
-		using pointer = Arr::Halfedge_handle;
+		using pointer = typename Arr::Halfedge_handle;
 		using reference = value_type&;
 
-		ComponentCcbCirculator(Arr::Halfedge_handle halfedge, std::function<bool(FaceH)> in_component)
+		ComponentCcbCirculator(typename Arr::Halfedge_handle halfedge, std::function<bool(FaceH)> in_component)
 		    : m_halfedge(halfedge), m_in_component(std::move(in_component)) {};
 
 		value_type operator*() const {
@@ -214,16 +214,16 @@ class Component {
 	class Face_const_iterator {
 	  private:
 		using Self = Face_const_iterator;
-		std::vector<FaceH>::const_iterator m_faceHandleIterator;
+		typename std::vector<FaceH>::const_iterator m_faceHandleIterator;
 
 	  public:
 		using iterator_category = std::input_iterator_tag;
-		using value_type = Arr::Face;
+		using value_type = typename Arr::Face;
 		using difference_type = std::ptrdiff_t;
-		using pointer = Arr::Face_handle;
+		using pointer = typename Arr::Face_handle;
 		using reference = value_type&;
 
-		Face_const_iterator(std::vector<FaceH>::const_iterator faceHandleIterator) :
+		Face_const_iterator(typename std::vector<FaceH>::const_iterator faceHandleIterator) :
 		      m_faceHandleIterator(faceHandleIterator) {};
 
 		value_type operator*() const {
@@ -270,7 +270,7 @@ class Component {
 		// Ccbs of current face.
 		std::vector<typename Arr::Ccb_halfedge_circulator> m_ccbs;
 		// Current ccb
-		std::vector<typename Arr::Ccb_halfedge_circulator>::const_iterator m_ccbIt;
+		typename std::vector<typename Arr::Ccb_halfedge_circulator>::const_iterator m_ccbIt;
 		// Current halfedge
 		HalfedgeH m_halfedge;
 
@@ -282,7 +282,7 @@ class Component {
 
 	  public:
 		using iterator_category = std::input_iterator_tag;
-		using value_type = Arr::Halfedge;
+		using value_type = typename Arr::Halfedge;
 		using difference_type = std::ptrdiff_t;
 		using pointer = HalfedgeH;
 		using reference = value_type&;
@@ -394,7 +394,7 @@ class Component {
 
 	  public:
 		using iterator_category = std::input_iterator_tag;
-		using value_type = Arr::Vertex;
+		using value_type = typename Arr::Vertex;
 		using difference_type = std::ptrdiff_t;
 		using pointer = VertexH;
 		using reference = value_type&;
@@ -500,20 +500,20 @@ class Component {
 	Size number_of_outer_ccbs() const {
 		return m_outer_ccbs.size();
 	}
-	std::vector<ComponentCcbCirculator>::const_iterator outer_ccbs_begin() const {
+	typename std::vector<ComponentCcbCirculator>::const_iterator outer_ccbs_begin() const {
 		return m_outer_ccbs.cbegin();
 	}
-	std::vector<ComponentCcbCirculator>::const_iterator outer_ccbs_end() const {
+	typename std::vector<ComponentCcbCirculator>::const_iterator outer_ccbs_end() const {
 		return m_outer_ccbs.cend();
 	}
 
 	ComponentCcbCirculator outer_ccb() const {
 		return m_outer_ccbs[0];
 	}
-	std::vector<ComponentCcbCirculator>::const_iterator inner_ccbs_begin() const {
+	typename std::vector<ComponentCcbCirculator>::const_iterator inner_ccbs_begin() const {
 		return m_inner_ccbs.cbegin();
 	}
-	std::vector<ComponentCcbCirculator>::const_iterator inner_ccbs_end() const {
+	typename std::vector<ComponentCcbCirculator>::const_iterator inner_ccbs_end() const {
 		return m_inner_ccbs.cend();
 	}
 	Size number_of_inner_ccbs() const {
@@ -521,10 +521,10 @@ class Component {
 	}
 
 	// Hole is an alias for inner_ccb
-	std::vector<ComponentCcbCirculator>::const_iterator holes_begin() const {
+	typename std::vector<ComponentCcbCirculator>::const_iterator holes_begin() const {
 		return inner_ccbs_begin();
 	}
-	std::vector<ComponentCcbCirculator>::const_iterator holes_end() const {
+	typename std::vector<ComponentCcbCirculator>::const_iterator holes_end() const {
 		return inner_ccbs_end();
 	}
 	Size number_of_holes() const {
@@ -693,10 +693,10 @@ void connectedComponents(const Arr& arr, OutputIterator out, const std::function
 template <class ArrWithFaceData>
 void copyBoundedFaceData(const ArrWithFaceData& arr1, ArrWithFaceData& arr2) {
 	using Arr = ArrWithFaceData;
-	using FaceH = Arr::Face_handle;
-	using HalfedgeH = Arr::Halfedge_handle;
-	using VertexH = Arr::Vertex_handle;
-	using VertexCH = Arr::Vertex_const_handle;
+	using FaceH = typename Arr::Face_handle;
+	using HalfedgeH = typename Arr::Halfedge_handle;
+	using VertexH = typename Arr::Vertex_handle;
+	using VertexCH = typename Arr::Vertex_const_handle;
 	using CCB = typename Arr::Ccb_halfedge_circulator;
 
 	std::vector<FaceH> remainingBoundedFaces;

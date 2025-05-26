@@ -7,6 +7,8 @@ namespace cartocrow::chorematic_map {
 struct WeightedPoint {
 	Point<Inexact> point;
 	Number<Inexact> weight;
+	WeightedPoint() = default;
+	WeightedPoint(Point<Inexact> point, Number<Inexact> weight) : point(point), weight(weight) {};
 
 	bool operator<(const WeightedPoint& wp2) const {
 		return point < wp2.point;
