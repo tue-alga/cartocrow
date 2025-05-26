@@ -13,6 +13,7 @@ target_link_libraries(
     renderer
     simplesets
     CGAL::CGAL
+    widgets
     Qt5::Widgets
 )
 

@@ -27,6 +27,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "cartocrow/simplesets/partition_painting.h"
 #include "cartocrow/simplesets/patterns/bank.h"
 #include "colors/colors.h"
+#include "demos/widgets/double_slider.h"
 #include <CGAL/Bbox_2.h>
 #include <QApplication>
 #include <QCheckBox>
@@ -81,19 +82,19 @@ SimpleSetsDemo::SimpleSetsDemo() {
 	vLayout->addWidget(settingsLabel);
 	auto* coverLabel = new QLabel("Cover");
 	vLayout->addWidget(coverLabel);
-	auto* coverSlider = new QSlider(Qt::Orientation::Horizontal);
+	auto* coverSlider = new DoubleSlider(Qt::Orientation::Horizontal);
 	vLayout->addWidget(coverSlider);
 	coverSlider->setMinimum(0);
-	coverSlider->setMaximum(80);
-	coverSlider->setValue(47);
+	coverSlider->setMaximum(8);
+	coverSlider->setValue(4.7);
 
 	auto* ptSizeLabel = new QLabel("Point size");
 	vLayout->addWidget(ptSizeLabel);
-	auto* ptSizeSlider = new QSlider(Qt::Orientation::Horizontal);
+	auto* ptSizeSlider = new DoubleSlider(Qt::Orientation::Horizontal);
 	vLayout->addWidget(ptSizeSlider);
 	ptSizeSlider->setMinimum(1);
-	ptSizeSlider->setMaximum(80);
-	ptSizeSlider->setValue(static_cast<int>(m_gs.pointSize * 10));
+	ptSizeSlider->setMaximum(8);
+	ptSizeSlider->setValue(m_gs.pointSize);
 
 	auto* smoothCheckbox = new QCheckBox("Smooth");
 	vLayout->addWidget(smoothCheckbox);
@@ -101,11 +102,11 @@ SimpleSetsDemo::SimpleSetsDemo() {
 
 	auto* smoothingSliderLabel = new QLabel("Smoothing radius factor");
 	vLayout->addWidget(smoothingSliderLabel);
-	auto* smoothingSlider = new QSlider(Qt::Orientation::Horizontal);
+	auto* smoothingSlider = new DoubleSlider(Qt::Orientation::Horizontal);
 	vLayout->addWidget(smoothingSlider);
 	smoothingSlider->setMinimum(1);
-	smoothingSlider->setMaximum(20);
-	smoothingSlider->setValue(20);
+	smoothingSlider->setMaximum(0.2);
+	smoothingSlider->setValue(0.2);
 
 	m_renderer = new GeometryWidget();
 	m_renderer->setDrawAxes(false);
@@ -116,7 +117,7 @@ SimpleSetsDemo::SimpleSetsDemo() {
 
 	loadFile(filePath);
 	computePartitions();
-	computeDrawing(coverSlider->value() / 10.0);
+	computeDrawing(coverSlider->value());
 	fitToScreen();
 
 	connect(fitToScreenButton, &QPushButton::clicked, [this]() {
@@ -128,29 +129,29 @@ SimpleSetsDemo::SimpleSetsDemo() {
 		if (filePath == "") return;
 		loadFile(filePath);
 	    computePartitions();
-	    computeDrawing(coverSlider->value() / 10.0);
+	    computeDrawing(coverSlider->value());
 	    fitToScreen();
 		fileSelector->setText(QString::fromStdString(filePath.filename()));
 	});
-	connect(coverSlider, &QSlider::valueChanged, [this, coverSlider] {
-		double value = coverSlider->value() / 10.0;
+	connect(coverSlider, &DoubleSlider::valueChanged, [this, coverSlider] {
+		double value = coverSlider->value();
 		computeDrawing(value);
 	});
-	connect(ptSizeSlider, &QSlider::valueChanged, [this, ptSizeSlider, coverSlider] {
-		double value = ptSizeSlider->value() / 10.0;
+	connect(ptSizeSlider, &DoubleSlider::valueChanged, [this, ptSizeSlider, coverSlider] {
+		double value = ptSizeSlider->value();
 		m_gs.pointSize = value;
 	  	computePartitions();
-	  	computeDrawing(coverSlider->value() / 10.0);
+	  	computeDrawing(coverSlider->value());
 	  	fitToScreen();
 	});
 	connect(smoothCheckbox, &QCheckBox::stateChanged, [this, smoothCheckbox, coverSlider] {
 		m_cds.smooth = smoothCheckbox->isChecked();
-		computeDrawing(coverSlider->value() / 10.0);
+		computeDrawing(coverSlider->value());
 	});
-	connect(smoothingSlider, &QSlider::valueChanged, [this, smoothingSlider, coverSlider] {
-		m_cds.smoothingRadiusFactor = smoothingSlider->value() / 100.0;
+	connect(smoothingSlider, &DoubleSlider::valueChanged, [this, smoothingSlider, coverSlider] {
+		m_cds.smoothingRadiusFactor = smoothingSlider->value();
 		if (m_cds.smooth) {
-			computeDrawing(coverSlider->value() / 10.0);
+			computeDrawing(coverSlider->value());
 		}
 	});
 

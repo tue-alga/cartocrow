@@ -40,7 +40,7 @@ int main() {
 	CGAL::Aff_transformation_2<Inexact> sTrans = sMove * sScale;
 
 	auto regionMap = std::make_shared<RegionMap>(ipeToRegionMap(mapPath, true));
-	auto regionWeightMap = regionDataMapFromGPKG(dataPath, "gemeenten", "gemeentecode", [](const std::string& s) {
+	auto regionWeightMap = regionDataMapFromGPKG(dataPath, "gemeentecode", "gemeenten", [](const std::string& s) {
 	  return s;
 	});
 
@@ -92,7 +92,7 @@ int main() {
 
 	RenderPath schematization = orthogonal_transform(sTrans * trans, IpeReader::loadIpePath(schematizationPath));
 
-    auto sampler = std::make_shared<Sampler<LandmarksPl>>(regionArr, seed, perRegion);
+    auto sampler = std::make_shared<Sampler>(regionArr, seed, perRegion);
 
     for (auto& [attribute, title, suffix, valueScalar] : names) {
         std::shared_ptr<RegionWeight> regionData = std::make_shared<RegionWeight>(regionWeightMap->at(attribute));

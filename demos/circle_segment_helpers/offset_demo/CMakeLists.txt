@@ -12,6 +12,7 @@ target_link_libraries(
     renderer
     circle_segment_helpers
     CGAL::CGAL
+    widgets
     Qt5::Widgets
 )
 

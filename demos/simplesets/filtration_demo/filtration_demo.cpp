@@ -9,13 +9,13 @@
 #include "cartocrow/simplesets/partition_painting.h"
 #include "cartocrow/simplesets/types.h"
 #include "demos/simplesets/colors/colors.h"
+#include "demos/widgets/double_slider.h"
 #include <CGAL/Bbox_2.h>
 #include <QApplication>
 #include <QDockWidget>
 #include <QFileDialog>
 #include <QLabel>
 #include <QPushButton>
-#include <QSlider>
 #include <QVBoxLayout>
 
 using namespace cartocrow;
@@ -55,10 +55,10 @@ FiltrationDemo::FiltrationDemo() {
 	vLayout->addWidget(settingsLabel);
 	auto* coverLabel = new QLabel("Cover");
 	vLayout->addWidget(coverLabel);
-	auto* coverSlider = new QSlider(Qt::Orientation::Horizontal);
+	auto* coverSlider = new DoubleSlider(Qt::Orientation::Horizontal);
 	vLayout->addWidget(coverSlider);
 	coverSlider->setMinimum(0);
-	coverSlider->setMaximum(80);
+	coverSlider->setMaximum(8);
 
 	auto* exportLabel = new QLabel("<h3>Export to ipe</h3>");
 	vLayout->addWidget(exportLabel);
@@ -97,8 +97,7 @@ FiltrationDemo::FiltrationDemo() {
 		if (filePath == "") return;
 		loadFile(filePath);
 		fileSelector->setText(QString::fromStdString(filePath.filename()));
-		coverSlider->valueChanged(coverSlider->value());
-
+		emit coverSlider->valueChanged(coverSlider->value());
 	});
 	connect(discreteExport, &QPushButton::clicked, [this, diskPainting]() {
 	  	IpeRenderer ipeRenderer;
@@ -148,8 +147,8 @@ FiltrationDemo::FiltrationDemo() {
 	  	std::filesystem::path filePath = QFileDialog::getSaveFileName(this, tr("Save file"), ".").toStdString();
 	  	ipeRenderer.save(filePath);
 	});
-	connect(coverSlider, &QSlider::valueChanged, [this, coverSlider, diskPainting] {
-		m_cover = coverSlider->value() / 10.0 * CGAL::to_double(m_gs.dilationRadius());
+	connect(coverSlider, &DoubleSlider::valueChanged, [this, coverSlider, diskPainting] {
+		m_cover = coverSlider->value() * CGAL::to_double(m_gs.dilationRadius());
 
 		Partition* thePartition;
 		bool found = false;
@@ -168,7 +167,7 @@ FiltrationDemo::FiltrationDemo() {
 	});
 
 	loadFile("data/mills.txt");
-	coverSlider->setValue(46);
+	coverSlider->setValue(4.6);
 }
 
 void FiltrationDemo::loadFile(const std::filesystem::path& filePath) {

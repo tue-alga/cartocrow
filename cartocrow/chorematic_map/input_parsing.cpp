@@ -2,7 +2,7 @@
 
 namespace cartocrow::chorematic_map {
 std::shared_ptr<std::unordered_map<std::string, RegionWeight>>
-regionDataMapFromGPKG(const std::filesystem::path& path, const std::string& layerName, const std::string& regionNameAttribute,
+regionDataMapFromGPKG(const std::filesystem::path& path, const std::string& regionNameAttribute, const std::optional<std::string>& layerName,
                       const std::function<std::string(std::string)>& regionNameTransform) {
     GDALAllRegister();
     GDALDataset *poDS;
@@ -13,7 +13,13 @@ regionDataMapFromGPKG(const std::filesystem::path& path, const std::string& laye
         printf( "Open failed.\n" );
         exit( 1 );
     }
-    OGRLayer* poLayer = poDS->GetLayerByName( layerName.c_str() );
+
+	OGRLayer* poLayer;
+	if (layerName.has_value()) {
+    	poLayer = poDS->GetLayerByName( layerName->c_str() );
+	} else {
+		poLayer = poDS->GetLayer(0);
+	}
 
     auto regionDataMap = std::make_shared<std::unordered_map<std::string, RegionWeight>>();
     std::unordered_map<std::string, RegionWeight>& dataMap = *regionDataMap;
@@ -47,8 +53,8 @@ regionDataMapFromGPKG(const std::filesystem::path& path, const std::string& laye
 }
 
 std::shared_ptr<RegionMap> regionMapFromGPKG(const std::filesystem::path& path,
-                                             const std::string& layerName,
                                              const std::string& regionNameAttribute,
+											 const std::optional<std::string>& layerName,
                                              const std::optional<std::function<bool(const OGRFeature&)>>& skip) {
     GDALAllRegister();
     GDALDataset       *poDS;
@@ -59,7 +65,12 @@ std::shared_ptr<RegionMap> regionMapFromGPKG(const std::filesystem::path& path,
         printf( "Open failed.\n" );
         exit( 1 );
     }
-    OGRLayer* poLayer = poDS->GetLayerByName( layerName.c_str() );
+    OGRLayer* poLayer;
+	if (layerName.has_value()) {
+		poLayer = poDS->GetLayerByName( layerName->c_str() );
+	} else {
+		poLayer = poDS->GetLayer(0);
+	}
 
     auto regionMap = std::make_shared<RegionMap>();
     RegionMap& regions = *regionMap;

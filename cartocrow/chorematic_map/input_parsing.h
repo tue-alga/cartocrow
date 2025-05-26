@@ -11,13 +11,14 @@ namespace cartocrow::chorematic_map {
 using RegionWeight = std::unordered_map<std::string, double>;
 
 std::shared_ptr<std::unordered_map<std::string, RegionWeight>>
-regionDataMapFromGPKG(const std::filesystem::path &path, const std::string &layerName,
-                      const std::string &regionNameAttribute,
-                      const std::function<std::string(std::string)>& regionNameTransform);
+regionDataMapFromGPKG(const std::filesystem::path& path,
+					  const std::string& regionNameAttribute,
+                      const std::optional<std::string>& layerName = std::nullopt,
+                      const std::function<std::string(std::string)>& regionNameTransform = [](const std::string& s) { return s; });
 
 std::shared_ptr<RegionMap> regionMapFromGPKG(const std::filesystem::path &path,
-                                             const std::string &layerName,
                                              const std::string &regionNameAttribute,
+											 const std::optional<std::string>& layerName = std::nullopt,
                                              const std::optional<std::function<bool(
                                                      const OGRFeature&)>> &skip = std::nullopt);
 

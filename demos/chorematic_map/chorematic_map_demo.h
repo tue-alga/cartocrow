@@ -14,29 +14,17 @@
 #include "cartocrow/chorematic_map/weighted_point.h"
 #include "cartocrow/chorematic_map/input_parsing.h"
 
-#include <CGAL/Arr_landmarks_point_location.h>
-
-#include <QSpinBox>
-#include <QSlider>
+#include "demos/widgets/double_slider.h"
 #include <QCheckBox>
 #include <QComboBox>
 #include <QLabel>
+#include <QSlider>
+#include <QSpinBox>
+#include <QLineEdit>
 
 using namespace cartocrow;
 using namespace cartocrow::renderer;
 using namespace cartocrow::chorematic_map;
-
-using LandmarksPl = CGAL::Arr_landmarks_point_location<RegionArrangement>;
-
-class VoronoiRegionArrangementPainting : public GeometryPainting {
-  public:
-	std::shared_ptr<VoronoiRegionArrangement> m_arr;
-
-	VoronoiRegionArrangementPainting(std::shared_ptr<VoronoiRegionArrangement> arr)
-	    : m_arr(std::move(arr)){};
-
-	void paint(GeometryRenderer& renderer) const override;
-};
 
 class ChorematicMapDemo : public QMainWindow {
 	Q_OBJECT
@@ -44,14 +32,13 @@ class ChorematicMapDemo : public QMainWindow {
   private:
 	GeometryWidget* m_renderer;
 	std::unique_ptr<Choropleth> m_choropleth;
-	std::unique_ptr<Sampler<LandmarksPl>> m_sampler;
+	std::unique_ptr<Sampler> m_sampler;
 	WeightedRegionSample<Exact> m_sample;
     std::shared_ptr<std::unordered_map<std::string, RegionWeight>> m_regionWeightMap;
 	std::vector<BinDisk> m_disks;
-	std::vector<std::shared_ptr<VoronoiRegionArrangementPainting>> m_voronois;
 	std::shared_ptr<ChoroplethPainting> m_choroplethP;
-	QSlider* m_threshold;
-	QSlider* m_gridSize;
+	DoubleSlider* m_threshold;
+	DoubleSlider* m_gridSize;
 	QSpinBox* m_seed;
 	QSpinBox* m_nSamples;
 	QSpinBox* m_voronoiIters;
@@ -61,8 +48,12 @@ class ChorematicMapDemo : public QMainWindow {
 	QCheckBox* m_invertFittingOrder;
     QCheckBox* m_applyHeuristic;
     QCheckBox* m_useSymDiff;
+	QCheckBox* m_useNaturalBreaks;
+	QCheckBox* m_searchForGridSize;
+	QCheckBox* m_labelAtCentroid;
 	QComboBox* m_samplingStrategy;
     QComboBox* m_dataAttribute;
+	QLineEdit* m_regionNameAttribute;
 	QLabel* m_diskScoreLabel;
 	QLabel* m_dataInfoLabel;
 
@@ -72,6 +63,7 @@ class ChorematicMapDemo : public QMainWindow {
 	void recolor();
 	void loadMap(const std::filesystem::path& mapPath);
 	void loadData(const std::filesystem::path& dataPath);
+	void exportToGpkg(const std::filesystem::path& outputPath);
   public:
 	ChorematicMapDemo();
 };

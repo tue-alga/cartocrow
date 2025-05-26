@@ -61,17 +61,17 @@ void measureSamplingRunningTime() {
 	auto regionArr = std::make_shared<RegionArrangement>(regionMapToArrangementParallel(*regionMap));
 	std::vector<std::pair<std::string, std::function<
 	                                       std::function<WeightedRegionSample<Exact>()>
-	                                       (Sampler<Landmarks_pl<RegionArrangement>>&, int n)
+	                                       (Sampler&, int n)
 	                                       >>> methods = {
 	    {
 	        "uniform",
-	        [&regionArr](Sampler<Landmarks_pl<RegionArrangement>>& sampler, int n) {
+	        [&regionArr](Sampler& sampler, int n) {
 		        return [&sampler, n]() { return sampler.uniformRandomSamples(n); };
 	        }
 	    },
 	    {
 	        "square_grid",
-	        [&regionArr](Sampler<Landmarks_pl<RegionArrangement>>& sampler, int n) {
+	        [&regionArr](Sampler& sampler, int n) {
 //		        auto [cellSize, _] = sampler.squareGrid(n);
 		        return [&sampler, n]() {
 					return sampler.squareGrid(n);
@@ -80,7 +80,7 @@ void measureSamplingRunningTime() {
 	    },
 	    {
 	        "hex_grid",
-	        [&regionArr](Sampler<Landmarks_pl<RegionArrangement>>& sampler, int n) {
+	        [&regionArr](Sampler& sampler, int n) {
 //			  auto [cellSize, _] = sampler.hexGrid(n);
 			  return [&sampler, n]() {
 				return sampler.hexGrid(n);
@@ -89,25 +89,25 @@ void measureSamplingRunningTime() {
 	    },
 	    {
 	        "Voronoi_1",
-			[&regionArr](Sampler<Landmarks_pl<RegionArrangement>>& sampler, int n) {
+			[&regionArr](Sampler& sampler, int n) {
 			    return [&sampler, n]() { return sampler.voronoiUniform(n, 1); };
 	        }
 	    },
 	    {
 	        "Voronoi_5",
-			[&regionArr](Sampler<Landmarks_pl<RegionArrangement>>& sampler, int n) {
+			[&regionArr](Sampler& sampler, int n) {
 			  return [&sampler, n]() { return sampler.voronoiUniform(n, 5); };
 	        }
 	    },
 	    {
 	        "Voronoi_25",
-			[&regionArr](Sampler<Landmarks_pl<RegionArrangement>>& sampler, int n) {
+			[&regionArr](Sampler& sampler, int n) {
 			  	return [&sampler, n]() { return sampler.voronoiUniform(n, 25); };
 	        }
 	    },
 	    {
 	        "Voronoi_100",
-	        [&regionArr](Sampler<Landmarks_pl<RegionArrangement>>& sampler, int n) {
+	        [&regionArr](Sampler& sampler, int n) {
 			 return [&sampler, n]() { return sampler.voronoiUniform(n, 100); };
 		 	}
 	    }
@@ -115,7 +115,7 @@ void measureSamplingRunningTime() {
 
 	for (const auto& [name, method] : methods) {
 		for (bool samplePerRegion : {false, true}) {
-			Sampler<Landmarks_pl<RegionArrangement>> sampler(regionArr, seed, samplePerRegion);
+			Sampler sampler(regionArr, seed, samplePerRegion);
 			// todo: determine what preprocessing should be measured and what not
 			if (samplePerRegion) {
 				sampler.computeRegionCCs();
@@ -143,16 +143,12 @@ void measureScores() {
 	auto regionArrDutch = std::make_shared<RegionArrangement>(regionMapToArrangementParallel(*regionMapDutch));
 
 	std::filesystem::path gpkgDutch = "data/chorematic_map/wijkenbuurten_2022_v3.gpkg";
-	auto regionWeightMapDutch = regionDataMapFromGPKG(gpkgDutch, "gemeenten", "gemeentecode", [](const std::string& s) {
-	  return s;
-	});
+	auto regionWeightMapDutch = regionDataMapFromGPKG(gpkgDutch, "gemeentecode", "gemeenten");
 
 	std::filesystem::path gpkgHessen = "data/chorematic_map/hessen.gpkg";
-	auto regionMapHessen = regionMapFromGPKG(gpkgHessen, "Hessen", "GEN");
+	auto regionMapHessen = regionMapFromGPKG(gpkgHessen, "GEN");
 	auto regionArrHessen = std::make_shared<RegionArrangement>(regionMapToArrangementParallel(*regionMapHessen));
-	auto regionWeightMapHessen = regionDataMapFromGPKG(gpkgHessen, "Hessen", "GEN", [](const std::string& s) {
-		return s;
-	});
+	auto regionWeightMapHessen = regionDataMapFromGPKG(gpkgHessen, "GEN");
 
 	std::vector<std::tuple<std::shared_ptr<RegionArrangement>, std::string, std::shared_ptr<std::unordered_map<std::string, RegionWeight>>, std::string>>
 	     choropleths({
@@ -172,17 +168,17 @@ void measureScores() {
 
 	std::vector<std::pair<std::string, std::function<
 	                                       std::function<WeightedRegionSample<Exact>()>
-	                                       (Sampler<Landmarks_pl<RegionArrangement>>&, int n)
+	                                       (Sampler&, int n)
 	                                       >>> methods = {
 	        {
 	            "Random",
-	            [](Sampler<Landmarks_pl<RegionArrangement>>& sampler, int n) {
+	            [](Sampler& sampler, int n) {
 		            return [&sampler, n]() { return sampler.uniformRandomSamples(n); };
 	            }
 	        },
 	        {
 	            "Square",
-	            [](Sampler<Landmarks_pl<RegionArrangement>>& sampler, int n) {
+	            [](Sampler& sampler, int n) {
 		            return [&sampler, n]() {
 			            return sampler.squareGrid(n);
 		            };
@@ -190,7 +186,7 @@ void measureScores() {
 	        },
 	        {
 	            "Hex",
-	            [](Sampler<Landmarks_pl<RegionArrangement>>& sampler, int n) {
+	            [](Sampler& sampler, int n) {
 		            return [&sampler, n]() {
 			            return sampler.hexGrid(n);
 		            };
@@ -198,7 +194,7 @@ void measureScores() {
 	        },
 	        {
 	            "Voronoi",
-	            [](Sampler<Landmarks_pl<RegionArrangement>>& sampler, int n) {
+	            [](Sampler& sampler, int n) {
 		            return [&sampler, n]() { return sampler.voronoiUniform(n, 25); };
 	            }
 	        },
@@ -218,7 +214,7 @@ void measureScores() {
 		fileOut << std::setprecision(16);
 
 		for (const auto& [regionArr, mapName, regionWeightMap, attribute] : choropleths) {
-			Sampler<Landmarks_pl<RegionArrangement>> sampler(regionArr, 0, samplePerRegion);
+			Sampler sampler(regionArr, 0, samplePerRegion);
 
 			auto regionWeight = std::make_shared<RegionWeight>((*regionWeightMap)[attribute]);
 			Choropleth choropleth(regionArr, regionWeight, 2);

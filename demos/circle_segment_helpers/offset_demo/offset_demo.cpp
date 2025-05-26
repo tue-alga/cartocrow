@@ -5,6 +5,7 @@
 #include "cartocrow/renderer/geometry_painting.h"
 #include "cartocrow/renderer/geometry_widget.h"
 #include "cartocrow/renderer/render_path.h"
+#include "demos/widgets/double_slider.h"
 
 #include <QApplication>
 #include <QDockWidget>
@@ -59,10 +60,10 @@ OffsetDemo::OffsetDemo() {
 
     auto* offsetLabel = new QLabel("Offset");
     vLayout->addWidget(offsetLabel);
-	auto* offsetSlider = new QSlider(Qt::Orientation::Horizontal);
+	auto* offsetSlider = new DoubleSlider(Qt::Orientation::Horizontal);
 	vLayout->addWidget(offsetSlider);
 	offsetSlider->setMinimum(0);
-	offsetSlider->setMaximum(160);
+	offsetSlider->setMaximum(1.6);
 
 	CSPolygonSet input;
     Polyline<Exact> polyline1;
@@ -97,8 +98,8 @@ OffsetDemo::OffsetDemo() {
 	  	renderer.draw(renderPath(m_dilated));
 	}, "Curve");
 
-	connect(offsetSlider, &QSlider::valueChanged, [this, input, offsetSlider] {
-		double r = offsetSlider->value() / 100.0;
+	connect(offsetSlider, &DoubleSlider::valueChanged, [this, input, offsetSlider] {
+		double r = offsetSlider->value();
 		m_smoothed = approximateSmoothCO(input, r);
 	  	m_smoothed_ = approximateSmoothOC(input, r);
 	    m_eroded = approximateErode(input, r);
@@ -106,7 +107,7 @@ OffsetDemo::OffsetDemo() {
 		m_renderer->repaint();
 	});
 
-	offsetSlider->setValue(1);
+	offsetSlider->setValue(0.01);
 }
 
 int main(int argc, char* argv[]) {
