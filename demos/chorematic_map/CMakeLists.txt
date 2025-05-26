@@ -18,7 +18,3 @@ target_link_libraries(
 )
 
 install(TARGETS chorematic_map_demo DESTINATION ${INSTALL_BINARY_DIR})
-
-add_subdirectory(performance_test)
-add_subdirectory(transform_dutch_municipalities)
-add_subdirectory(make_figures)
