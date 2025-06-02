@@ -1,33 +1,22 @@
-set(SOURCES
-   vw_demo.cpp
-)
-add_executable(vw_demo ${SOURCES})
-target_link_libraries(
-    vw_demo
-    PRIVATE
-    ${COMMON_CLA_TARGET}
-    core
-    simplification
-    renderer
-    CGAL::CGAL
-    Qt5::Widgets
-    glog::glog
-)
-install(TARGETS vw_demo DESTINATION ${INSTALL_BINARY_DIR})
+# The vwsimplification_cla executable exposes the method.
+cartocrow_add_cla(vwsimplification_cla)
 
-set(SOURCES
-   ksbb_demo.cpp
-)
-add_executable(ksbb_demo ${SOURCES})
 target_link_libraries(
-    ksbb_demo
-    PRIVATE
-    ${COMMON_CLA_TARGET}
-    core
-    simplification
-    renderer
-    CGAL::CGAL
-    Qt5::Widgets
-    glog::glog
+        ${TARGET}
+        PRIVATE
+        ${COMMON_CLA_TARGET}
+        vw_simplification
+        core
+        CGAL::CGAL
+        tinyxml2::tinyxml2
 )
-install(TARGETS ksbb_demo DESTINATION ${INSTALL_BINARY_DIR})
+
+# PHP script to run the executable.
+# Note that the configure file uses the ${CURRENT_CLA} variable to determine the executable to run.
+set(PHP "run_vwsimplification.php")
+set(CURRENT_CLA ${TARGET})
+configure_file(
+        "run_vwsimplification.php.in"
+        "${CMAKE_CURRENT_BINARY_DIR}/${PHP}"
+)
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${PHP}" DESTINATION "${INSTALL_SCRIPT_DIR}")

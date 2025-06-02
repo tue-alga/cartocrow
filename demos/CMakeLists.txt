@@ -1,6 +1,5 @@
 add_subdirectory(widgets)
 add_subdirectory(flow_map)
-add_subdirectory(simplification)
 add_subdirectory(isoline_simplification)
 add_subdirectory(simplesets)
 add_subdirectory(renderer)
