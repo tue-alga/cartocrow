@@ -104,7 +104,7 @@ SimpleSetsDemo::SimpleSetsDemo() {
 	vLayout->addWidget(smoothingSliderLabel);
 	auto* smoothingSlider = new DoubleSlider(Qt::Orientation::Horizontal);
 	vLayout->addWidget(smoothingSlider);
-	smoothingSlider->setMinimum(1);
+	smoothingSlider->setMinimum(0);
 	smoothingSlider->setMaximum(0.2);
 	smoothingSlider->setValue(0.2);
 
