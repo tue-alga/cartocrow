@@ -60,7 +60,7 @@ void SvgRenderer::save(const std::filesystem::path& file) {
 }
 
 void SvgRenderer::draw(const Point<Inexact>& p) {
-	m_out << "<use xlink:href=\"#vertex\" " << getVertexStyle() << " x=\"" << p.x() << "\" y=\""
+	m_out << "<use href=\"#vertex\" " << getVertexStyle() << " x=\"" << p.x() << "\" y=\""
 	      << -p.y() << "\"/>\n";
 }
 
