@@ -1,6 +1,6 @@
 #include "../catch.hpp"
 
-#include "cartocrow/core/ipe_reader.h"
+#include "cartocrow/reader/ipe_reader.h"
 #include "cartocrow/renderer/geometry_painting.h"
 #include "cartocrow/renderer/ipe_renderer.h"
 

@@ -23,6 +23,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "../core/bezier.h"
 #include "../core/core.h"
 #include "../core/polyline.h"
+#include "../core/halfplane.h"
 #include "render_path.h"
 
 namespace cartocrow::renderer {
@@ -83,6 +84,31 @@ class GeometryRenderer {
 		vertices = 1 << 2
 	};
 
+	enum LineCap {
+		ButtCap,
+		RoundCap,
+		SquareCap,
+	};
+
+	enum LineJoin {
+		RoundJoin,
+		BevelJoin,
+		MiterJoin,
+	};
+
+	enum HorizontalTextAlignment {
+		AlignLeft,
+		AlignRight,
+		AlignHCenter,
+	};
+
+	enum VerticalTextAlignment {
+		AlignTop,
+		AlignBottom,
+		AlignVCenter,
+		AlignBaseline,
+	};
+
 	/// \name Drawing methods
 	/// @{
 
@@ -90,24 +116,32 @@ class GeometryRenderer {
 	virtual void draw(const Point<Inexact>& p) = 0;
 	/// Draws a single line segment with the currently set style.
 	void draw(const Segment<Inexact>& s);
+	/// Draws a rectangle
+	void draw(const Rectangle<Inexact>& r);
+	/// Draws a triangle
+	void draw(const Triangle<Inexact>& t);
+	/// Draws a box
+	void draw(const Box& r);
 	/// Draws a simple polygon with the currently set style.
 	void draw(const Polygon<Inexact>& p);
 	/// Draws a polyline with the currently set style.
 	void draw(const Polyline<Inexact>& p);
 	/// Draws a polygon with holes with the currently set style.
-	virtual void draw(const PolygonWithHoles<Inexact>& p) = 0;
+	void draw(const PolygonWithHoles<Inexact>& p);
+	/// Draws a polygon set with the currently set style.
+	void draw(const PolygonSet<Inexact>& p);
 	/// Draws a circle with the currently set style.
 	virtual void draw(const Circle<Inexact>& c) = 0;
 	/// Draws a Bézier curve with the currently set style.
 	void draw(const BezierCurve& c);
 	/// Draws a Bézier spline with the currently set style.
 	virtual void draw(const BezierSpline& s) = 0;
-	/// Draws a polygon set with the currently set style.
-	virtual void draw(const PolygonSet<Inexact>& p);
 	/// Draws a line with the currently set style.
 	virtual void draw(const Line<Inexact>& l) = 0;
 	/// Draws a ray with the currently set style.
 	virtual void draw(const Ray<Inexact>& r) = 0;
+	/// Draws a halfplane with the currently set style.
+	virtual void draw(const Halfplane<Inexact>& h) = 0;
 	/// Draws a \ref RenderPath with the currently set style.
 	virtual void draw(const RenderPath& p) = 0;
 
@@ -118,13 +152,21 @@ class GeometryRenderer {
 	};
 
 	/// Draws a string at a given location.
-	/// The string is drawn centered horizontally around the location given.
-	virtual void drawText(const Point<Inexact>& p, const std::string& text) = 0;
+	/// The string is aligned as specified.
+	/// If \p escape is set to true, then the function escapes any characters that
+	/// have special meaning in the renderer (characters like '\<', '\', '%').
+	/// \sa setHorizontalTextAlignment
+	/// \sa setVerticalTextAlignment
+	virtual void drawText(const Point<Inexact>& p, const std::string& text, bool escape=true) = 0;
 	/// Draws a string at a given location.
-	/// The string is drawn centered horizontally around the location given.
+	/// The string is aligned as specified.
+	/// If \p escape is set to true, then the function escapes any characters that
+	/// have special meaning in the renderer (characters like '\<', '\', '%').
+	/// \sa setHorizontalTextAlignment
+	/// \sa setVerticalTextAlignment
 	template <class K>
-	void drawText(const Point<K>& p, const std::string& text) {
-		drawText(approximate(p), text);
+	void drawText(const Point<K>& p, const std::string& text, bool escape=true) {
+		drawText(approximate(p), text, escape);
 	}
 
 	/// @}
@@ -153,7 +195,18 @@ class GeometryRenderer {
 	virtual void setFill(Color color) = 0;
 	/// Sets the fill opacity of the renderer (range 0-255).
 	virtual void setFillOpacity(int alpha) = 0;
-
+    /// Sets clip path.
+    virtual void setClipPath(const RenderPath& clipPath) = 0;
+    /// Enable or disable clipping.
+    virtual void setClipping(bool enable) = 0;
+	/// Set line join.
+	virtual void setLineJoin(LineJoin lineJoin) = 0;
+	/// Set line cap.
+	virtual void setLineCap(LineCap lineCap) = 0;
+	/// Set horizontal text alignment.
+	virtual void setHorizontalTextAlignment(HorizontalTextAlignment alignment) = 0;
+	/// Set vertical text alignment.
+	virtual void setVerticalTextAlignment(VerticalTextAlignment alignment) = 0;
 	/// @}
 };
 

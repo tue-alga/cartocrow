@@ -23,6 +23,8 @@ struct PossibleMergeEvent {
 Number<Inexact> intersectionDelay(const std::vector<CatPoint>& points, const PolyPattern& p1, const PolyPattern& p2,
 								  const PolyPattern& result, const GeneralSettings& gs, const PartitionSettings& ps);
 
+/// This function partition the categorical points using a discrete event simulation.
+/// Returns a vector of pairs (t_i, P_i) where t_i is the time in the event simulation that partition P_i was created.
 std::vector<std::pair<Number<Inexact>, Partition>>
 partition(const std::vector<CatPoint>& points, const GeneralSettings& gs, const PartitionSettings& ps, Number<Inexact> maxTime);
 }

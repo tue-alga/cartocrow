@@ -17,8 +17,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef CARTOCROW_TYPES_H
-#define CARTOCROW_TYPES_H
+#ifndef CARTOCROW_ISOLINE_SIMPLIFICATION_TYPES_H
+#define CARTOCROW_ISOLINE_SIMPLIFICATION_TYPES_H
 
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 #include <CGAL/Segment_Delaunay_graph_2.h>
@@ -42,4 +42,4 @@ typedef std::unordered_map<Point<K>, std::list<Point<K>>::iterator> PointToItera
 typedef std::unordered_map<Point<K>, SDG2::Vertex_handle> PointToVertex;
 typedef std::unordered_map<Segment<K>, SDG2::Vertex_handle> EdgeToVertex;
 }
-#endif //CARTOCROW_TYPES_H
+#endif //CARTOCROW_ISOLINE_SIMPLIFICATION_TYPES_H

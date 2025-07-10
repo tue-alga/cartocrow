@@ -1,26 +1,26 @@
 #include "dilated_poly.h"
-#include "../helpers/cs_polygon_helpers.h"
-#include "../helpers/arrangement_helpers.h"
+#include "cartocrow/circle_segment_helpers/cs_polygon_helpers.h"
+#include "cartocrow/core/arrangement_helpers.h"
 #include <CGAL/approximated_offset_2.h>
 
 namespace cartocrow::simplesets {
-CSPolygon dilateSegment(const Segment<Inexact>& segment, const Number<Inexact>& dilationRadius) {
-	std::vector<Point<Exact>> points({makeExact(segment.source()), makeExact(segment.target())});
+CSPolygon dilateSegment(const Segment<Inexact>& segment, const Number<Exact>& dilationRadius) {
+	std::vector<Point<Exact>> points({pretendExact(segment.source()), pretendExact(segment.target())});
 	Polygon<Exact> polygon(points.begin(), points.end());
 	auto dilation = CGAL::approximated_offset_2(polygon, dilationRadius, M_EPSILON);
 	return dilation.outer_boundary();
 }
 
-Dilated::Dilated(const PolyPattern& polyPattern, const Number<Inexact>& dilationRadius) {
+DilatedPoly::DilatedPoly(const PolyPattern& polyPattern, const Number<Exact>& dilationRadius) {
 	m_catPoints = polyPattern.catPoints();
 
 	auto cont = polyPattern.poly();
 
 	if (holds_alternative<Polygon<Inexact>>(cont)) {
-		auto exactPolygon = makeExact(std::get<Polygon<Inexact>>(cont));
+		auto exactPolygon = pretendExact(std::get<Polygon<Inexact>>(cont));
 
 		if (exactPolygon.size() == 1) {
-			CSTraits::Rational_circle_2 circle(exactPolygon.vertex(0), dilationRadius * dilationRadius);
+			ArrCSTraits::Rational_circle_2 circle(exactPolygon.vertex(0), dilationRadius * dilationRadius);
 			m_contour = circleToCSPolygon(circle);
 			if (m_contour.orientation() == CGAL::CLOCKWISE) {
 				m_contour.reverse_orientation();
@@ -54,7 +54,7 @@ Dilated::Dilated(const PolyPattern& polyPattern, const Number<Inexact>& dilation
 			}
 		}
 
-		m_contour = ccb_to_polygon<CSTraits>(*(arr.unbounded_face()->inner_ccbs_begin()));
+		m_contour = ccb_to_general_polygon<ArrCSTraits>(*(arr.unbounded_face()->inner_ccbs_begin()));
 		if (m_contour.orientation() == CGAL::CLOCKWISE) {
 			m_contour.reverse_orientation();
 		}
@@ -63,11 +63,11 @@ Dilated::Dilated(const PolyPattern& polyPattern, const Number<Inexact>& dilation
 	}
 }
 
-const std::vector<CatPoint>& Dilated::catPoints() const {
+const std::vector<CatPoint>& DilatedPoly::catPoints() const {
 	return m_catPoints;
 }
 
-std::variant<Polyline<Inexact>, Polygon<Inexact>, CSPolygon> Dilated::contour() const {
+std::variant<Polyline<Inexact>, Polygon<Inexact>, CSPolygon> DilatedPoly::contour() const {
 	return m_contour;
 }
 }

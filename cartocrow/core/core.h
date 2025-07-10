@@ -22,9 +22,9 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 07-11-2019
 #ifndef CARTOCROW_CORE_CORE_H
 #define CARTOCROW_CORE_CORE_H
 
-#include "polyline.h"
 #include <CGAL/Arr_segment_traits_2.h>
 #include <CGAL/Arrangement_2.h>
+#include <CGAL/Arrangement_with_history_2.h>
 #include <CGAL/Bbox_2.h>
 #include <CGAL/Circle_2.h>
 #include <CGAL/Exact_predicates_exact_constructions_kernel.h>
@@ -63,6 +63,8 @@ template <class K> using Segment = CGAL::Segment_2<K>;
 template <class K> using Ray = CGAL::Ray_2<K>;
 /// An axis-aligned rectangle in the plane. See \ref CGAL::Iso_rectangle_2.
 template <class K> using Rectangle = CGAL::Iso_rectangle_2<K>;
+/// A triangle in the plane. See \ref CGAL::Triangle_2.
+template <class K> using Triangle = CGAL::Triangle_2<K>;
 
 /// A polygon in the plane. See \ref CGAL::Polygon_2.
 template <class K> using Polygon = CGAL::Polygon_2<K>;
@@ -77,6 +79,7 @@ using Box = CGAL::Bbox_2;
 
 /// An arrangement of objects in the plane.
 template <class K> using Arrangement = CGAL::Arrangement_2<CGAL::Arr_segment_traits_2<K>>;
+template <class K> using ArrangementWithHistory = CGAL::Arrangement_with_history_2<CGAL::Arr_segment_traits_2<K>>;
 
 /// An epsilon value.
 /**
@@ -92,36 +95,64 @@ template <class K>
 Point<Inexact> approximate(const Point<K>& p) {
 	return Point<Inexact>(CGAL::to_double(p.x()), CGAL::to_double(p.y()));
 }
+/// Converts a point from inexact representation to an exact representation.
+Point<Exact> pretendExact(const Point<Inexact>& p);
 /// Converts a vector from exact representation to an approximation in inexact
 /// representation.
 template <class K>
 Vector<Inexact> approximate(const Vector<K>& v) {
 	return Vector<Inexact>(CGAL::to_double(v.x()), CGAL::to_double(v.y()));
 }
+/// Converts a vector from inexact representation to an exact representation.
+Vector<Exact> pretendExact(const Vector<Inexact>& v);
 /// Converts a circle from exact representation to an approximation in inexact
 /// representation.
 template <class K>
 Circle<Inexact> approximate(const Circle<K>& c) {
 	return Circle<Inexact>(approximate(c.center()), CGAL::to_double(c.squared_radius()));
 }
+/// Converts a circle from inexact representation to an exact representation.
+Circle<Exact> pretendExact(const Circle<Inexact>& c);
 /// Converts a line from exact representation to an approximation in inexact
 /// representation.
 template <class K>
 Line<Inexact> approximate(const Line<K>& l) {
 	return Line<Inexact>(CGAL::to_double(l.a()), CGAL::to_double(l.b()), CGAL::to_double(l.c()));
 }
+/// Converts a line from inexact representation to an exact representation.
+Line<Exact> pretendExact(const Line<Inexact>& l);
 /// Converts a ray from exact representation to an approximation in inexact
 /// representation.
 template <class K>
 Ray<Inexact> approximate(const Ray<K>& r) {
 	return Ray<Inexact>(approximate(r.source()), approximate(r.second_point()));
 }
+/// Converts a ray from inexact representation to an exact representation.
+Ray<Exact> pretendExact(const Ray<Inexact>& r);
 /// Converts a line segment from exact representation to an approximation in
 /// inexact representation.
 template <class K>
 Segment<Inexact> approximate(const Segment<K>& s) {
 	return Segment<Inexact>(approximate(s.start()), approximate(s.end()));
 }
+/// Converts a segment from inexact representation to an exact representation.
+Segment<Exact> pretendExact(const Segment<Inexact>& s);
+/// Converts a rectangle from exact representation to an approximation in
+/// inexact representation.
+template <class K>
+Rectangle<Inexact> approximate(const Rectangle<K>& r) {
+	return Rectangle<Inexact>(approximate(r.vertex(0)), approximate(r.vertex(2)));
+}
+/// Converts a rectangle from inexact representation to an exact representation.
+Rectangle<Exact> pretendExact(const Rectangle<Inexact>& r);
+/// Converts a triangle from exact representation to an approximation in
+/// inexact representation.
+template <class K>
+Triangle<Inexact> approximate(const Triangle<K>& t) {
+	return Triangle<Inexact>(approximate(t.vertex(0)), approximate(t.vertex(1)), approximate(t.vertex(2)));
+}
+/// Converts a triangle from inexact representation to an exact representation.
+Triangle<Exact> pretendExact(const Triangle<Inexact>& t);
 /// Converts a polygon from exact representation to an approximation in inexact
 /// representation.
 template <class K>
@@ -132,6 +163,8 @@ Polygon<Inexact> approximate(const Polygon<K>& p) {
 	}
 	return result;
 }
+/// Converts a polygon from inexact representation to an exact representation.
+Polygon<Exact> pretendExact(const Polygon<Inexact>& p);
 /// Converts a polygon with holes from exact representation to an approximation
 /// in inexact representation.
 template <class K>
@@ -142,6 +175,8 @@ PolygonWithHoles<Inexact> approximate(const PolygonWithHoles<K>& p) {
 	}
 	return result;
 }
+/// Converts a polygon with holes from inexact representation to an exact representation.
+PolygonWithHoles<Exact> pretendExact(const PolygonWithHoles<Inexact>& p);
 /// Converts a polygon set from exact representation to an approximation in
 /// inexact representation.
 template <class K>
@@ -149,20 +184,20 @@ PolygonSet<Inexact> approximate(const PolygonSet<K>& p) {
 	PolygonSet<Inexact> result;
 	std::vector<PolygonWithHoles<Exact>> polygons;
 	p.polygons_with_holes(std::back_inserter(polygons));
-	for (auto polygon : polygons) {
+	for (const auto& polygon : polygons) {
 		result.insert(approximate(polygon));
 	}
 	return result;
 }
-/// Converts a polyline from exact representation to an approximation in
-/// inexact representation.
-template <class K>
-Polyline<Inexact> approximate(const Polyline<K>& p) {
-	Polyline<Inexact> result;
-	for (auto v = p.vertices_begin(); v < p.vertices_end(); ++v) {
-		result.push_back(approximate(*v));
+/// Converts a polygon set from inexact representation to an exact representation.
+PolygonSet<Exact> pretendExact(const PolygonSet<Inexact>& p);
+
+/// Converts a range of geometries in inexact representation to ones in exact representation.
+template <class InputIterator, class OutputIterator>
+void pretendExact(InputIterator begin, InputIterator end, OutputIterator out) {
+	for (auto it = begin; it != end; ++it) {
+		*out++ = pretendExact(*it);
 	}
-	return result;
 }
 
 /// An RGB color. Used for storing the color of elements to be drawn.

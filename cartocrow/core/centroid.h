@@ -65,6 +65,7 @@ template <class K> Point<K> centroid(const PolygonWithHoles<K>& polygon) {
 	for (typename PolygonWithHoles<K>::Hole_const_iterator hole_iter = polygon.holes_begin();
 	     hole_iter != polygon.holes_end(); ++hole_iter) {
 		Number<K> area = CGAL::abs(hole_iter->area());
+        if (area == 0) continue;
 		sum -= area * (centroid(*hole_iter) - CGAL::ORIGIN);
 		areaSum -= area;
 	}

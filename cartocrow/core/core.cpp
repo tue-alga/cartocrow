@@ -36,4 +36,62 @@ Number<Inexact> wrapAngleUpper(Number<Inexact> alpha, Number<Inexact> beta) {
 	return wrapUpper<Inexact>(alpha, beta, beta + M_2xPI);
 }
 
+Point<Exact> pretendExact(const Point<Inexact>& p) {
+	return {p.x(), p.y()};
+}
+
+Vector<Exact> pretendExact(const Vector<Inexact>& v) {
+	return {v.x(), v.y()};
+}
+
+Circle<Exact> pretendExact(const Circle<Inexact>& c) {
+	return {pretendExact(c.center()), c.squared_radius()};
+}
+
+Line<Exact> pretendExact(const Line<Inexact>& l) {
+	return {l.a(), l.b(), l.c()};
+}
+
+Ray<Exact> pretendExact(const Ray<Inexact>& r) {
+	return {pretendExact(r.source()), pretendExact(r.to_vector())};
+}
+
+Segment<Exact> pretendExact(const Segment<Inexact>& s) {
+	return {pretendExact(s.source()), pretendExact(s.target())};
+}
+
+Rectangle<Exact> pretendExact(const Rectangle<Inexact>& r) {
+	return {r.xmin(), r.ymin(), r.xmax(), r.ymax()};
+}
+
+Triangle<Exact> pretendExact(const Triangle<Inexact>& t) {
+	return {pretendExact(t.vertex(0)), pretendExact(t.vertex(1)), pretendExact(t.vertex(2))};
+}
+
+Polygon<Exact> pretendExact(const Polygon<Inexact>& p) {
+	std::vector<Point<Exact>> exact_points;
+	pretendExact(p.vertices_begin(), p.vertices_end(), std::back_inserter(exact_points));
+	return {exact_points.begin(), exact_points.end()};
+}
+
+PolygonWithHoles<Exact> pretendExact(const PolygonWithHoles<Inexact>& p) {
+	auto outer = pretendExact(p.outer_boundary());
+	std::vector<Polygon<Exact>> holes;
+	for (const auto& h : p.holes()) {
+		holes.push_back(pretendExact(h));
+	}
+	return {outer, holes.begin(), holes.end()};
+}
+
+PolygonSet<Exact> pretendExact(const PolygonSet<Inexact>& p) {
+	std::vector<PolygonWithHoles<Inexact>> polygons;
+	p.polygons_with_holes(std::back_inserter(polygons));
+
+	PolygonSet<Exact> result;
+	for (const auto& polygon : polygons) {
+		result.insert(pretendExact(polygon));
+	}
+	return result;
+}
+
 } // namespace cartocrow

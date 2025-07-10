@@ -45,6 +45,9 @@ using RegionArrangement =
 /// Creates a \ref RegionArrangement from a \ref RegionMap.
 RegionArrangement regionMapToArrangement(const RegionMap& map);
 
+/// A simple parallel implementation for converting a region map to a region arrangement.
+RegionArrangement regionMapToArrangementParallel(const RegionMap& map);
+
 } // namespace cartocrow
 
 #endif //CARTOCROW_CORE_REGION_ARRANGEMENT_H

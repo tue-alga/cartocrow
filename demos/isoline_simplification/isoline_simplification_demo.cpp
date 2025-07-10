@@ -18,7 +18,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include "isoline_simplification_demo.h"
-#include "cartocrow/core/ipe_reader.h"
 #include "cartocrow/isoline_simplification/isoline.h"
 #include "cartocrow/isoline_simplification/ipe_isolines.h"
 #include "cartocrow/isoline_simplification/voronoi_helpers.h"

@@ -138,6 +138,37 @@ class GeometryWidget : public QWidget, public GeometryRenderer {
 		std::shared_ptr<Point<Inexact>> m_point;
 	};
 
+    /// Editable for \ref Circle<Inexact>.
+    class CircleEditable : public Editable {
+    public:
+        /// Constructs a CircleEditable for the given circle.
+        CircleEditable(GeometryWidget* widget, std::shared_ptr<Circle<Inexact>> circle);
+        bool drawHoverHint(Point<Inexact> location, Number<Inexact> radius) const override;
+        bool startDrag(Point<Inexact> location, Number<Inexact> radius) override;
+        void handleDrag(Point<Inexact> to) const override;
+        void endDrag() override;
+
+    private:
+        /// The circle we're editing.
+        std::shared_ptr<Circle<Inexact>> m_circle;
+
+        /// Indicates what is being edited.
+        enum Dragging {
+            Center,
+            Radius,
+        };
+        /// Indicates what is being edited.
+        std::optional<Dragging> m_dragging;
+
+        /// Checks if the location is within a circle with the given radius
+        /// around the center.
+        bool isCloseToCenter(Point<Inexact> location, Number<Inexact> radius) const;
+
+        /// Checks if the location is within distance \p radius
+        /// to the boundary of the circle.
+        bool isCloseToBoundary(Point<Inexact> location, Number<Inexact> radius) const;
+    };
+
 	class PolygonEditable : public Editable {
 	  public:
 		/// Constructs a PolygonEditable for the given polygon.
@@ -162,13 +193,13 @@ class GeometryWidget : public QWidget, public GeometryRenderer {
 	GeometryWidget(std::shared_ptr<GeometryPainting> painting);
 
 	void draw(const Point<Inexact>& p) override;
-	void draw(const PolygonWithHoles<Inexact>& p) override;
 	void draw(const Circle<Inexact>& c) override;
 	void draw(const BezierSpline& s) override;
 	void draw(const Line<Inexact>& l) override;
 	void draw(const Ray<Inexact>& r) override;
+	void draw(const Halfplane<Inexact>& h) override;
 	void draw(const RenderPath& p) override;
-	void drawText(const Point<Inexact>& p, const std::string& text) override;
+	void drawText(const Point<Inexact>& p, const std::string& text, bool escape=true) override;
 
 	void pushStyle() override;
 	void popStyle() override;
@@ -177,6 +208,17 @@ class GeometryWidget : public QWidget, public GeometryRenderer {
 	void setStrokeOpacity(int alpha) override;
 	void setFill(Color color) override;
 	void setFillOpacity(int alpha) override;
+    void setClipPath(const RenderPath& clipPath) override;
+    void setClipping(bool enable) override;
+	void setLineJoin(LineJoin lineJoin) override;
+	void setLineCap(LineCap lineCap) override;
+	void setHorizontalTextAlignment(HorizontalTextAlignment alignment) override;
+	void setVerticalTextAlignment(VerticalTextAlignment alignment) override;
+
+  private:
+	QFlags<Qt::AlignmentFlag> m_textAlignment = Qt::AlignCenter;
+
+  public:
 
 	/// Adds a new painting to this widget.
 	void addPainting(std::shared_ptr<GeometryPainting> painting, const std::string& name);
@@ -189,6 +231,8 @@ class GeometryWidget : public QWidget, public GeometryRenderer {
 
 	/// Adds an editable point.
 	void registerEditable(std::shared_ptr<Point<Inexact>> point);
+    /// Adds an editable circle.
+    void registerEditable(std::shared_ptr<Circle<Inexact>> point);
 	/// Adds an editable polygon.
 	void registerEditable(std::shared_ptr<Polygon<Inexact>> polygon);
 
@@ -250,6 +294,8 @@ class GeometryWidget : public QWidget, public GeometryRenderer {
 	Point<Inexact> inverseConvertPoint(QPointF p) const;
 	/// Converts a rectangle in Qt coordinates back to drawing coordinates.
 	Box inverseConvertBox(QRectF r) const;
+    /// Convert a render path to a Qt path.
+    QPainterPath renderPathToQt(const RenderPath& p);
 
   private:
 	/// Converts the polygon to Qt coordinates and adds it to the QPainterPath.

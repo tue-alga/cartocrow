@@ -22,15 +22,18 @@ set(TEST_SOURCES "cartocrow_test.cpp"
 	"simplesets/poly_line_gon_intersection.cpp"
 	"simplesets/partition_algorithm.cpp"
 	"simplesets/collinear_island.cpp"
+	"chorematic_map/maximum_weight_disk.cpp"
 )
+
 
 add_executable(cartocrow_test cartocrow_test.cpp ${TEST_SOURCES})
 target_link_libraries(cartocrow_test
 	PRIVATE
 	core
-	flow_map
 	necklace_map
+	flow_map
 	renderer
 	simplification
 	simplesets
+	chorematic_map
 )
