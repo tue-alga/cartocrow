@@ -1,4 +1,5 @@
 #include "cs_types.h"
+#include <variant>
 
 #ifndef CARTOCROW_CS_CURVE_HELPERS_H
 #define CARTOCROW_CS_CURVE_HELPERS_H
@@ -13,13 +14,13 @@ template <class OutputIterator>
 void curveToXMonotoneCurves(const CSCurve& curve, OutputIterator out) {
 	ArrCSTraits traits;
 	auto make_x_monotone = traits.make_x_monotone_2_object();
-	std::vector<boost::variant<ArrCSTraits::Point_2, CSXMCurve>> curves_and_points;
+	std::vector<std::variant<ArrCSTraits::Point_2, CSXMCurve>> curves_and_points;
 	make_x_monotone(curve, std::back_inserter(curves_and_points));
 
 	// There should not be any isolated points
 	for (auto kinda_curve : curves_and_points) {
-		if (kinda_curve.which() == 1) {
-			*out++ = boost::get<CSXMCurve>(kinda_curve);
+		if (std::holds_alternative<CSXMCurve>(kinda_curve)) {
+			*out++ = std::get<CSXMCurve>(kinda_curve);
 		} else {
 			std::cout << "Converting curve into x-monotone curves results in isolated point."
 			          << std::endl;

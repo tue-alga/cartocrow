@@ -26,14 +26,14 @@ CSPolygon face_to_polygon(const Face& face) {
 CSXMCurve make_x_monotone(const Segment<Exact>& segment) {
 	ArrCSTraits traits;
 	auto make_x_monotone = traits.make_x_monotone_2_object();
-	std::vector<boost::variant<ArrCSTraits::Point_2, CSXMCurve>> curves_and_points;
+	std::vector<std::variant<ArrCSTraits::Point_2, CSXMCurve>> curves_and_points;
 	make_x_monotone(segment, std::back_inserter(curves_and_points));
 	std::vector<CSXMCurve> curves;
 
 	// There should not be any isolated points
 	for (auto kinda_curve : curves_and_points) {
-		assert(kinda_curve.which() == 1);
-		auto curve = boost::get<CSXMCurve>(kinda_curve);
+		assert(std::holds_alternative<CSXMCurve>(kinda_curve));
+		auto curve = std::get<CSXMCurve>(kinda_curve);
 		curves.push_back(curve);
 	}
 
@@ -57,32 +57,32 @@ Point<Exact> get_approx_point_on_boundary(const Face& face) {
 		Line<Exact> pl = l.perpendicular(middle);
 		auto inter = CGAL::intersection(pl, rect);
 		assert(inter.has_value());
-		assert(inter->which() == 1);
-		Segment<Exact> seg = boost::get<Segment<Exact>>(*inter);
+		assert(std::holds_alternative<Segment<Exact>>(inter));
+		Segment<Exact> seg = std::get<Segment<Exact>>(*inter);
 //		CGAL::intersection(pl, circle);
 		ArrCSTraits traits;
 		auto make_x_monotone = traits.make_x_monotone_2_object();
-		std::vector<boost::variant<ArrCSTraits::Point_2, CSXMCurve>> curves_and_points;
+		std::vector<std::variant<ArrCSTraits::Point_2, CSXMCurve>> curves_and_points;
 //		make_x_monotone(circle, std::back_inserter(curves_and_points));
 		make_x_monotone(seg, std::back_inserter(curves_and_points));
 		std::vector<CSXMCurve> curves;
 
 		// There should not be any isolated points
 		for (auto kinda_curve : curves_and_points) {
-			auto curve = boost::get<CSXMCurve>(kinda_curve);
+			auto curve = std::get<CSXMCurve>(kinda_curve);
 			curves.push_back(curve);
 		}
 
 		typedef std::pair<ArrCSTraits::Point_2, unsigned int> Intersection_point;
-		typedef boost::variant<Intersection_point, CSXMCurve> Intersection_result;
+		typedef std::variant<Intersection_point, CSXMCurve> Intersection_result;
 		std::vector<Intersection_result> intersection_results;
 		assert(curves.size() == 1);
 		curve.intersect(curves[0], std::back_inserter(intersection_results));
 
 		std::vector<ArrCSTraits::Point_2> intersection_pts;
 		for (const auto& result : intersection_results) {
-			assert(result.which() == 0);
-			intersection_pts.push_back(boost::get<Intersection_point>(result).first);
+			assert(std::holds_alternative<Intersection_point>(result));
+			intersection_pts.push_back(std::get<Intersection_point>(result).first);
 		}
 
 		assert(intersection_pts.size() == 1);
@@ -98,19 +98,19 @@ Point<Exact> get_point_in(const Face& face) {
 	Point<Exact> approx_point_on_boundary = get_approx_point_on_boundary(face);
 	Line<Exact> line(point_outside, approx_point_on_boundary);
 	auto line_inter_box = CGAL::intersection(rect, line);
-	auto seg = boost::get<Segment<Exact>>(*line_inter_box);
+	auto seg = std::get<Segment<Exact>>(*line_inter_box);
 	auto seg_curve = make_x_monotone(seg);
 	std::vector<ArrCSTraits::Point_2> intersection_pts;
 	for (auto cit = poly.curves_begin(); cit != poly.curves_end(); cit++) {
 		auto curve = *cit;
 		typedef std::pair<ArrCSTraits::Point_2, unsigned int> Intersection_point;
-		typedef boost::variant<Intersection_point, CSXMCurve> Intersection_result;
+		typedef std::variant<Intersection_point, CSXMCurve> Intersection_result;
 		std::vector<Intersection_result> intersection_results;
 		curve.intersect(seg_curve, std::back_inserter(intersection_results));
 
 		for (const auto& result : intersection_results) {
-			assert(result.which() == 0);
-			intersection_pts.push_back(boost::get<Intersection_point>(result).first);
+			assert(std::holds_alternative<Intersection_point>(result));
+			intersection_pts.push_back(std::get<Intersection_point>(result).first);
 		}
 	}
 

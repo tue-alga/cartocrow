@@ -4,6 +4,7 @@
 #include <CGAL/enum.h>
 #include <CGAL/number_utils.h>
 #include <ctime>
+#include <variant>
 
 #include "cartocrow/core/core.h"
 #include "cartocrow/core/timer.h"
@@ -183,17 +184,17 @@ TEST_CASE("Creating an arrangement") {
 	// point location queries
 	CGAL::Arr_walk_along_line_point_location<Arrangement<Exact>> locator(arrangement);
 	auto l1 = locator.locate(Point<Exact>(0.6, 0.1));
-	REQUIRE(l1.type() == typeid(Arrangement<Exact>::Face_const_handle));
-	auto f1 = boost::get<Arrangement<Exact>::Face_const_handle>(l1);
+	REQUIRE(std::holds_alternative<Arrangement<Exact>::Face_const_handle>(l1));
+	auto f1 = std::get<Arrangement<Exact>::Face_const_handle>(l1);
 	auto l2 = locator.locate(Point<Exact>(0.7, 0.1));
-	REQUIRE(l2.type() == typeid(Arrangement<Exact>::Face_const_handle));
-	auto f2 = boost::get<Arrangement<Exact>::Face_const_handle>(l2);
+	REQUIRE(std::holds_alternative<Arrangement<Exact>::Face_const_handle>(l2));
+	auto f2 = std::get<Arrangement<Exact>::Face_const_handle>(l2);
 	auto l3 = locator.locate(Point<Exact>(0.9, 0.5));
-	REQUIRE(l3.type() == typeid(Arrangement<Exact>::Face_const_handle));
-	auto f3 = boost::get<Arrangement<Exact>::Face_const_handle>(l3);
+	REQUIRE(std::holds_alternative<Arrangement<Exact>::Face_const_handle>(l3));
+	auto f3 = std::get<Arrangement<Exact>::Face_const_handle>(l3);
 	auto l4 = locator.locate(Point<Exact>(0, 1));
-	REQUIRE(l4.type() == typeid(Arrangement<Exact>::Face_const_handle));
-	auto f4 = boost::get<Arrangement<Exact>::Face_const_handle>(l4);
+	REQUIRE(std::holds_alternative<Arrangement<Exact>::Face_const_handle>(l4));
+	auto f4 = std::get<Arrangement<Exact>::Face_const_handle>(l4);
 	CHECK(f1 == f2);
 	CHECK(f1 != f3);
 	CHECK(f1 != f4);
@@ -202,13 +203,13 @@ TEST_CASE("Creating an arrangement") {
 	CHECK(f4 == arrangement.unbounded_face());
 
 	auto l5 = locator.locate(Point<Exact>(0.25, 0));
-	REQUIRE(l5.type() == typeid(Arrangement<Exact>::Halfedge_const_handle));
-	auto e5 = boost::get<Arrangement<Exact>::Halfedge_const_handle>(l5);
+	REQUIRE(std::holds_alternative<Arrangement<Exact>::Halfedge_const_handle>(l5));
+	auto e5 = std::get<Arrangement<Exact>::Halfedge_const_handle>(l5);
 	CHECK(e5->curve().line().has_on(Point<Exact>(0.125, 0)));
 
 	auto l6 = locator.locate(Point<Exact>(0.5, 0));
-	REQUIRE(l6.type() == typeid(Arrangement<Exact>::Vertex_const_handle));
-	auto v6 = boost::get<Arrangement<Exact>::Vertex_const_handle>(l6);
+	REQUIRE(std::holds_alternative<Arrangement<Exact>::Vertex_const_handle>(l6));
+	auto v6 = std::get<Arrangement<Exact>::Vertex_const_handle>(l6);
 	CHECK(v6->point() == Point<Exact>(0.5, 0));
 }
 

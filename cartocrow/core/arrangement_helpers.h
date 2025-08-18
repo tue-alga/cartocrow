@@ -2,6 +2,7 @@
 #define CARTOCROW_ARRANGEMENT_HELPERS_H
 
 #include "core.h"
+#include <variant>
 #include <vector>
 #include <CGAL/General_polygon_2.h>
 #include <CGAL/Arr_landmarks_point_location.h>
@@ -723,8 +724,8 @@ void copyBoundedFaceData(const ArrWithFaceData& arr1, ArrWithFaceData& arr2) {
 
 		auto obj = pl.locate(vt2Pt);
 		HalfedgeH ccb1;
-		if (auto vt1_p = boost::get<VertexCH>(&obj)) {
-			VertexCH vt1 = *vt1_p;
+		if (std::holds_alternative<VertexCH>(obj)) {
+			VertexCH vt1 = std::get<VertexCH>(obj);
 			// Convention: the target of these halfedges is vt_.
 			auto circ = vt1->incident_halfedges();
 			auto curr = circ;
