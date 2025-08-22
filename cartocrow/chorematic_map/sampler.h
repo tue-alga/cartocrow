@@ -6,6 +6,7 @@
 #include "../core/centroid.h"
 #include "../core/rectangle_helpers.h"
 
+#include "cartocrow/core/region_map.h"
 #include "weighted_point.h"
 #include "weighted_region_sample.h"
 
@@ -20,6 +21,7 @@
 
 #include <utility>
 #include <future>
+#include <variant>
 
 namespace cartocrow::chorematic_map {
 
@@ -93,8 +95,8 @@ VoronoiArrangement boundedVoronoiArrangement(InputIterator begin, InputIterator 
 
 	for (auto vit = dt.vertices_begin(); vit != dt.vertices_end(); ++vit) {
 		auto obj = pl.locate(vit->point());
-		if (auto fhp = boost::get<VoronoiArrangement::Face_const_handle>(&obj)) {
-			auto& fh = *fhp;
+		if (std::holds_alternative<VoronoiArrangement::Face_const_handle>(obj)) {
+			auto fh = std::get<VoronoiArrangement::Face_const_handle>(obj);
 			auto fhm = arr.non_const_handle(fh);
 			fhm->set_data(vit->point());
 		}
@@ -155,8 +157,8 @@ voronoiMoveToCentroid(const RegionArrangement& domain, const Landmarks_pl<Region
 		}
 		auto centroid = CGAL::ORIGIN + total / totalWeight;
 		auto obj = pl.locate(centroid);
-		if (auto fhp = boost::get<RegionArrangement::Face_const_handle>(&obj)) {
-			auto& fh = *fhp;
+		if (std::holds_alternative<RegionArrangement::Face_const_handle>(obj)) {
+			auto fh = std::get<RegionArrangement::Face_const_handle>(obj);
 			if (!fh->data().empty()) {
 				*out++ = centroid;
 				totalDistance += sqrt(squared_distance(approximate(site), approximate(centroid)));
@@ -486,8 +488,8 @@ class Sampler {
 	WeightedPoint assignWeightToPoint(const Point<Exact>& pt, const RegionWeight& regionWeight, bool unitWeight = false) {
         auto pl = getPL();
 		auto obj = pl->locate(pt);
-		if (auto fhp = boost::get<RegionArrangement::Face_const_handle>(&obj)) {
-			auto fh = *fhp;
+		if (std::holds_alternative<RegionArrangement::Face_const_handle>(obj)) {
+			auto fh = std::get<RegionArrangement::Face_const_handle>(obj);
 			double w;
 			auto region = fh->data();
 			if (regionWeight.contains(region)) {
@@ -563,8 +565,8 @@ class Sampler {
 					bool found = false;
 					for (auto& pl : getLandmassPls()) {
 						auto obj = pl->locate(pt);
-						if (auto fhp = boost::get<RegionArrangement::Face_const_handle>(&obj)) {
-							auto fh = *fhp;
+						if (std::holds_alternative<RegionArrangement::Face_const_handle>(obj)) {
+							auto fh = std::get<RegionArrangement::Face_const_handle>(obj);
 							if (!fh->data().empty()) {
 								found = true;
 							}
@@ -606,8 +608,8 @@ class Sampler {
 					for (auto& pt : points) {
 						bool found = false;
 						auto obj = pl->locate(pt);
-						if (auto fhp = boost::get<RegionArrangement::Face_const_handle>(&obj)) {
-							auto fh = *fhp;
+						if (std::holds_alternative<RegionArrangement::Face_const_handle>(obj)) {
+							auto fh = std::get<RegionArrangement::Face_const_handle>(obj);
 							if (!fh->data().empty()) {
 								found = true;
 							}
@@ -653,8 +655,8 @@ class Sampler {
 			for (int j = 0; j < stepsY; ++j) {
 				Point<Exact> pt = bl + Vector<Exact>(xOff + cellSize / 2 + i * cellSize, yOff + cellSize / 2 + j * cellSize);
 				auto obj = pl->locate(pt);
-				if (auto fhp = boost::get<RegionArrangement::Face_const_handle>(&obj)) {
-					auto fh = *fhp;
+				if (std::holds_alternative<RegionArrangement::Face_const_handle>(obj)) {
+					auto fh = std::get<RegionArrangement::Face_const_handle>(obj);
 					if (!fh->data().empty()) {
 						*out++ = pt;
 					}
@@ -732,8 +734,8 @@ class Sampler {
 				double shift = odd ? 0 : -0.5;
 				Point<Exact> pt = bl + Vector<Exact>(xOff + cellSize / 2 + (i + shift) * cellSize, yOff + cellSizeY / 2 + j * cellSizeY);
 				auto obj = pl->locate(pt);
-				if (auto fhp = boost::get<RegionArrangement::Face_const_handle>(&obj)) {
-					auto fh = *fhp;
+				if (std::holds_alternative<RegionArrangement::Face_const_handle>(obj)) {
+					auto fh = std::get<RegionArrangement::Face_const_handle>(obj);
 					if (!fh->data().empty()) {
 						*out++ = pt;
 					}

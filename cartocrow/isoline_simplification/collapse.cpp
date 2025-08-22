@@ -20,6 +20,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "collapse.h"
 
 #include <utility>
+#include <variant>
 #include "ipeshape.h"
 #include "ipegeo.h"
 #include "ipe_bezier_wrapper.h"
@@ -362,15 +363,15 @@ Point<K> min_sym_diff_point(Point<K> s, Point<K> t, Point<K> u, Point<K> v, Line
 	if (svl.oriented_side(t) == svl.oriented_side(u)) {
 		if (squared_distance(svl, t) > squared_distance(svl, u)) {
 			auto i = *intersection(l, stl);
-			if (i.type() == typeid(Point<K>)) {
-				new_vertex = *boost::get<Point<K>>(&i);
+			if (std::holds_alternative<Point<K>>(i)) {
+				new_vertex = std::get<Point<K>>(i);
 			} else {
 				new_vertex = midpoint(s, v);
 			}
 		} else {
 			auto i = *intersection(l, uvl);
-			if (i.type() == typeid(Point<K>)) {
-				new_vertex = *boost::get<Point<K>>(&i);
+			if (std::holds_alternative<Point<K>>(i)) {
+				new_vertex = std::get<Point<K>>(i);
 			} else {
 				new_vertex = midpoint(s, v);
 			}
@@ -378,15 +379,15 @@ Point<K> min_sym_diff_point(Point<K> s, Point<K> t, Point<K> u, Point<K> v, Line
 	} else {
 		if (svl.oriented_side(t) == svl.oriented_side(l.point())) {
 			auto i = *intersection(l, stl);
-			if (i.type() == typeid(Point<K>)) {
-				new_vertex = *boost::get<Point<K>>(&i);
+			if (std::holds_alternative<Point<K>>(i)) {
+				new_vertex = std::get<Point<K>>(i);
 			} else {
 				new_vertex = midpoint(s, v);
 			}
 		} else {
 			auto i = *intersection(l, uvl);
-			if (i.type() == typeid(Point<K>)) {
-				new_vertex = *boost::get<Point<K>>(&i);
+			if (std::holds_alternative<Point<K>>(i)) {
+				new_vertex = std::get<Point<K>>(i);
 			} else {
 				new_vertex = midpoint(s, v);
 			}
@@ -558,7 +559,7 @@ HarmonyLineCollapse::HarmonyLineCollapse(int samples): m_samples(samples) {}
 std::pair<Point<K>, bool> HarmonyLineCollapse::new_vertex(const Line<K>& harmony_line, const Point<K>& s, const Point<K>& t, const Point<K>& u, const Point<K>& v) {
 	auto area_line = area_preservation_line(s, t, u, v);
 	auto inter = *intersection(harmony_line, area_line);
-	Point<K> new_vertex = *boost::get<Point<K>>(&inter);
+	Point<K> new_vertex = std::get<Point<K>>(inter);
 
 	std::optional<Point<K>> first;
 	std::optional<Point<K>> last;
@@ -697,59 +698,73 @@ double symmetric_difference(const Point<K>& s, const Point<K>& t, const Point<K>
 	double cost = 0.0;
 
 	if (st_pv.has_value()) {
-		if (auto st_pv_pt = boost::get<Point<K>>(&*st_pv)) {
-			cost += area({s, p, *st_pv_pt});
+		if (std::holds_alternative<Point<K>>(*st_pv)) {
+			auto st_pv_pt = std::get<Point<K>>(*st_pv);
+			cost += area({s, p, st_pv_pt});
 		}
 		if (tu_pv.has_value()) {
-			if (auto tu_pv_pt = boost::get<Point<K>>(&*tu_pv)) {
-				cost += area({*tu_pv_pt, u, v});
-				if (auto st_pv_pt = boost::get<Point<K>>(&*st_pv)) {
-					cost += area({*st_pv_pt, t, *tu_pv_pt});
+			if (std::holds_alternative<Point<K>>(*tu_pv)) {
+				auto tu_pv_pt = std::get<Point<K>>(*tu_pv);
+				cost += area({tu_pv_pt, u, v});
+				if (std::holds_alternative<Point<K>>(*st_pv)) {
+					auto st_pv_pt = std::get<Point<K>>(*st_pv);
+					cost += area({st_pv_pt, t, tu_pv_pt});
 				}
 			}
 		} else {
-			if (auto st_pv_pt = boost::get<Point<K>>(&*st_pv)) {
-				cost += area({*st_pv_pt, t, u, v});
+			if (std::holds_alternative<Point<K>>(*st_pv)) {
+				auto st_pv_pt = std::get<Point<K>>(*st_pv);
+				cost += area({st_pv_pt, t, u, v});
 			}
 		}
 	} else if (uv_sp.has_value()) {
-		if (auto uv_sp_pt = boost::get<Point<K>>(&*uv_sp)) {
-			cost += area({*uv_sp_pt, p, v});
+		if (std::holds_alternative<Point<K>>(*uv_sp)) {
+			auto uv_sp_pt = std::get<Point<K>>(*uv_sp);
+			cost += area({uv_sp_pt, p, v});
 		}
 		if (tu_sp.has_value()) {
-			if (auto tu_sp_pt = boost::get<Point<K>>(&*tu_sp)) {
-				cost += area({s, t, *tu_sp_pt});
-				if (auto uv_sp_pt = boost::get<Point<K>>(&*uv_sp)) {
-					cost += area({*tu_sp_pt, u, *uv_sp_pt});
+			if (std::holds_alternative<Point<K>>(*tu_sp)) {
+				auto tu_sp_pt = std::get<Point<K>>(*tu_sp);
+				cost += area({s, t, tu_sp_pt});
+				if (std::holds_alternative<Point<K>>(*uv_sp)) {
+					auto uv_sp_pt = std::get<Point<K>>(*uv_sp);
+					cost += area({tu_sp_pt, u, uv_sp_pt});
 				}
 			}
 		} else {
-			if (auto uv_sp_pt = boost::get<Point<K>>(&*uv_sp)) {
-				cost += area({s, t, u, *uv_sp_pt});
+			if (std::holds_alternative<Point<K>>(*uv_sp)) {
+				auto uv_sp_pt = std::get<Point<K>>(*uv_sp);
+				cost += area({s, t, u, uv_sp_pt});
 			}
 		}
 	} else if (!tu_sp.has_value() && !tu_pv.has_value()) {
 		cost += area({s, t, u, v, p});
 	} else if (!tu_sp.has_value()) {
-		if (auto tu_pv_pt = boost::get<Point<K>>(&*tu_pv)) {
-			cost += area({p, s, t, *tu_pv_pt});
-			cost += area({*tu_pv_pt, u, v});
+		if (std::holds_alternative<Point<K>>(*tu_pv)) {
+			auto tu_pv_pt = std::get<Point<K>>(*tu_pv);
+			cost += area({p, s, t, tu_pv_pt});
+			cost += area({tu_pv_pt, u, v});
 		}
 	} else if (!tu_pv.has_value()) {
-		if (auto tu_sp_pt = boost::get<Point<K>>(&*tu_sp)) {
-			cost += area({s, t, *tu_sp_pt});
-			cost += area({*tu_sp_pt, u, v, p});
+		if (std::holds_alternative<Point<K>>(*tu_sp)) {
+			auto tu_sp_pt = std::get<Point<K>>(*tu_sp);
+			cost += area({s, t, tu_sp_pt});
+			cost += area({tu_sp_pt, u, v, p});
 		}
 	} else {
-		if (auto tu_sp_pt = boost::get<Point<K>>(&*tu_sp)) {
-			cost += area({s, t, *tu_sp_pt});
+		if (std::holds_alternative<Point<K>>(*tu_sp)) {
+			auto tu_sp_pt = std::get<Point<K>>(*tu_sp);
+			cost += area({s, t, tu_sp_pt});
 		}
-		if (auto tu_pv_pt = boost::get<Point<K>>(&*tu_pv)) {
-			cost += area({*tu_pv_pt, u, v});
+		if (std::holds_alternative<Point<K>>(*tu_pv)) {
+			auto tu_pv_pt = std::get<Point<K>>(*tu_pv);
+			cost += area({tu_pv_pt, u, v});
 		}
-		if (auto tu_sp_pt = boost::get<Point<K>>(&*tu_sp)) {
-			if (auto tu_pv_pt = boost::get<Point<K>>(&*tu_pv)) {
-				cost += area({*tu_sp_pt, p, *tu_pv_pt});
+		if (std::holds_alternative<Point<K>>(*tu_sp)) {
+			auto tu_sp_pt = std::get<Point<K>>(*tu_sp);
+			if (std::holds_alternative<Point<K>>(*tu_pv)) {
+				auto tu_pv_pt = std::get<Point<K>>(*tu_pv);
+				cost += area({tu_sp_pt, p, tu_pv_pt});
 			}
 		}
 	}

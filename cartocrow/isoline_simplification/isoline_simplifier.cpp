@@ -30,6 +30,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <CGAL/Polyline_simplification_2/simplify.h>
 
 #include <utility>
+#include <variant>
 #include "ipe_bezier_wrapper.h"
 
 namespace cartocrow::isoline_simplification {
@@ -976,8 +977,8 @@ bool IsolineSimplifier::check_ladder_intersections_naive(const SlopeLadder& ladd
 				const auto pv = Segment<K>(p, v);
 				auto spi = intersection(sp, edge);
 				auto pvi = intersection(pv, edge);
-				if (spi.has_value() && !(spi->type() == typeid(Point<K>) && boost::get<Point<K>>(*spi) == s) ||
-				    pvi.has_value() && !(pvi->type() == typeid(Point<K>) && boost::get<Point<K>>(*pvi) == v))
+				if (spi.has_value() && !(std::holds_alternative<Point<K>>(*spi) && std::get<Point<K>>(*spi) == s) ||
+					pvi.has_value() && !(std::holds_alternative<Point<K>>(*pvi) && std::get<Point<K>>(*pvi) == v))
 					return true;
 			}
 		}
@@ -988,9 +989,9 @@ bool IsolineSimplifier::check_ladder_intersections_naive(const SlopeLadder& ladd
 			if (e1 == e2) continue;
 			auto i = intersection(e1, e2);
 			if (i.has_value()) {
-				if (i->type() != typeid(Point<K>))
+				if (!std::holds_alternative<Point<K>>(*i))
 					return true;
-				auto p = boost::get<Point<K>>(*i);
+				auto p = std::get<Point<K>>(*i);
 				if (p != e1.source() && p != e1.target())
 					return true;
 			}
@@ -1062,9 +1063,9 @@ IntersectionResult IsolineSimplifier::check_ladder_intersections_Voronoi(const S
 			if (e1 == e2) continue;
 			auto i = intersection(e1, e2);
 			if (i.has_value()) {
-				if (i->type() != typeid(Point<K>))
+				if (!std::holds_alternative<Point<K>>(*i))
 					return std::monostate();
-				auto p = boost::get<Point<K>>(*i);
+				auto p = std::get<Point<K>>(*i);
 				if (p != e1.source() && p != e1.target())
 					return std::monostate();
 			}
@@ -1094,8 +1095,9 @@ std::vector<Point<K>> intersections_primal(Segment<K> seg, const CGAL::Object& o
 		auto inters = CGAL::intersection(s, seg);
 		if (inters.has_value()) {
 			auto v = *inters;
-			if (auto pp = boost::get<Point<K>>(&v)) {
-				intersections.push_back(*pp);
+			if (std::holds_alternative<Point<K>>(v)) {
+				auto pp = std::get<Point<K>>(v);
+				intersections.push_back(pp);
 			}
 		}
 		return intersections;
@@ -1103,8 +1105,9 @@ std::vector<Point<K>> intersections_primal(Segment<K> seg, const CGAL::Object& o
 		auto inters = CGAL::intersection(l, seg);
 		if (inters.has_value()) {
 			auto v = *inters;
-			if (auto pp = boost::get<Point<K>>(&v)) {
-				intersections.push_back(*pp);
+			if (std::holds_alternative<Point<K>>(v)) {
+				auto pp = std::get<Point<K>>(v);
+				intersections.push_back(pp);
 			}
 		}
 		return intersections;
@@ -1112,8 +1115,9 @@ std::vector<Point<K>> intersections_primal(Segment<K> seg, const CGAL::Object& o
 		auto inters = CGAL::intersection(r, seg);
 		if (inters.has_value()) {
 			auto v = *inters;
-			if (auto pp = boost::get<Point<K>>(&v)) {
-				intersections.push_back(*pp);
+			if (std::holds_alternative<Point<K>>(v)) {
+				auto pp = std::get<Point<K>>(v);
+				intersections.push_back(pp);
 			}
 		}
 		return intersections;

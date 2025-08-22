@@ -52,9 +52,10 @@ template <class K> class Halfplane {
 		                                           Point<Inexact>(rect.xmax(), rect.ymax())));
 
 		if (result) {
-			if (const Segment<Inexact>* s = boost::get<Segment<Inexact>>(&*result)) {
-				poly.push_back(s->source());
-				poly.push_back(s->target());
+			if (std::holds_alternative<Segment<Inexact>>(*result)) {
+				const Segment<Inexact> s = std::get<Segment<Inexact>>(*result);
+				poly.push_back(s.source());
+				poly.push_back(s.target());
 
 				auto boundsSide = [&rect](const Point<Inexact>& p) {
 					if (abs(p.y() - rect.ymax()) < M_EPSILON) {
@@ -71,8 +72,8 @@ template <class K> class Halfplane {
 					}
 				};
 
-				auto sourceSide = boundsSide(s->source());
-				auto targetSide = boundsSide(s->target());
+				auto sourceSide = boundsSide(s.source());
+				auto targetSide = boundsSide(s.target());
 				auto current = targetSide;
 				while (current != sourceSide) {
 					auto next = next_side(current);
@@ -91,9 +92,10 @@ template <class K> class Halfplane {
 		                                           Point<Exact>(rect.xmax(), rect.ymax())));
 
 		if (result) {
-			if (const Segment<Exact>* s = boost::get<Segment<Exact>>(&*result)) {
-				poly.push_back(s->source());
-				poly.push_back(s->target());
+			if (std::holds_alternative<Segment<Exact>>(*result)) {
+				const Segment<Exact> s = std::get<Segment<Exact>>(*result);
+				poly.push_back(s.source());
+				poly.push_back(s.target());
 
 				auto boundsSide = [&rect](const Point<Exact>& p) {
 					if (p.y() == rect.ymax()) {
@@ -110,8 +112,8 @@ template <class K> class Halfplane {
 					}
 				};
 
-				auto sourceSide = boundsSide(s->source());
-				auto targetSide = boundsSide(s->target());
+				auto sourceSide = boundsSide(s.source());
+				auto targetSide = boundsSide(s.target());
 				auto current = targetSide;
 				while (current != sourceSide) {
 					auto next = next_side(current);

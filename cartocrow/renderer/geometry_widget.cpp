@@ -585,10 +585,11 @@ void GeometryWidget::draw(const Ray<Inexact>& r) {
 	Box bounds = inverseConvertBox(rect());
 	auto result = intersection(r, Rectangle<Inexact>(Point<Inexact>(bounds.xmin(), bounds.ymin()), Point<Inexact>(bounds.xmax(), bounds.ymax())));
 	if (result) {
-		if (const Segment<Inexact>* s = boost::get<Segment<Inexact>>(&*result)) {
+		if (std::holds_alternative<Segment<Inexact>>(*result)) {
+			const Segment<Inexact> s = std::get<Segment<Inexact>>(*result);
 			int oldMode = m_style.m_mode;
 			setMode(oldMode & ~vertices);
-			GeometryRenderer::draw(*s);
+			GeometryRenderer::draw(s);
 			setMode(oldMode);
 		}
 		if (m_style.m_mode & vertices) {
@@ -603,10 +604,11 @@ void GeometryWidget::draw(const Line<Inexact>& l) {
 	    intersection(l, CGAL::Iso_rectangle_2<Inexact>(Point<Inexact>(bounds.xmin(), bounds.ymin()),
 	                                                   Point<Inexact>(bounds.xmax(), bounds.ymax())));
 	if (result) {
-		if (const Segment<Inexact>* s = boost::get<Segment<Inexact>>(&*result)) {
+		if (std::holds_alternative<Segment<Inexact>>(*result)) {
+			const Segment<Inexact> s = std::get<Segment<Inexact>>(*result);
 			int oldMode = m_style.m_mode;
 			setMode(oldMode & ~vertices);
-			GeometryRenderer::draw(*s);
+			GeometryRenderer::draw(s);
 			setMode(oldMode);
 		}
 	}
@@ -619,7 +621,8 @@ void GeometryWidget::draw(const Halfplane<Inexact>& h) {
 		intersection(l, CGAL::Iso_rectangle_2<Inexact>(Point<Inexact>(bounds.xmin(), bounds.ymin()),
 													   Point<Inexact>(bounds.xmax(), bounds.ymax())));
 	if (result) {
-		if (const Segment<Inexact>* s = boost::get<Segment<Inexact>>(&*result)) {
+		if (std::holds_alternative<Segment<Inexact>>(*result)) {
+			const Segment<Inexact> s = std::get<Segment<Inexact>>(*result);
 			int oldMode = m_style.m_mode;
 			if (oldMode & fill) {
 				// Draw filled half-plane
@@ -629,7 +632,7 @@ void GeometryWidget::draw(const Halfplane<Inexact>& h) {
 				GeometryRenderer::draw(poly);
 			}
 			setMode(oldMode & ~vertices);
-			GeometryRenderer::draw(*s);
+			GeometryRenderer::draw(s);
 			setMode(oldMode);
 		}
 	}

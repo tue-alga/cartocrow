@@ -27,7 +27,7 @@ CartoCrow depends on the following build tools:
 
 And it depends on the following libraries:
 
-* CGAL (5.6) – for implementations of computational geometry algorithms we need
+* CGAL (6.0.1) – for implementations of computational geometry algorithms we need
 * glog (0.5.0, 0.6.0) – for logging
 * ipelib (7.2.26) – for [Ipe](https://ipe.otfried.org) input and SVG/Ipe output
 * nlohmann-json (3.10.5, 3.11.2) – for JSON parsing
@@ -133,13 +133,15 @@ The remaining dependencies need to be built manually.
 <details>
   <summary><b>Installing dependencies on Linux</b></summary>
 
-On Ubuntu, most dependencies can be obtained from the repository:
+On Ubuntu 25.04, most dependencies can be obtained from the repository:
 
 ```sh
 sudo apt install build-essential cmake
 sudo apt install libcgal-dev nlohmann-json3-dev qtbase5-dev
 sudo apt install libpq-dev gdal-bin libgdal-dev
 ```
+
+(Note: Ubuntu 24.10 and earlier have CGAL 5.6, which does not work.)
 
 The remaining dependencies need to be built manually.
 
@@ -210,5 +212,5 @@ build/frontend/cartocrow data/europe-population-necklace.json output.svg data/eu
 
 ## License
 
-Copyright (c) 2019-2023 Netherlands eScience Center and TU Eindhoven
+Copyright (c) 2019-2025 Netherlands eScience Center and TU Eindhoven
 Licensed under the GPLv3.0 license. See LICENSE for details.
