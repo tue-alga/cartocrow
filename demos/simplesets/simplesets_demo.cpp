@@ -131,7 +131,7 @@ SimpleSetsDemo::SimpleSetsDemo() {
 	    computePartitions();
 	    computeDrawing(coverSlider->value());
 	    fitToScreen();
-		fileSelector->setText(QString::fromStdString(filePath.filename()));
+		fileSelector->setText(QString::fromStdString(filePath.filename().string()));
 	});
 	connect(coverSlider, &DoubleSlider::valueChanged, [this, coverSlider] {
 		double value = coverSlider->value();

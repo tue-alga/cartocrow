@@ -1,7 +1,7 @@
 #ifndef CARTOCROW_GDAL_CONVERSION_H
 #define CARTOCROW_GDAL_CONVERSION_H
 
-#include <gdal/ogrsf_frmts.h>
+#include <ogrsf_frmts.h>
 #include "cartocrow/core/core.h"
 
 namespace cartocrow {
