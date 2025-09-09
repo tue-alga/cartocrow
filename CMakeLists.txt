@@ -44,10 +44,16 @@ link_libraries(${CGAL_LIBRARIES})
 find_package(GMP REQUIRED)
 
 find_package(GDAL CONFIG REQUIRED)
+include_directories(${GDAL_INCLUDE_DIR})
+
 find_package(Qt5Widgets REQUIRED)
 set(CMAKE_AUTOMOC ON)
 find_package(glog REQUIRED)
+
 find_package(Ipelib REQUIRED)
+include_directories(${Ipelib_INCLUDE_DIR})
+
+include_directories(${CavalierContours_INCLUDE_DIR})
 
 # ## SOURCES ###
 
