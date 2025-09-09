@@ -1,0 +1,43 @@
+{
+  "version": 2,
+  "configurePresets": [
+    {
+      "name": "CommonLocalPaths",
+	  "hidden": true,
+      "cacheVariables": {
+        "Ipelib_INCLUDE_DIR": {
+          "value": "<path to ipe-msvc/src/include>",
+          "type": "PATH"
+        },
+        "CavalierContours_INCLUDE_DIR": {
+          "value": "<path to CavalierContours/include>",
+          "type": "PATH"
+        }
+      },
+      "environment": {
+        "VCPKG_ROOT": "<path to /vcpkg>"
+      }
+    },
+    {
+      "name": "Debug",
+      "inherits": ["_x64-Debug","CommonLocalPaths"],
+      "cacheVariables": {
+        "Ipelib_LIBRARY": "<path to x64 Debug compiled ipe-msvc.lib>"       
+      }
+    },
+    {
+      "name": "Release",
+      "inherits": ["_x64-Release","CommonLocalPaths"],
+      "cacheVariables": {
+        "Ipelib_LIBRARY": "<path to x64 Release compiled ipe-msvc.lib>"       
+      }
+    },
+    {
+      "name": "ReleaseWithDebug",
+      "inherits": ["_x64-RelWithDebInfo","CommonLocalPaths"],
+      "cacheVariables": {
+        "Ipelib_LIBRARY": "<path to x64 Release compiled ipe-msvc.lib>"       
+      },
+    }
+  ]
+}
