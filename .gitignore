@@ -9,7 +9,7 @@ doc/tags/
 *.code-workspace
 compile_commands.json
 out/
-CMakeSettings.json
+CMakeUserPresets.json
 .idea/
 cmake-build-debug/
 cmake-build-release/

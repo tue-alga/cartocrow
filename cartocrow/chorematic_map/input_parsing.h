@@ -1,7 +1,7 @@
 #ifndef CARTOCROW_INPUT_PARSING_H
 #define CARTOCROW_INPUT_PARSING_H
 
-#include <gdal/ogrsf_frmts.h>
+#include <ogrsf_frmts.h>
 
 #include <filesystem>
 

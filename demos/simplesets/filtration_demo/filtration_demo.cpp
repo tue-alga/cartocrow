@@ -96,7 +96,7 @@ FiltrationDemo::FiltrationDemo() {
 		std::filesystem::path filePath = QFileDialog::getOpenFileName(this, tr("Select SimpleSets input"), startDir).toStdString();
 		if (filePath == "") return;
 		loadFile(filePath);
-		fileSelector->setText(QString::fromStdString(filePath.filename()));
+		fileSelector->setText(QString::fromStdString(filePath.filename().string()));
 		emit coverSlider->valueChanged(coverSlider->value());
 	});
 	connect(discreteExport, &QPushButton::clicked, [this, diskPainting]() {

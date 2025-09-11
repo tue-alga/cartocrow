@@ -8,7 +8,7 @@ regionDataMapFromGPKG(const std::filesystem::path& path, const std::string& regi
     GDALAllRegister();
     GDALDataset *poDS;
 
-    poDS = (GDALDataset*) GDALOpenEx( path.c_str(), GDAL_OF_VECTOR, nullptr, nullptr, nullptr );
+    poDS = (GDALDataset*) GDALOpenEx( path.string().c_str(), GDAL_OF_VECTOR, nullptr, nullptr, nullptr );
     if( poDS == nullptr )
     {
         printf( "Open failed.\n" );
@@ -63,7 +63,7 @@ std::shared_ptr<RegionMap> regionMapFromGPKG(const std::filesystem::path& path,
     GDALAllRegister();
     GDALDataset       *poDS;
 
-    poDS = (GDALDataset*) GDALOpenEx( path.c_str(), GDAL_OF_VECTOR, nullptr, nullptr, nullptr );
+    poDS = (GDALDataset*) GDALOpenEx( path.string().c_str(), GDAL_OF_VECTOR, nullptr, nullptr, nullptr );
     if( poDS == nullptr )
     {
         printf( "Open failed.\n" );
