@@ -26,7 +26,6 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 06-01-2020
 #include <CGAL/Arr_linear_traits_2.h>
 #include <CGAL/Envelope_diagram_1.h>
 #include <CGAL/envelope_2.h>
-#include <glog/logging.h>
 
 namespace cartocrow::necklace_map {
 namespace detail {
@@ -48,7 +47,7 @@ ComputeScaleFactorFixedOrder::ComputeScaleFactorFixedOrder(Necklace& necklace,
 	// Add a node to the scale factor computation functor per element.
 	nodes_.reserve(2 * necklace.beads.size());
 	for (const std::shared_ptr<Bead>& bead : necklace.beads) {
-		CHECK_GT(bead->radius_base, 0);
+		assert(bead->radius_base > 0);
 		// Ignore beads without a feasible interval.
 
 		// Compute the covering radius.
@@ -76,7 +75,7 @@ ComputeScaleFactorFixedOrder::ComputeScaleFactorFixedOrder(Necklace& necklace,
 	// Each node is duplicated with an offset to its interval to force cyclic validity.
 	const NodeSet::iterator end = nodes_.end();
 	for (NodeSet::iterator node_iter = nodes_.begin(); node_iter != end; ++node_iter) {
-		CHECK_NOTNULL(node_iter->bead);
+		assert(node_iter->bead != nullptr);
 		nodes_.emplace_back(node_iter->bead);
 
 		nodes_.back().valid->from() += M_2xPI;
@@ -113,7 +112,7 @@ inline size_t ComputeScaleFactorFixedOrder::size() const {
 
 // Buffer between i and j.
 inline Number<Inexact> ComputeScaleFactorFixedOrder::buffer(const size_t i, const size_t j) const {
-	CHECK_LE(i, j);
+	assert(i <= j);
 	const ptrdiff_t num_buffers = j - i;
 	return num_buffers * buffer_rad_;
 }
@@ -163,7 +162,7 @@ Number<Inexact> ComputeScaleFactorFixedOrder::CorrectScaleFactor(const Number<In
 Number<Inexact> ComputeScaleFactorFixedOrder::OptimizeSubProblem(const size_t I, const size_t J,
                                                                  Number<Inexact>& max_buffer_rad) const {
 	const size_t size = J - I + 1;
-	CHECK_GE(size, 1);
+	assert(size >= 1);
 	switch (size) {
 	// Return solutions to minimal problems.
 	case 0:
@@ -199,7 +198,7 @@ Number<Inexact> ComputeScaleFactorFixedOrder::OptimizeSubProblem(const size_t I,
 		for (size_t i = I; i <= k; ++i) {
 			const Number<Inexact> x = 1 / (2 * r(i, k) - r(i));
 			const Number<Inexact> y = (a(i) + buffer(i, k)) * x;
-			CHECK_GE(x, 0);
+			assert(x >= 0);
 
 			const Line<Inexact> line(x, -1, -y);
 			lines.push_back(Monotone_line(line, i));
@@ -207,7 +206,7 @@ Number<Inexact> ComputeScaleFactorFixedOrder::OptimizeSubProblem(const size_t I,
 		for (size_t j = k + 1; j <= J; ++j) {
 			const Number<Inexact> x = -1 / (2 * r(k + 1, j) - r(j));
 			const Number<Inexact> y = (b(j) - buffer(k, j)) * x;
-			CHECK_LE(x, 0);
+			assert(x <= 0);
 
 			const Line<Inexact> line(x, -1, -y);
 			lines.push_back(Monotone_line(line, j));
@@ -234,7 +233,7 @@ Number<Inexact> ComputeScaleFactorFixedOrder::OptimizeSubProblem(const size_t I,
 				break;
 			}
 		}
-		CHECK_GE(rho, 0);
+		assert(rho >= 0);
 
 		//      // Alternatively, we could compute all O(n^2) combinations of i and j.
 		//      Number<Inexact> rho__ = -1;
@@ -248,7 +247,7 @@ Number<Inexact> ComputeScaleFactorFixedOrder::OptimizeSubProblem(const size_t I,
 		//            rho__ = rho_ij;
 		//        }
 		//      }
-		//      CHECK_GE(rho__, 0);
+		//      assert(rho__ >= 0);
 		//      CHECK_NEAR(rho, rho__, 0.005);
 
 		// The scaling factor is the minimum or rho_1, rho_2, and rho (ignoring negative values).

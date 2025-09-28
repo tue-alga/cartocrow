@@ -59,9 +59,7 @@ set(HEADERS
 )
 
 add_library(necklace_map ${SOURCES})
-target_link_libraries(necklace_map
-	PRIVATE glog::glog
-)
+target_link_libraries(necklace_map)
 
 cartocrow_install_module(necklace_map)
 install(FILES ${HEADERS} DESTINATION ${CARTOCROW_INSTALL_DIR}/necklace_map)

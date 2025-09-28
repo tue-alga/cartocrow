@@ -14,7 +14,6 @@ target_link_libraries(
     renderer
     CGAL::CGAL
     Qt5::Widgets
-    glog::glog
 )
 
 install(TARGETS optimization_demo DESTINATION ${INSTALL_BINARY_DIR})

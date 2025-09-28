@@ -8,7 +8,6 @@ set(HEADERS
 add_library(simplification ${SOURCES})
 target_link_libraries(simplification
 	PUBLIC core
-	PRIVATE glog::glog
 )
 
 cartocrow_install_module(simplification)

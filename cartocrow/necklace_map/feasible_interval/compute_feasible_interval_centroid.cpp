@@ -22,8 +22,6 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 03-03-2020
 
 #include "compute_feasible_interval_centroid.h"
 
-#include <glog/logging.h>
-
 #include "../../core/centroid.h"
 #include "../necklace_interval.h"
 
@@ -54,8 +52,8 @@ CircularRange ComputeFeasibleCentroidInterval::operator()(const PolygonSet<Inexa
 ComputeFeasibleCentroidInterval::ComputeFeasibleCentroidInterval(const Parameters& parameters)
     : ComputeFeasibleInterval(parameters),
       half_length_rad_(0.5 * parameters.centroid_interval_length_rad) {
-	CHECK_GE(half_length_rad_, 0);
-	CHECK_LT(half_length_rad_, M_PI);
+	assert(half_length_rad_ >= 0);
+	assert(half_length_rad_ < M_PI);
 }
 
 } // namespace cartocrow::necklace_map

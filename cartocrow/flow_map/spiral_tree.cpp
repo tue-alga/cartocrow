@@ -106,8 +106,8 @@ Point<Inexact> SpiralTree::rootPosition() const {
 }
 
 /*void SpiralTree::setRestrictingAngle(const Number<Inexact>& restricting_angle) {
-	CHECK_GT(restricting_angle, 0);
-	CHECK_LT(restricting_angle, M_PI_2);
+	assert(restricting_angle > 0);
+	assert(restricting_angle < M_PI_2);
 	m_restricting_angle = restricting_angle;
 	clean();
 }*/

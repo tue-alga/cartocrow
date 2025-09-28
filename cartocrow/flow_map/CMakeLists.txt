@@ -43,9 +43,6 @@ set(HEADERS
 )
 
 add_library(flow_map ${SOURCES})
-target_link_libraries(flow_map
-	PRIVATE glog::glog
-)
 
 cartocrow_install_module(flow_map)
 install(FILES ${HEADERS} DESTINATION ${CARTOCROW_INSTALL_DIR}/flow_map)

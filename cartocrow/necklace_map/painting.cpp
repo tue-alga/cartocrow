@@ -83,7 +83,7 @@ void Painting::paintConnectors(renderer::GeometryRenderer& renderer) const {
 		element->region.MakeSimple(simpleRegion);
 		Point centroid = ComputeCentroid()(simpleRegion);
 		Point bead_position;
-		CHECK(element->necklace->shape->IntersectRay(element->bead->angle_rad, bead_position));
+		assert(element->necklace->shape->IntersectRay(element->bead->angle_rad, bead_position));
 		renderer.draw(centroid);
 		renderer.draw(Segment(centroid, bead_position));
 	}*/

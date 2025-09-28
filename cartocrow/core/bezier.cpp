@@ -23,8 +23,6 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 08-09-2020
 
 #include <cmath>
 
-#include <glog/logging.h>
-
 namespace cartocrow {
 
 BezierCurve::BezierCurve(const Point<Inexact>& source, const Point<Inexact>& source_control,
@@ -82,8 +80,8 @@ Point<Inexact> BezierCurve::target() const {
  * @return the point on the curve at t.
  */
 Point<Inexact> BezierCurve::evaluate(const Number<Inexact>& t) const {
-	CHECK_GE(t, 0);
-	CHECK_LE(t, 1);
+	assert(t >= 0);
+	assert(t <= 1);
 	if (t == 0) {
 		return source();
 	} else if (t == 1) {
@@ -103,7 +101,7 @@ Point<Inexact> BezierCurve::evaluate(const Number<Inexact>& t) const {
 size_t BezierCurve::intersectRay(const Point<Inexact>& source, const Point<Inexact>& target,
                                  Point<Inexact>* intersections,
                                  Number<Inexact>* intersection_t) const {
-	CHECK_NE(source, target);
+	assert(source != target);
 
 	// Computing the intersection(s) of a line with a cubic Bezier curve,
 	// based on the Particle In Cell javascript implementation (https://www.particleincell.com/2013/cubic-line-intersection/),
@@ -123,7 +121,7 @@ size_t BezierCurve::intersectRay(const Point<Inexact>& source, const Point<Inexa
 		const Number<Inexact> f_1 = AB * m_coefficients[2]; // t
 		const Number<Inexact> f_0 = AB * m_coefficients[3] + C; // 1
 
-		CHECK_NE(f_3, 0);
+		assert(f_3 != 0);
 		const Number<Inexact> A = f_2 / f_3;
 		const Number<Inexact> B = f_1 / f_3;
 		const Number<Inexact> C = f_0 / f_3;
@@ -357,7 +355,7 @@ void BezierSpline::appendCurve(BezierCurve curve) {
  */
 void BezierSpline::appendCurve(const Point<Inexact>& source_control,
                                const Point<Inexact>& target_control, const Point<Inexact>& target) {
-	CHECK(!curves_.empty());
+	assert(!curves_.empty());
 	const Point<Inexact>& source = curves_.back().target();
 	appendCurve(source, source_control, target_control, target);
 }

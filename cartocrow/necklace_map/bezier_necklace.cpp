@@ -25,8 +25,6 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 25-02-2020
 #include <algorithm>
 #include <cmath>
 
-#include <glog/logging.h>
-
 namespace cartocrow {
 namespace necklace_map {
 namespace {
@@ -81,7 +79,7 @@ BezierNecklace::BezierNecklace(const BezierSpline spline, const Point<Inexact>& 
 
 	// Reorder the curves to start with the curve directly to the right of the kernel.
 	std::sort(spline_.curves().begin(), spline_.curves().end(), CompareBezierCurves(*this));
-	CHECK(spline_.isClosed());
+	assert(spline_.isClosed());
 }
 
 const Point<Inexact>& BezierNecklace::kernel() const {
@@ -146,13 +144,13 @@ Number<Inexact> BezierNecklace::computeCoveringRadiusRad(const Range& range,
 	const BezierSpline::CurveSet::const_iterator curve_iter_from =
 	    findCurveContainingAngle(range.from());
 	const BezierSpline::CurveSet::const_iterator curve_iter_to = findCurveContainingAngle(range.to());
-	CHECK(curve_iter_from != spline_.curves().end());
-	CHECK(curve_iter_to != spline_.curves().end());
+	assert(curve_iter_from != spline_.curves().end());
+	assert(curve_iter_to != spline_.curves().end());
 
 	Number<Inexact> t_from, t_to;
 	Point<Inexact> point;
-	CHECK(intersectRay(range.from(), curve_iter_from, point, t_from));
-	CHECK(intersectRay(range.to(), curve_iter_to, point, t_to));
+	assert(intersectRay(range.from(), curve_iter_from, point, t_from));
+	assert(intersectRay(range.to(), curve_iter_to, point, t_to));
 
 	const Number<Inexact> t_step = 0.25;
 	Number<Inexact> t = t_from;
@@ -163,8 +161,8 @@ Number<Inexact> BezierNecklace::computeCoveringRadiusRad(const Range& range,
 		const Number<Inexact> angle_rad = computeAngleRad(point);
 
 		Number<Inexact> angle_ccw, angle_cw;
-		CHECK(computeAngleAtDistanceRad(point, radius, curve_iter, t, angle_ccw));
-		CHECK(computeAngleAtDistanceRad(point, -radius, curve_iter, t, angle_cw));
+		assert(computeAngleAtDistanceRad(point, radius, curve_iter, t, angle_ccw));
+		assert(computeAngleAtDistanceRad(point, -radius, curve_iter, t, angle_cw));
 
 		const Number<Inexact> covering_radius_rad_ccw = CircularRange(angle_rad, angle_ccw).length();
 		const Number<Inexact> covering_radius_rad_cw = CircularRange(angle_cw, angle_rad).length();
@@ -201,13 +199,13 @@ Number<Inexact> BezierNecklace::computeDistanceToKernel(const Range& range) cons
 	const BezierSpline::CurveSet::const_iterator curve_iter_from =
 	    findCurveContainingAngle(range.from());
 	const BezierSpline::CurveSet::const_iterator curve_iter_to = findCurveContainingAngle(range.to());
-	CHECK(curve_iter_from != spline_.curves().end());
-	CHECK(curve_iter_to != spline_.curves().end());
+	assert(curve_iter_from != spline_.curves().end());
+	assert(curve_iter_to != spline_.curves().end());
 
 	Number<Inexact> t_from, t_to;
 	Point<Inexact> point;
-	CHECK(intersectRay(range.from(), curve_iter_from, point, t_from));
-	CHECK(intersectRay(range.to(), curve_iter_to, point, t_to));
+	assert(intersectRay(range.from(), curve_iter_from, point, t_from));
+	assert(intersectRay(range.to(), curve_iter_to, point, t_to));
 
 	const Number<Inexact> t_step = 0.25;
 	Number<Inexact> t = t_from;
@@ -239,7 +237,7 @@ Number<Inexact> BezierNecklace::computeAngleAtDistanceRad(const Number<Inexact>&
 	}
 
 	// Find the curve that contains the angle.
-	/*CHECK(checked_);*/
+	/*assert(checked_);*/
 	const BezierSpline::CurveSet::const_iterator curve_iter = findCurveContainingAngle(angle_rad);
 	if (curve_iter == spline_.curves().end()) {
 		return false;
@@ -248,7 +246,7 @@ Number<Inexact> BezierNecklace::computeAngleAtDistanceRad(const Number<Inexact>&
 	// Find the angle at the specified distance.
 	Point<Inexact> point;
 	Number<Inexact> t;
-	CHECK(intersectRay(angle_rad, curve_iter, point, t));
+	assert(intersectRay(angle_rad, curve_iter, point, t));
 	Number<Inexact> angle_out_rad;
 	const bool correct = computeAngleAtDistanceRad(point, distance, curve_iter, t, angle_out_rad);
 	return correct ? angle_out_rad : angle_rad;
@@ -282,7 +280,7 @@ bool BezierNecklace::intersectRay(const Number<Inexact>& angle_rad,
 
 	// Note that the set of Bezier curves must always be a star-shaped curve with the kernel as star point,
 	// meaning that a line through the kernel has at most one intersection with the curve.
-	CHECK_EQ(num_intersection, 1);
+	assert(num_intersection == 1);
 	intersection = intersections[0];
 	t = intersection_t[0];
 	return true;
@@ -343,7 +341,7 @@ Number<Inexact> BezierNecklace::searchCurveForAngleAtDistanceRad(
 		const Number<Inexact> t = 0.5 * (lower_bound + upper_bound);
 		const Point<Inexact> point_t = curve.evaluate(t);
 		const Number<Inexact> squared_distance_t = CGAL::squared_distance(point, point_t);
-		CHECK_LE(squared_distance_t, squared_distance_upper);
+		assert(squared_distance_t <= squared_distance_upper);
 
 		if (squared_distance_t < squared_distance) {
 			lower_bound = t;

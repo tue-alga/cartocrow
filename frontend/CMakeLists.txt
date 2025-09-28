@@ -19,7 +19,6 @@ target_link_libraries(
     chorematic_map
     renderer
     CGAL::CGAL
-    glog::glog
     nlohmann_json::nlohmann_json
 )
 

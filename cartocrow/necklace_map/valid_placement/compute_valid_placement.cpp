@@ -22,8 +22,6 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 07-01-2020
 
 #include "compute_valid_placement.h"
 
-#include <glog/logging.h>
-
 #include "../detail/cycle_node.h"
 #include "../necklace_interval.h"
 
@@ -94,7 +92,7 @@ void ComputeValidPlacement::operator()(const Number<Inexact>& scale_factor,
 	const NecklaceShape::Ptr& necklace_shape = necklace.shape;
 	for (const std::shared_ptr<Bead>& bead : necklace.beads) {
 		// Compute the scaled covering radius.
-		CHECK_NOTNULL(bead);
+		assert(bead != nullptr);
 		bead->angle_rad = scale_factor == 0 ? bead->feasible.from() : wrapAngle(bead->angle_rad);
 	}
 
@@ -120,7 +118,7 @@ void ComputeValidPlacement::operator()(const Number<Inexact>& scale_factor,
 	for (int cycle = 0; cycle < cycles; ++cycle) {
 		for (size_t index_bead = 0; index_bead < num_beads; ++index_bead) {
 			std::shared_ptr<Bead>& bead = necklace.beads[index_bead];
-			CHECK_NOTNULL(bead);
+			assert(bead != nullptr);
 
 			const size_t index_prev = (index_bead + num_beads - 1) % num_beads;
 			const size_t index_next = (index_bead + 1) % num_beads;

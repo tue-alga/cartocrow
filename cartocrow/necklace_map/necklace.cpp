@@ -29,7 +29,7 @@ Necklace::Necklace(std::shared_ptr<NecklaceShape> shape) : shape(std::move(shape
 void Necklace::sortBeads() {
 	// TODO
 	//for (const std::shared_ptr<Bead>& bead : beads) {
-	//CHECK_NOTNULL(bead);
+	//assert(bead != nullptr);
 	//}
 
 	std::sort(beads.begin(), beads.end(),

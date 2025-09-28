@@ -28,7 +28,6 @@ CartoCrow depends on the following build tools:
 And it depends on the following libraries:
 
 * CGAL (6.0.1) – for implementations of computational geometry algorithms we need
-* glog (0.5.0, 0.6.0) – for logging
 * ipelib (7.2.26) – for [Ipe](https://ipe.otfried.org) input and SVG/Ipe output
 * nlohmann-json (3.10.5, 3.11.2) – for JSON parsing
 * Qt (5.15) – for the interactive GUI
@@ -66,7 +65,6 @@ On Windows systems, we recommend using [vcpkg](https://github.com/microsoft/vcpk
   ```sh
   vcpkg install cgal:x64-windows
   vcpkg install qt5:x64-windows
-  vcpkg install glog:x64-windows
   vcpkg install nlohmann-json:x64-windows
   vcpkg install gdal
   ```
@@ -94,7 +92,7 @@ Most dependencies can be obtained from the repository:
 
 ```sh
 pacman -S base-devel mingw-w64-x86_64-toolchain mingw-w64-x86_64-cmake mingw-w64-x86_64-ninja
-pacman -S mingw-w64-x86_64-cgal mingw-w64-x86_64-glog mingw-w64-x86_64-qt5 mingw-w64-x86_64-nlohmann-json mingw-w64-x86_64-gdal
+pacman -S mingw-w64-x86_64-cgal mingw-w64-x86_64-qt5 mingw-w64-x86_64-nlohmann-json mingw-w64-x86_64-gdal
 ```
 
 The remaining dependencies need to be built manually.
@@ -144,16 +142,6 @@ sudo apt install libpq-dev gdal-bin libgdal-dev
 (Note: Ubuntu 24.10 and earlier have CGAL 5.6, which does not work.)
 
 The remaining dependencies need to be built manually.
-
-* **glog.** This dependency is built manually because Ubuntu's packaging apparently does not include the CMake files we need.
-
-  ```sh
-  git clone https://github.com/google/glog.git
-  cd glog
-  cmake -S . -B build
-  cmake --build build
-  sudo cmake --install build
-  ```
 
 * **Ipelib.** Download the [source archive](https://github.com/otfried/ipe/releases/download/v7.2.24/ipe-7.2.24-src.tar.gz), unpack it, and compile and install it using the instructions given in `install.txt`.
 

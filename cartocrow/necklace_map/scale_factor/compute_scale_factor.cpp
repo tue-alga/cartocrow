@@ -22,8 +22,6 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 28-11-2019
 
 #include "compute_scale_factor.h"
 
-#include <glog/logging.h>
-
 #include "compute_scale_factor_any_order.h"
 #include "compute_scale_factor_fixed_order.h"
 
@@ -42,8 +40,8 @@ std::shared_ptr<ComputeScaleFactor> ComputeScaleFactor::construct(const Paramete
 
 ComputeScaleFactor::ComputeScaleFactor(const Parameters& parameters)
     : buffer_rad_(parameters.buffer_rad), max_buffer_rad_(-1) {
-	CHECK_GE(buffer_rad_, 0);
-	CHECK_LE(buffer_rad_, M_PI);
+	assert(buffer_rad_ >= 0);
+	assert(buffer_rad_ <= M_PI);
 }
 
 Number<Inexact> ComputeScaleFactor::operator()(std::vector<Necklace>& necklaces) {
@@ -58,7 +56,7 @@ Number<Inexact> ComputeScaleFactor::operator()(std::vector<Necklace>& necklaces)
 		// Limit the initial bead radii.
 		Number<Inexact> rescale = 1;
 		for (const std::shared_ptr<Bead>& bead : necklace.beads) {
-			CHECK_GT(bead->radius_base, 0);
+			assert(bead->radius_base > 0);
 			const Number<Inexact> distance = necklace.shape->computeDistanceToKernel(bead->feasible);
 			const Number<Inexact> bead_rescale = bead->radius_base / distance;
 			rescale = std::max(rescale, bead_rescale);
