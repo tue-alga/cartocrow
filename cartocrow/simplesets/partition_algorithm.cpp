@@ -106,10 +106,9 @@ Number<Inexact> intersectionDelay(const std::vector<CatPoint>& points, const Pol
 std::vector<std::pair<Number<Inexact>, Partition>>
 partition(const std::vector<CatPoint>& points, const GeneralSettings& gs, const PartitionSettings& ps, Number<Inexact> maxTime) {
 	// Create initial partition consisting of single points
-	std::vector<std::shared_ptr<PolyPattern>> initialPatterns;
-	std::transform(points.begin(), points.end(), std::back_inserter(initialPatterns), [](const auto& pt)
+	Partition partition;
+	std::transform(points.begin(), points.end(), std::back_inserter(partition), [](const auto& pt)
 	               { return std::make_shared<SinglePoint>(pt); });
-	Partition partition(initialPatterns);
 
 	std::vector<std::pair<Number<Inexact>, Partition>> history;
 	history.emplace_back(0, partition);

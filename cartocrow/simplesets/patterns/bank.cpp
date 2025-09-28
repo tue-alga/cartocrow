@@ -11,17 +11,21 @@ Bank::Bank(std::vector<CatPoint> catPoints): m_catPoints(std::move(catPoints)) {
 	// Store polyline
 	m_polyline = Polyline<Inexact>(m_points);
 
-	// Compute the cover radius
-	std::optional<Number<Inexact>> maxSquaredDistance;
-	for (int i = 0; i < m_points.size() - 1; i++) {
-		auto p = m_points[i];
-		auto q = m_points[i+1];
-		auto dist = squared_distance(p, q);
-		if (!maxSquaredDistance.has_value() || dist > *maxSquaredDistance) {
-			maxSquaredDistance = dist;
+	if (m_points.size() <= 1) {
+		m_coverRadius = 0;
+	} else {
+		// Compute the cover radius
+		std::optional<Number<Inexact>> maxSquaredDistance;
+		for (int i = 0; i < m_points.size() - 1; i++) {
+			auto p = m_points[i];
+			auto q = m_points[i + 1];
+			auto dist = squared_distance(p, q);
+			if (!maxSquaredDistance.has_value() || dist > *maxSquaredDistance) {
+				maxSquaredDistance = dist;
+			}
 		}
+		m_coverRadius = sqrt(*maxSquaredDistance) / 2;
 	}
-	m_coverRadius = sqrt(*maxSquaredDistance) / 2;
 
 	// Compute bends
 	computeBends();
