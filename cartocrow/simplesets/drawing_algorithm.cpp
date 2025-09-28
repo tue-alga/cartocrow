@@ -57,7 +57,7 @@ Point<Exact> get_approx_point_on_boundary(const Face& face) {
 		Line<Exact> pl = l.perpendicular(middle);
 		auto inter = CGAL::intersection(pl, rect);
 		assert(inter.has_value());
-		assert(std::holds_alternative<Segment<Exact>>(inter));
+		assert(std::holds_alternative<Segment<Exact>>(*inter));
 		Segment<Exact> seg = std::get<Segment<Exact>>(*inter);
 //		CGAL::intersection(pl, circle);
 		ArrCSTraits traits;
