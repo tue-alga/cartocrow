@@ -11,6 +11,7 @@ target_link_libraries(
     core
     chorematic_map
     renderer
+    reader
     CGAL::CGAL
     GDAL::GDAL
     widgets

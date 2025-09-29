@@ -8,7 +8,6 @@
 #include "cartocrow/circle_segment_helpers/cs_render_helpers.h"
 #include "cartocrow/circle_segment_helpers/poly_line_gon_intersection.h"
 #include "cartocrow/core/arrangement_helpers.h"
-#include "cartocrow/renderer/ipe_renderer.h"
 #include "grow_circles.h"
 #include <CGAL/Boolean_set_operations_2.h>
 #include <CGAL/Boolean_set_operations_2/Gps_polygon_validation.h>

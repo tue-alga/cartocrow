@@ -20,8 +20,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #ifndef CARTOCROW_RENDERER_SVG_RENDERER_H
 #define CARTOCROW_RENDERER_SVG_RENDERER_H
 
-#include <QPainter>
-
 #include <filesystem>
 #include <fstream>
 #include <stack>

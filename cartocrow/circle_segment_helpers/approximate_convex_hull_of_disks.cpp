@@ -6,7 +6,6 @@
 #include <CGAL/Apollonius_site_2.h>
 #include <CGAL/Apollonius_graph_2.h>
 #include <CGAL/Apollonius_graph_traits_2.h>
-#include <gmpxx.h>
 
 namespace cartocrow {
 typedef CGAL::Apollonius_graph_traits_2<Exact> AT;
