@@ -22,8 +22,6 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 06-05-2020
 
 #include "check_feasible_exact.h"
 
-#include <glog/logging.h>
-
 namespace cartocrow::necklace_map {
 namespace detail {
 
@@ -106,7 +104,7 @@ bool CheckFeasibleExact::FeasibleFromSlice(const size_t first_slice_index,
 }
 
 void CheckFeasibleExact::AssignAngle(const Number<Inexact>& angle_rad, std::shared_ptr<Bead>& bead) {
-	CHECK_NOTNULL(bead);
+	assert(bead != nullptr);
 	bead_angles_[angle_rad] = bead;
 }
 

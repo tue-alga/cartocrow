@@ -26,8 +26,6 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 06-05-2020
 #include <algorithm>
 #include <cmath>
 
-#include <glog/logging.h>
-
 namespace cartocrow::necklace_map {
 namespace detail {
 
@@ -58,14 +56,14 @@ TaskSlice::TaskSlice() : event_from(), event_to(), coverage(0, 0), tasks(), laye
 TaskSlice::TaskSlice(const TaskEvent& event_from, const TaskEvent& event_to, const int num_layers)
     : event_from(event_from), event_to(event_to),
       coverage(event_from.angle_rad, wrapAngle(event_to.angle_rad, event_from.angle_rad)) {
-	CHECK(BitString::checkFit(num_layers));
+	assert(BitString::checkFit(num_layers));
 	tasks.resize(num_layers);
 }
 
 TaskSlice::TaskSlice(const TaskSlice& slice, const Number<Inexact>& angle_start, const int cycle)
     : event_from(slice.event_from), event_to(slice.event_to), coverage(0, 0),
       layer_sets(slice.layer_sets) {
-	CHECK_LE(0, cycle);
+	assert(0 <= cycle);
 
 	// Determine the part of the necklace covered by this slice.
 	const Number<Inexact> cycle_start = cycle * M_2xPI;
@@ -147,7 +145,7 @@ void TaskSlice::Rotate(const TaskSlice& first_slice, const BitString& layer_set)
 }
 
 void TaskSlice::AddTask(const CycleNodeLayered::Ptr& task) {
-	CHECK_LT(task->layer, tasks.size());
+	assert(task->layer < tasks.size());
 	tasks[task->layer] = std::make_shared<CycleNodeLayered>(task);
 }
 

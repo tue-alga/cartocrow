@@ -26,7 +26,6 @@ add_library(circle_segment_helpers ${SOURCES})
 target_link_libraries(circle_segment_helpers
     PUBLIC core
            renderer
-    PRIVATE glog::glog
 )
 
 cartocrow_install_module(circle_segment_helpers)

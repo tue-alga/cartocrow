@@ -22,8 +22,6 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 06-05-2020
 
 #include "check_feasible_heuristic.h"
 
-#include <glog/logging.h>
-
 namespace cartocrow::necklace_map {
 namespace detail {
 
@@ -66,7 +64,7 @@ void CheckFeasibleHeuristic::InitializeSlices() {
 
 void CheckFeasibleHeuristic::AssignAngle(const Number<Inexact>& angle_rad,
                                          std::shared_ptr<Bead>& bead) {
-	CHECK_NOTNULL(bead);
+	assert(bead != nullptr);
 	nodes_check_.push_back(std::make_shared<CycleNodeCheck>(bead, angle_rad));
 }
 

@@ -22,8 +22,6 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 03-03-2020
 
 #include "compute_feasible_interval_wedge.h"
 
-#include <glog/logging.h>
-
 #include "../necklace_interval.h"
 #include "cartocrow/core/core.h"
 
@@ -32,7 +30,7 @@ namespace cartocrow::necklace_map {
 CircularRange ComputeFeasibleWedgeInterval::operator()(const PolygonSet<Inexact>& shape,
                                                        const Necklace& necklace) const {
 	// TODO code commented out for the sake of getting this to work
-	/*CHECK_GT(extent.size(), 0);
+	/*assert(extent.size() > 0);
 	if (extent.size() == 1) {
 		return (*fallback_point_regions_)(extent, necklace);
 	}

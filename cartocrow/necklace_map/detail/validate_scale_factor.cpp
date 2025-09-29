@@ -24,8 +24,6 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 20-01-2020
 
 #include <vector>
 
-#include <glog/logging.h>
-
 #include "cycle_node.h"
 
 namespace cartocrow::necklace_map {
@@ -72,7 +70,7 @@ bool ValidateScaleFactor::operator()(Necklace& necklace) const {
 	// Create a sorted cycle based on the feasible intervals of the necklace beads and compute the scaled covering radii.
 	for (const std::shared_ptr<Bead>& bead : necklace.beads) {
 		// In case of the any-order algorithm, the current angle limits the valid interval.
-		CHECK_NOTNULL(bead);
+		assert(bead != nullptr);
 		nodes.emplace_back(bead,
 		                   std::make_shared<Range>(bead->angle_rad,
 		                                           wrapAngle(bead->feasible.to(), bead->angle_rad)));

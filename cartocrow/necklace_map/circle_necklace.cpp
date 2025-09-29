@@ -22,8 +22,6 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 25-02-2020
 
 #include "circle_necklace.h"
 
-#include <glog/logging.h>
-
 namespace cartocrow {
 namespace necklace_map {
 
@@ -130,7 +128,7 @@ Number<Inexact> CircleNecklace::computeDistanceToKernel(const Range& range) cons
 Number<Inexact> CircleNecklace::computeAngleAtDistanceRad(const Number<Inexact>& angle_rad,
                                                           const Number<Inexact>& distance) const {
 	const Number<Inexact> distance_abs = std::abs(distance);
-	CHECK_LE(distance_abs, 2 * radius_);
+	assert(distance_abs <= 2 * radius_);
 	if (distance_abs == 2 * radius_) {
 		return angle_rad + M_PI;
 	}

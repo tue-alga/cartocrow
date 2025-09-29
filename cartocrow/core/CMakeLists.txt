@@ -29,9 +29,6 @@ set(HEADERS
 )
 
 add_library(core ${SOURCES})
-target_link_libraries(core
-	PRIVATE glog::glog
-)
 
 cartocrow_install_module(core)
 install(FILES ${HEADERS} DESTINATION ${CARTOCROW_INSTALL_DIR}/core)

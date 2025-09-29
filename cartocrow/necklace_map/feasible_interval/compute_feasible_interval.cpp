@@ -24,8 +24,6 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 05-12-2019
 
 #include <cmath>
 
-#include <glog/logging.h>
-
 #include "compute_feasible_interval_centroid.h"
 #include "compute_feasible_interval_wedge.h"
 

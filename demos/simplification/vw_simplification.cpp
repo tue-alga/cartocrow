@@ -22,7 +22,6 @@ Created by Wouter Meulemans (w.meulemans@tue.nl) on 31-08-2021
 #include <sstream>
 
 #include <gflags/gflags.h>
-#include <glog/logging.h>
 
 #include <cartocrow/core/core_types.h>
 #include <cartocrow/core/timer.h>

@@ -9,7 +9,6 @@ link_libraries(${CGAL_LIBRARIES})
 find_dependency(GMP REQUIRED)
 
 find_dependency(Qt5Widgets REQUIRED)
-find_dependency(glog REQUIRED)
 find_dependency(Ipelib REQUIRED)
 
 # Add the targets file

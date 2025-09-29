@@ -26,8 +26,6 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 06-05-2020
 #include <cmath>
 #include <limits>
 
-#include <glog/logging.h>
-
 #include "check_feasible_exact.h"
 #include "check_feasible_heuristic.h"
 
@@ -272,7 +270,7 @@ bool CheckFeasible::ProcessContainer(const size_t first_slice_index,
 				return false;
 			}
 
-			CHECK_LE(value.angle_rad, check_angle_rad);
+			assert(value.angle_rad <= check_angle_rad);
 			check_angle_rad = value.angle_rad;
 
 			// Assign the angle.

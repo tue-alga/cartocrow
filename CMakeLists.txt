@@ -46,7 +46,6 @@ find_package(GMP REQUIRED)
 find_package(GDAL CONFIG REQUIRED)
 find_package(Qt5Widgets REQUIRED)
 set(CMAKE_AUTOMOC ON)
-find_package(glog REQUIRED)
 find_package(Ipelib REQUIRED)
 
 # ## SOURCES ###

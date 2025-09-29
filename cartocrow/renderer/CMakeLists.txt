@@ -21,7 +21,6 @@ set(HEADERS
 add_library(renderer ${SOURCES})
 target_link_libraries(renderer
 	PUBLIC core Qt5::Widgets Ipe::ipelib
-	PRIVATE glog::glog
 )
 
 if(WIN32)
