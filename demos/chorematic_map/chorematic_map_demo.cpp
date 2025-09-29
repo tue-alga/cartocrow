@@ -21,6 +21,7 @@
 #include "cartocrow/core/arrangement_map.h"
 #include "cartocrow/renderer/ipe_renderer.h"
 #include "cartocrow/reader/gdal_conversion.h"
+#include "cartocrow/reader/region_map_reader.h"
 
 #include "demos/widgets/double_slider.h"
 

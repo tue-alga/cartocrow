@@ -1,10 +1,10 @@
 #ifndef CARTOCROW_POLY_LINE_GON_INTERSECTION_H
 #define CARTOCROW_POLY_LINE_GON_INTERSECTION_H
 
-#include "cartocrow/circle_segment_helpers/cs_curve_helpers.h"
-#include "cartocrow/circle_segment_helpers/cs_polygon_helpers.h"
-#include "cartocrow/circle_segment_helpers/cs_polyline_helpers.h"
-#include "cartocrow/simplesets/types.h"
+#include "cs_types.h"
+#include "cs_curve_helpers.h"
+#include "cs_polygon_helpers.h"
+#include "cs_polyline_helpers.h"
 #include <CGAL/Arr_extended_dcel.h>
 #include <CGAL/Arr_observer.h>
 #include <CGAL/Arrangement_with_history_2.h>
