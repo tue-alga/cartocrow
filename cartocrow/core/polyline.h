@@ -126,6 +126,8 @@ Polyline<Inexact> approximate(const Polyline<K>& p) {
 	}
 	return result;
 }
+
+Polyline<Exact> pretendExact(const Polyline<Inexact>& p);
 }
 
 #endif //CARTOCROW_POLYLINE_H
