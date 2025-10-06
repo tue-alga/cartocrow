@@ -63,12 +63,12 @@ std::vector<Point<K>> parabola_intersections(Segment<K> seg, Line<K> dir, Point<
 	return pts;
 }
 
-BezierCurve parse_ipe_bezier(const ipe::Bezier& bz) {
+CubicBezierCurve parse_ipe_bezier(const ipe::Bezier& bz) {
 	return { vp(bz.iV[0]), vp(bz.iV[1]), vp(bz.iV[2]), vp(bz.iV[3]) };
 }
 
-BezierSpline parse_ipe_beziers(const std::vector<ipe::Bezier>& bzs) {
-	BezierSpline spline;
+CubicBezierSpline parse_ipe_beziers(const std::vector<ipe::Bezier>& bzs) {
+	CubicBezierSpline spline;
 	for (const auto& bz : bzs) {
 		spline.appendCurve(parse_ipe_bezier(bz));
 	}

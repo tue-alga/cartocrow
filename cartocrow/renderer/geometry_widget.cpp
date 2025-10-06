@@ -564,20 +564,20 @@ void GeometryWidget::draw(const Circle<Inexact>& c) {
 	m_painter->drawEllipse(rect);
 }
 
-void GeometryWidget::draw(const BezierSpline& s) {
+void GeometryWidget::draw(const CubicBezierSpline& s) {
+	if (s.empty()) return;
 	setupPainter();
 	QPainterPath path;
-	path.moveTo(convertPoint(s.curves()[0].source()));
-	for (BezierCurve c : s.curves()) {
-		path.cubicTo(convertPoint(c.sourceControl()), convertPoint(c.targetControl()),
-		             convertPoint(c.target()));
+	path.moveTo(convertPoint(s.source()));
+	for (int i = 0; i < s.numCurves(); ++i) {
+		path.cubicTo(convertPoint(s.controlPoint(3 * i + 1)), convertPoint(s.controlPoint(3 * i + 2)),
+		             convertPoint(s.controlPoint(3 * i + 3)));
 	}
 	m_painter->drawPath(path);
 	if (m_style.m_mode & vertices) {
-		for (BezierCurve c : s.curves()) {
-			draw(c.source());
+		for (int i = 0; i <= s.numCurves(); ++i) {
+			draw(s.controlPoint(3 * i));
 		}
-		draw(s.curves().back().target());
 	}
 }
 

@@ -19,11 +19,11 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #ifndef CARTOCROW_SIMPLE_SMOOTHING_H
 #define CARTOCROW_SIMPLE_SMOOTHING_H
+#include "../core/cubic_bezier.h"
 #include "types.h"
-#include "../core/bezier.h"
 
 namespace cartocrow::isoline_simplification {
-BezierSpline simple_smoothing(const Isoline<K>& iso);
+CubicBezierSpline simple_smoothing(const Isoline<K>& iso);
 }
 
 #endif //CARTOCROW_SIMPLE_SMOOTHING_H

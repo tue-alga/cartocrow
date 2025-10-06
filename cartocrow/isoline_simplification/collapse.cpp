@@ -270,7 +270,7 @@ void SplineCollapsePainting::paint(cartocrow::renderer::GeometryRenderer& render
 				all_controls.push_back(*end);
 			}
 			auto bzs = m_spline_collapse.controls_to_beziers(all_controls);
-			BezierSpline spline;
+			CubicBezierSpline spline;
 			for (const auto& bz : bzs) {
 				spline.appendCurve(vp(bz.iV[0]), vp(bz.iV[1]), vp(bz.iV[2]), vp(bz.iV[3]));
 			}

@@ -38,7 +38,7 @@ class PaintingRenderer : public GeometryPainting, public GeometryRenderer {
 
 	void draw(const Point<Inexact>& p) override;
 	void draw(const Circle<Inexact>& c) override;
-	void draw(const BezierSpline& s) override;
+	void draw(const CubicBezierSpline& s) override;
 	void draw(const Line<Inexact>& l) override;
 	void draw(const Ray<Inexact>& r) override;
 	void draw(const Halfplane<Inexact>& h) override;
@@ -93,7 +93,7 @@ class PaintingRenderer : public GeometryPainting, public GeometryRenderer {
 	};
 	using Label = std::tuple<Point<Inexact>, std::string, bool>;
 	using DrawableObject =
-	    std::variant<Point<Inexact>, Circle<Inexact>, BezierSpline,
+	    std::variant<Point<Inexact>, Circle<Inexact>, CubicBezierSpline,
 	                 Line<Inexact>, Ray<Inexact>, Halfplane<Inexact>, RenderPath, Label, Style>;
 	std::vector<DrawableObject> m_objects;
 	Style m_style;

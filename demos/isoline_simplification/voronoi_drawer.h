@@ -65,7 +65,7 @@ class VoronoiDrawer {
 		if (CGAL::collinear(focus, start_p, end_p)) return *this << Segment<K>(start, end);
 
 		auto control = CGAL::circumcenter(focus, start_p, end_p);
-		auto bezier = BezierCurve(approximate(start), approximate(control), approximate(end));
+		auto bezier = CubicBezierCurve(approximate(start), approximate(control), approximate(end));
 
 		m_renderer->draw(bezier);
 

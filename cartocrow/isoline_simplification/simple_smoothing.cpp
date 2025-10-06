@@ -22,7 +22,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "ipeshape.h"
 
 namespace cartocrow::isoline_simplification {
-BezierSpline simple_smoothing(const Isoline<K>& iso) {
+CubicBezierSpline simple_smoothing(const Isoline<K>& iso) {
 	if (iso.m_closed) {
 		std::vector<ipe::Vector> vs;
 		std::vector<Point<K>> pts(iso.m_points.begin(), iso.m_points.end());
