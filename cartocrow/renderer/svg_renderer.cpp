@@ -126,9 +126,9 @@ void SvgRenderer::draw(const Circle<Inexact>& c) {
 	      << -c.center().y() << "\"/>\n";
 }
 
-void SvgRenderer::draw(const BezierSpline& s) {
+void SvgRenderer::draw(const CubicBezierSpline& s) {
 	// TODO
-	std::cerr << "The SVG renderer does not support BezierSplines; ignoring\n";
+	std::cerr << "The SVG renderer does not support CubicBezierSplines; ignoring\n";
 }
 
 std::string renderPathToSVGCommands(const RenderPath& p) {

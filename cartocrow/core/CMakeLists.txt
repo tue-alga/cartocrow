@@ -4,10 +4,11 @@ set(SOURCES
 	region_arrangement.cpp
 	region_map.cpp
 	timer.cpp
-	bezier.cpp
+	cubic_bezier.cpp
 	rectangle_helpers.cpp
 	vector_helpers.cpp
 	transform_helpers.cpp
+	polyline.cpp
 )
 set(HEADERS
 	centroid.h
@@ -17,7 +18,8 @@ set(HEADERS
 	region_arrangement.h
 	region_map.h
 	timer.h
-	bezier.h
+	cubic_bezier.h
+	root_finding_helpers.h
 	rectangle_helpers.h
 	arrangement_helpers.h
 	polyline.h

@@ -19,7 +19,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "ipe_reader.h"
 
-#include "cartocrow/core/bezier.h"
+#include "cartocrow/core/cubic_bezier.h"
 
 #include <CGAL/Boolean_set_operations_2/Gps_polygon_validation.h>
 
@@ -120,8 +120,8 @@ PolygonSet<Exact> IpeReader::convertShapeToPolygonSet(const ipe::Shape& shape,
 	return set;
 }
 
-BezierSpline IpeReader::convertPathToSpline(const ipe::SubPath& path, const ipe::Matrix& matrix) {
-	BezierSpline spline;
+CubicBezierSpline IpeReader::convertPathToSpline(const ipe::SubPath& path, const ipe::Matrix& matrix) {
+	CubicBezierSpline spline;
 	if (path.type() == ipe::SubPath::EClosedSpline) {
 		std::vector<ipe::Bezier> beziers;
 		path.asClosedSpline()->beziers(beziers);

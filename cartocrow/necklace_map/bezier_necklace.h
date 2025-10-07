@@ -24,7 +24,7 @@ Created by tvl (t.vanlankveld@esciencecenter.nl) on 25-02-2020
 #define CARTOCROW_NECKLACE_MAP_BEZIER_NECKLACE_H
 
 #include "../core/core.h"
-#include "../core/bezier.h"
+#include "../core/cubic_bezier.h"
 #include "necklace_shape.h"
 
 namespace cartocrow::necklace_map {
@@ -35,11 +35,11 @@ class BezierNecklace : public NecklaceShape {
 
 	static constexpr const Number<Inexact> kDistanceRatioEpsilon = 1.001;
 
-	BezierNecklace(const BezierSpline spline, const Point<Inexact>& kernel);
+	BezierNecklace(const CubicBezierSpline& spline, const Point<Inexact>& kernel);
 
 	const Point<Inexact>& kernel() const override;
 
-	const BezierSpline& spline() const;
+	const CubicBezierSpline& spline() const;
 
 	bool isValid() const override;
 
@@ -58,24 +58,25 @@ class BezierNecklace : public NecklaceShape {
 	void accept(NecklaceShapeVisitor& visitor) override;
 
   private:
-	BezierSpline::CurveSet::const_iterator
+	using CurveIterator = CubicBezierSpline::CurveIterable::Iterator;
+	CurveIterator
 	findCurveContainingAngle(const Number<Inexact>& angle_rad) const;
 
 	bool intersectRay(const Number<Inexact>& angle_rad,
-	                  const BezierSpline::CurveSet::const_iterator& curve_iter,
+	                  const CurveIterator& curve_index,
 	                  Point<Inexact>& intersection, Number<Inexact>& t) const;
 
 	bool computeAngleAtDistanceRad(const Point<Inexact>& point, const Number<Inexact>& distance,
-	                               const BezierSpline::CurveSet::const_iterator& curve_point,
+	                               const CurveIterator& curve_index,
 	                               const Number<Inexact>& t_point, Number<Inexact>& angle_rad) const;
 
 	Number<Inexact> searchCurveForAngleAtDistanceRad(const Point<Inexact>& point,
-	                                                 const BezierCurve& curve,
+	                                                 const CubicBezierCurve& curve,
 	                                                 const Number<Inexact>& squared_distance,
 	                                                 const CGAL::Orientation& orientation,
 	                                                 const Number<Inexact>& t_start) const;
 
-	BezierSpline spline_;
+	CubicBezierSpline spline_;
 
 	Point<Inexact> kernel_;
 };

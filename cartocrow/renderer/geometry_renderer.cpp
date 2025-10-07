@@ -94,8 +94,8 @@ void GeometryRenderer::draw(const PolygonSet<Inexact>& ps) {
 	draw(path);
 }
 
-void GeometryRenderer::draw(const BezierCurve& c) {
-	BezierSpline spline;
+void GeometryRenderer::draw(const CubicBezierCurve& c) {
+	CubicBezierSpline spline;
 	spline.appendCurve(c);
 	draw(spline);
 }

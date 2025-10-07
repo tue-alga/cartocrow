@@ -193,9 +193,9 @@ void IpeRenderer::draw(const Circle<Inexact>& c) {
 	drawPathOnPage(path);
 }
 
-void IpeRenderer::draw(const BezierSpline& s) {
+void IpeRenderer::draw(const CubicBezierSpline& s) {
 	ipe::Curve* curve = new ipe::Curve();
-	for (BezierCurve c : s.curves()) {
+	for (CubicBezierCurve c : s.curves()) {
 		std::vector<ipe::Vector> coords;
 		coords.emplace_back(c.source().x(), c.source().y());
 		coords.emplace_back(c.sourceControl().x(), c.sourceControl().y());
@@ -209,7 +209,7 @@ void IpeRenderer::draw(const BezierSpline& s) {
 	drawPathOnPage(path);
 
 	if (m_style.m_mode & vertices) {
-		for (BezierCurve c : s.curves()) {
+		for (CubicBezierCurve c : s.curves()) {
 			draw(c.source());
 		}
 		draw(s.curves().back().target());

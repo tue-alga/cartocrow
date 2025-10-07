@@ -20,10 +20,10 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #ifndef CARTOCROW_IPE_BEZIER_WRAPPER_H
 #define CARTOCROW_IPE_BEZIER_WRAPPER_H
 
-#include "ipeshape.h"
+#include "../core/cubic_bezier.h"
 #include "ipegeo.h"
+#include "ipeshape.h"
 #include "types.h"
-#include "../core/bezier.h"
 
 namespace cartocrow::isoline_simplification {
 std::vector<Point<K>> parabola_intersections(Segment<K> seg, Line<K> dir,
@@ -31,7 +31,7 @@ std::vector<Point<K>> parabola_intersections(Segment<K> seg, Line<K> dir,
 ipe::Vector pv(Point<K> p);
 Point<K> vp(ipe::Vector p);
 
-BezierCurve parse_ipe_bezier(const ipe::Bezier& bz);
-BezierSpline parse_ipe_beziers(const std::vector<ipe::Bezier>& bzs);
+CubicBezierCurve parse_ipe_bezier(const ipe::Bezier& bz);
+CubicBezierSpline parse_ipe_beziers(const std::vector<ipe::Bezier>& bzs);
 }
 #endif //CARTOCROW_IPE_BEZIER_WRAPPER_H

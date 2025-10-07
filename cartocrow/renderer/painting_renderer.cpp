@@ -33,8 +33,8 @@ void PaintingRenderer::paint(GeometryRenderer& renderer) const {
 			renderer.draw(std::get<Point<Inexact>>(object));
 		} else if (std::holds_alternative<Circle<Inexact>>(object)) {
 			renderer.draw(std::get<Circle<Inexact>>(object));
-		} else if (std::holds_alternative<BezierSpline>(object)) {
-			renderer.draw(std::get<BezierSpline>(object));
+		} else if (std::holds_alternative<CubicBezierSpline>(object)) {
+			renderer.draw(std::get<CubicBezierSpline>(object));
 		} else if (std::holds_alternative<Line<Inexact>>(object)) {
 			renderer.draw(std::get<Line<Inexact>>(object));
 		} else if (std::holds_alternative<Ray<Inexact>>(object)) {
@@ -75,7 +75,7 @@ void PaintingRenderer::draw(const Circle<Inexact>& c) {
 	m_objects.push_back(c);
 }
 
-void PaintingRenderer::draw(const BezierSpline& s) {
+void PaintingRenderer::draw(const CubicBezierSpline& s) {
 	m_objects.push_back(s);
 }
 

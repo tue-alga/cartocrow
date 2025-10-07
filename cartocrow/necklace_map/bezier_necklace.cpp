@@ -34,11 +34,11 @@ class CompareBezierCurves {
   public:
 	explicit CompareBezierCurves(const BezierNecklace& shape) : shape_(shape) {}
 
-	inline bool operator()(const BezierCurve& curve_a, const BezierCurve& curve_b) const {
+	inline bool operator()(const CubicBezierCurve& curve_a, const CubicBezierCurve& curve_b) const {
 		return shape_.computeAngleRad(curve_a.target()) < shape_.computeAngleRad(curve_b.target());
 	}
 
-	inline bool operator()(const BezierCurve& curve, const Number<Inexact>& angle_rad) const {
+	inline bool operator()(const CubicBezierCurve& curve, const Number<Inexact>& angle_rad) const {
 		const Number<Inexact> angle_target_rad = shape_.computeAngleRad(curve.target());
 		return angle_target_rad < angle_rad;
 	}
@@ -69,7 +69,7 @@ class CompareBezierCurves {
  * @param spline the Bezier spline shape.
  * @param kernel the kernel (and star-point) of the necklace.
  */
-BezierNecklace::BezierNecklace(const BezierSpline spline, const Point<Inexact>& kernel)
+BezierNecklace::BezierNecklace(const CubicBezierSpline& spline, const Point<Inexact>& kernel)
     : spline_(spline), kernel_(kernel) {
 	// Clockwise curves are reversed.
 	if (CGAL::orientation(spline_.curves().begin()->source(),
@@ -78,8 +78,14 @@ BezierNecklace::BezierNecklace(const BezierSpline spline, const Point<Inexact>& 
 	}
 
 	// Reorder the curves to start with the curve directly to the right of the kernel.
-	std::sort(spline_.curves().begin(), spline_.curves().end(), CompareBezierCurves(*this));
-	assert(spline_.isClosed());
+	std::vector<CubicBezierCurve> curves(spline_.curves_begin(), spline_.curves_end());
+	std::sort(curves.begin(), curves.end(), CompareBezierCurves(*this));
+	spline_ = CubicBezierSpline();
+	for (const auto& curve : curves) {
+		spline_.appendCurve(curve);
+	}
+
+	assert(spline_.closed());
 }
 
 const Point<Inexact>& BezierNecklace::kernel() const {
@@ -89,7 +95,7 @@ const Point<Inexact>& BezierNecklace::kernel() const {
 /**@brief Give the Bezier spline shape of the necklace.
  * @return the shape of the necklace.
  */
-const BezierSpline& BezierNecklace::spline() const {
+const CubicBezierSpline& BezierNecklace::spline() const {
 	return spline_;
 }
 
@@ -99,8 +105,8 @@ bool BezierNecklace::isValid() const {
 	// The curve must also be fully visible from the kernel, i.e. no ray originating from the kernel intersects the curve in more than one point.
 	// Finally, the curve must describe a counterclockwise sweep around the kernel, i.e. the curve must start to the left of the vector from the kernel to the curve source.
 
-	bool valid = spline_.isValid();
-	for (const BezierCurve& curve : spline_.curves()) {
+	bool valid = true;
+	for (const CubicBezierCurve& curve : spline_.curves()) {
 		valid &= curve.source() != curve.sourceControl() && curve.target() != curve.targetControl() &&
 		         !CGAL::right_turn(curve.source(), curve.sourceControl(), kernel()) &&
 		         !CGAL::left_turn(curve.target(), curve.targetControl(), kernel());
@@ -112,8 +118,8 @@ bool BezierNecklace::isValid() const {
 bool BezierNecklace::intersectRay(const Number<Inexact>& angle_rad,
                                   Point<Inexact>& intersection) const {
 	// Find the curve that contains the angle.
-	BezierSpline::CurveSet::const_iterator curve_iter = findCurveContainingAngle(angle_rad);
-	if (curve_iter == spline_.curves().end()) {
+	auto curve_iter = findCurveContainingAngle(angle_rad);
+	if (curve_iter == spline_.curves_end()) {
 		return false;
 	}
 
@@ -122,7 +128,7 @@ bool BezierNecklace::intersectRay(const Number<Inexact>& angle_rad,
 }
 
 Box BezierNecklace::computeBoundingBox() const {
-	return spline_.computeBoundingBox();
+	return spline_.bbox();
 }
 
 Number<Inexact> BezierNecklace::computeCoveringRadiusRad(const Range& range,
@@ -141,9 +147,8 @@ Number<Inexact> BezierNecklace::computeCoveringRadiusRad(const Range& range,
 	// We chose for the fixed sample size per curve because the trade-off between accuracy and sampling size seemed reasonable.
 	// Taking five samples per curve (t = {0, 1/4, 1/2, 3/4, 1}) captures the extreme curvature parts of each Cubic spline.
 
-	const BezierSpline::CurveSet::const_iterator curve_iter_from =
-	    findCurveContainingAngle(range.from());
-	const BezierSpline::CurveSet::const_iterator curve_iter_to = findCurveContainingAngle(range.to());
+	auto curve_iter_from = findCurveContainingAngle(range.from());
+	auto curve_iter_to = findCurveContainingAngle(range.to());
 	assert(curve_iter_from != spline_.curves().end());
 	assert(curve_iter_to != spline_.curves().end());
 
@@ -155,7 +160,7 @@ Number<Inexact> BezierNecklace::computeCoveringRadiusRad(const Range& range,
 	const Number<Inexact> t_step = 0.25;
 	Number<Inexact> t = t_from;
 	Number<Inexact> covering_radius_rad = 0;
-	for (BezierSpline::CurveSet::const_iterator curve_iter = curve_iter_from;
+	for (auto curve_iter = curve_iter_from;
 	     curve_iter != curve_iter_to || t <= t_to;) {
 		point = curve_iter->evaluate(t);
 		const Number<Inexact> angle_rad = computeAngleRad(point);
@@ -196,9 +201,8 @@ Number<Inexact> BezierNecklace::computeDistanceToKernel(const Range& range) cons
 	// We chose for the fixed sample size per curve because the trade-off between accuracy and sampling size seemed reasonable.
 	// Taking five samples per curve (t = {0, 1/4, 1/2, 3/4, 1}) captures the extreme curvature parts of each Cubic spline.
 
-	const BezierSpline::CurveSet::const_iterator curve_iter_from =
-	    findCurveContainingAngle(range.from());
-	const BezierSpline::CurveSet::const_iterator curve_iter_to = findCurveContainingAngle(range.to());
+    auto curve_iter_from = findCurveContainingAngle(range.from());
+	auto curve_iter_to = findCurveContainingAngle(range.to());
 	assert(curve_iter_from != spline_.curves().end());
 	assert(curve_iter_to != spline_.curves().end());
 
@@ -210,7 +214,7 @@ Number<Inexact> BezierNecklace::computeDistanceToKernel(const Range& range) cons
 	const Number<Inexact> t_step = 0.25;
 	Number<Inexact> t = t_from;
 	Number<Inexact> squared_distance = std::numeric_limits<Number<Inexact>>::max();
-	for (BezierSpline::CurveSet::const_iterator curve_iter = curve_iter_from;
+	for (auto curve_iter = curve_iter_from;
 	     curve_iter != curve_iter_to || t <= t_to;) {
 		point = curve_iter->evaluate(t);
 		squared_distance = std::min(squared_distance, CGAL::squared_distance(point, kernel()));
@@ -238,7 +242,7 @@ Number<Inexact> BezierNecklace::computeAngleAtDistanceRad(const Number<Inexact>&
 
 	// Find the curve that contains the angle.
 	/*assert(checked_);*/
-	const BezierSpline::CurveSet::const_iterator curve_iter = findCurveContainingAngle(angle_rad);
+	auto curve_iter = findCurveContainingAngle(angle_rad);
 	if (curve_iter == spline_.curves().end()) {
 		return false;
 	}
@@ -256,43 +260,41 @@ void BezierNecklace::accept(NecklaceShapeVisitor& visitor) {
 	visitor.Visit(*this);
 }
 
-BezierSpline::CurveSet::const_iterator
+CubicBezierSpline::CurveIterable::Iterator
 BezierNecklace::findCurveContainingAngle(const Number<Inexact>& angle_rad) const {
-	BezierSpline::CurveSet::const_iterator curve_iter =
+	auto curve_iter =
 	    std::lower_bound(spline_.curves().begin(), spline_.curves().end(), wrapAngle(angle_rad),
 	                     CompareBezierCurves(*this));
 	return curve_iter == spline_.curves().end() ? spline_.curves().begin() : curve_iter;
 }
 
 bool BezierNecklace::intersectRay(const Number<Inexact>& angle_rad,
-                                  const BezierSpline::CurveSet::const_iterator& curve_iter,
+                                  const CurveIterator& curve_iter,
                                   Point<Inexact>& intersection, Number<Inexact>& t) const {
 	const Point<Inexact> target =
 	    kernel() + Vector<Inexact>(std::cos(angle_rad), std::sin(angle_rad));
 
-	Point<Inexact> intersections[3];
-	Number<Inexact> intersection_t[3];
-	const size_t num_intersection =
-	    curve_iter->intersectRay(kernel(), target, intersections, intersection_t);
-	if (num_intersection == 0) {
+	std::vector<CubicBezierCurve::CurvePoint> inters;
+	curve_iter->intersections(Ray<Inexact>(kernel(), target), std::back_inserter(inters));
+	if (inters.empty()) {
 		return false;
 	}
 
 	// Note that the set of Bezier curves must always be a star-shaped curve with the kernel as star point,
 	// meaning that a line through the kernel has at most one intersection with the curve.
-	assert(num_intersection == 1);
-	intersection = intersections[0];
-	t = intersection_t[0];
+	assert(inters.size() == 1);
+	intersection = inters[0].point;
+	t = inters[0].t;
 	return true;
 }
 
 bool BezierNecklace::computeAngleAtDistanceRad(
     const Point<Inexact>& point, const Number<Inexact>& distance,
-    const BezierSpline::CurveSet::const_iterator& curve_point, const Number<Inexact>& t_point,
+    const CurveIterator& curve_point, const Number<Inexact>& t_point,
     Number<Inexact>& angle_rad) const {
 	// Find the curve that contains the distance.
 	const Number<Inexact> squared_distance = distance * distance;
-	BezierSpline::CurveSet::const_iterator curve_iter = curve_point;
+	auto curve_iter = curve_point;
 	Number<Inexact> t_start = t_point;
 	do {
 		if (0 < distance) {
@@ -328,7 +330,7 @@ bool BezierNecklace::computeAngleAtDistanceRad(
 }
 
 Number<Inexact> BezierNecklace::searchCurveForAngleAtDistanceRad(
-    const Point<Inexact>& point, const BezierCurve& curve, const Number<Inexact>& squared_distance,
+    const Point<Inexact>& point, const CubicBezierCurve& curve, const Number<Inexact>& squared_distance,
     const CGAL::Orientation& orientation, const Number<Inexact>& t_start) const {
 	// Perform a binary search on the curve to estimate the point at the specified distance.
 	// The assumption is that the distance between the point and a sample on the curve is monotonic in t.

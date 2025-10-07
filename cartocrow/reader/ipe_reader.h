@@ -26,7 +26,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "cartocrow/renderer/render_path.h"
 
 #include "cartocrow/core/core.h"
-#include "cartocrow/core/bezier.h"
+#include "cartocrow/core/cubic_bezier.h"
 
 #include <ipeattributes.h>
 #include <ipedoc.h>
@@ -52,7 +52,7 @@ class IpeReader {
 	static PolygonSet<Exact> convertShapeToPolygonSet(const ipe::Shape& shape,
 	                                                  const ipe::Matrix& matrix);
 	/// Converts an Ipe path to a Bézier spline.
-	static BezierSpline convertPathToSpline(const ipe::SubPath& path, const ipe::Matrix& matrix);
+	static CubicBezierSpline convertPathToSpline(const ipe::SubPath& path, const ipe::Matrix& matrix);
 
     static renderer::RenderPath convertShapeToRenderPath(const ipe::Shape& shape, const ipe::Matrix& matrix);
     static renderer::RenderPath loadIpePath(const std::filesystem::path& ipeFile);
