@@ -255,6 +255,7 @@ void CubicBezierSpline::appendCurve(const Curve& curve) {
 	for (int i = 0; i < 4; ++i) {
 		if (i == 0 && !m_c.empty()) {
 			assert(m_c.back() == curve.source());
+			continue;
 		}
 		m_c.push_back(curve.control(i));
 	}
@@ -354,7 +355,7 @@ Number<Inexact> CubicBezierSpline::signedArea() const {
 		p.push_back(c.target());
 		a += c.signedArea();
 	}
-	a -= p.area();
+	a += p.area();
 
 	return a;
 }
