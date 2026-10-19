@@ -29,15 +29,15 @@ namespace cartocrow::data_structures {
 		while (k > 0) {
 			int parent = (k - 1) >> 1;
 			Element_handle e = queue[parent];
-			if (QT::compare(elt, e) >= 0) {
+			if (traits.compare(elt, e) >= 0) {
 				break;
 			}
 			queue[k] = e;
-			QT::setIndex(e, k);
+		    traits.setIndex(e, k);
 			k = parent;
 		}
 		queue[k] = elt;
-		QT::setIndex(elt, k);
+	    traits.setIndex(elt, k);
 	}
 
 	template <QueueTraits QT>
@@ -47,18 +47,18 @@ namespace cartocrow::data_structures {
 			int child = (k << 1) + 1;
 			Element_handle c = queue[child];
 			int right = child + 1;
-			if (right < queue.size() && QT::compare(c, queue[right]) > 0) {
+		    if (right < queue.size() && traits.compare(c, queue[right]) > 0) {
 				c = queue[child = right];
 			}
-			if (QT::compare(elt, c) <= 0) {
+		    if (traits.compare(elt, c) <= 0) {
 				break;
 			}
 			queue[k] = c;
-			QT::setIndex(c, k);
+		    traits.setIndex(c, k);
 			k = child;
 		}
 		queue[k] = elt;
-		QT::setIndex(elt, k);
+	    traits.setIndex(elt, k);
 	}
 
 	template <QueueTraits QT>
@@ -78,7 +78,7 @@ namespace cartocrow::data_structures {
 	template <QueueTraits QT>
 	QT::Element_handle IndexedPriorityQueue<QT>::pop() {
 		Element_handle result = queue[0];
-		QT::setIndex(result, -1);
+	    traits.setIndex(result, -1);
 
 		Element_handle last = queue[queue.size() - 1];
 		queue.pop_back();
@@ -102,14 +102,14 @@ namespace cartocrow::data_structures {
 
 	template <QueueTraits QT>
 	bool IndexedPriorityQueue<QT>::remove(Element_handle elt) {
-		int id = QT::getIndex(elt);
+	    int id = traits.getIndex(elt);
 		if (id < 0 || id >= queue.size() || queue[id] != elt) {
 			assert(!contains(elt));
 			assert(std::find(queue.begin(), queue.end(), elt) == queue.end());
 			return false;
 		}
 		else {
-			QT::setIndex(elt, -1);
+		    traits.setIndex(elt, -1);
 			if (id == queue.size() - 1) {
 				queue.pop_back();
 			}
@@ -130,7 +130,7 @@ namespace cartocrow::data_structures {
 
 	template <QueueTraits QT>
 	bool IndexedPriorityQueue<QT>::contains(Element_handle elt) const {
-		int id = QT::getIndex(elt);
+	    int id = traits.getIndex(elt);
 		if (id < 0 || id >= queue.size()) {
 			return false;
 		}
@@ -144,14 +144,14 @@ namespace cartocrow::data_structures {
 		assert(contains(elt));
 		assert(std::find(queue.begin(), queue.end(), elt) != queue.end());
 
-		siftUp(QT::getIndex(elt), elt);
-		siftDown(QT::getIndex(elt), elt);
+		siftUp(traits.getIndex(elt), elt);
+	    siftDown(traits.getIndex(elt), elt);
 	}
 
 	template <QueueTraits QT>
 	void IndexedPriorityQueue<QT>::clear() {
 		for (Element_handle elt : queue) {
-			QT::setIndex(elt, -1);
+		    traits.setIndex(elt, -1);
 		}
 		queue.clear();
 	}

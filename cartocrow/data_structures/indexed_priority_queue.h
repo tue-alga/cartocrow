@@ -21,45 +21,47 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 namespace cartocrow::data_structures {
 
-	template <class QT> concept QueueTraits = requires(typename QT::Element_handle elt, int i) {
-		typename QT::Element_handle;
+template <class QT>
+concept QueueTraits = requires(QT traits, typename QT::Element_handle elt, int i) {
+	typename QT::Element_handle;
 
-		{ QT::setIndex(elt, i) };
+	{traits.setIndex(elt, i)};
 
-		{
-			QT::getIndex(elt)
-		} -> std::same_as<int>;
+	{traits.getIndex(elt)}->std::same_as<int>;
 
-		{
-			QT::compare(elt, elt)
-		} -> std::same_as<int>; // negative if elt < elt2, positive if elt > elt2, zero if elt = elt2. Smallest value == highest priority (top of queue)
-	};
+	{traits.compare(elt, elt)}
+	    ->std::same_as<int>; // negative if elt < elt2, positive if elt > elt2, zero if elt = elt2. Smallest value == highest priority (top of queue)
+};
 
-	template <QueueTraits QT> class IndexedPriorityQueue {
-	public:
-		using Element_handle = QT::Element_handle;
+template <QueueTraits QT> class IndexedPriorityQueue {
+  public:
+	using Element_handle = QT::Element_handle;
 
-	private:
-		std::vector<Element_handle> queue;
+  private:
+	std::vector<Element_handle> queue;
+	QT traits;
 
-		void siftUp(int k, Element_handle elt);
-		void siftDown(int k, Element_handle elt);
+	void siftUp(int k, Element_handle elt);
+	void siftDown(int k, Element_handle elt);
 
-	public:
-		bool empty() const;
+  public:
+	IndexedPriorityQueue() requires std::is_default_constructible<QT>::value {}
+	IndexedPriorityQueue(QT traits) : traits(std::move(traits)) {}
 
-		void push(Element_handle elt);
-		Element_handle pop();
-		Element_handle peek() const;
+	bool empty() const;
 
-		bool remove(Element_handle elt);
-		bool contains(Element_handle elt) const;
-		void update(Element_handle elt);
+	void push(Element_handle elt);
+	Element_handle pop();
+	Element_handle peek() const;
 
-		void clear();
+	bool remove(Element_handle elt);
+	bool contains(Element_handle elt) const;
+	void update(Element_handle elt);
 
-		const std::vector<Element_handle>& content() const;
-	};
+	void clear();
+
+	const std::vector<Element_handle>& content() const;
+};
 
 } // namespace cartocrow::data_structures
 
