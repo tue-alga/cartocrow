@@ -265,7 +265,7 @@ TEST_CASE("Approximating exact polygons by inexact ones") {
 	p1.push_back(Point<Exact>(2, 4));
 	p1.push_back(Point<Exact>(3, 5));
 	p1.push_back(Point<Exact>(4, 2));
-	Polygon<Inexact> p2 = approximate<Exact, Polygon>(p1);
+	Polygon<Inexact> p2 = approximate(p1);
 	CHECK(p2.area() == Approx(CGAL::to_double(p1.area())));
 }
 
@@ -282,6 +282,6 @@ TEST_CASE("Approximating exact polygon sets by inexact ones") {
 	set.insert(p1);
 	set.insert(p2);
 	CHECK(set.number_of_polygons_with_holes() == 2);
-	PolygonSet<Inexact> setInexact = approximate<Exact, PolygonSet>(set);
+	PolygonSet<Inexact> setInexact = approximate(set);
 	CHECK(setInexact.number_of_polygons_with_holes() == 2);
 }
