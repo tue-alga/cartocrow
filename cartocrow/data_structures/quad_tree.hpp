@@ -156,7 +156,7 @@ detail::QTNode<QT>* QuadTree<QT>::find(Element elt) {
 					if constexpr (extend) {
 						n->lb = new Node(
 						    n,
-						    Rectangle<Kernel>(n->rect.xmin(), n->rect.ymin(), xmid + fx, ymid + fx),
+						    Rectangle<Kernel>(n->rect.xmin(), n->rect.ymin(), xmid + fx, ymid + fy),
 						    n->inf_left, false, n->inf_bottom, false);
 					} else {
 						return nullptr;
