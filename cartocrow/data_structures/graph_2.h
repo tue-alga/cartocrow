@@ -81,7 +81,7 @@ class Graph_2 {
 	using Curve_representation = CurveTraits::Curve_representation_2;
 
 	using Graph_traits = GraphTraits;
-	using History = std::conditional<GraphTraits::historic, History, NoHistory>::type;
+	using History = std::conditional<GraphTraits::historic, GraphHistory, NoGraphHistory>::type;
 
   private:
 	using Vertex_container = std::vector<Vertex_handle>;

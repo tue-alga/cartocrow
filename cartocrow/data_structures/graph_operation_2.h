@@ -66,7 +66,7 @@ class OperationGroup {
 	}
 };
 
-struct NoHistory {
+struct NoGraphHistory {
 	void start_group() {
 		assert(false); // should not be called
 	}
@@ -108,7 +108,7 @@ struct NoHistory {
 	}
 };
 
-class History {
+class GraphHistory {
   private:
 	using GroupContainer = std::list<OperationGroup>;
 	using GroupHandle = GroupContainer::iterator;
@@ -118,7 +118,7 @@ class History {
 	int m_build = 0;
 
   public:
-	~History() {
+	~GraphHistory() {
 		clear();
 	}
 
