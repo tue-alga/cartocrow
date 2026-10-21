@@ -281,12 +281,8 @@ std::string SvgRenderer::getStyle() const {
 }
 
 std::string SvgRenderer::getVertexStyle() const {
-	if ((m_style.m_mode & GeometryRenderer::vertices)) {
-		return "fill=\"" + m_style.m_strokeColor +
-		       "\" fill-opacity=\"" + std::to_string(m_style.m_strokeOpacity) + "\"";
-	} else {
-		return "";
-	}
+	return "fill=\"" + m_style.m_strokeColor +
+	       "\" fill-opacity=\"" + std::to_string(m_style.m_strokeOpacity) + "\"";
 }
 
 void SvgRenderer::addPainting(const std::shared_ptr<GeometryPainting>& painting) {
