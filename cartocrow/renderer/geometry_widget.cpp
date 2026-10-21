@@ -38,7 +38,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include <numbers>
 
-namespace cartocrow::renderer {
+namespace cartocrow {
 
 GeometryWidget::Editable::Editable(GeometryWidget* widget) : m_widget(widget) {}
 
@@ -947,7 +947,7 @@ void GeometryWidget::addPainting(std::shared_ptr<GeometryPainting> painting, con
 	updateLayerList();
 }
 
-std::shared_ptr<GeometryPainting> GeometryWidget::addPainting(const std::function<void(renderer::GeometryRenderer&)>& draw_function, const std::string& name) {
+std::shared_ptr<GeometryPainting> GeometryWidget::addPainting(const std::function<void(GeometryRenderer&)>& draw_function, const std::string& name) {
 	auto painting = std::make_shared<FunctionPainting>(draw_function);
 	addPainting(painting, name);
 	return painting;
@@ -1074,4 +1074,4 @@ void GeometryWidget::saveToSvg() {
 	renderer.save(fileName.toStdString(), Box(bottomLeft.x(), bottomLeft.y(), topRight.x(), topRight.y()));
 }
 
-} // namespace cartocrow::renderer
+} // namespace cartocrow

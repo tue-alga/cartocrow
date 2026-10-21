@@ -20,7 +20,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <chrono>
 #include <iostream>
 
-namespace cartocrow::utils {
+namespace cartocrow {
 
 Stopwatch::Stopwatch(std::string name, TimeResolution resolution)
     : name(name), resolution(resolution) {

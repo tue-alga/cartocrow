@@ -28,7 +28,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "cartocrow/renderer/geometry_widget.h"
 
 using namespace cartocrow;
-using namespace cartocrow::renderer;
 
 std::pair<bool, bool> properTangent(const Segment<Exact>& seg, const RationalRadiusCircle& c, bool end) {
 	auto p = end ? seg.target() : seg.source();

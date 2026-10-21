@@ -18,7 +18,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "geometry_renderer.h"
 #include <CGAL/number_utils.h>
 
-namespace cartocrow::renderer {
+namespace cartocrow {
 
 void GeometryRenderer::draw(const Segment<Inexact>& s) {
 	RenderPath path;
@@ -123,4 +123,4 @@ void GeometryRenderer::draw(const CubicBezierCurve& c) {
 	draw(spline);
 }
 
-} // namespace cartocrow::renderer
+} // namespace cartocrow

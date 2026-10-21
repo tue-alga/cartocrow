@@ -20,13 +20,13 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "cartocrow/circle_segment_helpers/cs_types.h"
 #include "cartocrow/renderer/render_path.h"
 
-namespace cartocrow::renderer {
-renderer::RenderPath renderPath(const CSXMCurve& xmCurve);
-renderer::RenderPath renderPath(const CSCurve& curve);
-renderer::RenderPath renderPath(const CSPolygon& polygon);
-renderer::RenderPath renderPath(const CSPolygonWithHoles& withHoles);
-renderer::RenderPath renderPath(const CSPolygonSet& polygonSet);
-renderer::RenderPath renderPath(const CSPolyline& polyline);
-void addToRenderPath(const CSXMCurve& xm_curve, renderer::RenderPath& path, bool first);
-void addToRenderPath(const CSCurve& curve, renderer::RenderPath& path, bool first);
+namespace cartocrow {
+RenderPath renderPath(const CSXMCurve& xmCurve);
+RenderPath renderPath(const CSCurve& curve);
+RenderPath renderPath(const CSPolygon& polygon);
+RenderPath renderPath(const CSPolygonWithHoles& withHoles);
+RenderPath renderPath(const CSPolygonSet& polygonSet);
+RenderPath renderPath(const CSPolyline& polyline);
+void addToRenderPath(const CSXMCurve& xm_curve, RenderPath& path, bool first);
+void addToRenderPath(const CSCurve& curve, RenderPath& path, bool first);
 }

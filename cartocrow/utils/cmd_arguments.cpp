@@ -20,7 +20,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <iostream>
 #include <algorithm>
 
-namespace cartocrow::utils {
+namespace cartocrow {
 
 CommandLineArguments::CommandLineArguments(int argc, char* argv[]) {
 	for (int c = 0; c < argc; ++c) {
@@ -168,4 +168,4 @@ void CommandLineArguments::print_arguments(const std::string newline_prefix,
 	std::cout << std::endl;
 }
 
-} // namespace cartocrow::utils
+} // namespace cartocrow

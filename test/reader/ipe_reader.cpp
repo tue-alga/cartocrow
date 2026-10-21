@@ -21,7 +21,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "cartocrow/renderer/ipe_renderer.h"
 
 using namespace cartocrow;
-using namespace renderer;
 
 // Test case names need to be unique, so we prefix with IpeReader.
 #define TEST_CASE_(name) TEST_CASE("[IpeReader] " name, "[IpeReader]")

@@ -20,7 +20,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <nlohmann/json.hpp>
 #include "../core/core.h"
 
-namespace cartocrow::utils {
+namespace cartocrow {
 
 class PersistentSettings {
   private:
@@ -55,4 +55,4 @@ class PersistentSettings {
 	bool m_changed;
 };
 
-} // namespace cartocrow::utils
+} // namespace cartocrow

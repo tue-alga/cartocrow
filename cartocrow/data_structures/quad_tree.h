@@ -19,7 +19,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include <cartocrow/core/core.h>
 
-namespace cartocrow::data_structures {
+namespace cartocrow {
 
 	template <typename QT> concept QuadTreeTraits = requires(typename QT::Element elt, const Rectangle<typename QT::Kernel>& rect) {
 
@@ -75,6 +75,6 @@ namespace cartocrow::data_structures {
 		template <bool extend> Node* find(Element elt);
 	};
 
-} // namespace cartocrow::data_structures
+} // namespace cartocrow
 
 #include "quad_tree.hpp"

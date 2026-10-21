@@ -24,7 +24,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "geometry_painting.h"
 #include "geometry_renderer.h"
 
-namespace cartocrow::renderer {
+namespace cartocrow {
 
 /// The style for a GeometryWidget.
 struct SvgRendererStyle {
@@ -113,8 +113,8 @@ class SvgRenderer : public GeometryRenderer {
 
 	void addPainting(const std::shared_ptr<GeometryPainting>& painting);
 	void addPainting(const std::shared_ptr<GeometryPainting>& painting, const std::string& name);
-	void addPainting(const std::function<void(renderer::GeometryRenderer&)>& draw_function);
-	void addPainting(const std::function<void(renderer::GeometryRenderer&)>& draw_function, const std::string& name);
+	void addPainting(const std::function<void(GeometryRenderer&)>& draw_function);
+	void addPainting(const std::function<void(GeometryRenderer&)>& draw_function, const std::string& name);
 
   private:
 	/// The output file we're writing to.
@@ -154,4 +154,4 @@ class SvgRenderer : public GeometryRenderer {
 };
 
 std::string renderPathToSVGCommands(const RenderPath& p, bool invertY = true);
-} // namespace cartocrow::renderer
+} // namespace cartocrow

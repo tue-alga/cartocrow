@@ -26,7 +26,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <QWidget>
 
 using namespace cartocrow;
-using namespace cartocrow::renderer;
 
 void DemoPainting::paint(GeometryRenderer& renderer) const {
 	// set style

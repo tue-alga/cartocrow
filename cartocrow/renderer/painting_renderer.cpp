@@ -19,7 +19,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include <variant>
 
-namespace cartocrow::renderer {
+namespace cartocrow {
 
 PaintingRenderer::PaintingRenderer() {}
 
@@ -198,4 +198,4 @@ void PaintingRenderer::useDefaultFont() {
 	m_style.m_fontSize = std::nullopt;
 	m_style.m_fontFamily = std::nullopt;
 }
-} // namespace cartocrow::renderer
+} // namespace cartocrow

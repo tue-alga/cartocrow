@@ -22,7 +22,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <QApplication>
 
 using namespace cartocrow;
-using namespace cartocrow::renderer;
 
 CSPolylineHelpersDemo::CSPolylineHelpersDemo() {
 	setWindowTitle("Circle-segment polyline helpers demo");

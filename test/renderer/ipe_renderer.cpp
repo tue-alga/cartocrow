@@ -30,14 +30,14 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 using namespace cartocrow;
 
 TEST_CASE("Exporting marks to Ipe") {
-	class TestPainting : public renderer::GeometryPainting {
-		void paint(renderer::GeometryRenderer& renderer) const override {
+	class TestPainting : public GeometryPainting {
+		void paint(GeometryRenderer& renderer) const override {
 			renderer.draw(Point<Exact>(0, 0));
 			renderer.draw(Point<Exact>(2, 1));
 		}
 	};
 	auto painting = std::make_shared<TestPainting>();
-	renderer::IpeRenderer renderer(painting);
+	IpeRenderer renderer(painting);
 	std::filesystem::path path = std::filesystem::temp_directory_path() / "test.ipe";
 	renderer.save(path);
 
@@ -51,13 +51,13 @@ TEST_CASE("Exporting marks to Ipe") {
 }
 
 TEST_CASE("Exporting a line segment to Ipe") {
-	class TestPainting : public renderer::GeometryPainting {
-		void paint(renderer::GeometryRenderer& renderer) const override {
+	class TestPainting : public GeometryPainting {
+		void paint(GeometryRenderer& renderer) const override {
 			renderer.draw(Segment<Exact>(Point<Exact>(2, 3), Point<Exact>(1, 4)));
 		}
 	};
 	auto painting = std::make_shared<TestPainting>();
-	renderer::IpeRenderer renderer(painting);
+	IpeRenderer renderer(painting);
 	std::filesystem::path path = std::filesystem::temp_directory_path() / "test.ipe";
 	renderer.save(path);
 
@@ -76,11 +76,11 @@ TEST_CASE("Exporting a line segment to Ipe") {
 }
 
 TEST_CASE("Exporting a label to Ipe") {
-	std::shared_ptr<renderer::GeometryPainting> painting;
+	std::shared_ptr<GeometryPainting> painting;
 	std::string expectedText = "";
 	SECTION("without special characters") {
-		class TestPainting : public renderer::GeometryPainting {
-			void paint(renderer::GeometryRenderer& renderer) const override {
+		class TestPainting : public GeometryPainting {
+			void paint(GeometryRenderer& renderer) const override {
 				renderer.drawText(Point<Exact>(5, 5), "Hello!");
 			}
 		};
@@ -88,15 +88,15 @@ TEST_CASE("Exporting a label to Ipe") {
 		expectedText = "Hello!";
 	}
 	SECTION("with special characters") {
-		class TestPainting : public renderer::GeometryPainting {
-			void paint(renderer::GeometryRenderer& renderer) const override {
+		class TestPainting : public GeometryPainting {
+			void paint(GeometryRenderer& renderer) const override {
 				renderer.drawText(Point<Exact>(5, 5), "test # $ % & { } _ ~ ^ \\ test");
 			}
 		};
 		painting = std::make_shared<TestPainting>();
 		expectedText = "test \\# \\$ \\% \\& \\{ \\} \\_ \\~{} \\^{} \\textbackslash{} test";
 	}
-	renderer::IpeRenderer renderer(painting);
+	IpeRenderer renderer(painting);
 	std::filesystem::path path = std::filesystem::temp_directory_path() / "test.ipe";
 	renderer.save(path);
 

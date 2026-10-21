@@ -19,7 +19,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include <cartocrow/core/core.h>
 
-namespace cartocrow::data_structures {
+namespace cartocrow {
 
 template <typename PQT> concept PointQuadTreeTraits = requires(typename PQT::Element elt) {
 
@@ -72,5 +72,5 @@ template <PointQuadTreeTraits PQT> class PointQuadTree {
 	static bool same_point(const Point<Kernel>& a, const Point<Kernel>& b, const Number<Kernel> prec);
 };
 
-} // namespace cartocrow::data_structures
+} // namespace cartocrow
 #include "point_quad_tree.hpp"

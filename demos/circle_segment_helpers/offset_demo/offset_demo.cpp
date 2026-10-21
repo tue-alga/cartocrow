@@ -32,7 +32,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <CGAL/approximated_offset_2.h>
 
 using namespace cartocrow;
-using namespace cartocrow::renderer;
 
 CSPolygon dilateSegment(const Segment<Exact>& segment, const Number<Exact>& dilationRadius) {
     std::vector<Point<Exact>> points({segment.source(), segment.target()});
