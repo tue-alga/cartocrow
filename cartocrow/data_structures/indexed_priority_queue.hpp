@@ -118,7 +118,7 @@ namespace cartocrow::data_structures {
 				queue.pop_back();
 				siftDown(id, moved);
 				if (queue[id] == moved) {
-					siftDown(id, moved);
+					siftUp(id, moved);
 				}
 			}
 
