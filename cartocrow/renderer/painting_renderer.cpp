@@ -52,6 +52,7 @@ void PaintingRenderer::paint(GeometryRenderer& renderer) const {
 			renderer.setFillOpacity(style.m_fillOpacity);
 			renderer.setStroke(style.m_strokeColor, style.m_strokeWidth, style.m_absoluteWidth);
 			renderer.setStrokeOpacity(style.m_strokeOpacity);
+			renderer.setPointSize(style.m_pointSize, style.m_absoluteSize);
 			renderer.setClipping(style.m_clip);
             if (style.m_clipPath != lastStyle.m_clipPath) {
 			    renderer.setClipPath(style.m_clipPath);
@@ -141,7 +142,7 @@ void PaintingRenderer::setFillOpacity(int alpha) {
 
 void PaintingRenderer::setPointSize(double size, bool absoluteSize) {
 	m_style.m_pointSize = size;
-	m_style.m_absoluteWidth = absoluteSize;
+	m_style.m_absoluteSize = absoluteSize;
 	m_objects.push_back(m_style);
 }
 

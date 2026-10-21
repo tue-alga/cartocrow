@@ -53,7 +53,6 @@ void SvgRenderer::save(const std::filesystem::path& file) {
 	std::locale::global(std::locale("C"));
 	m_out.open(file);
 	m_out << "<svg version=\"1.1\" xmlns:inkscape=\"http://www.inkscape.org/namespaces/inkscape\" xmlns=\"http://www.w3.org/2000/svg\">\n";
-	m_out << "<defs><circle id=\"vertex\" cx=\"0\" cy=\"0\" r=\"4\"/></defs>\n";
 	savePaintings();
 	m_out << "</svg>\n";
 	m_out.close();
@@ -65,15 +64,14 @@ void SvgRenderer::save(const std::filesystem::path& file, Box viewBox) {
 	m_out << "<svg version=\"1.1\"" << " viewBox=\"" <<
 	    viewBox.xmin() << " " << -viewBox.ymax() << " " << viewBox.x_span() << " " << viewBox.y_span() <<
 	    "\" xmlns:inkscape=\"http://www.inkscape.org/namespaces/inkscape\" xmlns=\"http://www.w3.org/2000/svg\">\n";
-	m_out << "<defs><circle id=\"vertex\" cx=\"0\" cy=\"0\" r=\"4\"/></defs>\n";
 	savePaintings();
 	m_out << "</svg>\n";
 	m_out.close();
 }
 
 void SvgRenderer::draw(const Point<Inexact>& p) {
-	m_out << "<use href=\"#vertex\" " << getVertexStyle() << " x=\"" << p.x() << "\" y=\""
-	      << -p.y() << "\"/>\n";
+	m_out << "<circle " << getVertexStyle() << " r=\"" << m_style.m_pointSize / 2 << "\" cx=\"" << p.x()
+	      << "\" cy=\"" << -p.y() << "\"/>\n";
 }
 
 void SvgRenderer::draw(const Line<Inexact>& l) {

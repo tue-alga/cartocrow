@@ -547,7 +547,7 @@ void GeometryWidget::draw(const Point<Inexact>& p) {
 	m_painter->setPen(Qt::NoPen);
 	m_painter->setBrush(m_style.m_strokeColor);
 	QPointF p2 = convertPoint(p);
-	const double size = m_style.m_pointSize * (m_style.m_absoluteWidth ? zoomFactor() : 1);
+	const double size = m_style.m_pointSize * (m_style.m_absoluteSize ? zoomFactor() : 1);
 	m_painter->drawEllipse(
 	    QRectF(p2.x() - 0.5 * size, p2.y() - 0.5 * size, size, size));
 }

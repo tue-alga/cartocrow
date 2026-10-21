@@ -129,6 +129,8 @@ void IpeRenderer::draw(const Point<Inexact>& p) {
 	ipe::Vector vector(p.x(), p.y());
 	ipe::Attribute name = ipe::Attribute(true, "mark/disk(sx)");
 	ipe::Reference* reference = new ipe::Reference(getAttributesForStyle(), name, vector);
+	// the disk mark has radius 0.6 times the symbol size
+	reference->setSize(ipe::Attribute(ipe::Fixed::fromDouble(m_style.m_pointSize / 1.2)));
 	m_page->append(ipe::TSelect::ENotSelected, m_layer, reference);
 }
 
