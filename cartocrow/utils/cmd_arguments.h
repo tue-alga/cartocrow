@@ -21,7 +21,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <string>
 #include <optional>
 
-namespace cartocrow::utils {
+namespace cartocrow {
 
 class CommandLineArguments {
   private:
@@ -59,4 +59,4 @@ class CommandLineArguments {
 	                     const std::string newline_start = "  ", const std::string sep = " ") const;
 };
 
-} // namespace cartocrow::utils
+} // namespace cartocrow

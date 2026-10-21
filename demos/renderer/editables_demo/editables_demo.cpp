@@ -22,7 +22,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <QWidget>
 
 using namespace cartocrow;
-using namespace cartocrow::renderer;
 
 DemoPainting::DemoPainting(std::shared_ptr<Point<Inexact>> p1, std::shared_ptr<Point<Inexact>> p2,
                            std::shared_ptr<Point<Inexact>> p3)

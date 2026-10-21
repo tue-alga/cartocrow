@@ -19,7 +19,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "geometry_renderer.h"
 
-namespace cartocrow::renderer {
+namespace cartocrow {
 
 /// A description of a drawing using a \ref GeometryRenderer.
 /**
@@ -56,4 +56,4 @@ class GeometryPainting {
 	virtual void paint(GeometryRenderer& renderer) const = 0;
 };
 
-} // namespace cartocrow::renderer
+} // namespace cartocrow

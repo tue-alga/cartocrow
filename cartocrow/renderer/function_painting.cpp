@@ -17,7 +17,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "function_painting.h"
 
-namespace cartocrow::renderer {
+namespace cartocrow {
 FunctionPainting::FunctionPainting(const std::function<void(GeometryRenderer&)>& draw_function)
     : m_draw_function(draw_function) {}
 

@@ -25,7 +25,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <cmath>
 #include <string>
 
-namespace cartocrow::renderer {
+namespace cartocrow {
 
 SvgRenderer::SvgRenderer(const std::shared_ptr<GeometryPainting>& painting) {
 	m_paintings.push_back(DrawnPainting{painting});
@@ -299,12 +299,12 @@ void SvgRenderer::addPainting(const std::shared_ptr<GeometryPainting>& painting,
 	m_paintings.push_back(DrawnPainting{painting, spaceless});
 }
 
-void SvgRenderer::addPainting(const std::function<void(renderer::GeometryRenderer&)>& draw_function) {
+void SvgRenderer::addPainting(const std::function<void(GeometryRenderer&)>& draw_function) {
 	auto painting = std::make_shared<FunctionPainting>(draw_function);
 	addPainting(painting);
 }
 
-void SvgRenderer::addPainting(const std::function<void(renderer::GeometryRenderer&)>& draw_function, const std::string& name) {
+void SvgRenderer::addPainting(const std::function<void(GeometryRenderer&)>& draw_function, const std::string& name) {
 	auto painting = std::make_shared<FunctionPainting>(draw_function);
 	addPainting(painting, name);
 }
@@ -428,4 +428,4 @@ void SvgRenderer::useDefaultFont() {
 	m_style.m_fontSize = std::nullopt;
 	m_style.m_fontFamily = std::nullopt;
 }
-} // namespace cartocrow::renderer
+} // namespace cartocrow

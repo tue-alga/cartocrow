@@ -23,7 +23,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <QMainWindow>
 
 using namespace cartocrow;
-using namespace cartocrow::renderer;
 
 class CircleConvexHullDemo: public QMainWindow {
 	Q_OBJECT

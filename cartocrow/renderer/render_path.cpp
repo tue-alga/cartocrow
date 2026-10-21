@@ -17,7 +17,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "render_path.h"
 
-namespace cartocrow::renderer {
+namespace cartocrow {
 
 const std::vector<RenderPath::Command>& RenderPath::commands() const {
 	return m_commands;
@@ -51,7 +51,7 @@ RenderPath& RenderPath::operator+=(const RenderPath& other) {
 	return *this;
 }
 
-renderer::RenderPath orthogonal_transform(const CGAL::Aff_transformation_2<Inexact>& t, const RenderPath& p) {
+RenderPath orthogonal_transform(const CGAL::Aff_transformation_2<Inexact>& t, const RenderPath& p) {
     RenderPath tp;
     for (auto& cmd : p.commands()) {
         if (auto* c = std::get_if<RenderPath::MoveTo>(&cmd)) {
@@ -89,4 +89,4 @@ RenderPath& operator<<(RenderPath& path, const PolygonWithHoles<Inexact>& p) {
 	return path;
 }
 
-} // namespace cartocrow::renderer
+} // namespace cartocrow

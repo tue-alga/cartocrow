@@ -27,7 +27,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "../core/halfplane.h"
 #include "render_path.h"
 
-namespace cartocrow::renderer {
+namespace cartocrow {
 
 /// An interface for rendering geometric objects to a GUI or a file.
 /**
@@ -229,4 +229,4 @@ class GeometryRenderer {
 	/// @}
 };
 
-} // namespace cartocrow::renderer
+} // namespace cartocrow

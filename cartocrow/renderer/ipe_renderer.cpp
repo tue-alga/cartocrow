@@ -32,7 +32,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <string>
 #include <variant>
 
-namespace cartocrow::renderer {
+namespace cartocrow {
 
 IpeRenderer::IpeRenderer(const std::shared_ptr<GeometryPainting>& painting) {
 	m_paintings.push_back(DrawnPainting{painting});
@@ -517,12 +517,12 @@ void IpeRenderer::setPreamble(const std::string& preamble) {
 	m_preamble = preamble;
 }
 
-void IpeRenderer::addPainting(const std::function<void(renderer::GeometryRenderer&)>& draw_function) {
+void IpeRenderer::addPainting(const std::function<void(GeometryRenderer&)>& draw_function) {
 	auto painting = std::make_shared<FunctionPainting>(draw_function);
 	addPainting(painting);
 }
 
-void IpeRenderer::addPainting(const std::function<void(renderer::GeometryRenderer&)>& draw_function, const std::string& name) {
+void IpeRenderer::addPainting(const std::function<void(GeometryRenderer&)>& draw_function, const std::string& name) {
 	auto painting = std::make_shared<FunctionPainting>(draw_function);
 	addPainting(painting, name);
 }
@@ -577,4 +577,4 @@ std::string IpeRenderer::escapeForLaTeX(const std::string& text) const {
 	return result;
 }
 
-} // namespace cartocrow::renderer
+} // namespace cartocrow

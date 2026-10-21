@@ -20,7 +20,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 // Do not include this file, but the .h file instead
 // -----------------------------------------------------------------------------
 
-namespace cartocrow::data_structures {
+namespace cartocrow {
 
 namespace detail {
 template <QuadTreeTraits QT> struct QTNode {
@@ -293,4 +293,4 @@ void QuadTree<QT>::findOverlapped(const Rectangle<Kernel>& query, ElementCallbac
 	findOverlappedRecursive(root, query, act);
 }
 
-} // namespace cartocrow::data_structures
+} // namespace cartocrow

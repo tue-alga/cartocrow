@@ -22,7 +22,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
  
 #include <cassert>
 
-namespace cartocrow::data_structures {
+namespace cartocrow {
 
 	template <QueueTraits QT>
 	void IndexedPriorityQueue<QT>::siftUp(int k, Element_handle elt) {
@@ -160,4 +160,4 @@ namespace cartocrow::data_structures {
 	const std::vector<typename QT::Element_handle>& IndexedPriorityQueue<QT>::content() const {
 	    return queue;
     }
-    } // namespace cartocrow::data_structures
+    } // namespace cartocrow

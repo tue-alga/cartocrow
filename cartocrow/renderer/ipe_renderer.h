@@ -26,7 +26,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "geometry_painting.h"
 #include "geometry_renderer.h"
 
-namespace cartocrow::renderer {
+namespace cartocrow {
 
 /// The style for the Ipe renderer.
 struct IpeRendererStyle {
@@ -128,8 +128,8 @@ class IpeRenderer : public GeometryRenderer {
 
 	void setPreamble(const std::string& preamble);
 
-	void addPainting(const std::function<void(renderer::GeometryRenderer&)>& draw_function);
-	void addPainting(const std::function<void(renderer::GeometryRenderer&)>& draw_function, const std::string& name);
+	void addPainting(const std::function<void(GeometryRenderer&)>& draw_function);
+	void addPainting(const std::function<void(GeometryRenderer&)>& draw_function, const std::string& name);
 	void addPainting(const std::shared_ptr<GeometryPainting>& painting);
 	void addPainting(const std::shared_ptr<GeometryPainting>& painting, const std::string& name);
 
@@ -187,4 +187,4 @@ class IpeRenderer : public GeometryRenderer {
 	bool m_usedLocalFont = false;
 };
 
-} // namespace cartocrow::renderer
+} // namespace cartocrow

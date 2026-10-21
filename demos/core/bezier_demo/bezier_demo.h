@@ -22,7 +22,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "cartocrow/renderer/geometry_widget.h"
 
 using namespace cartocrow;
-using namespace cartocrow::renderer;
 
 class BezierDemo : public QMainWindow {
   Q_OBJECT

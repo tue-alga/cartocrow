@@ -20,11 +20,11 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "geometry_renderer.h"
 #include "geometry_painting.h"
 
-namespace cartocrow::renderer {
+namespace cartocrow {
 class FunctionPainting : public GeometryPainting {
   public:
 	FunctionPainting(const std::function<void(GeometryRenderer&)>& draw_function);
-	void paint(renderer::GeometryRenderer& renderer) const override;
+	void paint(GeometryRenderer& renderer) const override;
 
   private:
 	const std::function<void(GeometryRenderer&)> m_draw_function;

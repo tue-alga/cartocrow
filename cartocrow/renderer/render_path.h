@@ -21,7 +21,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "../core/core.h"
 
-namespace cartocrow::renderer {
+namespace cartocrow {
 
 /// A path that can be drawn or filled.
 class RenderPath {
@@ -90,7 +90,7 @@ class RenderPath {
 
 /// Apply transformation \p t on render path \p p.
 /// \pre Affine transformation \p t should be an orthogonal transformation (no stretching).
-renderer::RenderPath orthogonal_transform(const CGAL::Aff_transformation_2<Inexact>& t, const RenderPath& p);
+RenderPath orthogonal_transform(const CGAL::Aff_transformation_2<Inexact>& t, const RenderPath& p);
 /// Append polygon to render path.
 RenderPath& operator<<(RenderPath& path, const Polygon<Inexact>& p);
 /// Append polygon with holes to render path.

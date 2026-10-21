@@ -34,7 +34,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "geometry_painting.h"
 #include "geometry_renderer.h"
 
-namespace cartocrow::renderer {
+namespace cartocrow {
 
 /// The style for a GeometryWidget.
 struct GeometryWidgetStyle {
@@ -237,7 +237,7 @@ class GeometryWidget : public QWidget, public GeometryRenderer {
 
 	/// Adds a new painting to this widget.
 	void addPainting(std::shared_ptr<GeometryPainting> painting, const std::string& name);
-	std::shared_ptr<GeometryPainting> addPainting(const std::function<void(renderer::GeometryRenderer&)>& draw_function, const std::string& name);
+	std::shared_ptr<GeometryPainting> addPainting(const std::function<void(GeometryRenderer&)>& draw_function, const std::string& name);
 	// Set visibility of a painting
 	void setVisibility(const std::shared_ptr<GeometryPainting>& painting, bool visible);
 	/// Removes all paintings from this widget.
@@ -401,4 +401,4 @@ class GeometryWidget : public QWidget, public GeometryRenderer {
 	QToolButton* m_saveToSvgButton;
 };
 
-} // namespace cartocrow::renderer
+} // namespace cartocrow

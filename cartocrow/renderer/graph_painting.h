@@ -19,7 +19,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "geometry_painting.h"
 
-namespace cartocrow::renderer {
+namespace cartocrow {
 
 enum VertexSelection { DEG0_ONLY = 0, NO_DEG2 = 1, ALL = 2 };
 
@@ -106,4 +106,4 @@ template <class Graph> class GraphPainting : public GeometryPainting {
 			}
 		}
 };
-} // namespace cartocrow::renderer
+} // namespace cartocrow

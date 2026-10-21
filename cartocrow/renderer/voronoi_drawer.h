@@ -22,7 +22,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "cartocrow/core/segment_delaunay_graph_helpers.h"
 
-namespace cartocrow::renderer {
+namespace cartocrow {
 /// This class can be used in combination with the draw_dual and draw_dual_edge functions of
 /// CGAL's Voronoi and Segment Voronoi diagrams.
 /// Also see the modified draw_dual function for segment Voronoi diagrams in "segment_delaunay_graph_helpers.h"
@@ -31,9 +31,9 @@ class VoronoiDrawer {
   public:
 	using GtE = CGAL::Segment_Delaunay_graph_traits_2<Exact>;
 
-	cartocrow::renderer::GeometryRenderer* m_renderer;
+	cartocrow::GeometryRenderer* m_renderer;
 
-	explicit VoronoiDrawer(cartocrow::renderer::GeometryRenderer* renderer): m_renderer(renderer) {};
+	explicit VoronoiDrawer(cartocrow::GeometryRenderer* renderer): m_renderer(renderer) {};
 
 	VoronoiDrawer& operator<<(const typename Gt::Segment_2& s) {
 		m_renderer->draw(s);

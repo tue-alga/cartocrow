@@ -19,7 +19,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include <vector>
 
-namespace cartocrow::data_structures {
+namespace cartocrow {
 
 template <class QT>
 concept QueueTraits = requires(QT traits, typename QT::Element_handle elt, int i) {
@@ -63,6 +63,6 @@ template <QueueTraits QT> class IndexedPriorityQueue {
 	const std::vector<Element_handle>& content() const;
 };
 
-} // namespace cartocrow::data_structures
+} // namespace cartocrow
 
 #include "indexed_priority_queue.hpp"

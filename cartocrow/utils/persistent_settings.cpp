@@ -19,7 +19,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include <fstream>
 
-namespace cartocrow::utils {
+namespace cartocrow {
 
 PersistentSettings::PersistentSettings(std::string settings) {
 	m_path = settings + ".json";
@@ -122,4 +122,4 @@ int PersistentSettings::getDouble(Key key, double default_value) {
 	}
 }
 
-} // namespace cartocrow::utils
+} // namespace cartocrow

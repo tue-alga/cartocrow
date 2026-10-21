@@ -20,7 +20,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "geometry_painting.h"
 #include "geometry_renderer.h"
 
-namespace cartocrow::renderer {
+namespace cartocrow {
 
 /// Renderer that does not actually render, but instead serves as a painting
 /// that stores the render commands executed, so that they can later be rendered
@@ -116,4 +116,4 @@ class PaintingRenderer : public GeometryPainting, public GeometryRenderer {
 	std::stack<Style> m_styleStack;
 };
 
-} // namespace cartocrow::renderer
+} // namespace cartocrow
