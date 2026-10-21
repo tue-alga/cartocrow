@@ -20,20 +20,20 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <ogrsf_frmts.h>
 #include "cartocrow/core/core.h"
 #include "cartocrow/core/polyline.h"
-#include "cartocrow/core/polyline_set.h"
-#include "cartocrow/core/polygon_set_raw.h"
-#include "cartocrow/core/point_set.h"
+#include "cartocrow/core/multi_polyline.h"
+#include "cartocrow/core/multipolygon_with_holes.h"
+#include "cartocrow/core/multi_point.h"
 #include "cartocrow/core/straight_geometry.h"
 
 namespace cartocrow {
 StraightGeometry<Inexact> ogrGeometryToStraightGeometry(const OGRGeometry& geometry);
-PolygonSetRaw<Inexact> ogrMultiPolygonToPolygonSetRaw(const OGRMultiPolygon& multiPolygon);
-PolygonSetRaw<Inexact> ogrPolygonToPolygonSetRaw(const OGRPolygon& ogrPolygon);
+MultipolygonWithHoles<Inexact> ogrMultiPolygonToPolygonSetRaw(const OGRMultiPolygon& multiPolygon);
+MultipolygonWithHoles<Inexact> ogrPolygonToPolygonSetRaw(const OGRPolygon& ogrPolygon);
 Polygon<Inexact> ogrLinearRingToPolygon(const OGRLinearRing& ogrLinearRing);
-PolylineSet<Inexact> ogrMultiLineStringToPolylineSet(const OGRMultiLineString& ogrMultiLineString);
+MultiPolyline<Inexact> ogrMultiLineStringToPolylineSet(const OGRMultiLineString& ogrMultiLineString);
 Polyline<Inexact> ogrLineStringToPolyline(const OGRLineString& ogrLineString);
 PolygonWithHoles<Inexact> ogrPolygonToPolygonWithHoles(const OGRPolygon& ogrPolygon);
-PointSet<Inexact> ogrMultiPointToPointSet(const OGRMultiPoint& ogrMultiPoint);
+MultiPoint<Inexact> ogrMultiPointToPointSet(const OGRMultiPoint& ogrMultiPoint);
 Point<Inexact> ogrPointToPoint(const OGRPoint& ogrPoint);
 OGRLinearRing polygonToOGRLinearRing(const Polygon<Inexact>& polygon);
 OGRPolygon polygonWithHolesToOGRPolygon(const PolygonWithHoles<Inexact>& polygon);

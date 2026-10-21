@@ -12,30 +12,36 @@ endmacro(cartocrow_install_module)
 
 add_subdirectory(core)
 add_subdirectory(circle_segment_helpers)
+add_subdirectory(data_structures)
 add_subdirectory(renderer)
 add_subdirectory(reader)
+add_subdirectory(utils)
 if (NOT EMSCRIPTEN)
     add_subdirectory(widgets)
 endif()
 
 add_library(cartocrow_lib INTERFACE)
 if (NOT EMSCRIPTEN)
-	target_link_libraries(
-		cartocrow_lib INTERFACE
-		core
-		circle_segment_helpers
-		renderer
-		reader
-		widgets
+target_link_libraries(
+    cartocrow_lib INTERFACE
+    core
+    circle_segment_helpers
+    data_structures
+    renderer
+    reader
+    utils
+    widgets
 )
 else()
-	target_link_libraries(
-		cartocrow_lib INTERFACE
-		core
-		circle_segment_helpers
-		renderer
-		reader
-	)
+target_link_libraries(
+    cartocrow_lib INTERFACE
+    core
+    data_structures
+    circle_segment_helpers
+    renderer
+    reader
+    utils
+)
 endif()
 
 cartocrow_install_module(cartocrow_lib)

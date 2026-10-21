@@ -18,9 +18,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #pragma once
 
 #include <string>
-#include <vector>
+#include <list>
 
-namespace cartocrow {
+namespace cartocrow::utils {
 
 enum TimeResolution { SECONDS, MILLISECONDS, NANOSECONDS };
 
@@ -46,6 +46,8 @@ class Stopwatch {
 	long getTotalTime();
 	long getCount();
 
+	TimeResolution getResolution();
+
 	friend class StopwatchPool;
 };
 
@@ -54,7 +56,7 @@ class StopwatchPool {
   private:
 	std::string name;
 	TimeResolution resolution;
-	std::vector<Stopwatch> watches;
+	std::list<Stopwatch> watches;
 
   public:
 	StopwatchPool(std::string name, TimeResolution resolution = MILLISECONDS);

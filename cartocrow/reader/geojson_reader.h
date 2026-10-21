@@ -26,12 +26,12 @@ concept GeoJSONReaderIntermediateGeometryConverter = requires(const Intermediate
 };
 
 Point<Inexact> parsePoint(const JSONObject& o) ;
-PointSet<Inexact> parseMultiPoint(const JSONObject& o);
+MultiPoint<Inexact> parseMultiPoint(const JSONObject& o);
 Polyline<Inexact> parseLineString(const JSONObject& o);
-PolylineSet<Inexact> parseMultiLineString(const JSONObject& o);
+MultiPolyline<Inexact> parseMultiLineString(const JSONObject& o);
 Polygon<Inexact> parseLinearRing(const JSONObject& o);
 PolygonWithHoles<Inexact> parsePolygon(const JSONObject& o);
-PolygonSetRaw<Inexact> parseMultiPolygon(const JSONObject& o);
+MultipolygonWithHoles<Inexact> parseMultiPolygon(const JSONObject& o);
 
 /// is a model of GeoJSONReaderTraits
 template<class Geometry, class Converter>

@@ -22,6 +22,18 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "core.h"
 
 namespace cartocrow {
+template <class K> 
+CGAL::Point_2<K> projection(const CGAL::Segment_2<K>& seg, const CGAL::Point_2<K>& p) {
+	Line<K> l = seg.supporting_line();
+	auto q = l.projection(p);
+	auto s = (q - seg.source()) * (seg.target() - seg.source()) / seg.squared_length();
+	if (s < 0)
+		return seg.source();
+	if (s > 1)
+		return seg.target();
+	return q;
+}
+
 template <class Segment_>
 class Polyline_Segment_ptr
 {
@@ -137,20 +149,32 @@ template <class K> class Polyline {
 		}
 		return transformed;
 	}
+	CGAL::Point_2<K> nearest(const CGAL::Point_2<K>& p) const {
+		CGAL::Point_2<K> closest;
+		Number<K> minDist2 = std::numeric_limits<Number<K>>::infinity();
+
+		for (auto eit = edges_begin(); eit != edges_end(); ++eit) {
+			auto proj = projection(*eit, p);
+			auto dist2 = CGAL::squared_distance(p, proj);
+			if (dist2 < minDist2) {
+				minDist2 = dist2;
+				closest = proj;
+			}
+		}
+
+		return closest;
+	}
   private:
 	std::vector<CGAL::Point_2<K>> m_points;
 };
 
-/// Converts a polyline from exact representation to an approximation in
-/// inexact representation.
-template <class K>
-Polyline<Inexact> approximate(const Polyline<K>& p) {
-	Polyline<Inexact> result;
-	for (auto v = p.vertices_begin(); v < p.vertices_end(); ++v) {
-		result.push_back(approximate(*v));
+template <typename KernelOut, typename KernelIn>
+Polyline<KernelOut> convert_kernel(const Polyline<KernelIn>& v) {
+	Polyline<KernelOut> result;
+	for (auto p = v.vertices_begin(); p < v.vertices_end(); ++p) {
+		result.push_back(convert_kernel<KernelOut>(*p));
 	}
 	return result;
 }
 
-Polyline<Exact> pretendExact(const Polyline<Inexact>& p);
 }

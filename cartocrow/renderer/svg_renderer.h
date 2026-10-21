@@ -32,6 +32,9 @@ struct SvgRendererStyle {
 	int m_mode = GeometryRenderer::stroke;
 	/// The diameter of points.
 	double m_pointSize = 10;
+	/// Whether the size is interpreted as absolute, that is, independent of
+	/// the renderer's zoom factor.
+	bool m_absoluteSize = false;
 	/// The color of points and lines.
 	std::string m_strokeColor = "#000000";
 	/// The opacity of points and lines.
@@ -96,6 +99,7 @@ class SvgRenderer : public GeometryRenderer {
 	void setStrokeOpacity(int alpha) override;
 	void setFill(Color color) override;
 	void setFillOpacity(int alpha) override;
+	void setPointSize(double size, bool absoluteSize = false) override;
     void setClipPath(const RenderPath& clipPath) override;
     void setClipping(bool enable) override;
 	void setLineJoin(LineJoin lineJoin) override;

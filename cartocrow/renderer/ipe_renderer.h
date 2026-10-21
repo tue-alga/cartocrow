@@ -114,6 +114,7 @@ class IpeRenderer : public GeometryRenderer {
 	void setStrokeOpacity(int alpha) override;
 	void setFill(Color color) override;
 	void setFillOpacity(int alpha) override;
+	void setPointSize(double size, bool absoluteSize = false) override;
     void setClipPath(const RenderPath& clipPath) override;
     void setClipping(bool enable) override;
 	void setLineJoin(LineJoin lineJoin) override;

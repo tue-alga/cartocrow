@@ -15,17 +15,14 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "polyline_set.h"
+#pragma once
+
+#include "graph_2.h"
+#include "graph_segment_traits_2.h"
 
 namespace cartocrow {
-PolylineSet<Inexact>
-approximate(const PolylineSet<Exact>& pls) {
-    std::vector<Polyline<Inexact>> plsInexact;
 
-    for (const auto& pl : pls.polylines) {
-        plsInexact.push_back(approximate(pl));
-    }
+template <class VD, class ED, class K, class M>
+using Straight_graph_2 = Graph_2<VD, ED, Graph_segment_curve_traits_2<K>, M>;
 
-    return {plsInexact};
-}
 }

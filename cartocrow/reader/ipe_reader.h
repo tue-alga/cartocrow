@@ -22,9 +22,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "../core/core.h"
 #include "../core/ellipse.h"
 #include "../core/polyline.h"
-#include "../core/polyline_set.h"
-#include "../core/point_set.h"
-#include "../core/polygon_set_raw.h"
+#include "../core/multi_polyline.h"
+#include "../core/multi_point.h"
+#include "../core/multipolygon_with_holes.h"
 #include "../core/cubic_bezier.h"
 #include "../core/geometric_feature.h"
 
@@ -57,8 +57,8 @@ concept IpeReaderTraits =
 // todo: make a RenderPath reader traits that parses everything to a render path?
 
 using IntermediateIpeGeometry = std::variant<
-    PolygonSetRaw<Inexact>, PolygonWithHoles<Inexact>, Polygon<Inexact>, PolylineSet<Inexact>, Polyline<Inexact>, Segment<Inexact>, 
-	Point<Inexact>, PointSet<Inexact>, CubicBezierCurve, CubicBezierSpline, Circle<Inexact>, Ellipse>;
+    MultipolygonWithHoles<Inexact>, PolygonWithHoles<Inexact>, Polygon<Inexact>, MultiPolyline<Inexact>, Polyline<Inexact>, Segment<Inexact>, 
+	Point<Inexact>, MultiPoint<Inexact>, CubicBezierCurve, CubicBezierSpline, Circle<Inexact>, Ellipse>;
 
 template <class Geometry, class OutputIterator, class Traits>
 concept IpeReaderIntermediateGeometryConverter = requires(const IntermediateIpeGeometry& g, OutputIterator out) {
@@ -101,8 +101,8 @@ struct IpeReaderIntermediateGeometryTraits {
 		ipe::Matrix matrix = path->matrix();
 		ipe::Shape shape = path->shape();
 
-		// If all subpaths are closed curves with straight segments then make PolygonSetRaw (or Polygon).
-		// If all subpaths are open curves with straight segments then make PolylineSet (or Polyline)
+		// If all subpaths are closed curves with straight segments then make MultipolygonWithHoles (or Polygon).
+		// If all subpaths are open curves with straight segments then make MultiPolyline (or Polyline)
 		// Otherwise, parse and output the subpaths separately
 		bool allStraightSegments = true;
 		bool allClosed = true;
@@ -128,7 +128,7 @@ struct IpeReaderIntermediateGeometryTraits {
 		}
 
 		if (allStraightSegments && allClosed) {
-			PolygonSetRaw<Inexact> ps;
+			MultipolygonWithHoles<Inexact> ps;
 			for (int i = 0; i < shape.countSubPaths(); ++i) {
 				Polygon<Inexact> polygon;
 				const ipe::Curve* curve = shape.subPath(i)->asCurve();
@@ -151,7 +151,7 @@ struct IpeReaderIntermediateGeometryTraits {
 				if (shape.countSubPaths() == 1) {
 					*out++ = polygon;
 				} else {
-					ps.polygons_with_holes.emplace_back(polygon);
+					ps.add_polygon(polygon);
 				}
 			}
 			if (shape.countSubPaths() > 1) {
@@ -160,7 +160,7 @@ struct IpeReaderIntermediateGeometryTraits {
 
 			return;
 		} else if (allStraightSegments && allOpen) {
-			PolylineSet<Inexact> ps;
+			MultiPolyline<Inexact> ps;
 			for (int i = 0; i < shape.countSubPaths(); ++i) {
 				Polyline<Inexact> polyline;
 				const ipe::Curve* curve = shape.subPath(i)->asCurve();

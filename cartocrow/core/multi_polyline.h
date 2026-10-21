@@ -19,14 +19,14 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "polyline.h"
 
-// Mirrors CGAL's Polygon_set
+// Mirrors CGAL's Multipolygon_with_holes and Polygon_set
 namespace cartocrow {
 template<class K>
-struct PolylineSet {
+struct MultiPolyline {
    std::vector<Polyline<K>> polylines;
 
-   PolylineSet<K> transform(const CGAL::Aff_transformation_2<K>& trans) const {
-       PolylineSet<K> transformed;
+   MultiPolyline<K> transform(const CGAL::Aff_transformation_2<K>& trans) const {
+       MultiPolyline<K> transformed;
        for (const auto& pl : polylines) {
            transformed.polylines.push_back(pl.transform(trans));
        }
@@ -38,5 +38,13 @@ struct PolylineSet {
    }
 };
 
-PolylineSet<Inexact> approximate(const PolylineSet<Exact>& pls);
+template <typename KernelOut, typename KernelIn>
+MultiPolyline<KernelOut> convert_kernel(const MultiPolyline<KernelIn>& v) {
+	MultiPolyline<KernelOut> result;
+	for (const auto& p : v.polylines) {
+        result.polylines.push_back(convert_kernel<KernelOut>(*p));
+	}
+	return result;
+}
+
 }

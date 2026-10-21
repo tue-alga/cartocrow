@@ -547,9 +547,9 @@ void GeometryWidget::draw(const Point<Inexact>& p) {
 	m_painter->setPen(Qt::NoPen);
 	m_painter->setBrush(m_style.m_strokeColor);
 	QPointF p2 = convertPoint(p);
-	m_painter->drawEllipse(QRectF(p2.x() - 0.5 * m_style.m_pointSize,
-	                              p2.y() - 0.5 * m_style.m_pointSize, m_style.m_pointSize,
-	                              m_style.m_pointSize));
+	const double size = m_style.m_pointSize * (m_style.m_absoluteSize ? zoomFactor() : 1);
+	m_painter->drawEllipse(
+	    QRectF(p2.x() - 0.5 * size, p2.y() - 0.5 * size, size, size));
 }
 
 void GeometryWidget::addPolygonToPath(QPainterPath& path, const Polygon<Inexact>& p) {
@@ -822,6 +822,11 @@ void GeometryWidget::setFill(Color color) {
 
 void GeometryWidget::setFillOpacity(int alpha) {
 	m_style.m_fillColor.setAlpha(alpha);
+}
+
+void GeometryWidget::setPointSize(double size, bool absoluteSize) {
+	m_style.m_pointSize = size;
+	m_style.m_absoluteSize = absoluteSize;
 }
 
 void GeometryWidget::setClipPath(const RenderPath& clipPath) {

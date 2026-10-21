@@ -48,7 +48,7 @@ BezierDemo::BezierDemo() {
 	m_renderer->registerEditable(c0);
 	auto c1 = std::make_shared<Point<Inexact>>(1, 0);
 	m_renderer->registerEditable(c1);
-	auto c2 = std::make_shared<Point<Inexact>>(1, 2);
+	auto c2 = std::make_shared<Point<Inexact>>(1, 3);
 	m_renderer->registerEditable(c2);
 	auto c3 = std::make_shared<Point<Inexact>>(1.5, 1);
 	m_renderer->registerEditable(c3);
@@ -69,7 +69,7 @@ BezierDemo::BezierDemo() {
 	auto d3 = std::make_shared<Point<Inexact>>(1.5, -1);
 	m_renderer->registerEditable(d3);
 
-	m_renderer->addPainting([p1, p2, c0, c1, c2, c3, c4, c5, c6, d0, d1, d2, d3, this](GeometryRenderer& renderer) {
+	m_renderer->addPainting([p1, p2, c0, c1, c2, c3, c4, c5, c6, this](GeometryRenderer& renderer) {
 		// Define segment, cubic Bézier spline and its extrema, bounding box and inflection points
 	  	Segment<Inexact> seg(*p1, *p2);
 	  	CubicBezierCurve curve1(*c0, *c1, *c2, *c3);
@@ -77,10 +77,6 @@ BezierDemo::BezierDemo() {
 		CubicBezierSpline spline;
 		spline.appendCurve(curve1);
 	  	spline.appendCurve(curve2);
-		auto [left, bottom, right, top] = spline.extrema();
-		Box box = spline.bbox();
-		std::vector<CubicBezierSpline::SplinePoint> inflects;
-		spline.inflections(std::back_inserter(inflects));
 
 		// Draw curvature lines of the curve
 	    renderer.setStroke(Color(155, 50, 255), 1.0);
@@ -93,7 +89,16 @@ BezierDemo::BezierDemo() {
 				renderer.draw(Segment<Inexact>(p, p + n * spline.curvature({curveIndex, t}) / 5));
 			}
 		}
+	}, "Curvature");
 
+	m_renderer->addPainting([c0, c1, c2, c3, c4, c5, c6, this](GeometryRenderer& renderer) {
+		CubicBezierCurve curve1(*c0, *c1, *c2, *c3);
+		CubicBezierCurve curve2(*c3, *c4, *c5, *c6);
+		CubicBezierSpline spline;
+		spline.appendCurve(curve1);
+		spline.appendCurve(curve2);
+
+		Box box = spline.bbox();
 		// Draw bounding box of the spline
 		renderer.setMode(GeometryRenderer::stroke | GeometryRenderer::fill);
 	  	renderer.setStroke(Color(0, 120, 215), 1.0);
@@ -101,6 +106,26 @@ BezierDemo::BezierDemo() {
 		renderer.setFillOpacity(5);
 		renderer.draw(box);
 	  	renderer.setFillOpacity(255);
+	}, "Bounding box");
+
+	m_renderer->addPainting([p1, p2, c0, c1, c2, c3, c4, c5, c6, this](GeometryRenderer& renderer) {
+		Segment<Inexact> seg(*p1, *p2);
+		CubicBezierCurve curve1(*c0, *c1, *c2, *c3);
+		CubicBezierCurve curve2(*c3, *c4, *c5, *c6);
+		CubicBezierSpline spline;
+		spline.appendCurve(curve1);
+		spline.appendCurve(curve2);
+
+		renderer.setStroke(Color(200, 200, 200), 1.0);
+		Polyline<Inexact> pl;
+		pl.push_back(*c0);
+		pl.push_back(*c1);
+		pl.push_back(*c2);
+		pl.push_back(*c3);
+		pl.push_back(*c4);
+		pl.push_back(*c5);
+		pl.push_back(*c6);
+		renderer.draw(pl);
 
 	  	// Draw the spline itself and the segment
 	  	renderer.setMode(GeometryRenderer::stroke);
@@ -109,10 +134,7 @@ BezierDemo::BezierDemo() {
 			  renderer.setStroke(Color(0, 0, 255), 3.0);
 	  	}
 		renderer.draw(spline);
-	  renderer.setStroke(Color(0, 0, 0), 3.0);
-		renderer.draw(seg);
-		renderer.draw(*p1);
-	  	renderer.draw(*p2);
+	    renderer.setStroke(Color(0, 0, 0), 3.0);
 	  	renderer.draw(*c0);
 	  	renderer.draw(*c3);
 	    renderer.draw(*c6);
@@ -123,19 +145,51 @@ BezierDemo::BezierDemo() {
 	  	renderer.draw(*c2);
 	  	renderer.draw(*c4);
 	  	renderer.draw(*c5);
+	}, "Spline");
 
+	m_renderer->addPainting([c0, c1, c2, c3, c4, c5, c6, this](GeometryRenderer& renderer) {
+		CubicBezierCurve curve1(*c0, *c1, *c2, *c3);
+		CubicBezierCurve curve2(*c3, *c4, *c5, *c6);
+		CubicBezierSpline spline;
+		spline.appendCurve(curve1);
+		spline.appendCurve(curve2);
+		auto [left, bottom, right, top] = spline.extrema();
 	  	// Draw the extrema
 	  	renderer.setStroke(Color(0, 120, 215), 1.0);
 	  	renderer.draw(left.point);
 	  	renderer.draw(bottom.point);
 	  	renderer.draw(right.point);
 	  	renderer.draw(top.point);
+	}, "Extrema");
 
+	m_renderer->addPainting([c0, c1, c2, c3, c4, c5, c6, this](GeometryRenderer& renderer) {
+		CubicBezierCurve curve1(*c0, *c1, *c2, *c3);
+		CubicBezierCurve curve2(*c3, *c4, *c5, *c6);
+		CubicBezierSpline spline;
+		spline.appendCurve(curve1);
+		spline.appendCurve(curve2);
 	  	// Draw the inflection points
+		std::vector<CubicBezierSpline::SplinePoint> inflects;
+		spline.inflections(std::back_inserter(inflects));
 	  	renderer.setStroke(Color(155, 50, 255), 1.0);
 		for (const auto& inflect : inflects) {
 			renderer.draw(inflect.point);
 		}
+	}, "Inflections");
+
+	m_renderer->addPainting([p1, p2, this, c0, c1, c2, c3, c4, c5, c6](GeometryRenderer& renderer) {
+		CubicBezierCurve curve1(*c0, *c1, *c2, *c3);
+		CubicBezierCurve curve2(*c3, *c4, *c5, *c6);
+		CubicBezierSpline spline;
+		spline.appendCurve(curve1);
+		spline.appendCurve(curve2);
+
+		Segment<Inexact> seg(*p1, *p2);
+
+		renderer.setStroke(Color(0, 0, 0), 3.0);
+		renderer.draw(seg);
+		renderer.draw(*p1);
+		renderer.draw(*p2);
 
 		// Draw intersections of spline with line segment
 	  	renderer.setStroke(Color(200, 0, 0), 1.0);
@@ -144,13 +198,39 @@ BezierDemo::BezierDemo() {
 	  	for (const auto& inter : inters) {
 			  renderer.draw(inter.point);
 	  	}
+	}, "Line segment intersection");
+
+	m_renderer->addPainting([this, c0, c1, c2, c3, c4, c5, c6](GeometryRenderer& renderer) {
+		CubicBezierCurve curve1(*c0, *c1, *c2, *c3);
+		CubicBezierCurve curve2(*c3, *c4, *c5, *c6);
+		CubicBezierSpline spline;
+		spline.appendCurve(curve1);
+		spline.appendCurve(curve2);
 
 		// Draw nearest to mouse
-	    renderer.setStroke(Color(0, 200, 0), 1.0);
+		renderer.setStroke(Color(0, 200, 0), 1.0);
 		auto mp = m_renderer->mousePosition();
-		auto closest = spline.nearest(mp).point;
-		renderer.draw(closest);
-		renderer.draw(Segment<Inexact>(closest, mp));
+		auto closest = spline.nearest(mp);
+		renderer.draw(closest.point);
+		renderer.draw(Segment<Inexact>(closest.point, mp));
+		renderer.draw(spline.position(closest.param));
+		renderer.draw(Segment<Inexact>(spline.position(closest.param), mp));
+	}, "Nearest");
+
+	m_renderer->addPainting([d0, d1, d2, d3, c0, c1, c2, c3, c4, c5, c6, this](GeometryRenderer& renderer) {
+		CubicBezierCurve curve1(*c0, *c1, *c2, *c3);
+		CubicBezierCurve curve2(*c3, *c4, *c5, *c6);
+		CubicBezierSpline spline;
+		spline.appendCurve(curve1);
+		spline.appendCurve(curve2);
+
+		renderer.setStroke(Color(200, 200, 200), 1.0);
+		Polyline<Inexact> pl;
+		pl.push_back(*d0);
+		pl.push_back(*d1);
+		pl.push_back(*d2);
+		pl.push_back(*d3);
+		renderer.draw(pl);
 
 		CubicBezierCurve otherCurve(*d0, *d1, *d2, *d3);
 		if (spline.intersects(otherCurve)) {
@@ -161,14 +241,37 @@ BezierDemo::BezierDemo() {
 		if (otherCurve.selfIntersects()) {
 			renderer.setStroke(Color(0, 0, 255), 3.0);
 		}
-	  	renderer.draw(otherCurve);
+		renderer.draw(otherCurve);
 
+		std::vector<CubicBezierIntersectionResult<CubicBezierSpline, CubicBezierCurve>> intersections;
+		spline.intersections(otherCurve, std::back_inserter(intersections));
+
+		for (const auto& result : intersections) {
+			renderer.draw(result.point);
+		}
+		
 	  	renderer.setStroke(Color(200, 200, 200), 3.0);
 		renderer.draw(*d0);
 	    renderer.draw(*d1);
 	    renderer.draw(*d2);
 	    renderer.draw(*d3);
-	}, "Bézier spline");
+	}, "Bézier curve intersection");
+
+	m_renderer->addPainting([this](GeometryRenderer& renderer) { 
+		CubicBezierSpline s;
+		s.appendCurve({4, 2}, {4, 2.5}, {4.5, 3}, {5, 3});
+		s.appendCurve({5, 3}, {5.5, 3}, {6, 2.5}, {6, 2});
+		s.appendCurve({6, 2}, {6, 1.5}, {5.5, 1}, {5, 1});
+		s.appendCurve({5, 1}, {4.5, 1}, {4, 1.5}, {4, 2});
+
+		auto mp = m_renderer->mousePosition();
+		auto color = s.boundedSide(mp) == CGAL::ON_BOUNDED_SIDE ? Color(255, 0, 255).shaded(1.5)
+		                                                        : Color(200, 200, 200);
+		renderer.setMode(GeometryRenderer::fill | GeometryRenderer::stroke);
+		renderer.setFill(color);
+		renderer.setStroke(Color(0, 0, 0), 3.0);
+		renderer.draw(s);
+	}, "Bounded side");
 }
 
 int main(int argc, char* argv[]) {

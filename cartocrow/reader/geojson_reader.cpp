@@ -5,8 +5,8 @@ Point<Inexact> parsePoint(const JSONObject& o) {
 	return {o[0], o[1]};
 }
 
-PointSet<Inexact> parseMultiPoint(const JSONObject& o) {
-	PointSet<Inexact> pointSet;
+MultiPoint<Inexact> parseMultiPoint(const JSONObject& o) {
+	MultiPoint<Inexact> pointSet;
 	for (const auto& ptO : o) {
 		pointSet.points.push_back(parsePoint(ptO));
 	}
@@ -21,8 +21,8 @@ Polyline<Inexact> parseLineString(const JSONObject& o) {
 	return polyline;
 }
 
-PolylineSet<Inexact> parseMultiLineString(const JSONObject& o) {
-	PolylineSet<Inexact> ps;
+MultiPolyline<Inexact> parseMultiLineString(const JSONObject& o) {
+	MultiPolyline<Inexact> ps;
 	for (const auto& lsO : o) {
 		ps.polylines.push_back(parseLineString(lsO));
 	}
@@ -54,10 +54,10 @@ PolygonWithHoles<Inexact> parsePolygon(const JSONObject& o) {
 	return polygonWH;
 }
 
-PolygonSetRaw<Inexact> parseMultiPolygon(const JSONObject& o) {
-	PolygonSetRaw<Inexact> ps;
+MultipolygonWithHoles<Inexact> parseMultiPolygon(const JSONObject& o) {
+	MultipolygonWithHoles<Inexact> ps;
 	for (const auto& pO : o) {
-		ps.polygons_with_holes.push_back(parsePolygon(pO));
+		ps.add_polygon_with_holes(parsePolygon(pO));
 	}
 	return ps;
 }

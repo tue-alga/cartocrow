@@ -112,7 +112,8 @@ void IpeRenderer::save(const std::filesystem::path& file) {
 
 	auto pdf = file.extension() == ".pdf";
 	if (pdf) {
-		bool success = document.runLatex(file.c_str());
+		auto file_str = file.string();
+		bool success = document.runLatex(file_str.c_str());
 		if (!success) {
 			std::cerr << "LaTeX compilation failed." << std::endl;
 		}
@@ -128,6 +129,8 @@ void IpeRenderer::draw(const Point<Inexact>& p) {
 	ipe::Vector vector(p.x(), p.y());
 	ipe::Attribute name = ipe::Attribute(true, "mark/disk(sx)");
 	ipe::Reference* reference = new ipe::Reference(getAttributesForStyle(), name, vector);
+	// the disk mark has radius 0.6 times the symbol size
+	reference->setSize(ipe::Attribute(ipe::Fixed::fromDouble(m_style.m_pointSize / 1.2)));
 	m_page->append(ipe::TSelect::ENotSelected, m_layer, reference);
 }
 
@@ -366,6 +369,10 @@ void IpeRenderer::setFill(Color color) {
 void IpeRenderer::setFillOpacity(int alpha) {
 	auto name = opacity_attribute(alpha);
 	m_style.m_fillOpacity = name;
+}
+
+void IpeRenderer::setPointSize(double size, [[maybe_unused]] bool absoluteSize) {
+	m_style.m_pointSize = size;
 }
 
 void IpeRenderer::setClipPath(const RenderPath &clipPath) {

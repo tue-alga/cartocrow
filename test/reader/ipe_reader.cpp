@@ -75,12 +75,12 @@ TEST_CASE_("Reading points and a polygon") {
 }
 
 TEST_CASE_("Reading polygon sets") {
-	// Test whether polygon is automatically converted to PolygonSetRaw.
+	// Test whether polygon is automatically converted to MultipolygonWithHoles.
 	// The file contains 2 polygon sets and 1 polygon.
 	IpeReader ipeReader("data/test_ipe_reader.ipe");
 	ipeReader.setPage(1);
 
-	auto psrs = ipeReader.read<Multiple, PolygonSetRaw<Inexact>, WithoutAttributes>();
+	auto psrs = ipeReader.read<Multiple, MultipolygonWithHoles<Inexact>, WithoutAttributes>();
 	auto pgns = ipeReader.read<Multiple, Polygon<Inexact>, WithoutAttributes>();
 
 	CHECK(psrs.size() == 3);

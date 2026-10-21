@@ -65,11 +65,11 @@ template <class K> using Rectangle = CGAL::Iso_rectangle_2<K>;
 template <class K> using Triangle = CGAL::Triangle_2<K>;
 
 /// A polygon in the plane. See \ref CGAL::Polygon_2.
-template <class K> using Polygon = CGAL::Polygon_2<K>;
+template <class K, class Container = std::vector<Point<K>>> using Polygon = CGAL::Polygon_2<K, Container>;
 /// A polygon with holes in the plane. See \ref CGAL::Polygon_2.
-template <class K> using PolygonWithHoles = CGAL::Polygon_with_holes_2<K>;
+template <class K, class Container = std::vector<Point<K>>> using PolygonWithHoles = CGAL::Polygon_with_holes_2<K, Container>;
 /// A point set with polygonal boundaries. See \ref CGAL::Polygon_set_2.
-template <class K> using PolygonSet = CGAL::Polygon_set_2<K>;
+template <class K, class Container = std::vector<Point<K>>, class DCEL = CGAL::Gps_default_dcel<CGAL::Gps_segment_traits_2<K, Container>>> using PolygonSet = CGAL::Polygon_set_2<K, Container, DCEL>;
 
 /// Axis-aligned bounding box with inexact coordinates. See \ref
 /// CGAL::Bbox_2.
@@ -77,7 +77,8 @@ using Box = CGAL::Bbox_2;
 
 /// An arrangement of objects in the plane.
 template <class K> using Arrangement = CGAL::Arrangement_2<CGAL::Arr_segment_traits_2<K>>;
-template <class K> using ArrangementWithHistory = CGAL::Arrangement_with_history_2<CGAL::Arr_segment_traits_2<K>>;
+template <class K>
+using ArrangementWithHistory = CGAL::Arrangement_with_history_2<CGAL::Arr_segment_traits_2<K>>;
 
 /// An epsilon value.
 /**
@@ -87,123 +88,13 @@ template <class K> using ArrangementWithHistory = CGAL::Arrangement_with_history
  */
 constexpr const Number<Inexact> M_EPSILON = 0.0000001;
 
-/// Converts a point from exact representation to an approximation in inexact
-/// representation.
-template <class K>
-Point<Inexact> approximate(const Point<K>& p) {
-	return Point<Inexact>(CGAL::to_double(p.x()), CGAL::to_double(p.y()));
-}
-/// Converts a point from inexact representation to an exact representation.
-Point<Exact> pretendExact(const Point<Inexact>& p);
-/// Converts a vector from exact representation to an approximation in inexact
-/// representation.
-template <class K>
-Vector<Inexact> approximate(const Vector<K>& v) {
-	return Vector<Inexact>(CGAL::to_double(v.x()), CGAL::to_double(v.y()));
-}
-/// Converts a vector from inexact representation to an exact representation.
-Vector<Exact> pretendExact(const Vector<Inexact>& v);
-/// Converts a circle from exact representation to an approximation in inexact
-/// representation.
-template <class K>
-Circle<Inexact> approximate(const Circle<K>& c) {
-	return Circle<Inexact>(approximate(c.center()), CGAL::to_double(c.squared_radius()));
-}
-/// Converts a circle from inexact representation to an exact representation.
-Circle<Exact> pretendExact(const Circle<Inexact>& c);
-/// Converts a line from exact representation to an approximation in inexact
-/// representation.
-template <class K>
-Line<Inexact> approximate(const Line<K>& l) {
-	return Line<Inexact>(CGAL::to_double(l.a()), CGAL::to_double(l.b()), CGAL::to_double(l.c()));
-}
-/// Converts a line from inexact representation to an exact representation.
-Line<Exact> pretendExact(const Line<Inexact>& l);
-/// Converts a ray from exact representation to an approximation in inexact
-/// representation.
-template <class K>
-Ray<Inexact> approximate(const Ray<K>& r) {
-	return Ray<Inexact>(approximate(r.source()), approximate(r.second_point()));
-}
-/// Converts a ray from inexact representation to an exact representation.
-Ray<Exact> pretendExact(const Ray<Inexact>& r);
-/// Converts a line segment from exact representation to an approximation in
-/// inexact representation.
-template <class K>
-Segment<Inexact> approximate(const Segment<K>& s) {
-	return Segment<Inexact>(approximate(s.start()), approximate(s.end()));
-}
-/// Converts a segment from inexact representation to an exact representation.
-Segment<Exact> pretendExact(const Segment<Inexact>& s);
-/// Converts a rectangle from exact representation to an approximation in
-/// inexact representation.
-template <class K>
-Rectangle<Inexact> approximate(const Rectangle<K>& r) {
-	return Rectangle<Inexact>(approximate(r.vertex(0)), approximate(r.vertex(2)));
-}
-/// Converts a rectangle from inexact representation to an exact representation.
-Rectangle<Exact> pretendExact(const Rectangle<Inexact>& r);
-/// Converts a triangle from exact representation to an approximation in
-/// inexact representation.
-template <class K>
-Triangle<Inexact> approximate(const Triangle<K>& t) {
-	return Triangle<Inexact>(approximate(t.vertex(0)), approximate(t.vertex(1)), approximate(t.vertex(2)));
-}
-/// Converts a triangle from inexact representation to an exact representation.
-Triangle<Exact> pretendExact(const Triangle<Inexact>& t);
-/// Converts a polygon from exact representation to an approximation in inexact
-/// representation.
-template <class K>
-Polygon<Inexact> approximate(const Polygon<K>& p) {
-	Polygon<Inexact> result;
-	for (auto v = p.vertices_begin(); v < p.vertices_end(); ++v) {
-		result.push_back(approximate(*v));
-	}
-	return result;
-}
-/// Converts a polygon from inexact representation to an exact representation.
-Polygon<Exact> pretendExact(const Polygon<Inexact>& p);
-/// Converts a polygon with holes from exact representation to an approximation
-/// in inexact representation.
-template <class K>
-PolygonWithHoles<Inexact> approximate(const PolygonWithHoles<K>& p) {
-	PolygonWithHoles<Inexact> result(approximate(p.outer_boundary()));
-	for (auto hole = p.holes_begin(); hole < p.holes_end(); ++hole) {
-		result.add_hole(approximate(*hole));
-	}
-	return result;
-}
-/// Converts a polygon with holes from inexact representation to an exact representation.
-PolygonWithHoles<Exact> pretendExact(const PolygonWithHoles<Inexact>& p);
-/// Converts a polygon set from exact representation to an approximation in
-/// inexact representation.
-template <class K>
-PolygonSet<Inexact> approximate(const PolygonSet<K>& p) {
-	PolygonSet<Inexact> result;
-	std::vector<PolygonWithHoles<Exact>> polygons;
-	p.polygons_with_holes(std::back_inserter(polygons));
-	for (const auto& polygon : polygons) {
-		result.insert(approximate(polygon));
-	}
-	return result;
-}
-/// Converts a polygon set from inexact representation to an exact representation.
-PolygonSet<Exact> pretendExact(const PolygonSet<Inexact>& p);
-
-/// Converts a range of geometries in inexact representation to ones in exact representation.
-template <class InputIterator, class OutputIterator>
-void pretendExact(InputIterator begin, InputIterator end, OutputIterator out) {
-	for (auto it = begin; it != end; ++it) {
-		*out++ = pretendExact(*it);
-	}
-}
-
 /// Returns the area of a polygon with holes.
 /// TODO: move to more logical place
 template <class K> Number<K> area(PolygonWithHoles<K> polygon) {
 	Number<K> a = polygon.outer_boundary().area();
-	for (const auto &h : polygon.holes()) a -= h.area();
-	return a;  // = outer area minus area of each hole
+	for (const auto& h : polygon.holes())
+		a -= h.area();
+	return a; // = outer area minus area of each hole
 }
 
 /// An RGB color. Used for storing the color of elements to be drawn.
@@ -228,5 +119,161 @@ struct Color {
 
 /// \f$2 \pi\f$, defined here for convenience.
 constexpr Number<Inexact> two_pi = std::numbers::pi * 2;
+
+namespace detail {
+constexpr const CGAL::Cartesian_converter<Exact, Inexact> exact_to_inexact;
+constexpr const CGAL::Cartesian_converter<Inexact, Exact> inexact_to_exact;
+
+template <typename K, template <typename> class Type>
+concept IsCGALPrimitiveType =
+    std::is_same<Type<K>, Point<K>>::value || std::is_same<Type<K>, Vector<K>>::value ||
+    std::is_same<Type<K>, Line<K>>::value || std::is_same<Type<K>, Ray<K>>::value ||
+    std::is_same<Type<K>, Segment<K>>::value || std::is_same<Type<K>, Rectangle<K>>::value ||
+    std::is_same<Type<K>, Triangle<K>>::value || std::is_same<Type<K>, Circle<K>>::value;
+} // namespace detail
+
+template <typename KernelOut, typename KernelIn, template <typename> class Type>
+requires detail::IsCGALPrimitiveType<KernelIn,Type> Type<KernelOut> convert_kernel(const Type<KernelIn>& v) {
+
+	if constexpr (std::is_same<KernelIn, KernelOut>::value) {
+		return v;
+	} else if constexpr (std::is_same<KernelIn, Exact>::value &&
+	                     std::is_same<KernelOut, Inexact>::value) {
+		return detail::exact_to_inexact(v);
+	} else if constexpr (std::is_same<KernelIn, Inexact>::value &&
+	                     std::is_same<KernelOut, Exact>::value) {
+		return detail::inexact_to_exact(v);
+	} else {
+		CGAL::Cartesian_converter<KernelIn, KernelOut> conv;
+		return conv(v);
+	}
+}
+
+template <typename KernelOut, typename KernelIn>
+Number<KernelOut> convert_kernel(const Number<KernelIn>& v) {
+
+	if constexpr (std::is_same<KernelIn, KernelOut>::value) {
+		return v;
+	} else if constexpr (std::is_same<KernelIn, Exact>::value &&
+	                     std::is_same<KernelOut, Inexact>::value) {
+		return detail::exact_to_inexact(v);
+	} else if constexpr (std::is_same<KernelIn, Inexact>::value &&
+	                     std::is_same<KernelOut, Exact>::value) {
+		return detail::inexact_to_exact(v);
+	} else {
+		CGAL::Cartesian_converter<KernelIn, KernelOut> conv;
+		return conv(v);
+	}
+}
+
+template <typename KernelOut>
+Number<KernelOut> convert_kernel(const Number<Inexact>& v) {
+
+	if constexpr (std::is_same<Inexact, KernelOut>::value) {
+		return v;
+	} else if constexpr (std::is_same<KernelOut, Exact>::value) {
+		return detail::inexact_to_exact(v);
+	} else {
+		CGAL::Cartesian_converter<Inexact, KernelOut> conv;
+		return conv(v);
+	}
+}
+
+template <typename KernelOut> Number<KernelOut> convert_kernel(const Number<Exact>& v) {
+
+	if constexpr (std::is_same<Exact, KernelOut>::value) {
+		return v;
+	} else if constexpr (std::is_same<KernelOut, Inexact>::value) {
+		return detail::exact_to_inexact(v);
+	} else {
+		CGAL::Cartesian_converter<Exact, KernelOut> conv;
+		return conv(v);
+	}
+}
+
+template <typename KernelOut, typename KernelIn>
+Polygon<KernelOut> convert_kernel(const Polygon<KernelIn>& v) {
+	std::vector<Point<KernelOut>> points;
+	for (Point<KernelIn> p : v.vertices()) {
+		points.push_back(convert_kernel<KernelOut>(p));
+	}
+	return {points.begin(), points.end()};
+}
+
+template <typename KernelOut, typename KernelIn>
+PolygonWithHoles<KernelOut> convert_kernel(const PolygonWithHoles<KernelIn>& v) {
+	auto outer = convert_kernel<KernelOut>(v.outer_boundary());
+	std::vector<Polygon<KernelOut>> holes;
+	for (Polygon<KernelIn> h : v.holes()) {
+		holes.push_back(convert_kernel<KernelOut>(h));
+	}
+	return {outer, holes.begin(), holes.end()};
+}
+
+template <typename KernelOut, typename KernelIn>
+PolygonSet<KernelOut> convert_kernel(const PolygonSet<KernelIn>& v) {
+	std::vector<PolygonWithHoles<KernelIn>> polygons;
+	v.polygons_with_holes(std::back_inserter(polygons));
+	PolygonSet<KernelOut> result;
+	for (const PolygonWithHoles<KernelIn>& polygon : polygons) {
+		result.insert(convert_kernel<KernelOut>(polygon));
+	}
+	return result;
+}
+
+template <typename KernelIn, template <typename> class Type>
+Type<Exact> pretendExact(const Type<KernelIn>& v) {
+	return convert_kernel<Exact>(v);
+}
+
+template <typename KernelIn, template <typename> class Type>
+Type<Inexact> approximate(const Type<KernelIn>& v) {
+	return convert_kernel<Inexact>(v);
+}
+
+template<typename KernelIn> 
+Polygon<Exact> pretendExact(const Polygon<KernelIn>& v) {
+	return convert_kernel<Exact>(v);
+}
+
+template <typename KernelIn> 
+Polygon<Inexact> approximate(const Polygon<KernelIn>& v) {
+	return convert_kernel<Inexact>(v);
+}
+
+template <typename KernelIn>
+PolygonWithHoles<Exact> pretendExact(const PolygonWithHoles<KernelIn>& v) {
+	return convert_kernel<Exact>(v);
+}
+
+template <typename KernelIn>
+PolygonWithHoles<Inexact> approximate(const PolygonWithHoles<KernelIn>& v) {
+	return convert_kernel<Inexact>(v);
+}
+
+template <typename KernelIn> 
+PolygonSet<Exact> pretendExact(const PolygonSet<KernelIn>& v) {
+	return convert_kernel<Exact>(v);
+}
+
+template <typename KernelIn> 
+PolygonSet<Inexact> approximate(const PolygonSet<KernelIn>& v) {
+	return convert_kernel<Inexact>(v);
+}
+
+template <typename KernelIn> 
+Number<Exact> pretendExact(const Number<KernelIn>& v) {
+	return convert_kernel<Exact>(v);
+}
+
+template <typename KernelIn> 
+Number<Inexact> approximate(const Number<KernelIn>& v) {
+	return convert_kernel<Inexact>(v);
+}
+
+Number<Exact> pretendExact(const Number<Inexact>& v);
+Number<Exact> pretendExact(const Number<Exact>& v);
+Number<Inexact> approximate(const Number<Inexact>& v);
+Number<Inexact> approximate(const Number<Exact>& v);
 
 } // namespace cartocrow

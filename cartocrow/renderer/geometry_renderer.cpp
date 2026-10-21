@@ -76,7 +76,7 @@ void GeometryRenderer::draw(const Polyline<Inexact>& p) {
 	draw(path);
 }
 
-void GeometryRenderer::draw(const PolylineSet<Inexact>& ps) {
+void GeometryRenderer::draw(const MultiPolyline<Inexact>& ps) {
 	RenderPath path;
 	for (const auto& p : ps.polylines) {
 		path.moveTo(p.source());
@@ -87,7 +87,7 @@ void GeometryRenderer::draw(const PolylineSet<Inexact>& ps) {
 	draw(path);
 }
 
-void GeometryRenderer::draw(const PointSet<Inexact>& ps) {
+void GeometryRenderer::draw(const MultiPoint<Inexact>& ps) {
 	for (const auto& p : ps.points) {
 		draw(p);
 	}
@@ -109,9 +109,9 @@ void GeometryRenderer::draw(const PolygonSet<Inexact>& ps) {
 	draw(path);
 }
 
-void GeometryRenderer::draw(const PolygonSetRaw<Inexact>& ps) {
+void GeometryRenderer::draw(const MultipolygonWithHoles<Inexact>& ps) {
 	RenderPath path;
-	for (const auto& p : ps.polygons_with_holes) {
+	for (const auto& p : ps.polygons_with_holes()) {
 		path << p;
 	}
 	draw(path);

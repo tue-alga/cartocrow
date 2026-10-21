@@ -52,11 +52,11 @@ StraightGeometry<Inexact> ogrGeometryToStraightGeometry(const OGRGeometry& geome
     }
 }
 
-PolygonSetRaw<Inexact> ogrMultiPolygonToPolygonSetRaw(const OGRMultiPolygon& multiPolygon) {
-	PolygonSetRaw<Inexact> polygonSet;
+MultipolygonWithHoles<Inexact> ogrMultiPolygonToPolygonSetRaw(const OGRMultiPolygon& multiPolygon) {
+	MultipolygonWithHoles<Inexact> polygonSet;
     for (const auto& poly : multiPolygon) {
 		auto pgnWH = ogrPolygonToPolygonWithHoles(*poly);
-		polygonSet.polygons_with_holes.push_back(pgnWH);
+		polygonSet.add_polygon_with_holes(pgnWH);
     }
     return polygonSet;
 }
@@ -73,10 +73,10 @@ Polygon<Inexact> ogrLinearRingToPolygon(const OGRLinearRing& ogrLinearRing) {
     return polygon;
 }
 
-PolygonSetRaw<Inexact> ogrPolygonToPolygonSetRaw(const OGRPolygon& ogrPolygon) {
-	PolygonSetRaw<Inexact> polygonSet;
+MultipolygonWithHoles<Inexact> ogrPolygonToPolygonSetRaw(const OGRPolygon& ogrPolygon) {
+	MultipolygonWithHoles<Inexact> polygonSet;
 	auto polygon = ogrPolygonToPolygonWithHoles(ogrPolygon);
-	polygonSet.polygons_with_holes.emplace_back(polygon);
+	polygonSet.add_polygon_with_holes(std::move(polygon));
     return polygonSet;
 }
 
@@ -95,8 +95,8 @@ PolygonWithHoles<Inexact> ogrPolygonToPolygonWithHoles(const OGRPolygon& ogrPoly
 	return {outer, holes.begin(), holes.end()};
 }
 
-PolylineSet<Inexact> ogrMultiLineStringToPolylineSet(const OGRMultiLineString& ogrMultiLineString) {
-	PolylineSet<Inexact> polylineSet;
+MultiPolyline<Inexact> ogrMultiLineStringToPolylineSet(const OGRMultiLineString& ogrMultiLineString) {
+	MultiPolyline<Inexact> polylineSet;
 
 	for (const auto& lineString : ogrMultiLineString) {
 		polylineSet.polylines.push_back(ogrLineStringToPolyline(*lineString));
@@ -119,7 +119,7 @@ Point<Inexact> ogrPointToPoint(const OGRPoint& ogrPoint) {
 	return {ogrPoint.getX(), ogrPoint.getY()};
 }
 
-PointSet<Inexact> ogrMultiPointToPointSet(const OGRMultiPoint& ogrMultiPoint) {
+MultiPoint<Inexact> ogrMultiPointToPointSet(const OGRMultiPoint& ogrMultiPoint) {
 	std::vector<Point<Inexact>> pts;
 	for (const OGRPoint* p : ogrMultiPoint) {
 		pts.emplace_back(p->getX(), p->getY());

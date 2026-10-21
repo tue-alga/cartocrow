@@ -13,6 +13,7 @@ set(SHARED_HEADERS
 	function_painting.h
 	geometry_painting.h
 	geometry_renderer.h
+	graph_painting.h
 	painting_renderer.h
 	render_path.h
 	svg_renderer.h

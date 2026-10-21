@@ -15,14 +15,16 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "polyline.h"
+#include "multi_point.h"
 
 namespace cartocrow {
-Polyline<Exact> pretendExact(const Polyline<Inexact>& p) {
-	Polyline<Exact> result;
-	for (auto v = p.vertices_begin(); v < p.vertices_end(); ++v) {
-		result.push_back(pretendExact(*v));
-	}
-	return result;
+MultiPoint<Inexact> approximate(const MultiPoint<Exact>& ps) {
+    std::vector<Point<Inexact>> psInexact;
+
+    for (const auto& p : ps.points) {
+		psInexact.push_back(approximate(p));
+    }
+
+    return {psInexact};
 }
 }

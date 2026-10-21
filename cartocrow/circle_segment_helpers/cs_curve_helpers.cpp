@@ -159,7 +159,7 @@ Vector<Inexact> startTangent(const CSXMCurve& c) {
 		return v / len;
 	} else {
 		auto circle = c.supporting_circle();
-		auto v = approximate(approximateOneRootPoint(c.source())) - approximate(circle.center());
+		auto v = approximateOneRootPoint(c.source()) - approximate(circle.center());
 		auto p = v.perpendicular(circle.orientation());
 		auto len = sqrt(p.squared_length());
 		return p / len;
@@ -174,7 +174,7 @@ Vector<Inexact> endTangent(const CSXMCurve& c) {
 		return v / len;
 	} else {
 		auto circle = c.supporting_circle();
-		auto v = approximate(approximateOneRootPoint(c.target())) - approximate(circle.center());
+		auto v = approximateOneRootPoint(c.target()) - approximate(circle.center());
 		auto p = v.perpendicular(circle.orientation());
 		auto len = sqrt(p.squared_length());
 		return p / len;

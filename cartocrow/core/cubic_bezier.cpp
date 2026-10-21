@@ -22,7 +22,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <ranges>
 
 namespace cartocrow {
-CubicBezierCurve::CubicBezierCurve(Point<K> source, Point<K> control1, Point<K> control2, Point<K> target) : m_p0(std::move(source)), m_p1(std::move(control1)), m_p2(std::move(control2)),
+CubicBezierCurve::CubicBezierCurve(Point<K> source, Point<K> control1, Point<K> control2,
+                                   Point<K> target)
+    : m_p0(std::move(source)), m_p1(std::move(control1)), m_p2(std::move(control2)),
       m_p3(std::move(target)) {
 	m_v0 = m_p0 - CGAL::ORIGIN;
 	m_v1 = m_p1 - CGAL::ORIGIN;
@@ -30,17 +32,13 @@ CubicBezierCurve::CubicBezierCurve(Point<K> source, Point<K> control1, Point<K> 
 	m_v3 = m_p3 - CGAL::ORIGIN;
 };
 
-CubicBezierCurve::CubicBezierCurve(Point<K> source, Point<K> control, Point<K> target) :
-	CubicBezierCurve(source,
-				     source + (control - source) * 2.0 / 3.0,
-                     target + (control - target) * 2.0 / 3.0,
-                     target) {}
+CubicBezierCurve::CubicBezierCurve(Point<K> source, Point<K> control, Point<K> target)
+    : CubicBezierCurve(source, source + (control - source) * 2.0 / 3.0,
+                       target + (control - target) * 2.0 / 3.0, target) {}
 
-CubicBezierCurve::CubicBezierCurve(Point<K> source, Point<K> target) :
-	CubicBezierCurve(source,
-                     source + (target - source) * 1.0 / 3.0,
-					 source + (target - source) * 2.0 / 3.0,
-                     target) {}
+CubicBezierCurve::CubicBezierCurve(Point<K> source, Point<K> target)
+    : CubicBezierCurve(source, source + (target - source) * 1.0 / 3.0,
+                       source + (target - source) * 2.0 / 3.0, target) {}
 
 CubicBezierCurve::CubicBezierCurve(Segment<K> seg) : CubicBezierCurve(seg.source(), seg.target()) {}
 
@@ -93,7 +91,7 @@ Vector<Inexact> CubicBezierCurve::derivative(const Number<Inexact>& t) const {
 	auto t_ = 1 - t;
 	auto a = 3 * t_ * t_;
 	auto b = 6 * t_ * t;
-	auto c = 3 * t  * t;
+	auto c = 3 * t * t;
 
 	return a * v1 + b * v2 + c * v3;
 }
@@ -134,7 +132,7 @@ Number<Inexact> CubicBezierCurve::signedArea() const {
 }
 
 CubicBezierCurve CubicBezierCurve::reversed() const {
-	return {m_p3, m_p2, m_p1, m_p0 };
+	return {m_p3, m_p2, m_p1, m_p0};
 }
 
 void CubicBezierCurve::reverse() {
@@ -144,7 +142,7 @@ void CubicBezierCurve::reverse() {
 	std::swap(m_v1, m_v2);
 }
 
-std::pair<CubicBezierCurve, CubicBezierCurve>
+std::pair<CubicBezierCurve, CubicBezierCurve> 
 CubicBezierCurve::split(const Number<Inexact>& t) const {
 	auto t_ = 1 - t;
 
@@ -163,11 +161,11 @@ CubicBezierCurve::split(const Number<Inexact>& t) const {
 	return {b1, b2};
 }
 
-CubicBezierCurve
+CubicBezierCurve 
 CubicBezierCurve::sub(const Number<Inexact>& t1, const Number<Inexact>& t2) const {
-    auto [_, tail] = split(t1);
+	auto [_, tail] = split(t1);
 	double t2_ = (t2 - t1) / (1 - t1);
-    return tail.split(t2_).first;
+	return tail.split(t2_).first;
 }
 
 Polyline<Inexact> CubicBezierCurve::polyline(int nEdges) const {
@@ -184,7 +182,7 @@ Number<Inexact> CubicBezierCurve::curvature(Number<Inexact> t) const {
 	auto dd = derivative2(t);
 
 	auto num = d.x() * dd.y() - dd.x() * d.y();
-	auto den = pow(d.x() * d.x() + d.y() * d.y(), 3.0/2.0);
+	auto den = pow(d.x() * d.x() + d.y() * d.y(), 3.0 / 2.0);
 	if (den == 0) {
 		return std::numeric_limits<double>::infinity();
 	}
@@ -192,11 +190,18 @@ Number<Inexact> CubicBezierCurve::curvature(Number<Inexact> t) const {
 }
 
 CubicBezierCurve CubicBezierCurve::transform(const CGAL::Aff_transformation_2<Inexact>& t) const {
-	return { m_p0.transform(t), m_p1.transform(t), m_p2.transform(t), m_p3.transform(t) };
+	return {m_p0.transform(t), m_p1.transform(t), m_p2.transform(t), m_p3.transform(t)};
 }
 
-CubicBezierCurve::CurvePoint
-CubicBezierCurve::nearest(Point<K> point, double threshold) const {
+CubicBezierCurve::Parameter CubicBezierCurve::parameter(double param) const {
+	return param;
+}
+
+double CubicBezierCurve::doubleParameter(CubicBezierCurve::Parameter param) const {
+	return param;
+}
+
+CubicBezierCurve::CurvePoint CubicBezierCurve::nearest(Point<K> point, double threshold) const {
 	int nPoints = 10;
 
 	int closest = -1;
@@ -215,22 +220,25 @@ CubicBezierCurve::nearest(Point<K> point, double threshold) const {
 
 	// now do binary search
 	auto indexToT = [nPoints](int index) {
-	    double step = 1.0 / (nPoints - 1);
+		double step = 1.0 / (nPoints - 1);
 		return index * step;
 	};
 	double t1 = indexToT(std::max(0, closest - 1));
 	double t2 = indexToT(std::min(nPoints - 1, closest + 1));
-	double closestT = (t1 + t2) / 2;
+	double closestT = indexToT(closest);
 	auto closestP = points[closest];
+
 	while (t2 - t1 > threshold) {
 		double mt = (t1 + t2) / 2;
 		double s1 = (t1 + mt) / 2;
 		double s2 = (mt + t2) / 2;
 		auto s1P = evaluate(s1);
 		auto s2P = evaluate(s2);
+		auto mtP = evaluate(mt);
 		double s1D2 = CGAL::squared_distance(s1P, point);
 		double s2D2 = CGAL::squared_distance(s2P, point);
-		double minD = std::min(std::min(s1D2, s2D2), minDist2);
+		double mtD2 = CGAL::squared_distance(mtP, point);
+		double minD = std::min(std::min(s1D2, s2D2), std::min(minDist2, mtD2));
 		if (minD == s1D2) {
 			minDist2 = minD;
 			closestT = s1;
@@ -241,13 +249,23 @@ CubicBezierCurve::nearest(Point<K> point, double threshold) const {
 			closestT = s2;
 			closestP = s2P;
 			t1 = mt;
-		} else {
-			assert(minD == minDist2);
+		} else if (minD == mtD2) {
 			minDist2 = minD;
 			t1 = s1;
 			t2 = s2;
+			closestT = mt;
+			closestP = mtP;
+		} else {
+			assert(minD == minDist2);
+			assert(closestT == t1 || closestT == t2);
+			if (closestT == t1) {
+				t2 = s1;
+			} else {
+				t1 = s2;
+			}
 		}
 	}
+
 	return {closestT, closestP};
 }
 
@@ -282,15 +300,17 @@ CubicBezierCurve::extrema() const {
 		yMaxP = m_p3;
 	}
 
-	auto checkExtrema = [this](double A, double B, double C, auto coordSelector,
-	                        Point<K>& minVal, Point<K>& maxVal, double& minValT, double& maxValT) {
-		double D = B*B - 4*A*C;
-		if (D < 0) return;
+	auto checkExtrema = [this](double A, double B, double C, auto coordSelector, Point<K>& minVal,
+	                           Point<K>& maxVal, double& minValT, double& maxValT) {
+		double D = B * B - 4 * A * C;
+		if (D < 0)
+			return;
 		double sqrtD = std::sqrt(D);
-		double denom = 2*A;
-		if (denom == 0) return;
+		double denom = 2 * A;
+		if (denom == 0)
+			return;
 
-		for (double t : { (-B - sqrtD)/denom, (-B + sqrtD)/denom }) {
+		for (double t : {(-B - sqrtD) / denom, (-B + sqrtD) / denom}) {
 			if (t >= 0.0 && t <= 1.0) {
 				auto p = evaluate(t);
 				double val = coordSelector(p);
@@ -306,8 +326,8 @@ CubicBezierCurve::extrema() const {
 		}
 	};
 
-	checkExtrema(a.x(), b.x(), c.x(), [](auto& p){ return p.x(); }, xMinP, xMaxP, xMinT, xMaxT);
-	checkExtrema(a.y(), b.y(), c.y(), [](auto& p){ return p.y(); }, yMinP, yMaxP, yMinT, yMaxT);
+	checkExtrema(a.x(), b.x(), c.x(), [](auto& p) { return p.x(); }, xMinP, xMaxP, xMinT, xMaxT);
+	checkExtrema(a.y(), b.y(), c.y(), [](auto& p) { return p.y(); }, yMinP, yMaxP, yMinT, yMaxT);
 
 	return {{xMinT, xMinP}, {yMinT, yMinP}, {xMaxT, xMaxP}, {yMaxT, yMaxP}};
 }
@@ -317,7 +337,8 @@ Box CubicBezierCurve::bbox() const {
 	return {left.point.x(), bottom.point.y(), right.point.x(), top.point.y()};
 }
 
-std::tuple<Vector<Inexact>, Vector<Inexact>, Vector<Inexact>, Vector<Inexact>> CubicBezierCurve::coefficients() const {
+std::tuple<Vector<Inexact>, Vector<Inexact>, Vector<Inexact>, Vector<Inexact>>
+CubicBezierCurve::coefficients() const {
 	auto c0 = m_v3 - m_v0 + 3 * (m_v1 - m_v2);
 	auto c1 = 3 * (m_v0 - 2 * m_v1 + m_v2);
 	auto c2 = 3 * (m_v1 - m_v0);
@@ -339,7 +360,8 @@ bool CubicBezierCurve::selfIntersects(double threshold) const {
 
 	for (int i = 0; i < curves.size(); ++i) {
 		for (int j = i + 2; j < curves.size(); ++j) { // do not check consecutive parts
-			if (detail::intersectsRecursive(curves[i], curves[j], threshold)) return true;
+			if (detail::intersectsRecursive(curves[i], curves[j], threshold))
+				return true;
 		}
 	}
 
@@ -371,7 +393,8 @@ void CubicBezierSpline::appendCurve(const Curve& curve) {
 	}
 }
 
-void CubicBezierSpline::appendCurve(Point<K> source, Point<K> control1, Point<K> control2, Point<K> target) {
+void CubicBezierSpline::appendCurve(Point<K> source, Point<K> control1, Point<K> control2,
+                                    Point<K> target) {
 	if (m_c.empty()) {
 		m_c.push_back(std::move(source));
 	} else {
@@ -404,12 +427,22 @@ void CubicBezierSpline::appendCurve(Point<K> source, Point<K> target) {
 	m_c.push_back(target);
 }
 
+void CubicBezierSpline::appendSpline(const CubicBezierSpline& spline) {
+	for (int i = 0; i < spline.controlPoints().size(); ++i) {
+		if (i == 0 && !m_c.empty()) {
+			assert(m_c.back() == spline.source());
+			continue;
+		}
+		m_c.push_back(spline.controlPoint(i));
+	}
+}
+
 CubicBezierCurve CubicBezierSpline::curve(size_t i) const {
 	return {m_c[3 * i], m_c[3 * i + 1], m_c[3 * i + 2], m_c[3 * i + 3]};
 }
 
 const std::vector<Point<Inexact>>& CubicBezierSpline::controlPoints() const {
-    return m_c;
+	return m_c;
 };
 
 Point<Inexact> CubicBezierSpline::controlPoint(size_t i) const {
@@ -425,7 +458,8 @@ Point<Inexact> CubicBezierSpline::target() const {
 }
 
 size_t CubicBezierSpline::numCurves() const {
-	if (m_c.empty()) return 0;
+	if (m_c.empty())
+		return 0;
 	return (m_c.size() - 1) / 3;
 }
 
@@ -438,7 +472,7 @@ bool CubicBezierSpline::closed() const {
 }
 
 Point<Inexact> CubicBezierSpline::evaluate(const SplineParameter& param) const {
-    auto c = curve(param.curveIndex);
+	auto c = curve(param.curveIndex);
 	return c.evaluate(param.t);
 }
 
@@ -493,23 +527,28 @@ CubicBezierSpline::nearest(Point<Inexact> point, double threshold) const {
 	return SplinePoint{SplineParameter{closestIndex, closest.t}, closest.point};
 }
 
-std::tuple<CubicBezierSpline::SplinePoint, CubicBezierSpline::SplinePoint, CubicBezierSpline::SplinePoint, CubicBezierSpline::SplinePoint>
+std::tuple<CubicBezierSpline::SplinePoint, CubicBezierSpline::SplinePoint,
+           CubicBezierSpline::SplinePoint, CubicBezierSpline::SplinePoint>
 CubicBezierSpline::extrema() const {
 	std::optional<SplinePoint> l, b, r, t;
 	int curveIndex = 0;
 	for (const auto& c : curves()) {
 		auto [l_, b_, r_, t_] = c.extrema();
 		if (!l.has_value() || l_.point.x() < l->point.x()) {
-			l = SplinePoint{.param=SplineParameter{.curveIndex=curveIndex, .t=l_.t}, .point=l_.point};
+			l = SplinePoint{.param = SplineParameter{.curveIndex = curveIndex, .t = l_.t},
+			                .point = l_.point};
 		}
 		if (!r.has_value() || r_.point.x() > r->point.x()) {
-			r = SplinePoint{.param=SplineParameter{.curveIndex=curveIndex, .t=r_.t}, .point=r_.point};
+			r = SplinePoint{.param = SplineParameter{.curveIndex = curveIndex, .t = r_.t},
+			                .point = r_.point};
 		}
 		if (!b.has_value() || b_.point.y() < b->point.y()) {
-			b = SplinePoint{.param=SplineParameter{.curveIndex=curveIndex, .t=b_.t}, .point=b_.point};
+			b = SplinePoint{.param = SplineParameter{.curveIndex = curveIndex, .t = b_.t},
+			                .point = b_.point};
 		}
 		if (!t.has_value() || t_.point.y() > t->point.y()) {
-			t = SplinePoint{.param=SplineParameter{.curveIndex=curveIndex, .t=t_.t}, .point=t_.point};
+			t = SplinePoint{.param = SplineParameter{.curveIndex = curveIndex, .t = t_.t},
+			                .point = t_.point};
 		}
 		++curveIndex;
 	}
@@ -533,8 +572,10 @@ CubicBezierSpline CubicBezierSpline::reversed() const {
 }
 
 Number<Inexact> CubicBezierSpline::signedArea() const {
-	if (empty()) return 0;
-	if (numCurves() == 1) return curves().front().signedArea();
+	if (empty())
+		return 0;
+	if (numCurves() == 1)
+		return curves().front().signedArea();
 
 	Polygon<Inexact> p;
 	p.push_back(curves().front().source());
@@ -568,10 +609,10 @@ CubicBezierSpline::split(const SplineParameter& param) const {
 	CubicBezierSpline spline1;
 	for (int i = 0; i < param.curveIndex; ++i) {
 		if (spline1.empty())
-			spline1.m_c.push_back(m_c[3*i]);
-		spline1.m_c.push_back(m_c[3*i+1]);
-		spline1.m_c.push_back(m_c[3*i+2]);
-		spline1.m_c.push_back(m_c[3*i+3]);
+			spline1.m_c.push_back(m_c[3 * i]);
+		spline1.m_c.push_back(m_c[3 * i + 1]);
+		spline1.m_c.push_back(m_c[3 * i + 2]);
+		spline1.m_c.push_back(m_c[3 * i + 3]);
 	}
 	if (c1.has_value()) {
 		spline1.appendCurve(*c1);
@@ -583,26 +624,49 @@ CubicBezierSpline::split(const SplineParameter& param) const {
 	}
 	for (int i = param.curveIndex + 1; i < numCurves(); ++i) {
 		if (spline2.empty())
-			spline2.m_c.push_back(m_c[3*i]);
-		spline2.m_c.push_back(m_c[3*i+1]);
-		spline2.m_c.push_back(m_c[3*i+2]);
-		spline2.m_c.push_back(m_c[3*i+3]);
+			spline2.m_c.push_back(m_c[3 * i]);
+		spline2.m_c.push_back(m_c[3 * i + 1]);
+		spline2.m_c.push_back(m_c[3 * i + 2]);
+		spline2.m_c.push_back(m_c[3 * i + 3]);
 	}
 
 	return {spline1, spline2};
 }
 
-std::pair<CubicBezierSpline, CubicBezierSpline>
-CubicBezierSpline::split(double param) const {
+CubicBezierSpline CubicBezierSpline::sub(const CubicBezierSpline::SplineParameter& from,
+                                         const CubicBezierSpline::SplineParameter& to) const {
+	if (from.curveIndex == to.curveIndex) {
+		return curve(from.curveIndex).sub(from.t, to.t);
+	}
+	// This can be optimized by not constructing curves but directly setting control points.
+	CubicBezierSpline s;
+	s.appendCurve(curve(from.curveIndex).sub(from.t, 1.0));
+	for (int i = from.curveIndex + 1; i < to.curveIndex; ++i) {
+		s.appendCurve(curve(i));
+	}
+	s.appendCurve(curve(to.curveIndex).sub(0.0, to.t));
+	return s;
+}
+
+CubicBezierSpline::Parameter CubicBezierSpline::parameter(double param) const {
 	double t = param * numCurves();
 	int curveIndex = static_cast<int>(t);
 	double frac = t - curveIndex;
-	return split({curveIndex, frac});
+	return {curveIndex, frac};
+}
+
+double CubicBezierSpline::doubleParameter(CubicBezierSpline::Parameter param) const {
+	return (param.curveIndex + param.t) / static_cast<double>(numCurves());
+}
+
+std::pair<CubicBezierSpline, CubicBezierSpline> CubicBezierSpline::split(double param) const {
+	return split(parameter(param));
 }
 
 Polyline<Inexact> CubicBezierSpline::polyline(int nEdgesPerCurve) const {
 	Polyline<Inexact> pl;
-	if (nEdgesPerCurve < 1) return pl;
+	if (nEdgesPerCurve < 1)
+		return pl;
 
 	pl.push_back(curves().front().source());
 	for (const auto& curve : curves()) {
@@ -616,6 +680,14 @@ Polyline<Inexact> CubicBezierSpline::polyline(int nEdgesPerCurve) const {
 	}
 
 	return pl;
+}
+
+CubicBezierSpline CubicBezierSpline::transform(const CGAL::Aff_transformation_2<Inexact>& t) const {
+	CubicBezierSpline transformed;
+	for (const auto& cp : m_c) {
+		transformed.m_c.push_back(cp.transform(t));
+	}
+	return transformed;
 }
 
 bool CubicBezierSpline::intersects(const CubicBezierCurve& other, double threshold) const {
@@ -639,5 +711,18 @@ bool CubicBezierSpline::selfIntersects(double threshold) const {
 	}
 
 	return false;
+}
+
+// Note that the current implementation is not robust.
+CGAL::Bounded_side CubicBezierSpline::boundedSide(const Point<Inexact>& p) const {
+	Ray<Inexact> r(p, Vector<Inexact>(1, 0));
+
+	std::vector<SplinePoint> inters;
+	intersections(r, std::back_inserter(inters));
+	if (inters.size() % 2 == 0) {
+		return CGAL::ON_UNBOUNDED_SIDE;
+	} else {
+		return CGAL::ON_BOUNDED_SIDE;
+	}
 }
 }

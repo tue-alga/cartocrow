@@ -45,62 +45,20 @@ Color::Color() : r(0), g(0), b(0) {}
 Color::Color(int r, int g, int b) : r(r), g(g), b(b) {}
 Color::Color(int rgb) : r((rgb & 0xff0000) >> 16), g((rgb & 0x00ff00) >> 8), b(rgb & 0x0000ff) {}
 
-Point<Exact> pretendExact(const Point<Inexact>& p) {
-	return {p.x(), p.y()};
+Number<Exact> pretendExact(const Number<Inexact>& v) {
+	return convert_kernel<Exact>(v);
 }
 
-Vector<Exact> pretendExact(const Vector<Inexact>& v) {
-	return {v.x(), v.y()};
+Number<Exact> pretendExact(const Number<Exact>& v) {
+	return convert_kernel<Exact>(v);
 }
 
-Circle<Exact> pretendExact(const Circle<Inexact>& c) {
-	return {pretendExact(c.center()), c.squared_radius()};
+Number<Inexact> approximate(const Number<Inexact>& v) {
+	return convert_kernel<Inexact>(v);
 }
 
-Line<Exact> pretendExact(const Line<Inexact>& l) {
-	return {l.a(), l.b(), l.c()};
-}
-
-Ray<Exact> pretendExact(const Ray<Inexact>& r) {
-	return {pretendExact(r.source()), pretendExact(r.to_vector())};
-}
-
-Segment<Exact> pretendExact(const Segment<Inexact>& s) {
-	return {pretendExact(s.source()), pretendExact(s.target())};
-}
-
-Rectangle<Exact> pretendExact(const Rectangle<Inexact>& r) {
-	return {r.xmin(), r.ymin(), r.xmax(), r.ymax()};
-}
-
-Triangle<Exact> pretendExact(const Triangle<Inexact>& t) {
-	return {pretendExact(t.vertex(0)), pretendExact(t.vertex(1)), pretendExact(t.vertex(2))};
-}
-
-Polygon<Exact> pretendExact(const Polygon<Inexact>& p) {
-	std::vector<Point<Exact>> exact_points;
-	pretendExact(p.vertices_begin(), p.vertices_end(), std::back_inserter(exact_points));
-	return {exact_points.begin(), exact_points.end()};
-}
-
-PolygonWithHoles<Exact> pretendExact(const PolygonWithHoles<Inexact>& p) {
-	auto outer = pretendExact(p.outer_boundary());
-	std::vector<Polygon<Exact>> holes;
-	for (const auto& h : p.holes()) {
-		holes.push_back(pretendExact(h));
-	}
-	return {outer, holes.begin(), holes.end()};
-}
-
-PolygonSet<Exact> pretendExact(const PolygonSet<Inexact>& p) {
-	std::vector<PolygonWithHoles<Inexact>> polygons;
-	p.polygons_with_holes(std::back_inserter(polygons));
-
-	PolygonSet<Exact> result;
-	for (const auto& polygon : polygons) {
-		result.insert(pretendExact(polygon));
-	}
-	return result;
+Number<Inexact> approximate(const Number<Exact>& v) {
+	return convert_kernel<Inexact>(v);
 }
 
 } // namespace cartocrow

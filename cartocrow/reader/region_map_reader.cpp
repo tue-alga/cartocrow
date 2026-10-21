@@ -47,7 +47,7 @@ RegionMap ipeToRegionMap(const std::filesystem::path& file, bool labelAtCentroid
 	
 	// step 2: find regions
 	// interpret filled paths as regions
-	auto features = reader.read<Multiple, PolygonSetRaw<Inexact>, WithAttributes>();
+	auto features = reader.read<Multiple, MultipolygonWithHoles<Inexact>, WithAttributes>();
 
 	for (auto& feature : features) {
 		auto shape = pretendExact(feature.geometry).polygonSet();

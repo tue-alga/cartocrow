@@ -1,6 +1,7 @@
 set(TEST_SOURCES "cartocrow_test.cpp"
 	"core/cubic_bezier.cpp"
 	"core/core.cpp"
+	"core/kernel_conversions.cpp"
 	"core/polygon_helpers.cpp"
 	"core/region_arrangement.cpp"
 	"core/region_map.cpp"
@@ -9,6 +10,7 @@ set(TEST_SOURCES "cartocrow_test.cpp"
 	"reader/gdal_reader.cpp"
 	"reader/multi_reader.cpp"
 	"reader/geojson_reader.cpp"
+	"data_structures/graph_2.cpp"
 )
 
 

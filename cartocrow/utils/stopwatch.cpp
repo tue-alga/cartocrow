@@ -20,7 +20,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <chrono>
 #include <iostream>
 
-namespace cartocrow {
+namespace cartocrow::utils {
 
 Stopwatch::Stopwatch(std::string name, TimeResolution resolution)
     : name(name), resolution(resolution) {
@@ -48,6 +48,10 @@ long Stopwatch::getCount() {
 	return count;
 }
 
+TimeResolution Stopwatch::getResolution() {
+	return resolution;
+}
+
 long Stopwatch::current_time() {
 	switch (resolution) {
 	case SECONDS:
@@ -62,6 +66,9 @@ long Stopwatch::current_time() {
 		return std::chrono::duration_cast<std::chrono::nanoseconds>(
 		           std::chrono::system_clock::now().time_since_epoch())
 		    .count();
+	default:
+		std::cout << "WARNING: unexpected resolution in stopwatch " << resolution << std::endl;
+		return 0;
 	}
 }
 
@@ -74,9 +81,8 @@ Stopwatch& StopwatchPool::get(std::string name) {
 			return w;
 		}
 	}
-	Stopwatch w(name, resolution);
-	watches.push_back(w);
-	return watches[watches.size() - 1];
+	watches.emplace_back(name, resolution);
+	return watches.back();
 }
 
 void StopwatchPool::clear() {
@@ -117,6 +123,8 @@ inline std::string to_string(TimeResolution resolution) {
 		return "ms";
 	case NANOSECONDS:
 		return "ns";
+	default:
+		return "<?>";
 	}
 }
 

@@ -21,11 +21,11 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 namespace cartocrow {
 template <class K> 
-struct PointSet {
+struct MultiPoint {
 	std::vector<Point<K>> points;
 
-	PointSet<K> transform(const CGAL::Aff_transformation_2<K>& trans) const {
-		PointSet<K> transformed;
+	MultiPoint<K> transform(const CGAL::Aff_transformation_2<K>& trans) const {
+		MultiPoint<K> transformed;
 		for (const auto& p : points) {
 			transformed.points.push_back(p.transform(trans));
 		}
@@ -37,5 +37,15 @@ struct PointSet {
 	}
 };
 
-PointSet<Inexact> approximate(const PointSet<Exact>& ps);
+
+template <typename KernelOut, typename KernelIn>
+MultiPoint<KernelOut> convert_kernel(const MultiPoint<KernelIn>& v) {
+	std::vector<Point<KernelOut>> result;
+
+	for (const auto& p : v.points) {
+		result.push_back(convert_kernel<KernelOut>(p));
+	}
+
+	return {result};
+}
 } // namespace cartocrow

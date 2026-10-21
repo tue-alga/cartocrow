@@ -143,10 +143,9 @@ template <class K> class Halfplane {
 	}
 };
 
-/// Converts a halfplane from exact representation to an approximation in
-/// inexact representation.
-template <class K>
-Halfplane<Inexact> approximate(const Halfplane<K>& p) {
-	return {approximate(p.line())};
+template <typename KernelOut, typename KernelIn>
+Halfplane<KernelOut> convert_kernel(const Halfplane<KernelIn>& v) {
+	return {convert_kernel<KernelOut>(v.line())};
 }
+
 }
