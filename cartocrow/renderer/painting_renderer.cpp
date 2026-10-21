@@ -23,6 +23,12 @@ namespace cartocrow::renderer {
 
 PaintingRenderer::PaintingRenderer() {}
 
+void PaintingRenderer::clear() {
+	m_objects.clear();
+	m_style = Style();
+	m_styleStack = std::stack<Style>();
+}
+
 void PaintingRenderer::paint(GeometryRenderer& renderer) const {
     Style lastStyle;
 

@@ -31,6 +31,10 @@ class PaintingRenderer : public GeometryPainting, public GeometryRenderer {
 	/// Creates a new painting renderer.
 	PaintingRenderer();
 
+	/// Removes all stored render commands and resets the style, so that the
+	/// renderer is in the same state as a newly created one.
+	void clear();
+
 	void paint(GeometryRenderer& renderer) const override;
 
 	void draw(const Point<Inexact>& p) override;
